@@ -13,6 +13,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    json_compliance_file_suffix,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -88,6 +89,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
+from prowler.lib.outputs.compliance_json.compliance_json import ComplianceJSON
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
@@ -417,6 +419,14 @@ def prowler():
                 )
                 generated_outputs["regular"].append(json_output)
                 json_output.batch_write_data_to_file()
+
+            if mode == "json-compliance":
+                compliance_json_output = ComplianceJSON(
+                    findings=finding_outputs,
+                    file_path=f"{filename}{json_compliance_file_suffix}",
+                )
+                generated_outputs["regular"].append(compliance_json_output)
+                compliance_json_output.batch_write_data_to_file()
             if mode == "html":
                 html_output = HTML(
                     findings=finding_outputs,

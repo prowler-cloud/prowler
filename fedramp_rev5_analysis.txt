@@ -1,0 +1,1402 @@
+FedRAMP Moderate Baseline Revision 5 - Detailed Control Analysis
+================================================================================
+
+Total Controls: 137
+Total Families: 18
+
+
+AC FAMILY - ACCESS CONTROL
+--------------------------------------------------
+Controls in this family: 13
+
+Control ID: AC-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] access c...
+FedRAMP Parameters: AC-1 (c) (1) [at least every 3 years] 
+AC-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: AC-11
+Name: Device Lock
+Description: a. Prevent further access to the system by [Selection (one or more): initiating a device lock after [Assignment: organization-defined time period] of inactivity; requiring the user to initiate a devic...
+FedRAMP Parameters: AC-11 (a) [fifteen (15) minutes]; requiring the user to initiate a device lock before leaving the system unattended
+
+----------------------------------------
+
+Control ID: AC-2
+Name: Account Management
+Description: a. Define and document the types of accounts allowed and specifically prohibited for use within the system;
+ b. Assign account managers;
+ c. Require [Assignment: organization-defined prerequisites and...
+FedRAMP Parameters: AC-2 (h) (1) [twenty-four (24) hours]
+AC-2 (h) (2) [eight (8) hours]
+AC-2 (h) (3) [eight (8) hours]
+AC-2 (j) [quarterly for privileged access, annually for non-privileged access]
+
+----------------------------------------
+
+Control ID: AC-2 (12)
+Name: Account Management | Account Monitoring for Atypical Usage
+Description: (a) Monitor system accounts for [Assignment: organization-defined atypical usage]; and
+ (b) Report atypical usage of system accounts to [Assignment: organization-defined personnel or roles].
+FedRAMP Parameters: AC-2 (12) (b)[at a minimum, the ISSO and/or similar role within the organization]
+FedRAMP Guidance: AC-2 (12) (a) Requirement: Required for privileged accounts.
+AC-2 (12) (b) Requirement: Required for privileged accounts.
+
+----------------------------------------
+
+Control ID: AC-2 (13)
+Name: Account Management | Disable Accounts for High-risk Individuals
+Description: Disable accounts of individuals within [Assignment: organization-defined time period] of discovery of [Assignment: organization-defined significant risks].
+FedRAMP Parameters: AC-2 (13)-1 [one (1) hour]
+
+----------------------------------------
+
+Control ID: AC-2 (2)
+Name: Account Management | Automated Temporary and Emergency Account Management
+Description: Automatically [Selection: remove; disable] temporary and emergency accounts after [Assignment: organization-defined time period for each type of account].
+FedRAMP Parameters: AC-2 (2) [Selection: disables] 
+[Assignment: no more than 96 hours from last use]
+
+----------------------------------------
+
+Control ID: AC-2 (3)
+Name: Account Management | Disable Accounts
+Description: Disable accounts within [Assignment: organization-defined time period] when the accounts: 
+ (a) Have expired;
+ (b) Are no longer associated with a user or individual;
+ (c) Are in violation of organiza...
+FedRAMP Parameters: AC-2 (3) [24 hours for user accounts]
+AC-2 (3) (d) [ninety (90) days] (See additional requirements and guidance.)
+FedRAMP Guidance: AC-2 (3) Requirement: The service provider defines the time period for non-user accounts (e.g., accounts associated with devices).  The time periods are approved and accepted by the JAB/AO. Where user management is a function of the service, reports of activity of consumer users shall be made available.
+AC-2 (3) (d) Requirement: The service provider defines the time period of inactivity for device identifiers.
+Guidance: For DoD clouds, see DoD cloud website for specific DoD requirements that go above and beyond FedRAMP https://public.cyber.mil/dccs/.
+
+----------------------------------------
+
+Control ID: AC-2 (5)
+Name: Account Management | Inactivity Logout
+Description: Require that users log out when [Assignment: organization-defined time period of expected inactivity or description of when to log out].
+FedRAMP Parameters: AC-2 (5) [for privileged users, it is the end of a user's standard work period]
+FedRAMP Guidance: AC-2 (5) Guidance: Should use a shorter timeframe than AC-12.
+
+----------------------------------------
+
+Control ID: AC-2 (9)
+Name: Account Management | Restrictions on Use of Shared and Group Accounts
+Description: Only permit the use of shared and group accounts that meet [Assignment: organization-defined conditions for establishing shared and group accounts].
+FedRAMP Parameters: AC-2 (9) [organization-defined need with justification statement that explains why such accounts are necessary]
+FedRAMP Guidance: AC-2 (9) Requirement: Required if shared/group accounts are deployed
+
+----------------------------------------
+
+Control ID: AC-22
+Name: Publicly Accessible Content
+Description: a. Designate individuals authorized to make information publicly accessible;
+ b. Train authorized individuals to ensure that publicly accessible information does not contain nonpublic information;
+ c....
+FedRAMP Parameters: AC-22 (d) [at least quarterly]
+
+----------------------------------------
+
+Control ID: AC-6 (2)
+Name: Least Privilege | Non-privileged Access for Nonsecurity Functions
+Description: Require that users of system accounts (or roles) with access to [Assignment: organization-defined security functions or security-relevant information] use non-privileged accounts or roles, when access...
+FedRAMP Parameters: AC-6 (2) [all security functions]
+FedRAMP Guidance: AC-6 (2) Guidance:  Examples of security functions include but are not limited to: establishing system accounts, configuring access authorizations (i.e., permissions, privileges), setting events to be audited, and setting intrusion detection parameters, system programming, system and security administration, other privileged functions.
+
+----------------------------------------
+
+Control ID: AC-6 (7)
+Name: Least Privilege | Review of User Privileges
+Description: (a) Review [Assignment: organization-defined frequency] the privileges assigned to [Assignment: organization-defined roles or classes of users] to validate the need for such privileges; and
+ (b) Reass...
+FedRAMP Parameters: AC-6 (7) (a)-1  [at a minimum, annually]
+AC-6 (7) (a)-2  [all users with privileges]
+
+----------------------------------------
+
+Control ID: AC-8
+Name: System Use Notification
+Description: a. Display [Assignment: organization-defined system use notification message or banner] to users before granting access to the system that provides privacy and security notices consistent with applica...
+FedRAMP Parameters: AC-8 (a) [see additional Requirements and Guidance]
+AC-8 (c) (1) [see additional Requirements and Guidance]
+FedRAMP Guidance: AC-8 Requirement: The service provider shall determine elements of the cloud environment that require the System Use Notification control. The elements of the cloud environment that require System Use Notification are approved and accepted by the JAB/AO. 
+
+Requirement: The service provider shall determine how System Use Notification is going to be verified and provide appropriate periodicity of the check. The System Use Notification verification and periodicity are approved and accepted by the JAB/AO.
+
+Requirement: If not performed as part of a Configuration Baseline check, then there must be documented agreement on how to provide results of verification and the necessary periodicity of the verification by the service provider. The documented agreement on how to provide verification of the results are approved and accepted by the JAB/AO.
+
+Guidance: If performed as part of a Configuration Baseline check, then the % of items requiring setting that are checked and that pass (or fail) check can be provided.
+
+----------------------------------------
+
+
+AT FAMILY - AWARENESS AND TRAINING
+--------------------------------------------------
+Controls in this family: 4
+
+Control ID: AT-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] awarenes...
+FedRAMP Parameters: AT-1 (c) (1) [at least every 3 years] 
+AT-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: AT-2
+Name: Literacy Training and Awareness
+Description: a. Provide security and privacy literacy training to system users (including managers, senior executives, and contractors):
+ 1. As part of initial training for new users and [Assignment: organization-...
+FedRAMP Parameters: AT-2 (a) (1) [at least annually]
+AT-2 (c) [at least annually]
+
+----------------------------------------
+
+Control ID: AT-3
+Name: Role-based Training
+Description: a. Provide role-based security and privacy training to personnel with the following roles and responsibilities: [Assignment: organization-defined roles and responsibilities]:
+ 1. Before authorizing ac...
+FedRAMP Parameters: AT-3 (a) (1) [at least annually]
+AT-3 (b) [at least annually]
+
+----------------------------------------
+
+Control ID: AT-4
+Name: Training Records
+Description: a. Document and monitor information security and privacy training activities, including security and privacy awareness training and specific role-based security and privacy training; and
+ b. Retain in...
+FedRAMP Parameters: AT-4 (b) [at least one (1) year or 1 year after completion of a specific training program]
+
+----------------------------------------
+
+
+AU FAMILY - AUDIT AND ACCOUNTABILITY
+--------------------------------------------------
+Controls in this family: 8
+
+Control ID: AU-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] audit an...
+FedRAMP Parameters: AU-1 (c) (1) [at least every 3 years] 
+AU-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: AU-11
+Name: Audit Record Retention
+Description: Retain audit records for [Assignment: organization-defined time period consistent with records retention policy] to provide support for after-the-fact investigations of incidents and to meet regulator...
+FedRAMP Parameters: AU-11 [a time period in compliance with M-21-31]
+FedRAMP Guidance: AU-11 Requirement: The service provider retains audit records on-line for at least ninety days and further preserves audit records off-line for a period that is in accordance with NARA requirements. 
+AU-11 Requirement: The service provider must support Agency requirements to comply with M-21-31 (https://www.whitehouse.gov/wp-content/uploads/2021/08/M-21-31-Improving-the-Federal-Governments-Investigative-and-Remediation-Capabilities-Related-to-Cybersecurity-Incidents.pdf)
+AU-11 Guidance: The service provider is encouraged to align with M-21-31 where possible
+
+----------------------------------------
+
+Control ID: AU-12
+Name: Audit Record Generation
+Description: a. Provide audit record generation capability for the event types the system is capable of auditing as defined in AU-2a on [Assignment: organization-defined system components];
+ b. Allow [Assignment: ...
+FedRAMP Parameters: AU-12 (a) [all information system and network components where audit capability is deployed/available]
+
+----------------------------------------
+
+Control ID: AU-2
+Name: Event Logging
+Description: a. Identify the types of events that the system is capable of logging in support of the audit function: [Assignment: organization-defined event types that the system is capable of logging];
+ b. Coordi...
+FedRAMP Parameters: AU-2 (a) [successful and unsuccessful account logon events, account management events, object access, policy change, privilege functions, process tracking, and system events. For Web applications: all administrator activity, authentication checks, authorization checks, data deletions, data access, data changes, and permission changes]
+AU-2 (c) [organization-defined subset of the auditable events defined in AU-2a to be audited continually for each identified event].
+AU-2 (e) [annually and whenever there is a change in the threat environment]
+FedRAMP Guidance: AU-2 Requirement: Coordination between service provider and consumer shall be documented and accepted by the JAB/AO.
+AU-2 (e) Guidance: Annually or whenever changes in the threat environment are communicated to the service provider by the JAB/AO.
+
+----------------------------------------
+
+Control ID: AU-3 (1)
+Name: Content of Audit Records | Additional Audit Information
+Description: Generate audit records containing the following additional information: [Assignment: organization-defined additional information].
+FedRAMP Parameters: AU-3 (1) [session, connection, transaction, or activity duration; for client-server transactions, the number of bytes received and bytes sent; additional informational messages to diagnose or identify the event; characteristics that describe or identify the object or resource being acted upon; individual identities of group account users; full-text of privileged commands]
+FedRAMP Guidance: AU-3 (1) Guidance: For client-server transactions, the number of bytes sent and received gives bidirectional transfer information that can be helpful during an investigation or inquiry.
+
+----------------------------------------
+
+Control ID: AU-5
+Name: Response to Audit Logging Process Failures
+Description: a. Alert [Assignment: organization-defined personnel or roles] within [Assignment: organization-defined time period] in the event of an audit logging process failure; and
+ b. Take the following additi...
+FedRAMP Parameters: AU-5 (b) [overwrite oldest record]
+
+----------------------------------------
+
+Control ID: AU-6
+Name: Audit Record Review, Analysis, and Reporting
+Description: a. Review and analyze system audit records [Assignment: organization-defined frequency] for indications of [Assignment: organization-defined inappropriate or unusual activity] and the potential impact...
+FedRAMP Parameters: AU-6 (a)-1 [at least weekly]
+FedRAMP Guidance: AU-6 Requirement: Coordination between service provider and consumer shall be documented and accepted by the JAB/AO. In multi-tenant environments, capability and means for providing review, analysis, and reporting to consumer for data pertaining to consumer shall be documented.
+
+----------------------------------------
+
+Control ID: AU-8
+Name: Time Stamps
+Description: a. Use internal system clocks to generate time stamps for audit records; and
+ b. Record time stamps for audit records that meet [Assignment: organization-defined granularity of time measurement] and t...
+FedRAMP Parameters: AU-8 (b) [one second granularity of time measurement]
+
+----------------------------------------
+
+
+CA FAMILY - SECURITY ASSESSMENT AND AUTHORIZATION
+--------------------------------------------------
+Controls in this family: 9
+
+Control ID: CA-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] assessme...
+FedRAMP Parameters: CA-1 (c) (1) [at least every 3 years] 
+CA-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: CA-2
+Name: Control Assessments
+Description: a. Select the appropriate assessor or assessment team for the type of assessment to be conducted;
+ b. Develop a control assessment plan that describes the scope of the assessment including:
+ 1. Contro...
+FedRAMP Parameters: CA-2 (d) [at least annually] 
+CA-2 (f) [individuals or roles to include FedRAMP PMO]
+FedRAMP Guidance: CA-2 Guidance: Reference FedRAMP Annual Assessment Guidance.
+
+----------------------------------------
+
+Control ID: CA-2 (3)
+Name: Control Assessments | Leveraging Results from External Organizations
+Description: Leverage the results of control assessments performed by [Assignment: organization-defined external organization] on [Assignment: organization-defined system] when the assessment meets [Assignment: or...
+FedRAMP Parameters: CA-2 (3)-1 [any FedRAMP Accredited 3PAO]
+CA-2 (3)-3 [the conditions of the JAB/AO in the FedRAMP Repository]
+
+----------------------------------------
+
+Control ID: CA-3
+Name: Information Exchange
+Description: a. Approve and manage the exchange of information between the system and other systems using [Selection (one or more): interconnection security agreements; information exchange security agreements; me...
+FedRAMP Parameters: CA-3 (c) [at least annually and on input from JAB/AO]
+
+----------------------------------------
+
+Control ID: CA-5
+Name: Plan of Action and Milestones
+Description: a. Develop a plan of action and milestones for the system to document the planned remediation actions of the organization to correct weaknesses or deficiencies noted during the assessment of the contr...
+FedRAMP Parameters: CA-5 (b) [at least monthly]
+FedRAMP Guidance: CA-5 Requirement: POA&Ms must be provided at least monthly.
+CA-5 Guidance: Reference FedRAMP-POAM-Template
+
+----------------------------------------
+
+Control ID: CA-6
+Name: Authorization
+Description: a. Assign a senior official as the authorizing official for the system;
+ b. Assign a senior official as the authorizing official for common controls available for inheritance by organizational systems...
+FedRAMP Parameters: CA-6 (e) [in accordance with OMB A-130 requirements or when a significant change occurs]
+FedRAMP Guidance: CA-6 (e) Guidance: Significant change is defined in NIST Special Publication 800-37 Revision 2, Appendix F and according to FedRAMP Significant Change Policies and Procedures. The service provider describes the types of changes to the information system or the environment of operations that would impact the risk posture. The types of changes are approved and accepted by the JAB/AO.
+
+----------------------------------------
+
+Control ID: CA-7
+Name: Continuous Monitoring
+Description: Develop a system-level continuous monitoring strategy and implement continuous monitoring in accordance with the organization-level continuous monitoring strategy that includes:
+ a. Establishing the f...
+FedRAMP Parameters: CA-7 (g)-1 [to include JAB/AO]
+FedRAMP Guidance: CA-7 Requirement: Operating System, Database, Web Application, Container, and Service Configuration Scans: at least monthly. All scans performed by Independent Assessor: at least annually.
+CA-7 Requirement: CSOs with more than one agency ATO must implement a collaborative Continuous Monitoring (ConMon) approach described in the FedRAMP Guide for Multi-Agency Continuous Monitoring. This requirement applies to CSOs authorized via the Agency path as each agency customer is responsible for performing ConMon oversight. It does not apply to CSOs authorized via the JAB path because the JAB performs ConMon oversight.
+CA-7 Guidance: FedRAMP does not provide a template for the Continuous Monitoring Plan. CSPs should reference the FedRAMP Continuous Monitoring Strategy Guide when developing the Continuous Monitoring Plan.
+
+----------------------------------------
+
+Control ID: CA-8
+Name: Penetration Testing
+Description: Conduct penetration testing [Assignment: organization-defined frequency] on [Assignment: organization-defined systems or system components].
+FedRAMP Parameters: CA-8-1 [at least annually]
+FedRAMP Guidance: CA-8 Guidance: Reference the FedRAMP Penetration Test Guidance.
+
+----------------------------------------
+
+Control ID: CA-9
+Name: Internal System Connections
+Description: a. Authorize internal connections of [Assignment: organization-defined system components or classes of components] to the system;
+ b. Document, for each internal connection, the interface characterist...
+FedRAMP Parameters: CA-9 (d) [at least annually]
+
+----------------------------------------
+
+
+CM FAMILY - CONFIGURATION MANAGEMENT
+--------------------------------------------------
+Controls in this family: 10
+
+Control ID: CM-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] configur...
+FedRAMP Parameters: CM-1 (c) (1) [at least every 3 years] 
+CM-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: CM-11
+Name: User-installed Software
+Description: a. Establish [Assignment: organization-defined policies] governing the installation of software by users;
+ b. Enforce software installation policies through the following methods: [Assignment: organiz...
+FedRAMP Parameters: CM-11 (c) [Continuously (via CM-7 (5))]
+
+----------------------------------------
+
+Control ID: CM-12 (1)
+Name: Information Location | Automated Tools to Support Information Location
+Description: Use automated tools to identify [Assignment: organization-defined information by information type] on [Assignment: organization-defined system components] to ensure controls are in place to protect or...
+FedRAMP Parameters: CM-12 (1)-1: [Federal data and system data that must be protected at the High or Moderate impact levels]
+FedRAMP Guidance: CM-12 (1) Requirement: According to FedRAMP Authorization Boundary Guidance.
+
+----------------------------------------
+
+Control ID: CM-2
+Name: Baseline Configuration
+Description: a. Develop, document, and maintain under configuration control, a current baseline configuration of the system; and
+ b. Review and update the baseline configuration of the system:
+ 1. [Assignment: org...
+FedRAMP Parameters: CM-2 (b) (1) [at least annually and when a significant change occurs]
+CM-2 (b) (2) [to include when directed by the JAB]
+FedRAMP Guidance: CM-2 (b) (1) Guidance: Significant change is defined in NIST Special Publication 800-37 Revision 2, Appendix F.
+
+----------------------------------------
+
+Control ID: CM-3 (4)
+Name: Configuration Change Control | Security and Privacy Representatives
+Description: Require [Assignment: organization-defined security and privacy representatives] to be members of the [Assignment: organization-defined configuration change control element].
+FedRAMP Parameters: CM-3 (4)-2 [Configuration control board (CCB) or similar (as defined in CM-3)]
+
+----------------------------------------
+
+Control ID: CM-5 (5)
+Name: Access Restrictions for Change | Privilege Limitation for Production and Operation
+Description: (a) Limit privileges to change system components and system-related information within a production or operational environment; and
+ (b) Review and reevaluate privileges [Assignment: organization-defi...
+FedRAMP Parameters: CM-5 (5) (b) [at least quarterly]
+
+----------------------------------------
+
+Control ID: CM-7 (1)
+Name: Least Functionality | Periodic Review
+Description: (a) Review the system [Assignment: organization-defined frequency] to identify unnecessary and/or nonsecure functions, ports, protocols, software, and services; and
+ (b) Disable or remove [Assignment:...
+FedRAMP Parameters: CM-7 (1) (a) [at least annually]
+
+----------------------------------------
+
+Control ID: CM-7 (5)
+Name: Least Functionality | Authorized Software — Allow-by-exception
+Description: (a) Identify [Assignment: organization-defined software programs authorized to execute on the system];
+ (b) Employ a deny-all, permit-by-exception policy to allow the execution of authorized software ...
+FedRAMP Parameters: CM-7 (5) (c) [at least quarterly or when there is a change]
+
+----------------------------------------
+
+Control ID: CM-8
+Name: System Component Inventory
+Description: a. Develop and document an inventory of system components that:
+ 1. Accurately reflects the system;
+ 2. Includes all components within the system;
+ 3. Does not include duplicate accounting of componen...
+FedRAMP Parameters: CM-8 (b) [at least monthly]
+FedRAMP Guidance: CM-8 Requirement: must be provided at least monthly or when there is a change.
+
+----------------------------------------
+
+Control ID: CM-8 (3)
+Name: System Component Inventory | Automated Unauthorized Component Detection
+Description: (a) Detect the presence of unauthorized hardware, software, and firmware components within the system using [Assignment: organization-defined automated mechanisms] [Assignment: organization-defined fr...
+FedRAMP Parameters: CM-8 (3) (a)-1  [automated mechanisms with a maximum five-minute delay in detection.] 
+CM-8 (3) (a)-2 [continuously]
+
+----------------------------------------
+
+
+CP FAMILY - CONTINGENCY PLANNING
+--------------------------------------------------
+Controls in this family: 8
+
+Control ID: CP-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] continge...
+FedRAMP Parameters: CP-1 (c) (1) [at least every 3 years] 
+CP-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: CP-2
+Name: Contingency Plan
+Description: a. Develop a contingency plan for the system that:
+ 1. Identifies essential mission and business functions and associated contingency requirements;
+ 2. Provides recovery objectives, restoration priori...
+FedRAMP Parameters: CP-2 (d) [at least annually]
+FedRAMP Guidance: CP-2 Requirement: For JAB authorizations the contingency lists include designated FedRAMP personnel.
+
+CP-2 Requirement: CSPs must use the FedRAMP Information System Contingency Plan (ISCP) Template (available on the fedramp.gov: https://www.fedramp.gov/assets/resources/templates/SSP-A06-FedRAMP-ISCP-Template.docx).
+
+----------------------------------------
+
+Control ID: CP-2 (3)
+Name: Contingency Plan | Resume Mission and Business Functions
+Description: Plan for the resumption of [Selection: all; essential] mission and business functions within [Assignment: organization-defined time period] of contingency plan activation.
+FedRAMP Parameters: CP-2 (3)-1 [all]
+CP-2 (3)-2 [time period defined in service provider and organization  SLA]
+
+----------------------------------------
+
+Control ID: CP-3
+Name: Contingency Training
+Description: a. Provide contingency training to system users consistent with assigned roles and responsibilities: 
+ 1. Within [Assignment: organization-defined time period] of assuming a contingency role or respon...
+FedRAMP Parameters: CP-3 (a) (1) [*See Additional Requirements]
+CP-3 (a) (3) [at least annually]
+CP-3 (b) [at least annually]
+FedRAMP Guidance: CP-3 (a) Requirement: Privileged admins and engineers must take the basic contingency training within 10 days. Consideration must be given for those privileged admins and engineers with critical contingency-related roles, to gain enough system context and situational awareness to understand the full impact of contingency training as it applies to their respective level. Newly hired critical contingency personnel must take this more in-depth training within 60 days of hire date when the training will have more impact.
+
+----------------------------------------
+
+Control ID: CP-4
+Name: Contingency Plan Testing
+Description: a. Test the contingency plan for the system [Assignment: organization-defined frequency] using the following tests to determine the effectiveness of the plan and the readiness to execute the plan: [As...
+FedRAMP Parameters: CP-4 (a)-1 [at least annually] 
+CP-4 (a)-2 [functional exercises]
+FedRAMP Guidance: CP-4 (a) Requirement: The service provider develops test plans in accordance with NIST Special Publication 800-34 (as amended); plans are approved by the JAB/AO prior to initiating testing.
+
+CP-4 (b) Requirement: The service provider must include the Contingency Plan test results with the security package within the Contingency Plan-designated appendix (Appendix G, Contingency Plan Test Report).
+
+----------------------------------------
+
+Control ID: CP-9
+Name: System Backup
+Description: a. Conduct backups of user-level information contained in [Assignment: organization-defined system components] [Assignment: organization-defined frequency consistent with recovery time and recovery po...
+FedRAMP Parameters: CP-9 (a)-2 [daily incremental; weekly full]
+CP-9 (b) [daily incremental; weekly full]
+CP-9 (c) [daily incremental; weekly full]
+FedRAMP Guidance: CP-9 Requirement: The service provider shall determine what elements of the cloud environment require the Information System Backup control. The service provider shall determine how Information System Backup is going to be verified and appropriate periodicity of the check.
+CP-9 (a) Requirement: The service provider maintains at least three backup copies of user-level information (at least one of which is available online) or provides an equivalent alternative.
+CP-9 (b) Requirement: The service provider maintains at least three backup copies of system-level information (at least one of which is available online) or provides an equivalent alternative.
+CP-9 (c) Requirement: The service provider maintains at least three backup copies of information system documentation including security information (at least one of which is available online) or provides an equivalent alternative.
+
+----------------------------------------
+
+Control ID: CP-9 (1)
+Name: System Backup | Testing for Reliability and Integrity
+Description: Test backup information [Assignment: organization-defined frequency] to verify media reliability and information integrity.
+FedRAMP Parameters: CP-9 (1) [at least annually]
+
+----------------------------------------
+
+Control ID: CP-9 (8)
+Name: System Backup | Cryptographic Protection
+Description: Implement cryptographic mechanisms to prevent unauthorized disclosure and modification of [Assignment: organization-defined backup information].
+FedRAMP Parameters: CP-9 (08) [all backup files]
+FedRAMP Guidance: CP-9 (8) Guidance: Note that this enhancement requires the use of cryptography which must be compliant with Federal requirements and utilize FIPS validated or NSA approved cryptography (see SC-13.)
+
+----------------------------------------
+
+
+IA FAMILY - IDENTIFICATION AND AUTHENTICATION
+--------------------------------------------------
+Controls in this family: 5
+
+Control ID: IA-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] identifi...
+FedRAMP Parameters: IA-1 (c) (1) [at least every 3 years] 
+IA-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: IA-2 (6)
+Name: Identification and Authentication (organizational Users) | Access to Accounts —separate Device
+Description: Implement multi-factor authentication for [Selection (one or more): local; network; remote] access to [Selection (one or more): privileged accounts; non-privileged accounts] such that:
+ (a) One of the...
+FedRAMP Parameters: IA-2 (6)-1 [local, network and remote]
+IA-2 (6)-2 [privileged accounts; non-privileged accounts]
+IA-2 (6) (b) [FIPS-validated or NSA-approved cryptography]
+FedRAMP Guidance: IA-2 (6) Guidance: PIV=separate device. Please refer to NIST SP 800-157 Guidelines for Derived Personal Identity Verification (PIV) Credentials.
+
+IA-2 (6) Guidance: See SC-13 Guidance for more information on FIPS-validated or NSA-approved cryptography.
+
+----------------------------------------
+
+Control ID: IA-2 (8)
+Name: Identification and Authentication (organizational Users) | Access to Accounts — Replay Resistant
+Description: Implement replay-resistant authentication mechanisms for access to [Selection (one or more): privileged accounts; non-privileged accounts].
+FedRAMP Parameters: IA-2 (8) [privileged accounts; non-privileged accounts]
+
+----------------------------------------
+
+Control ID: IA-4
+Name: Identifier Management
+Description: Manage system identifiers by:
+ a. Receiving authorization from [Assignment: organization-defined personnel or roles] to assign an individual, group, role, service, or device identifier;
+ b. Selecting ...
+FedRAMP Parameters: IA-4 (a) [at a minimum, the ISSO (or similar role within the organization)]  
+IA-4 (d) [at least two (2) years]
+
+----------------------------------------
+
+Control ID: IA-4 (4)
+Name: Identifier Management | Identify User Status
+Description: Manage individual identifiers by uniquely identifying each individual as [Assignment: organization-defined characteristic identifying individual status].
+FedRAMP Parameters: IA-4 (4) [contractors; foreign nationals]
+
+----------------------------------------
+
+
+IR FAMILY - INCIDENT RESPONSE
+--------------------------------------------------
+Controls in this family: 6
+
+Control ID: IR-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] incident...
+FedRAMP Parameters: IR-1 (c) (1) [at least every 3 years] 
+IR-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: IR-2
+Name: Incident Response Training
+Description: a. Provide incident response training to system users consistent with assigned roles and responsibilities:
+ 1. Within [Assignment: organization-defined time period] of assuming an incident response ro...
+FedRAMP Parameters: IR-2 (a) (1) [ten (10) days for privileged users, thirty (30) days for Incident Response roles]
+IR-2 (a) (3) [at least annually]
+IR-2 (b) [at least annually]
+
+----------------------------------------
+
+Control ID: IR-3
+Name: Incident Response Testing
+Description: Test the effectiveness of the incident response capability for the system [Assignment: organization-defined frequency] using the following tests: [Assignment: organization-defined tests].
+FedRAMP Parameters: IR-3-1 [functional, at least annually]
+FedRAMP Guidance: IR-3-2 Requirement: The service provider defines tests and/or exercises in accordance with NIST Special Publication 800-61 (as amended). Functional testing must occur prior to testing for initial authorization. Annual functional testing may be concurrent with required penetration tests (see CA-8). The service provider provides test plans to the JAB/AO annually. Test plans are approved and accepted by the JAB/AO prior to test commencing.
+
+----------------------------------------
+
+Control ID: IR-6
+Name: Incident Reporting
+Description: a. Require personnel to report suspected incidents to the organizational incident response capability within [Assignment: organization-defined time period]; and
+ b. Report incident information to [Ass...
+FedRAMP Parameters: IR-6 (a) [US-CERT incident reporting timelines as specified in NIST Special Publication 800-61 (as amended)]
+FedRAMP Guidance: IR-6 Requirement: Reports security incident information according to FedRAMP Incident Communications Procedure.
+
+----------------------------------------
+
+Control ID: IR-8
+Name: Incident Response Plan
+Description: a. Develop an incident response plan that:
+ 1. Provides the organization with a roadmap for implementing its incident response capability;
+ 2. Describes the structure and organization of the incident ...
+FedRAMP Parameters: IR-8 (a) (9)-2 [at least annually]
+IR-8 (b) [see additional FedRAMP Requirements and Guidance]
+IR-8 (d) [see additional FedRAMP Requirements and Guidance]
+FedRAMP Guidance: IR-8 (b) Requirement: The service provider defines a list of incident response personnel (identified by name and/or by role) and organizational elements. The incident response list includes designated FedRAMP personnel.
+IR-8 (d) Requirement: The service provider defines a list of incident response personnel (identified by name and/or by role) and organizational elements. The incident response list includes designated FedRAMP personnel.
+
+----------------------------------------
+
+Control ID: IR-9 (2)
+Name: Information Spillage Response | Training
+Description: Provide information spillage response training [Assignment: organization-defined frequency].
+FedRAMP Parameters: IR-9 (2) [at least annually]
+
+----------------------------------------
+
+
+MA FAMILY - MAINTENANCE
+--------------------------------------------------
+Controls in this family: 4
+
+Control ID: MA-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] maintena...
+FedRAMP Parameters: MA-1 (c) (1) [at least every 3 years]
+MA-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: MA-3
+Name: Maintenance Tools
+Description: a. Approve, control, and monitor the use of system maintenance tools; and
+ b. Review previously approved system maintenance tools [Assignment: organization-defined frequency].
+FedRAMP Parameters: MA-3 (b) [at least annually]
+
+----------------------------------------
+
+Control ID: MA-3 (3)
+Name: Maintenance Tools | Prevent Unauthorized Removal
+Description: Prevent the removal of maintenance equipment containing organizational information by:
+ (a) Verifying that there is no organizational information contained on the equipment;
+ (b) Sanitizing or destroy...
+FedRAMP Parameters: MA-3 (3) (d) [the information owner]
+
+----------------------------------------
+
+Control ID: MA-6
+Name: Timely Maintenance
+Description: Obtain maintenance support and/or spare parts for [Assignment: organization-defined system components] within [Assignment: organization-defined time period] of failure.
+FedRAMP Parameters: MA-6-2 [a timeframe to support advertised uptime and availability]
+
+----------------------------------------
+
+
+MP FAMILY - MEDIA PROTECTION
+--------------------------------------------------
+Controls in this family: 6
+
+Control ID: MP-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] media pr...
+FedRAMP Parameters: MP-1 (c) (1) [at least every 3 years] 
+MP-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: MP-2
+Name: Media Access
+Description: Restrict access to [Assignment: organization-defined types of digital and/or non-digital media] to [Assignment: organization-defined personnel or roles].
+FedRAMP Parameters: MP-2-1 [all types of digital and/or non-digital media containing sensitive information]
+
+----------------------------------------
+
+Control ID: MP-3
+Name: Media Marking
+Description: a. Mark system media indicating the distribution limitations, handling caveats, and applicable security markings (if any) of the information; and
+ b. Exempt [Assignment: organization-defined types of ...
+FedRAMP Parameters: MP-3 (b)-1 [no removable media types]
+MP-3 (b)-2 [organization-defined security safeguards not applicable]
+FedRAMP Guidance: MP-3 (b) Guidance: Second parameter not-applicable
+
+----------------------------------------
+
+Control ID: MP-4
+Name: Media Storage
+Description: a. Physically control and securely store [Assignment: organization-defined types of digital and/or non-digital media] within [Assignment: organization-defined controlled areas]; and
+ b. Protect system...
+FedRAMP Parameters: MP-4 (a)-1 [all types of digital and non-digital media with sensitive information] 
+MP-4 (a)-2 [see additional FedRAMP requirements and guidance]
+FedRAMP Guidance: MP-4 (a) Requirement: The service provider defines controlled areas within facilities where the information and information system reside.
+
+----------------------------------------
+
+Control ID: MP-5
+Name: Media Transport
+Description: a. Protect and control [Assignment: organization-defined types of system media] during transport outside of controlled areas using [Assignment: organization-defined controls];
+ b. Maintain accountabil...
+FedRAMP Parameters: MP-5 (a) [all media with sensitive information] [prior to leaving secure/controlled environment: for digital media, encryption in compliance with Federal requirements and utilizes FIPS validated or NSA approved cryptography (see SC-13.); for non-digital media, secured in locked container]
+FedRAMP Guidance: MP-5 (a) Requirement: The service provider defines security measures to protect digital and non-digital media in transport.  The security measures are approved and accepted by the JAB/AO.
+
+----------------------------------------
+
+Control ID: MP-6
+Name: Media Sanitization
+Description: a. Sanitize [Assignment: organization-defined system media] prior to disposal, release out of organizational control, or release for reuse using [Assignment: organization-defined sanitization techniqu...
+FedRAMP Parameters: MP-6 (a)-2 [techniques and procedures IAW NIST SP 800-88 Section 4: Reuse and Disposal of Storage Media and Hardware]
+
+----------------------------------------
+
+
+PE FAMILY - PHYSICAL AND ENVIRONMENTAL PROTECTION
+--------------------------------------------------
+Controls in this family: 9
+
+Control ID: PE-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] physical...
+FedRAMP Parameters: PE-1 (c) (1) [at least every 3 years] 
+PE-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: PE-10
+Name: Emergency Shutoff
+Description: a. Provide the capability of shutting off power to [Assignment: organization-defined system or individual system components] in emergency situations;
+ b. Place emergency shutoff switches or devices in...
+FedRAMP Parameters: PE-10 (b) [near more than one egress point of the IT area and ensures it is labeled and protected by a cover to prevent accidental shut-off]
+
+----------------------------------------
+
+Control ID: PE-13 (1)
+Name: Fire Protection | Detection Systems — Automatic Activation and Notification
+Description: Employ fire detection systems that activate automatically and notify [Assignment: organization-defined personnel or roles] and [Assignment: organization-defined emergency responders] in the event of a...
+FedRAMP Parameters: PE-13 (1) -1 [service provider building maintenance/physical security personnel]
+PE-13 (1) -2 [service provider emergency responders with incident response responsibilities]
+
+----------------------------------------
+
+Control ID: PE-14
+Name: Environmental Controls
+Description: a. Maintain [Selection (one or more): temperature; humidity; pressure; radiation; [Assignment: organization-defined environmental control]] levels within the facility where the system resides at [Assi...
+FedRAMP Parameters: PE-14 (a) [consistent with American Society of Heating, Refrigerating and Air-conditioning Engineers (ASHRAE) document entitled Thermal Guidelines for Data Processing Environments]
+
+PE-14 (b) [continuously]
+FedRAMP Guidance: PE-14 (a) Requirement:  The service provider measures temperature at server inlets and humidity levels by dew point.
+
+----------------------------------------
+
+Control ID: PE-16
+Name: Delivery and Removal
+Description: a. Authorize and control [Assignment: organization-defined types of system components] entering and exiting the facility; and
+ b. Maintain records of the system components.
+FedRAMP Parameters: PE-16 (a) [all information system components]
+
+----------------------------------------
+
+Control ID: PE-2
+Name: Physical Access Authorizations
+Description: a. Develop, approve, and maintain a list of individuals with authorized access to the facility where the system resides;
+ b. Issue authorization credentials for facility access;
+ c. Review the access ...
+FedRAMP Parameters: PE-2 (c) [at least annually]
+
+----------------------------------------
+
+Control ID: PE-3
+Name: Physical Access Control
+Description: a. Enforce physical access authorizations at [Assignment: organization-defined entry and exit points to the facility where the system resides] by:
+ 1. Verifying individual access authorizations before...
+FedRAMP Parameters: PE-3 (a) (2) [CSP defined physical access control systems/devices AND guards]
+PE-3 (d) [in all circumstances within restricted access area where the information system resides]
+PE-3 (f)-2 [at least annually]
+PE-3 (g) [at least annually or earlier as required by a security relevant event.]
+
+----------------------------------------
+
+Control ID: PE-6
+Name: Monitoring Physical Access
+Description: a. Monitor physical access to the facility where the system resides to detect and respond to physical security incidents;
+ b. Review physical access logs [Assignment: organization-defined frequency] a...
+FedRAMP Parameters: PE-6 (b)-1 [at least monthly]
+
+----------------------------------------
+
+Control ID: PE-8
+Name: Visitor Access Records
+Description: a. Maintain visitor access records to the facility where the system resides for [Assignment: organization-defined time period];
+ b. Review visitor access records [Assignment: organization-defined freq...
+FedRAMP Parameters: PE-8 (a) [for a minimum of one (1) year]
+PE-8 (b) [at least monthly]
+
+----------------------------------------
+
+
+PL FAMILY - PLANNING
+--------------------------------------------------
+Controls in this family: 4
+
+Control ID: PL-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] planning...
+FedRAMP Parameters: PL-1 (c) (1) [at least every 3 years] 
+PL-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: PL-2
+Name: System Security and Privacy Plans
+Description: a. Develop security and privacy plans for the system that:
+ 1. Are consistent with the organization’s enterprise architecture;
+ 2. Explicitly define the constituent system components;
+ 3. Describe the...
+FedRAMP Parameters: PL-2 (a) (14) [to include chief privacy and ISSO and/or similar role or designees]
+PL-2 (b) [to include chief privacy and ISSO and/or similar role]
+PL-2 (c) [at least annually]
+
+----------------------------------------
+
+Control ID: PL-4
+Name: Rules of Behavior
+Description: a. Establish and provide to individuals requiring access to the system, the rules that describe their responsibilities and expected behavior for information and system usage, security, and privacy;
+ b...
+FedRAMP Parameters: PL-4 (c) [at least every 3 years]
+PL-4 (d) [at least annually and when the rules are revised or changed]
+
+----------------------------------------
+
+Control ID: PL-8
+Name: Security and Privacy Architectures
+Description: a. Develop security and privacy architectures for the system that:
+ 1. Describe the requirements and approach to be taken for protecting the confidentiality, integrity, and availability of organizatio...
+FedRAMP Parameters: PL-8 (b) [at least annually and when a significant change occurs]
+FedRAMP Guidance: PL-8 (b) Guidance: Significant change is defined in NIST Special Publication 800-37 Revision 2, Appendix F.
+
+----------------------------------------
+
+
+PS FAMILY - PERSONNEL SECURITY
+--------------------------------------------------
+Controls in this family: 9
+
+Control ID: PS-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] personne...
+FedRAMP Parameters: PS-1 (c) (1) [at least every 3 years] 
+PS-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: PS-2
+Name: Position Risk Designation
+Description: a. Assign a risk designation to all organizational positions;
+ b. Establish screening criteria for individuals filling those positions; and
+ c. Review and update position risk designations [Assignment...
+FedRAMP Parameters: PS-2 (c) [at least every three years]
+
+----------------------------------------
+
+Control ID: PS-3
+Name: Personnel Screening
+Description: a. Screen individuals prior to authorizing access to the system; and
+ b. Rescreen individuals in accordance with [Assignment: organization-defined conditions requiring rescreening and, where rescreeni...
+FedRAMP Parameters: PS-3 (b) [for national security clearances; a reinvestigation is required during the fifth (5th) year for top secret security clearance, the tenth (10th) year for secret security clearance, and fifteenth (15th) year for confidential security clearance.
+
+For moderate risk law enforcement and high impact public trust level, a reinvestigation is required during the fifth (5th) year.  There is no reinvestigation for other moderate risk positions or any low risk positions]
+
+----------------------------------------
+
+Control ID: PS-3 (3)
+Name: Personnel Screening | Information Requiring Special Protective Measures
+Description: Verify that individuals accessing a system processing, storing, or transmitting information requiring special protection:
+ (a) Have valid access authorizations that are demonstrated by assigned offici...
+FedRAMP Parameters: PS-3 (3) (b) [personnel screening criteria – as required by specific information]
+
+----------------------------------------
+
+Control ID: PS-4
+Name: Personnel Termination
+Description: Upon termination of individual employment:
+ a. Disable system access within [Assignment: organization-defined time period];
+ b. Terminate or revoke any authenticators and credentials associated with t...
+FedRAMP Parameters: PS-4 (a) [four (4) hours]
+
+----------------------------------------
+
+Control ID: PS-5
+Name: Personnel Transfer
+Description: a. Review and confirm ongoing operational need for current logical and physical access authorizations to systems and facilities when individuals are reassigned or transferred to other positions within...
+FedRAMP Parameters: PS-5 (b)-2 [twenty-four (24) hours] 
+PS-5 (d)-1 [including access control personnel responsible for the system]
+PS-5 (d)-2 [twenty-four (24) hours]
+
+----------------------------------------
+
+Control ID: PS-6
+Name: Access Agreements
+Description: a. Develop and document access agreements for organizational systems;
+ b. Review and update the access agreements [Assignment: organization-defined frequency]; and
+ c. Verify that individuals requirin...
+FedRAMP Parameters: PS-6 (b) [at least annually]
+PS-6 (c) (2) [at least annually and any time there is a change to the user's level of access]
+
+----------------------------------------
+
+Control ID: PS-7
+Name: External Personnel Security
+Description: a. Establish personnel security requirements, including security roles and responsibilities for external providers;
+ b. Require external providers to comply with personnel security policies and proced...
+FedRAMP Parameters: PS-7 (d)-1 [including access control personnel responsible for the system and/or facilities, as appropriate]
+PS-7 (d)-2 [within twenty-four (24) hours]
+
+----------------------------------------
+
+Control ID: PS-8
+Name: Personnel Sanctions
+Description: a. Employ a formal sanctions process for individuals failing to comply with established information security and privacy policies and procedures; and
+ b. Notify [Assignment: organization-defined perso...
+FedRAMP Parameters: PS-8 (b)-1 [to include the ISSO and/or similar role within the organization]
+PS-8 (b)-2 [24 hours]
+
+----------------------------------------
+
+
+RA FAMILY - RISK ASSESSMENT
+--------------------------------------------------
+Controls in this family: 5
+
+Control ID: RA-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] risk ass...
+FedRAMP Parameters: RA-1 (c) (1) [at least every 3 years] 
+RA-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: RA-3
+Name: Risk Assessment
+Description: a. Conduct a risk assessment, including:
+ 1. Identifying threats to and vulnerabilities in the system;
+ 2. Determining the likelihood and magnitude of harm from unauthorized access, use, disclosure, d...
+FedRAMP Parameters: RA-3 (c) [security assessment report]
+
+RA-3 (d) [at least every three (3) years and when a significant change occurs]
+
+RA-3 (f) [at least every three (3) years]
+FedRAMP Guidance: RA-3 Guidance: Significant change is defined in NIST Special Publication 800-37 Revision 2, Appendix F.
+RA-3 (e) Requirement: Include all Authorizing Officials; for JAB authorizations to include FedRAMP.
+
+----------------------------------------
+
+Control ID: RA-5
+Name: Vulnerability Monitoring and Scanning
+Description: a. Monitor and scan for vulnerabilities in the system and hosted applications [Assignment: organization-defined frequency and/or randomly in accordance with organization-defined process] and when new ...
+FedRAMP Parameters: RA-5 (a) [monthly operating system/infrastructure; monthly web applications (including APIs) and databases]
+RA-5 (d) [high-risk vulnerabilities mitigated within thirty (30) days from date of discovery; moderate-risk vulnerabilities mitigated within ninety (90) days from date of discovery; low risk vulnerabilities mitigated within one hundred and eighty (180) days from date of discovery]
+FedRAMP Guidance: RA-5 Guidance: See the FedRAMP Documents page> Vulnerability Scanning Requirements 
+https://www.FedRAMP.gov/documents/
+RA-5 (a) Requirement: an accredited independent assessor scans operating systems/infrastructure, web applications, and databases once annually.
+RA-5 (d) Requirement: If a vulnerability is listed among the CISA Known Exploited Vulnerability (KEV) Catalog (https://www.cisa.gov/known-exploited-vulnerabilities-catalog) the KEV remediation date supersedes the FedRAMP parameter requirement.
+RA-5 (e) Requirement: to include all Authorizing Officials; for JAB authorizations to include FedRAMP
+
+RA-5 Guidance: Informational findings from a scanner are detailed as a returned result that holds no vulnerability risk or severity and for FedRAMP does not require an entry onto the POA&M or entry onto the RET during any assessment phase.
+Warning findings, on the other hand, are given a risk rating (low, moderate, high or critical) by the scanning solution and should be treated like any other finding with a risk or severity rating for tracking purposes onto either the POA&M or RET depending on when the findings originated (during assessments or during monthly continuous monitoring). If a warning is received during scanning, but further validation turns up no actual issue then this item should be categorized as a false positive. If this situation presents itself during an assessment phase (initial assessment, annual assessment or any SCR), follow guidance on how to report false positives in the Security Assessment Report (SAR). If this situation happens during monthly continuous monitoring, a deviation request will need to be submitted per the FedRAMP Vulnerability Deviation Request Form.
+Warnings are commonly associated with scanning solutions that also perform compliance scans, and if the scanner reports a “warning” as part of the compliance scanning of a CSO, follow guidance surrounding the tracking of compliance findings during either the assessment phases (initial assessment, annual assessment or any SCR) or monthly continuous monitoring as it applies. Guidance on compliance scan findings can be found by searching on “Tracking of Compliance Scans” in FAQs.
+
+----------------------------------------
+
+Control ID: RA-5 (2)
+Name: Vulnerability Monitoring and Scanning | Update Vulnerabilities to Be Scanned
+Description: Update the system vulnerabilities to be scanned [Selection (one or more): [Assignment: organization-defined frequency]; prior to a new scan; when new vulnerabilities are identified and reported].
+FedRAMP Parameters: RA-5 (2) [within 24 hours prior to
+running scans]
+
+----------------------------------------
+
+Control ID: RA-5 (5)
+Name: Vulnerability Monitoring and Scanning | Privileged Access
+Description: Implement privileged access authorization to [Assignment: organization-defined system components] for [Assignment: organization-defined vulnerability scanning activities].
+FedRAMP Parameters: RA-5 (5)-1 [all components that support authentication] 
+RA-5 (5)-2 [all scans]
+
+----------------------------------------
+
+
+SA FAMILY - SYSTEM AND SERVICES ACQUISITION
+--------------------------------------------------
+Controls in this family: 8
+
+Control ID: SA-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] system a...
+FedRAMP Parameters: SA-1 (c) (1) [at least every 3 years] 
+SA-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: SA-10
+Name: Developer Configuration Management
+Description: Require the developer of the system, system component, or system service to:
+ a. Perform configuration management during system, component, or service [Selection (one or more): design; development; im...
+FedRAMP Parameters: SA-10 (a) [development, implementation, AND operation]
+FedRAMP Guidance: SA-10 (e)  Requirement: track security flaws and flaw resolution within the system, component, or service and report findings to organization-defined personnel, to include FedRAMP.
+
+----------------------------------------
+
+Control ID: SA-15
+Name: Development Process, Standards, and Tools
+Description: a. Require the developer of the system, system component, or system service to follow a documented development process that:
+ 1. Explicitly addresses security and privacy requirements;
+ 2. Identifies ...
+FedRAMP Parameters: SA-15 (b)-1 [frequency at least annually]
+SA-15 (b)-2 [FedRAMP Security Authorization requirements]
+
+----------------------------------------
+
+Control ID: SA-4 (2)
+Name: Acquisition Process | Design and Implementation Information for Controls
+Description: Require the developer of the system, system component, or system service to provide design and implementation information for the controls that includes: [Selection (one or more): security-relevant ex...
+FedRAMP Parameters: SA-4 (2)-1 [at a minimum to include security-relevant external system interfaces; high-level design; low-level design; source code or network and data flow diagram; [organization-defined design/implementation information]]
+
+----------------------------------------
+
+Control ID: SA-5
+Name: System Documentation
+Description: a. Obtain or develop administrator documentation for the system, system component, or system service that describes:
+ 1. Secure configuration, installation, and operation of the system, component, or ...
+FedRAMP Parameters: SA-5 (d) [at a minimum, the ISSO (or similar role within the organization)]
+
+----------------------------------------
+
+Control ID: SA-9
+Name: External System Services
+Description: a. Require that providers of external system services comply with organizational security and privacy requirements and employ the following controls: [Assignment: organization-defined controls];
+ b. D...
+FedRAMP Parameters: SA-9 (a) [Appropriate FedRAMP Security Controls Baseline (s) if Federal information is processed or stored within the external system]
+SA-9 (c) [Federal/FedRAMP Continuous Monitoring requirements must be met for external systems where Federal information is processed or stored]
+
+----------------------------------------
+
+Control ID: SA-9 (2)
+Name: External System Services | Identification of Functions, Ports, Protocols, and Services
+Description: Require providers of the following external system services to identify the functions, ports, protocols, and other services required for the use of such services: [Assignment: organization-defined ext...
+FedRAMP Parameters: SA-9 (2) [all external systems where Federal information is processed or stored]
+
+----------------------------------------
+
+Control ID: SA-9 (5)
+Name: External System Services | Processing, Storage, and Service Location
+Description: Restrict the location of [Selection (one or more): information processing; information or data; system services] to [Assignment: organization-defined locations] based on [Assignment: organization-defi...
+FedRAMP Parameters: SA-9 (5)-1 [information processing, information or data, AND system services]
+
+----------------------------------------
+
+
+SC FAMILY - SYSTEM AND COMMUNICATIONS PROTECTION
+--------------------------------------------------
+Controls in this family: 15
+
+Control ID: SC-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] system a...
+FedRAMP Parameters: SC-1 (c) (1) [at least every 3 years] 
+SC-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: SC-10
+Name: Network Disconnect
+Description: Terminate the network connection associated with a communications session at the end of the session or after [Assignment: organization-defined time period] of inactivity.
+FedRAMP Parameters: SC-10 [no longer than ten (10) minutes for privileged sessions and no longer than fifteen (15) minutes for user sessions]
+
+----------------------------------------
+
+Control ID: SC-12
+Name: Cryptographic Key Establishment and Management
+Description: Establish and manage cryptographic keys when cryptography is employed within the system in accordance with the following key management requirements: [Assignment: organization-defined requirements for...
+FedRAMP Parameters: SC-12 [In accordance with Federal requirements]
+FedRAMP Guidance: SC-12 Guidance: See references in NIST 800-53 documentation.
+
+SC-12 Guidance: Must meet applicable Federal Cryptographic Requirements. See References Section of control.
+
+SC-12 Guidance: Wildcard certificates may be used internally within the system, but are not permitted for external customer access to the system.
+
+----------------------------------------
+
+Control ID: SC-13
+Name: Cryptographic Protection
+Description: a. Determine the [Assignment: organization-defined cryptographic uses]; and
+ b. Implement the following types of cryptography required for each specified cryptographic use: [Assignment: organization-d...
+FedRAMP Parameters: SC-13 (b) [FIPS-validated or NSA-approved cryptography]
+FedRAMP Guidance: SC-13 Guidance:
+This control applies to all use of cryptography. In addition to encryption, this includes functions such as hashing, random number generation, and key generation. Examples include the following:
+ - Encryption of data
+ - Decryption of data
+ - Generation of one time passwords (OTPs) for MFA
+ - Protocols such as TLS, SSH, and HTTPS
+
+The requirement for FIPS 140 validation, as well as timelines for acceptance of FIPS 140-2, and 140-3 can be found at the NIST Cryptographic Module Validation Program (CMVP).
+https://csrc.nist.gov/projects/cryptographic-module-validation-program 
+
+SC-13 Guidance: For NSA-approved cryptography, the National Information Assurance Partnership (NIAP) oversees a national program to evaluate Commercial IT Products for Use in National Security Systems. The NIAP Product Compliant List can be found at the following location:
+https://www.niap-ccevs.org/Product/index.cfm 
+
+SC-13 Guidance: When leveraging encryption from underlying IaaS/PaaS: While some IaaS/PaaS provide encryption by default, many require encryption to be configured, and enabled by the customer. The CSP has the responsibility to verify encryption is properly configured. 
+
+SC-13 Guidance:
+Moving to non-FIPS CM or product is acceptable when:
+- FIPS validated version has a known vulnerability
+- Feature with vulnerability is in use
+- Non-FIPS version fixes the vulnerability
+- Non-FIPS version is submitted to NIST for FIPS validation
+- POA&M is added to track approval, and deployment when ready
+
+SC-13 Guidance: At a minimum, this control applies to cryptography in use for the following controls: AU-9(3), CP-9(8), IA-2(6), IA-5(1), MP-5, SC-8(1), and SC-28(1).
+
+----------------------------------------
+
+Control ID: SC-15
+Name: Collaborative Computing Devices and Applications
+Description: a. Prohibit remote activation of collaborative computing devices and applications with the following exceptions: [Assignment: organization-defined exceptions where remote activation is to be allowed];...
+FedRAMP Parameters: SC-15 (a) [no exceptions for computing devices]
+FedRAMP Guidance: SC-15 Requirement: The information system provides disablement (instead of physical disconnect) of collaborative computing devices in a manner that supports ease of use.
+
+----------------------------------------
+
+Control ID: SC-28
+Name: Protection of Information at Rest
+Description: Protect the [Selection (one or more): confidentiality; integrity] of the following information at rest: [Assignment: organization-defined information at rest].
+FedRAMP Parameters: SC-28 [confidentiality AND integrity]
+FedRAMP Guidance: SC-28 Guidance: The organization supports the capability to use cryptographic mechanisms to protect information at rest. 
+
+SC-28 Guidance: When leveraging encryption from underlying IaaS/PaaS: While some IaaS/PaaS services provide encryption by default, many require encryption to be configured, and enabled by the customer. The CSP has the responsibility to verify encryption is properly configured.  
+
+SC-28 Guidance: Note that this enhancement requires the use of cryptography in accordance with SC-13.
+
+----------------------------------------
+
+Control ID: SC-28 (1)
+Name: Protection of Information at Rest | Cryptographic Protection
+Description: Implement cryptographic mechanisms to prevent unauthorized disclosure and modification of the following information at rest on [Assignment: organization-defined system components or media]: [Assignmen...
+FedRAMP Parameters: SC-28 (1)-1 [all information system components storing Federal data or system data that must be protected at the High or Moderate impact levels]
+FedRAMP Guidance: SC-28 (1) Guidance: 
+Organizations should select a mode of protection that is targeted towards the relevant threat scenarios. 
+Examples:
+A. Organizations may apply full disk encryption (FDE) to a mobile device where the primary threat is loss of the device while storage is locked. 
+B. For a database application housing data for a single customer, encryption at the file system level would often provide more protection than FDE against the more likely threat of an intruder on the operating system accessing the storage.
+C. For a database application housing data for multiple customers, encryption with unique keys for each customer at the database record level may be more appropriate.
+
+----------------------------------------
+
+Control ID: SC-45 (1)
+Name: System Time Synchronization | Synchronization with Authoritative Time Source
+Description: (a) Compare the internal system clocks [Assignment: organization-defined frequency] with [Assignment: organization-defined authoritative time source]; and
+ (b) Synchronize the internal system clocks t...
+FedRAMP Parameters: SC-45 (1) (a) [At least hourly] [http://tf.nist.gov/tf-cgi/servers.cgi] 
+SC-45 (1) (b) [any difference]
+FedRAMP Guidance: SC-45 (1) Requirement: The service provider selects primary and secondary time servers used by the NIST Internet time service. The secondary server is selected from a different geographic region than the primary server.
+SC-45 (1) Requirement: The service provider synchronizes the system clocks of network computers that run operating systems other than Windows to the Windows Server Domain Controller emulator or to the same time source for that server.
+SC-45 (1) Guidance: Synchronization of system clocks improves the accuracy of log analysis.
+
+----------------------------------------
+
+Control ID: SC-5
+Name: Denial-of-service Protection
+Description: a. [Selection: Protect against; Limit] the effects of the following types of denial-of-service events: [Assignment: organization-defined types of denial-of-service events]; and
+ b. Employ the followin...
+FedRAMP Parameters: SC-5 (a)-1 [Protect against] 
+SC-5 (a)-2 [at a minimum: ICMP (ping) flood, SYN flood, slowloris, buffer overflow attack, and volume attack]
+
+----------------------------------------
+
+Control ID: SC-7 (12)
+Name: Boundary Protection | Host-based Protection
+Description: Implement [Assignment: organization-defined host-based boundary protection mechanisms] at [Assignment: organization-defined system components].
+FedRAMP Parameters: SC-7 (12)-1 [Host Intrusion Prevention System (HIPS), Host Intrusion Detection System (HIDS), or minimally a host-based firewall]
+
+----------------------------------------
+
+Control ID: SC-7 (4)
+Name: Boundary Protection | External Telecommunications Services
+Description: (a) Implement a managed interface for each external telecommunication service;
+ (b) Establish a traffic flow policy for each managed interface;
+ (c) Protect the confidentiality and integrity of the in...
+FedRAMP Parameters: SC-7 (4) (e) [at least every 180 days or whenever there is a change in the threat environment that warrants a review of the exceptions]
+
+----------------------------------------
+
+Control ID: SC-7 (5)
+Name: Boundary Protection | Deny by Default — Allow by Exception
+Description: Deny network communications traffic by default and allow network communications traffic by exception [Selection (one or more): at managed interfaces; for [Assignment: organization-defined systems]].
+FedRAMP Parameters: SC-7 (5) [any systems]
+FedRAMP Guidance: SC-7 (5) Guidance: For JAB Authorization, CSPs shall include details of this control in their Architecture Briefing
+
+----------------------------------------
+
+Control ID: SC-7 (8)
+Name: Boundary Protection | Route Traffic to Authenticated Proxy Servers
+Description: Route [Assignment: organization-defined internal communications traffic] to [Assignment: organization-defined external networks] through authenticated proxy servers at managed interfaces.
+FedRAMP Parameters: SC-7 (8)-2 [any network outside of organizational control and any network outside the authorization boundary]
+
+----------------------------------------
+
+Control ID: SC-8
+Name: Transmission Confidentiality and Integrity
+Description: Protect the [Selection (one or more): confidentiality; integrity] of transmitted information.
+FedRAMP Parameters: SC-8 [confidentiality AND integrity]
+FedRAMP Guidance: SC-8 Guidance:
+For each instance of data in transit, confidentiality AND integrity should be through cryptography as specified in SC-8 (1),  physical means as specified in SC-8 (5), or in combination.
+
+For clarity, this control applies to all data in transit. Examples include the following data flows:
+ - Crossing the system boundary
+ - Between compute instances - including containers
+ - From a compute instance to storage
+ - Replication between availability zones
+ - Transmission of backups to storage
+ - From a load balancer to a compute instance
+ - Flows from management tools required for their work – e.g. log collection, scanning, etc.
+
+The following applies only when choosing SC-8 (5) in lieu of SC-8 (1).
+FedRAMP-Defined Assignment / Selection Parameters 
+SC-8 (5)-1 [a hardened or alarmed carrier Protective Distribution System (PDS) when outside of Controlled Access Area (CAA)]
+SC-8 (5)-2 [prevent unauthorized disclosure of information AND detect changes to information] 
+
+SC-8 Guidance:
+SC-8 (5) applies when physical protection has been selected as the method to protect confidentiality and integrity. For physical protection, data in transit must be in either a Controlled Access Area (CAA), or a Hardened or alarmed PDS.
+
+Hardened or alarmed PDS: Shall be as defined in SECTION X - CATEGORY 2 PDS INSTALLATION GUIDANCE of CNSSI No.7003, titled PROTECTED DISTRIBUTION SYSTEMS (PDS). Per the CNSSI No. 7003 Section VIII, PDS must originate and terminate in a Controlled Access Area (CAA). 
+
+Controlled Access Area (CAA): Data will be considered physically protected, and in a CAA if it meets Section 2.3 of the DHS’s Recommended Practice: Improving Industrial Control System Cybersecurity with Defense-in-Depth Strategies. CSPs can meet Section 2.3 of the DHS’ recommended practice by satisfactory implementation of the following controls PE-2 (1), PE-2 (2), PE-2 (3), PE-3 (2), PE-3 (3), PE-6 (2), and PE-6 (3).
+
+Note: When selecting SC-8 (5), the above SC-8(5), and the above referenced PE controls must be added to the SSP.
+
+CNSSI No.7003 can be accessed here:
+https://www.dcsa.mil/Portals/91/documents/ctp/nao/CNSSI_7003_PDS_September_2015.pdf 
+
+DHS Recommended Practice: Improving Industrial Control System Cybersecurity with Defense-in-Depth Strategies can be accessed here:
+https://us-cert.cisa.gov/sites/default/files/FactSheets/NCCIC%20ICS_FactSheet_Defense_in_Depth_Strategies_S508C.pdf
+
+----------------------------------------
+
+Control ID: SC-8 (1)
+Name: Transmission Confidentiality and Integrity | Cryptographic Protection
+Description: Implement cryptographic mechanisms to [Selection (one or more): prevent unauthorized disclosure of information; detect changes to information] during transmission.
+FedRAMP Parameters: SC-8 (1) [prevent unauthorized disclosure of information AND detect changes to information]
+FedRAMP Guidance: SC-8 (1) Requirement: Please ensure SSP Section 10.3 Cryptographic Modules Implemented for Data At Rest (DAR) and Data In Transit (DIT) is fully populated for reference in this control.
+
+SC-8 (1) Guidance:
+See M-22-09, including "Agencies encrypt all DNS requests and HTTP traffic within their environment"
+
+SC-8 (1) applies when encryption has been selected as the method to protect confidentiality and integrity. Otherwise refer to SC-8 (5). SC-8 (1) is strongly encouraged.
+
+SC-8 (1) Guidance: Note that this enhancement requires the use of cryptography which must be compliant with Federal requirements and utilize FIPS validated or NSA approved cryptography (see SC-13.)
+
+SC-8 (1) Guidance: When leveraging encryption from the underlying IaaS/PaaS: While some IaaS/PaaS services provide encryption by default, many require encryption to be configured, and enabled by the customer. The CSP has the responsibility to verify encryption is properly configured.
+
+----------------------------------------
+
+
+SI FAMILY - SYSTEM AND INFORMATION INTEGRITY
+--------------------------------------------------
+Controls in this family: 9
+
+Control ID: SI-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] system a...
+FedRAMP Parameters: SI-1 (c) (1) [at least every 3 years] 
+SI-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: SI-11
+Name: Error Handling
+Description: a. Generate error messages that provide information necessary for corrective actions without revealing information that could be exploited; and
+ b. Reveal error messages only to [Assignment: organizat...
+FedRAMP Parameters: SI-11 (b) [to include the ISSO and/or similar role within the organization]
+
+----------------------------------------
+
+Control ID: SI-2
+Name: Flaw Remediation
+Description: a. Identify, report, and correct system flaws;
+ b. Test software and firmware updates related to flaw remediation for effectiveness and potential side effects before installation;
+ c. Install security...
+FedRAMP Parameters: SI-2 (c) [within thirty (30) days of release of updates]
+
+----------------------------------------
+
+Control ID: SI-2 (2)
+Name: Flaw Remediation | Automated Flaw Remediation Status
+Description: Determine if system components have applicable security-relevant software and firmware updates installed using [Assignment: organization-defined automated mechanisms] [Assignment: organization-defined...
+FedRAMP Parameters: SI-2 (2)-2 [at least monthly]
+
+----------------------------------------
+
+Control ID: SI-3
+Name: Malicious Code Protection
+Description: a. Implement [Selection (one or more): signature based; non-signature based] malicious code protection mechanisms at system entry and exit points to detect and eradicate malicious code;
+ b. Automatica...
+FedRAMP Parameters: SI-3 (a) [signature based and non-signature based]
+SI-3 (c) (1)-1 [at least weekly] 
+SI-3 (c) (1)-2 [to include endpoints and network entry and exit points]
+SI-3 (c) (2)-1 [to include blocking and quarantining malicious code]
+SI-3 (c) (2)-2 [administrator or defined security personnel near-realtime]
+
+----------------------------------------
+
+Control ID: SI-4 (4)
+Name: System Monitoring | Inbound and Outbound Communications Traffic
+Description: (a) Determine criteria for unusual or unauthorized activities or conditions for inbound and outbound communications traffic;
+ (b) Monitor inbound and outbound communications traffic [Assignment: organ...
+FedRAMP Parameters: SI-4 (4) (b)-1 [continuously]
+
+----------------------------------------
+
+Control ID: SI-5
+Name: Security Alerts, Advisories, and Directives
+Description: a. Receive system security alerts, advisories, and directives from [Assignment: organization-defined external organizations] on an ongoing basis;
+ b. Generate internal security alerts, advisories, and...
+FedRAMP Parameters: SI-5 (a) [to include US-CERT and Cybersecurity and Infrastructure Security Agency (CISA) Directives]
+SI-5 (c) [to include system security personnel and administrators with configuration/patch-management responsibilities]
+FedRAMP Guidance: SI-5 Requirement: Service Providers must address the CISA Emergency and Binding Operational Directives applicable to their cloud service offering per FedRAMP guidance.  This includes listing the applicable directives and stating compliance status.
+
+----------------------------------------
+
+Control ID: SI-6
+Name: Security and Privacy Function Verification
+Description: a. Verify the correct operation of [Assignment: organization-defined security and privacy functions];
+ b. Perform the verification of the functions specified in SI-6a [Selection (one or more): [Assign...
+FedRAMP Parameters: SI-6 (b) -1 [to include upon system startup and/or restart] -2 [at least monthly]
+SI-6 (c) [to include system administrators and security personnel]
+
+----------------------------------------
+
+Control ID: SI-7 (1)
+Name: Software, Firmware, and Information Integrity | Integrity Checks
+Description: Perform an integrity check of [Assignment: organization-defined software, firmware, and information] [Selection (one or more): at startup; at [Assignment: organization-defined transitional states or s...
+FedRAMP Parameters: SI-7 (1)-2 [selection to include security relevant events]  
+SI-7 (1)-3 [at least monthly]
+
+----------------------------------------
+
+
+SR FAMILY - SUPPLY CHAIN RISK MANAGEMENT FAMILY
+--------------------------------------------------
+Controls in this family: 5
+
+Control ID: SR-1
+Name: Policy and Procedures
+Description: a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:
+ 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] supply c...
+FedRAMP Parameters: SR-1 (a) [to include chief privacy and ISSO and/or similar role or designees]
+SR-1 (c) (1) [at least every 3 years] 
+SR-1 (c) (2) [at least annually] [significant changes]
+
+----------------------------------------
+
+Control ID: SR-11 (2)
+Name: Component Authenticity | Configuration Control for Component Service and Repair
+Description: Maintain configuration control over the following system components awaiting service or repair and serviced or repaired components awaiting return to service: [Assignment: organization-defined system ...
+FedRAMP Parameters: SR-11 (2) [all]
+
+----------------------------------------
+
+Control ID: SR-2
+Name: Supply Chain Risk Management Plan
+Description: a. Develop a plan for managing supply chain risks associated with the research and development, design, manufacturing, acquisition, delivery, integration, operations and maintenance, and disposal of t...
+FedRAMP Parameters: SR-2 (b) [at least annually]
+
+----------------------------------------
+
+Control ID: SR-6
+Name: Supplier Assessments and Reviews
+Description: Assess and review the supply chain-related risks associated with suppliers or contractors and the system, system component, or system service they provide [Assignment: organization-defined frequency].
+FedRAMP Parameters: SR-6 [at least annually]
+FedRAMP Guidance: SR-6 Requirement: CSOs must ensure that their supply chain vendors build and test their systems in alignment with NIST SP 800-171 or a commensurate security and compliance framework. CSOs must ensure that vendors are compliant with physical facility access and logical access controls to supplied products.
+
+----------------------------------------
+
+Control ID: SR-8
+Name: Notification Agreements
+Description: Establish agreements and procedures with entities involved in the supply chain for the system, system component, or system service for the [Selection (one or more): notification of supply chain compro...
+FedRAMP Parameters: SR-8-1 [notification of supply chain compromises and results of assessment or audits]
+FedRAMP Guidance: SR-8 Requirement: CSOs must ensure and document how they receive notifications from their supply chain vendor of newly discovered vulnerabilities including zero-day vulnerabilities.
+
+----------------------------------------
+

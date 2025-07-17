@@ -1,0 +1,2198 @@
+{
+  "Framework": "FedRamp-Moderate-Revision-5",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "The Federal Risk and Authorization Management Program (FedRAMP) was established in 2011. It provides a cost-effective, risk-based approach for the adoption and use of cloud services by the U.S. federal government. FedRAMP empowers federal agencies to use modern cloud technologies, with an emphasis on the security and protection of federal information. This file contains the FedRAMP Moderate Revision 5 baseline controls.",
+  "Requirements": [
+    {
+      "Id": "AC-1",
+      "Name": "AC-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] access control policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the access control policy and the associated access controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the access control policy and procedures; and\n c. Review and update the current access control:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "AC-1",
+          "Section": "Access Control (AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AC-2",
+      "Name": "AC-2 Account Management",
+      "Description": "a. Define and document the types of accounts allowed and specifically prohibited for use within the system;\n b. Assign account managers;\n c. Require [Assignment: organization-defined prerequisites and criteria] for group and role membership;\n d. Specify:\n 1. Authorized users of the system;\n 2. Group and role membership; and\n 3. Access authorizations (i.e., privileges) and [Assignment: organization-defined attributes (as required)] for each account;\n e. Require approvals by [Assignment: organization-defined personnel or roles] for requests to create accounts;\n f. Create, enable, modify, disable, and remove accounts in accordance with [Assignment: organization-defined policy, procedures, prerequisites, and criteria];\n g. Monitor the use of accounts;\n h. Notify account managers and [Assignment: organization-defined personnel or roles] within:\n 1. [Assignment: organization-defined time period] when accounts are no longer required;\n 2. [Assignment: organization-defined time period] when users are terminated or transferred; and\n 3. [Assignment: organization-defined time period] when system usage or need-to-know changes for an individual;\n i. Authorize access to the system based on:\n 1. A valid access authorization;\n 2. Intended system usage; and\n 3. [Assignment: organization-defined attributes (as required)];\n j. Review accounts for compliance with account management requirements [Assignment: organization-defined frequency];\n k. Establish and implement a process for changing shared or group account authenticators (if deployed) when individuals are removed from the group; and\n l. Align account management processes with personnel termination and transfer processes.",
+      "Attributes": [
+        {
+          "ItemId": "ac-2-j",
+          "Section": "Access Control (AC)",
+          "SubSection": "Account Management (AC-2)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_user_console_access_unused",
+        "iam_user_mfa_enabled_console_access",
+        "iam_policy_attached_only_to_group_or_roles",
+        "s3_bucket_server_access_logging_enabled",
+        "securityhub_enabled",
+        "iam_password_policy_minimum_length_14",
+        "apigateway_restapi_logging_enabled",
+        "iam_root_mfa_enabled",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "redshift_cluster_audit_logging",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_root_hardware_mfa_enabled",
+        "cloudtrail_multi_region_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "iam_rotate_access_key_90_days",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "iam_no_root_access_key",
+        "iam_user_accesskey_unused",
+        "rds_instance_integration_cloudwatch_logs",
+        "guardduty_is_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "iam_inline_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "AC-2 (2)",
+      "Name": "AC-2 (2) Account Management | Automated Temporary and Emergency Account Management",
+      "Description": "Automatically [Selection: remove; disable] temporary and emergency accounts after [Assignment: organization-defined time period for each type of account].",
+      "Attributes": [
+        {
+          "ItemId": "AC-2 (2)",
+          "Section": "Access Control (AC)",
+          "Service": "aws",
+          "SubSection": "Account Management | Automated Temporary and Emergency Account Management (AC-2 (2))"
+        }
+      ],
+      "Checks": [
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_rotate_access_key_90_days"
+      ]
+    },
+    {
+      "Id": "AC-2 (3)",
+      "Name": "AC-2 (3) Account Management | Disable Accounts",
+      "Description": "Disable accounts within [Assignment: organization-defined time period] when the accounts: \n (a) Have expired;\n (b) Are no longer associated with a user or individual;\n (c) Are in violation of organizational policy; or\n (d) Have been inactive for [Assignment: organization-defined time period].",
+      "Attributes": [
+        {
+          "ItemId": "ac-2-3",
+          "Section": "Access Control (AC)",
+          "SubSection": "Account Management | Disable Accounts (AC-2 (3))",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_user_console_access_unused",
+        "iam_password_policy_minimum_length_14",
+        "iam_user_accesskey_unused"
+      ]
+    },
+    {
+      "Id": "AC-2 (5)",
+      "Name": "AC-2 (5) Account Management | Inactivity Logout",
+      "Description": "Require that users log out when [Assignment: organization-defined time period of expected inactivity or description of when to log out].",
+      "Attributes": [
+        {
+          "ItemId": "AC-2 (5)",
+          "Section": "Access Control (AC)",
+          "Service": "aws",
+          "SubSection": "Account Management | Inactivity Logout (AC-2 (5))"
+        }
+      ],
+      "Checks": [
+        "iam_user_console_access_unused",
+        "iam_user_accesskey_unused"
+      ]
+    },
+    {
+      "Id": "AC-2 (9)",
+      "Name": "AC-2 (9) Account Management | Restrictions on Use of Shared and Group Accounts",
+      "Description": "Only permit the use of shared and group accounts that meet [Assignment: organization-defined conditions for establishing shared and group accounts].",
+      "Attributes": [
+        {
+          "ItemId": "AC-2 (9)",
+          "Section": "Access Control (AC)",
+          "Service": "aws",
+          "SubSection": "Account Management | Restrictions on Use of Shared and Group Accounts (AC-2 (9))"
+        }
+      ],
+      "Checks": [
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "AC-2 (12)",
+      "Name": "AC-2 (12) Account Management | Account Monitoring for Atypical Usage",
+      "Description": "(a) Monitor system accounts for [Assignment: organization-defined atypical usage]; and\n (b) Report atypical usage of system accounts to [Assignment: organization-defined personnel or roles].",
+      "Attributes": [
+        {
+          "ItemId": "ac-2-12-a",
+          "Section": "Access Control (AC)",
+          "SubSection": "Account Management | Account Monitoring for Atypical Usage (AC-2 (12))",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "AC-2 (13)",
+      "Name": "AC-2 (13) Account Management | Disable Accounts for High-risk Individuals",
+      "Description": "Disable accounts of individuals within [Assignment: organization-defined time period] of discovery of [Assignment: organization-defined significant risks].",
+      "Attributes": [
+        {
+          "ItemId": "AC-2 (13)",
+          "Section": "Access Control (AC)",
+          "Service": "aws",
+          "SubSection": "Account Management | Disable Accounts for High-risk Individuals (AC-2 (13))"
+        }
+      ],
+      "Checks": [
+        "iam_user_console_access_unused",
+        "iam_user_accesskey_unused",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "AC-6 (2)",
+      "Name": "AC-6 (2) Least Privilege | Non-privileged Access for Nonsecurity Functions",
+      "Description": "Require that users of system accounts (or roles) with access to [Assignment: organization-defined security functions or security-relevant information] use non-privileged accounts or roles, when accessing nonsecurity functions.",
+      "Attributes": [
+        {
+          "ItemId": "AC-6 (2)",
+          "Section": "Access Control (AC)",
+          "Service": "aws",
+          "SubSection": "Least Privilege | Non-privileged Access for Nonsecurity Functions (AC-6 (2))"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_attached_only_to_group_or_roles"
+      ]
+    },
+    {
+      "Id": "AC-6 (7)",
+      "Name": "AC-6 (7) Least Privilege | Review of User Privileges",
+      "Description": "(a) Review [Assignment: organization-defined frequency] the privileges assigned to [Assignment: organization-defined roles or classes of users] to validate the need for such privileges; and\n (b) Reassign or remove privileges, if necessary, to correctly reflect organizational mission and business needs.",
+      "Attributes": [
+        {
+          "ItemId": "AC-6 (7)",
+          "Section": "Access Control (AC)",
+          "Service": "aws",
+          "SubSection": "Least Privilege | Review of User Privileges (AC-6 (7))"
+        }
+      ],
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
+      ]
+    },
+    {
+      "Id": "AC-8",
+      "Name": "AC-8 System Use Notification",
+      "Description": "a. Display [Assignment: organization-defined system use notification message or banner] to users before granting access to the system that provides privacy and security notices consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines and state that:\n 1. Users are accessing a U.S. Government system;\n 2. System usage may be monitored, recorded, and subject to audit;\n 3. Unauthorized use of the system is prohibited and subject to criminal and civil penalties; and\n 4. Use of the system indicates consent to monitoring and recording;\n b. Retain the notification message or banner on the screen until users acknowledge the usage conditions and take explicit actions to log on to or further access the system; and\n c. For publicly accessible systems:\n 1. Display system use information [Assignment: organization-defined conditions], before granting further access to the publicly accessible system;\n 2. Display references, if any, to monitoring, recording, or auditing that are consistent with privacy accommodations for such systems that generally prohibit those activities; and\n 3. Include a description of the authorized uses of the system.",
+      "Attributes": [
+        {
+          "ItemId": "AC-8",
+          "Section": "Access Control (AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AC-11",
+      "Name": "AC-11 Device Lock",
+      "Description": "a. Prevent further access to the system by [Selection (one or more): initiating a device lock after [Assignment: organization-defined time period] of inactivity; requiring the user to initiate a device lock before leaving the system unattended]; and\n b. Retain the device lock until the user reestablishes access using established identification and authentication procedures.",
+      "Attributes": [
+        {
+          "ItemId": "AC-11",
+          "Section": "Access Control (AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AC-22",
+      "Name": "AC-22 Publicly Accessible Content",
+      "Description": "a. Designate individuals authorized to make information publicly accessible;\n b. Train authorized individuals to ensure that publicly accessible information does not contain nonpublic information;\n c. Review the proposed content of information prior to posting onto the publicly accessible system to ensure that nonpublic information is not included; and\n d. Review the content on the publicly accessible system for nonpublic information [Assignment: organization-defined frequency] and remove such information, if discovered.",
+      "Attributes": [
+        {
+          "ItemId": "AC-22",
+          "Section": "Access Control (AC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AT-1",
+      "Name": "AT-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] awareness and training policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the awareness and training policy and the associated awareness and training controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the awareness and training policy and procedures; and\n c. Review and update the current awareness and training:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "AT-1",
+          "Section": "Awareness and Training (AT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AT-2",
+      "Name": "AT-2 Literacy Training and Awareness",
+      "Description": "a. Provide security and privacy literacy training to system users (including managers, senior executives, and contractors):\n 1. As part of initial training for new users and [Assignment: organization-defined frequency] thereafter; and\n 2. When required by system changes or following [Assignment: organization-defined events];\n b. Employ the following techniques to increase the security and privacy awareness of system users [Assignment: organization-defined awareness techniques];\n c. Update literacy training and awareness content [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n d. Incorporate lessons learned from internal or external security incidents or breaches into literacy training and awareness techniques.",
+      "Attributes": [
+        {
+          "ItemId": "AT-2",
+          "Section": "Awareness and Training (AT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AT-3",
+      "Name": "AT-3 Role-based Training",
+      "Description": "a. Provide role-based security and privacy training to personnel with the following roles and responsibilities: [Assignment: organization-defined roles and responsibilities]:\n 1. Before authorizing access to the system, information, or performing assigned duties, and [Assignment: organization-defined frequency] thereafter; and\n 2. When required by system changes;\n b. Update role-based training content [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n c. Incorporate lessons learned from internal or external security incidents or breaches into role-based training.",
+      "Attributes": [
+        {
+          "ItemId": "AT-3",
+          "Section": "Awareness and Training (AT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AT-4",
+      "Name": "AT-4 Training Records",
+      "Description": "a. Document and monitor information security and privacy training activities, including security and privacy awareness training and specific role-based security and privacy training; and\n b. Retain individual training records for [Assignment: organization-defined time period].",
+      "Attributes": [
+        {
+          "ItemId": "AT-4",
+          "Section": "Awareness and Training (AT)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AU-1",
+      "Name": "AU-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] audit and accountability policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the audit and accountability policy and the associated audit and accountability controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the audit and accountability policy and procedures; and\n c. Review and update the current audit and accountability:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "AU-1",
+          "Section": "Audit and Accountability (AU)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AU-2",
+      "Name": "AU-2 Event Logging",
+      "Description": "a. Identify the types of events that the system is capable of logging in support of the audit function: [Assignment: organization-defined event types that the system is capable of logging];\n b. Coordinate the event logging function with other organizational entities requiring audit-related information to guide and inform the selection criteria for events to be logged;\n c. Specify the following event types for logging within the system: [Assignment: organization-defined event types (subset of the event types defined in AU-2a.) along with the frequency of (or situation requiring) logging for each identified event type];\n d. Provide a rationale for why the event types selected for logging are deemed to be adequate to support after-the-fact investigations of incidents; and\n e. Review and update the event types selected for logging [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "au-2-a-d",
+          "Section": "Audit and Accountability (AU)",
+          "SubSection": "Audit Events (AU-2)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_s3_dataevents_read_enabled",
+        "elbv2_logging_enabled",
+        "vpc_flow_logs_enabled",
+        "apigateway_restapi_logging_enabled",
+        "redshift_cluster_audit_logging",
+        "cloudtrail_multi_region_enabled",
+        "s3_bucket_server_access_logging_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "elb_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_s3_dataevents_write_enabled"
+      ]
+    },
+    {
+      "Id": "AU-3 (1)",
+      "Name": "AU-3 (1) Content of Audit Records | Additional Audit Information",
+      "Description": "Generate audit records containing the following additional information: [Assignment: organization-defined additional information].",
+      "Attributes": [
+        {
+          "ItemId": "AU-3 (1)",
+          "Section": "Audit and Accountability (AU)",
+          "Service": "aws",
+          "SubSection": "Content of Audit Records | Additional Audit Information (AU-3 (1))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "AU-5",
+      "Name": "AU-5 Response to Audit Logging Process Failures",
+      "Description": "a. Alert [Assignment: organization-defined personnel or roles] within [Assignment: organization-defined time period] in the event of an audit logging process failure; and\n b. Take the following additional actions: [Assignment: organization-defined additional actions].",
+      "Attributes": [
+        {
+          "ItemId": "AU-5",
+          "Section": "Audit and Accountability (AU)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "AU-6",
+      "Name": "AU-6 Audit Record Review, Analysis, and Reporting",
+      "Description": "a. Review and analyze system audit records [Assignment: organization-defined frequency] for indications of [Assignment: organization-defined inappropriate or unusual activity] and the potential impact of the inappropriate or unusual activity;\n b. Report findings to [Assignment: organization-defined personnel or roles]; and\n c. Adjust the level of audit record review, analysis, and reporting within the system when there is a change in risk based on law enforcement information, intelligence information, or other credible sources of information.",
+      "Attributes": [
+        {
+          "ItemId": "AU-6",
+          "Section": "Audit and Accountability (AU)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures"
+      ]
+    },
+    {
+      "Id": "AU-8",
+      "Name": "AU-8 Time Stamps",
+      "Description": "a. Use internal system clocks to generate time stamps for audit records; and\n b. Record time stamps for audit records that meet [Assignment: organization-defined granularity of time measurement] and that use Coordinated Universal Time, have a fixed local time offset from Coordinated Universal Time, or that include the local time offset as part of the time stamp.",
+      "Attributes": [
+        {
+          "ItemId": "AU-8",
+          "Section": "Audit and Accountability (AU)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
+    },
+    {
+      "Id": "AU-11",
+      "Name": "AU-11 Audit Record Retention",
+      "Description": "Retain audit records for [Assignment: organization-defined time period consistent with records retention policy] to provide support for after-the-fact investigations of incidents and to meet regulatory and organizational information retention requirements.",
+      "Attributes": [
+        {
+          "ItemId": "au-11",
+          "Section": "Audit and Accountability (AU)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ]
+    },
+    {
+      "Id": "AU-12",
+      "Name": "AU-12 Audit Record Generation",
+      "Description": "a. Provide audit record generation capability for the event types the system is capable of auditing as defined in AU-2a on [Assignment: organization-defined system components];\n b. Allow [Assignment: organization-defined personnel or roles] to select the event types that are to be logged by specific components of the system; and\n c. Generate audit records for the event types defined in AU-2c that include the audit record content defined in AU-3.",
+      "Attributes": [
+        {
+          "ItemId": "au-12-a-c",
+          "Section": "Audit and Accountability (AU)",
+          "SubSection": "Audit Generation (AU-12)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_s3_dataevents_read_enabled",
+        "elbv2_logging_enabled",
+        "vpc_flow_logs_enabled",
+        "apigateway_restapi_logging_enabled",
+        "redshift_cluster_audit_logging",
+        "cloudtrail_multi_region_enabled",
+        "s3_bucket_server_access_logging_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "elb_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_s3_dataevents_write_enabled"
+      ]
+    },
+    {
+      "Id": "CA-1",
+      "Name": "CA-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] assessment, authorization, and monitoring policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the assessment, authorization, and monitoring policy and the associated assessment, authorization, and monitoring controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the assessment, authorization, and monitoring policy and procedures; and\n c. Review and update the current assessment, authorization, and monitoring:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "CA-1",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CA-2",
+      "Name": "CA-2 Control Assessments",
+      "Description": "a. Select the appropriate assessor or assessment team for the type of assessment to be conducted;\n b. Develop a control assessment plan that describes the scope of the assessment including:\n 1. Controls and control enhancements under assessment;\n 2. Assessment procedures to be used to determine control effectiveness; and\n 3. Assessment environment, assessment team, and assessment roles and responsibilities;\n c. Ensure the control assessment plan is reviewed and approved by the authorizing official or designated representative prior to conducting the assessment;\n d. Assess the controls in the system and its environment of operation [Assignment: organization-defined frequency] to determine the extent to which the controls are implemented correctly, operating as intended, and producing the desired outcome with respect to meeting established security and privacy requirements;\n e. Produce a control assessment report that document the results of the assessment; and\n f. Provide the results of the control assessment to [Assignment: organization-defined individuals or roles].",
+      "Attributes": [
+        {
+          "ItemId": "CA-2",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "config_recorder_all_regions_enabled",
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "CA-2 (3)",
+      "Name": "CA-2 (3) Control Assessments | Leveraging Results from External Organizations",
+      "Description": "Leverage the results of control assessments performed by [Assignment: organization-defined external organization] on [Assignment: organization-defined system] when the assessment meets [Assignment: organization-defined requirements].",
+      "Attributes": [
+        {
+          "ItemId": "CA-2 (3)",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws",
+          "SubSection": "Control Assessments | Leveraging Results from External Organizations (CA-2 (3))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CA-3",
+      "Name": "CA-3 Information Exchange",
+      "Description": "a. Approve and manage the exchange of information between the system and other systems using [Selection (one or more): interconnection security agreements; information exchange security agreements; memoranda of understanding or agreement; service level agreements; user agreements; nondisclosure agreements; [Assignment: organization-defined type of agreement]];\n b. Document, as part of each exchange agreement, the interface characteristics, security and privacy requirements, controls, and responsibilities for each system, and the impact level of the information communicated; and\n c. Review and update the agreements [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "CA-3",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "cloudtrail_multi_region_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "CA-5",
+      "Name": "CA-5 Plan of Action and Milestones",
+      "Description": "a. Develop a plan of action and milestones for the system to document the planned remediation actions of the organization to correct weaknesses or deficiencies noted during the assessment of the controls and to reduce or eliminate known vulnerabilities in the system; and\n b. Update existing plan of action and milestones [Assignment: organization-defined frequency] based on the findings from control assessments, independent audits or reviews, and continuous monitoring activities.",
+      "Attributes": [
+        {
+          "ItemId": "CA-5",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "guardduty_no_high_severity_findings"
+      ]
+    },
+    {
+      "Id": "CA-6",
+      "Name": "CA-6 Authorization",
+      "Description": "a. Assign a senior official as the authorizing official for the system;\n b. Assign a senior official as the authorizing official for common controls available for inheritance by organizational systems;\n c. Ensure that the authorizing official for the system, before commencing operations:\n 1. Accepts the use of common controls inherited by the system; and\n 2. Authorizes the system to operate;\n d. Ensure that the authorizing official for common controls authorizes the use of those controls for inheritance by organizational systems;\n e. Update the authorizations [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "CA-6",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "CA-7",
+      "Name": "CA-7 Continuous Monitoring",
+      "Description": "Develop a system-level continuous monitoring strategy and implement continuous monitoring in accordance with the organization-level continuous monitoring strategy that includes:\n a. Establishing the following system-level metrics to be monitored: [Assignment: organization-defined system-level metrics];\n b. Establishing [Assignment: organization-defined frequencies] for monitoring and [Assignment: organization-defined frequencies] for assessment of control effectiveness;\n c. Ongoing control assessments in accordance with the continuous monitoring strategy;\n d. Ongoing monitoring of system and organization-defined metrics in accordance with the continuous monitoring strategy;\n e. Correlation and analysis of information generated by control assessments and monitoring;\n f. Response actions to address results of the analysis of control assessment and monitoring information; and\n g. Reporting the security and privacy status of the system to [Assignment: organization-defined personnel or roles] [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "ca-7-a-b",
+          "Section": "Security Assessment And Authorization (CA)",
+          "SubSection": "Continuous Monitoring (CA-7)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "securityhub_enabled",
+        "rds_instance_enhanced_monitoring_enabled",
+        "redshift_cluster_audit_logging",
+        "cloudtrail_multi_region_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "guardduty_is_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured"
+      ]
+    },
+    {
+      "Id": "CA-8",
+      "Name": "CA-8 Penetration Testing",
+      "Description": "Conduct penetration testing [Assignment: organization-defined frequency] on [Assignment: organization-defined systems or system components].",
+      "Attributes": [
+        {
+          "ItemId": "CA-8",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "inspector2_is_enabled"
+      ]
+    },
+    {
+      "Id": "CA-9",
+      "Name": "CA-9 Internal System Connections",
+      "Description": "a. Authorize internal connections of [Assignment: organization-defined system components or classes of components] to the system;\n b. Document, for each internal connection, the interface characteristics, security and privacy requirements, and the nature of the information communicated;\n c. Terminate internal system connections after [Assignment: organization-defined conditions]; and\n d. Review [Assignment: organization-defined frequency] the continued need for each internal connection.",
+      "Attributes": [
+        {
+          "ItemId": "CA-9",
+          "Section": "Security Assessment and Authorization (CA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_default_restrict_traffic",
+        "vpc_endpoint_connections_trust_boundaries"
+      ]
+    },
+    {
+      "Id": "CM-1",
+      "Name": "CM-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] configuration management policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the configuration management policy and the associated configuration management controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the configuration management policy and procedures; and\n c. Review and update the current configuration management:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "CM-1",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CM-2",
+      "Name": "CM-2 Baseline Configuration",
+      "Description": "a. Develop, document, and maintain under configuration control, a current baseline configuration of the system; and\n b. Review and update the baseline configuration of the system:\n 1. [Assignment: organization-defined frequency];\n 2. When required due to [Assignment: organization-defined circumstances]; and\n 3. When system components are installed or upgraded.",
+      "Attributes": [
+        {
+          "ItemId": "cm-2",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "s3_bucket_public_access",
+        "ec2_securitygroup_default_restrict_traffic",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "s3_account_level_public_access_blocks",
+        "ec2_instance_older_than_specific_days",
+        "rds_instance_no_public_access",
+        "s3_bucket_policy_public_write_access",
+        "ec2_instance_managed_by_ssm",
+        "redshift_cluster_public_access",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "elbv2_waf_acl_attached",
+        "awslambda_function_url_public",
+        "ec2_instance_public_ip",
+        "emr_cluster_master_nodes_no_public_ip",
+        "rds_snapshots_public_access",
+        "ec2_ebs_public_snapshot",
+        "ec2_networkacl_allow_ingress_any_port",
+        "awslambda_function_not_publicly_accessible",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "CM-3 (4)",
+      "Name": "CM-3 (4) Configuration Change Control | Security and Privacy Representatives",
+      "Description": "Require [Assignment: organization-defined security and privacy representatives] to be members of the [Assignment: organization-defined configuration change control element].",
+      "Attributes": [
+        {
+          "ItemId": "CM-3 (4)",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws",
+          "SubSection": "Configuration Change Control | Security and Privacy Representatives (CM-3 (4))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CM-5 (5)",
+      "Name": "CM-5 (5) Access Restrictions for Change | Privilege Limitation for Production and Operation",
+      "Description": "(a) Limit privileges to change system components and system-related information within a production or operational environment; and\n (b) Review and reevaluate privileges [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "CM-5 (5)",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws",
+          "SubSection": "Access Restrictions for Change | Privilege Limitation for Production and Operation (CM-5 (5))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CM-7 (1)",
+      "Name": "CM-7 (1) Least Functionality | Periodic Review",
+      "Description": "(a) Review the system [Assignment: organization-defined frequency] to identify unnecessary and/or nonsecure functions, ports, protocols, software, and services; and\n (b) Disable or remove [Assignment: organization-defined functions, ports, protocols, software, and services within the system deemed to be unnecessary and/or nonsecure].",
+      "Attributes": [
+        {
+          "ItemId": "CM-7 (1)",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws",
+          "SubSection": "Least Functionality | Periodic Review (CM-7 (1))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CM-7 (5)",
+      "Name": "CM-7 (5) Least Functionality | Authorized Software — Allow-by-exception",
+      "Description": "(a) Identify [Assignment: organization-defined software programs authorized to execute on the system];\n (b) Employ a deny-all, permit-by-exception policy to allow the execution of authorized software programs on the system; and\n (c) Review and update the list of authorized software programs [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "CM-7 (5)",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws",
+          "SubSection": "Least Functionality | Authorized Software — Allow-by-exception (CM-7 (5))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CM-8",
+      "Name": "CM-8 System Component Inventory",
+      "Description": "a. Develop and document an inventory of system components that:\n 1. Accurately reflects the system;\n 2. Includes all components within the system;\n 3. Does not include duplicate accounting of components or components assigned to any other system;\n 4. Is at the level of granularity deemed necessary for tracking and reporting; and\n 5. Includes the following information to achieve system component accountability: [Assignment: organization-defined information deemed necessary to achieve effective system component accountability]; and\n b. Review and update the system component inventory [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "CM-8",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "securityhub_enabled",
+        "resourceexplorer2_indexes_found"
+      ]
+    },
+    {
+      "Id": "CM-8 (3)",
+      "Name": "CM-8 (3) System Component Inventory | Automated Unauthorized Component Detection",
+      "Description": "(a) Detect the presence of unauthorized hardware, software, and firmware components within the system using [Assignment: organization-defined automated mechanisms] [Assignment: organization-defined frequency]; and\n (b) Take the following actions when unauthorized components are detected: [Selection (one or more): disable network access by such components; isolate the components; notify [Assignment: organization-defined personnel or roles]].",
+      "Attributes": [
+        {
+          "ItemId": "cm-8-3-a",
+          "Section": "Configuration Management (CM)",
+          "SubSection": "System Component Inventory | Automated Unauthorized Component Detection (CM-8 (3))",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "CM-11",
+      "Name": "CM-11 User-installed Software",
+      "Description": "a. Establish [Assignment: organization-defined policies] governing the installation of software by users;\n b. Enforce software installation policies through the following methods: [Assignment: organization-defined methods]; and\n c. Monitor policy compliance [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "CM-11",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "CM-12 (1)",
+      "Name": "CM-12 (1) Information Location | Automated Tools to Support Information Location",
+      "Description": "Use automated tools to identify [Assignment: organization-defined information by information type] on [Assignment: organization-defined system components] to ensure controls are in place to protect organizational information and individual privacy.",
+      "Attributes": [
+        {
+          "ItemId": "CM-12 (1)",
+          "Section": "Configuration Management (CM)",
+          "Service": "aws",
+          "SubSection": "Information Location | Automated Tools to Support Information Location (CM-12 (1))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CP-1",
+      "Name": "CP-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] contingency planning policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the contingency planning policy and the associated contingency planning controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the contingency planning policy and procedures; and\n c. Review and update the current contingency planning:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "CP-1",
+          "Section": "Contingency Planning (CP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CP-2",
+      "Name": "CP-2 Contingency Plan",
+      "Description": "a. Develop a contingency plan for the system that:\n 1. Identifies essential mission and business functions and associated contingency requirements;\n 2. Provides recovery objectives, restoration priorities, and metrics;\n 3. Addresses contingency roles, responsibilities, assigned individuals with contact information;\n 4. Addresses maintaining essential mission and business functions despite a system disruption, compromise, or failure; \n 5. Addresses eventual, full system restoration without deterioration of the controls originally planned and implemented;\n 6. Addresses the sharing of contingency information; and\n 7. Is reviewed and approved by [Assignment: organization-defined personnel or roles];\n b. Distribute copies of the contingency plan to [Assignment: organization-defined key contingency personnel (identified by name and/or by role) and organizational elements];\n c. Coordinate contingency planning activities with incident handling activities;\n d. Review the contingency plan for the system [Assignment: organization-defined frequency];\n e. Update the contingency plan to address changes to the organization, system, or environment of operation and problems encountered during contingency plan implementation, execution, or testing;\n f. Communicate contingency plan changes to [Assignment: organization-defined key contingency personnel (identified by name and/or by role) and organizational elements];\n g. Incorporate lessons learned from contingency plan testing, training, or actual contingency activities into contingency testing and training; and\n h. Protect the contingency plan from unauthorized disclosure and modification.",
+      "Attributes": [
+        {
+          "ItemId": "CP-2",
+          "Section": "Contingency Planning (CP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_vaults_exist",
+        "rds_instance_backup_enabled",
+        "dynamodb_tables_pitr_enabled"
+      ]
+    },
+    {
+      "Id": "CP-2 (3)",
+      "Name": "CP-2 (3) Contingency Plan | Resume Mission and Business Functions",
+      "Description": "Plan for the resumption of [Selection: all; essential] mission and business functions within [Assignment: organization-defined time period] of contingency plan activation.",
+      "Attributes": [
+        {
+          "ItemId": "CP-2 (3)",
+          "Section": "Contingency Planning (CP)",
+          "Service": "aws",
+          "SubSection": "Contingency Plan | Resume Mission and Business Functions (CP-2 (3))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CP-3",
+      "Name": "CP-3 Contingency Training",
+      "Description": "a. Provide contingency training to system users consistent with assigned roles and responsibilities: \n 1. Within [Assignment: organization-defined time period] of assuming a contingency role or responsibility;\n 2. When required by system changes; and\n 3. [Assignment: organization-defined frequency] thereafter; and\n b. Review and update contingency training content [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "CP-3",
+          "Section": "Contingency Planning (CP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_reportplans_exist"
+      ]
+    },
+    {
+      "Id": "CP-4",
+      "Name": "CP-4 Contingency Plan Testing",
+      "Description": "a. Test the contingency plan for the system [Assignment: organization-defined frequency] using the following tests to determine the effectiveness of the plan and the readiness to execute the plan: [Assignment: organization-defined tests].\n b. Review the contingency plan test results; and\n c. Initiate corrective actions, if needed.",
+      "Attributes": [
+        {
+          "ItemId": "CP-4",
+          "Section": "Contingency Planning (CP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_recovery_point_encrypted",
+        "rds_instance_backup_enabled",
+        "dynamodb_tables_pitr_enabled"
+      ]
+    },
+    {
+      "Id": "CP-9",
+      "Name": "CP-9 System Backup",
+      "Description": "a. Conduct backups of user-level information contained in [Assignment: organization-defined system components] [Assignment: organization-defined frequency consistent with recovery time and recovery point objectives];\n b. Conduct backups of system-level information contained in the system [Assignment: organization-defined frequency consistent with recovery time and recovery point objectives];\n c. Conduct backups of system documentation, including security- and privacy-related documentation [Assignment: organization-defined frequency consistent with recovery time and recovery point objectives]; and \n d. Protect the confidentiality, integrity, and availability of backup information.",
+      "Attributes": [
+        {
+          "ItemId": "cp-9-b",
+          "Section": "Contingency Planning (CP)",
+          "SubSection": "Information System Backup (CP-9)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "redshift_cluster_automated_snapshot",
+        "rds_instance_backup_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "efs_have_backup_enabled",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "CP-9 (1)",
+      "Name": "CP-9 (1) System Backup | Testing for Reliability and Integrity",
+      "Description": "Test backup information [Assignment: organization-defined frequency] to verify media reliability and information integrity.",
+      "Attributes": [
+        {
+          "ItemId": "CP-9 (1)",
+          "Section": "Contingency Planning (CP)",
+          "Service": "aws",
+          "SubSection": "System Backup | Testing for Reliability and Integrity (CP-9 (1))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CP-9 (8)",
+      "Name": "CP-9 (8) System Backup | Cryptographic Protection",
+      "Description": "Implement cryptographic mechanisms to prevent unauthorized disclosure and modification of [Assignment: organization-defined backup information].",
+      "Attributes": [
+        {
+          "ItemId": "CP-9 (8)",
+          "Section": "Contingency Planning (CP)",
+          "Service": "aws",
+          "SubSection": "System Backup | Cryptographic Protection (CP-9 (8))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IA-1",
+      "Name": "IA-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] identification and authentication policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the identification and authentication policy and the associated identification and authentication controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the identification and authentication policy and procedures; and\n c. Review and update the current identification and authentication:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "IA-1",
+          "Section": "Identification and Authentication (IA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IA-2 (6)",
+      "Name": "IA-2 (6) Identification and Authentication (organizational Users) | Access to Accounts —separate Device",
+      "Description": "Implement multi-factor authentication for [Selection (one or more): local; network; remote] access to [Selection (one or more): privileged accounts; non-privileged accounts] such that:\n (a) One of the factors is provided by a device separate from the system gaining access; and\n (b) The device meets [Assignment: organization-defined strength of mechanism requirements].",
+      "Attributes": [
+        {
+          "ItemId": "IA-2 (6)",
+          "Section": "Identification and Authentication (IA)",
+          "Service": "aws",
+          "SubSection": "Identification and Authentication (organizational Users) | Access to Accounts —separate Device (IA-2 (6))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IA-2 (8)",
+      "Name": "IA-2 (8) Identification and Authentication (organizational Users) | Access to Accounts — Replay Resistant",
+      "Description": "Implement replay-resistant authentication mechanisms for access to [Selection (one or more): privileged accounts; non-privileged accounts].",
+      "Attributes": [
+        {
+          "ItemId": "IA-2 (8)",
+          "Section": "Identification and Authentication (IA)",
+          "Service": "aws",
+          "SubSection": "Identification and Authentication (organizational Users) | Access to Accounts — Replay Resistant (IA-2 (8))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IA-4",
+      "Name": "IA-4 Identifier Management",
+      "Description": "Manage system identifiers by:\n a. Receiving authorization from [Assignment: organization-defined personnel or roles] to assign an individual, group, role, service, or device identifier;\n b. Selecting an identifier that identifies an individual, group, role, service, or device;\n c. Assigning the identifier to the intended individual, group, role, service, or device; and\n d. Preventing reuse of identifiers for [Assignment: organization-defined time period].",
+      "Attributes": [
+        {
+          "ItemId": "IA-4",
+          "Section": "Identification and Authentication (IA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused"
+      ]
+    },
+    {
+      "Id": "IA-4 (4)",
+      "Name": "IA-4 (4) Identifier Management | Identify User Status",
+      "Description": "Manage individual identifiers by uniquely identifying each individual as [Assignment: organization-defined characteristic identifying individual status].",
+      "Attributes": [
+        {
+          "ItemId": "IA-4 (4)",
+          "Section": "Identification and Authentication (IA)",
+          "Service": "aws",
+          "SubSection": "Identifier Management | Identify User Status (IA-4 (4))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IR-1",
+      "Name": "IR-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] incident response policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the incident response policy and the associated incident response controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the incident response policy and procedures; and\n c. Review and update the current incident response:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "IR-1",
+          "Section": "Incident Response (IR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "IR-2",
+      "Name": "IR-2 Incident Response Training",
+      "Description": "a. Provide incident response training to system users consistent with assigned roles and responsibilities:\n 1. Within [Assignment: organization-defined time period] of assuming an incident response role or responsibility or acquiring system access;\n 2. When required by system changes; and\n 3. [Assignment: organization-defined frequency] thereafter; and\n b. Review and update incident response training content [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "IR-2",
+          "Section": "Incident Response (IR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "IR-3",
+      "Name": "IR-3 Incident Response Testing",
+      "Description": "Test the effectiveness of the incident response capability for the system [Assignment: organization-defined frequency] using the following tests: [Assignment: organization-defined tests].",
+      "Attributes": [
+        {
+          "ItemId": "IR-3",
+          "Section": "Incident Response (IR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_enumeration"
+      ]
+    },
+    {
+      "Id": "IR-6",
+      "Name": "IR-6 Incident Reporting",
+      "Description": "a. Require personnel to report suspected incidents to the organizational incident response capability within [Assignment: organization-defined time period]; and\n b. Report incident information to [Assignment: organization-defined authorities].",
+      "Attributes": [
+        {
+          "ItemId": "IR-6",
+          "Section": "Incident Response (IR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
+    },
+    {
+      "Id": "IR-8",
+      "Name": "IR-8 Incident Response Plan",
+      "Description": "a. Develop an incident response plan that:\n 1. Provides the organization with a roadmap for implementing its incident response capability;\n 2. Describes the structure and organization of the incident response capability;\n 3. Provides a high-level approach for how the incident response capability fits into the overall organization;\n 4. Meets the unique requirements of the organization, which relate to mission, size, structure, and functions;\n 5. Defines reportable incidents;\n 6. Provides metrics for measuring the incident response capability within the organization;\n 7. Defines the resources and management support needed to effectively maintain and mature an incident response capability;\n 8. Addresses the sharing of incident information;\n 9. Is reviewed and approved by [Assignment: organization-defined personnel or roles] [Assignment: organization-defined frequency]; and\n 10. Explicitly designates responsibility for incident response to [Assignment: organization-defined entities, personnel, or roles].\n b. Distribute copies of the incident response plan to [Assignment: organization-defined incident response personnel (identified by name and/or by role) and organizational elements];\n c. Update the incident response plan to address system and organizational changes or problems encountered during plan implementation, execution, or testing;\n d. Communicate incident response plan changes to [Assignment: organization-defined incident response personnel (identified by name and/or by role) and organizational elements]; and\n e. Protect the incident response plan from unauthorized disclosure and modification.",
+      "Attributes": [
+        {
+          "ItemId": "IR-8",
+          "Section": "Incident Response (IR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "ssmincidents_enabled_with_plans"
+      ]
+    },
+    {
+      "Id": "IR-9 (2)",
+      "Name": "IR-9 (2) Information Spillage Response | Training",
+      "Description": "Provide information spillage response training [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "IR-9 (2)",
+          "Section": "Incident Response (IR)",
+          "Service": "aws",
+          "SubSection": "Information Spillage Response | Training (IR-9 (2))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MA-1",
+      "Name": "MA-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] maintenance policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the maintenance policy and the associated maintenance controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the maintenance policy and procedures; and\n c. Review and update the current maintenance:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "MA-1",
+          "Section": "Maintenance (MA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MA-3",
+      "Name": "MA-3 Maintenance Tools",
+      "Description": "a. Approve, control, and monitor the use of system maintenance tools; and\n b. Review previously approved system maintenance tools [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "MA-3",
+          "Section": "Maintenance (MA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MA-3 (3)",
+      "Name": "MA-3 (3) Maintenance Tools | Prevent Unauthorized Removal",
+      "Description": "Prevent the removal of maintenance equipment containing organizational information by:\n (a) Verifying that there is no organizational information contained on the equipment;\n (b) Sanitizing or destroying the equipment;\n (c) Retaining the equipment within the facility; or\n (d) Obtaining an exemption from [Assignment: organization-defined personnel or roles] explicitly authorizing removal of the equipment from the facility.",
+      "Attributes": [
+        {
+          "ItemId": "MA-3 (3)",
+          "Section": "Maintenance (MA)",
+          "Service": "aws",
+          "SubSection": "Maintenance Tools | Prevent Unauthorized Removal (MA-3 (3))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MA-6",
+      "Name": "MA-6 Timely Maintenance",
+      "Description": "Obtain maintenance support and/or spare parts for [Assignment: organization-defined system components] within [Assignment: organization-defined time period] of failure.",
+      "Attributes": [
+        {
+          "ItemId": "MA-6",
+          "Section": "Maintenance (MA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MP-1",
+      "Name": "MP-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] media protection policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the media protection policy and the associated media protection controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the media protection policy and procedures; and\n c. Review and update the current media protection:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "MP-1",
+          "Section": "Media Protection (MP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MP-2",
+      "Name": "MP-2 Media Access",
+      "Description": "Restrict access to [Assignment: organization-defined types of digital and/or non-digital media] to [Assignment: organization-defined personnel or roles].",
+      "Attributes": [
+        {
+          "ItemId": "MP-2",
+          "Section": "Media Protection (MP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MP-3",
+      "Name": "MP-3 Media Marking",
+      "Description": "a. Mark system media indicating the distribution limitations, handling caveats, and applicable security markings (if any) of the information; and\n b. Exempt [Assignment: organization-defined types of system media] from marking if the media remain within [Assignment: organization-defined controlled areas].",
+      "Attributes": [
+        {
+          "ItemId": "MP-3",
+          "Section": "Media Protection (MP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MP-4",
+      "Name": "MP-4 Media Storage",
+      "Description": "a. Physically control and securely store [Assignment: organization-defined types of digital and/or non-digital media] within [Assignment: organization-defined controlled areas]; and\n b. Protect system media types defined in MP-4a until the media are destroyed or sanitized using approved equipment, techniques, and procedures.",
+      "Attributes": [
+        {
+          "ItemId": "MP-4",
+          "Section": "Media Protection (MP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MP-5",
+      "Name": "MP-5 Media Transport",
+      "Description": "a. Protect and control [Assignment: organization-defined types of system media] during transport outside of controlled areas using [Assignment: organization-defined controls];\n b. Maintain accountability for system media during transport outside of controlled areas;\n c. Document activities associated with the transport of system media; and\n d. Restrict the activities associated with the transport of system media to authorized personnel.",
+      "Attributes": [
+        {
+          "ItemId": "MP-5",
+          "Section": "Media Protection (MP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "MP-6",
+      "Name": "MP-6 Media Sanitization",
+      "Description": "a. Sanitize [Assignment: organization-defined system media] prior to disposal, release out of organizational control, or release for reuse using [Assignment: organization-defined sanitization techniques and procedures]; and\n b. Employ sanitization mechanisms with the strength and integrity commensurate with the security category or classification of the information.",
+      "Attributes": [
+        {
+          "ItemId": "MP-6",
+          "Section": "Media Protection (MP)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-1",
+      "Name": "PE-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] physical and environmental protection policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the physical and environmental protection policy and the associated physical and environmental protection controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the physical and environmental protection policy and procedures; and\n c. Review and update the current physical and environmental protection:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "PE-1",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-2",
+      "Name": "PE-2 Physical Access Authorizations",
+      "Description": "a. Develop, approve, and maintain a list of individuals with authorized access to the facility where the system resides;\n b. Issue authorization credentials for facility access;\n c. Review the access list detailing authorized facility access by individuals [Assignment: organization-defined frequency]; and\n d. Remove individuals from the facility access list when access is no longer required.",
+      "Attributes": [
+        {
+          "ItemId": "PE-2",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-3",
+      "Name": "PE-3 Physical Access Control",
+      "Description": "a. Enforce physical access authorizations at [Assignment: organization-defined entry and exit points to the facility where the system resides] by:\n 1. Verifying individual access authorizations before granting access to the facility; and\n 2. Controlling ingress and egress to the facility using [Selection (one or more): [Assignment: organization-defined physical access control systems or devices]; guards];\n b. Maintain physical access audit logs for [Assignment: organization-defined entry or exit points];\n c. Control access to areas within the facility designated as publicly accessible by implementing the following controls: [Assignment: organization-defined physical access controls];\n d. Escort visitors and control visitor activity [Assignment: organization-defined circumstances requiring visitor escorts and control of visitor activity];\n e. Secure keys, combinations, and other physical access devices;\n f. Inventory [Assignment: organization-defined physical access devices] every [Assignment: organization-defined frequency]; and\n g. Change combinations and keys [Assignment: organization-defined frequency] and/or when keys are lost, combinations are compromised, or when individuals possessing the keys or combinations are transferred or terminated.",
+      "Attributes": [
+        {
+          "ItemId": "PE-3",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-6",
+      "Name": "PE-6 Monitoring Physical Access",
+      "Description": "a. Monitor physical access to the facility where the system resides to detect and respond to physical security incidents;\n b. Review physical access logs [Assignment: organization-defined frequency] and upon occurrence of [Assignment: organization-defined events or potential indications of events]; and\n c. Coordinate results of reviews and investigations with the organizational incident response capability.",
+      "Attributes": [
+        {
+          "ItemId": "PE-6",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-8",
+      "Name": "PE-8 Visitor Access Records",
+      "Description": "a. Maintain visitor access records to the facility where the system resides for [Assignment: organization-defined time period];\n b. Review visitor access records [Assignment: organization-defined frequency]; and\n c. Report anomalies in visitor access records to [Assignment: organization-defined personnel].",
+      "Attributes": [
+        {
+          "ItemId": "PE-8",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-10",
+      "Name": "PE-10 Emergency Shutoff",
+      "Description": "a. Provide the capability of shutting off power to [Assignment: organization-defined system or individual system components] in emergency situations;\n b. Place emergency shutoff switches or devices in [Assignment: organization-defined location by system or system component] to facilitate access for authorized personnel; and\n c. Protect emergency power shutoff capability from unauthorized activation.",
+      "Attributes": [
+        {
+          "ItemId": "PE-10",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-13 (1)",
+      "Name": "PE-13 (1) Fire Protection | Detection Systems — Automatic Activation and Notification",
+      "Description": "Employ fire detection systems that activate automatically and notify [Assignment: organization-defined personnel or roles] and [Assignment: organization-defined emergency responders] in the event of a fire.",
+      "Attributes": [
+        {
+          "ItemId": "PE-13 (1)",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws",
+          "SubSection": "Fire Protection | Detection Systems — Automatic Activation and Notification (PE-13 (1))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-14",
+      "Name": "PE-14 Environmental Controls",
+      "Description": "a. Maintain [Selection (one or more): temperature; humidity; pressure; radiation; [Assignment: organization-defined environmental control]] levels within the facility where the system resides at [Assignment: organization-defined acceptable levels]; and\n b. Monitor environmental control levels [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "PE-14",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PE-16",
+      "Name": "PE-16 Delivery and Removal",
+      "Description": "a. Authorize and control [Assignment: organization-defined types of system components] entering and exiting the facility; and\n b. Maintain records of the system components.",
+      "Attributes": [
+        {
+          "ItemId": "PE-16",
+          "Section": "Physical and Environmental Protection (PE)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PL-1",
+      "Name": "PL-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] planning policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the planning policy and the associated planning controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the planning policy and procedures; and\n c. Review and update the current planning:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "PL-1",
+          "Section": "Planning (PL)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PL-2",
+      "Name": "PL-2 System Security and Privacy Plans",
+      "Description": "a. Develop security and privacy plans for the system that:\n 1. Are consistent with the organization’s enterprise architecture;\n 2. Explicitly define the constituent system components;\n 3. Describe the operational context of the system in terms of mission and business processes;\n 4. Identify the individuals that fulfill system roles and responsibilities;\n 5. Identify the information types processed, stored, and transmitted by the system;\n 6. Provide the security categorization of the system, including supporting rationale;\n 7. Describe any specific threats to the system that are of concern to the organization; \n 8. Provide the results of a privacy risk assessment for systems processing personally identifiable information;\n 9. Describe the operational environment for the system and any dependencies on or connections to other systems or system components;\n 10. Provide an overview of the security and privacy requirements for the system;\n 11. Identify any relevant control baselines or overlays, if applicable;\n 12. Describe the controls in place or planned for meeting the security and privacy requirements, including a rationale for any tailoring decisions;\n 13. Include risk determinations for security and privacy architecture and design decisions;\n 14. Include security- and privacy-related activities affecting the system that require planning and coordination with [Assignment: organization-defined individuals or groups]; and\n 15. Are reviewed and approved by the authorizing official or designated representative prior to plan implementation.\n b. Distribute copies of the plans and communicate subsequent changes to the plans to [Assignment: organization-defined personnel or roles];\n c. Review the plans [Assignment: organization-defined frequency]; \n d. Update the plans to address changes to the system and environment of operation or problems identified during plan implementation or control assessments; and\n e. Protect the plans from unauthorized disclosure and modification.",
+      "Attributes": [
+        {
+          "ItemId": "PL-2",
+          "Section": "Planning (PL)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PL-4",
+      "Name": "PL-4 Rules of Behavior",
+      "Description": "a. Establish and provide to individuals requiring access to the system, the rules that describe their responsibilities and expected behavior for information and system usage, security, and privacy;\n b. Receive a documented acknowledgment from such individuals, indicating that they have read, understand, and agree to abide by the rules of behavior, before authorizing access to information and the system;\n c. Review and update the rules of behavior [Assignment: organization-defined frequency]; and\n d. Require individuals who have acknowledged a previous version of the rules of behavior to read and re-acknowledge [Selection (one or more): [Assignment: organization-defined frequency]; when the rules are revised or updated].",
+      "Attributes": [
+        {
+          "ItemId": "PL-4",
+          "Section": "Planning (PL)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PL-8",
+      "Name": "PL-8 Security and Privacy Architectures",
+      "Description": "a. Develop security and privacy architectures for the system that:\n 1. Describe the requirements and approach to be taken for protecting the confidentiality, integrity, and availability of organizational information;\n 2. Describe the requirements and approach to be taken for processing personally identifiable information to minimize privacy risk to individuals;\n 3. Describe how the architectures are integrated into and support the enterprise architecture; and\n 4. Describe any assumptions about, and dependencies on, external systems and services;\n b. Review and update the architectures [Assignment: organization-defined frequency] to reflect changes in the enterprise architecture; and\n c. Reflect planned architecture changes in security and privacy plans, Concept of Operations (CONOPS), criticality analysis, organizational procedures, and procurements and acquisitions.",
+      "Attributes": [
+        {
+          "ItemId": "PL-8",
+          "Section": "Planning (PL)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-1",
+      "Name": "PS-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] personnel security policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the personnel security policy and the associated personnel security controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the personnel security policy and procedures; and\n c. Review and update the current personnel security:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "PS-1",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-2",
+      "Name": "PS-2 Position Risk Designation",
+      "Description": "a. Assign a risk designation to all organizational positions;\n b. Establish screening criteria for individuals filling those positions; and\n c. Review and update position risk designations [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "PS-2",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-3",
+      "Name": "PS-3 Personnel Screening",
+      "Description": "a. Screen individuals prior to authorizing access to the system; and\n b. Rescreen individuals in accordance with [Assignment: organization-defined conditions requiring rescreening and, where rescreening is so indicated, the frequency of rescreening].",
+      "Attributes": [
+        {
+          "ItemId": "PS-3",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-3 (3)",
+      "Name": "PS-3 (3) Personnel Screening | Information Requiring Special Protective Measures",
+      "Description": "Verify that individuals accessing a system processing, storing, or transmitting information requiring special protection:\n (a) Have valid access authorizations that are demonstrated by assigned official government duties; and\n (b) Satisfy [Assignment: organization-defined additional personnel screening criteria].",
+      "Attributes": [
+        {
+          "ItemId": "PS-3 (3)",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws",
+          "SubSection": "Personnel Screening | Information Requiring Special Protective Measures (PS-3 (3))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-4",
+      "Name": "PS-4 Personnel Termination",
+      "Description": "Upon termination of individual employment:\n a. Disable system access within [Assignment: organization-defined time period];\n b. Terminate or revoke any authenticators and credentials associated with the individual;\n c. Conduct exit interviews that include a discussion of [Assignment: organization-defined information security topics];\n d. Retrieve all security-related organizational system-related property; and\n e. Retain access to organizational information and systems formerly controlled by terminated individual.",
+      "Attributes": [
+        {
+          "ItemId": "PS-4",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-5",
+      "Name": "PS-5 Personnel Transfer",
+      "Description": "a. Review and confirm ongoing operational need for current logical and physical access authorizations to systems and facilities when individuals are reassigned or transferred to other positions within the organization;\n b. Initiate [Assignment: organization-defined transfer or reassignment actions] within [Assignment: organization-defined time period following the formal transfer action];\n c. Modify access authorization as needed to correspond with any changes in operational need due to reassignment or transfer; and\n d. Notify [Assignment: organization-defined personnel or roles] within [Assignment: organization-defined time period].",
+      "Attributes": [
+        {
+          "ItemId": "PS-5",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-6",
+      "Name": "PS-6 Access Agreements",
+      "Description": "a. Develop and document access agreements for organizational systems;\n b. Review and update the access agreements [Assignment: organization-defined frequency]; and\n c. Verify that individuals requiring access to organizational information and systems: \n 1. Sign appropriate access agreements prior to being granted access; and\n 2. Re-sign access agreements to maintain access to organizational systems when access agreements have been updated or [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "PS-6",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-7",
+      "Name": "PS-7 External Personnel Security",
+      "Description": "a. Establish personnel security requirements, including security roles and responsibilities for external providers;\n b. Require external providers to comply with personnel security policies and procedures established by the organization;\n c. Document personnel security requirements;\n d. Require external providers to notify [Assignment: organization-defined personnel or roles] of any personnel transfers or terminations of external personnel who possess organizational credentials and/or badges, or who have system privileges within [Assignment: organization-defined time period]; and\n e. Monitor provider compliance with personnel security requirements.",
+      "Attributes": [
+        {
+          "ItemId": "PS-7",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "PS-8",
+      "Name": "PS-8 Personnel Sanctions",
+      "Description": "a. Employ a formal sanctions process for individuals failing to comply with established information security and privacy policies and procedures; and\n b. Notify [Assignment: organization-defined personnel or roles] within [Assignment: organization-defined time period] when a formal employee sanctions process is initiated, identifying the individual sanctioned and the reason for the sanction.",
+      "Attributes": [
+        {
+          "ItemId": "PS-8",
+          "Section": "Personnel Security (PS)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RA-1",
+      "Name": "RA-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] risk assessment policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the risk assessment policy and the associated risk assessment controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the risk assessment policy and procedures; and\n c. Review and update the current risk assessment:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "RA-1",
+          "Section": "Risk Assessment (RA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "RA-3",
+      "Name": "RA-3 Risk Assessment",
+      "Description": "a. Conduct a risk assessment, including:\n 1. Identifying threats to and vulnerabilities in the system;\n 2. Determining the likelihood and magnitude of harm from unauthorized access, use, disclosure, disruption, modification, or destruction of the system, the information it processes, stores, or transmits, and any related information; and\n 3. Determining the likelihood and impact of adverse effects on individuals arising from the processing of personally identifiable information;\n b. Integrate risk assessment results and risk management decisions from the organization and mission or business process perspectives with system-level risk assessments;\n c. Document risk assessment results in [Selection: security and privacy plans; risk assessment report; [Assignment: organization-defined document]];\n d. Review risk assessment results [Assignment: organization-defined frequency];\n e. Disseminate risk assessment results to [Assignment: organization-defined personnel or roles]; and\n f. Update the risk assessment [Assignment: organization-defined frequency] or when there are significant changes to the system, its environment of operation, or other conditions that may impact the security or privacy state of the system.",
+      "Attributes": [
+        {
+          "ItemId": "RA-3",
+          "Section": "Risk Assessment (RA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "guardduty_is_enabled",
+        "inspector2_is_enabled",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "RA-5",
+      "Name": "RA-5 Vulnerability Monitoring and Scanning",
+      "Description": "a. Monitor and scan for vulnerabilities in the system and hosted applications [Assignment: organization-defined frequency and/or randomly in accordance with organization-defined process] and when new vulnerabilities potentially affecting the system are identified and reported;\n b. Employ vulnerability monitoring tools and techniques that facilitate interoperability among tools and automate parts of the vulnerability management process by using standards for:\n 1. Enumerating platforms, software flaws, and improper configurations;\n 2. Formatting checklists and test procedures; and\n 3. Measuring vulnerability impact; \n c. Analyze vulnerability scan reports and results from vulnerability monitoring;\n d. Remediate legitimate vulnerabilities [Assignment: organization-defined response times] in accordance with an organizational assessment of risk;\n e. Share information obtained from the vulnerability monitoring process and control assessments with [Assignment: organization-defined personnel or roles] to help eliminate similar vulnerabilities in other systems; and\n f. Employ vulnerability monitoring tools that include the capability to readily update the vulnerabilities to be scanned.",
+      "Attributes": [
+        {
+          "ItemId": "ra-5",
+          "Section": "Risk Assessment (RA)",
+          "Service": "guarduty"
+        }
+      ],
+      "Checks": [
+        "guardduty_no_high_severity_findings",
+        "guardduty_is_enabled"
+      ]
+    },
+    {
+      "Id": "RA-5 (2)",
+      "Name": "RA-5 (2) Vulnerability Monitoring and Scanning | Update Vulnerabilities to Be Scanned",
+      "Description": "Update the system vulnerabilities to be scanned [Selection (one or more): [Assignment: organization-defined frequency]; prior to a new scan; when new vulnerabilities are identified and reported].",
+      "Attributes": [
+        {
+          "ItemId": "RA-5 (2)",
+          "Section": "Risk Assessment (RA)",
+          "Service": "aws",
+          "SubSection": "Vulnerability Monitoring and Scanning | Update Vulnerabilities to Be Scanned (RA-5 (2))"
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "RA-5 (5)",
+      "Name": "RA-5 (5) Vulnerability Monitoring and Scanning | Privileged Access",
+      "Description": "Implement privileged access authorization to [Assignment: organization-defined system components] for [Assignment: organization-defined vulnerability scanning activities].",
+      "Attributes": [
+        {
+          "ItemId": "RA-5 (5)",
+          "Section": "Risk Assessment (RA)",
+          "Service": "aws",
+          "SubSection": "Vulnerability Monitoring and Scanning | Privileged Access (RA-5 (5))"
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "SA-1",
+      "Name": "SA-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] system and services acquisition policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the system and services acquisition policy and the associated system and services acquisition controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the system and services acquisition policy and procedures; and\n c. Review and update the current system and services acquisition:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "SA-1",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SA-4 (2)",
+      "Name": "SA-4 (2) Acquisition Process | Design and Implementation Information for Controls",
+      "Description": "Require the developer of the system, system component, or system service to provide design and implementation information for the controls that includes: [Selection (one or more): security-relevant external system interfaces; high-level design; low-level design; source code or hardware schematics; [Assignment: organization-defined design and implementation information]] at [Assignment: organization-defined level of detail].",
+      "Attributes": [
+        {
+          "ItemId": "SA-4 (2)",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws",
+          "SubSection": "Acquisition Process | Design and Implementation Information for Controls (SA-4 (2))"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SA-5",
+      "Name": "SA-5 System Documentation",
+      "Description": "a. Obtain or develop administrator documentation for the system, system component, or system service that describes:\n 1. Secure configuration, installation, and operation of the system, component, or service; \n 2. Effective use and maintenance of security and privacy functions and mechanisms; and\n 3. Known vulnerabilities regarding configuration and use of administrative or privileged functions;\n b. Obtain or develop user documentation for the system, system component, or system service that describes:\n 1. User-accessible security and privacy functions and mechanisms and how to effectively use those functions and mechanisms;\n 2. Methods for user interaction, which enables individuals to use the system, component, or service in a more secure manner and protect individual privacy; and\n 3. User responsibilities in maintaining the security of the system, component, or service and privacy of individuals;\n c. Document attempts to obtain system, system component, or system service documentation when such documentation is either unavailable or nonexistent and take [Assignment: organization-defined actions] in response; and\n d. Distribute documentation to [Assignment: organization-defined personnel or roles].",
+      "Attributes": [
+        {
+          "ItemId": "SA-5",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "resourceexplorer2_indexes_found"
+      ]
+    },
+    {
+      "Id": "SA-9",
+      "Name": "SA-9 External System Services",
+      "Description": "a. Require that providers of external system services comply with organizational security and privacy requirements and employ the following controls: [Assignment: organization-defined controls];\n b. Define and document organizational oversight and user roles and responsibilities with regard to external system services; and\n c. Employ the following processes, methods, and techniques to monitor control compliance by external service providers on an ongoing basis: [Assignment: organization-defined processes, methods, and techniques].",
+      "Attributes": [
+        {
+          "ItemId": "SA-9",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "SA-9 (2)",
+      "Name": "SA-9 (2) External System Services | Identification of Functions, Ports, Protocols, and Services",
+      "Description": "Require providers of the following external system services to identify the functions, ports, protocols, and other services required for the use of such services: [Assignment: organization-defined external system services].",
+      "Attributes": [
+        {
+          "ItemId": "SA-9 (2)",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws",
+          "SubSection": "External System Services | Identification of Functions, Ports, Protocols, and Services (SA-9 (2))"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "SA-9 (5)",
+      "Name": "SA-9 (5) External System Services | Processing, Storage, and Service Location",
+      "Description": "Restrict the location of [Selection (one or more): information processing; information or data; system services] to [Assignment: organization-defined locations] based on [Assignment: organization-defined requirements or conditions].",
+      "Attributes": [
+        {
+          "ItemId": "SA-9 (5)",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws",
+          "SubSection": "External System Services | Processing, Storage, and Service Location (SA-9 (5))"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "vpc_different_regions"
+      ]
+    },
+    {
+      "Id": "SA-10",
+      "Name": "SA-10 Developer Configuration Management",
+      "Description": "Require the developer of the system, system component, or system service to:\n a. Perform configuration management during system, component, or service [Selection (one or more): design; development; implementation; operation; disposal];\n b. Document, manage, and control the integrity of changes to [Assignment: organization-defined configuration items under configuration management];\n c. Implement only organization-approved changes to the system, component, or service;\n d. Document approved changes to the system, component, or service and the potential security and privacy impacts of such changes; and\n e. Track security flaws and flaw resolution within the system, component, or service and report findings to [Assignment: organization-defined personnel].",
+      "Attributes": [
+        {
+          "ItemId": "sa-10",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "securityhub_enabled",
+        "ec2_instance_managed_by_ssm"
+      ]
+    },
+    {
+      "Id": "SA-15",
+      "Name": "SA-15 Development Process, Standards, and Tools",
+      "Description": "a. Require the developer of the system, system component, or system service to follow a documented development process that:\n 1. Explicitly addresses security and privacy requirements;\n 2. Identifies the standards and tools used in the development process;\n 3. Documents the specific tool options and tool configurations used in the development process; and\n 4. Documents, manages, and ensures the integrity of changes to the process and/or tools used in development; and\n b. Review the development process, standards, tools, tool options, and tool configurations [Assignment: organization-defined frequency] to determine if the process, standards, tools, tool options and tool configurations selected and employed can satisfy the following security and privacy requirements: [Assignment: organization-defined security and privacy requirements].",
+      "Attributes": [
+        {
+          "ItemId": "SA-15",
+          "Section": "System and Services Acquisition (SA)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "codebuild_project_no_secrets_in_variables",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_project_logging_enabled"
+      ]
+    },
+    {
+      "Id": "SC-1",
+      "Name": "SC-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] system and communications protection policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the system and communications protection policy and the associated system and communications protection controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the system and communications protection policy and procedures; and\n c. Review and update the current system and communications protection:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "SC-1",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SC-5",
+      "Name": "SC-5 Denial-of-service Protection",
+      "Description": "a. [Selection: Protect against; Limit] the effects of the following types of denial-of-service events: [Assignment: organization-defined types of denial-of-service events]; and\n b. Employ the following controls to achieve the denial-of-service objective: [Assignment: organization-defined controls by type of denial-of-service event].",
+      "Attributes": [
+        {
+          "ItemId": "sc-5",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "rds_instance_multi_az",
+        "rds_instance_deletion_protection",
+        "dynamodb_tables_pitr_enabled",
+        "guardduty_is_enabled",
+        "elbv2_deletion_protection",
+        "s3_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "SC-7 (4)",
+      "Name": "SC-7 (4) Boundary Protection | External Telecommunications Services",
+      "Description": "(a) Implement a managed interface for each external telecommunication service;\n (b) Establish a traffic flow policy for each managed interface;\n (c) Protect the confidentiality and integrity of the information being transmitted across each interface;\n (d) Document each exception to the traffic flow policy with a supporting mission or business need and duration of that need;\n (e) Review exceptions to the traffic flow policy [Assignment: organization-defined frequency] and remove exceptions that are no longer supported by an explicit mission or business need;\n (f) Prevent unauthorized exchange of control plane traffic with external networks;\n (g) Publish information to enable remote networks to detect unauthorized control plane traffic from internal networks; and\n (h) Filter unauthorized control plane traffic from external networks.",
+      "Attributes": [
+        {
+          "ItemId": "SC-7 (4)",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws",
+          "SubSection": "Boundary Protection | External Telecommunications Services (SC-7 (4))"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "directconnect_connection_redundancy"
+      ]
+    },
+    {
+      "Id": "SC-7 (5)",
+      "Name": "SC-7 (5) Boundary Protection | Deny by Default — Allow by Exception",
+      "Description": "Deny network communications traffic by default and allow network communications traffic by exception [Selection (one or more): at managed interfaces; for [Assignment: organization-defined systems]].",
+      "Attributes": [
+        {
+          "ItemId": "SC-7 (5)",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws",
+          "SubSection": "Boundary Protection | Deny by Default — Allow by Exception (SC-7 (5))"
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_networkacl_allow_ingress_any_port"
+      ]
+    },
+    {
+      "Id": "SC-7 (8)",
+      "Name": "SC-7 (8) Boundary Protection | Route Traffic to Authenticated Proxy Servers",
+      "Description": "Route [Assignment: organization-defined internal communications traffic] to [Assignment: organization-defined external networks] through authenticated proxy servers at managed interfaces.",
+      "Attributes": [
+        {
+          "ItemId": "SC-7 (8)",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws",
+          "SubSection": "Boundary Protection | Route Traffic to Authenticated Proxy Servers (SC-7 (8))"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "elb_ssl_listeners",
+        "elbv2_ssl_listeners"
+      ]
+    },
+    {
+      "Id": "SC-7 (12)",
+      "Name": "SC-7 (12) Boundary Protection | Host-based Protection",
+      "Description": "Implement [Assignment: organization-defined host-based boundary protection mechanisms] at [Assignment: organization-defined system components].",
+      "Attributes": [
+        {
+          "ItemId": "SC-7 (12)",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws",
+          "SubSection": "Boundary Protection | Host-based Protection (SC-7 (12))"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "ec2_instance_managed_by_ssm",
+        "inspector2_is_enabled"
+      ]
+    },
+    {
+      "Id": "SC-8",
+      "Name": "SC-8 Transmission Confidentiality and Integrity",
+      "Description": "Protect the [Selection (one or more): confidentiality; integrity] of transmitted information.",
+      "Attributes": [
+        {
+          "ItemId": "sc-8",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "elb_ssl_listeners",
+        "elbv2_insecure_ssl_ciphers",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "apigateway_restapi_client_certificate_enabled",
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "SC-8 (1)",
+      "Name": "SC-8 (1) Transmission Confidentiality and Integrity | Cryptographic Protection",
+      "Description": "Implement cryptographic mechanisms to [Selection (one or more): prevent unauthorized disclosure of information; detect changes to information] during transmission.",
+      "Attributes": [
+        {
+          "ItemId": "sc-8-1",
+          "Section": "System and Communications Protection (SC)",
+          "SubSection": "Transmission Confidentiality and Integrity | Cryptographic Protection (SC-8 (1))",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "elb_ssl_listeners",
+        "elbv2_insecure_ssl_ciphers",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "apigateway_restapi_client_certificate_enabled",
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "SC-10",
+      "Name": "SC-10 Network Disconnect",
+      "Description": "Terminate the network connection associated with a communications session at the end of the session or after [Assignment: organization-defined time period] of inactivity.",
+      "Attributes": [
+        {
+          "ItemId": "SC-10",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_default_restrict_traffic"
+      ]
+    },
+    {
+      "Id": "SC-12",
+      "Name": "SC-12 Cryptographic Key Establishment and Management",
+      "Description": "Establish and manage cryptographic keys when cryptography is employed within the system in accordance with the following key management requirements: [Assignment: organization-defined requirements for key generation, distribution, storage, access, and destruction].",
+      "Attributes": [
+        {
+          "ItemId": "sc-12",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "kms_cmk_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "SC-13",
+      "Name": "SC-13 Cryptographic Protection",
+      "Description": "a. Determine the [Assignment: organization-defined cryptographic uses]; and\n b. Implement the following types of cryptography required for each specified cryptographic use: [Assignment: organization-defined types of cryptography for each specified cryptographic use].",
+      "Attributes": [
+        {
+          "ItemId": "sc-13",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "SC-15",
+      "Name": "SC-15 Collaborative Computing Devices and Applications",
+      "Description": "a. Prohibit remote activation of collaborative computing devices and applications with the following exceptions: [Assignment: organization-defined exceptions where remote activation is to be allowed]; and\n b. Provide an explicit indication of use to users physically present at the devices.",
+      "Attributes": [
+        {
+          "ItemId": "SC-15",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+      ]
+    },
+    {
+      "Id": "SC-28",
+      "Name": "SC-28 Protection of Information at Rest",
+      "Description": "Protect the [Selection (one or more): confidentiality; integrity] of the following information at rest: [Assignment: organization-defined information at rest].",
+      "Attributes": [
+        {
+          "ItemId": "sc-28",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_ebs_volume_encryption",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "efs_encryption_at_rest_enabled",
+        "s3_bucket_default_encryption",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "rds_instance_storage_encrypted",
+        "redshift_cluster_audit_logging",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "cloudtrail_kms_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "SC-28 (1)",
+      "Name": "SC-28 (1) Protection of Information at Rest | Cryptographic Protection",
+      "Description": "Implement cryptographic mechanisms to prevent unauthorized disclosure and modification of the following information at rest on [Assignment: organization-defined system components or media]: [Assignment: organization-defined information].",
+      "Attributes": [
+        {
+          "ItemId": "SC-28 (1)",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws",
+          "SubSection": "Protection of Information at Rest | Cryptographic Protection (SC-28 (1))"
+        }
+      ],
+      "Checks": [
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_not_deleted_unintentionally",
+        "s3_bucket_default_encryption",
+        "ec2_ebs_volume_encryption",
+        "rds_instance_storage_encrypted"
+      ]
+    },
+    {
+      "Id": "SC-45 (1)",
+      "Name": "SC-45 (1) System Time Synchronization | Synchronization with Authoritative Time Source",
+      "Description": "(a) Compare the internal system clocks [Assignment: organization-defined frequency] with [Assignment: organization-defined authoritative time source]; and\n (b) Synchronize the internal system clocks to the authoritative time source when the time difference is greater than [Assignment: organization-defined time period].",
+      "Attributes": [
+        {
+          "ItemId": "SC-45 (1)",
+          "Section": "System and Communications Protection (SC)",
+          "Service": "aws",
+          "SubSection": "System Time Synchronization | Synchronization with Authoritative Time Source (SC-45 (1))"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_multi_region_enabled"
+      ]
+    },
+    {
+      "Id": "SI-1",
+      "Name": "SI-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] system and information integrity policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the system and information integrity policy and the associated system and information integrity controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the system and information integrity policy and procedures; and\n c. Review and update the current system and information integrity:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "SI-1",
+          "Section": "System and Information Integrity (SI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SI-2",
+      "Name": "SI-2 Flaw Remediation",
+      "Description": "a. Identify, report, and correct system flaws;\n b. Test software and firmware updates related to flaw remediation for effectiveness and potential side effects before installation;\n c. Install security-relevant software and firmware updates within [Assignment: organization-defined time period] of the release of the updates; and\n d. Incorporate flaw remediation into the organizational configuration management process.",
+      "Attributes": [
+        {
+          "ItemId": "SI-2",
+          "Section": "System and Information Integrity (SI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "inspector2_is_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "SI-2 (2)",
+      "Name": "SI-2 (2) Flaw Remediation | Automated Flaw Remediation Status",
+      "Description": "Determine if system components have applicable security-relevant software and firmware updates installed using [Assignment: organization-defined automated mechanisms] [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "si-2-2",
+          "Section": "System and Information Integrity (SI)",
+          "SubSection": "Flaw Remediation | Automated Flaw Remediation Status (SI-2 (2))",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "SI-3",
+      "Name": "SI-3 Malicious Code Protection",
+      "Description": "a. Implement [Selection (one or more): signature based; non-signature based] malicious code protection mechanisms at system entry and exit points to detect and eradicate malicious code;\n b. Automatically update malicious code protection mechanisms as new releases are available in accordance with organizational configuration management policy and procedures;\n c. Configure malicious code protection mechanisms to:\n 1. Perform periodic scans of the system [Assignment: organization-defined frequency] and real-time scans of files from external sources at [Selection (one or more): endpoint; network entry and exit points] as the files are downloaded, opened, or executed in accordance with organizational policy; and\n 2. [Selection (one or more): block malicious code; quarantine malicious code; take [Assignment: organization-defined action]]; and send alert to [Assignment: organization-defined personnel or roles] in response to malicious code detection; and\n d. Address the receipt of false positives during malicious code detection and eradication and the resulting potential impact on the availability of the system.",
+      "Attributes": [
+        {
+          "ItemId": "SI-3",
+          "Section": "System and Information Integrity (SI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_ec2_malware_protection_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "SI-4 (4)",
+      "Name": "SI-4 (4) System Monitoring | Inbound and Outbound Communications Traffic",
+      "Description": "(a) Determine criteria for unusual or unauthorized activities or conditions for inbound and outbound communications traffic;\n (b) Monitor inbound and outbound communications traffic [Assignment: organization-defined frequency] for [Assignment: organization-defined unusual or unauthorized activities or conditions].",
+      "Attributes": [
+        {
+          "ItemId": "si-4-4",
+          "Section": "System and Information Integrity (SI)",
+          "SubSection": "System Monitoring | Inbound and Outbound Communications Traffic (SI-4 (4))",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "securityhub_enabled",
+        "redshift_cluster_audit_logging",
+        "cloudtrail_multi_region_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "guardduty_is_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured"
+      ]
+    },
+    {
+      "Id": "SI-5",
+      "Name": "SI-5 Security Alerts, Advisories, and Directives",
+      "Description": "a. Receive system security alerts, advisories, and directives from [Assignment: organization-defined external organizations] on an ongoing basis;\n b. Generate internal security alerts, advisories, and directives as deemed necessary;\n c. Disseminate security alerts, advisories, and directives to: [Selection (one or more): [Assignment: organization-defined personnel or roles]; [Assignment: organization-defined elements within the organization]; [Assignment: organization-defined external organizations]]; and\n d. Implement security directives in accordance with established time frames, or notify the issuing organization of the degree of noncompliance.",
+      "Attributes": [
+        {
+          "ItemId": "SI-5",
+          "Section": "System and Information Integrity (SI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "guardduty_is_enabled",
+        "inspector2_is_enabled"
+      ]
+    },
+    {
+      "Id": "SI-6",
+      "Name": "SI-6 Security and Privacy Function Verification",
+      "Description": "a. Verify the correct operation of [Assignment: organization-defined security and privacy functions];\n b. Perform the verification of the functions specified in SI-6a [Selection (one or more): [Assignment: organization-defined system transitional states]; upon command by user with appropriate privilege; [Assignment: organization-defined frequency]];\n c. Alert [Assignment: organization-defined personnel or roles] to failed security and privacy verification tests; and\n d. [Selection (one or more): Shut the system down; Restart the system; [Assignment: organization-defined alternative action (s)]] when anomalies are discovered.",
+      "Attributes": [
+        {
+          "ItemId": "SI-6",
+          "Section": "System and Information Integrity (SI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_log_file_validation_enabled",
+        "config_recorder_all_regions_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "SI-7 (1)",
+      "Name": "SI-7 (1) Software, Firmware, and Information Integrity | Integrity Checks",
+      "Description": "Perform an integrity check of [Assignment: organization-defined software, firmware, and information] [Selection (one or more): at startup; at [Assignment: organization-defined transitional states or security-relevant events]; [Assignment: organization-defined frequency]].",
+      "Attributes": [
+        {
+          "ItemId": "si-7-1",
+          "Section": "System and Information Integrity (SI)",
+          "SubSection": "Software, Firmware, and Information Integrity | Integrity Checks (SI-7 (1))",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "cloudtrail_log_file_validation_enabled",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "SI-11",
+      "Name": "SI-11 Error Handling",
+      "Description": "a. Generate error messages that provide information necessary for corrective actions without revealing information that could be exploited; and\n b. Reveal error messages only to [Assignment: organization-defined personnel or roles].",
+      "Attributes": [
+        {
+          "ItemId": "SI-11",
+          "Section": "System and Information Integrity (SI)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
+    },
+    {
+      "Id": "SR-1",
+      "Name": "SR-1 Policy and Procedures",
+      "Description": "a. Develop, document, and disseminate to [Assignment: organization-defined personnel or roles]:\n 1. [Selection (one or more): Organization-level; Mission/business process-level; System-level] supply chain risk management policy that:\n (a) Addresses purpose, scope, roles, responsibilities, management commitment, coordination among organizational entities, and compliance; and\n (b) Is consistent with applicable laws, executive orders, directives, regulations, policies, standards, and guidelines; and\n 2. Procedures to facilitate the implementation of the supply chain risk management policy and the associated supply chain risk management controls;\n b. Designate an [Assignment: organization-defined official] to manage the development, documentation, and dissemination of the supply chain risk management policy and procedures; and\n c. Review and update the current supply chain risk management:\n 1. Policy [Assignment: organization-defined frequency] and following [Assignment: organization-defined events]; and\n 2. Procedures [Assignment: organization-defined frequency] and following [Assignment: organization-defined events].",
+      "Attributes": [
+        {
+          "ItemId": "SR-1",
+          "Section": "Supply Chain Risk Management (SR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "SR-2",
+      "Name": "SR-2 Supply Chain Risk Management Plan",
+      "Description": "a. Develop a plan for managing supply chain risks associated with the research and development, design, manufacturing, acquisition, delivery, integration, operations and maintenance, and disposal of the following systems, system components or system services: [Assignment: organization-defined systems, system components, or system services];\n b. Review and update the supply chain risk management plan [Assignment: organization-defined frequency] or as required, to address threat, organizational or environmental changes; and\n c. Protect the supply chain risk management plan from unauthorized disclosure and modification.",
+      "Attributes": [
+        {
+          "ItemId": "SR-2",
+          "Section": "Supply Chain Risk Management (SR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "trustedadvisor_premium_support_plan_subscribed",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "SR-6",
+      "Name": "SR-6 Supplier Assessments and Reviews",
+      "Description": "Assess and review the supply chain-related risks associated with suppliers or contractors and the system, system component, or system service they provide [Assignment: organization-defined frequency].",
+      "Attributes": [
+        {
+          "ItemId": "SR-6",
+          "Section": "Supply Chain Risk Management (SR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "SR-8",
+      "Name": "SR-8 Notification Agreements",
+      "Description": "Establish agreements and procedures with entities involved in the supply chain for the system, system component, or system service for the [Selection (one or more): notification of supply chain compromises; results of assessments or audits; [Assignment: organization-defined information]].",
+      "Attributes": [
+        {
+          "ItemId": "SR-8",
+          "Section": "Supply Chain Risk Management (SR)",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "SR-11 (2)",
+      "Name": "SR-11 (2) Component Authenticity | Configuration Control for Component Service and Repair",
+      "Description": "Maintain configuration control over the following system components awaiting service or repair and serviced or repaired components awaiting return to service: [Assignment: organization-defined system components].",
+      "Attributes": [
+        {
+          "ItemId": "SR-11 (2)",
+          "Section": "Supply Chain Risk Management (SR)",
+          "Service": "aws",
+          "SubSection": "Component Authenticity | Configuration Control for Component Service and Repair (SR-11 (2))"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "ssm_managed_compliant_patching"
+      ]
+    }
+  ]
+}
