@@ -60,13 +60,22 @@ export const getMenuList = (pathname: string): GroupProps[] => {
         },
       ],
     },
-
     {
-      groupLabel: "Issues",
+      groupLabel: "",
+      menus: [
+        {
+          href: "/lighthouse",
+          label: "Lighthouse AI",
+          icon: LighthouseIcon,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
       menus: [
         {
           href: "",
-          label: "Top failed issues",
+          label: "Top failed findings",
           icon: Bookmark,
           submenus: [
             {
@@ -124,7 +133,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
     },
 
     {
-      groupLabel: "Settings",
+      groupLabel: "",
       menus: [
         {
           href: "",
@@ -142,7 +151,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       ],
     },
     {
-      groupLabel: "Workspace",
+      groupLabel: "",
       menus: [
         {
           href: "",
@@ -153,16 +162,6 @@ export const getMenuList = (pathname: string): GroupProps[] => {
             { href: "/invitations", label: "Invitations", icon: Mail },
           ],
           defaultOpen: false,
-        },
-      ],
-    },
-    {
-      groupLabel: "Prowler Lighthouse AI",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse AI",
-          icon: LighthouseIcon,
         },
       ],
     },
