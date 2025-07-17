@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.11.0] (Prowler UNRELEASED)
+
+### Added
+- Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+
 ## [v1.10.0] (Prowler UNRELEASED)
 
 ### Added

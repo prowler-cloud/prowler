@@ -248,6 +248,27 @@ class S3:
             )
         return uploaded_objects
 
+    def upload_file(self, filename: str, bucket_name: str, key: str) -> None:
+        """
+        Upload a file to the S3 bucket.
+
+        Args:
+            filename (str): The path to the file to upload.
+            bucket_name (str): The name of the S3 bucket.
+            key (str): The key to use for the uploaded file.
+
+        """
+        try:
+            self._session.upload_file(
+                Filename=filename,
+                Bucket=bucket_name,
+                Key=key,
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+
     @staticmethod
     def test_connection(
         bucket_name: str,
@@ -487,4 +508,4 @@ class S3:
         except Exception as error:
             if raise_on_exception:
                 raise S3TestConnectionError(original_exception=error)
-            return Connection(error=error)
+            return Connection(is_connected=False, error=error)
