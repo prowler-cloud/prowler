@@ -27,42 +27,38 @@ const steps = [
   },
 ];
 
-const stepOverrides: Record<
+const ROUTE_CONFIG: Record<
   string,
-  { index: number; title: string; description: string }
+  {
+    stepIndex: number;
+    stepOverride?: { index: number; title: string; description: string };
+  }
 > = {
+  "/providers/connect-account": { stepIndex: 0 },
+  "/providers/add-credentials": { stepIndex: 1 },
+  "/providers/test-connection": { stepIndex: 2 },
   "/providers/update-credentials": {
-    index: 2,
-    title: "Make sure the new credentials are valid",
-    description: "Valid credentials will take you back to the providers page",
+    stepIndex: 1,
+    stepOverride: {
+      index: 2,
+      title: "Make sure the new credentials are valid",
+      description: "Valid credentials will take you back to the providers page",
+    },
   },
-};
-
-const baseRouteToStepMap = Object.fromEntries(
-  steps.map((step, index) => [step.href, index]),
-);
-
-const routeToStepIndexMap: Record<string, number> = {
-  ...baseRouteToStepMap,
-  "/providers/update-credentials":
-    baseRouteToStepMap["/providers/add-credentials"],
 };
 
 export const WorkflowAddProvider = () => {
   const pathname = usePathname();
 
+  const config = ROUTE_CONFIG[pathname] || { stepIndex: 0 };
+  const currentStep = config.stepIndex;
+
   const updatedSteps = steps.map((step, index) => {
-    const override = stepOverrides[pathname];
-    if (override && index === override.index) {
-      return {
-        ...step,
-        title: override.title,
-        description: override.description,
-      };
+    if (config.stepOverride && index === config.stepOverride.index) {
+      return { ...step, ...config.stepOverride };
     }
     return step;
   });
-  const currentStep = routeToStepIndexMap[pathname] ?? 0;
 
   return (
     <section className="max-w-sm">
