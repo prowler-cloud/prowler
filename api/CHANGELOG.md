@@ -12,6 +12,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
 - Optimized the underlying queries for resources endpoints [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 - Optimized include parameters for resources view [(#8229)](https://github.com/prowler-cloud/prowler/pull/8229)
+- Optimized overview background tasks [(#8300)](https://github.com/prowler-cloud/prowler/pull/8300) 
 
 ### Fixed
 - Search filter for findings and resources [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)

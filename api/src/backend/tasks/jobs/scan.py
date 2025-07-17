@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
-from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, OuterRef, Subquery, Sum, When
+from django.db import IntegrityError, OperationalError, connection
+from django.db.models import Case, Count, IntegerField, Prefetch, Sum, When
 from tasks.utils import CustomEncoder
 
 from api.compliance import (
@@ -547,35 +547,30 @@ def _update_resource_failed_findings_count(tenant_id: str, scan_id: str):
 
     with rls_transaction(tenant_id):
         scan = Scan.objects.get(pk=scan_id)
-        provider_id = scan.provider_id
+        provider_id = str(scan.provider_id)
 
-        resources = list(
-            Resource.all_objects.filter(tenant_id=tenant_id, provider_id=provider_id)
-        )
-
-    # For each resource, calculate failed findings count based on latest findings
-    for resource in resources:
-        with rls_transaction(tenant_id):
-            # Get the latest finding for each finding.uid that affects this resource
-            latest_findings_subquery = (
-                Finding.all_objects.filter(
-                    tenant_id=tenant_id, uid=OuterRef("uid"), resources=resource
-                )
-                .order_by("-inserted_at")
-                .values("id")[:1]
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE resources AS r
+                   SET failed_findings_count = COALESCE((
+                       SELECT COUNT(*) FROM (
+                         SELECT DISTINCT ON (f.uid) f.uid
+                           FROM findings AS f
+                           JOIN resource_finding_mappings AS rfm
+                             ON rfm.finding_id = f.id
+                          WHERE f.tenant_id = %s
+                            AND f.status    = %s
+                            AND f.muted     = FALSE
+                            AND rfm.resource_id = r.id
+                          ORDER BY f.uid, f.inserted_at DESC
+                       ) AS latest_uids
+                   ), 0)
+                 WHERE r.tenant_id   = %s
+                   AND r.provider_id = %s
+            """,
+                [tenant_id, FindingStatus.FAIL, tenant_id, provider_id],
             )
-
-            # Count failed findings from the latest findings
-            failed_count = Finding.all_objects.filter(
-                tenant_id=tenant_id,
-                resources=resource,
-                id__in=Subquery(latest_findings_subquery),
-                status=FindingStatus.FAIL,
-                muted=False,
-            ).count()
-
-            resource.failed_findings_count = failed_count
-            resource.save(update_fields=["failed_findings_count"])
 
 
 def create_compliance_requirements(tenant_id: str, scan_id: str):
@@ -603,18 +598,27 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             prowler_provider = return_prowler_provider(provider_instance)
 
         # Get check status data by region from findings
+        findings = (
+            Finding.all_objects.filter(scan_id=scan_id, muted=False)
+            .only("id", "check_id", "status")
+            .prefetch_related(
+                Prefetch(
+                    "resources",
+                    queryset=Resource.objects.only("id", "region"),
+                    to_attr="small_resources",
+                )
+            )
+            .iterator(chunk_size=1000)
+        )
+
         check_status_by_region = {}
         with rls_transaction(tenant_id):
-            findings = Finding.objects.filter(scan_id=scan_id, muted=False)
             for finding in findings:
-                # Get region from resources
-                for resource in finding.resources.all():
+                for resource in finding.small_resources:
                     region = resource.region
-                    region_dict = check_status_by_region.setdefault(region, {})
-                    current_status = region_dict.get(finding.check_id)
-                    if current_status == "FAIL":
-                        continue
-                    region_dict[finding.check_id] = finding.status
+                    current_status = check_status_by_region.setdefault(region, {})
+                    if current_status.get(finding.check_id) != "FAIL":
+                        current_status[finding.check_id] = finding.status
 
         try:
             # Try to get regions from provider
