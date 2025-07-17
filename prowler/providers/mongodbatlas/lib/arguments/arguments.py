@@ -26,18 +26,22 @@ def init_parser(self):
         metavar="ATLAS_PRIVATE_KEY",
     )
 
-    mongodbatlas_parser.add_argument(
+    mongodbatlas_filters_subparser = mongodbatlas_parser.add_argument_group(
+        "Optional Filters"
+    )
+
+    mongodbatlas_filters_subparser.add_argument(
         "--atlas-organization-id",
         nargs="?",
-        help="MongoDB Atlas organization ID to audit",
+        help="MongoDB Atlas Organization ID to filter scans to a specific organization",
         default=None,
         metavar="ATLAS_ORGANIZATION_ID",
     )
 
-    mongodbatlas_parser.add_argument(
+    mongodbatlas_filters_subparser.add_argument(
         "--atlas-project-id",
         nargs="?",
-        help="MongoDB Atlas project ID to audit (if not specified, all projects will be audited)",
+        help="MongoDB Atlas Project ID to filter scans to a specific project",
         default=None,
         metavar="ATLAS_PROJECT_ID",
     )
