@@ -36,9 +36,9 @@ def generate_finding_output(
     depends_on: list[str] = ["test-dependency"],
     related_to: list[str] = ["test-related-to"],
     notes: str = "test-notes",
-    service_name: str = "test-service",
-    check_id: str = "test-check-id",
-    check_title: str = "test-check-id",
+    service_name: str = "service",
+    check_id: str = "service_test_check_id",
+    check_title: str = "service_test_check_id",
     check_type: list[str] = ["test-type"],
 ) -> Finding:
     return Finding(
