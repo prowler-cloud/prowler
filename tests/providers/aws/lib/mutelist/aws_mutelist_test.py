@@ -1888,7 +1888,7 @@ class TestAWSMutelist:
 
         # Finding
         finding_1 = generate_finding_output(
-            check_id="check_test",
+            check_id="service_check_test",
             status="FAIL",
             region=AWS_REGION_US_EAST_1,
             resource_uid="prowler",

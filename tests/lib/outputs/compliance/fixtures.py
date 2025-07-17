@@ -24,7 +24,7 @@ CIS_1_4_AWS = Compliance(
     Description="The CIS Benchmark for CIS Amazon Web Services Foundations Benchmark, v1.4.0, Level 1 and 2 provides prescriptive guidance for configuring security options for a subset of Amazon Web Services. It has an emphasis on foundational, testable, and architecture agnostic settings",
     Requirements=[
         Compliance_Requirement(
-            Checks=["test-check-id"],
+            Checks=["service_test_check_id"],
             Id="2.1.3",
             Description="Ensure MFA Delete is enabled on S3 buckets",
             Attributes=[
@@ -73,7 +73,7 @@ CIS_2_0_AZURE = Compliance(
     Description="The CIS Azure Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Azure with an emphasis on foundational, testable, and architecture agnostic settings.",
     Requirements=[
         Compliance_Requirement(
-            Checks=["test-check-id"],
+            Checks=["service_test_check_id"],
             Id="2.1.3",
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
