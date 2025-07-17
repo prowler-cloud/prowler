@@ -30,6 +30,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `ServiceName` field in Network Firewall checks metadata [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
 - Update `entra_users_mfa_capable` check to use the correct resource name and ID [(#8288)](https://github.com/prowler-cloud/prowler/pull/8288)
 - Handle multiple services and severities while listing checks [(#8302)](https://github.com/prowler-cloud/prowler/pull/8302)
+- Handle `tenant_id` for m365 mutelist [(#8306)](https://github.com/prowler-cloud/prowler/pull/8306)
 
 ---
 
