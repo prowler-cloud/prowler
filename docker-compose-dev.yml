@@ -16,7 +16,7 @@ services:
     volumes:
       - "./api/src/backend:/home/prowler/backend"
       - "./api/pyproject.toml:/home/prowler/pyproject.toml"
-      - "/tmp/prowler_api_output:/tmp/prowler_api_output"
+      - "output:/tmp/prowler_api_output"
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,7 +87,7 @@ services:
       - path: .env
         required: false
     volumes:
-      - "/tmp/prowler_api_output:/tmp/prowler_api_output"
+      - "output:/tmp/prowler_api_output"
     depends_on:
       valkey:
         condition: service_healthy
@@ -115,3 +115,7 @@ services:
     entrypoint:
       - "../docker-entrypoint.sh"
       - "beat"
+
+volumes:
+  output:
+    driver: local
