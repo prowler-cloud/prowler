@@ -23,7 +23,7 @@ Prowler can be integrated with SAML SSO identity providers such as Okta to enabl
 -   **Just-in-Time Provisioning**: Users from the organization signing into Prowler for the first time will be automatically created.
 
 ???+ warning "Deactivate SAML"
-    Important: If the SAML configuration is removed, users who previously authenticated via SAML will need to reset their password to regain access using standard login. This is because their accounts no longer have valid authentication credentials without the SAML integration.
+    If the SAML configuration is removed, users who previously authenticated via SAML will need to reset their password to regain access using standard login. This is because their accounts no longer have valid authentication credentials without the SAML integration.
 
 ### Prerequisites
 
