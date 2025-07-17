@@ -74,7 +74,7 @@ For Prowler to correctly identify and provision users, the IdP must be configure
     ![IdP configuration](../img/saml/saml_attribute_statements.png)
 
 ???+ warning "Dynamic Updates"
-    These attributes are updated in Prowler each time a user logs in. Changes made in the IdP will be reflected in Prowler upon the user's next session.
+    These attributes are updated in Prowler each time a user logs in. Any changes made in the identity provider (IdP) will be reflected the next time the user logs in again.
 
 #### Step 5: Upload IdP Metadata to Prowler
 
