@@ -431,6 +431,7 @@ azure:
   shodan_api_key: null
 
   # Configurable minimal risk level for attack path notifications
+  # azure.defender_attack_path_notifications_properly_configured
   defender_attack_path_minimal_risk_level: "High"
 
   # Azure App Service
