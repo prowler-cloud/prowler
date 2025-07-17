@@ -27,14 +27,42 @@ const steps = [
   },
 ];
 
+const stepOverrides: Record<
+  string,
+  { index: number; title: string; description: string }
+> = {
+  "/providers/update-credentials": {
+    index: 2,
+    title: "Make sure the new credentials are valid",
+    description: "Valid credentials will take you back to the providers page",
+  },
+};
+
+const baseRouteToStepMap = Object.fromEntries(
+  steps.map((step, index) => [step.href, index]),
+);
+
+const routeToStepIndexMap: Record<string, number> = {
+  ...baseRouteToStepMap,
+  "/providers/update-credentials":
+    baseRouteToStepMap["/providers/add-credentials"],
+};
+
 export const WorkflowAddProvider = () => {
   const pathname = usePathname();
 
-  // Calculate current step based on pathname
-  const currentStepIndex = steps.findIndex((step) =>
-    pathname.endsWith(step.href),
-  );
-  const currentStep = currentStepIndex === -1 ? 0 : currentStepIndex;
+  const updatedSteps = steps.map((step, index) => {
+    const override = stepOverrides[pathname];
+    if (override && index === override.index) {
+      return {
+        ...step,
+        title: override.title,
+        description: override.description,
+      };
+    }
+    return step;
+  });
+  const currentStep = routeToStepIndexMap[pathname] ?? 0;
 
   return (
     <section className="max-w-sm">
@@ -63,7 +91,7 @@ export const WorkflowAddProvider = () => {
         hideProgressBars
         currentStep={currentStep}
         stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-prowler-blue-800 cursor-default"
-        steps={steps}
+        steps={updatedSteps}
       />
       <Spacer y={4} />
     </section>
