@@ -110,6 +110,9 @@ nav:
       - GitHub:
           - Authentication: tutorials/github/authentication.md
           - Getting Started: tutorials/github/getting-started-github.md
+      - MongoDB Atlas:
+          - Getting Started: tutorials/mongodbatlas/getting-started-mongodbatlas.md
+          - Authentication: tutorials/mongodbatlas/authentication.md
       - IaC:
           - Getting Started: tutorials/iac/getting-started-iac.md
   - Developer Guide:

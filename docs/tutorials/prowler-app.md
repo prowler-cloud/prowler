@@ -38,7 +38,7 @@ You will see the Overview page with no data yet, so let's start adding a provide
 ---
 
 ## **Step 3: Add a Provider**
-To run your first scan, you need to add a cloud provider account. Prowler App supports AWS, Azure, GCP, and Kubernetes.
+To run your first scan, you need to add a cloud provider account. Prowler App supports AWS, Azure, GCP, M365, Kubernetes and more.
 
 1. Navigate to `Settings > Cloud Providers`.
 2. Click `Add Account` to set up a new provider and provide your credentials:

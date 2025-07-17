@@ -26,22 +26,6 @@ def init_parser(self):
         metavar="ATLAS_PRIVATE_KEY",
     )
 
-    mongodbatlas_parser.add_argument(
-        "--atlas-organization-id",
-        nargs="?",
-        help="MongoDB Atlas organization ID to audit",
-        default=None,
-        metavar="ATLAS_ORGANIZATION_ID",
-    )
-
-    mongodbatlas_parser.add_argument(
-        "--atlas-project-id",
-        nargs="?",
-        help="MongoDB Atlas project ID to audit (if not specified, all projects will be audited)",
-        default=None,
-        metavar="ATLAS_PROJECT_ID",
-    )
-
 
 def validate_arguments(arguments):
     """Validate MongoDB Atlas provider arguments"""

@@ -1,6 +1,7 @@
 # Requirements
 
-Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#), [Azure SDK](https://azure.github.io/azure-sdk-for-python/) and [GCP API Python Client](https://github.com/googleapis/google-api-python-client/).
+Prowler has been written in Python using the SDKs and APIs of the providers it supports.
+
 ## AWS
 
 Since Prowler uses AWS Credentials under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence).
@@ -472,6 +473,58 @@ The required modules are:
 - [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0): Minimum version 3.6.0. Required for several checks across Exchange, Defender, and Purview.
 - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): Minimum version 6.6.0. Required for all Teams checks.
 - [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
+
+## MongoDB Atlas
+
+### Authentication
+
+Prowler for MongoDB Atlas uses HTTP Digest Authentication with API key pairs consisting of a public key and private key.
+
+MongoDB Atlas provider supports the following authentication methods:
+
+- **Command-line arguments**: Pass credentials directly via CLI flags
+- **Environment variables**: Set credentials as environment variables
+
+### Command-line Arguments
+
+```console
+prowler mongodbatlas --atlas-public-key <public_key> --atlas-private-key <private_key>
+```
+
+### Environment Variables
+
+```console
+export ATLAS_PUBLIC_KEY=<public_key>
+export ATLAS_PRIVATE_KEY=<private_key>
+prowler mongodbatlas
+```
+
+### Creating API Keys
+
+To create MongoDB Atlas API keys:
+
+1. **Log into MongoDB Atlas**: Access the MongoDB Atlas console
+2. **Navigate to Access Manager**: Go to the organization or project access management section
+3. **Select API Keys Tab**: Click on the "API Keys" tab
+4. **Create API Key**: Click "Create API Key" and provide a description
+5. **Set Permissions**: Project permissions are recommended for security
+6. **Save Credentials**: Note the public key and private key and store them securely
+
+### Needed Permissions
+
+MongoDB Atlas API keys require appropriate permissions to perform security checks:
+
+- **Project-level permissions**: Recommended for security scanning
+- **Organization-level permissions**: If scanning multiple projects
+- **Read access**: Required for all security checks
+- **Network access**: Ensure your IP is in the API access list
+
+### Configuration Options
+
+- `--atlas-organization-id`: Filter results to specific organization
+- `--atlas-project-id`: Filter results to specific project
+
+For more details about MongoDB Atlas authentication, see the [MongoDB Atlas Tutorial](../tutorials/mongodbatlas/getting-started-mongodbatlas.md).
 
 ## GitHub
 ### Authentication
