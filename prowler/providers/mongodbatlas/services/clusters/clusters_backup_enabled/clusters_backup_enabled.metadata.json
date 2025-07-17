@@ -1,0 +1,34 @@
+{
+  "Provider": "mongodbatlas",
+  "CheckID": "clusters_backup_enabled",
+  "CheckTitle": "Ensure MongoDB Atlas clusters have backup enabled",
+  "CheckType": [
+    "Backup"
+  ],
+  "ServiceName": "clusters",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:mongodbatlas:cluster:{project_id}:{cluster_name}",
+  "Severity": "high",
+  "ResourceType": "Cluster",
+  "Description": "Ensure MongoDB Atlas clusters have backup enabled to protect against data loss",
+  "Risk": "Without backup enabled, MongoDB Atlas clusters are vulnerable to data loss in case of failures, corruption, or accidental deletion",
+  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/clusters-get-one/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.atlas.mongodb.com/backup/",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable backup for MongoDB Atlas clusters by setting backupEnabled to true in the cluster configuration.",
+      "Url": "https://docs.atlas.mongodb.com/backup/"
+    }
+  },
+  "Categories": [
+    "backup"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check verifies that MongoDB Atlas clusters have backup enabled (backupEnabled=true) to ensure data protection and recovery capabilities."
+}

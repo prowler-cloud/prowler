@@ -1,0 +1,34 @@
+{
+  "Provider": "mongodbatlas",
+  "CheckID": "organizations_security_contact_defined",
+  "CheckTitle": "Ensure organization has a Security Contact defined",
+  "CheckType": [
+    "Security Contact"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:mongodbatlas:organization:{org_id}",
+  "Severity": "medium",
+  "ResourceType": "Organization",
+  "Description": "Ensure organization has a security contact defined to receive security-related notifications",
+  "Risk": "Without a security contact, the organization may not receive important security notifications and alerts",
+  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/organization-get-settings/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.atlas.mongodb.com/security-contact/",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set a security contact email address in the organization settings to receive security-related notifications.",
+      "Url": "https://docs.atlas.mongodb.com/security-contact/"
+    }
+  },
+  "Categories": [
+    "security-contacts"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check verifies that the organization has a security contact defined (securityContact field) to receive security-related notifications."
+}

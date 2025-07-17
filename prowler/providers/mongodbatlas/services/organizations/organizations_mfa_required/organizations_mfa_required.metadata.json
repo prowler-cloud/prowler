@@ -1,0 +1,34 @@
+{
+  "Provider": "mongodbatlas",
+  "CheckID": "organizations_mfa_required",
+  "CheckTitle": "Ensure organization requires MFA",
+  "CheckType": [
+    "Authentication"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:mongodbatlas:organization:{org_id}",
+  "Severity": "high",
+  "ResourceType": "Organization",
+  "Description": "Ensure organization requires users to set up Multi-Factor Authentication (MFA) before accessing the organization",
+  "Risk": "Without MFA requirement, user accounts are vulnerable to credential-based attacks and unauthorized access",
+  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/organization-get-settings/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.atlas.mongodb.com/security-multi-factor-authentication/",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable MFA requirement for the organization by setting multiFactorAuthRequired to true in the organization settings.",
+      "Url": "https://docs.atlas.mongodb.com/security-multi-factor-authentication/"
+    }
+  },
+  "Categories": [
+    "iam"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check verifies that the organization requires users to set up Multi-Factor Authentication (MFA) before accessing the organization (multiFactorAuthRequired=true)."
+}

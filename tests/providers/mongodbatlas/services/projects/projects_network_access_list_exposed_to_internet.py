@@ -21,6 +21,7 @@ class TestProjectsNetworkAccessListNotOpenToWorld:
             cluster_count=0,
             network_access_entries=network_entries,
             project_settings={},
+            audit_config={},
         )
 
     def _execute_check_with_project(self, project):
