@@ -130,7 +130,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
   return (
     <>
       <Card>
-        <CardHeader className="flex items-center justify-between">
+        <CardHeader className="flex items-center justify-between dark:bg-prowler-blue-400">
           <div className="flex flex-col gap-1">
             <h4 className="text-lg font-bold">API Keys</h4>
             <p className="text-xs text-gray-500">
@@ -199,7 +199,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
             </DialogContent>
           </Dialog>
         </CardHeader>
-        <CardBody>
+        <CardBody className="dark:bg-prowler-blue-400 p-3" >
           {activeKeys.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Key className="text-muted-foreground mb-4 h-12 w-12" />

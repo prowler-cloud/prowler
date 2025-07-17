@@ -1010,6 +1010,26 @@ class TenantViewSet(BaseTenantViewset):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
+    def initial(self, request, *args, **kwargs):
+        """Custom initial method to extract tenant_id from JWT without interfering with authentication."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Extract tenant_id from JWT token if available, but don't set up RLS yet
+        tenant_id_from_auth = request.auth.get('tenant_id') if request.auth else None
+        if tenant_id_from_auth:
+            logger.debug(f"Extracted tenant_id from JWT: {tenant_id_from_auth}")
+            # Store for later use but don't set up RLS transaction here
+            self._extracted_tenant_id = tenant_id_from_auth
+            # Set it on request for compatibility
+            request.tenant_id = tenant_id_from_auth
+        else:
+            logger.error(f"No tenant_id in auth - auth present: {bool(request.auth)}")
+            self._extracted_tenant_id = None
+        
+        # Call parent initial method AFTER our tenant_id extraction
+        super().initial(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = Tenant.objects.filter(membership__user=self.request.user)
         return queryset.prefetch_related("memberships")
@@ -1021,6 +1041,28 @@ class TenantViewSet(BaseTenantViewset):
         Membership.objects.create(
             user=self.request.user, tenant=tenant, role=Membership.RoleChoices.OWNER
         )
+        
+        # Create admin role for the new tenant
+        try:
+            Role.objects.using(MainRouter.admin_db).create(
+                name="admin",
+                tenant_id=tenant.id,
+                manage_users=True,
+                manage_account=True,
+                manage_billing=True,
+                manage_providers=True,
+                manage_integrations=True,
+                manage_scans=True,
+                unlimited_visibility=True,
+            )
+        except Exception as e:
+            # If role creation fails, clean up the tenant
+            try:
+                tenant.delete()
+            except:
+                pass
+            raise
+        
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
@@ -1047,81 +1089,187 @@ class TenantViewSet(BaseTenantViewset):
     def api_keys(self, request, pk=None):
         """List all API keys for the tenant."""
         tenant = self.get_object()
-        api_keys = APIKey.objects.filter(
-            tenant_id=tenant.id,
-            revoked_at__isnull=True
-        ).order_by("-created_at")
         
-        # Apply filtering using APIKeyFilter
-        filterset = APIKeyFilter(request.GET, queryset=api_keys, request=request)
-        filtered_queryset = filterset.qs
+        # Use conditional RLS transaction based on extracted tenant_id
+        extracted_tenant_id = getattr(self, '_extracted_tenant_id', None)
         
-        page = self.paginate_queryset(filtered_queryset)
-        if page is not None:
-            serializer = APIKeySerializer(page, many=True, context=self.get_serializer_context())
-            return self.get_paginated_response(serializer.data)
+        def _list_api_keys():
+            api_keys = APIKey.objects.filter(
+                tenant_id=tenant.id,
+                revoked_at__isnull=True
+            ).order_by("-created_at")
+            
+            # Apply filtering using APIKeyFilter
+            filterset = APIKeyFilter(request.GET, queryset=api_keys, request=request)
+            filtered_queryset = filterset.qs
+            
+            page = self.paginate_queryset(filtered_queryset)
+            if page is not None:
+                serializer = APIKeySerializer(page, many=True, context=self.get_serializer_context())
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = APIKeySerializer(filtered_queryset, many=True, context=self.get_serializer_context())
+            return Response(serializer.data)
         
-        serializer = APIKeySerializer(filtered_queryset, many=True, context=self.get_serializer_context())
-        return Response(serializer.data)
+        # Execute with or without RLS context
+        if extracted_tenant_id:
+            with rls_transaction(str(extracted_tenant_id)):
+                return _list_api_keys()
+        else:
+            return _list_api_keys()
 
     @action(detail=True, methods=["post"], url_path="api-keys/create", url_name="api-keys-create")
     def api_keys_create(self, request, pk=None):
         """Create a new API key for the tenant."""
-        tenant = self.get_object()
+        import logging
+        logger = logging.getLogger(__name__)
         
+        logger.debug(f"API key creation started for tenant pk: {pk}")
+        
+        # Bypass JSON:API validation by accessing raw request data
+        try:
+            # Get the raw JSON data to bypass DRF JSON:API type validation
+            import json
+            
+            # Try different ways to access the request body
+            raw_body = None
+            if hasattr(request, 'body') and request.body:
+                raw_body = request.body
+            elif hasattr(request, '_body') and request._body:
+                raw_body = request._body
+            elif hasattr(request, 'stream') and hasattr(request.stream, 'read'):
+                # For DRF, try to read from stream
+                try:
+                    raw_body = request.stream.read()
+                except:
+                    pass
+            
+            if raw_body:
+                request_data = json.loads(raw_body.decode('utf-8'))
+                logger.debug(f"Raw request body parsed successfully: {request_data}")
+                
+                # Extract attributes from JSON:API format if present
+                if 'data' in request_data and 'attributes' in request_data['data']:
+                    logger.debug("Extracting attributes from JSON:API format")
+                    request_data = request_data['data']['attributes']
+                    logger.debug(f"Extracted attributes: {request_data}")
+                
+            else:
+                logger.info("No request body found, trying to access request data directly")
+                # Fallback to accessing request.data but with manual JSON:API extraction
+                try:
+                    raw_data = dict(request.data)  # Convert to regular dict to avoid DRF validation
+                    if 'data' in raw_data and 'attributes' in raw_data['data']:
+                        request_data = raw_data['data']['attributes']
+                        logger.debug(f"Extracted from request.data: {request_data}")
+                    else:
+                        request_data = raw_data
+                        logger.debug(f"Using request.data as-is: {request_data}")
+                except Exception as e:
+                    logger.error(f"Could not access request.data: {e}")
+                    request_data = {}
+                    
+        except Exception as e:
+            logger.error(f"ERROR parsing request data: {type(e).__name__}: {e}")
+            # Final fallback - use empty data
+            request_data = {}
+        
+        try:
+            tenant = self.get_object()
+            logger.debug(f"Successfully retrieved tenant: {tenant.id}")
+        except Exception as e:
+            logger.error(f"Failed to get tenant object: {type(e).__name__}: {e}")
+            raise
+        
+        # Use RLS transaction conditionally based on extracted tenant_id
+        try:
+            # Use RLS transaction if we extracted a tenant_id from the JWT
+            extracted_tenant_id = getattr(self, '_extracted_tenant_id', None)
+            if extracted_tenant_id:
+                logger.debug(f"Using RLS transaction for extracted tenant: {extracted_tenant_id}")
+                with rls_transaction(str(extracted_tenant_id)):
+                    return self._create_api_key_with_context(request, tenant, logger, request_data)
+            else:
+                logger.debug(f"No extracted tenant_id, proceeding without RLS transaction")
+                return self._create_api_key_with_context(request, tenant, logger, request_data)
+        except Exception as e:
+            logger.error(f"Exception in api_keys_create: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise
+    
+    def _create_api_key_with_context(self, request, tenant, logger, request_data):
+        """Helper method to create API key with proper context."""
         # Create serializer with tenant context - override the request.tenant_id temporarily
         original_tenant_id = getattr(request, 'tenant_id', None)
         request.tenant_id = tenant.id
+        logger.debug(f"Set request.tenant_id to: {tenant.id}")
         
-        context = self.get_serializer_context()
-        
-        serializer = APIKeyCreateSerializer(data=request.data, context=context)
-        serializer.is_valid(raise_exception=True)
-        api_key = serializer.save()
-        
-        # Restore original tenant_id
-        if original_tenant_id is not None:
-            request.tenant_id = original_tenant_id
-        elif hasattr(request, 'tenant_id'):
-            delattr(request, 'tenant_id')
-        
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            context = self.get_serializer_context()
+            logger.debug(f"Got serializer context: {context}")
+            
+            serializer = APIKeyCreateSerializer(data=request_data, context=context)
+            logger.debug("Created serializer instance")
+            
+            logger.debug("About to call serializer.is_valid()")
+            is_valid = serializer.is_valid(raise_exception=False)
+            logger.debug(f"Serializer is_valid result: {is_valid}")
+            
+            if not is_valid:
+                logger.error(f"Serializer validation errors: {serializer.errors}")
+                raise ValidationError(serializer.errors)
+            
+            logger.debug("About to call serializer.save()")
+            api_key = serializer.save()
+            logger.debug(f"Successfully saved API key: {api_key.id}")
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        finally:
+            # Restore original tenant_id
+            if original_tenant_id is not None:
+                request.tenant_id = original_tenant_id
+            elif hasattr(request, 'tenant_id'):
+                delattr(request, 'tenant_id')
+            logger.debug("Restored original tenant_id")
 
     @action(detail=True, methods=["get"], url_path="api-keys/(?P<api_key_id>[^/.]+)", url_name="api-keys-retrieve")
     def api_keys_retrieve(self, request, pk=None, api_key_id=None):
         """Retrieve details of a specific API key."""
         tenant = self.get_object()
         
-        try:
-            api_key = APIKey.objects.get(
-                id=api_key_id,
-                tenant_id=tenant.id,
-                revoked_at__isnull=True
-            )
-        except APIKey.DoesNotExist:
-            raise NotFound("API key not found or has been revoked.")
-        
-        serializer = APIKeySerializer(api_key, context=self.get_serializer_context())
-        return Response(serializer.data)
+        with rls_transaction(str(tenant.id)):
+            try:
+                api_key = APIKey.objects.get(
+                    id=api_key_id,
+                    tenant_id=tenant.id,
+                    revoked_at__isnull=True
+                )
+            except APIKey.DoesNotExist:
+                raise NotFound("API key not found or has been revoked.")
+            
+            serializer = APIKeySerializer(api_key, context=self.get_serializer_context())
+            return Response(serializer.data)
 
     @action(detail=True, methods=["delete"], url_path="api-keys/(?P<api_key_id>[^/.]+)/revoke", url_name="api-keys-destroy")
     def api_keys_destroy(self, request, pk=None, api_key_id=None):
         """Revoke an API key."""
         tenant = self.get_object()
         
-        try:
-            api_key = APIKey.objects.get(
-                id=api_key_id,
-                tenant_id=tenant.id,
-                revoked_at__isnull=True
-            )
-        except APIKey.DoesNotExist:
-            raise NotFound("API key not found or has been revoked.")
-        
-        # Revoke the key
-        api_key.revoke()
-        
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        with rls_transaction(str(tenant.id)):
+            try:
+                api_key = APIKey.objects.get(
+                    id=api_key_id,
+                    tenant_id=tenant.id,
+                    revoked_at__isnull=True
+                )
+            except APIKey.DoesNotExist:
+                raise NotFound("API key not found or has been revoked.")
+            
+            # Revoke the key
+            api_key.revoke()
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(

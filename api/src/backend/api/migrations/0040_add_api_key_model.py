@@ -5,8 +5,9 @@ from django.db import migrations, models
 import django.db.models.deletion
 import uuid
 from uuid import uuid4
-from api.db_utils import generate_random_token, DB_PROWLER_USER
+from api.db_utils import generate_random_token, DB_PROWLER_USER, POSTGRES_TENANT_VAR
 import django.core.validators
+import api.rls
 
 
 class Migration(migrations.Migration):
@@ -45,19 +46,14 @@ class Migration(migrations.Migration):
             model_name='apikey',
             index=models.Index(fields=['tenant_id', 'prefix'], name='api_keys_tenant_prefix_idx'),
         ),
-        # Enable RLS and create policy for api_keys
-        migrations.RunSQL(
-            f"""
-            ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
-            CREATE POLICY rls_on_api_keys ON api_keys FOR ALL 
-            USING (tenant_id = current_setting('row_level_security.tenant_id')::uuid);
-            GRANT SELECT, INSERT, UPDATE, DELETE ON api_keys TO {DB_PROWLER_USER};
-            """,
-            reverse_sql=f"""
-            REVOKE ALL ON api_keys FROM {DB_PROWLER_USER};
-            DROP POLICY IF EXISTS rls_on_api_keys ON api_keys;
-            ALTER TABLE api_keys DISABLE ROW LEVEL SECURITY;
-            """
+        # Add RLS constraint for api_keys
+        migrations.AddConstraint(
+            model_name='apikey',
+            constraint=api.rls.RowLevelSecurityConstraint(
+                field='tenant_id',
+                name='rls_on_apikey',
+                statements=['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+            ),
         ),
         
         # Create APIKeyActivity model for comprehensive audit logging
@@ -110,18 +106,13 @@ class Migration(migrations.Migration):
             index=models.Index(fields=['tenant_id', 'api_key', 'source_ip', '-timestamp'], name='api_key_activity_incident_idx'),
         ),
         
-        # Enable RLS and create policy for api_key_activities
-        migrations.RunSQL(
-            f"""
-            ALTER TABLE api_key_activities ENABLE ROW LEVEL SECURITY;
-            CREATE POLICY rls_on_api_key_activities ON api_key_activities FOR ALL 
-            USING (tenant_id = current_setting('row_level_security.tenant_id')::uuid);
-            GRANT SELECT, INSERT, UPDATE, DELETE ON api_key_activities TO {DB_PROWLER_USER};
-            """,
-            reverse_sql=f"""
-            REVOKE ALL ON api_key_activities FROM {DB_PROWLER_USER};
-            DROP POLICY IF EXISTS rls_on_api_key_activities ON api_key_activities;
-            ALTER TABLE api_key_activities DISABLE ROW LEVEL SECURITY;
-            """
+        # Add RLS constraint for api_key_activities
+        migrations.AddConstraint(
+            model_name='apikeyactivity',
+            constraint=api.rls.RowLevelSecurityConstraint(
+                field='tenant_id',
+                name='rls_on_apikeyactivity',
+                statements=['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+            ),
         ),
     ] 

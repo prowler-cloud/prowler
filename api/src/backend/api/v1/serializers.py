@@ -1,7 +1,8 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils import timezone
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
@@ -389,8 +390,12 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
         return value
     
     def create(self, validated_data):
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Get tenant from context
         tenant_id = self.context['request'].tenant_id
+        logger.debug(f"Creating API key for tenant: {tenant_id}")
         
         # Retry logic for prefix collisions (very unlikely but possible)
         max_retries = 5
@@ -402,6 +407,8 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
             # Extract prefix from the raw key using the model method
             prefix = APIKey.extract_prefix(raw_key)
             
+            logger.debug(f"Attempt {attempt + 1}: Generated key with prefix: {prefix}")
+            
             try:
                 # Create the API key instance
                 api_key = APIKey.objects.create(
@@ -411,12 +418,15 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
                     **validated_data
                 )
                 
+                logger.debug(f"Successfully created API key with ID: {api_key.id}")
+                
                 # Store the raw key temporarily for the response
                 api_key._raw_key = raw_key
                 
                 return api_key
                 
-            except IntegrityError:
+            except IntegrityError as e:
+                logger.error(f"IntegrityError on attempt {attempt + 1}: {e}")
                 # Prefix collision occurred, try again
                 if attempt == max_retries - 1:
                     raise serializers.ValidationError(
