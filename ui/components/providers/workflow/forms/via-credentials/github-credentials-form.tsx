@@ -59,9 +59,7 @@ export const GitHubCredentialsForm = ({
         variant="bordered"
         isRequired
         isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.OAUTH_APP_TOKEN
-          ]
+          !!control._formState.errors[ProviderCredentialFields.OAUTH_APP_TOKEN]
         }
       />
     </div>
@@ -74,8 +72,7 @@ export const GitHubCredentialsForm = ({
           GitHub App
         </h3>
         <p className="text-xs text-default-500">
-          Use GitHub App credentials (both App ID and Private Key are
-          required)
+          Use GitHub App credentials (both App ID and Private Key are required)
         </p>
       </div>
       <CustomInput
@@ -223,7 +220,7 @@ export const GitHubCredentialsForm = ({
             Connect via Credentials
           </div>
           <div className="text-sm text-default-500">
-            Enter your GitHub credentials for the selected authentication method.
+            Enter your GitHub credentials for the selected authentication method
           </div>
         </div>
 
