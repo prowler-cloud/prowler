@@ -12,6 +12,7 @@ from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
     json_ocsf_file_suffix,
+    json_compliance_file_suffix,
     output_file_timestamp,
 )
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
@@ -53,6 +54,7 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
+from prowler.lib.outputs.compliance_json.compliance_json import ComplianceJSON
 
 logger = get_task_logger(__name__)
 
@@ -104,6 +106,7 @@ OUTPUT_FORMATS_MAPPING = {
         "kwargs": {},
     },
     "json-ocsf": {"class": OCSF, "suffix": json_ocsf_file_suffix, "kwargs": {}},
+    "json-compliance": {"class": ComplianceJSON, "suffix": json_compliance_file_suffix, "kwargs": {}},
     "html": {"class": HTML, "suffix": html_file_suffix, "kwargs": {"stats": {}}},
 }
 
