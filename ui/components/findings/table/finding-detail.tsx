@@ -4,6 +4,7 @@ import { Snippet } from "@nextui-org/react";
 import Link from "next/link";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
+import { CustomSection } from "@/components/ui/custom";
 import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
@@ -15,21 +16,6 @@ import { DeltaIndicator } from "./delta-indicator";
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
 };
-
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-    <h3 className="text-md font-medium text-gray-800 dark:text-prowler-theme-pale/90">
-      {title}
-    </h3>
-    {children}
-  </div>
-);
 
 // Add new utility function for duration formatting
 const formatDuration = (seconds: number) => {
@@ -87,7 +73,7 @@ export const FindingDetail = ({
       </div>
 
       {/* Check Metadata */}
-      <Section title="Finding Details">
+      <CustomSection title="Finding Details">
         <div className="flex flex-wrap gap-4">
           <EntityInfoShort
             cloudProvider={providerDetails.provider as ProviderType}
@@ -208,10 +194,10 @@ export const FindingDetail = ({
         <InfoField label="Categories">
           {attributes.check_metadata.categories?.join(", ") || "-"}
         </InfoField>
-      </Section>
+      </CustomSection>
 
       {/* Resource Details */}
-      <Section title="Resource Details">
+      <CustomSection title="Resource Details">
         <InfoField label="Resource ID" variant="simple">
           <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
             <span className="whitespace-pre-line text-xs">
@@ -257,10 +243,10 @@ export const FindingDetail = ({
             <DateWithTime inline dateTime={resource.updated_at || "-"} />
           </InfoField>
         </div>
-      </Section>
+      </CustomSection>
 
       {/* Add new Scan Details section */}
-      <Section title="Scan Details">
+      <CustomSection title="Scan Details">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
           <InfoField label="Resources Scanned">
@@ -296,7 +282,7 @@ export const FindingDetail = ({
             </InfoField>
           )}
         </div>
-      </Section>
+      </CustomSection>
     </div>
   );
 };
