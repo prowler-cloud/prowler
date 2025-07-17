@@ -12,17 +12,17 @@
   "ResourceType": "Cluster",
   "Description": "Ensure MongoDB Atlas clusters have authentication enabled to prevent unauthorized access",
   "Risk": "Without authentication enabled, MongoDB Atlas clusters may be vulnerable to unauthorized access, potentially exposing sensitive data or allowing malicious actions",
-  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/clusters-get-one/",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.atlas.mongodb.com/security-authentication/",
+      "Other": "https://www.mongodb.com/docs/atlas/security/config-db-auth/",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable authentication for MongoDB Atlas clusters by setting authEnabled to true in the cluster configuration.",
-      "Url": "https://docs.atlas.mongodb.com/security-authentication/"
+      "Url": "https://www.mongodb.com/docs/atlas/security/config-db-auth/"
     }
   },
   "Categories": [

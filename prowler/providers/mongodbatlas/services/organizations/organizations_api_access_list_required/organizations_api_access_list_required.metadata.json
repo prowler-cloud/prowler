@@ -12,17 +12,17 @@
   "ResourceType": "Organization",
   "Description": "Ensure organization requires API operations to originate from an IP Address added to the API access list",
   "Risk": "Without API access list requirement, API operations can originate from any IP address, increasing the risk of unauthorized access",
-  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/organization-get-settings/",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.atlas.mongodb.com/security-api-access-list/",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable API access list requirement for the organization by setting apiAccessListRequired to true in the organization settings.",
-      "Url": "https://docs.atlas.mongodb.com/security-api-access-list/"
+      "Url": "https://www.mongodb.com/docs/atlas/security/ip-access-list/"
     }
   },
   "Categories": [

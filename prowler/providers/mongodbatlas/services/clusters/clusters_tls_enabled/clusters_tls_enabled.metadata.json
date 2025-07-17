@@ -12,17 +12,17 @@
   "ResourceType": "Cluster",
   "Description": "Ensure MongoDB Atlas clusters have TLS authentication required to secure data in transit",
   "Risk": "Without TLS enabled, MongoDB Atlas clusters are vulnerable to man-in-the-middle attacks and data interception during transmission",
-  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/clusters-get-one/",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.atlas.mongodb.com/security-connection/",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable TLS for MongoDB Atlas clusters by setting sslEnabled to true in the cluster configuration.",
-      "Url": "https://docs.atlas.mongodb.com/security-connection/"
+      "Url": "https://www.mongodb.com/docs/atlas/setup-cluster-security/#encryption-in-transit"
     }
   },
   "Categories": [
