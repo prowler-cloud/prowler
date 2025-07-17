@@ -24,8 +24,10 @@ class organizations_service_account_secrets_expiration(Check):
         """
         findings = []
 
-        # Default maximum hours as specified in the ticket (configurable)
-        max_hours_threshold = 8
+        # Get configurable threshold from audit config, default to 8 hours
+        max_hours_threshold = organizations_client.audit_config.get(
+            "max_service_account_secret_validity_hours", 8
+        )
 
         for organization in organizations_client.organizations.values():
             report = CheckReportMongoDBAtlas(

@@ -20,6 +20,7 @@ class MongoDBAtlasService:
         self.provider = provider
         self.session = provider.session
         self.base_url = provider.session.base_url
+        self.audit_config = provider.audit_config
         self.auth = HTTPDigestAuth(
             provider.session.public_key, provider.session.private_key
         )

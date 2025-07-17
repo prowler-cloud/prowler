@@ -22,10 +22,11 @@ class TestOrganizationsServiceAccountSecretsExpiration:
             settings=settings,
         )
 
-    def _execute_check_with_organization(self, organization):
+    def _execute_check_with_organization(self, organization, audit_config=None):
         """Helper method to execute check with an organization"""
         organizations_client = MagicMock()
         organizations_client.organizations = {ORG_ID: organization}
+        organizations_client.audit_config = audit_config or {}
 
         with (
             patch(
@@ -86,5 +87,30 @@ class TestOrganizationsServiceAccountSecretsExpiration:
         assert reports[0].status == "FAIL"
         assert (
             "does not have a maximum period expiration configured"
+            in reports[0].status_extended
+        )
+
+    def test_check_with_custom_threshold_from_config(self):
+        """Test check with custom threshold from audit config"""
+        organization = self._create_organization(max_validity_hours=12)
+        audit_config = {"max_service_account_secret_validity_hours": 24}
+        reports = self._execute_check_with_organization(organization, audit_config)
+
+        assert len(reports) == 1
+        assert reports[0].status == "PASS"
+        assert (
+            "within the recommended threshold of 24 hours" in reports[0].status_extended
+        )
+
+    def test_check_with_custom_threshold_exceeds_config(self):
+        """Test check where actual hours exceed custom threshold"""
+        organization = self._create_organization(max_validity_hours=36)
+        audit_config = {"max_service_account_secret_validity_hours": 24}
+        reports = self._execute_check_with_organization(organization, audit_config)
+
+        assert len(reports) == 1
+        assert reports[0].status == "FAIL"
+        assert (
+            "exceeds the recommended threshold of 24 hours"
             in reports[0].status_extended
         )

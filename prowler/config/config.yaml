@@ -525,3 +525,8 @@ m365:
 github:
   # github.repository_inactive_not_archived --> CIS recommends 180 days (6 months)
   inactive_not_archived_days_threshold: 180
+
+# MongoDB Atlas Configuration
+mongodbatlas:
+  # mongodbatlas.organizations_service_account_secrets_expiration --> Maximum hours for service account secrets validity
+  max_service_account_secret_validity_hours: 8
