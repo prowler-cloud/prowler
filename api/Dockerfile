@@ -44,6 +44,9 @@ USER prowler
 
 WORKDIR /home/prowler
 
+# Ensure output directory exists
+RUN mkdir -p /tmp/prowler_api_output
+
 COPY pyproject.toml ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
