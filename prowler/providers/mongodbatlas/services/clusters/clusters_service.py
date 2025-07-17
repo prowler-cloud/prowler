@@ -18,6 +18,8 @@ class Cluster(BaseModel):
     state_name: str
     encryption_at_rest_provider: Optional[str] = None
     backup_enabled: bool = False
+    auth_enabled: bool = False
+    ssl_enabled: bool = False
     provider_settings: Optional[dict] = {}
     replication_specs: Optional[List[dict]] = []
     disk_size_gb: Optional[float] = None
@@ -134,6 +136,8 @@ class Clusters(MongoDBAtlasService):
             state_name=cluster_data.get("stateName", ""),
             encryption_at_rest_provider=encryption_provider,
             backup_enabled=backup_enabled,
+            auth_enabled=cluster_data.get("authEnabled", False),
+            ssl_enabled=cluster_data.get("sslEnabled", False),
             provider_settings=provider_settings,
             replication_specs=replication_specs,
             disk_size_gb=cluster_data.get("diskSizeGB"),

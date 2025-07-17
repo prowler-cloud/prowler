@@ -31,6 +31,8 @@ class TestClustersEncryptionAtRestEnabled:
             state_name=STATE_NAME,
             encryption_at_rest_provider=encryption_at_rest_provider,
             backup_enabled=False,
+            auth_enabled=False,
+            ssl_enabled=False,
             provider_settings=provider_settings,
             replication_specs=[],
             paused=paused,

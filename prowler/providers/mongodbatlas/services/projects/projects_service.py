@@ -17,6 +17,7 @@ class Project(BaseModel):
     cluster_count: int
     network_access_entries: List[MongoDBAtlasNetworkAccessEntry] = []
     project_settings: Optional[dict] = {}
+    audit_config: Optional[dict] = {}
 
 
 class Projects(MongoDBAtlasService):
@@ -84,6 +85,9 @@ class Projects(MongoDBAtlasService):
         # Get project settings
         project_settings = self._get_project_settings(project_id)
 
+        # Get audit configuration
+        audit_config = self._get_audit_config(project_id)
+
         return Project(
             id=project_id,
             name=project_data.get("name", ""),
@@ -92,6 +96,7 @@ class Projects(MongoDBAtlasService):
             cluster_count=cluster_count,
             network_access_entries=network_access_entries,
             project_settings=project_settings,
+            audit_config=audit_config,
         )
 
     def _get_cluster_count(self, project_id: str) -> int:
@@ -163,5 +168,24 @@ class Projects(MongoDBAtlasService):
         except Exception as error:
             logger.error(
                 f"Error getting project settings for project {project_id}: {error}"
+            )
+            return {}
+
+    def _get_audit_config(self, project_id: str) -> dict:
+        """
+        Get audit configuration for a project
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            dict: Audit configuration
+        """
+        try:
+            audit_config = self._make_request("GET", f"/groups/{project_id}/auditLog")
+            return audit_config
+        except Exception as error:
+            logger.error(
+                f"Error getting audit configuration for project {project_id}: {error}"
             )
             return {}
