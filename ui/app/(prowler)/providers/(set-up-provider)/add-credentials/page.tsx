@@ -9,6 +9,7 @@ import {
   AddViaServiceAccountForm,
   SelectViaGCP,
 } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
@@ -26,9 +27,20 @@ export default function AddCredentialsPage({ searchParams }: Props) {
         <SelectViaGCP initialVia={searchParams.via} />
       )}
 
+      {searchParams.type === "github" && !searchParams.via && (
+        <SelectViaGitHub initialVia={searchParams.via} />
+      )}
+
       {((searchParams.type === "aws" && searchParams.via === "credentials") ||
         (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
+        (searchParams.type === "github" &&
+          searchParams.via === "personal_access_token") ||
+        (searchParams.type === "github" &&
+          searchParams.via === "oauth_app_token") ||
+        (searchParams.type === "github" && searchParams.via === "github_app") ||
+        (searchParams.type !== "aws" &&
+          searchParams.type !== "gcp" &&
+          searchParams.type !== "github")) && (
         <AddViaCredentialsForm searchParams={searchParams} />
       )}
 

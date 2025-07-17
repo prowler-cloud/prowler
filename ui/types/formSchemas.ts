@@ -68,9 +68,12 @@ export const awsCredentialsTypeSchema = z.object({
 
 export const addProviderFormSchema = z
   .object({
-    providerType: z.enum(["aws", "azure", "gcp", "kubernetes", "m365"], {
-      required_error: "Please select a provider type",
-    }),
+    providerType: z.enum(
+      ["aws", "azure", "gcp", "kubernetes", "m365", "github"],
+      {
+        required_error: "Please select a provider type",
+      },
+    ),
   })
   .and(
     z.discriminatedUnion("providerType", [
@@ -101,6 +104,11 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
+      }),
+      z.object({
+        providerType: z.literal("github"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
       }),
     ]),
   );
@@ -164,7 +172,22 @@ export const addCredentialsFormSchema = (providerType: string) =>
                     [ProviderCredentialFields.USER]: z.string().optional(),
                     [ProviderCredentialFields.PASSWORD]: z.string().optional(),
                   }
-                : {}),
+                : providerType === "github"
+                  ? {
+                      [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]: z
+                        .string()
+                        .optional(),
+                      [ProviderCredentialFields.OAUTH_APP_TOKEN]: z
+                        .string()
+                        .optional(),
+                      [ProviderCredentialFields.GITHUB_APP_ID]: z
+                        .number()
+                        .optional(),
+                      [ProviderCredentialFields.GITHUB_APP_KEY]: z
+                        .string()
+                        .optional(),
+                    }
+                  : {}),
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {

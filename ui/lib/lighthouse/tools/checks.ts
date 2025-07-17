@@ -19,7 +19,7 @@ export const getProviderChecksTool = tool(
   {
     name: "getProviderChecks",
     description:
-      "Returns a list of available checks for a specific provider (aws, gcp, azure, kubernetes). Allows filtering by service, severity, and compliance framework ID. If no filters are provided, all checks will be returned.",
+      "Returns a list of available checks for a specific provider (aws, gcp, azure, kubernetes, github). Allows filtering by service, severity, and compliance framework ID. If no filters are provided, all checks will be returned.",
     schema: checkSchema,
   },
 );

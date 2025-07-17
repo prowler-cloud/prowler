@@ -45,6 +45,11 @@ const getProviderFieldDetails = (providerType?: string) => {
         label: "Domain ID",
         placeholder: "e.g. your-domain.onmicrosoft.com",
       };
+    case "github":
+      return {
+        label: "Username",
+        placeholder: "e.g. your-github-username",
+      };
     default:
       return {
         label: "Provider UID",

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { CredentialsUpdateInfo } from "@/components/providers";
+import { CredentialsUpdateInfo } from "@/components/providers/credentials-update-info";
 import {
   UpdateViaCredentialsForm,
   UpdateViaRoleForm,
@@ -20,7 +20,9 @@ interface Props {
 export default function UpdateCredentialsPage({ searchParams }: Props) {
   return (
     <>
-      {(searchParams.type === "aws" || searchParams.type === "gcp") &&
+      {(searchParams.type === "aws" ||
+        searchParams.type === "gcp" ||
+        searchParams.type === "github") &&
         !searchParams.via && (
           <CredentialsUpdateInfo
             providerType={searchParams.type}
@@ -30,7 +32,14 @@ export default function UpdateCredentialsPage({ searchParams }: Props) {
 
       {((searchParams.type === "aws" && searchParams.via === "credentials") ||
         (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
+        (searchParams.type === "github" &&
+          searchParams.via === "personal_access_token") ||
+        (searchParams.type === "github" &&
+          searchParams.via === "oauth_app_token") ||
+        (searchParams.type === "github" && searchParams.via === "github_app") ||
+        (searchParams.type !== "aws" &&
+          searchParams.type !== "gcp" &&
+          searchParams.type !== "github")) && (
         <UpdateViaCredentialsForm searchParams={searchParams} />
       )}
 

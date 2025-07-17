@@ -1,4 +1,10 @@
-export type ProviderType = "aws" | "azure" | "m365" | "gcp" | "kubernetes";
+export type ProviderType =
+  | "aws"
+  | "azure"
+  | "m365"
+  | "gcp"
+  | "kubernetes"
+  | "github";
 
 export interface ProviderProps {
   id: string;
