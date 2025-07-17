@@ -12,17 +12,17 @@
   "ResourceType": "Organization",
   "Description": "Ensure organization requires users to set up Multi-Factor Authentication (MFA) before accessing the organization",
   "Risk": "Without MFA requirement, user accounts are vulnerable to credential-based attacks and unauthorized access",
-  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/organization-get-settings/",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.atlas.mongodb.com/security-multi-factor-authentication/",
+      "Other": "https://www.mongodb.com/docs/atlas/security-multi-factor-authentication/",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable MFA requirement for the organization by setting multiFactorAuthRequired to true in the organization settings.",
-      "Url": "https://docs.atlas.mongodb.com/security-multi-factor-authentication/"
+      "Url": "https://www.mongodb.com/docs/atlas/security-multi-factor-authentication/"
     }
   },
   "Categories": [

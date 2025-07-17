@@ -12,17 +12,17 @@
   "ResourceType": "Cluster",
   "Description": "Ensure MongoDB Atlas clusters have backup enabled to protect against data loss",
   "Risk": "Without backup enabled, MongoDB Atlas clusters are vulnerable to data loss in case of failures, corruption, or accidental deletion",
-  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/clusters-get-one/",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.atlas.mongodb.com/backup/",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable backup for MongoDB Atlas clusters by setting backupEnabled to true in the cluster configuration.",
-      "Url": "https://docs.atlas.mongodb.com/backup/"
+      "Url": "https://www.mongodb.com/docs/atlas/backup-restore-cluster/"
     }
   },
   "Categories": [

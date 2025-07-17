@@ -12,17 +12,17 @@
   "ResourceType": "Project",
   "Description": "Ensure database auditing is enabled to track database operations and security events",
   "Risk": "Without auditing enabled, security events and database operations are not logged, making it difficult to detect unauthorized access or troubleshoot issues",
-  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/auditing-get-configuration/",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.atlas.mongodb.com/database-auditing/",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable database auditing for the MongoDB Atlas project by configuring audit filters and destinations.",
-      "Url": "https://docs.atlas.mongodb.com/database-auditing/"
+      "Url": "https://www.mongodb.com/docs/atlas/database-auditing/"
     }
   },
   "Categories": [

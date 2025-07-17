@@ -12,17 +12,17 @@
   "ResourceType": "Organization",
   "Description": "Ensure organization has a security contact defined to receive security-related notifications",
   "Risk": "Without a security contact, the organization may not receive important security notifications and alerts",
-  "RelatedUrl": "https://www.mongodb.com/docs/atlas/reference/api/organization-get-settings/",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.atlas.mongodb.com/security-contact/",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Set a security contact email address in the organization settings to receive security-related notifications.",
-      "Url": "https://docs.atlas.mongodb.com/security-contact/"
+      "Url": "https://www.mongodb.com/docs/atlas/tutorial/manage-organization-settings/#add-security-contact-information"
     }
   },
   "Categories": [
