@@ -27,7 +27,7 @@ export default auth((req: NextRequest & { auth: any }) => {
     const permissions = user.permissions;
 
     if (pathname.startsWith("/billing") && !permissions.manage_billing) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/profile", req.url));
     }
   }
 
