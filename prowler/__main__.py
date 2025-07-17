@@ -259,7 +259,7 @@ def prowler():
                 checks_to_execute, excluded_checks
             )
 
-        # Exclude checks if -E/--excluded-checks-file
+        # Exclude checks if --excluded-checks-file
         if excluded_checks_file:
             excluded_checks_from_file = parse_checks_from_file(
                 excluded_checks_file, provider
