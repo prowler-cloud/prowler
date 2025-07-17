@@ -12,6 +12,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_ensure_using_approved_images` check for Azure provider [(#8168)](https://github.com/prowler-cloud/prowler/pull/8168)
 - `vm_scaleset_associated_load_balancer` check for Azure provider [(#8181)](https://github.com/prowler-cloud/prowler/pull/8181)
 - `defender_attack_path_notifications_properly_configured` check for Azure provider [(#8245)](https://github.com/prowler-cloud/prowler/pull/8245)
+- `entra_intune_enrollment_sign_in_frequency_every_time` check for M365 provider [(#8223)](https://github.com/prowler-cloud/prowler/pull/8223)
+- Support for remote repository scanning in IaC provider [(#8193)](https://github.com/prowler-cloud/prowler/pull/8193)
+- Add `test_connection` method to GitHub provider [(#8248)](https://github.com/prowler-cloud/prowler/pull/8248)
 
 ### Changed
 - Refactor the Azure Defender get security contact configuration method to use the API REST endpoint instead of the SDK [(#8241)](https://github.com/prowler-cloud/prowler/pull/8241)
