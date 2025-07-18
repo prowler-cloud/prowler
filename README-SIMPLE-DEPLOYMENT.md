@@ -122,19 +122,22 @@ chmod +x devops/setup-prowler.sh
 If you prefer manual control:
 
 ```bash
+# Install Python3 and cryptography (needed for Fernet key generation)
+sudo apt install -y python3 python3-cryptography
+
 # Create necessary directories
 mkdir -p _data/{postgres,valkey,backups,grafana,prometheus}
 
-# Generate environment file
-cat > .env << 'EOF'
+# Generate environment file with proper encryption key
+cat > .env << EOF
 # Database
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 POSTGRES_DB=prowler_db
 POSTGRES_ADMIN_USER=prowler
-POSTGRES_ADMIN_PASSWORD=$(openssl rand -base64 32)
+POSTGRES_ADMIN_PASSWORD=$(openssl rand -base64 24)
 POSTGRES_USER=prowler_user
-POSTGRES_PASSWORD=$(openssl rand -base64 32)
+POSTGRES_PASSWORD=$(openssl rand -base64 24)
 
 # Cache
 VALKEY_HOST=valkey
@@ -148,7 +151,7 @@ DJANGO_DEBUG=False
 DJANGO_SETTINGS_MODULE=config.django.production
 DJANGO_TOKEN_SIGNING_KEY=$(openssl rand -base64 32)
 DJANGO_TOKEN_VERIFYING_KEY=$(openssl rand -base64 32)
-DJANGO_SECRETS_ENCRYPTION_KEY=$(openssl rand -base64 32)
+DJANGO_SECRETS_ENCRYPTION_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
 
 # UI
 SITE_URL=http://$(curl -s ifconfig.me):3000
@@ -284,7 +287,44 @@ docker stats
 
 ### Common Issues
 
-1. **Services not starting**:
+1. **ALLOWED_HOSTS error** (most common):
+   ```bash
+   # Error: "Invalid HTTP_HOST header: 'X.X.X.X:8080'. You may need to add 'X.X.X.X' to ALLOWED_HOSTS."
+   
+   # Quick Fix: Add your public IP to ALLOWED_HOSTS
+   PUBLIC_IP=$(curl -s ifconfig.me)
+   sed -i "s/DJANGO_ALLOWED_HOSTS=.*/DJANGO_ALLOWED_HOSTS=*,localhost,127.0.0.1,$PUBLIC_IP,prowler-api/" .env
+   
+   # Restart services
+   docker-compose restart api
+   ```
+
+2. **Fernet key error**:
+   ```bash
+   # Error: "Fernet key must be 32 url-safe base64-encoded bytes"
+   
+   # Quick Fix: Install cryptography via system package manager
+   sudo apt install -y python3-cryptography
+   
+   # Generate proper Fernet key
+   NEW_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+   
+   # Update .env file
+   sed -i "s/DJANGO_SECRETS_ENCRYPTION_KEY=.*/DJANGO_SECRETS_ENCRYPTION_KEY=$NEW_KEY/" .env
+   
+   # Restart services
+   docker-compose down && docker-compose up -d
+   ```
+   
+   **Alternative Fix (if python3-cryptography not available)**:
+   ```bash
+   # Use openssl to generate a proper base64 key
+   NEW_KEY=$(openssl rand -base64 32)
+   sed -i "s/DJANGO_SECRETS_ENCRYPTION_KEY=.*/DJANGO_SECRETS_ENCRYPTION_KEY=$NEW_KEY/" .env
+   docker-compose down && docker-compose up -d
+   ```
+
+3. **Services not starting**:
    ```bash
    # Check logs
    docker-compose logs
@@ -293,14 +333,14 @@ docker stats
    docker-compose restart
    ```
 
-2. **Port conflicts**:
+4. **Port conflicts**:
    ```bash
    # Check what's using ports
    sudo netstat -tlnp | grep :3000
    sudo netstat -tlnp | grep :8080
    ```
 
-3. **Memory issues**:
+5. **Memory issues**:
    ```bash
    # Check memory usage
    free -h
@@ -308,7 +348,7 @@ docker stats
    # If low memory, upgrade instance to t3.large
    ```
 
-4. **Database connection issues**:
+6. **Database connection issues**:
    ```bash
    # Check database logs
    docker-compose logs postgres

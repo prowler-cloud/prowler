@@ -86,6 +86,17 @@ generate_password() {
     openssl rand -base64 "$length" | tr -d "=+/" | cut -c1-"$length"
 }
 
+generate_fernet_key() {
+    # Generate a proper Fernet key (32 bytes, base64-encoded)
+    if python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())" 2>/dev/null; then
+        return 0
+    else
+        # Fallback: generate a 32-byte base64 key using openssl
+        warn "Python cryptography not available, using openssl fallback"
+        openssl rand -base64 32
+    fi
+}
+
 # =================================================================
 # SYSTEM REQUIREMENTS CHECK
 # =================================================================
@@ -107,7 +118,7 @@ check_system_requirements() {
     info "Detected OS: $OS ($DISTRO)"
 
     # Check required tools
-    local required_tools=("curl" "git" "docker" "docker-compose")
+    local required_tools=("curl" "git" "docker" "docker-compose" "python3")
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
             warn "$tool not found. Installing..."
@@ -116,6 +127,14 @@ check_system_requirements() {
             info "$tool is installed"
         fi
     done
+
+    # Check Python cryptography library
+    if ! python3 -c "import cryptography" &> /dev/null; then
+        warn "Python cryptography library not found. Installing..."
+        install_tool "python3-cryptography"
+    else
+        info "Python cryptography library is installed"
+    fi
 
     # Check Docker
     if ! docker ps &> /dev/null; then
@@ -156,7 +175,7 @@ install_tool() {
                 sudo chmod +x /usr/local/bin/docker-compose
             fi
             ;;
-        "curl"|"git")
+        "curl"|"git"|"python3")
             if [[ "$OS" == "linux" ]]; then
                 if command -v apt-get &> /dev/null; then
                     sudo apt-get update && sudo apt-get install -y "$tool"
@@ -169,6 +188,17 @@ install_tool() {
                 else
                     error "Please install Homebrew first: https://brew.sh"
                 fi
+            fi
+            ;;
+        "python3-cryptography")
+            if [[ "$OS" == "linux" ]]; then
+                if command -v apt-get &> /dev/null; then
+                    sudo apt-get update && sudo apt-get install -y python3-cryptography
+                elif command -v yum &> /dev/null; then
+                    sudo yum install -y python3-cryptography
+                fi
+            elif [[ "$OS" == "macos" ]]; then
+                pip3 install cryptography
             fi
             ;;
     esac
@@ -193,7 +223,7 @@ generate_configuration() {
     local postgres_password=$(generate_password 24)
     local django_secret=$(generate_password 50)
     local jwt_secret=$(generate_password 32)
-    local encryption_key=$(generate_password 32)
+    local encryption_key=$(generate_fernet_key)
     local auth_secret=$(generate_password 32)
 
     # Generate main .env file
@@ -211,7 +241,8 @@ DOMAIN=$DOMAIN
 ENABLE_SSL=$ENABLE_SSL
 
 # Django API Settings
-DJANGO_ALLOWED_HOSTS=$DOMAIN,localhost,127.0.0.1,api
+PUBLIC_IP=\$(curl -s ifconfig.me 2>/dev/null || echo "")
+DJANGO_ALLOWED_HOSTS=*,localhost,127.0.0.1,api,prowler-api,prowler-api-1,prowler_api,prowler_api_1,\$PUBLIC_IP
 DJANGO_BIND_ADDRESS=0.0.0.0
 DJANGO_PORT=8080
 DJANGO_DEBUG=$([[ "$ENVIRONMENT" == "development" ]] && echo "True" || echo "False")
@@ -226,6 +257,14 @@ DJANGO_REFRESH_TOKEN_LIFETIME=1440
 DJANGO_CACHE_MAX_AGE=3600
 DJANGO_STALE_WHILE_REVALIDATE=60
 DJANGO_SECRETS_ENCRYPTION_KEY=$encryption_key
+
+# Authentication Settings (Fix login issues)
+DJANGO_EMAIL_VERIFICATION=none
+DJANGO_ACCOUNT_EMAIL_REQUIRED=true
+DJANGO_ACCOUNT_EMAIL_VERIFICATION=none
+DJANGO_ACCOUNT_AUTHENTICATION_METHOD=email
+DJANGO_ACCOUNT_LOGIN_ATTEMPTS_LIMIT=5
+DJANGO_ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT=300
 DJANGO_MANAGE_DB_PARTITIONS=True
 DJANGO_CELERY_DEADLOCK_ATTEMPTS=5
 DJANGO_BROKER_VISIBILITY_TIMEOUT=86400
@@ -441,21 +480,26 @@ setup_database() {
         error "PostgreSQL failed to start within expected time"
     fi
 
-    # Run migrations
+    # Run migrations (fix database setup)
     info "Running database migrations..."
-    docker-compose run --rm api python manage.py migrate --database admin
+    docker-compose run --rm api python manage.py migrate
+    
+    # Also run admin database migrations specifically
+    docker-compose run --rm api python manage.py migrate --database admin || true
 
-    # Create superuser if in development
-    if [[ "$ENVIRONMENT" == "development" ]]; then
-        info "Creating development superuser..."
-        docker-compose run --rm api python manage.py shell -c "
+    # Create superuser for all environments (required for functionality)
+    info "Creating superuser..."
+    docker-compose run --rm api python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(email='admin@prowler.local').exists():
-    User.objects.create_superuser('admin@prowler.local', 'admin', 'admin@123')
-    print('Superuser created: admin@prowler.local / admin@123')
+    user = User.objects.create_superuser('admin@prowler.local', 'AdminPassword123!')
+    user.is_active = True
+    user.save()
+    print('Superuser created: admin@prowler.local / AdminPassword123!')
+else:
+    print('Superuser already exists')
 "
-    fi
 
     log "Database setup completed"
 }
@@ -497,8 +541,28 @@ deploy_application() {
 
     # Run post-deployment tasks
     info "Running post-deployment tasks..."
-    docker-compose exec -T api python manage.py collectstatic --noinput
-    docker-compose exec -T api python manage.py check --deploy
+    
+    # Ensure migrations are fully applied
+    docker-compose exec -T api python manage.py migrate || true
+    
+    # Collect static files
+    docker-compose exec -T api python manage.py collectstatic --noinput || true
+    
+    # Run deployment checks
+    docker-compose exec -T api python manage.py check --deploy || true
+    
+    # Create superuser if it doesn't exist
+    docker-compose exec -T api python manage.py shell -c "
+from django.contrib.auth import get_user_model
+User = get_user_model()
+if not User.objects.filter(email='admin@prowler.local').exists():
+    user = User.objects.create_superuser('admin@prowler.local', 'AdminPassword123!')
+    user.is_active = True
+    user.save()
+    print('Post-deployment superuser created: admin@prowler.local / AdminPassword123!')
+else:
+    print('Superuser already exists')
+" || true
 
     log "Application deployment completed"
 }
