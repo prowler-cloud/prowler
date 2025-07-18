@@ -36,6 +36,9 @@ export const editScanFormSchema = (currentName: string) =>
       .refine((val) => val === "" || val.length >= 3, {
         message: "The alias must be empty or have at least 3 characters.",
       })
+      .refine((val) => val === "" || val.length <= 32, {
+        message: "The alias must not exceed 32 characters.",
+      })
       .refine((val) => val !== currentName, {
         message: "The new name must be different from the current one.",
       })
