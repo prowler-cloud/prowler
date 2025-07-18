@@ -9,9 +9,9 @@ This guide provides step-by-step instructions to deploy Prowler on AWS using Ubu
 git clone https://github.com/prowler-cloud/prowler.git
 cd prowler
 
-# Run automated setup
+# Run automated setup (IP-based access)
 chmod +x devops/setup-prowler.sh
-./devops/setup-prowler.sh -t cloud -e production -d your-domain.com -s -m -b -a
+./devops/setup-prowler.sh -t cloud -e production -m -b -a
 ```
 
 ## 📋 Prerequisites
@@ -21,13 +21,15 @@ chmod +x devops/setup-prowler.sh
 - **Memory**: Minimum 8GB RAM (16GB recommended)
 - **Storage**: Minimum 50GB free disk space
 - **Network**: Stable internet connection
-- **Domain**: Registered domain name for remote access
 
 ### AWS Requirements
 - **AWS Account** with appropriate permissions
 - **AWS CLI** configured with access keys
-- **Domain Management** (Route 53 or external DNS provider)
-- **SSL Certificate** (ACM or Let's Encrypt)
+- **EC2 Key Pair** for SSH access (optional)
+
+### Optional Requirements
+- **Domain**: Registered domain name (only if you want custom domain access)
+- **SSL Certificate** (ACM or Let's Encrypt - only for custom domains)
 
 ## 🛠️ System Setup
 
@@ -115,9 +117,10 @@ aws s3 mb s3://prowler-terraform-state-$(date +%s) --region us-east-1
 aws s3api put-bucket-versioning --bucket prowler-terraform-state-$(date +%s) --versioning-configuration Status=Enabled
 ```
 
-### 3. Request SSL Certificate
+### 3. Request SSL Certificate (Optional - For Custom Domains)
 
 ```bash
+# Only needed if you want to use a custom domain
 # Request SSL certificate through ACM
 aws acm request-certificate \
     --domain-name your-domain.com \
@@ -150,14 +153,10 @@ cat > deployment.env << EOF
 AWS_REGION=us-east-1
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
-# Domain Configuration
-DOMAIN_NAME=your-domain.com
-CERTIFICATE_ARN=arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
-
 # Deployment Settings
 ENVIRONMENT=production
 DEPLOYMENT_TYPE=cloud
-ENABLE_SSL=true
+ENABLE_SSL=false
 ENABLE_MONITORING=true
 BACKUP_ENABLED=true
 AUTO_SCALE=true
@@ -172,6 +171,11 @@ ELASTICACHE_NODE_TYPE=cache.t3.micro
 # Scaling Configuration
 MIN_CAPACITY=2
 MAX_CAPACITY=10
+
+# Optional: Custom Domain Configuration (uncomment if using domain)
+# DOMAIN_NAME=your-domain.com
+# CERTIFICATE_ARN=arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
+# ENABLE_SSL=true
 EOF
 
 # Load environment variables
@@ -187,12 +191,12 @@ cd devops/terraform
 # Initialize Terraform
 terraform init
 
-# Create terraform.tfvars file
+# Create terraform.tfvars file (IP-based access)
 cat > terraform.tfvars << EOF
 environment = "production"
 project_name = "prowler"
-domain_name = "$DOMAIN_NAME"
-certificate_arn = "$CERTIFICATE_ARN"
+domain_name = "prowler.local"
+certificate_arn = ""
 enable_auto_scaling = true
 min_capacity = 2
 max_capacity = 10
@@ -201,6 +205,21 @@ db_allocated_storage = 100
 elasticache_node_type = "cache.t3.micro"
 vpc_cidr = "10.0.0.0/16"
 EOF
+
+# If using custom domain, override with:
+# cat > terraform.tfvars << EOF
+# environment = "production"
+# project_name = "prowler"
+# domain_name = "$DOMAIN_NAME"
+# certificate_arn = "$CERTIFICATE_ARN"
+# enable_auto_scaling = true
+# min_capacity = 2
+# max_capacity = 10
+# db_instance_class = "db.t3.medium"
+# db_allocated_storage = 100
+# elasticache_node_type = "cache.t3.micro"
+# vpc_cidr = "10.0.0.0/16"
+# EOF
 
 # Plan deployment
 terraform plan
@@ -212,32 +231,44 @@ terraform apply -auto-approve
 terraform output
 ```
 
-### 4. Configure DNS
+### 4. Get Application Access Information
 
 ```bash
 # Get the load balancer DNS name from Terraform output
 ALB_DNS=$(terraform output -raw load_balancer_dns)
 
-# Create DNS record (using Route 53 as example)
-aws route53 change-resource-record-sets \
-    --hosted-zone-id Z1234567890123 \
-    --change-batch '{
-        "Changes": [
-            {
-                "Action": "UPSERT",
-                "ResourceRecordSet": {
-                    "Name": "'$DOMAIN_NAME'",
-                    "Type": "CNAME",
-                    "TTL": 300,
-                    "ResourceRecords": [
-                        {
-                            "Value": "'$ALB_DNS'"
-                        }
-                    ]
-                }
-            }
-        ]
-    }'
+# Get the load balancer public IP (for direct IP access)
+ALB_IP=$(nslookup $ALB_DNS | grep "Address:" | tail -1 | cut -d' ' -f2)
+
+echo "=============================================="
+echo "🌐 Application Access Information"
+echo "=============================================="
+echo "Load Balancer DNS: $ALB_DNS"
+echo "Load Balancer IP: $ALB_IP"
+echo "Web UI: http://$ALB_DNS (or http://$ALB_IP)"
+echo "API: http://$ALB_DNS/api (or http://$ALB_IP/api)"
+echo "=============================================="
+
+# Optional: Configure DNS if using custom domain
+# aws route53 change-resource-record-sets \
+#     --hosted-zone-id Z1234567890123 \
+#     --change-batch '{
+#         "Changes": [
+#             {
+#                 "Action": "UPSERT",
+#                 "ResourceRecordSet": {
+#                     "Name": "'$DOMAIN_NAME'",
+#                     "Type": "CNAME",
+#                     "TTL": 300,
+#                     "ResourceRecords": [
+#                         {
+#                             "Value": "'$ALB_DNS'"
+#                         }
+#                     ]
+#                 }
+#             }
+#         ]
+#     }'
 ```
 
 ### 5. Deploy Application
@@ -246,15 +277,23 @@ aws route53 change-resource-record-sets \
 # Return to project root
 cd ../..
 
-# Run automated deployment
+# Run automated deployment (IP-based access)
 ./devops/setup-prowler.sh \
     --type cloud \
     --environment production \
-    --domain $DOMAIN_NAME \
-    --ssl \
     --monitoring \
     --backup \
     --auto-scale
+
+# If using custom domain, use:
+# ./devops/setup-prowler.sh \
+#     --type cloud \
+#     --environment production \
+#     --domain $DOMAIN_NAME \
+#     --ssl \
+#     --monitoring \
+#     --backup \
+#     --auto-scale
 ```
 
 ## 🌐 Remote Access Setup
@@ -265,50 +304,69 @@ cd ../..
 # Get the security group ID from Terraform
 ALB_SG_ID=$(terraform output -raw alb_security_group_id)
 
-# Allow HTTP/HTTPS access from anywhere
+# Allow HTTP access from anywhere (no SSL required)
 aws ec2 authorize-security-group-ingress \
     --group-id $ALB_SG_ID \
     --protocol tcp \
     --port 80 \
     --cidr 0.0.0.0/0
 
-aws ec2 authorize-security-group-ingress \
-    --group-id $ALB_SG_ID \
-    --protocol tcp \
-    --port 443 \
-    --cidr 0.0.0.0/0
+# Optional: Allow HTTPS access if using custom domain with SSL
+# aws ec2 authorize-security-group-ingress \
+#     --group-id $ALB_SG_ID \
+#     --protocol tcp \
+#     --port 443 \
+#     --cidr 0.0.0.0/0
 ```
 
 ### 2. Configure Application Load Balancer
 
 The Terraform configuration automatically creates an Application Load Balancer with:
-- **HTTP to HTTPS redirect** (port 80 → 443)
-- **SSL termination** with your ACM certificate
+- **HTTP access** on port 80 (no SSL required)
 - **Health checks** for both API and UI services
 - **Path-based routing** (`/api/*` → API, `/` → UI)
+- **Public IP access** via AWS Load Balancer
 
 ### 3. Test Remote Access
 
 ```bash
-# Test SSL certificate and connectivity
-curl -I https://$DOMAIN_NAME
+# Get application URLs
+ALB_DNS=$(terraform output -raw load_balancer_dns)
+ALB_IP=$(nslookup $ALB_DNS | grep "Address:" | tail -1 | cut -d' ' -f2)
 
-# Test API endpoint
-curl -f https://$DOMAIN_NAME/api/health
+# Test API endpoint (using DNS)
+curl -f http://$ALB_DNS/api/health
 
-# Test UI accessibility
-curl -f https://$DOMAIN_NAME
+# Test API endpoint (using IP)
+curl -f http://$ALB_IP/api/health
+
+# Test UI accessibility (using DNS)
+curl -f http://$ALB_DNS
+
+# Test UI accessibility (using IP) 
+curl -f http://$ALB_IP
+
+echo "✅ Access your Prowler application at:"
+echo "   🌐 http://$ALB_DNS"
+echo "   🌐 http://$ALB_IP"
 ```
 
 ## 📊 Monitoring and Observability
 
 ### 1. Access Monitoring Dashboards
 
-- **Grafana**: https://your-domain.com:3001
-  - Username: `admin`
-  - Password: `admin123`
-- **Prometheus**: https://your-domain.com:9090
-- **Alertmanager**: https://your-domain.com:9093
+```bash
+# Get Load Balancer DNS/IP for monitoring access
+ALB_DNS=$(terraform output -raw load_balancer_dns)
+ALB_IP=$(nslookup $ALB_DNS | grep "Address:" | tail -1 | cut -d' ' -f2)
+
+echo "📊 Monitoring Dashboard Access:"
+echo "- Grafana: http://$ALB_DNS:3001 (or http://$ALB_IP:3001)"
+echo "  Username: admin"
+echo "  Password: admin123"
+echo "- Prometheus: http://$ALB_DNS:9090 (or http://$ALB_IP:9090)"
+echo "- Alertmanager: http://$ALB_DNS:9093 (or http://$ALB_IP:9093)"
+```
 
 ### 2. CloudWatch Integration
 
@@ -489,8 +547,14 @@ docker-compose logs -f api
 
 After successful deployment:
 
-1. **Access the application**: https://your-domain.com
-2. **Login with admin credentials** (check deployment logs)
+1. **Access the application**: Use the Load Balancer DNS or IP address from Terraform output
+   ```bash
+   # Get your application URL
+   ALB_DNS=$(terraform output -raw load_balancer_dns)
+   echo "🌐 Access Prowler at: http://$ALB_DNS"
+   ```
+
+2. **Login with admin credentials** (check deployment logs for credentials)
 3. **Configure cloud providers** (AWS, Azure, GCP)
 4. **Set up scan schedules** and compliance frameworks
 5. **Configure integrations** (Slack, Jira, etc.)
@@ -498,6 +562,32 @@ After successful deployment:
 
 ---
 
-**🔒 Security Note**: Always follow the principle of least privilege when configuring AWS IAM roles and policies. Regularly review and rotate access keys and passwords.
+## 🔑 Default Access Information
+
+After deployment, you can access Prowler using:
+
+```bash
+# Get your application access details
+ALB_DNS=$(terraform output -raw load_balancer_dns)
+ALB_IP=$(nslookup $ALB_DNS | grep "Address:" | tail -1 | cut -d' ' -f2)
+
+echo "🌐 Prowler Web Application:"
+echo "   DNS: http://$ALB_DNS"
+echo "   IP:  http://$ALB_IP"
+echo ""
+echo "🔧 API Endpoints:"
+echo "   DNS: http://$ALB_DNS/api"
+echo "   IP:  http://$ALB_IP/api"
+echo ""
+echo "📊 Monitoring (if enabled):"
+echo "   Grafana: http://$ALB_DNS:3001"
+echo "   Prometheus: http://$ALB_DNS:9090"
+```
+
+**🔒 Security Note**: 
+- This deployment uses HTTP (port 80) for simplicity - suitable for testing and internal networks
+- For production use with internet access, consider implementing SSL/TLS with a custom domain
+- Always follow the principle of least privilege when configuring AWS IAM roles and policies
+- Regularly review and rotate access keys and passwords
 
 **💡 Pro Tip**: Use AWS Systems Manager Parameter Store or AWS Secrets Manager for sensitive configuration values in production environments.
