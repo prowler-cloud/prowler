@@ -58,7 +58,7 @@ class NDJSONFormatter(logging.Formatter):
             log_record["duration"] = record.duration
         if hasattr(record, "status_code"):
             log_record["status_code"] = record.status_code
-        
+
         # Add API key activity logging fields
         if hasattr(record, "api_key_id"):
             log_record["api_key_id"] = record.api_key_id
@@ -116,7 +116,7 @@ class HumanReadableFormatter(logging.Formatter):
             log_components.append(f"done in {record.duration}s:")
         if hasattr(record, "status_code"):
             log_components.append(f"{record.status_code}")
-        
+
         # Add API key activity logging fields for human readable format
         if hasattr(record, "api_key_id"):
             log_components.append(f"(api_key:{record.api_key_id})")

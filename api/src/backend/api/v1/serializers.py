@@ -341,7 +341,7 @@ class APIKeySerializer(BaseSerializerV1):
     """
     Serializer for listing API Keys.
     """
-    
+
     class Meta:
         model = APIKey
         fields = [
@@ -364,15 +364,16 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
     """
     Serializer for creating API Keys.
     """
+
     expires_at = serializers.DateTimeField(
         required=False,
         allow_null=True,
-        help_text="Expiration time. If not provided, the key never expires."
+        help_text="Expiration time. If not provided, the key never expires.",
     )
-    
+
     # This field will only be included in the response
     key = serializers.CharField(read_only=True)
-    
+
     class Meta:
         model = APIKey
         fields = ["id", "name", "expires_at", "key", "prefix", "created_at"]
@@ -381,48 +382,49 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
             "prefix": {"read_only": True},
             "created_at": {"read_only": True},
         }
-    
+
     def validate_expires_at(self, value):
         if value and value <= timezone.now():
             raise serializers.ValidationError("Expiration date must be in the future.")
         return value
-    
+
     def create(self, validated_data):
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         # Get tenant from context
-        tenant_id = self.context['request'].tenant_id
+        tenant_id = self.context["request"].tenant_id
         logger.debug(f"Creating API key for tenant: {tenant_id}")
-        
+
         # Retry logic for prefix collisions (very unlikely but possible)
         max_retries = 5
         for attempt in range(max_retries):
             # Generate the actual API key
             raw_key = APIKey.generate_key()
             key_hash = APIKey.hash_key(raw_key)
-            
+
             # Extract prefix from the raw key using the model method
             prefix = APIKey.extract_prefix(raw_key)
-            
+
             logger.debug(f"Attempt {attempt + 1}: Generated key with prefix: {prefix}")
-            
+
             try:
                 # Create the API key instance
                 api_key = APIKey.objects.create(
                     tenant_id=tenant_id,
                     key_hash=key_hash,
                     prefix=prefix,
-                    **validated_data
+                    **validated_data,
                 )
-                
+
                 logger.debug(f"Successfully created API key with ID: {api_key.id}")
-                
+
                 # Store the raw key temporarily for the response
                 api_key._raw_key = raw_key
-                
+
                 return api_key
-                
+
             except IntegrityError as e:
                 logger.error(f"IntegrityError on attempt {attempt + 1}: {e}")
                 # Prefix collision occurred, try again
@@ -431,15 +433,17 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
                         "Unable to generate unique API key. Please try again."
                     )
                 continue
-        
+
         # This should never be reached due to the exception above
-        raise serializers.ValidationError("Failed to create API key after multiple attempts.")
-    
+        raise serializers.ValidationError(
+            "Failed to create API key after multiple attempts."
+        )
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         # Include the raw key only if it was just created
-        if hasattr(instance, '_raw_key'):
-            data['key'] = instance._raw_key
+        if hasattr(instance, "_raw_key"):
+            data["key"] = instance._raw_key
         return data
 
 
@@ -447,6 +451,7 @@ class APIKeyRevokeSerializer(serializers.Serializer):
     """
     Serializer for revoking an API Key.
     """
+
     class Meta:
         fields = []
 

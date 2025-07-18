@@ -55,6 +55,3 @@ def test_api_logging_middleware_logging(mock_logger):
                 }
 
                 mock_logger.info.assert_called_once_with("", extra=expected_extra)
-
-
-

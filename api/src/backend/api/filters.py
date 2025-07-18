@@ -700,14 +700,14 @@ class APIKeyFilter(FilterSet):
     created_at = DateFilter(field_name="created_at", lookup_expr="date")
     expires_at = DateFilter(field_name="expires_at", lookup_expr="date")
     is_active = BooleanFilter(method="filter_active")
-    
+
     def filter_active(self, queryset, name, value):
         if value is True:
             return queryset.filter(revoked_at__isnull=True)
         elif value is False:
             return queryset.filter(revoked_at__isnull=False)
         return queryset
-    
+
     class Meta:
         model = APIKey
         fields = {
