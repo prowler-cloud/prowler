@@ -50,7 +50,7 @@ class Test_GitHubArguments:
         assert self.mock_github_parser.add_argument_group.call_count == 2
         calls = self.mock_github_parser.add_argument_group.call_args_list
         assert calls[0][0][0] == "Authentication Modes"
-        assert calls[1][0][0] == "Repository Scoping"
+        assert calls[1][0][0] == "Scan Scoping"
 
     def test_init_parser_adds_authentication_arguments(self):
         """Test that init_parser adds all authentication arguments"""
