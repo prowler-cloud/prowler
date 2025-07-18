@@ -173,7 +173,7 @@ jobs:
 
         # Commit and push the changes
         git add api/pyproject.toml api/poetry.lock
-        git commit -m "Update prowler dependency to $BRANCH_NAME_TRIMMED for release $PROWLER_VERSION"
+        git commit -m "chore(api): update prowler dependency to $BRANCH_NAME_TRIMMED for release $PROWLER_VERSION"
         git push origin "$BRANCH_NAME"
 
         echo "✓ api/pyproject.toml prowler dependency updated to: $UPDATED_PROWLER_REF"
