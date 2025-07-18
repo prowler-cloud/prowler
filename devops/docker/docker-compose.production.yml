@@ -1,0 +1,476 @@
+# =================================================================
+# Prowler Production Docker Compose
+# =================================================================
+# Production-ready Docker Compose configuration
+# Features: Load balancer, monitoring, backups, security
+# Author: DevOps Engineering Team
+# Version: 1.0.0
+# =================================================================
+
+version: '3.8'
+
+services:
+  # =================================================================
+  # LOAD BALANCER / REVERSE PROXY
+  # =================================================================
+  
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: prowler-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - api
+      - ui
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # =================================================================
+  # PROWLER API
+  # =================================================================
+  
+  api:
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    container_name: prowler-api
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.production
+      - DJANGO_DEBUG=False
+      - DJANGO_ALLOWED_HOSTS=${DOMAIN}
+    volumes:
+      - api_static:/app/static
+      - api_media:/app/media
+      - scan_outputs:/tmp/prowler_api_output
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # =================================================================
+  # CELERY WORKERS
+  # =================================================================
+  
+  worker:
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    container_name: prowler-worker
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.production
+    volumes:
+      - scan_outputs:/tmp/prowler_api_output
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    command: ["celery", "-A", "config.celery", "worker", "--loglevel=info", "--concurrency=4"]
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  worker-beat:
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    container_name: prowler-worker-beat
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    command: ["celery", "-A", "config.celery", "beat", "--loglevel=info"]
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # =================================================================
+  # PROWLER UI
+  # =================================================================
+  
+  ui:
+    image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
+    container_name: prowler-ui
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - SITE_URL=https://${DOMAIN}
+      - API_BASE_URL=https://${DOMAIN}/api/v1
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # =================================================================
+  # DATABASE
+  # =================================================================
+  
+  postgres:
+    image: postgres:16.3-alpine3.20
+    container_name: prowler-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/postgres:/docker-entrypoint-initdb.d:ro
+      - ./backups:/backups
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  # =================================================================
+  # CACHE
+  # =================================================================
+  
+  valkey:
+    image: valkey/valkey:7-alpine3.19
+    container_name: prowler-valkey
+    command: valkey-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
+    volumes:
+      - valkey_data:/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  # =================================================================
+  # MONITORING
+  # =================================================================
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prowler-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: prowler-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: prowler-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./config/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    restart: unless-stopped
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # =================================================================
+  # LOG AGGREGATION
+  # =================================================================
+  
+  loki:
+    image: grafana/loki:latest
+    container_name: prowler-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: prowler-promtail
+    volumes:
+      - ./config/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - ./logs:/app/logs:ro
+    command: -config.file=/etc/promtail/config.yml
+    restart: unless-stopped
+    depends_on:
+      - loki
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # =================================================================
+  # BACKUP SERVICE
+  # =================================================================
+  
+  backup:
+    image: postgres:16.3-alpine3.20
+    container_name: prowler-backup
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_HOST=postgres
+      - BACKUP_SCHEDULE=0 2 * * *
+      - BACKUP_RETENTION_DAYS=30
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    command: /backup.sh
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  # =================================================================
+  # SECURITY SCANNING
+  # =================================================================
+  
+  clamav:
+    image: clamav/clamav:latest
+    container_name: prowler-clamav
+    volumes:
+      - clamav_data:/var/lib/clamav
+      - scan_outputs:/scan:ro
+    restart: unless-stopped
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # =================================================================
+  # AUTOMATIC UPDATES
+  # =================================================================
+  
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: prowler-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_NOTIFICATIONS=slack
+      - WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL=${SLACK_WEBHOOK_URL}
+      - WATCHTOWER_NOTIFICATION_SLACK_IDENTIFIER=prowler-watchtower
+    restart: unless-stopped
+    networks:
+      - prowler-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+# =================================================================
+# VOLUMES
+# =================================================================
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/postgres
+  
+  valkey_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/valkey
+  
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/prometheus
+  
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/grafana
+  
+  alertmanager_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/alertmanager
+  
+  loki_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/loki
+  
+  clamav_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/clamav
+  
+  api_static:
+    driver: local
+  
+  api_media:
+    driver: local
+  
+  scan_outputs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/_data/scan_outputs
+
+# =================================================================
+# NETWORKS
+# =================================================================
+
+networks:
+  prowler-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

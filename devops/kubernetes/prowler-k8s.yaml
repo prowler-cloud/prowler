@@ -1,0 +1,718 @@
+# =================================================================
+# Prowler Kubernetes Deployment
+# =================================================================
+# Complete Kubernetes deployment for Prowler application
+# Includes: API, UI, Database, Cache, Monitoring, Ingress
+# Author: DevOps Engineering Team
+# Version: 1.0.0
+# =================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prowler
+  labels:
+    name: prowler
+    app.kubernetes.io/name: prowler
+    app.kubernetes.io/version: "5.10.0"
+
+---
+# =================================================================
+# CONFIGMAPS
+# =================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prowler-config
+  namespace: prowler
+data:
+  DJANGO_ALLOWED_HOSTS: "*"
+  DJANGO_BIND_ADDRESS: "0.0.0.0"
+  DJANGO_PORT: "8080"
+  DJANGO_DEBUG: "False"
+  DJANGO_SETTINGS_MODULE: "config.django.production"
+  DJANGO_LOGGING_FORMATTER: "ndjson"
+  DJANGO_LOGGING_LEVEL: "INFO"
+  DJANGO_WORKERS: "4"
+  DJANGO_MANAGE_DB_PARTITIONS: "True"
+  DJANGO_CELERY_DEADLOCK_ATTEMPTS: "5"
+  DJANGO_BROKER_VISIBILITY_TIMEOUT: "86400"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "prowler_db"
+  POSTGRES_ADMIN_USER: "prowler"
+  POSTGRES_USER: "prowler_user"
+  VALKEY_HOST: "valkey-service"
+  VALKEY_PORT: "6379"
+  VALKEY_DB: "0"
+  UI_PORT: "3000"
+  AUTH_TRUST_HOST: "true"
+  SENTRY_ENVIRONMENT: "production"
+  DJANGO_DELETION_BATCH_SIZE: "5000"
+
+---
+# =================================================================
+# SECRETS
+# =================================================================
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prowler-secrets
+  namespace: prowler
+type: Opaque
+data:
+  POSTGRES_ADMIN_PASSWORD: <base64-encoded-password>
+  POSTGRES_PASSWORD: <base64-encoded-password>
+  DJANGO_SECRET_KEY: <base64-encoded-secret>
+  DJANGO_TOKEN_SIGNING_KEY: <base64-encoded-jwt-secret>
+  DJANGO_TOKEN_VERIFYING_KEY: <base64-encoded-jwt-secret>
+  DJANGO_SECRETS_ENCRYPTION_KEY: <base64-encoded-encryption-key>
+  AUTH_SECRET: <base64-encoded-auth-secret>
+
+---
+# =================================================================
+# PERSISTENT VOLUMES
+# =================================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: prowler
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: gp2
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: valkey-pvc
+  namespace: prowler
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: gp2
+
+---
+# =================================================================
+# POSTGRESQL DATABASE
+# =================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: prowler
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16.3-alpine3.20
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: prowler-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: prowler-config
+              key: POSTGRES_ADMIN_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prowler-secrets
+              key: POSTGRES_ADMIN_PASSWORD
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - prowler
+            - -d
+            - prowler_db
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - prowler
+            - -d
+            - prowler_db
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: prowler
+spec:
+  selector:
+    app: postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# =================================================================
+# VALKEY CACHE
+# =================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valkey
+  namespace: prowler
+  labels:
+    app: valkey
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: valkey
+  template:
+    metadata:
+      labels:
+        app: valkey
+    spec:
+      containers:
+      - name: valkey
+        image: valkey/valkey:7-alpine3.19
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: valkey-storage
+          mountPath: /data
+        livenessProbe:
+          exec:
+            command:
+            - valkey-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - valkey-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: valkey-storage
+        persistentVolumeClaim:
+          claimName: valkey-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey-service
+  namespace: prowler
+spec:
+  selector:
+    app: valkey
+  ports:
+  - protocol: TCP
+    port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# =================================================================
+# PROWLER API
+# =================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowler-api
+  namespace: prowler
+  labels:
+    app: prowler-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: prowler-api
+  template:
+    metadata:
+      labels:
+        app: prowler-api
+    spec:
+      initContainers:
+      - name: migrate
+        image: prowlercloud/prowler-api:stable
+        command: ["python", "manage.py", "migrate", "--database", "admin"]
+        envFrom:
+        - configMapRef:
+            name: prowler-config
+        - secretRef:
+            name: prowler-secrets
+      containers:
+      - name: prowler-api
+        image: prowlercloud/prowler-api:stable
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: prowler-config
+        - secretRef:
+            name: prowler-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      - name: celery-worker
+        image: prowlercloud/prowler-api:stable
+        command: ["celery", "-A", "config.celery", "worker", "--loglevel=info"]
+        envFrom:
+        - configMapRef:
+            name: prowler-config
+        - secretRef:
+            name: prowler-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      - name: celery-beat
+        image: prowlercloud/prowler-api:stable
+        command: ["celery", "-A", "config.celery", "beat", "--loglevel=info"]
+        envFrom:
+        - configMapRef:
+            name: prowler-config
+        - secretRef:
+            name: prowler-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowler-api-service
+  namespace: prowler
+spec:
+  selector:
+    app: prowler-api
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+# =================================================================
+# PROWLER UI
+# =================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowler-ui
+  namespace: prowler
+  labels:
+    app: prowler-ui
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: prowler-ui
+  template:
+    metadata:
+      labels:
+        app: prowler-ui
+    spec:
+      containers:
+      - name: prowler-ui
+        image: prowlercloud/prowler-ui:stable
+        ports:
+        - containerPort: 3000
+        env:
+        - name: SITE_URL
+          value: "https://prowler.example.com"
+        - name: API_BASE_URL
+          value: "https://prowler.example.com/api/v1"
+        - name: AUTH_TRUST_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: prowler-config
+              key: AUTH_TRUST_HOST
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: prowler-secrets
+              key: AUTH_SECRET
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowler-ui-service
+  namespace: prowler
+spec:
+  selector:
+    app: prowler-ui
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP
+
+---
+# =================================================================
+# HORIZONTAL POD AUTOSCALER
+# =================================================================
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: prowler-api-hpa
+  namespace: prowler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: prowler-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: prowler-ui-hpa
+  namespace: prowler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: prowler-ui
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# =================================================================
+# INGRESS
+# =================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prowler-ingress
+  namespace: prowler
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  tls:
+  - hosts:
+    - prowler.example.com
+    secretName: prowler-tls
+  rules:
+  - host: prowler.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: prowler-api-service
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prowler-ui-service
+            port:
+              number: 3000
+
+---
+# =================================================================
+# NETWORK POLICIES
+# =================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prowler-network-policy
+  namespace: prowler
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - podSelector:
+        matchLabels:
+          app: prowler-api
+    - podSelector:
+        matchLabels:
+          app: prowler-ui
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: valkey
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+
+---
+# =================================================================
+# POD DISRUPTION BUDGETS
+# =================================================================
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: prowler-api-pdb
+  namespace: prowler
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: prowler-api
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: prowler-ui-pdb
+  namespace: prowler
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: prowler-ui
+
+---
+# =================================================================
+# RBAC
+# =================================================================
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prowler-service-account
+  namespace: prowler
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prowler-role
+  namespace: prowler
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prowler-rolebinding
+  namespace: prowler
+subjects:
+- kind: ServiceAccount
+  name: prowler-service-account
+  namespace: prowler
+roleRef:
+  kind: Role
+  name: prowler-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# =================================================================
+# MONITORING
+# =================================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowler-metrics
+  namespace: prowler
+  labels:
+    app: prowler-metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  selector:
+    app: prowler-api
+  ports:
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prowler-servicemonitor
+  namespace: prowler
+  labels:
+    app: prowler
+spec:
+  selector:
+    matchLabels:
+      app: prowler-metrics
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

@@ -1,0 +1,610 @@
+# =================================================================
+# Prowler CI/CD Pipeline - GitHub Actions
+# =================================================================
+# Professional CI/CD pipeline for Prowler application
+# Features: Testing, Security, Build, Deploy, Monitoring
+# Author: DevOps Engineering Team
+# Version: 1.0.0
+# =================================================================
+
+name: Prowler CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_API: prowler-api
+  IMAGE_NAME_UI: prowler-ui
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+
+jobs:
+  # =================================================================
+  # CODE QUALITY & SECURITY
+  # =================================================================
+  
+  quality-check:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry install --with dev
+    
+    - name: Install Node.js dependencies
+      run: |
+        cd ui
+        npm ci
+    
+    - name: Run Python linting
+      run: |
+        poetry run ruff check .
+        poetry run black --check .
+        poetry run pylint prowler/
+    
+    - name: Run Python security check
+      run: |
+        poetry run bandit -r prowler/
+        poetry run safety check
+    
+    - name: Run Node.js linting
+      run: |
+        cd ui
+        npm run lint:check
+        npm run format:check
+    
+    - name: Run TypeScript check
+      run: |
+        cd ui
+        npm run typecheck
+    
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    
+    - name: CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: python, javascript
+
+  # =================================================================
+  # TESTING
+  # =================================================================
+  
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+    needs: quality-check
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        cd api
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry install --with dev
+    
+    - name: Run API tests
+      env:
+        DATABASE_URL: postgres://postgres:test@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+      run: |
+        cd api
+        poetry run pytest --cov=src --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./api/coverage.xml
+        flags: api
+        name: api-coverage
+  
+  test-ui:
+    name: Test UI
+    runs-on: ubuntu-latest
+    needs: quality-check
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        cd ui
+        npm ci
+    
+    - name: Run unit tests
+      run: |
+        cd ui
+        npm run test
+    
+    - name: Run E2E tests
+      run: |
+        cd ui
+        npx playwright install
+        npm run test:e2e
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report
+        path: ui/playwright-report/
+        retention-days: 30
+
+  # =================================================================
+  # VULNERABILITY SCANNING
+  # =================================================================
+  
+  vulnerability-scan:
+    name: Vulnerability Scanning
+    runs-on: ubuntu-latest
+    needs: quality-check
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Snyk security scan
+      uses: snyk/actions/setup@master
+    
+    - name: Run Snyk to check for vulnerabilities
+      run: |
+        snyk test --all-projects --severity-threshold=high
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  # =================================================================
+  # BUILD IMAGES
+  # =================================================================
+  
+  build-api:
+    name: Build API Image
+    runs-on: ubuntu-latest
+    needs: [test-api, vulnerability-scan]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_API }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push API image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./api
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+  
+  build-ui:
+    name: Build UI Image
+    runs-on: ubuntu-latest
+    needs: [test-ui, vulnerability-scan]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_UI }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push UI image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./ui
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  # =================================================================
+  # DEPLOY TO STAGING
+  # =================================================================
+  
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-api, build-ui]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Deploy to ECS
+      run: |
+        aws ecs update-service \
+          --cluster prowler-staging-cluster \
+          --service prowler-staging-api \
+          --force-new-deployment
+        
+        aws ecs update-service \
+          --cluster prowler-staging-cluster \
+          --service prowler-staging-ui \
+          --force-new-deployment
+    
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster prowler-staging-cluster \
+          --services prowler-staging-api prowler-staging-ui
+    
+    - name: Run smoke tests
+      run: |
+        curl -f https://staging.prowler.example.com/health
+        curl -f https://staging.prowler.example.com/api/health
+    
+    - name: Notify Slack
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
+
+  # =================================================================
+  # DEPLOY TO PRODUCTION
+  # =================================================================
+  
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-api, build-ui]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Blue/Green deployment
+      run: |
+        # Get current task definition
+        TASK_DEFINITION=$(aws ecs describe-task-definition \
+          --task-definition prowler-prod-api \
+          --query 'taskDefinition')
+        
+        # Update with new image
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_API }}:${{ github.sha }}" \
+          '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        
+        # Register new task definition
+        aws ecs register-task-definition \
+          --cli-input-json "$NEW_TASK_DEFINITION"
+        
+        # Update service
+        aws ecs update-service \
+          --cluster prowler-prod-cluster \
+          --service prowler-prod-api \
+          --task-definition prowler-prod-api
+        
+        # Repeat for UI
+        TASK_DEFINITION=$(aws ecs describe-task-definition \
+          --task-definition prowler-prod-ui \
+          --query 'taskDefinition')
+        
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME_UI }}:${{ github.sha }}" \
+          '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        
+        aws ecs register-task-definition \
+          --cli-input-json "$NEW_TASK_DEFINITION"
+        
+        aws ecs update-service \
+          --cluster prowler-prod-cluster \
+          --service prowler-prod-ui \
+          --task-definition prowler-prod-ui
+    
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster prowler-prod-cluster \
+          --services prowler-prod-api prowler-prod-ui
+    
+    - name: Run health checks
+      run: |
+        curl -f https://app.prowler.example.com/health
+        curl -f https://app.prowler.example.com/api/health
+    
+    - name: Run integration tests
+      run: |
+        # Run comprehensive integration tests
+        cd tests/integration
+        npm ci
+        npm run test:production
+    
+    - name: Create deployment record
+      run: |
+        curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.DEPLOYMENT_WEBHOOK_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "environment": "production",
+            "version": "${{ github.sha }}",
+            "deployer": "${{ github.actor }}",
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+          }' \
+          https://api.prowler.example.com/internal/deployments
+    
+    - name: Notify teams
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        custom_payload: |
+          {
+            "text": "Production deployment completed",
+            "attachments": [
+              {
+                "color": "good",
+                "fields": [
+                  {
+                    "title": "Environment",
+                    "value": "Production",
+                    "short": true
+                  },
+                  {
+                    "title": "Version",
+                    "value": "${{ github.sha }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Deployer",
+                    "value": "${{ github.actor }}",
+                    "short": true
+                  }
+                ]
+              }
+            ]
+          }
+      if: always()
+
+  # =================================================================
+  # ROLLBACK (Manual trigger)
+  # =================================================================
+  
+  rollback:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment: production
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Rollback to previous version
+      run: |
+        # Get previous task definition
+        PREVIOUS_TASK_DEF=$(aws ecs describe-services \
+          --cluster prowler-prod-cluster \
+          --services prowler-prod-api \
+          --query 'services[0].deployments[1].taskDefinition' \
+          --output text)
+        
+        # Update service to previous version
+        aws ecs update-service \
+          --cluster prowler-prod-cluster \
+          --service prowler-prod-api \
+          --task-definition $PREVIOUS_TASK_DEF
+        
+        # Repeat for UI
+        PREVIOUS_TASK_DEF=$(aws ecs describe-services \
+          --cluster prowler-prod-cluster \
+          --services prowler-prod-ui \
+          --query 'services[0].deployments[1].taskDefinition' \
+          --output text)
+        
+        aws ecs update-service \
+          --cluster prowler-prod-cluster \
+          --service prowler-prod-ui \
+          --task-definition $PREVIOUS_TASK_DEF
+    
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: 'warning'
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        custom_payload: |
+          {
+            "text": "🚨 Production rollback completed",
+            "attachments": [
+              {
+                "color": "warning",
+                "fields": [
+                  {
+                    "title": "Environment",
+                    "value": "Production",
+                    "short": true
+                  },
+                  {
+                    "title": "Triggered by",
+                    "value": "${{ github.actor }}",
+                    "short": true
+                  }
+                ]
+              }
+            ]
+          }
+
+  # =================================================================
+  # CLEANUP
+  # =================================================================
+  
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [deploy-staging, deploy-production]
+    
+    steps:
+    - name: Clean up old images
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const packageName = 'prowler-api';
+          
+          // Get all versions of the package
+          const versions = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+            package_type: 'container',
+            package_name: packageName,
+            org: owner,
+            per_page: 100
+          });
+          
+          // Keep only the latest 10 versions
+          const versionsToDelete = versions.data.slice(10);
+          
+          for (const version of versionsToDelete) {
+            await github.rest.packages.deletePackageVersionForOrg({
+              package_type: 'container',
+              package_name: packageName,
+              org: owner,
+              package_version_id: version.id
+            });
+          }
+    
+    - name: Clean up test artifacts
+      run: |
+        echo "Cleaning up test artifacts..."
+        # Add cleanup logic here

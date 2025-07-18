@@ -3811,6 +3811,115 @@ class IntegrationViewSet(BaseRLSViewSet):
         context["allowed_providers"] = self.allowed_providers
         return context
 
+    @action(detail=False, methods=["post"], url_name="test_connection")
+    def test_connection(self, request):
+        """
+        Test connection to an integration without saving it.
+        """
+        integration_type = request.data.get("data", {}).get("attributes", {}).get("integration_type")
+        config = request.data.get("data", {}).get("attributes", {}).get("config", {})
+        
+        if integration_type == "jira":
+            from prowler.lib.outputs.jira.jira import Jira
+            try:
+                # Test connection using Jira class
+                if config.get("auth_method") == "basic":
+                    connection = Jira.test_connection(
+                        user_mail=config.get("user_email"),
+                        api_token=config.get("api_token"),
+                        domain=config.get("domain"),
+                        raise_on_exception=True
+                    )
+                else:  # oauth2
+                    connection = Jira.test_connection(
+                        client_id=config.get("client_id"),
+                        client_secret=config.get("client_secret"),
+                        redirect_uri=config.get("redirect_uri"),
+                        raise_on_exception=True
+                    )
+                
+                if connection.is_connected:
+                    return Response({"data": {"attributes": {"connected": True}}}, status=200)
+                else:
+                    return Response(
+                        {"errors": [{"detail": "Connection failed"}]}, 
+                        status=400
+                    )
+            except Exception as e:
+                return Response(
+                    {"errors": [{"detail": str(e)}]}, 
+                    status=400
+                )
+        else:
+            return Response(
+                {"errors": [{"detail": "Integration type not supported"}]}, 
+                status=400
+            )
+
+    @action(detail=False, methods=["post"], url_name="jira_projects")
+    def jira_projects(self, request):
+        """
+        Get available Jira projects for the given credentials.
+        """
+        config = request.data.get("data", {}).get("attributes", {}).get("config", {})
+        
+        try:
+            from prowler.lib.outputs.jira.jira import Jira
+            
+            if config.get("auth_method") == "basic":
+                jira = Jira(
+                    user_mail=config.get("user_email"),
+                    api_token=config.get("api_token"),
+                    domain=config.get("domain")
+                )
+            else:  # oauth2
+                jira = Jira(
+                    client_id=config.get("client_id"),
+                    client_secret=config.get("client_secret"),
+                    redirect_uri=config.get("redirect_uri")
+                )
+            
+            projects = jira.get_projects()
+            return Response({"data": {"attributes": {"projects": projects}}}, status=200)
+            
+        except Exception as e:
+            return Response(
+                {"errors": [{"detail": str(e)}]}, 
+                status=400
+            )
+
+    @action(detail=False, methods=["post"], url_name="jira_issue_types")
+    def jira_issue_types(self, request):
+        """
+        Get available Jira issue types for the given project and credentials.
+        """
+        config = request.data.get("data", {}).get("attributes", {}).get("config", {})
+        
+        try:
+            from prowler.lib.outputs.jira.jira import Jira
+            
+            if config.get("auth_method") == "basic":
+                jira = Jira(
+                    user_mail=config.get("user_email"),
+                    api_token=config.get("api_token"),
+                    domain=config.get("domain")
+                )
+            else:  # oauth2
+                jira = Jira(
+                    client_id=config.get("client_id"),
+                    client_secret=config.get("client_secret"),
+                    redirect_uri=config.get("redirect_uri")
+                )
+            
+            issue_types = jira.get_available_issue_types(config.get("project_key"))
+            return Response({"data": {"attributes": {"issue_types": issue_types}}}, status=200)
+            
+        except Exception as e:
+            return Response(
+                {"errors": [{"detail": str(e)}]}, 
+                status=400
+            )
+
 
 @extend_schema_view(
     list=extend_schema(

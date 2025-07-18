@@ -12,6 +12,41 @@ class S3ConfigSerializer(BaseValidateSerializer):
         resource_name = "integrations"
 
 
+class JiraConfigSerializer(BaseValidateSerializer):
+    project_key = serializers.CharField()
+    issue_type = serializers.CharField()
+    domain = serializers.CharField(required=False)
+    user_email = serializers.CharField(required=False)
+    api_token = serializers.CharField(required=False)
+    client_id = serializers.CharField(required=False)
+    client_secret = serializers.CharField(required=False)
+    redirect_uri = serializers.CharField(required=False)
+    auth_method = serializers.ChoiceField(choices=["basic", "oauth2"])
+
+    class Meta:
+        resource_name = "integrations"
+
+    def validate(self, attrs):
+        auth_method = attrs.get("auth_method")
+        
+        if auth_method == "basic":
+            required_fields = ["domain", "user_email", "api_token"]
+            for field in required_fields:
+                if not attrs.get(field):
+                    raise serializers.ValidationError(
+                        f"{field} is required for basic authentication"
+                    )
+        elif auth_method == "oauth2":
+            required_fields = ["client_id", "client_secret", "redirect_uri"]
+            for field in required_fields:
+                if not attrs.get(field):
+                    raise serializers.ValidationError(
+                        f"{field} is required for OAuth2 authentication"
+                    )
+        
+        return attrs
+
+
 class AWSCredentialSerializer(BaseValidateSerializer):
     role_arn = serializers.CharField(required=False)
     external_id = serializers.CharField(required=False)
@@ -102,6 +137,50 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                 },
                 "required": ["bucket_name", "output_directory"],
+            },
+            {
+                "type": "object",
+                "title": "JIRA",
+                "properties": {
+                    "project_key": {
+                        "type": "string",
+                        "description": "The project key where issues will be created.",
+                    },
+                    "issue_type": {
+                        "type": "string",
+                        "description": "The type of issue to create (e.g., Bug, Task, Story).",
+                    },
+                    "domain": {
+                        "type": "string",
+                        "description": "The Jira domain (required for basic auth).",
+                    },
+                    "user_email": {
+                        "type": "string",
+                        "description": "The user email for basic authentication.",
+                    },
+                    "api_token": {
+                        "type": "string",
+                        "description": "The API token for basic authentication.",
+                    },
+                    "client_id": {
+                        "type": "string",
+                        "description": "The client ID for OAuth2 authentication.",
+                    },
+                    "client_secret": {
+                        "type": "string",
+                        "description": "The client secret for OAuth2 authentication.",
+                    },
+                    "redirect_uri": {
+                        "type": "string",
+                        "description": "The redirect URI for OAuth2 authentication.",
+                    },
+                    "auth_method": {
+                        "type": "string",
+                        "enum": ["basic", "oauth2"],
+                        "description": "The authentication method to use.",
+                    },
+                },
+                "required": ["project_key", "issue_type", "auth_method"],
             },
         ]
     }

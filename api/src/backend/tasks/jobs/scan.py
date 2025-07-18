@@ -18,6 +18,7 @@ from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
+    Integration,
     Processor,
     Provider,
     Resource,
@@ -341,6 +342,14 @@ def perform_prowler_scan(
             scan_instance.completed_at = datetime.now(tz=timezone.utc)
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
+
+    # Process integrations after successful scan completion (only if no exception)
+    if exception is None:
+        try:
+            _process_integrations(tenant_id, scan_id, provider_id)
+        except Exception as e:
+            logger.error(f"Error processing integrations for scan {scan_id}: {e}")
+            # Don't fail the scan if integrations fail
 
     if exception is not None:
         raise exception
@@ -690,4 +699,128 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
 
     except Exception as e:
         logger.error(f"Error creating compliance requirements for scan {scan_id}: {e}")
+        raise e
+
+
+def _process_integrations(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Process integrations for a completed scan.
+    
+    This function handles sending findings to configured integrations like Jira.
+    Only processes failed findings to avoid spam.
+    
+    Args:
+        tenant_id (str): The ID of the tenant.
+        scan_id (str): The ID of the completed scan.
+        provider_id (str): The ID of the provider that was scanned.
+    """
+    try:
+        with rls_transaction(tenant_id):
+            # Get all enabled integrations for this provider
+            integrations = Integration.objects.filter(
+                tenant_id=tenant_id,
+                enabled=True,
+                providers__id=provider_id,
+            ).select_related()
+            
+            if not integrations.exists():
+                logger.info(f"No enabled integrations found for provider {provider_id}")
+                return
+            
+            # Get failed findings from the scan (we only want to create tickets for failures)
+            failed_findings = Finding.objects.filter(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                status=FindingStatus.FAIL,
+                muted=False,  # Don't create tickets for muted findings
+            ).select_related('scan__provider')
+            
+            if not failed_findings.exists():
+                logger.info(f"No failed findings found for scan {scan_id}")
+                return
+            
+            # Convert DB findings to Prowler findings format
+            prowler_findings = []
+            for finding in failed_findings:
+                prowler_finding = ProwlerFinding(
+                    metadata=finding.check_metadata,
+                    status=finding.status,
+                    status_extended=finding.status_extended,
+                    resource_uid=finding.resource_uid,
+                    resource_name=finding.resource_name,
+                    resource_details=finding.resource_details,
+                    resource_tags=finding.resource_tags or {},
+                    region=finding.region,
+                    partition=finding.partition,
+                    muted=finding.muted,
+                    compliance=finding.compliance or {},
+                    severity=finding.severity,
+                )
+                prowler_findings.append(prowler_finding)
+            
+            # Process each integration
+            for integration in integrations:
+                try:
+                    if integration.integration_type == Integration.IntegrationChoices.JIRA:
+                        _process_jira_integration(integration, prowler_findings)
+                    else:
+                        logger.warning(f"Unsupported integration type: {integration.integration_type}")
+                        
+                except Exception as e:
+                    logger.error(f"Error processing integration {integration.id}: {e}")
+                    # Continue with other integrations
+                    continue
+                    
+    except Exception as e:
+        logger.error(f"Error processing integrations for scan {scan_id}: {e}")
+        raise e
+
+
+def _process_jira_integration(integration: Integration, findings: list[ProwlerFinding]):
+    """
+    Process Jira integration for the given findings.
+    
+    Args:
+        integration (Integration): The Jira integration configuration.
+        findings (list[ProwlerFinding]): List of findings to send to Jira.
+    """
+    try:
+        from prowler.lib.outputs.jira.jira import Jira
+        
+        config = integration.config
+        
+        # Initialize Jira client based on auth method
+        if config.get("auth_method") == "basic":
+            jira = Jira(
+                user_mail=config.get("user_email"),
+                api_token=config.get("api_token"),
+                domain=config.get("domain")
+            )
+        else:  # oauth2
+            jira = Jira(
+                client_id=config.get("client_id"),
+                client_secret=config.get("client_secret"),
+                redirect_uri=config.get("redirect_uri")
+            )
+        
+        # Send findings to Jira
+        jira.send_findings(
+            findings=findings,
+            project_key=config.get("project_key"),
+            issue_type=config.get("issue_type")
+        )
+        
+        logger.info(f"Successfully sent {len(findings)} findings to Jira integration {integration.id}")
+        
+        # Update integration connection status
+        integration.connected = True
+        integration.save()
+        
+    except Exception as e:
+        logger.error(f"Error in Jira integration {integration.id}: {e}")
+        
+        # Update integration connection status
+        integration.connected = False
+        integration.save()
+        
         raise e
