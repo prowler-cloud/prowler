@@ -514,10 +514,7 @@ To create MongoDB Atlas API keys:
 
 MongoDB Atlas API keys require appropriate permissions to perform security checks:
 
-- **Project-level permissions**: Recommended for security scanning
-- **Organization-level permissions**: If scanning multiple projects
-- **Read access**: Required for all security checks
-- **Network access**: Ensure your IP is in the API access list
+- **Organization Read Only**: Provides read-only access to everything in the organization, including all projects in the organization.
 
 ### Configuration Options
 
