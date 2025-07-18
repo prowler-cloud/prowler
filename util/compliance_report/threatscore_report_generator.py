@@ -2,6 +2,7 @@ import io
 import os
 
 import matplotlib.pyplot as plt
+import requests
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
@@ -19,11 +20,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-
-from api.models import Finding, Provider
-from api.utils import initialize_prowler_provider
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
 
 pdfmetrics.registerFont(
     TTFont(
@@ -46,20 +42,24 @@ def generate_threatscore_report(
     scan_id: str,
     compliance_id: str,
     output_path: str,
-    provider_id: str,
-    tenant_id: str,
+    email: str,
+    password: str,
+    token: str,
+    base_url: str,
     only_failed: bool = True,
     min_risk_level: int = 4,
 ):
     """
-    Generate a PDF compliance report based on Prowler ORM objects.
+    Generate a PDF compliance report based on Prowler endpoints.
 
     Parameters:
     - scan_id: ID of the scan executed by Prowler.
     - compliance_id: ID of the compliance framework (e.g., "nis2_azure").
     - output_path: Output PDF file path (e.g., "threatscore_report.pdf").
-    - provider_id: Provider ID for the scan.
-    - tenant_id: Tenant ID for the scan.
+    - email: Email for the API authentication.
+    - password: Password for the API.
+    - token: Token for the API.
+    - base_url: Base URL for the API.
     - only_failed: If True, only requirements with status "FAIL" will be included in the list of requirements.
     - min_risk_level: Minimum risk level for critical failed requirements.
     """
@@ -136,61 +136,52 @@ def generate_threatscore_report(
         textColor=colors.Color(0.2, 0.2, 0.2),
         fontName="PlusJakartaSans",
     )
-
-    provider_obj = Provider.objects.get(id=provider_id)
-    prowler_provider = initialize_prowler_provider(provider_obj)
-    provider_type = provider_obj.provider
-
-    frameworks_bulk = Compliance.get_bulk(provider_type)
-    compliance_obj = frameworks_bulk[compliance_id]
-    compliance_name = compliance_obj.name
-    compliance_version = getattr(compliance_obj, "Version", "N/A")
-    compliance_description = getattr(compliance_obj, "Description", "")
-
-    findings_qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid")
-    findings = [
-        FindingOutput.transform_api_finding(f, prowler_provider) for f in findings_qs
-    ]
-
-    attrs_map = {}
-    resp_reqs = []
-    resp_attrs = []
-    for req_id, req in compliance_obj.requirements.items():
-        attrs_map[req_id] = {
-            "id": req_id,
-            "attributes": {
-                "metadata": [req.metadata],
-                "check_ids": req.check_ids,
-            },
-            "description": getattr(req, "description", ""),
+    if not token:
+        if not email or not password:
+            raise Exception("Email and password are required to generate a token")
+        url_credentials = f"{base_url}/api/v1/tokens"
+        payload = {
+            "data": {
+                "type": "tokens",
+                "attributes": {
+                    "email": email,
+                    "password": password,
+                },
+            }
         }
-        resp_attrs.append(
-            {
-                "id": req_id,
-                "attributes": {
-                    "framework_description": compliance_description,
-                    "attributes": {"metadata": [req.metadata]},
-                },
-            }
+        resp_credentials = requests.post(
+            url_credentials,
+            json=payload,
+            headers={"Content-Type": "application/vnd.api+json"},
+        ).json()
+        if resp_credentials.get("errors"):
+            print(resp_credentials.get("errors"))
+            raise Exception(resp_credentials.get("errors"))
+        token = resp_credentials.get("data", {}).get("attributes", {}).get("access")
+
+    try:
+        url_reqs = f"{base_url}/api/v1/compliance-overviews/requirements?filter[compliance_id]={compliance_id}&filter[scan_id]={scan_id}"
+        resp_reqs = (
+            requests.get(url_reqs, headers={"Authorization": f"Bearer {token}"})
+            .json()
+            .get("data", [])
         )
-        status = "UNKNOWN"
-        description = getattr(req, "description", "")
-        for f in findings:
-            if f["check_id"] in req.check_ids:
-                status = f["status"]
-                description = f.get("description", description)
-                break
-        resp_reqs.append(
-            {
-                "id": req_id,
-                "attributes": {
-                    "framework": compliance_name,
-                    "version": compliance_version,
-                    "status": status,
-                    "description": description,
-                },
-            }
+
+        url_attrs = f"{base_url}/api/v1/compliance-overviews/attributes?filter[compliance_id]={compliance_id}"
+        resp_attrs = (
+            requests.get(url_attrs, headers={"Authorization": f"Bearer {token}"})
+            .json()
+            .get("data", [])
         )
+    except Exception as e:
+        print(e)
+        raise Exception(e)
+
+    compliance_name = resp_reqs[0]["attributes"]["framework"]
+    compliance_version = resp_reqs[0]["attributes"]["version"]
+    compliance_description = resp_attrs[0]["attributes"]["framework_description"]
+
+    attrs_map = {item["id"]: item["attributes"] for item in resp_attrs}
 
     def create_risk_component(risk_level, weight, score=0):
         """Create a visual risk component similar to the UI design"""
@@ -394,7 +385,13 @@ def generate_threatscore_report(
         return buffer
 
     def get_finding_info(check_id: str):
-        return [f for f in findings if f["check_id"] == check_id]
+        url_find = f"{base_url}/api/v1/findings?filter[check_id]={check_id}&filter[scan]={scan_id}"
+        value = (
+            requests.get(url_find, headers={"Authorization": f"Bearer {token}"})
+            .json()
+            .get("data", [])
+        )
+        return value
 
     doc = SimpleDocTemplate(
         output_path,
@@ -790,6 +787,7 @@ def generate_threatscore_report(
                     check_meta = attr.get("check_metadata", {})
                     title = check_meta.get("checktitle", attr.get("check_id", ""))
                     resource_name = attr.get("resource_id")
+                    resource_name = "sensitive data"
                     if not resource_name:
                         rel_resources = (
                             f.get("relationships", {})
@@ -880,12 +878,22 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output", default="threatscore_report.pdf", help="Output PDF file path"
     )
-    parser.add_argument("--provider-id", required=True, help="Provider ID")
-    parser.add_argument("--tenant-id", required=True, help="Tenant ID")
+    parser.add_argument("--email", required=True, help="Email for the API")
+    parser.add_argument("--password", required=True, help="Password for the API")
     parser.add_argument(
         "--only-failed",
         action="store_true",
         help="Only include failed requirements in the list of requirements",
+    )
+    parser.add_argument(
+        "--token",
+        default="",
+        help="Token for the API",
+    )
+    parser.add_argument(
+        "--base-url",
+        default="http://localhost:8080",
+        help="Base URL for the API",
     )
     parser.add_argument(
         "--min-risk-level",
@@ -899,8 +907,10 @@ if __name__ == "__main__":
         args.scan_id,
         args.compliance_id,
         args.output,
-        args.provider_id,
-        args.tenant_id,
+        args.email,
+        args.password,
+        args.token,
+        args.base_url,
         args.only_failed,
         args.min_risk_level,
     )
