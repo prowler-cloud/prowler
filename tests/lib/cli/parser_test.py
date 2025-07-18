@@ -67,6 +67,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -116,6 +117,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -157,6 +159,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -193,6 +196,7 @@ class Test_Parser:
         assert len(parsed.category) == 0
         assert not parsed.excluded_check
         assert not parsed.excluded_service
+        assert not parsed.excluded_checks_file
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -461,6 +465,13 @@ class Test_Parser:
         assert len(parsed.excluded_check) == 2
         assert excluded_checks_1 in parsed.excluded_check
         assert excluded_checks_2 in parsed.excluded_check
+
+    def test_exclude_checks_parser_excluded_checks_file_long(self):
+        argument = "--excluded-checks-file"
+        filename = "excluded_checks.txt"
+        command = [prowler_command, argument, filename]
+        parsed = self.parser.parse(command)
+        assert parsed.excluded_checks_file == filename
 
     def test_exclude_checks_parser_excluded_services_long(self):
         excluded_service = "accessanalyzer"
