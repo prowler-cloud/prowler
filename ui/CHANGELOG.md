@@ -12,6 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Navigation link in Scans view to access Compliance Overview [(#8251)](https://github.com/prowler-cloud/prowler/pull/8251)
 - Status column for findings table in the Compliance Detail view [(#8244)](https://github.com/prowler-cloud/prowler/pull/8244)
 - Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
+- Validation for scan name input field in both create and edit scan [(#8319)](https://github.com/prowler-cloud/prowler/pull/8319)
 
 ### Security
 
