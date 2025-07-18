@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.10.0] (Prowler UNRELEASED)
+
+### Added
+- GitHub repository scoping behavior to prevent fallback organization scans when using `--repository` flag with invalid repository formats [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
+
+### Changed
+
+### Fixed
+
+---
+
+
 ## [v5.9.0] (Prowler v5.9.0)
 
 ### Added
@@ -32,7 +44,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update `entra_users_mfa_capable` check to use the correct resource name and ID [(#8288)](https://github.com/prowler-cloud/prowler/pull/8288)
 - Handle multiple services and severities while listing checks [(#8302)](https://github.com/prowler-cloud/prowler/pull/8302)
 - Handle `tenant_id` for M365 Mutelist [(#8306)](https://github.com/prowler-cloud/prowler/pull/8306)
-- GitHub repository scoping behavior to prevent fallback organization scans when using `--repository` flag with invalid repository formats [(PRWLR-7664)](https://prowlerpro.atlassian.net/browse/PRWLR-7664)
 
 ---
 
