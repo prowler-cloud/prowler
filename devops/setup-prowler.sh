@@ -219,12 +219,25 @@ generate_configuration() {
     mkdir -p "$PROJECT_ROOT/_data/valkey"
     mkdir -p "$PROJECT_ROOT/_data/backups"
 
-    # Generate secrets
-    local postgres_password=$(generate_password 24)
-    local django_secret=$(generate_password 50)
-    local jwt_secret=$(generate_password 32)
-    local encryption_key=$(generate_fernet_key)
-    local auth_secret=$(generate_password 32)
+    # Use existing .env values if they exist, otherwise generate new ones
+    local existing_postgres_password=""
+    local existing_django_secret=""
+    local existing_jwt_secret=""
+    local existing_encryption_key=""
+    local existing_auth_secret=""
+    
+    if [[ -f "$PROJECT_ROOT/.env" ]]; then
+        existing_postgres_password=$(grep "^POSTGRES_ADMIN_PASSWORD=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '"' || echo "")
+        existing_encryption_key=$(grep "^DJANGO_SECRETS_ENCRYPTION_KEY=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '"' || echo "")
+        existing_auth_secret=$(grep "^AUTH_SECRET=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '"' || echo "")
+    fi
+    
+    # Use existing values or generate new ones
+    local postgres_password=${existing_postgres_password:-$(generate_password 24)}
+    local django_secret=$(generate_password 50)  # Always generate new for security
+    local jwt_secret=$(generate_password 32)     # Always generate new for security
+    local encryption_key=${existing_encryption_key:-$(generate_fernet_key)}
+    local auth_secret=${existing_auth_secret:-$(generate_password 32)}
 
     # Generate main .env file
     cat > "$PROJECT_ROOT/.env" << EOF
@@ -458,6 +471,18 @@ setup_docker_environment() {
 
 setup_database() {
     log "Setting up database..."
+
+    # Stop all containers first to ensure clean start
+    info "Stopping any existing containers..."
+    docker-compose down --remove-orphans || true
+
+    # Clean up any existing database data if password changed
+    local current_password=$(grep "^POSTGRES_ADMIN_PASSWORD=" "$PROJECT_ROOT/.env" | cut -d'=' -f2 | tr -d '"')
+    if [[ -n "$current_password" && "$current_password" != "postgres" ]]; then
+        info "New database password detected, cleaning up existing data..."
+        sudo rm -rf "$PROJECT_ROOT/_data/postgres" || true
+        mkdir -p "$PROJECT_ROOT/_data/postgres"
+    fi
 
     # Start only PostgreSQL first
     info "Starting PostgreSQL..."

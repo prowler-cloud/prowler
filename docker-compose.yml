@@ -4,7 +4,7 @@ services:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
       - path: .env
-        required: false
+        required: true
     ports:
       - "${DJANGO_PORT:-8080}:${DJANGO_PORT:-8080}"
     volumes:
@@ -22,7 +22,7 @@ services:
     image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
     env_file:
       - path: .env
-        required: false
+        required: true
     ports:
       - ${UI_PORT:-3000}:${UI_PORT:-3000}
 
@@ -32,16 +32,16 @@ services:
     volumes:
       - ./_data/postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${POSTGRES_ADMIN_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER:-prowler}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD:-changeme123}
+      - POSTGRES_DB=${POSTGRES_DB:-prowler_db}
     env_file:
       - path: .env
-        required: false
+        required: true
     ports:
       - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER:-prowler} -d ${POSTGRES_DB:-prowler_db}'"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -53,7 +53,7 @@ services:
       - ./_data/valkey:/data
     env_file:
       - path: .env
-        required: false
+        required: true
     ports:
       - "${VALKEY_PORT:-6379}:6379"
     healthcheck:
@@ -66,7 +66,7 @@ services:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
       - path: .env
-        required: false
+        required: true
     volumes:
       - "/tmp/prowler_api_output:/tmp/prowler_api_output"
     depends_on:
@@ -81,8 +81,8 @@ services:
   worker-beat:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
-      - path: ./.env
-        required: false
+      - path: .env
+        required: true
     depends_on:
       valkey:
         condition: service_healthy
