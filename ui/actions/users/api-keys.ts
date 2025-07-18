@@ -43,7 +43,9 @@ export async function createAPIKey(
     },
   };
 
-  const url = new URL(`${apiBaseUrl}/tenants/${session.tenantId}/api-keys/create`);
+  const url = new URL(
+    `${apiBaseUrl}/tenants/${session.tenantId}/api-keys/create`,
+  );
   const response = await fetch(url.toString(), {
     method: "POST",
     headers,
@@ -66,7 +68,9 @@ export async function revokeAPIKey(apiKeyId: string): Promise<void> {
   }
 
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/tenants/${session.tenantId}/api-keys/${apiKeyId}/revoke`);
+  const url = new URL(
+    `${apiBaseUrl}/tenants/${session.tenantId}/api-keys/${apiKeyId}/revoke`,
+  );
 
   const response = await fetch(url.toString(), {
     method: "DELETE",
