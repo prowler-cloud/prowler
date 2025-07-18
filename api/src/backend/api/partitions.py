@@ -13,7 +13,7 @@ from psqlextra.partitioning import (
 from psqlextra.partitioning.config import PostgresPartitioningConfig
 from uuid6 import UUID
 
-from api.models import Finding, ResourceFindingMapping
+from api.models import APIKeyActivity, Finding, ResourceFindingMapping
 from api.rls import RowLevelSecurityConstraint
 from api.uuid_utils import datetime_to_uuid7
 
@@ -197,6 +197,22 @@ manager = PostgresPartitioningManager(
                 ),
                 name_format="%Y_%b",
                 rls_statements=["SELECT"],
+            ),
+        ),
+        # APIKeyActivity partitioning for automatic cleanup of audit logs
+        PostgresPartitioningConfig(
+            model=APIKeyActivity,
+            strategy=PostgresUUIDv7PartitioningStrategy(
+                start_date=datetime.now(timezone.utc),
+                size=PostgresTimePartitionSize(
+                    months=settings.API_KEY_ACTIVITY_TABLE_PARTITION_MONTHS
+                ),
+                count=settings.API_KEY_ACTIVITY_TABLE_PARTITION_COUNT,
+                max_age=relative_days_or_none(
+                    settings.API_KEY_ACTIVITY_TABLE_PARTITION_MAX_AGE_MONTHS
+                ),
+                name_format="%Y_%b",
+                rls_statements=["SELECT", "INSERT", "DELETE"],
             ),
         ),
     ]

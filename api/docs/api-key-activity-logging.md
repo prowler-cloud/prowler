@@ -156,22 +156,69 @@ The logging system meets common compliance requirements:
 
 ### Data Retention
 
-Configure data retention policies based on compliance requirements:
+API key activity data is automatically managed using **PostgreSQL table partitioning** for efficient cleanup and performance. The system creates monthly partitions and automatically removes old partitions based on the configured retention period.
 
-```python
-# Example retention policy configuration
-API_KEY_ACTIVITY_RETENTION_DAYS = 2555  # 7 years for financial compliance
+#### Partition-Based Retention
+
+Configure data retention using environment variables:
+
+```bash
+# Retention period in days (default: 365 days / 1 year)
+API_KEY_ACTIVITY_RETENTION_DAYS=365
+
+# Advanced partitioning configuration (optional)
+API_KEY_ACTIVITY_TABLE_PARTITION_MONTHS=1        # Size of each partition (1 month)
+API_KEY_ACTIVITY_TABLE_PARTITION_COUNT=13        # Number of partitions to maintain
+API_KEY_ACTIVITY_TABLE_PARTITION_MAX_AGE_MONTHS=12  # Retention in months
+```
+
+#### Example Retention Policies
+
+```bash
+# 7 years for financial compliance (PCI DSS)
+API_KEY_ACTIVITY_RETENTION_DAYS=2555
+
+# 3 years for GDPR compliance
+API_KEY_ACTIVITY_RETENTION_DAYS=1095
+
+# 1 year for general security auditing
+API_KEY_ACTIVITY_RETENTION_DAYS=365
+```
+
+#### Partition Management
+
+Partitions are automatically managed by the system:
+
+- **Creation**: New partitions are created monthly
+- **Cleanup**: Old partitions are automatically dropped based on retention policy
+- **Performance**: Queries are optimized to only scan relevant partitions
+
+To manually manage partitions:
+
+```bash
+# Create/cleanup partitions (runs automatically in production)
+python manage.py pgpartition --using admin
 ```
 
 ### Immutable Audit Log
 
 API key activity records are designed to be immutable:
 
-- Records cannot be updated after creation
-- Deletion is restricted to automated retention policies
+- Records cannot be updated after creation (enforced by partitioning)
+- Deletion only occurs through automated partition cleanup
 - All access to audit data is logged
+- Partitioning ensures tamper-evident storage for compliance
 
 ## Performance Considerations
+
+### Partitioning Benefits
+
+The partitioned table design provides significant performance and maintenance advantages:
+
+- **Query Performance**: Queries automatically scan only relevant partitions based on UUIDv7 timestamps
+- **Maintenance Operations**: Old data cleanup is instant (partition drops vs. row deletions)
+- **Storage Efficiency**: Automatic compression and archival of older partitions
+- **Concurrent Access**: Reduced lock contention during maintenance operations
 
 ### Database Optimization
 

@@ -1,10 +1,11 @@
-# Generated manually for API Key model and API Key Activity logging with multi-tenancy
-# This migration creates API keys without user association and optional user in activity logging
+# Generated manually for API Key model and API Key Activity logging with multi-tenancy and partitioning
+# This migration creates API keys and partitioned APIKeyActivity table for automatic cleanup
 
 from django.db import migrations, models
 import django.db.models.deletion
 import uuid
 from uuid import uuid4
+from uuid6 import uuid7
 from api.db_utils import generate_random_token, DB_PROWLER_USER, POSTGRES_TENANT_VAR
 import django.core.validators
 import api.rls
@@ -56,11 +57,11 @@ class Migration(migrations.Migration):
             ),
         ),
         
-        # Create APIKeyActivity model for comprehensive audit logging
+        # Create APIKeyActivity model for comprehensive audit logging with partitioning support
         migrations.CreateModel(
             name='APIKeyActivity',
             fields=[
-                ('id', models.UUIDField(default=uuid4, editable=False, primary_key=True, serialize=False)),
+                ('id', models.UUIDField(default=uuid7, editable=False, primary_key=True, serialize=False)),
                 ('timestamp', models.DateTimeField(auto_now_add=True, db_index=True, editable=False)),
                 ('method', models.CharField(max_length=10, help_text='HTTP method (GET, POST, etc.)')),
                 ('endpoint', models.CharField(max_length=500, help_text='API endpoint that was accessed')),
@@ -80,13 +81,13 @@ class Migration(migrations.Migration):
             },
         ),
         
-        # Add RLS constraint for api_key_activities
+        # Add RLS constraint for api_key_activities (UPDATE excluded for partitioned table compatibility)
         migrations.AddConstraint(
             model_name='apikeyactivity',
             constraint=api.rls.RowLevelSecurityConstraint(
                 field='tenant_id',
                 name='rls_on_apikeyactivity',
-                statements=['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+                statements=['SELECT', 'INSERT', 'DELETE'],
             ),
         ),
     ] 

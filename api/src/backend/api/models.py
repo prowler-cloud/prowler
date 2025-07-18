@@ -265,7 +265,7 @@ class APIKey(RowLevelSecurityProtectedModel):
         super().save(*args, **kwargs)
 
 
-class APIKeyActivity(RowLevelSecurityProtectedModel):
+class APIKeyActivity(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     """
     Model for tracking comprehensive API key activity for security auditing and compliance.
     
@@ -278,9 +278,20 @@ class APIKeyActivity(RowLevelSecurityProtectedModel):
     
     All API key requests are logged here regardless of success/failure status
     to provide complete visibility into API key usage patterns.
+    
+    APIKeyActivity uses a partitioned table to store activity records. The partitions are created based on the UUIDv7 `id` field.
+    
+    Note when creating migrations, you must use `python manage.py pgmakemigrations` to create the migrations.
     """
     
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    objects = PostgresManager()
+    all_objects = models.Manager()
+
+    class PartitioningMeta:
+        method = PostgresPartitioningMethod.RANGE
+        key = ["id"]
+    
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     timestamp = models.DateTimeField(auto_now_add=True, editable=False, db_index=True)
     
     # API Key identification - critical for audit trails
