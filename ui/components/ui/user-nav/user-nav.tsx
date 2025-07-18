@@ -2,6 +2,7 @@
 
 import { LogOut, User } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 import { logOut } from "@/actions/auth";
 import {
@@ -24,14 +25,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
-import { UserProfileProps } from "@/types";
 
 import { Button } from "../button/button";
 
-export const UserNav = ({ user }: { user?: UserProfileProps }) => {
-  if (!user || !user.data) return null;
+export const UserNav = () => {
+  const { data: session } = useSession();
 
-  const { name, email, company_name } = user.data.attributes;
+  if (!session?.user) return null;
+
+  const { name, email, companyName } = session.user;
 
   return (
     <DropdownMenu>
@@ -66,8 +68,8 @@ export const UserNav = ({ user }: { user?: UserProfileProps }) => {
           <div className="flex flex-col space-y-1">
             <p className="text-small font-medium leading-none">
               {name}
-              {company_name && (
-                <span className="text-xs">{` | ${company_name}`}</span>
+              {companyName && (
+                <span className="text-xs">{` | ${companyName}`}</span>
               )}
             </p>
             <p className="text-muted-foreground text-xs leading-none">
