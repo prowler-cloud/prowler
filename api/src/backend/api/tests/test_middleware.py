@@ -1,9 +1,8 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from django.core.cache import cache
-from django.http import HttpResponse, JsonResponse
-from django.test import RequestFactory, override_settings
+from django.http import HttpResponse
+from django.test import RequestFactory
 from django.contrib.auth import get_user_model
 
 from api.middleware import APILoggingMiddleware

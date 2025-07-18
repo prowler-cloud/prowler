@@ -1,3 +1,4 @@
+import math
 from config.env import env
 
 # Partitioning
@@ -33,6 +34,5 @@ API_KEY_ACTIVITY_TABLE_PARTITION_MAX_AGE_MONTHS = env.int(
 API_KEY_ACTIVITY_RETENTION_DAYS = env.int("API_KEY_ACTIVITY_RETENTION_DAYS", 365)
 
 # Convert days to months for partitioning (if the days setting overrides the months setting)
-import math
 if API_KEY_ACTIVITY_RETENTION_DAYS != 365:  # Only override if explicitly set to non-default
     API_KEY_ACTIVITY_TABLE_PARTITION_MAX_AGE_MONTHS = math.ceil(API_KEY_ACTIVITY_RETENTION_DAYS / 30.44)  # Average days per month

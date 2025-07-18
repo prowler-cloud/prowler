@@ -4,9 +4,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import uuid
-from uuid import uuid4
 from uuid6 import uuid7
-from api.db_utils import generate_random_token, DB_PROWLER_USER, POSTGRES_TENANT_VAR
 import django.core.validators
 import api.rls
 

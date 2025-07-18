@@ -1054,11 +1054,11 @@ class TenantViewSet(BaseTenantViewset):
                 manage_scans=True,
                 unlimited_visibility=True,
             )
-        except Exception as e:
+        except Exception:
             # If role creation fails, clean up the tenant
             try:
                 tenant.delete()
-            except:
+            except Exception:
                 pass
             raise
         
@@ -1140,7 +1140,7 @@ class TenantViewSet(BaseTenantViewset):
                 # For DRF, try to read from stream
                 try:
                     raw_body = request.stream.read()
-                except:
+                except Exception:
                     pass
             
             if raw_body:
@@ -1189,7 +1189,7 @@ class TenantViewSet(BaseTenantViewset):
                 with rls_transaction(str(extracted_tenant_id)):
                     return self._create_api_key_with_context(request, tenant, logger, request_data)
             else:
-                logger.debug(f"No extracted tenant_id, proceeding without RLS transaction")
+                logger.debug("No extracted tenant_id, proceeding without RLS transaction")
                 return self._create_api_key_with_context(request, tenant, logger, request_data)
         except Exception as e:
             logger.error(f"Exception in api_keys_create: {type(e).__name__}: {e}")

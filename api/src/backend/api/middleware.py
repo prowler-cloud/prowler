@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 
 from config.custom_logging import BackendLogger
 

@@ -18,8 +18,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
-    ComplianceOverview,
-    ComplianceRequirementOverview,
     Finding,
     Integration,
     IntegrationProviderRelationship,

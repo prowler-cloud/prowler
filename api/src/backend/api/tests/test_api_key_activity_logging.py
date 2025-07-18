@@ -10,12 +10,10 @@ These tests verify that comprehensive API key usage is logged for:
 
 import json
 from unittest.mock import MagicMock, patch
-from django.test import TestCase, RequestFactory, override_settings
+from django.test import TestCase, RequestFactory
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 from api.models import APIKey, APIKeyActivity, Tenant
 from api.middleware import APILoggingMiddleware
-from api.authentication import APIKeyAuthentication
 
 User = get_user_model()
 
@@ -324,7 +322,7 @@ class APIKeyActivityLoggingTest(TestCase):
 
     def test_api_key_activity_string_representation(self):
         """Test the string representation of APIKeyActivity for debugging."""
-        activity = APIKeyActivity.objects.create(
+        APIKeyActivity.objects.create(
             api_key=self.api_key,
             user=self.user,
             tenant_id=self.tenant.id,
@@ -335,7 +333,6 @@ class APIKeyActivityLoggingTest(TestCase):
             query_params={}
         )
         
-        str_repr = str(activity)
         self.assertIn("API Key Activity: Test API Key")
         self.assertIn("POST /api/v1/scans")
         self.assertIn("at")  # timestamp should be included 
