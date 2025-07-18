@@ -72,6 +72,21 @@ jobs:
           exit 1
         fi
 
+    - name: Checkout existing branch for patch release
+      if: ${{ env.PATCH_VERSION != '0' }}
+      run: |
+        echo "Patch release detected, checking out existing branch $BRANCH_NAME..."
+        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists locally, checking out..."
+          git checkout "$BRANCH_NAME"
+        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists remotely, checking out..."
+          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+        else
+          echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
+          exit 1
+        fi
+
     - name: Verify version in pyproject.toml
       run: |
         CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
