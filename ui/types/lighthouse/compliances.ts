@@ -89,7 +89,7 @@ export const getCompliancesOverviewSchema = z.object({
 
 export const getComplianceFrameworksSchema = z.object({
   providerType: z
-    .enum(["aws", "azure", "gcp", "kubernetes", "m365"])
+    .enum(["aws", "azure", "gcp", "kubernetes", "m365", "github"])
     .describe("The provider type to get the compliance frameworks for."),
 });
 

@@ -147,6 +147,28 @@ export const buildKubernetesSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildGitHubSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.PERSONAL_ACCESS_TOKEN,
+    ),
+    [ProviderCredentialFields.OAUTH_APP_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.OAUTH_APP_TOKEN,
+    ),
+    [ProviderCredentialFields.GITHUB_APP_ID]: getFormValue(
+      formData,
+      ProviderCredentialFields.GITHUB_APP_ID,
+    ),
+    [ProviderCredentialFields.GITHUB_APP_KEY]: getFormValue(
+      formData,
+      ProviderCredentialFields.GITHUB_APP_KEY,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 // Main function to build secret configuration
 export const buildSecretConfig = (
   formData: FormData,
@@ -176,6 +198,10 @@ export const buildSecretConfig = (
     kubernetes: () => ({
       secretType: "static",
       secret: buildKubernetesSecret(formData),
+    }),
+    github: () => ({
+      secretType: "static",
+      secret: buildGitHubSecret(formData),
     }),
   };
 

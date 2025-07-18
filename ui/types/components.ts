@@ -235,13 +235,22 @@ export type KubernetesCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type GitHubCredentials = {
+  [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]?: string;
+  [ProviderCredentialFields.OAUTH_APP_TOKEN]?: string;
+  [ProviderCredentialFields.GITHUB_APP_ID]?: number;
+  [ProviderCredentialFields.GITHUB_APP_KEY]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPDefaultCredentials
   | GCPServiceAccountKey
   | KubernetesCredentials
-  | M365Credentials;
+  | M365Credentials
+  | GitHubCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

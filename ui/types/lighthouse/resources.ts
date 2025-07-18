@@ -37,7 +37,14 @@ const resourceSortEnum = z.enum([
   "-updated_at",
 ]);
 
-const providerTypeEnum = z.enum(["", "aws", "gcp", "azure", "kubernetes"]);
+const providerTypeEnum = z.enum([
+  "",
+  "aws",
+  "gcp",
+  "azure",
+  "kubernetes",
+  "github",
+]);
 
 export const getResourcesSchema = z.object({
   page: z.number().optional().describe("The page number to fetch."),

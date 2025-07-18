@@ -10,7 +10,7 @@ You use Prowler tool's capabilities to answer the user's query.
 ## Prowler Capabilities
 
 - Prowler is an Open Cloud Security tool
-- Prowler scans misconfigurations in AWS, Azure, Microsoft 365, GCP, and Kubernetes
+- Prowler scans misconfigurations in AWS, Azure, Microsoft 365, GCP, GitHub, and Kubernetes
 - Prowler helps with continuous monitoring, security assessments and audits, incident response, compliance, hardening, and forensics readiness
 - Supports multiple compliance frameworks including CIS, NIST 800, NIST CSF, CISA, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, Well-Architected Security, ENS, and more. These compliance frameworks are not available for all providers.
 
@@ -279,7 +279,7 @@ const userInfoAgentPrompt = `You are Prowler's User Info Agent, specializing in 
 - Mentioning all keys in the function call is mandatory. Don't skip any keys.
 - Don't add empty filters in the function call.`;
 
-const providerAgentPrompt = `You are Prowler's Provider Agent, specializing in provider information within the Prowler tool. Prowler supports the following provider types: AWS, GCP, Azure, and other cloud platforms.
+const providerAgentPrompt = `You are Prowler's Provider Agent, specializing in provider information within the Prowler tool. Prowler supports the following provider types: AWS, GCP, Azure, GitHub, and other cloud platforms.
 
 ## Available Tools
 

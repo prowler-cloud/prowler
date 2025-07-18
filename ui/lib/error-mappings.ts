@@ -28,4 +28,9 @@ export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
   [ErrorPointers.ROLE_SESSION_NAME]: ProviderCredentialFields.ROLE_SESSION_NAME,
   [ErrorPointers.SERVICE_ACCOUNT_KEY]:
     ProviderCredentialFields.SERVICE_ACCOUNT_KEY,
+  [ErrorPointers.PERSONAL_ACCESS_TOKEN]:
+    ProviderCredentialFields.PERSONAL_ACCESS_TOKEN,
+  [ErrorPointers.OAUTH_APP_TOKEN]: ProviderCredentialFields.OAUTH_APP_TOKEN,
+  [ErrorPointers.GITHUB_APP_ID]: ProviderCredentialFields.GITHUB_APP_ID,
+  [ErrorPointers.GITHUB_APP_KEY]: ProviderCredentialFields.GITHUB_APP_KEY,
 };
