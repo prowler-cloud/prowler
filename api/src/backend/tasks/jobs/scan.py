@@ -209,6 +209,9 @@ def perform_prowler_scan(
                                     },
                                 )
                                 resource_cache[resource_uid] = resource_instance
+
+                                # Initialize all processed resources in the cache
+                                resource_failed_findings_cache[resource_uid] = 0
                             else:
                                 resource_instance = resource_cache[resource_uid]
 
