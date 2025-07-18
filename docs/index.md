@@ -333,16 +333,10 @@ docker compose pull --policy always
 
 The `--policy always` flag ensures that Docker pulls the latest images even if they already exist locally.
 
-#### What Gets Preserved During Upgrade
 
-**Your data and configurations are safe!** The upgrade process preserves:
+???+ note "What Gets Preserved During Upgrade"
 
-- ✅ **Cloud Provider Configurations**: All your AWS, Azure, GCP, etc. provider settings
-- ✅ **Credentials**: Stored securely in the database
-- ✅ **Scan History**: All previous scan results and findings
-- ✅ **User Accounts**: User profiles and permissions
-- ✅ **Compliance Frameworks**: Custom compliance configurations
-- ✅ **Database**: PostgreSQL data persists across container restarts
+    Everything is preserved, nothing will be deleted after the update.
 
 #### Troubleshooting
 
