@@ -80,32 +80,6 @@ class Migration(migrations.Migration):
             },
         ),
         
-        # Add indexes for APIKeyActivity performance optimization
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['api_key', '-timestamp'], name='api_key_activity_key_time_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['tenant_id', '-timestamp'], name='api_key_activity_tenant_time_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['source_ip', '-timestamp'], name='api_key_activity_ip_time_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['endpoint', '-timestamp'], name='api_key_activity_endpoint_time_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['status_code', '-timestamp'], name='api_key_activity_status_time_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='apikeyactivity',
-            index=models.Index(fields=['tenant_id', 'api_key', 'source_ip', '-timestamp'], name='api_key_activity_incident_idx'),
-        ),
-        
         # Add RLS constraint for api_key_activities
         migrations.AddConstraint(
             model_name='apikeyactivity',
