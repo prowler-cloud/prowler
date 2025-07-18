@@ -13,6 +13,7 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
+from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 
@@ -55,14 +56,21 @@ def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
 
 def return_prowler_provider(
     provider: Provider,
-) -> [AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider]:
+) -> [
+    AwsProvider
+    | AzureProvider
+    | GcpProvider
+    | GithubProvider
+    | KubernetesProvider
+    | M365Provider
+]:
     """Return the Prowler provider class based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider: The corresponding provider class.
+        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -78,6 +86,8 @@ def return_prowler_provider(
             prowler_provider = KubernetesProvider
         case Provider.ProviderChoices.M365.value:
             prowler_provider = M365Provider
+        case Provider.ProviderChoices.GITHUB.value:
+            prowler_provider = GithubProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -120,7 +130,14 @@ def get_prowler_provider_kwargs(
 def initialize_prowler_provider(
     provider: Provider,
     mutelist_processor: Processor | None = None,
-) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider:
+) -> (
+    AwsProvider
+    | AzureProvider
+    | GcpProvider
+    | GithubProvider
+    | KubernetesProvider
+    | M365Provider
+):
     """Initialize a Prowler provider instance based on the given provider type.
 
     Args:
@@ -128,8 +145,8 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
-            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
+        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
+            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `GithubProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
             provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)

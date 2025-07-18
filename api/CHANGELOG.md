@@ -5,6 +5,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [v1.10.0] (Prowler v5.9.0)
 
 ### Added
+- Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
 - `GET /resources/metadata`, `GET /resources/metadata/latest` and `GET /resources/latest` to expose resource metadata and latest scan results [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 
