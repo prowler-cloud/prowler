@@ -2,6 +2,27 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.10.0] (Prowler UNRELEASED)
+
+### Added
+- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
+  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
+  - `clusters_backup_enabled` - Ensure clusters have backup enabled
+  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
+  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
+  - `organizations_api_access_list_required` - Ensure organization requires API access list
+  - `organizations_mfa_required` - Ensure organization requires MFA
+  - `organizations_security_contact_defined` - Ensure organization has security contact defined
+  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
+  - `projects_auditing_enabled` - Ensure database auditing is enabled
+  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
+
+### Changed
+
+### Fixed
+
+---
+
 ## [v5.9.0] (Prowler v5.9.0)
 
 ### Added
@@ -15,17 +36,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_intune_enrollment_sign_in_frequency_every_time` check for M365 provider [(#8223)](https://github.com/prowler-cloud/prowler/pull/8223)
 - Support for remote repository scanning in IaC provider [(#8193)](https://github.com/prowler-cloud/prowler/pull/8193)
 - Add `test_connection` method to GitHub provider [(#8248)](https://github.com/prowler-cloud/prowler/pull/8248)
-- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
-  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
-  - `clusters_backup_enabled` - Ensure clusters have backup enabled
-  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
-  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
-  - `organizations_api_access_list_required` - Ensure organization requires API access list
-  - `organizations_mfa_required` - Ensure organization requires MFA
-  - `organizations_security_contact_defined` - Ensure organization has security contact defined
-  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
-  - `projects_auditing_enabled` - Ensure database auditing is enabled
-  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
 
 ### Changed
 - Refactor the Azure Defender get security contact configuration method to use the API REST endpoint instead of the SDK [(#8241)](https://github.com/prowler-cloud/prowler/pull/8241)
