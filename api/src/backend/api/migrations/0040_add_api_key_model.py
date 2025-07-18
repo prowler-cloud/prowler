@@ -6,6 +6,15 @@ import django.db.models.deletion
 import uuid
 from uuid6 import uuid7
 import django.core.validators
+from psqlextra.backend.migrations.operations.add_default_partition import (
+    PostgresAddDefaultPartition,
+)
+from psqlextra.backend.migrations.operations.create_partitioned_model import (
+    PostgresCreatePartitionedModel,
+)
+from psqlextra.manager.manager import PostgresManager
+from psqlextra.models.partitioned import PostgresPartitionedModel
+from psqlextra.types import PostgresPartitioningMethod
 import api.rls
 
 
@@ -106,7 +115,7 @@ class Migration(migrations.Migration):
             ),
         ),
         # Create APIKeyActivity model for comprehensive audit logging with partitioning support
-        migrations.CreateModel(
+        PostgresCreatePartitionedModel(
             name="APIKeyActivity",
             fields=[
                 (
@@ -203,7 +212,22 @@ class Migration(migrations.Migration):
             options={
                 "db_table": "api_key_activities",
                 "ordering": ["-timestamp"],
+                "abstract": False,
+                "base_manager_name": "objects",
             },
+            partitioning_options={
+                "method": PostgresPartitioningMethod["RANGE"],
+                "key": ["id"],
+            },
+            bases=(PostgresPartitionedModel,),
+            managers=[
+                ("objects", PostgresManager()),
+            ],
+        ),
+        # Add default partition for APIKeyActivity
+        PostgresAddDefaultPartition(
+            model_name="APIKeyActivity",
+            name="default",
         ),
         # Add RLS constraint for api_key_activities (UPDATE excluded for partitioned table compatibility)
         migrations.AddConstraint(
@@ -211,6 +235,16 @@ class Migration(migrations.Migration):
             constraint=api.rls.RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_apikeyactivity",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ),
+        # Add RLS constraint for api_key_activities default partition
+        migrations.AddConstraint(
+            model_name="apikeyactivity",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_api_key_activities_default",
+                partition_name="default",
                 statements=["SELECT", "INSERT", "DELETE"],
             ),
         ),

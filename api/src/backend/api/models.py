@@ -365,6 +365,12 @@ class APIKeyActivity(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "DELETE"],
             ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s_default",
+                partition_name="default",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
         ]
 
     class JSONAPIMeta:
