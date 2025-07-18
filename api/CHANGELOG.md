@@ -7,6 +7,22 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
 - `GET /resources/metadata`, `GET /resources/metadata/latest` and `GET /resources/latest` to expose resource metadata and latest scan results [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
+- **API Key Authentication System**: Comprehensive API key functionality for programmatic access
+  - New `APIKey` model with secure password hashing and unique prefix-based lookup
+  - API key authentication middleware supporting `Authorization: ApiKey pk_<prefix>.<key>` format
+  - Tenant-based API key management with endpoints: `GET /tenants/{id}/api-keys`, `POST /tenants/{id}/api-keys/create`, `DELETE /tenants/{id}/api-keys/{key_id}/revoke`
+  - Configurable expiration periods (1 day, 7 days, 30 days, 90 days, or never)
+  - One-time key display during creation for enhanced security
+- **API Key Activity Logging**: Comprehensive audit trail for all API key usage
+  - New `APIKeyActivity` model tracking request details (method, endpoint, IP, user agent)
+  - Response monitoring (status code, response size, processing time)
+  - Security auditing and compliance support for incident response
+  - Persistent database logging for long-term analysis
+- **Authentication Documentation**: Comprehensive guide for JWT tokens vs API keys authentication methods
+  - Detailed comparison of authentication methods with security best practices
+  - Step-by-step guides for creating and managing API keys
+  - Troubleshooting and performance considerations documentation
+  - API Key Activity Logging documentation for security auditing and compliance
 
 ### Changed
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.

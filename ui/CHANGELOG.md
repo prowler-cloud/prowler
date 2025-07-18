@@ -11,6 +11,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Navigation link in Scans view to access Compliance Overview [(#8251)](https://github.com/prowler-cloud/prowler/pull/8251)
 - Status column for findings table in the Compliance Detail view [(#8244)](https://github.com/prowler-cloud/prowler/pull/8244)
 - Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
+- **API Key Management UI**: Complete interface for managing API keys in user profile
+  - New API Keys card in user profile page with create, view, and revoke functionality
+  - API key creation dialog with configurable expiration periods (1 day, 7 days, 30 days, 90 days, never)
+  - One-time key display with security warnings and copy-to-clipboard functionality
+  - Tenant-based API key management integrated with existing authentication system
+  - Server actions for API key operations with proper error handling and validation
 
 ### Security
 
