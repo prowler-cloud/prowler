@@ -29,9 +29,13 @@ export const LaunchScanWorkflow = ({
   const formSchema = z.object({
     ...onDemandScanFormSchema().shape,
     scanName: z
-      .string()
-      .min(3, "Must have at least 3 characters")
-      .or(z.literal(""))
+      .union([
+        z
+          .string()
+          .min(3, "Scan name must be at least 3 characters")
+          .max(32, "Scan name must not exceed 32 characters"),
+        z.literal(""),
+      ])
       .optional(),
   });
 
