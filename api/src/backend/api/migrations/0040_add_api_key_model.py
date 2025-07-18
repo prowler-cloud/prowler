@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='apikey',
-            index=models.Index(fields=['prefix'], name='api_keys_prefix_idx'),
+            index=models.Index(fields=['tenant_id', 'prefix'], name='api_keys_tenant_prefix_idx'),
         ),
         migrations.AddIndex(
             model_name='apikey',
