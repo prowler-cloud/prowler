@@ -43,10 +43,6 @@ class Migration(migrations.Migration):
             model_name='apikey',
             index=models.Index(fields=['tenant_id', 'revoked_at'], name='api_keys_tenant_active_idx'),
         ),
-        migrations.AddIndex(
-            model_name='apikey',
-            index=models.Index(fields=['tenant_id', 'prefix'], name='api_keys_tenant_prefix_idx'),
-        ),
         # Add RLS constraint for api_keys
         migrations.AddConstraint(
             model_name='apikey',
