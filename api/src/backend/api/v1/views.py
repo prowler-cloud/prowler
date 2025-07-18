@@ -998,7 +998,6 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-@method_decorator(CACHE_DECORATOR, name="api_keys")
 class TenantViewSet(BaseTenantViewset):
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer

@@ -247,15 +247,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CACHE_MAX_AGE = env.int("DJANGO_CACHE_MAX_AGE", 3600)
 CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
 
-# Django Cache Configuration (using same Valkey instance as Celery)
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{env('VALKEY_HOST', default='valkey')}:{env('VALKEY_PORT', default='6379')}/{env('VALKEY_CACHE_DB', default='1')}",
-        "KEY_PREFIX": "prowler_cache",
-    }
-}
-
 TESTING = False
 
 FINDINGS_MAX_DAYS_IN_RANGE = env.int("DJANGO_FINDINGS_MAX_DAYS_IN_RANGE", 7)
