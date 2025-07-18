@@ -185,7 +185,7 @@ class APIKeyActivityLoggingTest(TestCase):
             mock_extract_auth_info.return_value = auth_info
 
             middleware = APILoggingMiddleware(lambda req: response)
-            
+
             # Use the actual logger instead of mocking it
             middleware(request)
 
