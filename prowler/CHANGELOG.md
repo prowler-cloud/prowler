@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.9.1] (Prowler UNRELEASED)
+## [v5.10.0] (Prowler UNRELEASED)
 
 ### Added
 - Add `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
