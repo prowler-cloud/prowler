@@ -2,12 +2,10 @@
   "Provider": "mongodbatlas",
   "CheckID": "clusters_authentication_enabled",
   "CheckTitle": "Ensure MongoDB Atlas clusters have authentication enabled",
-  "CheckType": [
-    "Authentication"
-  ],
+  "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:mongodbatlas:cluster:{project_id}:{cluster_name}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Cluster",
   "Description": "Ensure MongoDB Atlas clusters have authentication enabled to prevent unauthorized access",
@@ -25,9 +23,7 @@
       "Url": "https://www.mongodb.com/docs/atlas/security/config-db-auth/"
     }
   },
-  "Categories": [
-    "authentication"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check verifies that MongoDB Atlas clusters have authentication enabled (authEnabled=true) to prevent unauthorized access to the database."

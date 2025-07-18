@@ -2,12 +2,10 @@
   "Provider": "mongodbatlas",
   "CheckID": "clusters_backup_enabled",
   "CheckTitle": "Ensure MongoDB Atlas clusters have backup enabled",
-  "CheckType": [
-    "Backup"
-  ],
+  "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:mongodbatlas:cluster:{project_id}:{cluster_name}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Cluster",
   "Description": "Ensure MongoDB Atlas clusters have backup enabled to protect against data loss",
@@ -25,9 +23,7 @@
       "Url": "https://www.mongodb.com/docs/atlas/backup-restore-cluster/"
     }
   },
-  "Categories": [
-    "backup"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check verifies that MongoDB Atlas clusters have backup enabled (backupEnabled=true) to ensure data protection and recovery capabilities."

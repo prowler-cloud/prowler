@@ -2,12 +2,10 @@
   "Provider": "mongodbatlas",
   "CheckID": "projects_auditing_enabled",
   "CheckTitle": "Ensure database auditing is enabled",
-  "CheckType": [
-    "Auditing"
-  ],
+  "CheckType": [],
   "ServiceName": "projects",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:mongodbatlas:project:{project_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Project",
   "Description": "Ensure database auditing is enabled to track database operations and security events",
@@ -25,9 +23,7 @@
       "Url": "https://www.mongodb.com/docs/atlas/database-auditing/"
     }
   },
-  "Categories": [
-    "logging"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check verifies that database auditing is enabled by checking the audit configuration for the project."

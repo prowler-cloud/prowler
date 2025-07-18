@@ -2,12 +2,10 @@
   "Provider": "mongodbatlas",
   "CheckID": "clusters_tls_enabled",
   "CheckTitle": "Ensure MongoDB Atlas clusters have TLS authentication required",
-  "CheckType": [
-    "Encryption"
-  ],
+  "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:mongodbatlas:cluster:{project_id}:{cluster_name}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Cluster",
   "Description": "Ensure MongoDB Atlas clusters have TLS authentication required to secure data in transit",
@@ -25,9 +23,7 @@
       "Url": "https://www.mongodb.com/docs/atlas/setup-cluster-security/#encryption-in-transit"
     }
   },
-  "Categories": [
-    "encryption"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check verifies that MongoDB Atlas clusters have TLS enabled (sslEnabled=true) to ensure secure data transmission."

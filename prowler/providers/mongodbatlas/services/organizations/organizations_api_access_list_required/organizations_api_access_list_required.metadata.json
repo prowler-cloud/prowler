@@ -2,12 +2,10 @@
   "Provider": "mongodbatlas",
   "CheckID": "organizations_api_access_list_required",
   "CheckTitle": "Ensure organization requires API access list",
-  "CheckType": [
-    "Access Control"
-  ],
+  "CheckType": [],
   "ServiceName": "organizations",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:mongodbatlas:organization:{org_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Organization",
   "Description": "Ensure organization requires API operations to originate from an IP Address added to the API access list",
@@ -25,9 +23,7 @@
       "Url": "https://www.mongodb.com/docs/atlas/security/ip-access-list/"
     }
   },
-  "Categories": [
-    "iam"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check verifies that the organization requires API operations to originate from an IP Address added to the API access list (apiAccessListRequired=true)."

@@ -2,12 +2,10 @@
   "Provider": "mongodbatlas",
   "CheckID": "organizations_security_contact_defined",
   "CheckTitle": "Ensure organization has a Security Contact defined",
-  "CheckType": [
-    "Security Contact"
-  ],
+  "CheckType": [],
   "ServiceName": "organizations",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:mongodbatlas:organization:{org_id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Organization",
   "Description": "Ensure organization has a security contact defined to receive security-related notifications",
@@ -25,9 +23,7 @@
       "Url": "https://www.mongodb.com/docs/atlas/tutorial/manage-organization-settings/#add-security-contact-information"
     }
   },
-  "Categories": [
-    "security-contacts"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check verifies that the organization has a security contact defined (securityContact field) to receive security-related notifications."

@@ -5,7 +5,7 @@
   "CheckType": [],
   "ServiceName": "clusters",
   "SubServiceName": "",
-  "ResourceIdTemplate": "mongodbatlas:cluster-id:cluster-name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "MongoDBAtlasCluster",
   "Description": "Ensure that MongoDB Atlas clusters have encryption at rest enabled to protect data stored on disk. Encryption at rest provides an additional layer of security by encrypting data before it's written to storage, protecting against unauthorized access to the underlying storage media.",
@@ -23,9 +23,7 @@
       "Url": "https://www.mongodb.com/docs/atlas/security-kms-encryption/"
     }
   },
-  "Categories": [
-    "encryption"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check verifies that MongoDB Atlas clusters have encryption at rest enabled through either the MongoDB Atlas encryption provider or cloud provider-specific encryption (such as AWS EBS encryption). Paused clusters are skipped as they are not actively serving data."
