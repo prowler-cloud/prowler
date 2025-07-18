@@ -5,7 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.9.2] (Prowler UNRELEASED)
 
 ### Fixed
-- Avoid false positives in SQS encryption check for ephemeral queues [(#8322)](https://github.com/prowler-cloud/prowler/pull/8322)
+- Avoid false positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
 
 ## [v5.9.1] (Prowler 5.9.1)
 
