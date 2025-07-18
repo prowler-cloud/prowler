@@ -515,6 +515,7 @@ To create MongoDB Atlas API keys:
 MongoDB Atlas API keys require appropriate permissions to perform security checks:
 
 - **Organization Read Only**: Provides read-only access to everything in the organization, including all projects in the organization.
+    - If you want to be able to [audit the Auditing configuration for the project](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/group/endpoint-auditing), **Organization Owner** is needed.
 
 ### Configuration Options
 
