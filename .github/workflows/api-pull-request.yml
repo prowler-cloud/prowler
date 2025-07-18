@@ -90,7 +90,18 @@ jobs:
         run: |
           BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           echo "Using branch: $BRANCH_NAME"
-          sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
+          
+          # Check if branch exists on main repository
+          if git ls-remote --exit-code --heads https://github.com/prowler-cloud/prowler.git "$BRANCH_NAME" >/dev/null 2>&1; then
+            echo "Branch $BRANCH_NAME exists on main repository, using prowler-cloud/prowler"
+            sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
+          else
+            echo "Branch $BRANCH_NAME does not exist on main repository"
+            # Get the repository URL from the event (for forks)
+            REPO_URL="https://github.com/${{ github.event.pull_request.head.repo.full_name || github.repository }}.git"
+            echo "Using repository: $REPO_URL"
+            sed -i "s|git+https://github.com/prowler-cloud/prowler.git@master|git+$REPO_URL@$BRANCH_NAME|g" pyproject.toml
+          fi
 
       - name: Install poetry
         working-directory: ./api
