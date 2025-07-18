@@ -423,7 +423,7 @@ While the scan is running, start exploring the findings in these sections:
 
 ### Prowler CLI
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `m365` or `kubernetes`):
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `m365`, `kubernetes`, `github`, `iac` or `mongodbatlas`):
 
 ???+ note
     If no provider specified, AWS will be used for backward compatibility with most of v2 options.
@@ -646,6 +646,34 @@ prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/tes
     - For more details on supported frameworks and rules, see the [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html)
 
 See more details about IaC scanning in the [IaC Tutorial](tutorials/iac/getting-started-iac.md) section.
+
+#### MongoDB Atlas
+
+Prowler allows you to scan your MongoDB Atlas cloud database deployments for security and compliance issues.
+
+Authentication is done using MongoDB Atlas API key pairs:
+
+```console
+# Using command-line arguments
+prowler mongodbatlas --atlas-public-key <public_key> --atlas-private-key <private_key>
+
+# Using environment variables
+export ATLAS_PUBLIC_KEY=<public_key>
+export ATLAS_PRIVATE_KEY=<private_key>
+prowler mongodbatlas
+```
+
+You can filter scans to specific organizations or projects:
+
+```console
+# Scan specific organization
+prowler mongodbatlas --atlas-organization-id <organization_id>
+
+# Scan specific project
+prowler mongodbatlas --atlas-project-id <project_id>
+```
+
+See more details about MongoDB Atlas Authentication in [Requirements](getting-started/requirements.md#mongodb-atlas)
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).

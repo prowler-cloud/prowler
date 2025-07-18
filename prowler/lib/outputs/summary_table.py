@@ -51,6 +51,9 @@ def display_summary_table(
         elif provider.type == "m365":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "mongodbatlas":
+            entity_type = "User"
+            audited_entities = provider.identity.username
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
