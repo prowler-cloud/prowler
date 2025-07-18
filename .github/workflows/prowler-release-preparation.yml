@@ -19,11 +19,22 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
     - name: Checkout code
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6316b80 # v5.2.0
+      with:
+        python-version: '3.12'
+
+    - name: Install Poetry
+      run: |
+        python3 -m pip install --user poetry
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Parse version and determine branch
       run: |
@@ -107,11 +118,12 @@ jobs:
         echo "✓ api/pyproject.toml version: $CURRENT_API_VERSION"
 
     - name: Verify prowler dependency in api/pyproject.toml
+      if: ${{ env.PATCH_VERSION != '0' }}
       run: |
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
-        PROWLER_VERSION_TRIMMED=$(echo "$PROWLER_VERSION" | tr -d '[:space:]')
-        if [ "$CURRENT_PROWLER_REF" != "$PROWLER_VERSION_TRIMMED" ]; then
-          echo "ERROR: Prowler dependency mismatch in api/pyproject.toml (expected: '$PROWLER_VERSION_TRIMMED', found: '$CURRENT_PROWLER_REF')"
+        BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
+        if [ "$CURRENT_PROWLER_REF" != "$BRANCH_NAME_TRIMMED" ]; then
+          echo "ERROR: Prowler dependency mismatch in api/pyproject.toml (expected: '$BRANCH_NAME_TRIMMED', found: '$CURRENT_PROWLER_REF')"
           exit 1
         fi
         echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
@@ -126,15 +138,55 @@ jobs:
         fi
         echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
 
-    - name: Create release branch for minor release
+    - name: Create or checkout release branch
+      run: |
+        # Check if branch exists locally or remotely
+        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists locally, checking out..."
+          git checkout "$BRANCH_NAME"
+        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists remotely, checking out..."
+          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+        else
+          # For minor releases (patch = 0), create new branch; for patches, branch should exist
+          if [ "$PATCH_VERSION" -eq 0 ]; then
+            echo "Creating new branch $BRANCH_NAME for minor release..."
+            git checkout -b "$BRANCH_NAME"
+          else
+            echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
+            exit 1
+          fi
+        fi
+
+    - name: Update prowler dependency in api/pyproject.toml
       if: ${{ env.PATCH_VERSION == '0' }}
       run: |
-        echo "Minor release detected (patch = 0), creating new branch $BRANCH_NAME..."
-        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" || git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
-          echo "ERROR: Branch $BRANCH_NAME already exists for minor release $PROWLER_VERSION"
+        CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
+        BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
+
+        # Minor release: update the dependency to use the new branch
+        echo "Minor release detected - updating prowler dependency from '$CURRENT_PROWLER_REF' to '$BRANCH_NAME_TRIMMED'"
+        sed -i "s|prowler @ git+https://github.com/prowler-cloud/prowler.git@[^\"]*\"|prowler @ git+https://github.com/prowler-cloud/prowler.git@$BRANCH_NAME_TRIMMED\"|" api/pyproject.toml
+
+        # Verify the change was made
+        UPDATED_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
+        if [ "$UPDATED_PROWLER_REF" != "$BRANCH_NAME_TRIMMED" ]; then
+          echo "ERROR: Failed to update prowler dependency in api/pyproject.toml"
           exit 1
         fi
-        git checkout -b "$BRANCH_NAME"
+
+        # Update poetry lock file
+        echo "Updating poetry.lock file..."
+        cd api
+        poetry lock --no-update
+        cd ..
+
+        # Commit and push the changes
+        git add api/pyproject.toml api/poetry.lock
+        git commit -m "Update prowler dependency to $BRANCH_NAME_TRIMMED for release $PROWLER_VERSION"
+        git push origin "$BRANCH_NAME"
+
+        echo "✓ api/pyproject.toml prowler dependency updated to: $UPDATED_PROWLER_REF"
 
     - name: Extract changelog entries
       run: |
