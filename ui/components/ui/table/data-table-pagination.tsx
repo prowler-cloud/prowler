@@ -19,7 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../select/select";
+} from "../select/Select";
 
 interface DataTablePaginationProps {
   metadata?: MetaDataProps;
