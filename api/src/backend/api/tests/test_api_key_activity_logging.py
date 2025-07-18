@@ -8,7 +8,6 @@ These tests verify that comprehensive API key usage is logged for:
 - Compromised key detection
 """
 
-import json
 from unittest.mock import MagicMock, patch
 from django.test import TestCase, RequestFactory
 from django.contrib.auth import get_user_model
