@@ -1,7 +1,7 @@
 """
 Tests for API Key Activity Logging functionality.
 
-These tests verify that comprehensive API key usage is logged for:
+These tests verify that API key usage is logged for:
 - Security auditing and incident response
 - Compliance requirements
 - Usage pattern analysis
