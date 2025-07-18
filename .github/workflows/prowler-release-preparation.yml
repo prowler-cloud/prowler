@@ -72,21 +72,6 @@ jobs:
           exit 1
         fi
 
-    - name: Checkout existing branch for patch release
-      if: ${{ env.PATCH_VERSION != '0' }}
-      run: |
-        echo "Patch release detected, checking out existing branch $BRANCH_NAME..."
-        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists locally, checking out..."
-          git checkout "$BRANCH_NAME"
-        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists remotely, checking out..."
-          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
-        else
-          echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
-          exit 1
-        fi
-
     - name: Verify version in pyproject.toml
       run: |
         CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
@@ -138,25 +123,15 @@ jobs:
         fi
         echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
 
-    - name: Create or checkout release branch
+    - name: Create release branch for minor release
+      if: ${{ env.PATCH_VERSION == '0' }}
       run: |
-        # Check if branch exists locally or remotely
-        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists locally, checking out..."
-          git checkout "$BRANCH_NAME"
-        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists remotely, checking out..."
-          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
-        else
-          # For minor releases (patch = 0), create new branch; for patches, branch should exist
-          if [ "$PATCH_VERSION" -eq 0 ]; then
-            echo "Creating new branch $BRANCH_NAME for minor release..."
-            git checkout -b "$BRANCH_NAME"
-          else
-            echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
-            exit 1
-          fi
+        echo "Minor release detected (patch = 0), creating new branch $BRANCH_NAME..."
+        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" || git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          echo "ERROR: Branch $BRANCH_NAME already exists for minor release $PROWLER_VERSION"
+          exit 1
         fi
+        git checkout -b "$BRANCH_NAME"
 
     - name: Update prowler dependency in api/pyproject.toml
       if: ${{ env.PATCH_VERSION == '0' }}
