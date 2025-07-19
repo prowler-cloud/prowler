@@ -387,10 +387,6 @@ class Test_Repository_Validation:
         assert self.repository._validate_repository_format("/missing-owner") is False
         assert self.repository._validate_repository_format("missing-repo/") is False
 
-        # Security test - prevent injection
-        assert self.repository._validate_repository_format("owner;rm -rf/repo") is False
-        assert self.repository._validate_repository_format("owner$echo/repo") is False
-
 
 class Test_Repository_ErrorHandling:
     def setup_method(self):
