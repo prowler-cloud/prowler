@@ -47,6 +47,7 @@ from api.db_utils import (
 )
 from api.exceptions import ModelValidationError
 from api.rls import (
+    APIKeyRowLevelSecurityConstraint,
     BaseSecurityConstraint,
     RowLevelSecurityConstraint,
     RowLevelSecurityProtectedModel,
@@ -162,6 +163,10 @@ class APIKey(RowLevelSecurityProtectedModel):
     Keys are hashed and never stored in plaintext.
     """
 
+    # Define both default and RLS-bypassing managers
+    objects = models.Manager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(
         max_length=255,
@@ -195,7 +200,7 @@ class APIKey(RowLevelSecurityProtectedModel):
             ),
         ]
         constraints = [
-            RowLevelSecurityConstraint(
+            APIKeyRowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],

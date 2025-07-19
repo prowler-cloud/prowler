@@ -48,17 +48,30 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         except ValueError:
             raise exceptions.AuthenticationFailed("Invalid API key format.")
 
+        logger.debug(f"Looking for API key with prefix: {prefix}")
+
         # Find potential API keys by prefix, then verify with password check
-        candidate_keys = APIKey.objects.filter(prefix=prefix)
+        # Use all_objects to bypass RLS since we don't have tenant context yet
+        # This is necessary because we need to authenticate the API key to GET the tenant context
+        candidate_keys = APIKey.all_objects.filter(prefix=prefix)
+        
+        logger.debug(f"Found {candidate_keys.count()} candidate keys")
 
         api_key = None
         for candidate in candidate_keys:
+            logger.debug(f"Checking candidate key ID: {candidate.id}")
             if APIKey.verify_key(key, candidate.key_hash):
                 api_key = candidate
+                logger.debug(f"Key verification successful for ID: {candidate.id}")
                 break
+            else:
+                logger.debug(f"Key verification failed for ID: {candidate.id}")
 
         if not api_key:
+            logger.info("No valid API key found for provided key")
             raise exceptions.AuthenticationFailed("Invalid API key.")
+
+        logger.debug(f"Found valid API key: {api_key.id}")
 
         # Check if the key is valid
         if not api_key.is_valid():
@@ -67,9 +80,18 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             else:
                 raise exceptions.AuthenticationFailed("API key has expired.")
 
-        # Update last used timestamp
-        api_key.last_used_at = timezone.now()
-        api_key.save(update_fields=["last_used_at"])
+        logger.debug("API key is valid, updating last_used_at")
+
+        # Update last used timestamp within RLS context
+        from api.db_utils import rls_transaction
+        try:
+            with rls_transaction(str(api_key.tenant_id)):
+                api_key.last_used_at = timezone.now()
+                api_key.save(update_fields=["last_used_at"])
+                logger.debug("Successfully updated last_used_at")
+        except Exception as e:
+            logger.warning(f"Failed to update last_used_at: {type(e).__name__}: {e}")
+            # Don't fail authentication if we can't update the timestamp
 
         # Return anonymous user and auth token
         # For API Key auth, the tenant_id comes from the API key itself
@@ -79,6 +101,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             "tenant_id": str(api_key.tenant_id),
         }
 
+        logger.debug(f"Returning successful authentication for tenant: {api_key.tenant_id}")
         return (AnonymousUser(), auth_info)
 
     def authenticate_header(self, request):

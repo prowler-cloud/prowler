@@ -1010,27 +1010,48 @@ class TenantViewSet(BaseTenantViewset):
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def initial(self, request, *args, **kwargs):
-        """Custom initial method to extract tenant_id from JWT without interfering with authentication."""
+        """Custom initial method to extract tenant_id from JWT or API key authentication."""
         import logging
+        from django.contrib.auth.models import AnonymousUser
 
         logger = logging.getLogger(__name__)
 
-        # Extract tenant_id from JWT token if available, but don't set up RLS yet
-        tenant_id_from_auth = request.auth.get("tenant_id") if request.auth else None
+        # Extract tenant_id from auth (works for both JWT and API key)
+        tenant_id_from_auth = None
+        if request.auth:
+            # For API key authentication, check if user is AnonymousUser
+            if isinstance(request.user, AnonymousUser) and request.auth.get('api_key_id'):
+                tenant_id_from_auth = request.auth.get("tenant_id")
+                logger.debug(f"Extracted tenant_id from API key: {tenant_id_from_auth}")
+            else:
+                # For JWT authentication
+                tenant_id_from_auth = request.auth.get("tenant_id")
+                logger.debug(f"Extracted tenant_id from JWT: {tenant_id_from_auth}")
+        
         if tenant_id_from_auth:
-            logger.debug(f"Extracted tenant_id from JWT: {tenant_id_from_auth}")
             # Store for later use but don't set up RLS transaction here
             self._extracted_tenant_id = tenant_id_from_auth
             # Set it on request for compatibility
             request.tenant_id = tenant_id_from_auth
         else:
-            logger.error(f"No tenant_id in auth - auth present: {bool(request.auth)}")
+            logger.error(f"No tenant_id in auth - auth present: {bool(request.auth)}, user type: {type(request.user)}")
             self._extracted_tenant_id = None
 
         # Call parent initial method AFTER our tenant_id extraction
         super().initial(request, *args, **kwargs)
 
     def get_queryset(self):
+        from django.contrib.auth.models import AnonymousUser
+        
+        # Handle API key authentication - return the tenant associated with the API key
+        if isinstance(self.request.user, AnonymousUser) and hasattr(self.request, 'auth'):
+            auth_info = self.request.auth
+            if auth_info and auth_info.get('api_key_id'):
+                tenant_id = auth_info.get('tenant_id')
+                queryset = Tenant.objects.filter(id=tenant_id)
+                return queryset.prefetch_related("memberships")
+        
+        # Handle regular user authentication
         queryset = Tenant.objects.filter(membership__user=self.request.user)
         return queryset.prefetch_related("memberships")
 
@@ -1155,18 +1176,15 @@ class TenantViewSet(BaseTenantViewset):
 
             if raw_body:
                 request_data = json.loads(raw_body.decode("utf-8"))
-                logger.debug(f"Raw request body parsed successfully: {request_data}")
+                logger.debug(f"Raw request body parsed successfully")
 
                 # Extract attributes from JSON:API format if present
                 if "data" in request_data and "attributes" in request_data["data"]:
                     logger.debug("Extracting attributes from JSON:API format")
                     request_data = request_data["data"]["attributes"]
-                    logger.debug(f"Extracted attributes: {request_data}")
 
             else:
-                logger.info(
-                    "No request body found, trying to access request data directly"
-                )
+                logger.debug("No request body found, trying to access request data directly")
                 # Fallback to accessing request.data but with manual JSON:API extraction
                 try:
                     raw_data = dict(
@@ -1174,16 +1192,14 @@ class TenantViewSet(BaseTenantViewset):
                     )  # Convert to regular dict to avoid DRF validation
                     if "data" in raw_data and "attributes" in raw_data["data"]:
                         request_data = raw_data["data"]["attributes"]
-                        logger.debug(f"Extracted from request.data: {request_data}")
                     else:
                         request_data = raw_data
-                        logger.debug(f"Using request.data as-is: {request_data}")
                 except Exception as e:
                     logger.error(f"Could not access request.data: {e}")
                     request_data = {}
 
         except Exception as e:
-            logger.error(f"ERROR parsing request data: {type(e).__name__}: {e}")
+            logger.error(f"Error parsing request data: {type(e).__name__}: {e}")
             # Final fallback - use empty data
             request_data = {}
 
@@ -1194,25 +1210,12 @@ class TenantViewSet(BaseTenantViewset):
             logger.error(f"Failed to get tenant object: {type(e).__name__}: {e}")
             raise
 
-        # Use RLS transaction conditionally based on extracted tenant_id
+        # Create API key with proper RLS context
         try:
-            # Use RLS transaction if we extracted a tenant_id from the JWT
-            extracted_tenant_id = getattr(self, "_extracted_tenant_id", None)
-            if extracted_tenant_id:
-                logger.debug(
-                    f"Using RLS transaction for extracted tenant: {extracted_tenant_id}"
-                )
-                with rls_transaction(str(extracted_tenant_id)):
-                    return self._create_api_key_with_context(
-                        request, tenant, logger, request_data
-                    )
-            else:
-                logger.debug(
-                    "No extracted tenant_id, proceeding without RLS transaction"
-                )
-                return self._create_api_key_with_context(
-                    request, tenant, logger, request_data
-                )
+            logger.debug("Creating API key with proper RLS context")
+            return self._create_api_key_with_context(
+                request, tenant, logger, request_data
+            )
         except Exception as e:
             logger.error(f"Exception in api_keys_create: {type(e).__name__}: {e}")
             import traceback
@@ -1228,25 +1231,25 @@ class TenantViewSet(BaseTenantViewset):
         logger.debug(f"Set request.tenant_id to: {tenant.id}")
 
         try:
-            context = self.get_serializer_context()
-            logger.debug(f"Got serializer context: {context}")
+            # Use RLS transaction to properly set tenant context for INSERT operation
+            with rls_transaction(str(tenant.id)):
+                context = self.get_serializer_context()
+                logger.debug("Got serializer context")
 
-            serializer = APIKeyCreateSerializer(data=request_data, context=context)
-            logger.debug("Created serializer instance")
+                serializer = APIKeyCreateSerializer(data=request_data, context=context)
+                logger.debug("Created serializer instance")
 
-            logger.debug("About to call serializer.is_valid()")
-            is_valid = serializer.is_valid(raise_exception=False)
-            logger.debug(f"Serializer is_valid result: {is_valid}")
+                is_valid = serializer.is_valid(raise_exception=False)
+                logger.debug(f"Serializer validation: {'valid' if is_valid else 'invalid'}")
 
-            if not is_valid:
-                logger.error(f"Serializer validation errors: {serializer.errors}")
-                raise ValidationError(serializer.errors)
+                if not is_valid:
+                    logger.error(f"Serializer validation errors: {serializer.errors}")
+                    raise ValidationError(serializer.errors)
 
-            logger.debug("About to call serializer.save()")
-            api_key = serializer.save()
-            logger.debug(f"Successfully saved API key: {api_key.id}")
+                api_key = serializer.save()
+                logger.info(f"Successfully created API key: {api_key.id}")
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         finally:
             # Restore original tenant_id
             if original_tenant_id is not None:
@@ -1464,7 +1467,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request)
         # Check if any of the user's roles have UNLIMITED_VISIBILITY
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all provider groups
@@ -1633,7 +1636,7 @@ class ProviderViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
             queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
@@ -1812,7 +1815,7 @@ class ScanViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Scan.objects.filter(tenant_id=self.request.tenant_id)
@@ -2244,7 +2247,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
@@ -2600,7 +2603,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -3134,7 +3137,7 @@ class RoleViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
-        user_role = get_role(request.user)
+        user_role = get_role(request.user, request)
         # If the user is the owner of the role, the manage_account field is not editable
         if user_role and kwargs["pk"] == str(user_role.id):
             request.data["manage_account"] = str(user_role.manage_account).lower()
@@ -3367,7 +3370,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     required_permissions = []
 
     def get_queryset(self):
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
@@ -3760,7 +3763,7 @@ class OverviewViewSet(BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        role = get_role(self.request.user)
+        role = get_role(self.request.user, self.request)
         providers = get_providers(role)
 
         if not role.unlimited_visibility:
@@ -4072,7 +4075,7 @@ class IntegrationViewSet(BaseRLSViewSet):
     allowed_providers = None
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user)
+        user_roles = get_role(self.request.user, self.request)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all integrations
             queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)

@@ -18,6 +18,31 @@ class Permissions(Enum):
     UNLIMITED_VISIBILITY = "unlimited_visibility"
 
 
+class IsAuthenticated(BasePermission):
+    """
+    Custom IsAuthenticated permission that handles both JWT and API key authentication.
+    
+    Allows access if:
+    - User is authenticated (JWT authentication), OR
+    - Request has valid API key authentication info
+    """
+    
+    def has_permission(self, request, view):
+        from django.contrib.auth.models import AnonymousUser
+        
+        # Handle regular authenticated users (JWT)
+        if request.user and request.user.is_authenticated:
+            return True
+        
+        # Handle API key authentication (returns AnonymousUser with auth info)
+        if isinstance(request.user, AnonymousUser) and hasattr(request, 'auth'):
+            auth_info = request.auth
+            if auth_info and auth_info.get('api_key_id'):
+                return True
+        
+        return False
+
+
 class HasPermissions(BasePermission):
     """
     Custom permission to check if the user's role has the required permissions.
@@ -25,30 +50,74 @@ class HasPermissions(BasePermission):
     """
 
     def has_permission(self, request, view):
+        from django.contrib.auth.models import AnonymousUser
+        
         required_permissions = getattr(view, "required_permissions", [])
         if not required_permissions:
             return True
 
-        user_roles = (
-            User.objects.using(MainRouter.admin_db).get(id=request.user.id).roles.all()
-        )
-        if not user_roles:
-            return False
+        # Handle API key authentication
+        if isinstance(request.user, AnonymousUser) and hasattr(request, 'auth'):
+            auth_info = request.auth
+            if auth_info and auth_info.get('api_key_id'):
+                # API keys have unlimited permissions within their tenant
+                return True
 
-        for perm in required_permissions:
-            if not getattr(user_roles[0], perm.value, False):
+        # Handle regular user authentication
+        try:
+            user_roles = (
+                User.objects.using(MainRouter.admin_db).get(id=request.user.id).roles.all()
+            )
+            if not user_roles:
                 return False
 
-        return True
+            for perm in required_permissions:
+                if not getattr(user_roles[0], perm.value, False):
+                    return False
+
+            return True
+        except User.DoesNotExist:
+            return False
 
 
-def get_role(user: User) -> Optional[Role]:
+def get_role(user: User, request=None) -> Optional[Role]:
     """
     Retrieve the first role assigned to the given user.
+    
+    For API key authentication, returns a virtual role with unlimited visibility.
 
     Returns:
-        The user's first Role instance if the user has any roles, otherwise None.
+        The user's first Role instance if the user has any roles, 
+        or a virtual unlimited role for API key authentication,
+        otherwise None.
     """
+    from django.contrib.auth.models import AnonymousUser
+    
+    # Handle API key authentication
+    if isinstance(user, AnonymousUser) and request and hasattr(request, 'auth'):
+        auth_info = request.auth
+        if auth_info and auth_info.get('api_key_id'):
+            # Create a virtual role with unlimited permissions for API keys
+            # This allows API keys to access all resources within their tenant
+            # Use a simple object instead of Role model to avoid many-to-many field issues
+            virtual_role = type('VirtualRole', (), {
+                'id': None,
+                'name': "api_key_unlimited",
+                'tenant_id': auth_info.get('tenant_id'),
+                'manage_users': True,
+                'manage_account': True,
+                'manage_billing': True,
+                'manage_providers': True,
+                'manage_integrations': True,
+                'manage_scans': True,
+                'unlimited_visibility': True,
+                'provider_groups': type('MockManager', (), {
+                    'all': lambda: Role.objects.none(),
+                    'exists': lambda: False
+                })()
+            })()
+            return virtual_role
+    
     return user.roles.first()
 
 

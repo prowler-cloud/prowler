@@ -410,7 +410,7 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
             logger.debug(f"Attempt {attempt + 1}: Generated key with prefix: {prefix}")
 
             try:
-                # Create the API key instance
+                # Create the API key instance using regular objects manager with RLS context
                 api_key = APIKey.objects.create(
                     tenant_id=tenant_id,
                     key_hash=key_hash,
@@ -418,7 +418,7 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
                     **validated_data,
                 )
 
-                logger.debug(f"Successfully created API key with ID: {api_key.id}")
+                logger.info(f"Successfully created API key with ID: {api_key.id}")
 
                 # Store the raw key temporarily for the response
                 api_key._raw_key = raw_key
@@ -426,13 +426,16 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
                 return api_key
 
             except IntegrityError as e:
-                logger.error(f"IntegrityError on attempt {attempt + 1}: {e}")
+                logger.warning(f"IntegrityError on attempt {attempt + 1}: {e}")
                 # Prefix collision occurred, try again
                 if attempt == max_retries - 1:
                     raise serializers.ValidationError(
                         "Unable to generate unique API key. Please try again."
                     )
                 continue
+            except Exception as e:
+                logger.error(f"Unexpected error during API key creation: {type(e).__name__}: {e}")
+                raise
 
         # This should never be reached due to the exception above
         raise serializers.ValidationError(

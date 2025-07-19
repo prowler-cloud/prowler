@@ -104,41 +104,49 @@ class APILoggingMiddleware:
         """
         try:
             from api.models import APIKeyActivity, APIKey
+            from api.db_utils import rls_transaction
 
-            # Get the API key object
-            try:
-                api_key = APIKey.objects.get(id=auth_info["api_key_id"])
-            except APIKey.DoesNotExist:
-                # Log error but don't fail the request
-                self.logger.warning(
-                    f"API Key not found for activity logging: {auth_info['api_key_id']}"
-                )
+            # Use RLS context for both reading the API key and creating the activity log
+            tenant_id = auth_info.get("tenant_id")
+            if not tenant_id:
+                self.logger.warning("No tenant_id in auth_info for API key activity logging")
                 return
 
-            # Extract response size if available
-            response_size = None
-            if hasattr(response, "get") and response.get("Content-Length"):
+            with rls_transaction(str(tenant_id)):
+                # Get the API key object
                 try:
-                    response_size = int(response["Content-Length"])
-                except (ValueError, TypeError):
-                    pass
+                    api_key = APIKey.objects.get(id=auth_info["api_key_id"])
+                except APIKey.DoesNotExist:
+                    # Log error but don't fail the request
+                    self.logger.warning(
+                        f"API Key not found for activity logging: {auth_info['api_key_id']}"
+                    )
+                    return
 
-            # Convert duration to milliseconds
-            duration_ms = int(duration * 1000) if duration is not None else None
+                # Extract response size if available
+                response_size = None
+                if hasattr(response, "get") and response.get("Content-Length"):
+                    try:
+                        response_size = int(response["Content-Length"])
+                    except (ValueError, TypeError):
+                        pass
 
-            # Create the activity record
-            APIKeyActivity.objects.create(
-                api_key=api_key,
-                tenant_id=api_key.tenant_id,
-                method=request.method,
-                endpoint=request.path,
-                source_ip=request.META.get("REMOTE_ADDR", ""),
-                user_agent=request.META.get("HTTP_USER_AGENT", ""),
-                status_code=response.status_code,
-                response_size=response_size,
-                duration_ms=duration_ms,
-                query_params=request.GET.dict(),
-            )
+                # Convert duration to milliseconds
+                duration_ms = int(duration * 1000) if duration is not None else None
+
+                # Create the activity record
+                APIKeyActivity.objects.create(
+                    api_key=api_key,
+                    tenant_id=api_key.tenant_id,
+                    method=request.method,
+                    endpoint=request.path,
+                    source_ip=request.META.get("REMOTE_ADDR", ""),
+                    user_agent=request.META.get("HTTP_USER_AGENT", ""),
+                    status_code=response.status_code,
+                    response_size=response_size,
+                    duration_ms=duration_ms,
+                    query_params=request.GET.dict(),
+                )
 
         except Exception as e:
             # Log the error but don't fail the request
