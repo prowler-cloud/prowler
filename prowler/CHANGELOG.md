@@ -2,6 +2,18 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.10.0] (Prowler UNRELEASED)
+
+### Added
+- GitHub repository and organization scoping support with `--repository` and `--organization` flags [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
+
+### Changed
+
+### Fixed
+
+---
+
+
 ## [v5.9.0] (Prowler v5.9.0)
 
 ### Added

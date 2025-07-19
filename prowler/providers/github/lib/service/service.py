@@ -11,6 +11,7 @@ class GithubService:
         service: str,
         provider: GithubProvider,
     ):
+        self.provider = provider
         self.clients = self.__set_clients__(
             provider.session,
         )
