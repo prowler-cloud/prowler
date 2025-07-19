@@ -105,9 +105,12 @@ curl -X GET http://localhost:8080/api/v1/findings \
   -H "Authorization: ApiKey $API_KEY"
 
 # List compliance overviews
-curl -X GET http://localhost:8080/api/v1/compliance-overviews \
+curl -X GET http://localhost:8080/api/v1/compliance-overviews?filter%5Bscan_id%5D=1 \
   -H "Authorization: ApiKey $API_KEY"
 
+# List compliance overviews attributes
+curl -X GET "http://localhost:8080/api/v1/compliance-overviews/attributes?filter%5Bcompliance_id%5D=1" \
+  -H "Authorization: ApiKey $API_KEY"
 ```
 
 ### Verify API Key Activity Logging

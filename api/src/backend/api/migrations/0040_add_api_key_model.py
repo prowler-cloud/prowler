@@ -16,6 +16,7 @@ from psqlextra.manager.manager import PostgresManager
 from psqlextra.models.partitioned import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 import api.rls
+from api.rls import APIKeyRowLevelSecurityConstraint
 
 
 class Migration(migrations.Migration):
@@ -108,7 +109,7 @@ class Migration(migrations.Migration):
         # Add RLS constraint for api_keys
         migrations.AddConstraint(
             model_name="apikey",
-            constraint=api.rls.RowLevelSecurityConstraint(
+            constraint=APIKeyRowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_apikey",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
