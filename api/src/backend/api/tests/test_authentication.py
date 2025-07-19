@@ -307,12 +307,15 @@ class TestAPIKeyAuthentication:
         """Test that only last_used_at field is updated during authentication."""
         request = request_factory.get("/api/v1/test")
 
-        # Store original values
-
         with patch.object(valid_api_key, "save") as mock_save:
-            # Mock the APIKey.objects.filter().first() to return our key
-            with patch("api.models.APIKey.objects.filter") as mock_filter:
-                mock_filter.return_value = [valid_api_key]
+            # Mock the APIKey.all_objects.filter() to return our key (not objects.filter)
+            with patch("api.models.APIKey.all_objects.filter") as mock_filter:
+                # Create a mock queryset that behaves like Django queryset
+                from unittest.mock import MagicMock
+                mock_queryset = MagicMock()
+                mock_queryset.count.return_value = 1
+                mock_queryset.__iter__.return_value = iter([valid_api_key])
+                mock_filter.return_value = mock_queryset
 
                 auth_instance.authenticate_credentials(valid_api_key._raw_key, request)
 

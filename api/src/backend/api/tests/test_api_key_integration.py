@@ -16,6 +16,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from django.utils import timezone
 from datetime import timedelta
+import uuid
 
 from api.models import APIKey, APIKeyActivity, Tenant
 
@@ -182,7 +183,7 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Test that API key authentication provides correct tenant context
         user, auth_info = auth.authenticate(request)
-        assert user.is_anonymous  # API keys return AnonymousUser
+        assert user.is_anonymous
         assert auth_info["tenant_id"] == str(tenant.id)  # Tenant-bound!
         assert "api_key_id" in auth_info
 
@@ -337,14 +338,23 @@ class TestAPIKeyIntegrationWorkflows:
         response = no_auth_client.get(reverse("tenant-list"))
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_api_key_concurrent_usage(self, authenticated_jwt_client, tenant):
-        """Test concurrent usage of API keys."""
+        # Test 4: Wrong Authorization format (Bearer instead of ApiKey)
+        wrong_format_client = APIClient()
+        wrong_format_client.defaults["HTTP_AUTHORIZATION"] = (
+            "Bearer pk_test.abcdef123456789012345678901234"
+        )
+
+        response = wrong_format_client.get(reverse("tenant-list"))
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_api_key_security_features_integration(self, authenticated_jwt_client, tenant):
+        """Test API key security features in real scenarios."""
 
         # Create API key
         create_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Concurrent Test Key", "expires_at": None},
+                "attributes": {"name": "Security Test Key", "expires_at": None},
             }
         }
 
@@ -355,35 +365,27 @@ class TestAPIKeyIntegrationWorkflows:
         )
 
         raw_api_key = create_response.json()["data"]["attributes"]["key"]
+        api_key_id = create_response.json()["data"]["id"]
 
-        # Simulate concurrent usage with multiple clients
-        clients = []
-        for i in range(5):
-            client = APIClient()
-            client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {raw_api_key}"
-            clients.append(client)
+        # Test valid API key works
+        api_client = APIClient()
+        api_client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {raw_api_key}"
 
-        # Test concurrent authentication with the same tenant-bound API key
-        from api.authentication import APIKeyAuthentication
-        from django.test import RequestFactory
+        valid_response = api_client.get(reverse("provider-list"))
+        assert valid_response.status_code in [200, 403]  # Should authenticate successfully
 
-        auth = APIKeyAuthentication()
-        factory = RequestFactory()
+        # Test revoked API key stops working
+        revoke_response = authenticated_jwt_client.delete(
+            reverse(
+                "tenant-api-keys-destroy",
+                kwargs={"pk": tenant.id, "api_key_id": api_key_id},
+            )
+        )
+        assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
 
-        # Simulate concurrent requests using the same API key
-        results = []
-        for i in range(5):
-            request = factory.get(f"/api/v1/test-{i}")
-            request.META["HTTP_AUTHORIZATION"] = f"ApiKey {raw_api_key}"
-            user, auth_info = auth.authenticate(request)
-            results.append((user, auth_info))
-
-        # All authentications should succeed and return same tenant context
-        for user, auth_info in results:
-            assert user.is_anonymous  # API keys return AnonymousUser
-            assert auth_info["tenant_id"] == str(
-                tenant.id
-            )  # Same tenant-bound context!
+        # Try using revoked key
+        revoked_response = api_client.get(reverse("provider-list"))
+        assert revoked_response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_api_key_permission_integration(self, authenticated_jwt_client, tenant):
         """Test API key integration with permission system."""
@@ -530,6 +532,7 @@ class TestAPIKeyIntegrationWorkflows:
         # Verify last_used_at was updated
         updated_key = APIKey.objects.get(id=api_key_id)
         assert updated_key.last_used_at is not None
+
         assert updated_key.last_used_at <= timezone.now()
 
         # Use key again and verify timestamp updates
@@ -620,3 +623,398 @@ class TestAPIKeyIntegrationWorkflows:
         user, auth_info = auth.authenticate(request)
         assert user.is_anonymous  # API keys return AnonymousUser
         assert auth_info["tenant_id"] == str(tenant.id)  # Tenant-bound for data access!
+
+
+@pytest.mark.django_db
+class TestAPIKeyTestingGuideWorkflow:
+    """
+    Integration tests that mirror the exact workflow from the API testing guide.
+    
+    These tests follow the same pattern as the curl commands in docs/api-key-testing-guide.md:
+    1. Create user account
+    2. Get JWT token
+    3. Get tenant ID
+    4. Create API key
+    5. Test API key with various endpoints
+    """
+
+    def test_complete_api_testing_guide_workflow(self):
+        """Test the complete workflow exactly as shown in the API testing guide."""
+        
+        # Step 1: Create user account (equivalent to the curl command in the guide)
+        client = APIClient()
+        
+        user_creation_data = {
+            "data": {
+                "type": "users",
+                "attributes": {
+                    "name": "Test User",
+                    "email": "test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        user_response = client.post(
+            reverse("user-list"),
+            data=user_creation_data,
+            format="vnd.api+json",
+        )
+        
+        assert user_response.status_code == status.HTTP_201_CREATED
+        assert user_response.json()["data"]["type"] == "users"
+        print("✓ User created successfully")
+        
+        # Step 2: Get JWT token (equivalent to the tokens endpoint in the guide)
+        token_data = {
+            "data": {
+                "type": "tokens",
+                "attributes": {
+                    "email": "test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        token_response = client.post(reverse("token-obtain"), data=token_data, format="vnd.api+json")
+        
+        assert token_response.status_code == status.HTTP_200_OK
+        jwt_token = token_response.json()["data"]["attributes"]["access"]
+        assert jwt_token is not None
+        print(f"✓ JWT token obtained: {jwt_token[:20]}...")
+        
+        # Step 3: Get tenant ID (equivalent to the tenants endpoint in the guide)
+        jwt_client = APIClient()
+        jwt_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_token}"
+        
+        tenant_response = jwt_client.get(reverse("tenant-list"))
+        
+        assert tenant_response.status_code == status.HTTP_200_OK
+        tenant_data = tenant_response.json()["data"]
+        assert len(tenant_data) > 0
+        tenant_id = tenant_data[0]["id"]
+        print(f"✓ Tenant ID obtained: {tenant_id}")
+        
+        # Step 4: Create API key (equivalent to the api-keys/create endpoint in the guide)
+        api_key_data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "My Test API Key",
+                    "expires_at": None
+                }
+            }
+        }
+        
+        api_key_response = jwt_client.post(
+            reverse("tenant-api-keys-create", kwargs={"pk": tenant_id}),
+            data=api_key_data,
+            format="vnd.api+json",
+        )
+        
+        assert api_key_response.status_code == status.HTTP_201_CREATED
+        api_key = api_key_response.json()["data"]["attributes"]["key"]
+        api_key_id = api_key_response.json()["data"]["id"]
+        assert api_key.startswith("pk_")
+        print(f"✓ API key created: {api_key[:20]}...")
+        print(f"✓ API key ID: {api_key_id}")
+        
+        # Step 5: Test the API key with various endpoints (mirroring the guide)
+        api_client = APIClient()
+        api_client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {api_key}"
+        
+        # Test 5a: List providers (equivalent to GET /api/v1/providers in the guide)
+        providers_response = api_client.get(reverse("provider-list"))
+        # Status could be 200 (success) or 403 (no permission) - both are valid auth responses
+        assert providers_response.status_code in [200, 403]
+        print("✓ Providers endpoint tested successfully")
+        
+        # Test 5b: List scans (equivalent to GET /api/v1/scans in the guide)
+        scans_response = api_client.get(reverse("scan-list"))
+        # Status could be 200 (success) or 403 (no permission) - both are valid auth responses
+        assert scans_response.status_code in [200, 403]
+        print("✓ Scans endpoint tested successfully")
+        
+        # Test 5c: List all findings (equivalent to GET /api/v1/findings in the guide)
+        findings_response = api_client.get(reverse("finding-list"))
+        # Status could be 200 (success), 403 (no permission), or 400 (validation error)
+        assert findings_response.status_code in [200, 400, 403]
+        print("✓ Findings endpoint tested successfully")
+        
+        # Test 5d: List compliance overviews (equivalent to the compliance-overviews endpoint in the guide)
+        # Using a sample scan ID as shown in the guide
+        sample_scan_id = "123e4567-e89b-12d3-a456-426614174000"
+        compliance_response = api_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": sample_scan_id}
+        )
+        # This endpoint might return 200 with empty data or other status codes
+        assert compliance_response.status_code in [200, 400, 403, 404]
+        print("✓ Compliance overviews endpoint tested successfully")
+        
+        # Test 5e: List compliance overview attributes (equivalent to the compliance-overviews/attributes endpoint in the guide)
+        compliance_attributes_response = api_client.get(
+            reverse("complianceoverview-attributes"),
+            {"filter[compliance_id]": "1"}
+        )
+        # This endpoint might return various status codes depending on data
+        assert compliance_attributes_response.status_code in [200, 400, 403, 404]
+        print("✓ Compliance overview attributes endpoint tested successfully")
+        
+        print("✓ Complete API testing guide workflow completed successfully!")
+
+    def test_api_key_security_scenarios_from_guide(self):
+        """Test security scenarios exactly as shown in the API testing guide."""
+        
+        # Test 1: Invalid API key format (from section 7 of the guide)
+        invalid_client = APIClient()
+        invalid_client.defaults["HTTP_AUTHORIZATION"] = "ApiKey pk_invalid.key12345"
+        
+        invalid_response = invalid_client.get(reverse("provider-list"))
+        assert invalid_response.status_code == status.HTTP_401_UNAUTHORIZED
+        print("✓ Invalid API key format correctly rejected")
+        
+        # Test 2: Missing Authorization header (from section 7 of the guide)
+        no_auth_client = APIClient()
+        no_auth_response = no_auth_client.get(reverse("provider-list"))
+        assert no_auth_response.status_code == status.HTTP_401_UNAUTHORIZED
+        print("✓ Missing authorization correctly rejected")
+        
+        # Test 3: Wrong Authorization format (Bearer vs ApiKey - from section 7 of the guide)
+        wrong_format_client = APIClient()
+        # Using a properly formatted API key but with Bearer instead of ApiKey
+        wrong_format_client.defaults["HTTP_AUTHORIZATION"] = "Bearer pk_test.abcdef123456789012345678901234"
+        
+        wrong_format_response = wrong_format_client.get(reverse("provider-list"))
+        assert wrong_format_response.status_code == status.HTTP_401_UNAUTHORIZED
+        print("✓ Wrong authorization format (Bearer instead of ApiKey) correctly rejected")
+
+    def test_api_key_expiration_scenario_from_guide(self):
+        """Test API key expiration scenario as shown in the advanced testing section of the guide."""
+        
+        # Create user and get JWT token (abbreviated setup)
+        client = APIClient()
+        
+        user_creation_data = {
+            "data": {
+                "type": "users",
+                "attributes": {
+                    "name": "Expiry Test User",
+                    "email": "expiry-test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        client.post(reverse("user-list"), data=user_creation_data, format="vnd.api+json")
+        
+        token_data = {
+            "data": {
+                "type": "tokens",
+                "attributes": {
+                    "email": "expiry-test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        token_response = client.post(reverse("token-obtain"), data=token_data, format="vnd.api+json")
+        jwt_token = token_response.json()["data"]["attributes"]["access"]
+        
+        jwt_client = APIClient()
+        jwt_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_token}"
+        
+        tenant_response = jwt_client.get(reverse("tenant-list"))
+        tenant_id = tenant_response.json()["data"][0]["id"]
+        
+        # Create API key with short expiration (as shown in the guide)
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        expire_time = timezone.now() + timedelta(minutes=1)
+        
+        api_key_data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "Short-lived Test Key",
+                    "expires_at": expire_time.isoformat()
+                }
+            }
+        }
+        
+        api_key_response = jwt_client.post(
+            reverse("tenant-api-keys-create", kwargs={"pk": tenant_id}),
+            data=api_key_data,
+            format="vnd.api+json",
+        )
+        
+        expiring_api_key = api_key_response.json()["data"]["attributes"]["key"]
+        print(f"✓ Created expiring key: {expiring_api_key[:20]}...")
+        
+        # Test that the key works initially
+        api_client = APIClient()
+        api_client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {expiring_api_key}"
+        
+        initial_response = api_client.get(reverse("provider-list"))
+        assert initial_response.status_code in [200, 403]  # Should work initially
+        print("✓ Expiring API key works initially")
+        
+        # Simulate time passing beyond expiration
+        future_time = expire_time + timedelta(minutes=2)
+        with patch("django.utils.timezone.now", return_value=future_time):
+            expired_response = api_client.get(reverse("provider-list"))
+            assert expired_response.status_code == status.HTTP_401_UNAUTHORIZED
+            print("✓ Expired API key correctly rejected after expiration")
+
+    def test_api_key_revocation_scenario_from_guide(self):
+        """Test API key revocation scenario as shown in the advanced testing section of the guide."""
+        
+        # Create user, get JWT token, and create API key (abbreviated setup)
+        client = APIClient()
+        
+        user_creation_data = {
+            "data": {
+                "type": "users",
+                "attributes": {
+                    "name": "Revocation Test User",
+                    "email": "revocation-test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        client.post(reverse("user-list"), data=user_creation_data, format="vnd.api+json")
+        
+        token_data = {
+            "data": {
+                "type": "tokens",
+                "attributes": {
+                    "email": "revocation-test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        token_response = client.post(reverse("token-obtain"), data=token_data, format="vnd.api+json")
+        jwt_token = token_response.json()["data"]["attributes"]["access"]
+        
+        jwt_client = APIClient()
+        jwt_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_token}"
+        
+        tenant_response = jwt_client.get(reverse("tenant-list"))
+        tenant_id = tenant_response.json()["data"][0]["id"]
+        
+        api_key_data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "Revocation Test Key",
+                    "expires_at": None
+                }
+            }
+        }
+        
+        api_key_response = jwt_client.post(
+            reverse("tenant-api-keys-create", kwargs={"pk": tenant_id}),
+            data=api_key_data,
+            format="vnd.api+json",
+        )
+        
+        api_key = api_key_response.json()["data"]["attributes"]["key"]
+        api_key_id = api_key_response.json()["data"]["id"]
+        
+        # Test that the key works initially
+        api_client = APIClient()
+        api_client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {api_key}"
+        
+        initial_response = api_client.get(reverse("provider-list"))
+        assert initial_response.status_code in [200, 403]  # Should work initially
+        print("✓ API key works before revocation")
+        
+        # Revoke the API key (as shown in the guide)
+        revoke_response = jwt_client.delete(
+            reverse("tenant-api-keys-destroy", kwargs={"pk": tenant_id, "api_key_id": api_key_id})
+        )
+        assert revoke_response.status_code == status.HTTP_204_NO_CONTENT
+        print("✓ API key revoked successfully")
+        
+        # Test that revoked key no longer works (should return 401 as shown in the guide)
+        revoked_response = api_client.get(reverse("provider-list"))
+        assert revoked_response.status_code == status.HTTP_401_UNAUTHORIZED
+        print("✓ Revoked API key correctly rejected")
+
+    def test_concurrent_api_key_usage_from_guide(self):
+        """Test concurrent API key usage as shown in the advanced testing section of the guide."""
+        
+        # Create user, get JWT token, and create API key (abbreviated setup)
+        client = APIClient()
+        
+        user_creation_data = {
+            "data": {
+                "type": "users",
+                "attributes": {
+                    "name": "Concurrent Test User",
+                    "email": "concurrent-test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        client.post(reverse("user-list"), data=user_creation_data, format="vnd.api+json")
+        
+        token_data = {
+            "data": {
+                "type": "tokens",
+                "attributes": {
+                    "email": "concurrent-test@example.com",
+                    "password": "TestPassword123!"
+                }
+            }
+        }
+        
+        token_response = client.post(reverse("token-obtain"), data=token_data, format="vnd.api+json")
+        jwt_token = token_response.json()["data"]["attributes"]["access"]
+        
+        jwt_client = APIClient()
+        jwt_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_token}"
+        
+        tenant_response = jwt_client.get(reverse("tenant-list"))
+        tenant_id = tenant_response.json()["data"][0]["id"]
+        
+        api_key_data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "Concurrent Test Key",
+                    "expires_at": None
+                }
+            }
+        }
+        
+        api_key_response = jwt_client.post(
+            reverse("tenant-api-keys-create", kwargs={"pk": tenant_id}),
+            data=api_key_data,
+            format="vnd.api+json",
+        )
+        
+        api_key = api_key_response.json()["data"]["attributes"]["key"]
+        
+        # Test concurrent API key usage (equivalent to running multiple requests in parallel as shown in the guide)
+        api_client = APIClient()
+        api_client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {api_key}"
+        
+        # Make multiple requests to simulate concurrent usage
+        responses = []
+        for i in range(5):
+            response = api_client.get(reverse("provider-list"))
+            responses.append(response)
+        
+        # All requests should have consistent behavior (either all succeed with same permissions or all fail consistently)
+        status_codes = [r.status_code for r in responses]
+        assert all(code in [200, 403] for code in status_codes), f"Unexpected status codes: {status_codes}"
+        
+        # All responses should have the same status code (consistent behavior)
+        assert len(set(status_codes)) == 1, f"Inconsistent status codes in concurrent requests: {status_codes}"
+        
+        print(f"✓ Concurrent API key usage successful - all {len(responses)} requests returned status {status_codes[0]}")
