@@ -312,6 +312,7 @@ class TestAPIKeyAuthentication:
             with patch("api.models.APIKey.all_objects.filter") as mock_filter:
                 # Create a mock queryset that behaves like Django queryset
                 from unittest.mock import MagicMock
+
                 mock_queryset = MagicMock()
                 mock_queryset.count.return_value = 1
                 mock_queryset.__iter__.return_value = iter([valid_api_key])
