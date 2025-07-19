@@ -149,3 +149,40 @@ export interface TenantDetailData {
     };
   };
 }
+
+export interface RoleRelationship {
+  id: string;
+  type: "roles";
+}
+
+// API Key types
+export interface APIKey {
+  id: string;
+  type: "api-keys";
+  attributes: {
+    name: string;
+    prefix: string;
+    expires_at: string | null;
+    last_used_at: string | null;
+    created_at: string;
+  };
+}
+
+export interface APIKeyCreateData {
+  name: string;
+  expires_at?: string | null;
+}
+
+export interface APIKeyCreateResponse {
+  data: {
+    id: string;
+    type: "api-keys";
+    attributes: {
+      name: string;
+      prefix: string;
+      expires_at: string | null;
+      created_at: string;
+      key: string; // Only returned on creation
+    };
+  };
+}
