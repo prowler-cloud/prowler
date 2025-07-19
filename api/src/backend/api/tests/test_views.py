@@ -6838,10 +6838,7 @@ class TestAPIKeyCRUDEndpoints:
         return {
             "data": {
                 "type": "api-keys",
-                "attributes": {
-                    "name": "Test API Key",
-                    "expires_at": None
-                }
+                "attributes": {"name": "Test API Key", "expires_at": None},
             }
         }
 
@@ -6849,14 +6846,15 @@ class TestAPIKeyCRUDEndpoints:
     def api_key_data_with_expiry(self):
         """Sample data for creating API keys with expiration."""
         from django.utils import timezone
+
         future_time = timezone.now() + timedelta(days=30)
         return {
             "data": {
-                "type": "api-keys", 
+                "type": "api-keys",
                 "attributes": {
                     "name": "Expiring API Key",
-                    "expires_at": future_time.isoformat()
-                }
+                    "expires_at": future_time.isoformat(),
+                },
             }
         }
 
@@ -6867,16 +6865,16 @@ class TestAPIKeyCRUDEndpoints:
         raw_key = APIKey.generate_key()
         prefix = APIKey.extract_prefix(raw_key)
         key_hash = APIKey.hash_key(raw_key)
-        
+
         api_key = APIKey.objects.create(
             name="Existing API Key",
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
             expires_at=None,
-            revoked_at=None
+            revoked_at=None,
         )
-        
+
         api_key._raw_key = raw_key
         return api_key
 
@@ -6884,21 +6882,22 @@ class TestAPIKeyCRUDEndpoints:
     def revoked_api_key(self, tenants_fixture):
         """Create a revoked API key for testing."""
         from django.utils import timezone
+
         tenant = tenants_fixture[0]
         raw_key = APIKey.generate_key()
         prefix = APIKey.extract_prefix(raw_key)
         key_hash = APIKey.hash_key(raw_key)
         past_time = timezone.now() - timedelta(minutes=30)
-        
+
         api_key = APIKey.objects.create(
             name="Revoked API Key",
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
             expires_at=None,
-            revoked_at=past_time
+            revoked_at=past_time,
         )
-        
+
         api_key._raw_key = raw_key
         return api_key
 
@@ -6908,33 +6907,39 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id})
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"] == []
 
-    def test_list_api_keys_with_data(self, authenticated_client, tenants_fixture, existing_api_key):
+    def test_list_api_keys_with_data(
+        self, authenticated_client, tenants_fixture, existing_api_key
+    ):
         """Test listing API keys with existing data."""
         tenant = tenants_fixture[0]
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id})
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1
-        
+
         api_key_data = data[0]
         assert api_key_data["attributes"]["name"] == "Existing API Key"
         assert api_key_data["attributes"]["prefix"] == existing_api_key.prefix
-        assert "key" not in api_key_data["attributes"]  # Raw key should not be exposed in list
+        assert (
+            "key" not in api_key_data["attributes"]
+        )  # Raw key should not be exposed in list
 
-    def test_list_api_keys_excludes_revoked(self, authenticated_client, tenants_fixture, existing_api_key, revoked_api_key):
+    def test_list_api_keys_excludes_revoked(
+        self, authenticated_client, tenants_fixture, existing_api_key, revoked_api_key
+    ):
         """Test that listing API keys excludes revoked keys."""
         tenant = tenants_fixture[0]
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id})
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1  # Only non-revoked key should be returned
@@ -6945,47 +6950,55 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": "non-existent-tenant-id"})
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_create_api_key_success(self, authenticated_client, tenants_fixture, api_key_data):
+    def test_create_api_key_success(
+        self, authenticated_client, tenants_fixture, api_key_data
+    ):
         """Test successful API key creation."""
         tenant = tenants_fixture[0]
         response = authenticated_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
             data=api_key_data,
-            content_type=API_JSON_CONTENT_TYPE
+            content_type=API_JSON_CONTENT_TYPE,
         )
-        
+
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()["data"]
-        
+
         # Check response structure
         assert data["attributes"]["name"] == "Test API Key"
         assert data["attributes"]["prefix"] is not None
-        assert data["attributes"]["key"] is not None  # Raw key should be present in create response
+        assert (
+            data["attributes"]["key"] is not None
+        )  # Raw key should be present in create response
         assert data["attributes"]["key"].startswith("pk_")
         assert data["attributes"]["expires_at"] is None
-        
+
         # Verify key was created in database
         assert APIKey.objects.filter(name="Test API Key").exists()
 
-    def test_create_api_key_with_expiry(self, authenticated_client, tenants_fixture, api_key_data_with_expiry):
+    def test_create_api_key_with_expiry(
+        self, authenticated_client, tenants_fixture, api_key_data_with_expiry
+    ):
         """Test API key creation with expiration date."""
         tenant = tenants_fixture[0]
         response = authenticated_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
             data=api_key_data_with_expiry,
-            content_type=API_JSON_CONTENT_TYPE
+            content_type=API_JSON_CONTENT_TYPE,
         )
-        
+
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()["data"]
-        
+
         assert data["attributes"]["name"] == "Expiring API Key"
         assert data["attributes"]["expires_at"] is not None
 
-    def test_create_api_key_invalid_name_too_short(self, authenticated_client, tenants_fixture):
+    def test_create_api_key_invalid_name_too_short(
+        self, authenticated_client, tenants_fixture
+    ):
         """Test API key creation with name that's too short."""
         tenant = tenants_fixture[0]
         invalid_data = {
@@ -6993,22 +7006,25 @@ class TestAPIKeyCRUDEndpoints:
                 "type": "api-keys",
                 "attributes": {
                     "name": "AB",  # Too short (min 3 chars)
-                    "expires_at": None
-                }
+                    "expires_at": None,
+                },
             }
         }
-        
+
         response = authenticated_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
             data=invalid_data,
-            content_type=API_JSON_CONTENT_TYPE
+            content_type=API_JSON_CONTENT_TYPE,
         )
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_create_api_key_invalid_expiry_past_date(self, authenticated_client, tenants_fixture):
+    def test_create_api_key_invalid_expiry_past_date(
+        self, authenticated_client, tenants_fixture
+    ):
         """Test API key creation with expiration in the past."""
         from django.utils import timezone
+
         tenant = tenants_fixture[0]
         past_time = timezone.now() - timedelta(hours=1)
         invalid_data = {
@@ -7016,37 +7032,32 @@ class TestAPIKeyCRUDEndpoints:
                 "type": "api-keys",
                 "attributes": {
                     "name": "Invalid Expiry Key",
-                    "expires_at": past_time.isoformat()
-                }
+                    "expires_at": past_time.isoformat(),
+                },
             }
         }
-        
+
         response = authenticated_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
             data=invalid_data,
-            content_type=API_JSON_CONTENT_TYPE
+            content_type=API_JSON_CONTENT_TYPE,
         )
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_create_api_key_missing_name(self, authenticated_client, tenants_fixture):
         """Test API key creation without required name field."""
         tenant = tenants_fixture[0]
         invalid_data = {
-            "data": {
-                "type": "api-keys",
-                "attributes": {
-                    "expires_at": None
-                }
-            }
+            "data": {"type": "api-keys", "attributes": {"expires_at": None}}
         }
-        
+
         response = authenticated_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
             data=invalid_data,
-            content_type=API_JSON_CONTENT_TYPE
+            content_type=API_JSON_CONTENT_TYPE,
         )
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_create_api_key_wrong_tenant(self, authenticated_client):
@@ -7054,34 +7065,33 @@ class TestAPIKeyCRUDEndpoints:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {
-                    "name": "Test Key",
-                    "expires_at": None
-                }
+                "attributes": {"name": "Test Key", "expires_at": None},
             }
         }
-        
+
         response = authenticated_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": "non-existent-tenant"}),
             data=api_key_data,
-            content_type=API_JSON_CONTENT_TYPE
+            content_type=API_JSON_CONTENT_TYPE,
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_retrieve_api_key_success(self, authenticated_client, tenants_fixture, existing_api_key):
+    def test_retrieve_api_key_success(
+        self, authenticated_client, tenants_fixture, existing_api_key
+    ):
         """Test successful API key retrieval."""
         tenant = tenants_fixture[0]
         response = authenticated_client.get(
-            reverse("tenant-api-keys-retrieve", kwargs={
-                "pk": tenant.id, 
-                "api_key_id": existing_api_key.id
-            })
+            reverse(
+                "tenant-api-keys-retrieve",
+                kwargs={"pk": tenant.id, "api_key_id": existing_api_key.id},
+            )
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
-        
+
         assert data["attributes"]["name"] == "Existing API Key"
         assert data["attributes"]["prefix"] == existing_api_key.prefix
         assert "key" not in data["attributes"]  # Raw key should not be exposed
@@ -7090,55 +7100,67 @@ class TestAPIKeyCRUDEndpoints:
         """Test retrieving non-existent API key."""
         tenant = tenants_fixture[0]
         from uuid import uuid4
+
         response = authenticated_client.get(
-            reverse("tenant-api-keys-retrieve", kwargs={
-                "pk": tenant.id,
-                "api_key_id": str(uuid4())  # Use valid UUID format
-            })
+            reverse(
+                "tenant-api-keys-retrieve",
+                kwargs={
+                    "pk": tenant.id,
+                    "api_key_id": str(uuid4()),  # Use valid UUID format
+                },
+            )
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_retrieve_revoked_api_key(self, authenticated_client, tenants_fixture, revoked_api_key):
+    def test_retrieve_revoked_api_key(
+        self, authenticated_client, tenants_fixture, revoked_api_key
+    ):
         """Test retrieving revoked API key returns 404."""
         tenant = tenants_fixture[0]
         response = authenticated_client.get(
-            reverse("tenant-api-keys-retrieve", kwargs={
-                "pk": tenant.id,
-                "api_key_id": revoked_api_key.id
-            })
+            reverse(
+                "tenant-api-keys-retrieve",
+                kwargs={"pk": tenant.id, "api_key_id": revoked_api_key.id},
+            )
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_retrieve_api_key_wrong_tenant(self, authenticated_client, tenants_fixture, existing_api_key):
+    def test_retrieve_api_key_wrong_tenant(
+        self, authenticated_client, tenants_fixture, existing_api_key
+    ):
         """Test retrieving API key from wrong tenant."""
-        wrong_tenant = tenants_fixture[1] if len(tenants_fixture) > 1 else tenants_fixture[0]
-        response = authenticated_client.get(
-            reverse("tenant-api-keys-retrieve", kwargs={
-                "pk": wrong_tenant.id,
-                "api_key_id": existing_api_key.id
-            })
+        wrong_tenant = (
+            tenants_fixture[1] if len(tenants_fixture) > 1 else tenants_fixture[0]
         )
-        
+        response = authenticated_client.get(
+            reverse(
+                "tenant-api-keys-retrieve",
+                kwargs={"pk": wrong_tenant.id, "api_key_id": existing_api_key.id},
+            )
+        )
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_revoke_api_key_success(self, authenticated_client, tenants_fixture, existing_api_key):
+    def test_revoke_api_key_success(
+        self, authenticated_client, tenants_fixture, existing_api_key
+    ):
         """Test successful API key revocation."""
         tenant = tenants_fixture[0]
-        
+
         # Verify key is initially valid
         assert existing_api_key.is_valid() is True
-        
+
         response = authenticated_client.delete(
-            reverse("tenant-api-keys-destroy", kwargs={
-                "pk": tenant.id,
-                "api_key_id": existing_api_key.id
-            })
+            reverse(
+                "tenant-api-keys-destroy",
+                kwargs={"pk": tenant.id, "api_key_id": existing_api_key.id},
+            )
         )
-        
+
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        
+
         # Verify key was revoked
         existing_api_key.refresh_from_db()
         assert existing_api_key.is_valid() is False
@@ -7148,101 +7170,108 @@ class TestAPIKeyCRUDEndpoints:
         """Test revoking non-existent API key."""
         tenant = tenants_fixture[0]
         from uuid import uuid4
+
         response = authenticated_client.delete(
-            reverse("tenant-api-keys-destroy", kwargs={
-                "pk": tenant.id,
-                "api_key_id": str(uuid4())  # Use valid UUID format
-            })
+            reverse(
+                "tenant-api-keys-destroy",
+                kwargs={
+                    "pk": tenant.id,
+                    "api_key_id": str(uuid4()),  # Use valid UUID format
+                },
+            )
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_revoke_already_revoked_api_key(self, authenticated_client, tenants_fixture, revoked_api_key):
+    def test_revoke_already_revoked_api_key(
+        self, authenticated_client, tenants_fixture, revoked_api_key
+    ):
         """Test revoking already revoked API key."""
         tenant = tenants_fixture[0]
         response = authenticated_client.delete(
-            reverse("tenant-api-keys-destroy", kwargs={
-                "pk": tenant.id,
-                "api_key_id": revoked_api_key.id
-            })
+            reverse(
+                "tenant-api-keys-destroy",
+                kwargs={"pk": tenant.id, "api_key_id": revoked_api_key.id},
+            )
         )
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_revoke_api_key_wrong_tenant(self, authenticated_client, tenants_fixture, existing_api_key):
+    def test_revoke_api_key_wrong_tenant(
+        self, authenticated_client, tenants_fixture, existing_api_key
+    ):
         """Test revoking API key from wrong tenant."""
-        wrong_tenant = tenants_fixture[1] if len(tenants_fixture) > 1 else tenants_fixture[0]
-        response = authenticated_client.delete(
-            reverse("tenant-api-keys-destroy", kwargs={
-                "pk": wrong_tenant.id,
-                "api_key_id": existing_api_key.id
-            })
+        wrong_tenant = (
+            tenants_fixture[1] if len(tenants_fixture) > 1 else tenants_fixture[0]
         )
-        
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-api-keys-destroy",
+                kwargs={"pk": wrong_tenant.id, "api_key_id": existing_api_key.id},
+            )
+        )
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def _test_api_key_filtering_by_name(self, authenticated_client, tenants_fixture):
         """Test filtering API keys by name."""
         tenant = tenants_fixture[0]
-        
+
         # Create multiple API keys
         for i, name in enumerate(["Alpha Key", "Beta Key", "Alpha Test"]):
             raw_key = APIKey.generate_key()
             prefix = APIKey.extract_prefix(raw_key)
             key_hash = APIKey.hash_key(raw_key)
-            
+
             APIKey.objects.create(
-                name=name,
-                tenant_id=tenant.id,
-                key_hash=key_hash,
-                prefix=prefix
+                name=name, tenant_id=tenant.id, key_hash=key_hash, prefix=prefix
             )
-        
+
         # Test exact name filter
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id}),
-            {"filter[name]": "Alpha Key"}
+            {"filter[name]": "Alpha Key"},
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1
         assert data[0]["attributes"]["name"] == "Alpha Key"
-        
+
         # Test name contains filter
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id}),
-            {"filter[name.icontains]": "alpha"}
+            {"filter[name.icontains]": "alpha"},
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 2  # "Alpha Key" and "Alpha Test"
 
-    def _test_api_key_filtering_by_creation_date(self, authenticated_client, tenants_fixture):
+    def _test_api_key_filtering_by_creation_date(
+        self, authenticated_client, tenants_fixture
+    ):
         """Test filtering API keys by creation date."""
         from django.utils import timezone
+
         tenant = tenants_fixture[0]
-        
+
         # Create an API key
         raw_key = APIKey.generate_key()
         prefix = APIKey.extract_prefix(raw_key)
         key_hash = APIKey.hash_key(raw_key)
-        
+
         APIKey.objects.create(
-            name="Date Test Key",
-            tenant_id=tenant.id,
-            key_hash=key_hash,
-            prefix=prefix
+            name="Date Test Key", tenant_id=tenant.id, key_hash=key_hash, prefix=prefix
         )
-        
+
         today = timezone.now().date().isoformat()
-        
+
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id}),
-            {"filter[created_at]": today}
+            {"filter[created_at]": today},
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) >= 1
@@ -7250,30 +7279,28 @@ class TestAPIKeyCRUDEndpoints:
     def test_api_key_ordering(self, authenticated_client, tenants_fixture):
         """Test ordering API keys by creation date."""
         tenant = tenants_fixture[0]
-        
+
         # Create multiple API keys with slight time differences
         import time
+
         for i, name in enumerate(["First Key", "Second Key"]):
             raw_key = APIKey.generate_key()
             prefix = APIKey.extract_prefix(raw_key)
             key_hash = APIKey.hash_key(raw_key)
-            
+
             APIKey.objects.create(
-                name=name,
-                tenant_id=tenant.id,
-                key_hash=key_hash,
-                prefix=prefix
+                name=name, tenant_id=tenant.id, key_hash=key_hash, prefix=prefix
             )
             time.sleep(0.01)  # Small delay to ensure different timestamps
-        
+
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id})
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 2
-        
+
         # Should be ordered by -created_at (newest first)
         assert data[0]["attributes"]["name"] == "Second Key"
         assert data[1]["attributes"]["name"] == "First Key"
@@ -7281,70 +7308,69 @@ class TestAPIKeyCRUDEndpoints:
     def test_api_key_pagination(self, authenticated_client, tenants_fixture):
         """Test pagination of API keys list."""
         tenant = tenants_fixture[0]
-        
+
         # Create multiple API keys
         for i in range(25):  # More than default page size
             raw_key = APIKey.generate_key()
             prefix = APIKey.extract_prefix(raw_key)
             key_hash = APIKey.hash_key(raw_key)
-            
+
             APIKey.objects.create(
                 name=f"Key {i:02d}",
                 tenant_id=tenant.id,
                 key_hash=key_hash,
-                prefix=prefix
+                prefix=prefix,
             )
-        
+
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id})
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         response_data = response.json()
-        
+
         # Should be paginated
         assert "links" in response_data
         assert "meta" in response_data
         assert len(response_data["data"]) <= 20  # Default page size
 
-    @patch('api.v1.serializers.APIKey.generate_key')
-    def _test_create_api_key_retry_on_prefix_collision(self, mock_generate_key, authenticated_client, tenants_fixture):
+    @patch("api.v1.serializers.APIKey.generate_key")
+    def _test_create_api_key_retry_on_prefix_collision(
+        self, mock_generate_key, authenticated_client, tenants_fixture
+    ):
         """Test that API key creation retries on prefix collision."""
         tenant = tenants_fixture[0]
-        
+
         # Create an existing API key with specific prefix
         existing_key = "pk_collision.abcdef123456789012345678901234"
         existing_prefix = APIKey.extract_prefix(existing_key)
         existing_hash = APIKey.hash_key(existing_key)
-        
+
         APIKey.objects.create(
             name="Existing Key",
             tenant_id=tenant.id,
             key_hash=existing_hash,
-            prefix=existing_prefix
+            prefix=existing_prefix,
         )
-        
+
         # Mock generate_key to first return colliding key, then unique key
         colliding_key = "pk_collision.different123456789012345678901"
         unique_key = "pk_unique12.abcdef123456789012345678901234"
         mock_generate_key.side_effect = [colliding_key, unique_key]
-        
+
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {
-                    "name": "Test Collision Key",
-                    "expires_at": None
-                }
+                "attributes": {"name": "Test Collision Key", "expires_at": None},
             }
         }
-        
+
         response = authenticated_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
             data=api_key_data,
-            content_type=API_JSON_CONTENT_TYPE
+            content_type=API_JSON_CONTENT_TYPE,
         )
-        
+
         # Should succeed on retry
         assert response.status_code == status.HTTP_201_CREATED
         assert mock_generate_key.call_count == 2

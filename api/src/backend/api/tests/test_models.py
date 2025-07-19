@@ -5,7 +5,14 @@ from django.utils import timezone
 from datetime import timedelta
 
 from api.db_router import MainRouter
-from api.models import Resource, ResourceTag, SAMLConfiguration, SAMLDomainIndex, APIKey, Tenant
+from api.models import (
+    Resource,
+    ResourceTag,
+    SAMLConfiguration,
+    SAMLDomainIndex,
+    APIKey,
+    Tenant,
+)
 
 
 @pytest.mark.django_db
@@ -338,17 +345,17 @@ class TestAPIKeyModel:
     def test_generate_key_format(self):
         """Test that generate_key produces correctly formatted keys."""
         key = APIKey.generate_key()
-        
+
         # Should be in format pk_XXXXXXXX.YYYYYYYY
         assert key.startswith("pk_")
         parts = key.split(".")
         assert len(parts) == 2
-        
+
         # First part should be pk_ + 8 characters
         prefix_part = parts[0]
         assert len(prefix_part) == 11  # "pk_" + 8 chars
         assert prefix_part.startswith("pk_")
-        
+
         # Second part should be 32 characters
         random_part = parts[1]
         assert len(random_part) == 32
@@ -394,7 +401,7 @@ class TestAPIKeyModel:
         """Test that hash_key produces secure hashes."""
         key = "pk_test1234.abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(key)
-        
+
         # Hash should not be the same as the original key
         assert key_hash != key
         # Hash should be a non-empty string
@@ -408,7 +415,7 @@ class TestAPIKeyModel:
         key = "pk_test1234.abcdef123456789012345678901234"
         hash1 = APIKey.hash_key(key)
         hash2 = APIKey.hash_key(key)
-        
+
         # Hashes should be different due to random salt
         assert hash1 != hash2
 
@@ -416,7 +423,7 @@ class TestAPIKeyModel:
         """Test verifying a correct API key against its hash."""
         key = "pk_test1234.abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(key)
-        
+
         assert APIKey.verify_key(key, key_hash) is True
 
     def test_verify_key_incorrect_key(self):
@@ -424,14 +431,14 @@ class TestAPIKeyModel:
         correct_key = "pk_test1234.abcdef123456789012345678901234"
         incorrect_key = "pk_wrong123.abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(correct_key)
-        
+
         assert APIKey.verify_key(incorrect_key, key_hash) is False
 
     def test_verify_key_empty_key(self):
         """Test verifying an empty key."""
         key = "pk_test1234.abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(key)
-        
+
         assert APIKey.verify_key("", key_hash) is False
 
     def test_is_valid_active_key(self, tenant):
@@ -442,9 +449,9 @@ class TestAPIKeyModel:
             key_hash="dummy_hash",
             prefix="testkey1",
             expires_at=None,  # No expiration
-            revoked_at=None   # Not revoked
+            revoked_at=None,  # Not revoked
         )
-        
+
         assert api_key.is_valid() is True
 
     def test_is_valid_expired_key(self, tenant):
@@ -456,9 +463,9 @@ class TestAPIKeyModel:
             key_hash="dummy_hash",
             prefix="testkey2",
             expires_at=past_time,
-            revoked_at=None
+            revoked_at=None,
         )
-        
+
         assert api_key.is_valid() is False
 
     def test_is_valid_future_expiry_key(self, tenant):
@@ -470,9 +477,9 @@ class TestAPIKeyModel:
             key_hash="dummy_hash",
             prefix="testkey3",
             expires_at=future_time,
-            revoked_at=None
+            revoked_at=None,
         )
-        
+
         assert api_key.is_valid() is True
 
     def test_is_valid_revoked_key(self, tenant):
@@ -484,9 +491,9 @@ class TestAPIKeyModel:
             key_hash="dummy_hash",
             prefix="testkey4",
             expires_at=None,
-            revoked_at=past_time
+            revoked_at=past_time,
         )
-        
+
         assert api_key.is_valid() is False
 
     def test_is_valid_revoked_and_expired_key(self, tenant):
@@ -498,9 +505,9 @@ class TestAPIKeyModel:
             key_hash="dummy_hash",
             prefix="testkey5",
             expires_at=past_time,
-            revoked_at=past_time
+            revoked_at=past_time,
         )
-        
+
         assert api_key.is_valid() is False
 
     def test_revoke_key(self, tenant):
@@ -511,16 +518,16 @@ class TestAPIKeyModel:
             key_hash="dummy_hash",
             prefix="testkey6",
             expires_at=None,
-            revoked_at=None
+            revoked_at=None,
         )
-        
+
         # Initially valid
         assert api_key.is_valid() is True
         assert api_key.revoked_at is None
-        
+
         # Revoke the key
         api_key.revoke()
-        
+
         # Should now be invalid and have revoked_at timestamp
         assert api_key.is_valid() is False
         assert api_key.revoked_at is not None
@@ -534,16 +541,16 @@ class TestAPIKeyModel:
             key_hash="dummy_hash",
             prefix="testkey7",
             expires_at=None,
-            revoked_at=None
+            revoked_at=None,
         )
-        
+
         # Revoke twice
         api_key.revoke()
         first_revoked_at = api_key.revoked_at
-        
+
         api_key.revoke()
         second_revoked_at = api_key.revoked_at
-        
+
         # Should still be invalid and revoked_at should be updated
         assert api_key.is_valid() is False
         assert second_revoked_at >= first_revoked_at
@@ -554,10 +561,12 @@ class TestAPIKeyModel:
             name="Key without prefix",
             tenant_id=tenant.id,
             key_hash="dummy_hash",
-            prefix=""  # Empty prefix should cause error
+            prefix="",  # Empty prefix should cause error
         )
-        
-        with pytest.raises(ValueError, match="API key prefix must be set before saving"):
+
+        with pytest.raises(
+            ValueError, match="API key prefix must be set before saving"
+        ):
             api_key.save()
 
     def test_api_key_string_representation(self, tenant):
@@ -566,9 +575,9 @@ class TestAPIKeyModel:
             name="Test API Key",
             tenant_id=tenant.id,
             key_hash="dummy_hash",
-            prefix="testkey8"
+            prefix="testkey8",
         )
-        
+
         str_repr = str(api_key)
         assert str_repr == "API Key: Test API Key"
 
@@ -579,18 +588,18 @@ class TestAPIKeyModel:
             name="First Key",
             tenant_id=tenant.id,
             key_hash="dummy_hash1",
-            prefix="testkey9"
+            prefix="testkey9",
         )
-        
+
         # Try to create second API key with same prefix - should be allowed
         # as prefix collision handling is done at generation time, not constraint level
         APIKey.objects.create(
             name="Second Key",
             tenant_id=tenant.id,
             key_hash="dummy_hash2",
-            prefix="testkey9"
+            prefix="testkey9",
         )
-        
+
         # Both should exist (collision handling is in generate_key, not model constraint)
         assert APIKey.objects.filter(prefix="testkey9").count() == 2
 
@@ -598,22 +607,22 @@ class TestAPIKeyModel:
         """Test that a generated key can be hashed, stored, and verified."""
         # Generate a key
         raw_key = APIKey.generate_key()
-        
+
         # Extract prefix and hash
         prefix = APIKey.extract_prefix(raw_key)
         key_hash = APIKey.hash_key(raw_key)
-        
+
         # Create API key in database
         api_key = APIKey.objects.create(
             name="Generated Key Test",
             tenant_id=tenant.id,
             key_hash=key_hash,
-            prefix=prefix
+            prefix=prefix,
         )
-        
+
         # Verify the key works
         assert APIKey.verify_key(raw_key, api_key.key_hash) is True
         assert api_key.is_valid() is True
-        
+
         # Verify prefix extraction matches
         assert APIKey.extract_prefix(raw_key) == api_key.prefix

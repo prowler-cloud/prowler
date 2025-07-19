@@ -208,7 +208,7 @@ class APIKey(RowLevelSecurityProtectedModel):
     def is_valid(self):
         """Check if the API key is still valid (not expired or revoked)."""
         from django.utils import timezone
-        
+
         if self.revoked_at:
             return False
         if self.expires_at and self.expires_at < timezone.now():
