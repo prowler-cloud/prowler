@@ -701,3 +701,35 @@ class Test_GithubProvider_Scoping:
 
             assert provider_none.repositories == []
             assert provider_none.organizations == []
+
+    def test_provider_configuration_validation(self):
+        """Test that provider validates configuration parameters"""
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=self.mock_session,
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=self.mock_identity,
+            ),
+        ):
+            # Test invalid repositories type
+            try:
+                GithubProvider(
+                    personal_access_token=PAT_TOKEN,
+                    repositories="not-a-list",  # Should be a list
+                )
+                assert False, "Should have raised ValueError"
+            except ValueError as e:
+                assert "repositories must be a list" in str(e)
+
+            # Test invalid organizations type
+            try:
+                GithubProvider(
+                    personal_access_token=PAT_TOKEN,
+                    organizations="not-a-list",  # Should be a list
+                )
+                assert False, "Should have raised ValueError"
+            except ValueError as e:
+                assert "organizations must be a list" in str(e)

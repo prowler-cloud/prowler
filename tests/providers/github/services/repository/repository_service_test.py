@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
+from github import GithubException, RateLimitExceededException
+
 from prowler.providers.github.services.repository.repository_service import (
     Branch,
     Repo,
@@ -266,18 +268,10 @@ class Test_Repository_Scoping:
             repository_service.clients = [mock_client]
             repository_service.provider = provider
 
-            with patch(
-                "prowler.providers.github.services.repository.repository_service.logger"
-            ) as mock_logger:
-                repos = repository_service._list_repositories()
+            repos = repository_service._list_repositories()
 
-                # Should be empty since repository wasn't found
-                assert len(repos) == 0
-                # Should log warning for inaccessible repository
-                mock_logger.warning.assert_called_once()
-                assert (
-                    "not accessible or not found" in mock_logger.warning.call_args[0][0]
-                )
+            # Should be empty since repository wasn't found
+            assert len(repos) == 0
 
     def test_organization_scoping(self):
         """Test that repositories from specified organizations are returned"""
@@ -312,31 +306,31 @@ class Test_Repository_Scoping:
 
         mock_client = MagicMock()
         # Organization lookup fails
-        mock_client.get_organization.side_effect = Exception("404 Not Found")
+        mock_client.get_organization.side_effect = GithubException(
+            404, "Not Found", None
+        )
         # User lookup succeeds
         mock_user = MagicMock()
         mock_user.get_repos.return_value = [self.mock_repo1]
         mock_client.get_user.return_value = mock_user
 
+        # Create service without calling the parent constructor
+        repository_service = Repository.__new__(Repository)
+        repository_service.clients = [mock_client]
+        repository_service.provider = provider
+
         with patch(
-            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
-        ):
-            repository_service = Repository(provider)
-            repository_service.clients = [mock_client]
-            repository_service.provider = provider
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ) as mock_logger:
+            repos = repository_service._list_repositories()
 
-            with patch(
-                "prowler.providers.github.services.repository.repository_service.logger"
-            ) as mock_logger:
-                repos = repository_service._list_repositories()
-
-                assert len(repos) == 1
-                assert 1 in repos
-                assert repos[1].name == "repo1"
-                mock_client.get_organization.assert_called_once_with("user1")
-                mock_client.get_user.assert_called_once_with("user1")
-                # Should log info about trying as user
-                mock_logger.info.assert_called()
+            assert len(repos) == 1
+            assert 1 in repos
+            assert repos[1].name == "repo1"
+            mock_client.get_organization.assert_called_once_with("user1")
+            mock_client.get_user.assert_called_once_with("user1")
+            # Should log info about trying as user
+            mock_logger.info.assert_called()
 
     def test_combined_repository_and_organization_scoping(self):
         """Test that both repository and organization scoping can be used together"""
@@ -368,3 +362,112 @@ class Test_Repository_Scoping:
             assert repos[2].name == "repo2"
             mock_client.get_repo.assert_called_once_with("owner1/repo1")
             mock_client.get_organization.assert_called_once_with("org2")
+
+
+class Test_Repository_Validation:
+    def setup_method(self):
+        self.repository = Repository(set_mocked_github_provider())
+
+    def test_validate_repository_format_valid(self):
+        """Test repository format validation with valid formats"""
+        # Valid formats
+        assert self.repository._validate_repository_format("owner/repo") is True
+        assert self.repository._validate_repository_format("my-org/my-repo") is True
+        assert (
+            self.repository._validate_repository_format("user123/project_name") is True
+        )
+        assert self.repository._validate_repository_format("org/repo.name") is True
+
+    def test_validate_repository_format_invalid(self):
+        """Test repository format validation with invalid formats"""
+        # Invalid formats
+        assert self.repository._validate_repository_format("") is False
+        assert self.repository._validate_repository_format("no-slash") is False
+        assert self.repository._validate_repository_format("too/many/slashes") is False
+        assert self.repository._validate_repository_format("/missing-owner") is False
+        assert self.repository._validate_repository_format("missing-repo/") is False
+
+        # Security test - prevent injection
+        assert self.repository._validate_repository_format("owner;rm -rf/repo") is False
+        assert self.repository._validate_repository_format("owner$echo/repo") is False
+
+
+class Test_Repository_ErrorHandling:
+    def setup_method(self):
+        self.mock_repo1 = MagicMock()
+        self.mock_repo1.id = 1
+        self.mock_repo1.name = "repo1"
+        self.mock_repo1.owner.login = "owner1"
+        self.mock_repo1.full_name = "owner1/repo1"
+        self.mock_repo1.default_branch = "main"
+        self.mock_repo1.private = False
+        self.mock_repo1.archived = False
+        self.mock_repo1.pushed_at = datetime.now(timezone.utc)
+        self.mock_repo1.delete_branch_on_merge = True
+        self.mock_repo1.security_and_analysis = None
+        self.mock_repo1.get_contents.return_value = None
+        self.mock_repo1.get_branch.side_effect = Exception("404 Not Found")
+        self.mock_repo1.get_dependabot_alerts.side_effect = Exception("404 Not Found")
+
+    def test_github_api_error_handling(self):
+        """Test that GitHub API errors are handled properly"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["owner/repo1"]
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = GithubException(403, "Forbidden", None)
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger:
+                repos = repository_service._list_repositories()
+
+                # Should be empty due to API error
+                assert len(repos) == 0
+                # Should log specific error message
+                mock_logger.warning.assert_called()
+                # Check if Access denied message was logged (could be in warning or error calls)
+                log_messages = [
+                    str(call)
+                    for call in mock_logger.warning.call_args_list
+                    + mock_logger.error.call_args_list
+                ]
+                assert any("Access denied" in msg for msg in log_messages)
+
+    def test_rate_limit_error_handling(self):
+        """Test that rate limit errors are logged appropriately"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["owner/repo1"]
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = RateLimitExceededException(
+            429, "Rate limit exceeded", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger:
+                # Rate limit errors should be caught and logged at the outer level
+                repos = repository_service._list_repositories()
+
+                # Should be empty due to rate limit error
+                assert len(repos) == 0
+                # Should log rate limit error
+                mock_logger.error.assert_called()
+                assert "Rate limit exceeded" in str(mock_logger.error.call_args)

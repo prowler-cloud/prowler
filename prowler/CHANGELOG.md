@@ -5,7 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.10.0] (Prowler UNRELEASED)
 
 ### Added
-- GitHub repository scoping behavior to prevent fallback organization scans when using `--repository` flag with invalid repository formats [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
+- GitHub repository and organization scoping support with `--repository` and `--organization` flags [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
 
 ### Changed
 

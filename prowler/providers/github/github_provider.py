@@ -110,7 +110,6 @@ class GithubProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = None,
-        # Repository scoping
         repositories: list = None,
         organizations: list = None,
     ):
@@ -319,7 +318,7 @@ class GithubProvider(Provider):
 
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise GithubSetUpSessionError(
                 original_exception=error,
@@ -368,7 +367,7 @@ class GithubProvider(Provider):
 
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise GithubSetUpIdentityError(
                 original_exception=error,

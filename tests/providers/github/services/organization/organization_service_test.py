@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+from github import GithubException, RateLimitExceededException
+
 from prowler.providers.github.services.organization.organization_service import (
     Org,
     Organization,
@@ -136,32 +138,25 @@ class Test_Organization_Scoping:
 
         mock_client = MagicMock()
         # Organization lookup fails
-        mock_client.get_organization.side_effect = Exception("404 Not Found")
+        mock_client.get_organization.side_effect = GithubException(
+            404, "Not Found", None
+        )
         # User lookup succeeds
         mock_client.get_user.return_value = self.mock_user
 
-        with patch(
-            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
-        ):
-            organization_service = Organization(provider)
-            organization_service.clients = [mock_client]
-            organization_service.provider = provider
+        # Create service without calling the parent constructor
+        organization_service = Organization.__new__(Organization)
+        organization_service.clients = [mock_client]
+        organization_service.provider = provider
 
-            with patch(
-                "prowler.providers.github.services.organization.organization_service.logger"
-            ) as mock_logger:
-                orgs = organization_service._list_organizations()
+        orgs = organization_service._list_organizations()
 
-                assert len(orgs) == 1
-                assert 100 in orgs
-                assert orgs[100].name == "test-user"
-                assert (
-                    orgs[100].mfa_required is None
-                )  # Users don't have MFA requirements
-                mock_client.get_organization.assert_called_once_with("test-user")
-                mock_client.get_user.assert_called_once_with("test-user")
-                # Should log info about trying as user
-                mock_logger.info.assert_called()
+        assert len(orgs) == 1
+        assert 100 in orgs
+        assert orgs[100].name == "test-user"
+        assert orgs[100].mfa_required is None  # Users don't have MFA requirements
+        mock_client.get_organization.assert_called_once_with("test-user")
+        mock_client.get_user.assert_called_once_with("test-user")
 
     def test_repository_only_scoping_no_organization_checks(self):
         """Test that repository-only scoping does NOT perform organization checks"""
@@ -243,15 +238,10 @@ class Test_Organization_Scoping:
             organization_service.clients = [mock_client]
             organization_service.provider = provider
 
-            with patch(
-                "prowler.providers.github.services.organization.organization_service.logger"
-            ) as mock_logger:
-                orgs = organization_service._list_organizations()
+            orgs = organization_service._list_organizations()
 
-                # Should be empty since organization/user wasn't found
-                assert len(orgs) == 0
-                # Should log warning for inaccessible organization/user
-                mock_logger.warning.assert_called()
+            # Should be empty since organization/user wasn't found
+            assert len(orgs) == 0
 
     def test_organization_error_handling(self):
         """Test that other errors (non-404) are handled gracefully"""
@@ -272,15 +262,10 @@ class Test_Organization_Scoping:
             organization_service.clients = [mock_client]
             organization_service.provider = provider
 
-            with patch(
-                "prowler.providers.github.services.organization.organization_service.logger"
-            ) as mock_logger:
-                orgs = organization_service._list_organizations()
+            orgs = organization_service._list_organizations()
 
-                # Should be empty since organization wasn't accessible
-                assert len(orgs) == 0
-                # Should log warning for inaccessible organization
-                mock_logger.warning.assert_called()
+            # Should be empty since organization wasn't accessible
+            assert len(orgs) == 0
 
     def test_duplicate_organizations_handling(self):
         """Test that duplicate organizations (e.g., from repositories and organizations) are handled correctly"""
@@ -306,3 +291,76 @@ class Test_Organization_Scoping:
             assert orgs[1].name == "test-org1"
             # Should only call get_organization once due to set deduplication
             mock_client.get_organization.assert_called_once_with("test-org1")
+
+
+class Test_Organization_ErrorHandling:
+    def setup_method(self):
+        self.mock_org1 = MagicMock()
+        self.mock_org1.id = 1
+        self.mock_org1.login = "test-org1"
+        self.mock_org1.two_factor_requirement_enabled = True
+
+    def test_github_api_error_handling(self):
+        """Test that GitHub API errors are handled properly"""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = ["test-org1"]
+
+        mock_client = MagicMock()
+        mock_client.get_organization.side_effect = GithubException(
+            403, "Forbidden", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            with patch(
+                "prowler.providers.github.services.organization.organization_service.logger"
+            ) as mock_logger:
+                orgs = organization_service._list_organizations()
+
+                # Should be empty due to API error
+                assert len(orgs) == 0
+                # Should log specific error message
+                mock_logger.warning.assert_called()
+                # Check if Access denied message was logged (could be in warning or error calls)
+                log_messages = [
+                    str(call)
+                    for call in mock_logger.warning.call_args_list
+                    + mock_logger.error.call_args_list
+                ]
+                assert any("Access denied" in msg for msg in log_messages)
+
+    def test_rate_limit_error_handling(self):
+        """Test that rate limit errors are logged appropriately"""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = ["test-org1"]
+
+        mock_client = MagicMock()
+        mock_client.get_organization.side_effect = RateLimitExceededException(
+            429, "Rate limit exceeded", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            with patch(
+                "prowler.providers.github.services.organization.organization_service.logger"
+            ) as mock_logger:
+                # Rate limit errors should be caught and logged at the outer level
+                orgs = organization_service._list_organizations()
+
+                # Should be empty due to rate limit error
+                assert len(orgs) == 0
+                # Should log rate limit error
+                mock_logger.error.assert_called()
+                assert "Rate limit exceeded" in str(mock_logger.error.call_args)

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
+import github
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -25,7 +26,50 @@ class Repository(GithubService):
                 )
                 return None
 
+    def _validate_repository_format(self, repo_name: str) -> bool:
+        """
+        Validate repository name format.
+
+        Args:
+            repo_name: Repository name to validate
+
+        Returns:
+            bool: True if format is valid, False otherwise
+        """
+        if not repo_name or "/" not in repo_name:
+            return False
+
+        parts = repo_name.split("/")
+        if len(parts) != 2:
+            return False
+
+        owner, repo = parts
+        # Ensure both owner and repo names are non-empty
+        if not owner.strip() or not repo.strip():
+            return False
+
+        return True
+
     def _list_repositories(self):
+        """
+        List repositories based on provider scoping configuration.
+
+        Scoping behavior:
+        - No scoping: Returns all accessible repositories for authenticated user
+        - Repository scoping: Returns only specified repositories
+          Example: --repository owner1/repo1 owner2/repo2
+        - Organization scoping: Returns all repositories from specified organizations
+          Example: --organization org1 org2
+        - Combined scoping: Returns specified repositories + all repos from organizations
+          Example: --repository owner1/repo1 --organization org2
+
+        Returns:
+            dict: Dictionary of repository ID to Repo objects
+
+        Raises:
+            github.GithubException: When GitHub API access fails
+            github.RateLimitExceededException: When API rate limits are exceeded
+        """
         logger.info("Repository - Listing Repositories...")
         repos = {}
         try:
@@ -36,7 +80,7 @@ class Repository(GithubService):
                             f"Filtering for specific repositories: {self.provider.repositories}"
                         )
                         for repo_name in self.provider.repositories:
-                            if "/" not in repo_name:
+                            if not self._validate_repository_format(repo_name):
                                 logger.warning(
                                     f"Repository name '{repo_name}' should be in 'owner/repo-name' format. Skipping."
                                 )
@@ -44,9 +88,27 @@ class Repository(GithubService):
                             try:
                                 repo = client.get_repo(repo_name)
                                 self._process_repository(repo, repos)
+                            except github.GithubException as error:
+                                if "404" in str(error):
+                                    logger.warning(
+                                        f"Repository '{repo_name}' not found or not accessible"
+                                    )
+                                elif "403" in str(error):
+                                    logger.warning(
+                                        f"Access denied to repository '{repo_name}' - insufficient permissions"
+                                    )
+                                else:
+                                    logger.error(
+                                        f"GitHub API error for repository '{repo_name}': {error}"
+                                    )
+                            except github.RateLimitExceededException as error:
+                                logger.error(
+                                    f"Rate limit exceeded while accessing repository '{repo_name}': {error}"
+                                )
+                                raise  # Re-raise rate limit errors as they need special handling
                             except Exception as error:
-                                logger.warning(
-                                    f"Repository '{repo_name}' not accessible or not found: {error}"
+                                logger.error(
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
 
                     if self.provider.organizations:
@@ -59,7 +121,7 @@ class Repository(GithubService):
                                     org = client.get_organization(org_name)
                                     for repo in org.get_repos():
                                         self._process_repository(repo, repos)
-                                except Exception as org_error:
+                                except github.GithubException as org_error:
                                     # If organization fails, try as a user
                                     if "404" in str(org_error):
                                         logger.info(
@@ -69,19 +131,48 @@ class Repository(GithubService):
                                             user = client.get_user(org_name)
                                             for repo in user.get_repos():
                                                 self._process_repository(repo, repos)
+                                        except github.GithubException as user_error:
+                                            if "404" in str(user_error):
+                                                logger.warning(
+                                                    f"'{org_name}' not found as organization or user"
+                                                )
+                                            elif "403" in str(user_error):
+                                                logger.warning(
+                                                    f"Access denied to '{org_name}' - insufficient permissions"
+                                                )
+                                            else:
+                                                logger.warning(
+                                                    f"GitHub API error accessing '{org_name}' as user: {user_error}"
+                                                )
                                         except Exception as user_error:
-                                            logger.warning(
-                                                f"'{org_name}' not accessible as organization or user: {user_error}"
+                                            logger.error(
+                                                f"{user_error.__class__.__name__}[{user_error.__traceback__.tb_lineno}]: {user_error}"
                                             )
-                                    else:
+                                    elif "403" in str(org_error):
                                         logger.warning(
-                                            f"Organization '{org_name}' not accessible: {org_error}"
+                                            f"Access denied to organization '{org_name}' - insufficient permissions"
                                         )
+                                    else:
+                                        logger.error(
+                                            f"GitHub API error accessing organization '{org_name}': {org_error}"
+                                        )
+                            except github.RateLimitExceededException as error:
+                                logger.error(
+                                    f"Rate limit exceeded while processing organization '{org_name}': {error}"
+                                )
+                                raise  # Re-raise rate limit errors as they need special handling
                             except Exception as error:
-                                logger.warning(f"Error accessing '{org_name}': {error}")
+                                logger.error(
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                 else:
                     for repo in client.get_user().get_repos():
                         self._process_repository(repo, repos)
+        except github.RateLimitExceededException as error:
+            logger.error(f"GitHub API rate limit exceeded: {error}")
+            raise  # Re-raise rate limit errors as they need special handling
+        except github.GithubException as error:
+            logger.error(f"GitHub API error while listing repositories: {error}")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
