@@ -434,7 +434,9 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
                     )
                 continue
             except Exception as e:
-                logger.error(f"Unexpected error during API key creation: {type(e).__name__}: {e}")
+                logger.error(
+                    f"Unexpected error during API key creation: {type(e).__name__}: {e}"
+                )
                 raise
 
         # This should never be reached due to the exception above

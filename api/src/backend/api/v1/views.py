@@ -1020,21 +1020,25 @@ class TenantViewSet(BaseTenantViewset):
         tenant_id_from_auth = None
         if request.auth:
             # For API key authentication, check if user is AnonymousUser
-            if isinstance(request.user, AnonymousUser) and request.auth.get('api_key_id'):
+            if isinstance(request.user, AnonymousUser) and request.auth.get(
+                "api_key_id"
+            ):
                 tenant_id_from_auth = request.auth.get("tenant_id")
                 logger.debug(f"Extracted tenant_id from API key: {tenant_id_from_auth}")
             else:
                 # For JWT authentication
                 tenant_id_from_auth = request.auth.get("tenant_id")
                 logger.debug(f"Extracted tenant_id from JWT: {tenant_id_from_auth}")
-        
+
         if tenant_id_from_auth:
             # Store for later use but don't set up RLS transaction here
             self._extracted_tenant_id = tenant_id_from_auth
             # Set it on request for compatibility
             request.tenant_id = tenant_id_from_auth
         else:
-            logger.error(f"No tenant_id in auth - auth present: {bool(request.auth)}, user type: {type(request.user)}")
+            logger.error(
+                f"No tenant_id in auth - auth present: {bool(request.auth)}, user type: {type(request.user)}"
+            )
             self._extracted_tenant_id = None
 
         # Call parent initial method AFTER our tenant_id extraction
@@ -1042,15 +1046,17 @@ class TenantViewSet(BaseTenantViewset):
 
     def get_queryset(self):
         from django.contrib.auth.models import AnonymousUser
-        
+
         # Handle API key authentication - return the tenant associated with the API key
-        if isinstance(self.request.user, AnonymousUser) and hasattr(self.request, 'auth'):
+        if isinstance(self.request.user, AnonymousUser) and hasattr(
+            self.request, "auth"
+        ):
             auth_info = self.request.auth
-            if auth_info and auth_info.get('api_key_id'):
-                tenant_id = auth_info.get('tenant_id')
+            if auth_info and auth_info.get("api_key_id"):
+                tenant_id = auth_info.get("tenant_id")
                 queryset = Tenant.objects.filter(id=tenant_id)
                 return queryset.prefetch_related("memberships")
-        
+
         # Handle regular user authentication
         queryset = Tenant.objects.filter(membership__user=self.request.user)
         return queryset.prefetch_related("memberships")
@@ -1176,7 +1182,7 @@ class TenantViewSet(BaseTenantViewset):
 
             if raw_body:
                 request_data = json.loads(raw_body.decode("utf-8"))
-                logger.debug(f"Raw request body parsed successfully")
+                logger.debug("Raw request body parsed successfully")
 
                 # Extract attributes from JSON:API format if present
                 if "data" in request_data and "attributes" in request_data["data"]:
@@ -1184,7 +1190,9 @@ class TenantViewSet(BaseTenantViewset):
                     request_data = request_data["data"]["attributes"]
 
             else:
-                logger.debug("No request body found, trying to access request data directly")
+                logger.debug(
+                    "No request body found, trying to access request data directly"
+                )
                 # Fallback to accessing request.data but with manual JSON:API extraction
                 try:
                     raw_data = dict(
@@ -1240,7 +1248,9 @@ class TenantViewSet(BaseTenantViewset):
                 logger.debug("Created serializer instance")
 
                 is_valid = serializer.is_valid(raise_exception=False)
-                logger.debug(f"Serializer validation: {'valid' if is_valid else 'invalid'}")
+                logger.debug(
+                    f"Serializer validation: {'valid' if is_valid else 'invalid'}"
+                )
 
                 if not is_valid:
                     logger.error(f"Serializer validation errors: {serializer.errors}")

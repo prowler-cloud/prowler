@@ -54,7 +54,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         # Use all_objects to bypass RLS since we don't have tenant context yet
         # This is necessary because we need to authenticate the API key to GET the tenant context
         candidate_keys = APIKey.all_objects.filter(prefix=prefix)
-        
+
         logger.debug(f"Found {candidate_keys.count()} candidate keys")
 
         api_key = None
@@ -84,6 +84,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
 
         # Update last used timestamp within RLS context
         from api.db_utils import rls_transaction
+
         try:
             with rls_transaction(str(api_key.tenant_id)):
                 api_key.last_used_at = timezone.now()
@@ -101,7 +102,9 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             "tenant_id": str(api_key.tenant_id),
         }
 
-        logger.debug(f"Returning successful authentication for tenant: {api_key.tenant_id}")
+        logger.debug(
+            f"Returning successful authentication for tenant: {api_key.tenant_id}"
+        )
         return (AnonymousUser(), auth_info)
 
     def authenticate_header(self, request):

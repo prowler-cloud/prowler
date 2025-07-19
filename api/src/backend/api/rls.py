@@ -185,8 +185,8 @@ class BaseSecurityConstraint(models.BaseConstraint):
 class APIKeyRowLevelSecurityConstraint(models.BaseConstraint):
     """
     Special RLS constraint for API keys that allows authentication lookups without tenant context.
-    
-    This constraint generates permissive policies that allow SELECT operations when no tenant context 
+
+    This constraint generates permissive policies that allow SELECT operations when no tenant context
     is set (needed for API key authentication), while still restricting other operations.
     """
 
@@ -243,7 +243,7 @@ class APIKeyRowLevelSecurityConstraint(models.BaseConstraint):
             clause = f"{'WITH CHECK' if statement == 'INSERT' else 'USING'}"
             # Allow SELECT without tenant context for authentication, but require it for other operations
             allow_no_context = "TRUE" if statement == "SELECT" else "FALSE"
-            
+
             policy_queries = f"{policy_queries}{self.policy_sql_query.format(statement=statement, clause=clause, allow_no_context=allow_no_context)}"
             grant_queries = (
                 f"{grant_queries}{self.grant_sql_query.format(statement=statement)}"

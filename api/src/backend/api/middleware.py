@@ -109,7 +109,9 @@ class APILoggingMiddleware:
             # Use RLS context for both reading the API key and creating the activity log
             tenant_id = auth_info.get("tenant_id")
             if not tenant_id:
-                self.logger.warning("No tenant_id in auth_info for API key activity logging")
+                self.logger.warning(
+                    "No tenant_id in auth_info for API key activity logging"
+                )
                 return
 
             with rls_transaction(str(tenant_id)):
