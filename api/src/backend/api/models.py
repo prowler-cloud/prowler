@@ -207,6 +207,8 @@ class APIKey(RowLevelSecurityProtectedModel):
 
     def is_valid(self):
         """Check if the API key is still valid (not expired or revoked)."""
+        from django.utils import timezone
+        
         if self.revoked_at:
             return False
         if self.expires_at and self.expires_at < timezone.now():
@@ -255,6 +257,10 @@ class APIKey(RowLevelSecurityProtectedModel):
         from django.contrib.auth.hashers import check_password
 
         return check_password(key, key_hash)
+
+    def __str__(self):
+        """Return string representation of the API key."""
+        return f"API Key: {self.name}"
 
     def save(self, *args, **kwargs):
         # The prefix should already be set during creation

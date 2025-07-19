@@ -39,7 +39,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         if auth_type.lower() != self.keyword.lower():
             return None
 
-        return self.authenticate_credentials(api_key, request)
+        return self.authenticate_credentials(api_key.strip(), request)
 
     def authenticate_credentials(self, key, request):
         # Extract prefix for faster lookup
