@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.conf import settings
 from django.utils import timezone
@@ -1578,7 +1578,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
         return value
 
     def validate_expires_at(self, value):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(dt_timezone.utc)
         if value and value < now + timedelta(hours=24):
             raise ValidationError(
                 "Expiry date must be at least 24 hours in the future."

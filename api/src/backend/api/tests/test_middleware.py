@@ -17,9 +17,11 @@ def test_api_logging_middleware_logging(mock_logger):
 
     request = factory.get("/test-path?param1=value1&param2=value2")
     request.method = "GET"
+    request.META = {"REMOTE_ADDR": "127.0.0.1", "HTTP_USER_AGENT": None}
 
     response = HttpResponse()
     response.status_code = 200
+    response.get = MagicMock(return_value=None)  # Mock Content-Length lookup
 
     get_response = MagicMock(return_value=response)
 
@@ -52,6 +54,13 @@ def test_api_logging_middleware_logging(mock_logger):
                     "query_params": {"param1": "value1", "param2": "value2"},
                     "status_code": 200,
                     "duration": 1.0,
+                    "source_ip": "127.0.0.1",
+                    "user_agent": None,
+                    "content_length": None,
+                    "authentication_method": "jwt",
+                    "is_api_key_request": False,
                 }
 
-                mock_logger.info.assert_called_once_with("", extra=expected_extra)
+                mock_logger.info.assert_called_once_with(
+                    "API Request: GET /test-path", extra=expected_extra
+                )

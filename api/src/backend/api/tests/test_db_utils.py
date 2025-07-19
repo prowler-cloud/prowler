@@ -104,21 +104,29 @@ class TestGenerateRandomToken:
         token = generate_random_token(length=length)
         assert len(token) == length
 
-    def test_generate_random_token_with_symbols(self):
-        symbols = "ABC123"
-        token = generate_random_token(length=10, symbols=symbols)
-        assert len(token) == 10
-        assert all(char in symbols for char in token)
+    def test_generate_random_token_with_custom_length(self):
+        length = 10
+        token = generate_random_token(length=length)
+        assert len(token) == length
+        # Token should only contain URL-safe characters (letters, digits, -, _)
+        import string
+
+        url_safe_chars = string.ascii_letters + string.digits + "-_"
+        assert all(char in url_safe_chars for char in token)
 
     def test_generate_random_token_unique(self):
         tokens = {generate_random_token() for _ in range(1000)}
         # Assuming that generating 1000 tokens should result in unique values
         assert len(tokens) == 1000
 
-    def test_generate_random_token_no_symbols_provided(self):
-        token = generate_random_token(length=5, symbols="")
-        # Default symbols
+    def test_generate_random_token_url_safe_characters(self):
+        token = generate_random_token(length=5)
+        # Should generate URL-safe characters
         assert len(token) == 5
+        import string
+
+        url_safe_chars = string.ascii_letters + string.digits + "-_"
+        assert all(char in url_safe_chars for char in token)
 
 
 class TestBatchDelete:

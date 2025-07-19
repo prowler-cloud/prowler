@@ -1664,7 +1664,7 @@ class TestProviderSecretViewSet:
         [
             # AWS with STATIC secret
             (
-                Provider.ProviderChoices.AWS.value,
+                Provider.ProviderChoices.AWS,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "aws_access_key_id": "value",
@@ -1674,7 +1674,7 @@ class TestProviderSecretViewSet:
             ),
             # AWS with ROLE secret
             (
-                Provider.ProviderChoices.AWS.value,
+                Provider.ProviderChoices.AWS,
                 ProviderSecret.TypeChoices.ROLE,
                 {
                     "role_arn": "arn:aws:iam::123456789012:role/example-role",
@@ -1689,7 +1689,7 @@ class TestProviderSecretViewSet:
             ),
             # Azure with STATIC secret
             (
-                Provider.ProviderChoices.AZURE.value,
+                Provider.ProviderChoices.AZURE,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
@@ -1699,7 +1699,7 @@ class TestProviderSecretViewSet:
             ),
             # GCP with STATIC secret
             (
-                Provider.ProviderChoices.GCP.value,
+                Provider.ProviderChoices.GCP,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
@@ -1709,7 +1709,7 @@ class TestProviderSecretViewSet:
             ),
             # GCP with Service Account Key secret
             (
-                Provider.ProviderChoices.GCP.value,
+                Provider.ProviderChoices.GCP,
                 ProviderSecret.TypeChoices.SERVICE_ACCOUNT,
                 {
                     "service_account_key": {
@@ -1729,7 +1729,7 @@ class TestProviderSecretViewSet:
             ),
             # Kubernetes with STATIC secret
             (
-                Provider.ProviderChoices.KUBERNETES.value,
+                Provider.ProviderChoices.KUBERNETES,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "kubeconfig_content": "kubeconfig-content",
@@ -1737,7 +1737,7 @@ class TestProviderSecretViewSet:
             ),
             # M365 with STATIC secret - no user or password
             (
-                Provider.ProviderChoices.M365.value,
+                Provider.ProviderChoices.M365,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
@@ -1747,7 +1747,7 @@ class TestProviderSecretViewSet:
             ),
             # M365 with user only
             (
-                Provider.ProviderChoices.M365.value,
+                Provider.ProviderChoices.M365,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
@@ -1758,7 +1758,7 @@ class TestProviderSecretViewSet:
             ),
             # M365 with password only
             (
-                Provider.ProviderChoices.M365.value,
+                Provider.ProviderChoices.M365,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
@@ -1769,7 +1769,7 @@ class TestProviderSecretViewSet:
             ),
             # M365 with user and password
             (
-                Provider.ProviderChoices.M365.value,
+                Provider.ProviderChoices.M365,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
@@ -5497,10 +5497,12 @@ class TestScheduleViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("tasks.beat.perform_scheduled_scan_task.apply_async")
     @patch("api.v1.views.Task.objects.get")
     def test_schedule_daily_already_scheduled(
         self,
         mock_task_get,
+        mock_perform_scheduled_scan_task,
         authenticated_client,
         providers_fixture,
         tasks_fixture,
@@ -5508,6 +5510,10 @@ class TestScheduleViewSet:
         provider, *_ = providers_fixture
         prowler_task = tasks_fixture[0]
         mock_task_get.return_value = prowler_task
+
+        # Mock the Celery task to return a mock task with ID
+        mock_celery_task = type("MockTask", (), {"id": prowler_task.id})
+        mock_perform_scheduled_scan_task.return_value = mock_celery_task
         json_payload = {
             "provider_id": str(provider.id),
         }
