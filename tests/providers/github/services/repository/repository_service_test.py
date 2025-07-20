@@ -422,7 +422,7 @@ class Test_Repository_ErrorHandling:
             repository_service.provider = provider
 
             with patch(
-                "prowler.providers.github.services.repository.repository_service.logger"
+                "prowler.providers.github.lib.service.service.logger"
             ) as mock_logger:
                 repos = repository_service._list_repositories()
 
@@ -457,7 +457,7 @@ class Test_Repository_ErrorHandling:
             repository_service.provider = provider
 
             with patch(
-                "prowler.providers.github.services.repository.repository_service.logger"
+                "prowler.providers.github.lib.service.service.logger"
             ) as mock_logger:
                 # Rate limit errors should be caught and logged at the outer level
                 repos = repository_service._list_repositories()

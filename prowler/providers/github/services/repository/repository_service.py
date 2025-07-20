@@ -88,27 +88,9 @@ class Repository(GithubService):
                             try:
                                 repo = client.get_repo(repo_name)
                                 self._process_repository(repo, repos)
-                            except github.GithubException as error:
-                                if "404" in str(error):
-                                    logger.warning(
-                                        f"Repository '{repo_name}' not found or not accessible"
-                                    )
-                                elif "403" in str(error):
-                                    logger.warning(
-                                        f"Access denied to repository '{repo_name}' - insufficient permissions"
-                                    )
-                                else:
-                                    logger.error(
-                                        f"GitHub API error for repository '{repo_name}': {error}"
-                                    )
-                            except github.RateLimitExceededException as error:
-                                logger.error(
-                                    f"Rate limit exceeded while accessing repository '{repo_name}': {error}"
-                                )
-                                raise  # Re-raise rate limit errors as they need special handling
                             except Exception as error:
-                                logger.error(
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                self._handle_github_api_error(
+                                    error, "accessing repository", repo_name
                                 )
 
                     if self.provider.organizations:
@@ -117,53 +99,14 @@ class Repository(GithubService):
                         )
                         for org_name in self.provider.organizations:
                             try:
-                                try:
-                                    org = client.get_organization(org_name)
-                                    for repo in org.get_repos():
-                                        self._process_repository(repo, repos)
-                                except github.GithubException as org_error:
-                                    # If organization fails, try as a user
-                                    if "404" in str(org_error):
-                                        logger.info(
-                                            f"'{org_name}' not found as organization, trying as user..."
-                                        )
-                                        try:
-                                            user = client.get_user(org_name)
-                                            for repo in user.get_repos():
-                                                self._process_repository(repo, repos)
-                                        except github.GithubException as user_error:
-                                            if "404" in str(user_error):
-                                                logger.warning(
-                                                    f"'{org_name}' not found as organization or user"
-                                                )
-                                            elif "403" in str(user_error):
-                                                logger.warning(
-                                                    f"Access denied to '{org_name}' - insufficient permissions"
-                                                )
-                                            else:
-                                                logger.warning(
-                                                    f"GitHub API error accessing '{org_name}' as user: {user_error}"
-                                                )
-                                        except Exception as user_error:
-                                            logger.error(
-                                                f"{user_error.__class__.__name__}[{user_error.__traceback__.tb_lineno}]: {user_error}"
-                                            )
-                                    elif "403" in str(org_error):
-                                        logger.warning(
-                                            f"Access denied to organization '{org_name}' - insufficient permissions"
-                                        )
-                                    else:
-                                        logger.error(
-                                            f"GitHub API error accessing organization '{org_name}': {org_error}"
-                                        )
-                            except github.RateLimitExceededException as error:
-                                logger.error(
-                                    f"Rate limit exceeded while processing organization '{org_name}': {error}"
+                                repos_list, entity_type = (
+                                    self._get_organization_or_user(client, org_name)
                                 )
-                                raise  # Re-raise rate limit errors as they need special handling
+                                for repo in repos_list:
+                                    self._process_repository(repo, repos)
                             except Exception as error:
-                                logger.error(
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                self._handle_github_api_error(
+                                    error, "processing organization", org_name
                                 )
                 else:
                     for repo in client.get_user().get_repos():
