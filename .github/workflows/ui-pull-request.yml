@@ -75,6 +75,13 @@ jobs:
             echo "Waiting for prowler-api... (attempt $i/30)"
             sleep 3
           done
+      - name: Run database migrations
+        run: |
+          docker compose exec -T api sh -c '
+            echo "Running database migrations..."
+            poetry run python manage.py migrate --database admin
+            echo "Database migrations completed successfully!"
+          '
       - name: Load database fixtures for e2e tests
         run: |
           docker compose exec -T api sh -c '
