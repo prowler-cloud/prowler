@@ -2,18 +2,18 @@ name: UI - Pull Request
 
 on:
   push:
-  #   branches:
-  #     - "master"
-  #     - "v5.*"
-  #   paths:
-  #     - ".github/workflows/ui-pull-request.yml"
-  #     - "ui/**"
-  # pull_request:
-  #   branches:
-  #     - master
-  #     - "v5.*"
-  #   paths:
-  #     - 'ui/**'
+    branches:
+      - "master"
+      - "v5.*"
+    paths:
+      - ".github/workflows/ui-pull-request.yml"
+      - "ui/**"
+  pull_request:
+    branches:
+      - master
+      - "v5.*"
+    paths:
+      - 'ui/**'
 env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
@@ -114,7 +114,7 @@ jobs:
         if: always()
         run: |
           echo "Shutting down services..."
-          docker-compose down -v || true
+          docker compose down -v || true
           echo "Cleanup completed"
 
   test-container-build:
