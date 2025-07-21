@@ -9,6 +9,7 @@ import {
   AddViaServiceAccountForm,
   SelectViaGCP,
 } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { SelectViaM365 } from "@/components/providers/workflow/forms/select-credentials-type/m365/select-via-m365";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
@@ -26,9 +27,15 @@ export default function AddCredentialsPage({ searchParams }: Props) {
         <SelectViaGCP initialVia={searchParams.via} />
       )}
 
+      {searchParams.type === "m365" && !searchParams.via && (
+        <SelectViaM365 initialVia={searchParams.via} />
+      )}
+
       {((searchParams.type === "aws" && searchParams.via === "credentials") ||
         (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
+        (searchParams.type === "m365" && searchParams.via === "credentials") ||
+        (searchParams.type === "m365" && searchParams.via === "service-principal-user") ||
+        (searchParams.type !== "aws" && searchParams.type !== "gcp" && searchParams.type !== "m365")) && (
         <AddViaCredentialsForm searchParams={searchParams} />
       )}
 

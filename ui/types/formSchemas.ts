@@ -66,6 +66,12 @@ export const awsCredentialsTypeSchema = z.object({
   }),
 });
 
+export const m365CredentialsTypeSchema = z.object({
+  m365CredentialsType: z.string().min(1, {
+    message: "Please select the type of credentials you want to use",
+  }),
+});
+
 export const addProviderFormSchema = z
   .object({
     providerType: z.enum(["aws", "azure", "gcp", "kubernetes", "m365"], {
@@ -253,6 +259,27 @@ export const addCredentialsServiceAccountFormSchema = (
         [ProviderCredentialFields.PROVIDER_ID]: z.string(),
         [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
       });
+
+export const addCredentialsM365UserFormSchema = () =>
+  z.object({
+    [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+    [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+    [ProviderCredentialFields.CLIENT_ID]: z
+      .string()
+      .nonempty("Client ID is required"),
+    [ProviderCredentialFields.CLIENT_SECRET]: z
+      .string()
+      .nonempty("Client Secret is required"),
+    [ProviderCredentialFields.TENANT_ID]: z
+      .string()
+      .nonempty("Tenant ID is required"),
+    [ProviderCredentialFields.USER]: z
+      .string()
+      .nonempty("User is required for this authentication method"),
+    [ProviderCredentialFields.PASSWORD]: z
+      .string()
+      .nonempty("Password is required for this authentication method"),
+  });
 
 export const testConnectionFormSchema = z.object({
   [ProviderCredentialFields.PROVIDER_ID]: z.string(),

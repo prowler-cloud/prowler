@@ -11,6 +11,7 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addCredentialsServiceAccountFormSchema,
+  addCredentialsM365UserFormSchema,
   ProviderType,
 } from "@/types";
 
@@ -45,6 +46,9 @@ export const useCredentialsForm = ({
     }
     if (providerType === "gcp" && via === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
+    }
+    if (providerType === "m365" && via === "service-principal-user") {
+      return addCredentialsM365UserFormSchema();
     }
     return addCredentialsFormSchema(providerType);
   };
