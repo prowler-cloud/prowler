@@ -17,9 +17,6 @@ on:
 env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
-  POSTGRES_DB: mydb
-  POSTGRES_USER: myuser
-  POSTGRES_PASSWORD: mypassword
 
 jobs:
   test-and-coverage:
@@ -61,25 +58,6 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Debug environment configuration
-        run: |
-          echo "=== Checking for .env file ==="
-          if [ -f .env ]; then
-            echo "✅ .env file found!"
-            echo "Contents of .env file:"
-            cat .env
-          else
-            echo "❌ .env file not found in repository"
-          fi
-          
-          echo ""
-          echo "=== Current environment variables ==="
-          env | grep -E "(POSTGRES|DB_)" | sort || echo "No database environment variables set"
-          
-          echo ""
-          echo "=== Docker Compose resolved configuration ==="
-          docker compose config | grep -A 20 -B 5 -i "environment\|postgres"
-          
       - name: Start needed services with docker compose
         run: |
           docker compose up -d api worker worker-beat
