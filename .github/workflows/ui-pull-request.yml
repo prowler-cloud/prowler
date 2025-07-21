@@ -62,7 +62,6 @@ jobs:
       POSTGRES_PORT: 5432
       VALKEY_PORT: 6379
       DJANGO_PORT: 8080
-      PROWLER_API_VERSION: stable
     services:
       postgres-db:
         image: postgres:16.3-alpine3.20
@@ -89,17 +88,17 @@ jobs:
           --health-timeout=5s
           --health-retries=3
       prowler-api:
-        image: prowlercloud/prowler-api:${{ env.PROWLER_API_VERSION }}
+        image: prowlercloud/prowler-api:stable
         ports:
           - 8080:8080
         options: >-
           --entrypoint "/home/prowler/docker-entrypoint.sh" --prod
       worker:
-        image: prowlercloud/prowler-api:${{ env.PROWLER_API_VERSION }}
+        image: prowlercloud/prowler-api:stable
         options: >-
           --entrypoint "/home/prowler/docker-entrypoint.sh" --worker
       worker-beat:
-        image: prowlercloud/prowler-api:${{ env.PROWLER_API_VERSION }}
+        image: prowlercloud/prowler-api:stable
         options: >-
           --entrypoint "../docker-entrypoint.sh" --beat
     steps:
