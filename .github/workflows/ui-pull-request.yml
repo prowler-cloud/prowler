@@ -115,7 +115,7 @@ jobs:
       - name: Test the API responds
         run: |
           sleep 10
-          curl -s http://prowler-api:${DJANGO_PORT}/health || echo "The API is not responding"
+          curl -s http://prowler-api:${DJANGO_PORT}/api/v1/docs || echo "The API is not responding"
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
