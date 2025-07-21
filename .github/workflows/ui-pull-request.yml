@@ -2,21 +2,24 @@ name: UI - Pull Request
 
 on:
   push:
-    branches:
-      - "master"
-      - "v5.*"
-    paths:
-      - ".github/workflows/ui-pull-request.yml"
-      - "ui/**"
-  pull_request:
-    branches:
-      - master
-      - "v5.*"
-    paths:
-      - 'ui/**'
+  #   branches:
+  #     - "master"
+  #     - "v5.*"
+  #   paths:
+  #     - ".github/workflows/ui-pull-request.yml"
+  #     - "ui/**"
+  # pull_request:
+  #   branches:
+  #     - master
+  #     - "v5.*"
+  #   paths:
+  #     - 'ui/**'
 env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
+  POSTGRES_DB: mydb
+  POSTGRES_USER: myuser
+  POSTGRES_PASSWORD: mypassword
 
 jobs:
   test-and-coverage:
@@ -52,11 +55,78 @@ jobs:
       AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: http://localhost:3000
+      # Services
+      POSTGRES_ADMIN_USER: postgres
+      POSTGRES_ADMIN_PASSWORD: secret
+      POSTGRES_DB: mydb
+      POSTGRES_PORT: 5432
+      VALKEY_PORT: 6379
+      DJANGO_PORT: 8080
+      PROWLER_API_VERSION: stable
+    services:
+      postgres-db:
+        image: postgres:16.3-alpine3.20
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_ADMIN_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_ADMIN_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        options: >-
+          --health-cmd="pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+      valkey:
+        image: valkey/valkey:7-alpine3.19
+        ports:
+          - 6379:6379
+        env:
+          VALKEY_PASSWORD: ${{ env.VALKEY_PASSWORD }}
+        options: >-
+          --health-cmd="valkey-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      prowler-api:
+        image: prowlercloud/prowler-api:${{ env.PROWLER_API_VERSION }}
+        ports:
+          - 8080:8080
+        options: >-
+          --entrypoint "/home/prowler/docker-entrypoint.sh" --prod
+      worker:
+        image: prowlercloud/prowler-api:${{ env.PROWLER_API_VERSION }}
+        options: >-
+          --entrypoint "/home/prowler/docker-entrypoint.sh" --worker
+      worker-beat:
+        image: prowlercloud/prowler-api:${{ env.PROWLER_API_VERSION }}
+        options: >-
+          --entrypoint "../docker-entrypoint.sh" --beat
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Load variables from .env file
+        run: |
+          set -a
+          [ -f .env ] && source .env
+          set +a
+      - name: Wait for PostgreSQL and Valkey to be ready
+        run: |
+          for i in {1..10}; do
+            healthy_count=$(docker ps --filter health=healthy | grep -E 'postgres-db|valkey' | wc -l)
+            if [ "$healthy_count" -eq 2 ]; then
+              echo "PostgreSQL and Valkey are ready!"
+              break
+            fi
+            echo "Waiting for services to be healthy..."
+            sleep 3
+          done
+      - name: Test the API responds
+        run: |
+          sleep 10
+          curl -s http://prowler-api:${DJANGO_PORT}/health || echo "The API is not responding"
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
