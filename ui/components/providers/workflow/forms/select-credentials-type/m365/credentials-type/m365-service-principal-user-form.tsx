@@ -18,15 +18,16 @@ export const M365ServicePrincipalUserForm = ({
           Service Principal + User Credentials
         </div>
         <div className="text-sm text-default-500">
-          Connect using Service Principal credentials combined with user authentication for PowerShell modules.
+          Connect using Service Principal credentials combined with user
+          authentication for PowerShell modules.
         </div>
       </div>
 
       <div className="flex items-center rounded-lg border border-system-info bg-system-info-medium p-3 text-sm dark:text-default-300">
         <InfoIcon className="mr-2 inline h-4 w-4 flex-shrink-0" />
         <div className="text-xs">
-          <p className="font-extrabold mb-2">This method provides:</p>
-          <ul className="list-disc list-inside space-y-1">
+          <p className="mb-2 font-extrabold">This method provides:</p>
+          <ul className="list-inside list-disc space-y-1">
             <li>Service Principal authentication for Microsoft Graph APIs</li>
             <li>User credentials for PowerShell modules access</li>
             <li>Complete M365 service coverage</li>
@@ -34,7 +35,9 @@ export const M365ServicePrincipalUserForm = ({
         </div>
       </div>
 
-      <span className="text-xs font-bold text-default-500">Service Principal Information</span>
+      <span className="text-xs font-bold text-default-500">
+        Service Principal Information
+      </span>
 
       <CustomInput
         control={control}
@@ -45,7 +48,9 @@ export const M365ServicePrincipalUserForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors[ProviderCredentialFields.CLIENT_ID]}
+        isInvalid={
+          !!control._formState.errors[ProviderCredentialFields.CLIENT_ID]
+        }
       />
 
       <CustomInput
@@ -57,7 +62,9 @@ export const M365ServicePrincipalUserForm = ({
         placeholder="Enter the Client Secret"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors[ProviderCredentialFields.CLIENT_SECRET]}
+        isInvalid={
+          !!control._formState.errors[ProviderCredentialFields.CLIENT_SECRET]
+        }
       />
 
       <CustomInput
@@ -69,10 +76,14 @@ export const M365ServicePrincipalUserForm = ({
         placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors[ProviderCredentialFields.TENANT_ID]}
+        isInvalid={
+          !!control._formState.errors[ProviderCredentialFields.TENANT_ID]
+        }
       />
 
-      <span className="text-xs font-bold text-default-500">User Credentials for PowerShell</span>
+      <span className="text-xs font-bold text-default-500">
+        User Credentials for PowerShell
+      </span>
 
       <CustomInput
         control={control}
@@ -95,7 +106,9 @@ export const M365ServicePrincipalUserForm = ({
         placeholder="Enter the Password"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors[ProviderCredentialFields.PASSWORD]}
+        isInvalid={
+          !!control._formState.errors[ProviderCredentialFields.PASSWORD]
+        }
       />
 
       <div className="flex items-center rounded-lg border border-system-warning bg-system-warning-medium p-2 text-sm dark:text-default-300">

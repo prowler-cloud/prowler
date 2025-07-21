@@ -24,10 +24,10 @@ import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credenti
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
-import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
-import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365ServicePrincipalForm } from "./select-credentials-type/m365/credentials-type";
 import { M365ServicePrincipalUserForm } from "./select-credentials-type/m365/credentials-type/m365-service-principal-user-form";
+import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
+import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
@@ -98,16 +98,18 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<AzureCredentials>}
           />
         )}
-        {providerType === "m365" && searchParamsObj.get("via") === "service-principal-user" && (
-          <M365ServicePrincipalUserForm
-            control={form.control as unknown as Control<M365Credentials>}
-          />
-        )}
-        {providerType === "m365" && searchParamsObj.get("via") !== "service-principal-user" && (
-          <M365ServicePrincipalForm
-            control={form.control as unknown as Control<M365Credentials>}
-          />
-        )}
+        {providerType === "m365" &&
+          searchParamsObj.get("via") === "service-principal-user" && (
+            <M365ServicePrincipalUserForm
+              control={form.control as unknown as Control<M365Credentials>}
+            />
+          )}
+        {providerType === "m365" &&
+          searchParamsObj.get("via") !== "service-principal-user" && (
+            <M365ServicePrincipalForm
+              control={form.control as unknown as Control<M365Credentials>}
+            />
+          )}
         {providerType === "gcp" &&
           searchParamsObj.get("via") === "service-account" && (
             <GCPServiceAccountKeyForm

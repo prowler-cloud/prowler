@@ -9,9 +9,9 @@ import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
   addCredentialsFormSchema,
+  addCredentialsM365UserFormSchema,
   addCredentialsRoleFormSchema,
   addCredentialsServiceAccountFormSchema,
-  addCredentialsM365UserFormSchema,
   ProviderType,
 } from "@/types";
 

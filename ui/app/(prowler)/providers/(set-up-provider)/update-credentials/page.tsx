@@ -20,7 +20,9 @@ interface Props {
 export default function UpdateCredentialsPage({ searchParams }: Props) {
   return (
     <>
-      {(searchParams.type === "aws" || searchParams.type === "gcp" || searchParams.type === "m365") &&
+      {(searchParams.type === "aws" ||
+        searchParams.type === "gcp" ||
+        searchParams.type === "m365") &&
         !searchParams.via && (
           <CredentialsUpdateInfo
             providerType={searchParams.type}
@@ -31,8 +33,11 @@ export default function UpdateCredentialsPage({ searchParams }: Props) {
       {((searchParams.type === "aws" && searchParams.via === "credentials") ||
         (searchParams.type === "gcp" && searchParams.via === "credentials") ||
         (searchParams.type === "m365" && searchParams.via === "credentials") ||
-        (searchParams.type === "m365" && searchParams.via === "service-principal-user") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp" && searchParams.type !== "m365")) && (
+        (searchParams.type === "m365" &&
+          searchParams.via === "service-principal-user") ||
+        (searchParams.type !== "aws" &&
+          searchParams.type !== "gcp" &&
+          searchParams.type !== "m365")) && (
         <UpdateViaCredentialsForm searchParams={searchParams} />
       )}
 

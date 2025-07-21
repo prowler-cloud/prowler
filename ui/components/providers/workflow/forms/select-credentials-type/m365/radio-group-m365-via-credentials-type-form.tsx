@@ -36,7 +36,9 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
             }}
           >
             <div className="flex flex-col gap-4">
-              <span className="text-sm text-default-500">Application Authentication</span>
+              <span className="text-sm text-default-500">
+                Application Authentication
+              </span>
               <CustomRadio
                 description="Connect using Service Principal credentials only"
                 value="credentials"
@@ -53,7 +55,9 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
                 value="service-principal-user"
               >
                 <div className="flex items-center">
-                  <span className="ml-2">Service Principal + User Credentials</span>
+                  <span className="ml-2">
+                    Service Principal + User Credentials
+                  </span>
                 </div>
               </CustomRadio>
             </div>
