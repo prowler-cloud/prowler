@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0040_integration_unique_configuration_per_tenant"),
+        ("api", "0043_integration_unique_configuration_per_tenant"),
     ]
 
     operations = [

@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0039_resource_resources_failed_findings_idx"),
+        ("api", "0042_scan_scans_prov_ins_desc_idx"),
     ]
 
     operations = [
