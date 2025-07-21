@@ -55,8 +55,6 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-    ).apply_async()
-    chain(
         generate_threatscore_report_task.si(
             tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
         ),
