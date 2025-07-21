@@ -32,8 +32,8 @@ export const LaunchScanWorkflow = ({
       .union([
         z
           .string()
-          .min(3, "Scan name must be at least 3 characters")
-          .max(32, "Scan name must not exceed 32 characters"),
+          .min(3, "Must be at least 3 characters")
+          .max(32, "Must not exceed 32 characters"),
         z.literal(""),
       ])
       .optional(),
