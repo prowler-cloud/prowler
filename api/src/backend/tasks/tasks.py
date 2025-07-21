@@ -1,5 +1,6 @@
-import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from shutil import rmtree
 
 from celery import chain, group, shared_task
 from celery.utils.log import get_task_logger
@@ -8,9 +9,9 @@ from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIR
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import backfill_resource_scan_summaries
 from tasks.jobs.connection import (
+    check_integration_connection,
     check_lighthouse_connection,
     check_provider_connection,
-    check_integration_connection,
 )
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
@@ -20,7 +21,7 @@ from tasks.jobs.export import (
     _generate_output_directory,
     _upload_to_s3,
 )
-from tasks.jobs.integrations import upload_s3_integration
+from tasks.jobs.integrations import check_integrations, upload_s3_integration
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -58,7 +59,7 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-        check_integrations_task.s(
+        check_integrations_task.si(
             tenant_id=tenant_id,
             provider_id=provider_id,
         ),
@@ -317,6 +318,12 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     output_writers = {}
     compliance_writers = {}
+    # We need to serialize output objects for Celery task communication because:
+    # - Output objects (CSV, HTML, ASFF, etc.) are not JSON serializable
+    # - Celery requires JSON serializable data to pass between tasks
+    # - We extract essential info (class_name, file_path) to recreate objects later
+    # - This approach allows us to reuse the existing send_to_bucket() function used by CLI
+    serialized_outputs = {"regular": [], "compliance": []}
 
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
@@ -345,7 +352,16 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 ),
                 is_last,
             )
-            if not initialization:
+            if initialization:
+                serialized_outputs["regular"].append(
+                    {
+                        "class_name": writer.__class__.__name__,
+                        "file_path": (
+                            writer.file_path if hasattr(writer, "file_path") else None
+                        ),
+                    }
+                )
+            else:
                 writer.transform(fos)
             writer.batch_write_data_to_file(**extra)
             writer._data.clear()
@@ -373,7 +389,16 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 ),
                 is_last,
             )
-            if not initialization:
+            if initialization:
+                serialized_outputs["compliance"].append(
+                    {
+                        "class_name": writer.__class__.__name__,
+                        "file_path": (
+                            writer.file_path if hasattr(writer, "file_path") else None
+                        ),
+                    }
+                )
+            else:
                 writer.transform(fos, compliance_obj, name)
             writer.batch_write_data_to_file()
             writer._data.clear()
@@ -381,13 +406,39 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     compressed = _compress_output_files(out_dir)
     upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
 
+    # S3 integrations (need output_directory)
+    with rls_transaction(tenant_id):
+        s3_integrations = Integration.objects.filter(
+            integrationproviderrelationship__provider_id=provider_id,
+            integration_type=Integration.IntegrationChoices.AMAZON_S3,
+        )
+
+    if s3_integrations:
+        # Pass serialized output metadata to S3 integration task instead of the actual objects
+        # to avoid Celery JSON serialization errors with complex output classes.
+        # This allows reusing the existing send_to_bucket() method without modifications.
+        s3_integration_task.apply_async(
+            kwargs={
+                "tenant_id": tenant_id,
+                "provider_id": provider_id,
+                "serialized_outputs": serialized_outputs,
+            }
+        ).get(
+            disable_sync_subtasks=False
+        )  # TODO: This synchronous execution is NOT recommended
+        # We're forced to do this because we need the files to exist before deletion occurs.
+        # Once we have the periodic file cleanup task implemented, we should:
+        # 1. Remove this .get() call and make it fully async
+        # 2. For Cloud deployments, develop a secondary approach where outputs are stored
+        #    directly in S3 and read from there, eliminating local file dependencies
+
     if upload_uri:
-        # TODO: This should be removed, the s3 integration can't work with this block of code, we need to create a new periodic task to delete the output files
-        # In addition, this task shouldn't be responsible for deleting the output files
-        # try:
-        #     rmtree(Path(compressed).parent, ignore_errors=True)
-        # except Exception as e:
-        #     logger.error(f"Error deleting output files: {e}")
+        # TODO: We need to create a new periodic task to delete the output files
+        # This task shouldn't be responsible for deleting the output files
+        try:
+            rmtree(Path(compressed).parent, ignore_errors=True)
+        except Exception as e:
+            logger.error(f"Error deleting output files: {e}")
         final_location, did_upload = upload_uri, True
     else:
         final_location, did_upload = compressed, False
@@ -397,7 +448,6 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     return {
         "upload": did_upload,
-        "output_directory": os.path.dirname(compressed),
     }
 
 
@@ -448,69 +498,25 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
 
 
-@shared_task(
-    name="integration-check",
-    queue="integrations",
-)
-def check_integrations_task(
-    generate_outputs_result: dict, tenant_id: str, provider_id: str
-):
+@shared_task(name="integration-check")
+def check_integrations_task(tenant_id: str, provider_id: str):
     """
     Check and execute all configured integrations for a provider.
 
     Args:
-        generate_outputs_result (dict): Result from generate_outputs task (contains output_directory)
         tenant_id (str): The tenant identifier
         provider_id (str): The provider identifier
     """
-    logger.info(f"Checking integrations for provider {provider_id}")
-    with rls_transaction(tenant_id):
-        integrations = Integration.objects.filter(
-            integrationproviderrelationship__provider_id=provider_id
-        )
+    result = check_integrations(tenant_id, provider_id)
 
-        if not integrations.exists():
-            logger.info(f"No integrations configured for provider {provider_id}")
-            return {"integrations_processed": 0}
-
-    integration_tasks = []
-
-    # S3 integrations (need output_directory)
-    output_directory = generate_outputs_result.get("output_directory")
-    with rls_transaction(tenant_id):
-        s3_integrations = list(
-            integrations.filter(integration_type=Integration.IntegrationChoices.S3)
-        )
-
-    if s3_integrations and output_directory:
-        logger.info(f"Found {len(s3_integrations)} S3 integration(s)")
-        integration_tasks.append(
-            s3_integration_task.s(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                output_directory=output_directory,
-            )
-        )
-
-    # TODO: Add other integration types here
-    # slack_integrations = integrations.filter(
-    #     integration_type=Integration.IntegrationChoices.SLACK
-    # )
-    # if slack_integrations.exists():
-    #     integration_tasks.append(
-    #        slack_integration_task.s(
-    #            tenant_id=tenant_id,
-    #            provider_id=provider_id,
-    #        )
-    #     )
-
-    # Execute all integration tasks in parallel
+    # Execute all integration tasks in parallel if any were found
+    integration_tasks = result.get("tasks", [])
     if integration_tasks:
         job = group(integration_tasks)
         job.apply_async()
         logger.info(f"Launched {len(integration_tasks)} integration task(s)")
 
-    return {"integrations_processed": len(integration_tasks)}
+    return {"integrations_processed": result["integrations_processed"]}
 
 
 @shared_task(
@@ -518,30 +524,17 @@ def check_integrations_task(
     name="integration-s3",
     queue="integrations",
 )
-def s3_integration_task(tenant_id: str, provider_id: str, output_directory: str):
+def s3_integration_task(
+    tenant_id: str,
+    provider_id: str,
+    serialized_outputs: dict,
+):
     """
     Process S3 integrations for a provider.
 
     Args:
         tenant_id (str): The tenant identifier
         provider_id (str): The provider identifier
-        output_directory (str): Directory containing the output files
+        serialized_outputs (dict): Dictionary containing serialized output information
     """
-    logger.info(f"Processing S3 integrations for provider {provider_id}")
-
-    try:
-        result = upload_s3_integration(tenant_id, provider_id, output_directory)
-        if result:
-            logger.info(
-                f"All the S3 integrations completed successfully for provider {provider_id}"
-            )
-            return {"success": True}
-        else:
-            logger.error(f"Some S3 integrations failed for provider {provider_id}")
-            return {
-                "success": False,
-                "error": "There were some S3 integrations that failed",
-            }
-    except Exception as e:
-        logger.error(f"S3 integrations failed for provider {provider_id}: {str(e)}")
-        return {"success": False, "error": str(e)}
+    return upload_s3_integration(tenant_id, provider_id, serialized_outputs)

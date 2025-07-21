@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from tasks.tasks import (
     _perform_scan_complete_tasks,
-    generate_outputs_task,
     check_integrations_task,
+    generate_outputs_task,
     s3_integration_task,
 )
 
@@ -471,7 +471,7 @@ class TestCheckIntegrationsTask:
     ):
         mock_integration1 = MagicMock()
         mock_integration2 = MagicMock()
-        mock_integration_model.IntegrationChoices.S3 = "S3"
+        mock_integration_model.IntegrationChoices.AMAZON_S3 = "S3"
 
         mock_outer_qs = MagicMock()
         mock_outer_qs.exists.return_value = True
