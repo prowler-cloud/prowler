@@ -3,9 +3,9 @@ from unittest.mock import patch
 
 import pytest
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
-from rest_framework_json_api.serializers import ValidationError
 from tasks.beat import schedule_provider_scan
 
+from api.exceptions import ConflictException
 from api.models import Scan
 
 
@@ -48,8 +48,8 @@ class TestScheduleProviderScan:
         with patch("tasks.tasks.perform_scheduled_scan_task.apply_async"):
             schedule_provider_scan(provider_instance)
 
-        # Now, try scheduling again, should raise ValidationError
-        with pytest.raises(ValidationError) as exc_info:
+        # Now, try scheduling again, should raise ConflictException
+        with pytest.raises(ConflictException) as exc_info:
             schedule_provider_scan(provider_instance)
 
         assert "There is already a scheduled scan for this provider." in str(

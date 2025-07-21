@@ -9,6 +9,7 @@ from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
+from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -999,8 +1000,12 @@ class ResourceSerializer(RLSSerializer):
 
     tags = serializers.SerializerMethodField()
     type_ = serializers.CharField(read_only=True)
+    failed_findings_count = serializers.IntegerField(read_only=True)
 
-    findings = serializers.ResourceRelatedField(many=True, read_only=True)
+    findings = SerializerMethodResourceRelatedField(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = Resource
@@ -1016,6 +1021,7 @@ class ResourceSerializer(RLSSerializer):
             "tags",
             "provider",
             "findings",
+            "failed_findings_count",
             "url",
         ]
         extra_kwargs = {
@@ -1037,6 +1043,10 @@ class ResourceSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
+        # Use prefetched tags if available to avoid N+1 queries
+        if hasattr(obj, "prefetched_tags"):
+            return {tag.key: tag.value for tag in obj.prefetched_tags}
+        # Fallback to the original method if prefetch is not available
         return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
@@ -1045,6 +1055,13 @@ class ResourceSerializer(RLSSerializer):
         type_ = fields.pop("type_")
         fields["type"] = type_
         return fields
+
+    def get_findings(self, obj):
+        return (
+            obj.latest_findings
+            if hasattr(obj, "latest_findings")
+            else obj.findings.all()
+        )
 
 
 class ResourceIncludeSerializer(RLSSerializer):
@@ -1082,6 +1099,10 @@ class ResourceIncludeSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
+        # Use prefetched tags if available to avoid N+1 queries
+        if hasattr(obj, "prefetched_tags"):
+            return {tag.key: tag.value for tag in obj.prefetched_tags}
+        # Fallback to the original method if prefetch is not available
         return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
@@ -1090,6 +1111,17 @@ class ResourceIncludeSerializer(RLSSerializer):
         type_ = fields.pop("type_")
         fields["type"] = type_
         return fields
+
+
+class ResourceMetadataSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    # Temporarily disabled until we implement tag filtering in the UI
+    # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
+
+    class Meta:
+        resource_name = "resources-metadata"
 
 
 class FindingSerializer(RLSSerializer):
