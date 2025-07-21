@@ -1065,7 +1065,7 @@ def integrations_fixture(providers_fixture):
         enabled=True,
         connected=True,
         integration_type="amazon_s3",
-        configuration={"key": "value"},
+        configuration={"key": "value1"},
         credentials={"psswd": "1234"},
     )
     IntegrationProviderRelationship.objects.create(
