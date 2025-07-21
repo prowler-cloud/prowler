@@ -5,6 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.9.2] (Prowler v5.9.2) UNRELEASED
 
 ### Fixed
+- `sns_topics_not_publicly_accessible` false positive with `aws:SourceArn` conditions [(#8326)](https://github.com/prowler-cloud/prowler/issues/8326)
 - Use the correct resource name in `defender_domain_dkim_enabled` check [(#8334)](https://github.com/prowler-cloud/prowler/pull/8334)
 
 ---

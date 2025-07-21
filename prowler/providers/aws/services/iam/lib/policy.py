@@ -498,9 +498,35 @@ def is_condition_block_restrictive(
                                     "aws:sourcevpc" != value
                                     and "aws:sourcevpce" != value
                                 ):
-                                    if source_account not in item:
-                                        is_condition_key_restrictive = False
-                                        break
+                                    if value == "aws:sourcearn":
+                                        # Check if ARN contains an account number
+                                        # ARN format: arn:partition:service:region:account:resource
+                                        arn_parts = item.split(":")
+                                        if (
+                                            len(arn_parts) > 4
+                                            and arn_parts[4]
+                                            and arn_parts[4] != "*"
+                                        ):
+                                            # ARN contains specific account field, check if it matches
+                                            if arn_parts[4].isdigit():
+                                                # Valid account number, check if it matches
+                                                if source_account not in item:
+                                                    is_condition_key_restrictive = False
+                                                    break
+                                            else:
+                                                # Non-numeric account field, treat as mismatch unless it matches exactly
+                                                if arn_parts[4] != source_account:
+                                                    is_condition_key_restrictive = False
+                                                    break
+                                        elif len(arn_parts) > 4 and arn_parts[4] == "*":
+                                            # ARN has wildcard account, not restrictive
+                                            is_condition_key_restrictive = False
+                                            break
+                                        # else: ARN doesn't contain account field (like S3 bucket), so it's restrictive
+                                    else:
+                                        if source_account not in item:
+                                            is_condition_key_restrictive = False
+                                            break
 
                         if is_condition_key_restrictive:
                             is_condition_valid = True
@@ -516,11 +542,41 @@ def is_condition_block_restrictive(
                             if is_cross_account_allowed:
                                 is_condition_valid = True
                             else:
-                                if (
-                                    source_account
-                                    in condition_statement[condition_operator][value]
-                                ):
-                                    is_condition_valid = True
+                                if value == "aws:sourcearn":
+                                    condition_value = condition_statement[
+                                        condition_operator
+                                    ][value]
+                                    # Check if ARN contains an account number
+                                    # ARN format: arn:partition:service:region:account:resource
+                                    arn_parts = condition_value.split(":")
+                                    if (
+                                        len(arn_parts) > 4
+                                        and arn_parts[4]
+                                        and arn_parts[4] != "*"
+                                    ):
+                                        # ARN contains specific account field, check if it matches
+                                        if arn_parts[4].isdigit():
+                                            # Valid account number, check if it matches
+                                            if source_account in condition_value:
+                                                is_condition_valid = True
+                                        else:
+                                            # Non-numeric account field, treat as match only if it matches exactly
+                                            if arn_parts[4] == source_account:
+                                                is_condition_valid = True
+                                    elif len(arn_parts) > 4 and arn_parts[4] == "*":
+                                        # ARN has wildcard account, not restrictive
+                                        pass
+                                    else:
+                                        # ARN doesn't contain account field (like S3 bucket), so it's restrictive
+                                        is_condition_valid = True
+                                else:
+                                    if (
+                                        source_account
+                                        in condition_statement[condition_operator][
+                                            value
+                                        ]
+                                    ):
+                                        is_condition_valid = True
 
     return is_condition_valid
 
