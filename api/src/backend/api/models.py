@@ -476,6 +476,13 @@ class Scan(RowLevelSecurityProtectedModel):
                 condition=Q(state=StateChoices.COMPLETED),
                 name="scans_prov_state_ins_desc_idx",
             ),
+            # TODO This might replace `scans_prov_state_ins_desc_idx` completely. Review usage
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                condition=Q(state=StateChoices.COMPLETED),
+                include=["id"],
+                name="scans_prov_ins_desc_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -859,6 +866,10 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
             models.Index(
                 fields=["tenant_id", "finding_id"],
                 name="rfm_tenant_finding_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "resource_id"],
+                name="rfm_tenant_resource_idx",
             ),
         ]
         constraints = [
