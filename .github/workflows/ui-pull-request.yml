@@ -115,10 +115,16 @@ jobs:
             --network host \
             -e POSTGRES_ADMIN_USER="${POSTGRES_ADMIN_USER}" \
             -e POSTGRES_ADMIN_PASSWORD="${POSTGRES_ADMIN_PASSWORD}" \
-            -e POSTGRES_DB="${POSTGRES_DB}" \
+            -e POSTGRES_USER="${POSTGRES_USER}" \
+            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+            -e POSTGRES_HOST="${POSTGRES_HOST}" \
             -e POSTGRES_PORT="${POSTGRES_PORT}" \
+            -e POSTGRES_DB="${POSTGRES_DB}" \
+            -e VALKEY_HOST="${VALKEY_HOST}" \
             -e VALKEY_PORT="${VALKEY_PORT}" \
-            -e DJANGO_PORT="${DJANGO_PORT}" \
+            -e VALKEY_PASSWORD="${VALKEY_PASSWORD}" \
+            -e DJANGO_SETTINGS_MODULE="config.django.production" \
+            -e DJANGO_SECRETS_ENCRYPTION_KEY="${DJANGO_SECRETS_ENCRYPTION_KEY}" \
             -e AUTH_SECRET="${AUTH_SECRET}" \
             -e AUTH_TRUST_HOST="${AUTH_TRUST_HOST}" \
             prowlercloud/prowler-api:stable \
@@ -126,7 +132,7 @@ jobs:
       - name: Test the API responds
         run: |
           sleep 10
-          curl -s http://prowler-api:${DJANGO_PORT}/api/v1/docs || echo "The API is not responding"
+          curl -s http://localhost:${DJANGO_PORT}/api/v1/docs || echo "The API is not responding"
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
