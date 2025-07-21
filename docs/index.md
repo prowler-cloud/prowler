@@ -312,6 +312,51 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     prowler azure --az-cli-auth
     ```
 
+### Prowler App Update
+
+You have two options to upgrade your Prowler App installation:
+
+#### Option 1: Change env file with the following values
+
+Edit your `.env` file and change the version values:
+
+```env
+PROWLER_UI_VERSION="5.9.0"
+PROWLER_API_VERSION="5.9.0"
+```
+
+#### Option 2: Run the following command
+
+```bash
+docker compose pull --policy always
+```
+
+The `--policy always` flag ensures that Docker pulls the latest images even if they already exist locally.
+
+
+???+ note "What Gets Preserved During Upgrade"
+
+    Everything is preserved, nothing will be deleted after the update.
+
+#### Troubleshooting
+
+If containers don't start, check logs for errors:
+
+```bash
+# Check logs for errors
+docker compose logs
+
+# Verify image versions
+docker images | grep prowler
+```
+
+If you encounter issues, you can rollback to the previous version by changing the `.env` file back to your previous version and running:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
 ## Prowler container versions
 
 The available versions of Prowler CLI are the following:

@@ -1,13 +1,13 @@
 # Prowler SDK Changelog
 
 All notable changes to the **Prowler SDK** are documented in this file.
-
 ---
 
 ## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed
 - Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
+- Use the correct resource name in `defender_domain_dkim_enabled` check [(#8334)](https://github.com/prowler-cloud/prowler/pull/8334)
 
 ---
 
