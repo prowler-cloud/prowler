@@ -92,15 +92,15 @@ jobs:
         ports:
           - 8080:8080
         options: >-
-          --entrypoint "/home/prowler/docker-entrypoint.sh" --prod
+          --entrypoint "/home/prowler/docker-entrypoint.sh" --command "prod"
       worker:
         image: prowlercloud/prowler-api:stable
         options: >-
-          --entrypoint "/home/prowler/docker-entrypoint.sh" --worker
+          --entrypoint "/home/prowler/docker-entrypoint.sh" --command "worker"
       worker-beat:
         image: prowlercloud/prowler-api:stable
         options: >-
-          --entrypoint "../docker-entrypoint.sh" --beat
+          --entrypoint "/home/prowler/docker-entrypoint.sh" --command "beat"
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
