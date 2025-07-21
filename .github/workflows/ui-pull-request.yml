@@ -61,7 +61,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Start services with docker compose (excluding UI)
+      - name: Start needed services with docker compose
         run: |
           docker compose up -d api worker worker-beat
       - name: Wait for prowler-api to respond
@@ -85,7 +85,7 @@ jobs:
                 poetry run python manage.py loaddata "$fixture" --database admin
               fi
             done
-            echo "✅ All database fixtures loaded successfully!"
+            echo "All database fixtures loaded successfully!"
           '
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
