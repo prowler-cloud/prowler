@@ -1,6 +1,7 @@
 import os
 import tempfile
 from os import path
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
@@ -125,7 +126,10 @@ class S3:
                 retries_max_attempts=retries_max_attempts,
                 regions=regions,
             )
-            self._session = aws_setup_session._session
+            self._session = aws_setup_session._session.current_session.client(
+                __class__.__name__.lower(),
+                config=aws_setup_session._session.session_config,
+            )
 
         self._bucket_name = bucket_name
         self._output_directory = output_directory
@@ -203,6 +207,7 @@ class S3:
 
                         if key == "compliance":
                             object_name = f"{bucket_directory}/{key}/{basename}"
+                            file_extension = Path(basename).suffix
                         else:
                             object_name = f"{bucket_directory}/{self.generate_subfolder_name_by_extension(output.file_extension)}/{basename}"
                         logger.info(

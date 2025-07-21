@@ -189,18 +189,18 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
         Connection: A connection object representing the result of the connection test for the specified integration.
     """
     if integration.integration_type in [
-        Integration.IntegrationChoices.S3,
+        Integration.IntegrationChoices.AMAZON_S3,
         Integration.IntegrationChoices.AWS_SECURITY_HUB,
     ]:
         try:
-            session = AwsProvider(**integration.credentials).session.current_session
+            AwsProvider(**integration.credentials).session.current_session
         except Exception as e:
             return Connection(is_connected=False, error=e)
 
-    if integration.integration_type == Integration.IntegrationChoices.S3:
+    if integration.integration_type == Integration.IntegrationChoices.AMAZON_S3:
         provider = S3
         return provider.test_connection(
-            session=session,
+            **integration.credentials,
             bucket_name=integration.configuration["bucket_name"],
             raise_on_exception=False,
         )

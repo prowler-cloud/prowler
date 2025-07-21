@@ -438,7 +438,7 @@ class Scan(RowLevelSecurityProtectedModel):
     scheduler_task = models.ForeignKey(
         PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
-    output_location = models.CharField(blank=True, null=True, max_length=200)
+    output_location = models.CharField(blank=True, null=True, max_length=4096)
     provider = models.ForeignKey(
         Provider,
         on_delete=models.CASCADE,

@@ -1967,7 +1967,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
         configuration: dict,
         credentials: dict,
     ):
-        if integration_type == Integration.IntegrationChoices.S3:
+        if integration_type == Integration.IntegrationChoices.AMAZON_S3:
             config_serializer = S3ConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
             # TODO: This will be required for AWS Security Hub
