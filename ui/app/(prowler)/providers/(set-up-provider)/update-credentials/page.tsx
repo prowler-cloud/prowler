@@ -17,40 +17,51 @@ interface Props {
   };
 }
 
+// Helper function to determine if the credentials form should be shown
+const shouldShowCredentialsForm = (
+  type: ProviderType,
+  via?: string,
+): boolean => {
+  const credentialsConfig = {
+    aws: ["credentials"],
+    gcp: ["credentials"],
+    github: ["personal_access_token", "oauth_app_token", "github_app"],
+  };
+
+  // If the type is in the configuration, check if the 'via' method is allowed
+  if (credentialsConfig[type as keyof typeof credentialsConfig]) {
+    return credentialsConfig[type as keyof typeof credentialsConfig].includes(
+      via || "",
+    );
+  }
+
+  // For unspecified types, show the default form
+  return !["aws", "gcp", "github"].includes(type);
+};
+
 export default function UpdateCredentialsPage({ searchParams }: Props) {
+  const { type, via } = searchParams;
+
   return (
     <>
-      {(searchParams.type === "aws" ||
-        searchParams.type === "gcp" ||
-        searchParams.type === "github") &&
-        !searchParams.via && (
-          <CredentialsUpdateInfo
-            providerType={searchParams.type}
-            initialVia={searchParams.via}
-          />
-        )}
+      {/* Credentials update info for supported providers */}
+      {(type === "aws" || type === "gcp" || type === "github") && !via && (
+        <CredentialsUpdateInfo providerType={type} initialVia={via} />
+      )}
 
-      {((searchParams.type === "aws" && searchParams.via === "credentials") ||
-        (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type === "github" &&
-          searchParams.via === "personal_access_token") ||
-        (searchParams.type === "github" &&
-          searchParams.via === "oauth_app_token") ||
-        (searchParams.type === "github" && searchParams.via === "github_app") ||
-        (searchParams.type !== "aws" &&
-          searchParams.type !== "gcp" &&
-          searchParams.type !== "github")) && (
+      {/* Credentials form */}
+      {shouldShowCredentialsForm(type, via) && (
         <UpdateViaCredentialsForm searchParams={searchParams} />
       )}
 
-      {searchParams.type === "aws" && searchParams.via === "role" && (
+      {/* Specific forms */}
+      {type === "aws" && via === "role" && (
         <UpdateViaRoleForm searchParams={searchParams} />
       )}
 
-      {searchParams.type === "gcp" &&
-        searchParams.via === "service-account" && (
-          <UpdateViaServiceAccountForm searchParams={searchParams} />
-        )}
+      {type === "gcp" && via === "service-account" && (
+        <UpdateViaServiceAccountForm searchParams={searchParams} />
+      )}
     </>
   );
 }

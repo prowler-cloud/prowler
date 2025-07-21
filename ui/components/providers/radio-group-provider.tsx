@@ -5,8 +5,6 @@ import React from "react";
 import { Control, Controller } from "react-hook-form";
 import { z } from "zod";
 
-import { addProviderFormSchema } from "@/types";
-
 import {
   AWSProviderBadge,
   AzureProviderBadge,
@@ -14,15 +12,74 @@ import {
   GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
-} from "../icons/providers-badge";
-import { CustomRadio } from "../ui/custom";
-import { FormMessage } from "../ui/form";
+} from "@/components/icons/providers-badge";
+import { CustomRadio } from "@/components/ui/custom";
+import { FormMessage } from "@/components/ui/form";
+import { addProviderFormSchema, IconSvgProps } from "@/types";
 
 interface RadioGroupProviderProps {
   control: Control<z.infer<typeof addProviderFormSchema>>;
   isInvalid: boolean;
   errorMessage?: string;
 }
+
+const PROVIDERS_CONFIG = [
+  {
+    value: "aws",
+    name: "Amazon Web Services",
+    description: "Amazon Web Services",
+    BadgeComponent: AWSProviderBadge,
+  },
+  {
+    value: "gcp",
+    name: "Google Cloud Platform",
+    description: "Google Cloud Platform",
+    BadgeComponent: GCPProviderBadge,
+  },
+  {
+    value: "azure",
+    name: "Microsoft Azure",
+    description: "Microsoft Azure",
+    BadgeComponent: AzureProviderBadge,
+  },
+  {
+    value: "m365",
+    name: "Microsoft 365",
+    description: "Microsoft 365",
+    BadgeComponent: M365ProviderBadge,
+  },
+  {
+    value: "kubernetes",
+    name: "Kubernetes",
+    description: "Kubernetes",
+    BadgeComponent: KS8ProviderBadge,
+  },
+  {
+    value: "github",
+    name: "GitHub",
+    description: "GitHub",
+    BadgeComponent: GitHubProviderBadge,
+  },
+] as const;
+
+const ProviderRadio = ({
+  value,
+  name,
+  description,
+  BadgeComponent,
+}: {
+  value: string;
+  name: string;
+  description: string;
+  BadgeComponent: React.FC<IconSvgProps>;
+}) => (
+  <CustomRadio description={description} value={value}>
+    <div className="flex items-center">
+      <BadgeComponent size={26} />
+      <span className="ml-2">{name}</span>
+    </div>
+  </CustomRadio>
+);
 
 export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
   control,
@@ -42,42 +99,15 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
             value={field.value || ""}
           >
             <div className="flex flex-col gap-4">
-              <CustomRadio description="Amazon Web Services" value="aws">
-                <div className="flex items-center">
-                  <AWSProviderBadge size={26} />
-                  <span className="ml-2">Amazon Web Services</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Google Cloud Platform" value="gcp">
-                <div className="flex items-center">
-                  <GCPProviderBadge size={26} />
-                  <span className="ml-2">Google Cloud Platform</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Microsoft Azure" value="azure">
-                <div className="flex items-center">
-                  <AzureProviderBadge size={26} />
-                  <span className="ml-2">Microsoft Azure</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Microsoft 365" value="m365">
-                <div className="flex items-center">
-                  <M365ProviderBadge size={26} />
-                  <span className="ml-2">Microsoft 365</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="Kubernetes" value="kubernetes">
-                <div className="flex items-center">
-                  <KS8ProviderBadge size={26} />
-                  <span className="ml-2">Kubernetes</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio description="GitHub" value="github">
-                <div className="flex items-center">
-                  <GitHubProviderBadge size={26} />
-                  <span className="ml-2">GitHub</span>
-                </div>
-              </CustomRadio>
+              {PROVIDERS_CONFIG.map((provider) => (
+                <ProviderRadio
+                  key={provider.value}
+                  value={provider.value}
+                  name={provider.name}
+                  description={provider.description}
+                  BadgeComponent={provider.BadgeComponent}
+                />
+              ))}
             </div>
           </RadioGroup>
           {errorMessage && (

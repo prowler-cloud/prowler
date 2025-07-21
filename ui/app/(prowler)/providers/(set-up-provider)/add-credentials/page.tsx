@@ -16,42 +16,53 @@ interface Props {
   searchParams: { type: ProviderType; id: string; via?: string };
 }
 
+// Helper function to determine if the credentials form should be shown
+const shouldShowCredentialsForm = (
+  type: ProviderType,
+  via?: string,
+): boolean => {
+  const credentialsConfig = {
+    aws: ["credentials"],
+    gcp: ["credentials"],
+    github: ["personal_access_token", "oauth_app_token", "github_app"],
+  };
+
+  // If the type is in the configuration, check if the 'via' method is allowed
+  if (credentialsConfig[type as keyof typeof credentialsConfig]) {
+    return credentialsConfig[type as keyof typeof credentialsConfig].includes(
+      via || "",
+    );
+  }
+
+  // For unspecified types, show the default form
+  return !["aws", "gcp", "github"].includes(type);
+};
+
 export default function AddCredentialsPage({ searchParams }: Props) {
+  const { type, via } = searchParams;
+
   return (
     <>
-      {searchParams.type === "aws" && !searchParams.via && (
-        <SelectViaAWS initialVia={searchParams.via} />
-      )}
+      {/* Selectors for authentication methods */}
+      {type === "aws" && !via && <SelectViaAWS initialVia={via} />}
 
-      {searchParams.type === "gcp" && !searchParams.via && (
-        <SelectViaGCP initialVia={searchParams.via} />
-      )}
+      {type === "gcp" && !via && <SelectViaGCP initialVia={via} />}
 
-      {searchParams.type === "github" && !searchParams.via && (
-        <SelectViaGitHub initialVia={searchParams.via} />
-      )}
+      {type === "github" && !via && <SelectViaGitHub initialVia={via} />}
 
-      {((searchParams.type === "aws" && searchParams.via === "credentials") ||
-        (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type === "github" &&
-          searchParams.via === "personal_access_token") ||
-        (searchParams.type === "github" &&
-          searchParams.via === "oauth_app_token") ||
-        (searchParams.type === "github" && searchParams.via === "github_app") ||
-        (searchParams.type !== "aws" &&
-          searchParams.type !== "gcp" &&
-          searchParams.type !== "github")) && (
+      {/* Credentials form */}
+      {shouldShowCredentialsForm(type, via) && (
         <AddViaCredentialsForm searchParams={searchParams} />
       )}
 
-      {searchParams.type === "aws" && searchParams.via === "role" && (
+      {/* Specific forms */}
+      {type === "aws" && via === "role" && (
         <AddViaRoleForm searchParams={searchParams} />
       )}
 
-      {searchParams.type === "gcp" &&
-        searchParams.via === "service-account" && (
-          <AddViaServiceAccountForm searchParams={searchParams} />
-        )}
+      {type === "gcp" && via === "service-account" && (
+        <AddViaServiceAccountForm searchParams={searchParams} />
+      )}
     </>
   );
 }

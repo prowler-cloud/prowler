@@ -7,14 +7,14 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { addProvider } from "@/actions/providers/providers";
+import { RadioGroupProvider } from "@/components/providers/radio-group-provider";
+import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { addProviderFormSchema, ApiError } from "@/types";
 
-import { addProvider } from "../../../../actions/providers/providers";
-import { addProviderFormSchema, ApiError } from "../../../../types";
-import { RadioGroupProvider } from "../../radio-group-provider";
-import { ProviderTitleDocs } from "../provider-title-docs";
 export type FormValues = z.infer<typeof addProviderFormSchema>;
 
 // Helper function for labels and placeholders
@@ -147,7 +147,12 @@ export const ConnectAccountForm = () => {
 
   const handleBackStep = () => {
     setPrevStep((prev) => prev - 1);
-    // Reset the providerUid and providerAlias fields when going back
+
+    //Deselect the providerType if the user is going back to the first step
+    if (prevStep === 2) {
+      form.setValue("providerType", undefined as any);
+    }
+
     form.setValue("providerUid", "");
     form.setValue("providerAlias", "");
   };
