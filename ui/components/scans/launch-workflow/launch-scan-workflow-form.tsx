@@ -105,7 +105,7 @@ export const LaunchScanWorkflow = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="min-w-48 self-end"
+                  className="h-[3.4rem] min-w-[15.2rem] self-end"
                 >
                   <CustomInput
                     control={form.control}
