@@ -55,84 +55,26 @@ jobs:
       AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: http://localhost:3000
-      # Services
-      POSTGRES_ADMIN_USER: postgres
-      POSTGRES_ADMIN_PASSWORD: secret
-      POSTGRES_DB: mydb
-      POSTGRES_PORT: 5432
-      VALKEY_PORT: 6379
-      DJANGO_PORT: 8080
-    services:
-      postgres-db:
-        image: postgres:16.3-alpine3.20
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: ${{ env.POSTGRES_ADMIN_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_ADMIN_PASSWORD }}
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-        options: >-
-          --health-cmd="pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
-      valkey:
-        image: valkey/valkey:7-alpine3.19
-        ports:
-          - 6379:6379
-        env:
-          VALKEY_PASSWORD: ${{ env.VALKEY_PASSWORD }}
-        options: >-
-          --health-cmd="valkey-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+      PROWLER_API_PORT: 8080
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Load variables from .env file
+      - name: Start services with docker compose (excluding UI)
         run: |
-          set -a
-          [ -f .env ] && source .env
-          set +a
-      - name: Wait for PostgreSQL and Valkey to be ready
+          docker compose up -d api worker worker-beat
+      - name: Wait for prowler-api to respond
         run: |
-          for i in {1..10}; do
-            healthy_count=$(docker ps --filter health=healthy | grep -E 'postgres-db|valkey' | wc -l)
-            if [ "$healthy_count" -eq 2 ]; then
-              echo "PostgreSQL and Valkey are ready!"
+          echo "Waiting for prowler-api..."
+          for i in {1..30}; do
+            if curl -s http://localhost:${PROWLER_API_PORT}/api/v1/docs >/dev/null 2>&1; then
+              echo "Prowler API is ready!"
               break
             fi
-            echo "Waiting for services to be healthy..."
+            echo "Waiting for prowler-api... (attempt $i/30)"
             sleep 3
           done
-      - name: Start prowler-api manually
-        run: |
-          docker run -d --rm \
-            --name prowler-api \
-            --network host \
-            -e POSTGRES_ADMIN_USER="${POSTGRES_ADMIN_USER}" \
-            -e POSTGRES_ADMIN_PASSWORD="${POSTGRES_ADMIN_PASSWORD}" \
-            -e POSTGRES_USER="${POSTGRES_USER}" \
-            -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
-            -e POSTGRES_HOST="${POSTGRES_HOST}" \
-            -e POSTGRES_PORT="${POSTGRES_PORT}" \
-            -e POSTGRES_DB="${POSTGRES_DB}" \
-            -e VALKEY_HOST="${VALKEY_HOST}" \
-            -e VALKEY_PORT="${VALKEY_PORT}" \
-            -e VALKEY_PASSWORD="${VALKEY_PASSWORD}" \
-            -e DJANGO_SETTINGS_MODULE="config.django.production" \
-            -e DJANGO_SECRETS_ENCRYPTION_KEY="${DJANGO_SECRETS_ENCRYPTION_KEY}" \
-            -e AUTH_SECRET="${AUTH_SECRET}" \
-            -e AUTH_TRUST_HOST="${AUTH_TRUST_HOST}" \
-            prowlercloud/prowler-api:stable \
-            ../docker-entrypoint.sh prod
-      - name: Test the API responds
-        run: |
-          sleep 10
-          curl -s http://localhost:${DJANGO_PORT}/api/v1/docs || echo "The API is not responding"
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -167,6 +109,15 @@ jobs:
           name: playwright-report
           path: ui/playwright-report/
           retention-days: 30
+          
+      - name: Cleanup services
+        if: always()
+        run: |
+          echo "Services before cleanup:"
+          docker-compose ps
+          echo "Shutting down services..."
+          docker-compose down -v || true
+          echo "Cleanup completed"
 
   test-container-build:
     runs-on: ubuntu-latest
