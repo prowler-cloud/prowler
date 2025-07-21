@@ -109,12 +109,10 @@ jobs:
           name: playwright-report
           path: ui/playwright-report/
           retention-days: 30
-          
+
       - name: Cleanup services
         if: always()
         run: |
-          echo "Services before cleanup:"
-          docker-compose ps
           echo "Shutting down services..."
           docker-compose down -v || true
           echo "Cleanup completed"
