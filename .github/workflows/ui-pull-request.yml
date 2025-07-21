@@ -113,7 +113,14 @@ jobs:
           docker run -d --rm \
             --name prowler-api \
             --network host \
-            --env-file .env \
+            -e POSTGRES_ADMIN_USER="${POSTGRES_ADMIN_USER}" \
+            -e POSTGRES_ADMIN_PASSWORD="${POSTGRES_ADMIN_PASSWORD}" \
+            -e POSTGRES_DB="${POSTGRES_DB}" \
+            -e POSTGRES_PORT="${POSTGRES_PORT}" \
+            -e VALKEY_PORT="${VALKEY_PORT}" \
+            -e DJANGO_PORT="${DJANGO_PORT}" \
+            -e AUTH_SECRET="${AUTH_SECRET}" \
+            -e AUTH_TRUST_HOST="${AUTH_TRUST_HOST}" \
             prowlercloud/prowler-api:stable \
             ../docker-entrypoint.sh prod
       - name: Test the API responds
