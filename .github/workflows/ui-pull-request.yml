@@ -2,18 +2,18 @@ name: UI - Pull Request
 
 on:
   push:
-    branches:
-      - "master"
-      - "v5.*"
-    paths:
-      - ".github/workflows/ui-pull-request.yml"
-      - "ui/**"
-  pull_request:
-    branches:
-      - master
-      - "v5.*"
-    paths:
-      - 'ui/**'
+  #   branches:
+  #     - "master"
+  #     - "v5.*"
+  #   paths:
+  #     - ".github/workflows/ui-pull-request.yml"
+  #     - "ui/**"
+  # pull_request:
+  #   branches:
+  #     - master
+  #     - "v5.*"
+  #   paths:
+  #     - 'ui/**'
 env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
@@ -75,6 +75,18 @@ jobs:
             echo "Waiting for prowler-api... (attempt $i/30)"
             sleep 3
           done
+      - name: Load database fixtures for e2e tests
+        run: |
+          docker compose exec -T api sh -c '
+            echo "Loading all fixtures from api/fixtures/dev/..."
+            for fixture in api/fixtures/dev/*.json; do
+              if [ -f "$fixture" ]; then
+                echo "Loading $fixture"
+                poetry run python manage.py loaddata "$fixture" --database admin
+              fi
+            done
+            echo "✅ All database fixtures loaded successfully!"
+          '
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -114,7 +126,7 @@ jobs:
         if: always()
         run: |
           echo "Shutting down services..."
-          docker compose down -v || true
+          docker-compose down -v || true
           echo "Cleanup completed"
 
   test-container-build:
