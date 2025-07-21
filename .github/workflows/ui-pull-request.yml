@@ -87,10 +87,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-      prowler-api:
-        image: prowlercloud/prowler-api:stable
-        ports:
-          - 8080:8080
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -112,6 +108,14 @@ jobs:
             echo "Waiting for services to be healthy..."
             sleep 3
           done
+      - name: Start prowler-api manually
+        run: |
+          docker run -d --rm \
+            --name prowler-api \
+            --network host \
+            --env-file .env \
+            prowlercloud/prowler-api:stable \
+            ../docker-entrypoint.sh prod
       - name: Test the API responds
         run: |
           sleep 10
