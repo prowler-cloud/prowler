@@ -72,6 +72,7 @@ class TestS3IntegrationUploads:
         assert str(connection.error) == "test error"
 
     @patch("tasks.jobs.integrations.GenericCompliance")
+    @patch("tasks.jobs.integrations.ASFF")
     @patch("tasks.jobs.integrations.OCSF")
     @patch("tasks.jobs.integrations.HTML")
     @patch("tasks.jobs.integrations.CSV")
@@ -88,6 +89,7 @@ class TestS3IntegrationUploads:
         mock_csv,
         mock_html,
         mock_ocsf,
+        mock_asff,
         mock_compliance,
     ):
         tenant_id = "tenant-id"
@@ -108,11 +110,13 @@ class TestS3IntegrationUploads:
         mock_csv_instance = MagicMock()
         mock_html_instance = MagicMock()
         mock_ocsf_instance = MagicMock()
+        mock_asff_instance = MagicMock()
         mock_compliance_instance = MagicMock()
 
         mock_csv.return_value = mock_csv_instance
         mock_html.return_value = mock_html_instance
         mock_ocsf.return_value = mock_ocsf_instance
+        mock_asff.return_value = mock_asff_instance
         mock_compliance.return_value = mock_compliance_instance
 
         # Mock glob to return test files
@@ -120,7 +124,8 @@ class TestS3IntegrationUploads:
         mock_glob.side_effect = [
             ["/tmp/prowler_output/scan123.csv"],
             ["/tmp/prowler_output/scan123.html"],
-            ["/tmp/prowler_output/scan123.json"],
+            ["/tmp/prowler_output/scan123.ocsf.json"],
+            ["/tmp/prowler_output/scan123.asff.json"],
             ["/tmp/prowler_output/compliance/compliance.csv"],
         ]
 
