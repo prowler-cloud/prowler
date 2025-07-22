@@ -20,6 +20,7 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
@@ -92,6 +93,9 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("cis_"), M365CIS),
         (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
         (lambda name: name.startswith("iso27001_"), M365ISO27001),
+    ],
+    "github": [
+        (lambda name: name.startswith("cis_"), GithubCIS),
     ],
 }
 

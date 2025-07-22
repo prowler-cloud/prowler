@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.10.2
+  version: 1.11.0
   description: |-
     Prowler API specification.
 
@@ -544,6 +544,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -552,6 +553,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -562,6 +564,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -572,6 +575,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -1061,6 +1065,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -1069,6 +1074,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1079,6 +1085,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -1089,6 +1096,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -1486,6 +1494,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -1494,6 +1503,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1504,6 +1514,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -1514,6 +1525,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -1909,6 +1921,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -1917,6 +1930,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1927,6 +1941,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -1937,6 +1952,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -2320,6 +2336,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -2328,6 +2345,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2338,6 +2356,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -2348,6 +2367,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -3121,6 +3141,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -3129,6 +3150,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3139,6 +3161,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -3149,6 +3172,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -3282,6 +3306,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -3290,6 +3315,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3300,6 +3326,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -3310,6 +3337,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -3459,6 +3487,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -3467,6 +3496,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3477,6 +3507,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -3487,6 +3518,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -4165,6 +4197,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -4173,6 +4206,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider__in]
         schema:
@@ -4746,6 +4780,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -4754,6 +4789,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4764,6 +4800,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -4774,6 +4811,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -6457,6 +6495,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -6465,6 +6504,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6475,6 +6515,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -6485,6 +6526,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -11130,6 +11172,34 @@ components:
                           encoded as a string.
                     required:
                     - kubeconfig_content
+                  - type: object
+                    title: GitHub Personal Access Token
+                    properties:
+                      personal_access_token:
+                        type: string
+                        description: GitHub personal access token for authentication.
+                    required:
+                    - personal_access_token
+                  - type: object
+                    title: GitHub OAuth App Token
+                    properties:
+                      oauth_app_token:
+                        type: string
+                        description: GitHub OAuth App token for authentication.
+                    required:
+                    - oauth_app_token
+                  - type: object
+                    title: GitHub App Credentials
+                    properties:
+                      github_app_id:
+                        type: integer
+                        description: GitHub App ID for authentication.
+                      github_app_key:
+                        type: string
+                        description: Path to the GitHub App private key file.
+                    required:
+                    - github_app_id
+                    - github_app_key
                   writeOnly: true
               required:
               - secret
@@ -12035,6 +12105,7 @@ components:
               - gcp
               - kubernetes
               - m365
+              - github
               type: string
               description: |-
                 * `aws` - AWS
@@ -12042,6 +12113,7 @@ components:
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
+                * `github` - GitHub
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -12149,6 +12221,7 @@ components:
               - gcp
               - kubernetes
               - m365
+              - github
               type: string
               description: |-
                 * `aws` - AWS
@@ -12156,6 +12229,7 @@ components:
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
+                * `github` - GitHub
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -12194,6 +12268,7 @@ components:
                   - gcp
                   - kubernetes
                   - m365
+                  - github
                   type: string
                   description: |-
                     * `aws` - AWS
@@ -12201,6 +12276,7 @@ components:
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
+                    * `github` - GitHub
                 uid:
                   type: string
                   minLength: 3
@@ -12852,6 +12928,34 @@ components:
                       as a string.
                 required:
                 - kubeconfig_content
+              - type: object
+                title: GitHub Personal Access Token
+                properties:
+                  personal_access_token:
+                    type: string
+                    description: GitHub personal access token for authentication.
+                required:
+                - personal_access_token
+              - type: object
+                title: GitHub OAuth App Token
+                properties:
+                  oauth_app_token:
+                    type: string
+                    description: GitHub OAuth App token for authentication.
+                required:
+                - oauth_app_token
+              - type: object
+                title: GitHub App Credentials
+                properties:
+                  github_app_id:
+                    type: integer
+                    description: GitHub App ID for authentication.
+                  github_app_key:
+                    type: string
+                    description: Path to the GitHub App private key file.
+                required:
+                - github_app_id
+                - github_app_key
               writeOnly: true
           required:
           - secret_type
@@ -13071,6 +13175,34 @@ components:
                           encoded as a string.
                     required:
                     - kubeconfig_content
+                  - type: object
+                    title: GitHub Personal Access Token
+                    properties:
+                      personal_access_token:
+                        type: string
+                        description: GitHub personal access token for authentication.
+                    required:
+                    - personal_access_token
+                  - type: object
+                    title: GitHub OAuth App Token
+                    properties:
+                      oauth_app_token:
+                        type: string
+                        description: GitHub OAuth App token for authentication.
+                    required:
+                    - oauth_app_token
+                  - type: object
+                    title: GitHub App Credentials
+                    properties:
+                      github_app_id:
+                        type: integer
+                        description: GitHub App ID for authentication.
+                      github_app_key:
+                        type: string
+                        description: Path to the GitHub App private key file.
+                    required:
+                    - github_app_id
+                    - github_app_key
                   writeOnly: true
               required:
               - secret_type
@@ -13305,6 +13437,34 @@ components:
                       as a string.
                 required:
                 - kubeconfig_content
+              - type: object
+                title: GitHub Personal Access Token
+                properties:
+                  personal_access_token:
+                    type: string
+                    description: GitHub personal access token for authentication.
+                required:
+                - personal_access_token
+              - type: object
+                title: GitHub OAuth App Token
+                properties:
+                  oauth_app_token:
+                    type: string
+                    description: GitHub OAuth App token for authentication.
+                required:
+                - oauth_app_token
+              - type: object
+                title: GitHub App Credentials
+                properties:
+                  github_app_id:
+                    type: integer
+                    description: GitHub App ID for authentication.
+                  github_app_key:
+                    type: string
+                    description: Path to the GitHub App private key file.
+                required:
+                - github_app_id
+                - github_app_key
               writeOnly: true
           required:
           - secret
