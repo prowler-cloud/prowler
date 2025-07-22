@@ -16,7 +16,7 @@ interface CustomLinkProps
   size?: string;
 }
 
-export const CustomLink: React.FC<CustomLinkProps> = ({
+export const CustomLink = ({
   href,
   target = "_blank",
   ariaLabel,
@@ -25,7 +25,7 @@ export const CustomLink: React.FC<CustomLinkProps> = ({
   scroll = true,
   size = "xs",
   ...props
-}) => {
+}: CustomLinkProps) => {
   return (
     <Link
       href={href}
