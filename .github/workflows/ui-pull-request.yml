@@ -95,22 +95,6 @@ jobs:
             done
             echo "All database fixtures loaded successfully!"
           '
-      - name: Debug - Verify e2e user in database
-        run: |
-          echo "🔍 Checking if e2e user exists in database..."
-          docker compose exec -T api sh -c '
-            echo "Total users in database:"
-            poetry run python manage.py shell -c "from api.models import User; print(User.objects.count())"
-
-            echo "All users in database:"
-            poetry run python manage.py shell -c "from api.models import User; [print(u.email) for u in User.objects.all()]"
-
-            echo "Checking specifically for e2e user:"
-            poetry run python manage.py shell -c "from api.models import User; print(\"E2E user exists:\", User.objects.filter(email=\"e2e@prowler.com\").exists())"
-
-            echo "Checking specifically for dev user:"
-            poetry run python manage.py shell -c "from api.models import User; print(\"Dev user exists:\", User.objects.filter(email=\"dev@prowler.com\").exists())"
-          '
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:

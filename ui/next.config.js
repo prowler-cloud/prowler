@@ -15,9 +15,9 @@ const cspHeader = `
 
 module.exports = {
   poweredByHeader: false,
-  ...(process.env.NODE_ENV === "production" && {
-    output: "standalone",
-  }),
+  // ...(process.env.NODE_ENV === "production" && {
+  output: "standalone",
+  // }),
   async headers() {
     return [
       {
