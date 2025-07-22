@@ -116,6 +116,16 @@ jobs:
             e2e_exists=$(poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email='"'"'e2e@prowler.com'"'"').exists())")
             echo "E2E user exists: $e2e_exists"
 
+            # More detailed debugging
+            echo "🔍 Total users in database:"
+            poetry run python manage.py shell -c "from api.models import User; print(User.objects.count())"
+
+            echo "🔍 All users in database:"
+            poetry run python manage.py shell -c "from api.models import User; [print(f'{u.email} - {u.id}') for u in User.objects.all()]"
+
+            echo "🔍 Checking for users with e2e in email:"
+            poetry run python manage.py shell -c "from api.models import User; [print(f'{u.email} - {u.id}') for u in User.objects.filter(email__icontains='e2e')]"
+
             if [ "$dev_exists" != "True" ]; then
               echo "❌ Dev user not found in database!"
               exit 1
