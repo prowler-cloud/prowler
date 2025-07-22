@@ -58,6 +58,9 @@
             },
             "roleActions": {
               "type": "array"
+            },
+            "subscriptionId": {
+              "type": "string"
             }
           },
           "variables": {
@@ -89,7 +92,7 @@
           "outputs": {
             "roleDefinitionId": {
               "type": "string",
-              "value": "[subscriptionResourceId(parameters('subscriptionIds')[copyIndex()], 'Microsoft.Authorization/roleDefinitions', variables('roleDefName'))]"
+              "value": "[subscriptionResourceId(parameters('subscriptionId'), 'Microsoft.Authorization/roleDefinitions', variables('roleDefName'))]"
             }
           }
         },
@@ -102,6 +105,9 @@
           },
           "roleActions": {
             "value": "[variables('customRoleActions')]"
+          },
+          "subscriptionId": {
+            "value": "[parameters('subscriptionIds')[copyIndex()]]"
           }
         }
       }
