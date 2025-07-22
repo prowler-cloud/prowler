@@ -121,10 +121,10 @@ jobs:
             poetry run python manage.py shell -c "from api.models import User; print(User.objects.count())"
 
             echo "🔍 All users in database:"
-            poetry run python manage.py shell -c "from api.models import User; [print(u.email + ' - ' + str(u.id)) for u in User.objects.all()]"
+            poetry run python manage.py shell -c "from api.models import User; users = User.objects.all(); [print(u.email, u.id) for u in users]"
 
             echo "🔍 Checking for users with e2e in email:"
-            poetry run python manage.py shell -c "from api.models import User; [print(u.email + ' - ' + str(u.id)) for u in User.objects.filter(email__icontains='e2e')]"
+            poetry run python manage.py shell -c "from api.models import User; users = User.objects.filter(email__icontains='e2e'); [print(u.email, u.id) for u in users]"
 
             if [ "$dev_exists" != "True" ]; then
               echo "❌ Dev user not found in database!"
