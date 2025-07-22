@@ -179,7 +179,7 @@ export const MutedFindingsConfigForm = ({
               Learn more about configuring the Mutelist{" "}
               <CustomLink
                 href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/"
-                className="text-primary-600 hover:underline"
+                className="hover:underline"
               >
                 here
               </CustomLink>

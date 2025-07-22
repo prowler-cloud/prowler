@@ -242,11 +242,7 @@ export const SamlConfigForm = ({
               assign the user&apos;s role. If the role does not exist, one will
               be created with minimal permissions. You can assign permissions to
               roles on the{" "}
-              <CustomLink
-                href="/roles"
-                target="_self"
-                className="text-gray-600 underline dark:text-gray-400"
-              >
+              <CustomLink href="/roles" target="_self">
                 <span className="underline">Roles</span>
               </CustomLink>{" "}
               page.

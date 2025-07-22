@@ -2,6 +2,7 @@
 
 import { DropdownMenuArrow } from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -28,7 +29,6 @@ import { cn } from "@/lib/utils";
 import { CollapseMenuButtonProps } from "@/types";
 
 import { Button } from "../button/button";
-import { CustomLink } from "../custom";
 
 export const CollapseMenuButton = ({
   icon: Icon,
@@ -105,11 +105,7 @@ export const CollapseMenuButton = ({
               className="ml-4 h-8 w-full justify-start"
               asChild
             >
-              <CustomLink
-                href={href}
-                target={target ?? "_self"}
-                className="flex items-center"
-              >
+              <Link href={href} target={target} className="flex items-center">
                 <div className="mr-4 h-full border-l border-default-200"></div>
                 <span className="mr-2">
                   <SubIcon size={16} />
@@ -124,7 +120,7 @@ export const CollapseMenuButton = ({
                 >
                   {label}
                 </p>
-              </CustomLink>
+              </Link>
             </Button>
           ),
         )}
@@ -170,8 +166,7 @@ export const CollapseMenuButton = ({
         <DropdownMenuSeparator />
         {submenus.map(({ href, label, active, icon: SubIcon }, index) => (
           <DropdownMenuItem key={index} asChild>
-            <CustomLink
-              target="_self"
+            <Link
               className={`flex cursor-pointer items-center gap-2 ${
                 ((active === undefined && pathname === href) || active) &&
                 "bg-secondary"
@@ -180,7 +175,7 @@ export const CollapseMenuButton = ({
             >
               <SubIcon size={16} />
               <p className="max-w-[180px] truncate">{label}</p>
-            </CustomLink>
+            </Link>
           </DropdownMenuItem>
         ))}
         <DropdownMenuArrow className="fill-border" />

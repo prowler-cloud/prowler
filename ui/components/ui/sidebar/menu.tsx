@@ -2,6 +2,7 @@
 
 import { Divider } from "@nextui-org/react";
 import { Ellipsis, LogOut } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { logOut } from "@/actions/auth";
@@ -18,7 +19,6 @@ import { getMenuList } from "@/lib/menu-list";
 import { cn } from "@/lib/utils";
 
 import { Button } from "../button/button";
-import { CustomLink } from "../custom";
 import { CustomButton } from "../custom/custom-button";
 import { ScrollArea } from "../scroll-area/scroll-area";
 
@@ -144,7 +144,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               className="mb-1 h-8 w-full justify-start"
                               asChild
                             >
-                              <CustomLink target="_self" href={href}>
+                              <Link href={href}>
                                 <span
                                   className={cn(isOpen === false ? "" : "mr-4")}
                                 >
@@ -160,7 +160,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                                 >
                                   {label}
                                 </p>
-                              </CustomLink>
+                              </Link>
                             </Button>
                           </TooltipTrigger>
                           {isOpen === false && (
@@ -222,15 +222,17 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
           <>
             <Divider orientation="vertical" />
-            <CustomLink
+            <Link
               href="https://status.prowler.com"
-              className="text-none flex items-center gap-1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1"
             >
               <InfoIcon size={16} />
               <span className="text-muted-foreground font-normal opacity-80 transition-opacity hover:font-bold hover:opacity-100">
                 Service Status
               </span>
-            </CustomLink>
+            </Link>
           </>
         )}
       </div>

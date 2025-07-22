@@ -2,10 +2,9 @@
 
 import { Icon } from "@iconify/react";
 import { BreadcrumbItem, Breadcrumbs } from "@nextui-org/react";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
-
-import { CustomLink } from "../custom";
 
 export interface CustomBreadcrumbItem {
   name: string;
@@ -126,15 +125,14 @@ export function BreadcrumbNavigation({
             {breadcrumb.isLast && showTitle && title ? (
               renderTitleWithIcon(title)
             ) : breadcrumb.isClickable && breadcrumb.path ? (
-              <CustomLink
-                target="_self"
+              <Link
                 href={buildNavigationUrl(breadcrumb.path)}
                 className="flex cursor-pointer items-center space-x-2"
               >
                 <span className="text-wrap text-sm font-bold text-default-700 transition-colors hover:text-primary">
                   {breadcrumb.name}
                 </span>
-              </CustomLink>
+              </Link>
             ) : breadcrumb.isClickable && breadcrumb.onClick ? (
               <button
                 onClick={breadcrumb.onClick}

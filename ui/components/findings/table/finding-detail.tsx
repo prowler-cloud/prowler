@@ -154,7 +154,7 @@ export const FindingDetail = ({
                       href={
                         attributes.check_metadata.remediation.recommendation.url
                       }
-                      className="text-blue-500 hover:underline"
+                      className="hover:underline"
                       size="sm"
                     >
                       Learn more
@@ -180,7 +180,7 @@ export const FindingDetail = ({
               <InfoField label="Additional Resources">
                 <CustomLink
                   href={attributes.check_metadata.remediation.code.other}
-                  className="text-blue-500 hover:underline"
+                  className="hover:underline"
                   size="sm"
                 >
                   View documentation

@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import Link from "next/link";
 
 import { ProwlerShort } from "@/components/icons";
 import { ProwlerExtended } from "@/components/icons";
@@ -9,7 +10,6 @@ import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 
 import { Button } from "../button/button";
-import { CustomLink } from "../custom";
 import { Menu } from "./menu";
 import { SidebarToggle } from "./sidebar-toggle";
 
@@ -39,9 +39,8 @@ export function Sidebar() {
           variant="link"
           asChild
         >
-          <CustomLink
+          <Link
             href="/"
-            target="_self"
             className={clsx(
               "mb-6 flex w-full flex-col items-center justify-center px-3",
               {
@@ -64,7 +63,7 @@ export function Sidebar() {
             >
               <ProwlerExtended />
             </div>
-          </CustomLink>
+          </Link>
         </Button>
 
         <Menu isOpen={getOpenState()} />
