@@ -86,10 +86,12 @@ class SQS(AWSService):
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
+                        valid_queues.append(queue)
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                    valid_queues.append(queue)
             self.queues = valid_queues
         except Exception as error:
             logger.error(
