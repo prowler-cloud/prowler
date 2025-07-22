@@ -1,11 +1,12 @@
 import json
 import time
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
-from django.db import IntegrityError, OperationalError, connection
+from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Prefetch, Sum, When
 from tasks.utils import CustomEncoder
 
@@ -13,7 +14,11 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_utils import create_objects_in_batches, rls_transaction
+from api.db_utils import (
+    create_objects_in_batches,
+    rls_transaction,
+    update_objects_in_batches,
+)
 from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
@@ -103,7 +108,10 @@ def _store_resources(
 
 
 def perform_prowler_scan(
-    tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
+    tenant_id: str,
+    scan_id: str,
+    provider_id: str,
+    checks_to_execute: list[str] | None = None,
 ):
     """
     Perform a scan using Prowler and store the findings and resources in the database.
@@ -175,6 +183,7 @@ def perform_prowler_scan(
         resource_cache = {}
         tag_cache = {}
         last_status_cache = {}
+        resource_failed_findings_cache = defaultdict(int)
 
         for progress, findings in prowler_scan.scan():
             for finding in findings:
@@ -200,6 +209,9 @@ def perform_prowler_scan(
                                     },
                                 )
                                 resource_cache[resource_uid] = resource_instance
+
+                                # Initialize all processed resources in the cache
+                                resource_failed_findings_cache[resource_uid] = 0
                             else:
                                 resource_instance = resource_cache[resource_uid]
 
@@ -313,6 +325,11 @@ def perform_prowler_scan(
                     )
                     finding_instance.add_resources([resource_instance])
 
+                    # Increment failed_findings_count cache if the finding status is FAIL and not muted
+                    if status == FindingStatus.FAIL and not finding.muted:
+                        resource_uid = finding.resource_uid
+                        resource_failed_findings_cache[resource_uid] += 1
+
                 # Update scan resource summaries
                 scan_resource_cache.add(
                     (
@@ -329,6 +346,24 @@ def perform_prowler_scan(
                 scan_instance.save()
 
         scan_instance.state = StateChoices.COMPLETED
+
+        # Update failed_findings_count for all resources in batches if scan completed successfully
+        if resource_failed_findings_cache:
+            resources_to_update = []
+            for resource_uid, failed_count in resource_failed_findings_cache.items():
+                if resource_uid in resource_cache:
+                    resource_instance = resource_cache[resource_uid]
+                    resource_instance.failed_findings_count = failed_count
+                    resources_to_update.append(resource_instance)
+
+            if resources_to_update:
+                update_objects_in_batches(
+                    tenant_id=tenant_id,
+                    model=Resource,
+                    objects=resources_to_update,
+                    fields=["failed_findings_count"],
+                    batch_size=1000,
+                )
 
     except Exception as e:
         logger.error(f"Error performing scan {scan_id}: {e}")
@@ -376,7 +411,6 @@ def perform_prowler_scan(
 def aggregate_findings(tenant_id: str, scan_id: str):
     """
     Aggregates findings for a given scan and stores the results in the ScanSummary table.
-    Also updates the failed_findings_count for each resource based on the latest findings.
 
     This function retrieves all findings associated with a given `scan_id` and calculates various
     metrics such as counts of failed, passed, and muted findings, as well as their deltas (new,
@@ -405,8 +439,6 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_new: Muted findings with a delta of 'new'.
         - muted_changed: Muted findings with a delta of 'changed'.
     """
-    _update_resource_failed_findings_count(tenant_id, scan_id)
-
     with rls_transaction(tenant_id):
         findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
 
@@ -529,48 +561,6 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             for agg in aggregation
         }
         ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
-
-
-def _update_resource_failed_findings_count(tenant_id: str, scan_id: str):
-    """
-    Update the failed_findings_count field for resources based on the latest findings.
-
-    This function calculates the number of failed findings for each resource by:
-    1. Getting the latest finding for each finding.uid
-    2. Counting failed findings per resource
-    3. Updating the failed_findings_count field for each resource
-
-    Args:
-        tenant_id (str): The ID of the tenant to which the scan belongs.
-        scan_id (str): The ID of the scan for which to update resource counts.
-    """
-
-    with rls_transaction(tenant_id):
-        scan = Scan.objects.get(pk=scan_id)
-        provider_id = str(scan.provider_id)
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE resources AS r
-                   SET failed_findings_count = COALESCE((
-                       SELECT COUNT(*) FROM (
-                         SELECT DISTINCT ON (f.uid) f.uid
-                           FROM findings AS f
-                           JOIN resource_finding_mappings AS rfm
-                             ON rfm.finding_id = f.id
-                          WHERE f.tenant_id = %s
-                            AND f.status    = %s
-                            AND f.muted     = FALSE
-                            AND rfm.resource_id = r.id
-                          ORDER BY f.uid, f.inserted_at DESC
-                       ) AS latest_uids
-                   ), 0)
-                 WHERE r.tenant_id   = %s
-                   AND r.provider_id = %s
-            """,
-                [tenant_id, FindingStatus.FAIL, tenant_id, provider_id],
-            )
 
 
 def create_compliance_requirements(tenant_id: str, scan_id: str):
