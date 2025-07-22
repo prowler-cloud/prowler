@@ -61,7 +61,7 @@ jobs:
           persist-credentials: false
       - name: Start needed services with docker compose
         run: |
-          docker compose up -d
+          docker compose up -d api worker worker-beat
       - name: Wait for prowler-api to respond
         run: |
           echo "Waiting for prowler-api..."
@@ -82,7 +82,6 @@ jobs:
           echo "Database migrations completed!"
       - name: Copy local fixtures into API container
         run: |
-          docker compose ps
           docker cp ./api/src/backend/api/fixtures/dev/. prowler-api-1:/home/prowler/backend/api/fixtures/dev
       - name: Load database fixtures for e2e tests
         run: |
