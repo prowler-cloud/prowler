@@ -353,6 +353,8 @@ class Finding(BaseModel):
         finding.region = resource.region
         # Azure, GCP specified field
         finding.location = resource.region
+        # GitHub specified field
+        finding.owner = resource.region
         # K8s specified field
         if provider.type == "kubernetes":
             finding.namespace = resource.region.removeprefix("namespace: ")
