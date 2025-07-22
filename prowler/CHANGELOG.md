@@ -2,7 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.9.2] (Prowler v5.9.2) UNRELEASED
+## [v5.10.0] (Prowler UNRELEASED)
+
+### Added
+- Add `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
+
+---
+
+## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed
 - Use the correct resource name in `defender_domain_dkim_enabled` check [(#8334)](https://github.com/prowler-cloud/prowler/pull/8334)
@@ -39,12 +46,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update `entra_users_mfa_capable` check to use the correct resource name and ID [(#8288)](https://github.com/prowler-cloud/prowler/pull/8288)
 - Handle multiple services and severities while listing checks [(#8302)](https://github.com/prowler-cloud/prowler/pull/8302)
 - Handle `tenant_id` for M365 Mutelist [(#8306)](https://github.com/prowler-cloud/prowler/pull/8306)
-
----
-
-## [v5.8.2] (Prowler 5.8.2)
-
-### Fixed
 - Fix error in Dashboard Overview page when reading CSV files [(#8257)](https://github.com/prowler-cloud/prowler/pull/8257)
 
 ---
