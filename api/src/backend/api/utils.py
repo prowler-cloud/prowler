@@ -9,11 +9,8 @@ from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
-from prowler.lib.outputs.jira.jira import Jira
-from prowler.lib.outputs.slack.slack import Slack
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
-from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -188,18 +185,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
     Returns:
         Connection: A connection object representing the result of the connection test for the specified integration.
     """
-    if integration.integration_type in [
-        Integration.IntegrationChoices.AMAZON_S3,
-        Integration.IntegrationChoices.AWS_SECURITY_HUB,
-    ]:
-        try:
-            AwsProvider(**integration.credentials).session.current_session
-        except Exception as e:
-            return Connection(is_connected=False, error=e)
-
     if integration.integration_type == Integration.IntegrationChoices.AMAZON_S3:
-        provider = S3
-        return provider.test_connection(
+        return S3.test_connection(
             **integration.credentials,
             bucket_name=integration.configuration["bucket_name"],
             raise_on_exception=False,
@@ -209,11 +196,11 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
     elif (
         integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
     ):
-        provider = SecurityHub
+        pass
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
-        provider = Jira
+        pass
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
-        provider = Slack
+        pass
     else:
         raise ValueError(
             f"Integration type {integration.integration_type} not supported"
