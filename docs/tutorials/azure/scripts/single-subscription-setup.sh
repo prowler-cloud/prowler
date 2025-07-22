@@ -85,11 +85,18 @@ get_current_subscription() {
 create_app_registration() {
     print_header "Creating App Registration"
     
-    # Create app registration
-    print_warning "Creating app registration with name: $APP_NAME"
-    APP_OUTPUT=$(az ad app create \
-        --display-name "$APP_NAME" \
-        --required-resource-accesses @- << 'EOF'
+    # Check if app registration already exists
+    print_warning "Checking for existing app registration with name: $APP_NAME"
+    EXISTING_APP=$(az ad app list --display-name "$APP_NAME" --query "[0]" 2>/dev/null)
+    
+    if [[ $EXISTING_APP != "null" && -n "$EXISTING_APP" ]]; then
+        APP_ID=$(echo $EXISTING_APP | jq -r '.appId')
+        APP_OBJECT_ID=$(echo $EXISTING_APP | jq -r '.id')
+        print_warning "Found existing App Registration: $APP_ID"
+        
+        # Update required permissions to ensure they're correct
+        print_warning "Updating API permissions for existing app..."
+        az ad app update --id "$APP_ID" --required-resource-accesses @- << 'EOF' >/dev/null
 [
     {
         "resourceAppId": "00000003-0000-0000-c000-000000000000",
@@ -110,26 +117,76 @@ create_app_registration() {
     }
 ]
 EOF
-    )
+        print_success "Updated API permissions for existing app"
+    else
+        # Create new app registration
+        print_warning "Creating new app registration with name: $APP_NAME"
+        APP_OUTPUT=$(az ad app create \
+            --display-name "$APP_NAME" \
+            --required-resource-accesses @- << 'EOF'
+[
+    {
+        "resourceAppId": "00000003-0000-0000-c000-000000000000",
+        "resourceAccess": [
+            {
+                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+                "type": "Role"
+            },
+            {
+                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+                "type": "Role"
+            },
+            {
+                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
+                "type": "Role"
+            }
+        ]
+    }
+]
+EOF
+        )
+        
+        APP_ID=$(echo $APP_OUTPUT | jq -r '.appId')
+        APP_OBJECT_ID=$(echo $APP_OUTPUT | jq -r '.id')
+        
+        print_success "Created App Registration: $APP_ID"
+    fi
     
-    APP_ID=$(echo $APP_OUTPUT | jq -r '.appId')
-    APP_OBJECT_ID=$(echo $APP_OUTPUT | jq -r '.id')
+    # Check if service principal already exists
+    print_warning "Checking for existing service principal..."
+    EXISTING_SP=$(az ad sp list --filter "appId eq '$APP_ID'" --query "[0]" 2>/dev/null)
     
-    print_success "Created App Registration: $APP_ID"
-    
-    # Create service principal
-    print_warning "Creating service principal..."
-    SP_OUTPUT=$(az ad sp create --id $APP_ID)
-    SP_OBJECT_ID=$(echo $SP_OUTPUT | jq -r '.id')
-    
-    print_success "Created Service Principal: $SP_OBJECT_ID"
+    if [[ $EXISTING_SP != "null" && -n "$EXISTING_SP" ]]; then
+        SP_OBJECT_ID=$(echo $EXISTING_SP | jq -r '.id')
+        print_warning "Found existing Service Principal: $SP_OBJECT_ID"
+    else
+        # Create service principal
+        print_warning "Creating service principal..."
+        SP_OUTPUT=$(az ad sp create --id $APP_ID 2>/dev/null)
+        
+        if [ $? -ne 0 ]; then
+            print_warning "Service principal creation failed. It might already exist."
+            EXISTING_SP=$(az ad sp list --filter "appId eq '$APP_ID'" --query "[0]" 2>/dev/null)
+            
+            if [[ $EXISTING_SP != "null" && -n "$EXISTING_SP" ]]; then
+                SP_OBJECT_ID=$(echo $EXISTING_SP | jq -r '.id')
+                print_warning "Found existing Service Principal: $SP_OBJECT_ID"
+            else
+                print_error "Failed to create or find service principal for app ID: $APP_ID"
+                exit 1
+            fi
+        else
+            SP_OBJECT_ID=$(echo $SP_OUTPUT | jq -r '.id')
+            print_success "Created Service Principal: $SP_OBJECT_ID"
+        fi
+    fi
     
     # Create client secret
     print_warning "Creating client secret..."
     SECRET_OUTPUT=$(az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
     CLIENT_SECRET=$(echo $SECRET_OUTPUT | jq -r '.password')
     
-    print_success "Created client secret"
+    print_success "Created/updated client secret"
     
     # Grant admin consent (requires Global Administrator or Application Administrator)
     echo ""
@@ -195,14 +252,44 @@ EOF
 create_custom_role() {
     print_header "Creating Custom Role"
     
-    print_warning "Creating ProwlerRole in subscription: $SUBSCRIPTION_ID"
+    print_warning "Checking for ProwlerRole in subscription: $SUBSCRIPTION_ID"
     
     # Check if role already exists
     if az role definition list --name "$CUSTOM_ROLE_NAME" --subscription "$SUBSCRIPTION_ID" --query "[0].roleName" -o tsv 2>/dev/null | grep -q "$CUSTOM_ROLE_NAME"; then
         print_warning "ProwlerRole already exists in subscription $SUBSCRIPTION_ID"
+        
+        # Check if the role needs updating
+        print_warning "Verifying role permissions..."
+        ROLE_ACTIONS=$(az role definition list --name "$CUSTOM_ROLE_NAME" --subscription "$SUBSCRIPTION_ID" --query "[0].permissions[0].actions" -o tsv)
+        
+        if [[ "$ROLE_ACTIONS" != *"Microsoft.Web/sites/host/listkeys/action"* ]] || [[ "$ROLE_ACTIONS" != *"Microsoft.Web/sites/config/list/Action"* ]]; then
+            print_warning "Updating ProwlerRole with required permissions..."
+            
+            # Delete and recreate the role with proper permissions
+            ROLE_ID=$(az role definition list --name "$CUSTOM_ROLE_NAME" --subscription "$SUBSCRIPTION_ID" --query "[0].name" -o tsv)
+            az role definition delete --name "$ROLE_ID" --subscription "$SUBSCRIPTION_ID" >/dev/null
+            
+            # Create custom role
+            az role definition create --subscription "$SUBSCRIPTION_ID" --role-definition @- << EOF >/dev/null
+{
+    "Name": "$CUSTOM_ROLE_NAME",
+    "IsCustom": true,
+    "Description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role",
+    "AssignableScopes": ["/subscriptions/$SUBSCRIPTION_ID"],
+    "Actions": [
+        "Microsoft.Web/sites/host/listkeys/action",
+        "Microsoft.Web/sites/config/list/Action"
+    ]
+}
+EOF
+            print_success "Updated ProwlerRole with required permissions"
+        else
+            print_success "ProwlerRole already has the required permissions"
+        fi
     else
         # Create custom role
-        az role definition create --subscription "$SUBSCRIPTION_ID" --role-definition @- << EOF
+        print_warning "Creating new ProwlerRole..."
+        az role definition create --subscription "$SUBSCRIPTION_ID" --role-definition @- << EOF >/dev/null
 {
     "Name": "$CUSTOM_ROLE_NAME",
     "IsCustom": true,
@@ -221,28 +308,42 @@ EOF
 assign_roles() {
     print_header "Assigning Roles"
     
-    print_warning "Assigning roles in subscription: $SUBSCRIPTION_ID"
+    print_warning "Checking role assignments in subscription: $SUBSCRIPTION_ID"
     
-    # Assign Reader role
-    print_warning "Assigning Reader role..."
-    if az role assignment create \
-        --role "Reader" \
-        --assignee $SP_OBJECT_ID \
-        --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
-        print_success "Assigned Reader role in $SUBSCRIPTION_ID"
+    # Check if Reader role is already assigned
+    print_warning "Checking Reader role assignment..."
+    READER_ASSIGNED=$(az role assignment list --assignee "$SP_OBJECT_ID" --role "Reader" --subscription "$SUBSCRIPTION_ID" --query "[0].roleDefinitionName" -o tsv 2>/dev/null)
+    
+    if [[ "$READER_ASSIGNED" == "Reader" ]]; then
+        print_success "Reader role is already assigned in $SUBSCRIPTION_ID"
     else
-        print_warning "Reader role assignment may already exist in $SUBSCRIPTION_ID"
+        print_warning "Assigning Reader role..."
+        if az role assignment create \
+            --role "Reader" \
+            --assignee "$SP_OBJECT_ID" \
+            --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
+            print_success "Assigned Reader role in $SUBSCRIPTION_ID"
+        else
+            print_warning "Failed to assign Reader role. It may already exist."
+        fi
     fi
     
-    # Assign ProwlerRole
-    print_warning "Assigning ProwlerRole..."
-    if az role assignment create \
-        --role "$CUSTOM_ROLE_NAME" \
-        --assignee $SP_OBJECT_ID \
-        --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
-        print_success "Assigned ProwlerRole in $SUBSCRIPTION_ID"
+    # Check if ProwlerRole is already assigned
+    print_warning "Checking ProwlerRole assignment..."
+    PROWLER_ASSIGNED=$(az role assignment list --assignee "$SP_OBJECT_ID" --role "$CUSTOM_ROLE_NAME" --subscription "$SUBSCRIPTION_ID" --query "[0].roleDefinitionName" -o tsv 2>/dev/null)
+    
+    if [[ "$PROWLER_ASSIGNED" == "$CUSTOM_ROLE_NAME" ]]; then
+        print_success "ProwlerRole is already assigned in $SUBSCRIPTION_ID"
     else
-        print_warning "ProwlerRole assignment may already exist in $SUBSCRIPTION_ID"
+        print_warning "Assigning ProwlerRole..."
+        if az role assignment create \
+            --role "$CUSTOM_ROLE_NAME" \
+            --assignee "$SP_OBJECT_ID" \
+            --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
+            print_success "Assigned ProwlerRole in $SUBSCRIPTION_ID"
+        else
+            print_warning "Failed to assign ProwlerRole. It may already exist."
+        fi
     fi
 }
 
