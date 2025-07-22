@@ -54,6 +54,7 @@ nav:
           - Role-Based Access Control: tutorials/prowler-app-rbac.md
           - Social Login: tutorials/prowler-app-social-login.md
           - SSO with SAML: tutorials/prowler-app-sso.md
+          - Mute findings: tutorials/prowler-app-mute-findings.md
           - Lighthouse: tutorials/prowler-app-lighthouse.md
       - CLI:
           - Miscellaneous: tutorials/misc.md
@@ -109,6 +110,7 @@ nav:
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
       - GitHub:
           - Authentication: tutorials/github/authentication.md
+          - Getting Started: tutorials/github/getting-started-github.md
       - IaC:
           - Getting Started: tutorials/iac/getting-started-iac.md
   - Developer Guide:

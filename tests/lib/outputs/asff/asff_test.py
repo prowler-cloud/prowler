@@ -524,7 +524,7 @@ class TestASFF:
         expected_asff = [
             {
                 "SchemaVersion": "2018-10-08",
-                "Id": "prowler-test-check-id-123456789012-eu-west-1-1aa220687",
+                "Id": "prowler-service_test_check_id-123456789012-eu-west-1-1aa220687",
                 "ProductArn": "arn:aws:securityhub:eu-west-1::product/prowler/prowler",
                 "RecordState": "ACTIVE",
                 "ProductFields": {
@@ -532,14 +532,14 @@ class TestASFF:
                     "ProviderVersion": prowler_version,
                     "ProwlerResourceName": "test-arn",
                 },
-                "GeneratorId": "prowler-test-check-id",
+                "GeneratorId": "prowler-service_test_check_id",
                 "AwsAccountId": "123456789012",
                 "Types": ["test-type"],
                 "FirstObservedAt": timestamp,
                 "UpdatedAt": timestamp,
                 "CreatedAt": timestamp,
                 "Severity": {"Label": "HIGH"},
-                "Title": "test-check-id",
+                "Title": "service_test_check_id",
                 "Description": "This is a test",
                 "Resources": [
                     {

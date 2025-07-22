@@ -3,7 +3,7 @@
   "CheckID": "ssmincidents_enabled_with_plans",
   "CheckTitle": "Ensure SSM Incidents is enabled with response plans.",
   "CheckType": [],
-  "ServiceName": "ssm",
+  "ServiceName": "ssmincidents",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ssm:region:account-id:document/document-name",
   "Severity": "low",
