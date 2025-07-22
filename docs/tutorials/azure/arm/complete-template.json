@@ -1,0 +1,232 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Complete Prowler Azure authentication setup including App Registration, Service Principal, Custom Role, and Role Assignments"
+  },
+  "parameters": {
+    "applicationName": {
+      "type": "string",
+      "defaultValue": "Prowler Security Scanner",
+      "metadata": {
+        "description": "Name of the Prowler App Registration"
+      }
+    },
+    "subscriptionIds": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of subscription IDs where Prowler should have access"
+      }
+    },
+    "customRoleName": {
+      "type": "string",
+      "defaultValue": "ProwlerRole",
+      "metadata": {
+        "description": "Name for the custom role"
+      }
+    }
+  },
+  "variables": {
+    "customRoleDescription": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role",
+    "customRoleActions": [
+      "Microsoft.Web/sites/host/listkeys/action",
+      "Microsoft.Web/sites/config/list/Action"
+    ],
+    "microsoftGraphAppId": "00000003-0000-0000-c000-000000000000",
+    "requiredResourceAccess": [
+      {
+        "resourceAppId": "[variables('microsoftGraphAppId')]",
+        "resourceAccess": [
+          {
+            "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+            "type": "Role"
+          },
+          {
+            "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+            "type": "Role"
+          },
+          {
+            "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
+            "type": "Role"
+          }
+        ]
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "createProwlerAppRegistration",
+      "location": "[resourceGroup().location]",
+      "kind": "AzurePowerShell",
+      "properties": {
+        "azPowerShellVersion": "8.3",
+        "scriptContent": "[concat(\n          '$appName = \"', parameters('applicationName'), '\"\n',\n          '$requiredResourceAccess = @(\n',\n          '    @{\n',\n          '        ResourceAppId = \"00000003-0000-0000-c000-000000000000\"\n',\n          '        ResourceAccess = @(\n',\n          '            @{ Id = \"7ab1d382-f21e-4acd-a863-ba3e13f7da61\"; Type = \"Role\" },\n',\n          '            @{ Id = \"246dd0d5-5bd0-4def-940b-0421030a5b68\"; Type = \"Role\" },\n',\n          '            @{ Id = \"38d9df27-64da-44fd-b7c5-a6fbac20248f\"; Type = \"Role\" }\n',\n          '        )\n',\n          '    }\n',\n          ')\n',\n          '\n',\n          '# Connect to Microsoft Graph\n',\n          'Connect-MgGraph -Scopes \"Application.ReadWrite.All\"\n',\n          '\n',\n          '# Create app registration\n',\n          '$app = New-MgApplication -DisplayName $appName -RequiredResourceAccess $requiredResourceAccess\n',\n          '\n',\n          '# Create service principal\n',\n          '$sp = New-MgServicePrincipal -AppId $app.AppId\n',\n          '\n',\n          '# Create client secret\n',\n          '$passwordCredential = @{\n',\n          '    displayName = \"Prowler Client Secret\"\n',\n          '}\n',\n          '$secret = Add-MgApplicationPassword -ApplicationId $app.Id -PasswordCredential $passwordCredential\n',\n          '\n',\n          '# Output results\n',\n          '$result = @{\n',\n          '    applicationId = $app.AppId\n',\n          '    servicePrincipalId = $sp.Id\n',\n          '    clientSecret = $secret.SecretText\n',\n          '    tenantId = (Get-MgContext).TenantId\n',\n          '}\n',\n          '\n',\n          '$DeploymentScriptOutputs = @{}\n',\n          '$DeploymentScriptOutputs[\"applicationId\"] = $result.applicationId\n',\n          '$DeploymentScriptOutputs[\"servicePrincipalId\"] = $result.servicePrincipalId\n',\n          '$DeploymentScriptOutputs[\"clientSecret\"] = $result.clientSecret\n',\n          '$DeploymentScriptOutputs[\"tenantId\"] = $result.tenantId'\n        )]",
+        "timeout": "PT30M",
+        "cleanupPreference": "OnSuccess",
+        "retentionInterval": "P1D"
+      },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'prowler-deployment-identity')]": {}
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'prowler-deployment-identity')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "prowler-deployment-identity",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "[concat('prowler-setup-', parameters('subscriptionIds')[copyIndex()])]",
+      "subscriptionId": "[parameters('subscriptionIds')[copyIndex()]]",
+      "location": "[deployment().location]",
+      "copy": {
+        "name": "subscriptionSetupLoop",
+        "count": "[length(parameters('subscriptionIds'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deploymentScripts', 'createProwlerAppRegistration')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "servicePrincipalId": {
+              "type": "string"
+            },
+            "customRoleName": {
+              "type": "string"
+            },
+            "customRoleDescription": {
+              "type": "string"
+            },
+            "customRoleActions": {
+              "type": "array"
+            }
+          },
+          "variables": {
+            "roleDefName": "[guid(subscription().id, parameters('customRoleName'))]",
+            "readerRoleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleDefinitions",
+              "apiVersion": "2022-04-01",
+              "name": "[variables('roleDefName')]",
+              "properties": {
+                "roleName": "[parameters('customRoleName')]",
+                "description": "[parameters('customRoleDescription')]",
+                "type": "CustomRole",
+                "permissions": [
+                  {
+                    "actions": "[parameters('customRoleActions')]",
+                    "notActions": [],
+                    "dataActions": [],
+                    "notDataActions": []
+                  }
+                ],
+                "assignableScopes": [
+                  "[subscription().id]"
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(subscription().id, parameters('servicePrincipalId'), 'Reader')]",
+              "properties": {
+                "roleDefinitionId": "[variables('readerRoleDefinitionId')]",
+                "principalId": "[parameters('servicePrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(subscription().id, parameters('servicePrincipalId'), parameters('customRoleName'))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roleDefName'))]"
+              ],
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roleDefName'))]",
+                "principalId": "[parameters('servicePrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "servicePrincipalId": {
+            "value": "[reference('createProwlerAppRegistration').outputs.servicePrincipalId]"
+          },
+          "customRoleName": {
+            "value": "[parameters('customRoleName')]"
+          },
+          "customRoleDescription": {
+            "value": "[variables('customRoleDescription')]"
+          },
+          "customRoleActions": {
+            "value": "[variables('customRoleActions')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "applicationId": {
+      "type": "string",
+      "value": "[reference('createProwlerAppRegistration').outputs.applicationId]",
+      "metadata": {
+        "description": "The Application (Client) ID of the created app registration"
+      }
+    },
+    "tenantId": {
+      "type": "string",
+      "value": "[reference('createProwlerAppRegistration').outputs.tenantId]",
+      "metadata": {
+        "description": "The Azure AD Tenant ID"
+      }
+    },
+    "servicePrincipalObjectId": {
+      "type": "string",
+      "value": "[reference('createProwlerAppRegistration').outputs.servicePrincipalId]",
+      "metadata": {
+        "description": "The Object ID of the created service principal"
+      }
+    },
+    "clientSecret": {
+      "type": "string",
+      "value": "[reference('createProwlerAppRegistration').outputs.clientSecret]",
+      "metadata": {
+        "description": "The generated client secret (sensitive)"
+      }
+    },
+    "prowlerConfiguration": {
+      "type": "object",
+      "value": {
+        "environmentVariables": {
+          "AZURE_CLIENT_ID": "[reference('createProwlerAppRegistration').outputs.applicationId]",
+          "AZURE_CLIENT_SECRET": "[reference('createProwlerAppRegistration').outputs.clientSecret]",
+          "AZURE_TENANT_ID": "[reference('createProwlerAppRegistration').outputs.tenantId]"
+        },
+        "prowlerCommand": "prowler azure --sp-env-auth",
+        "manualStepsRequired": [
+          "Grant admin consent for API permissions in Azure Portal:",
+          "1. Go to Azure AD > App registrations > Prowler Security Scanner",
+          "2. Click API permissions > Grant admin consent for [your tenant]"
+        ]
+      }
+    }
+  }
+}

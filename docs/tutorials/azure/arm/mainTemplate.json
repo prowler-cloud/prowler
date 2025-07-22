@@ -2,11 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.4.1008.15138",
-      "templateHash": "8381960602397537918"
-    }
+    "description": "Creates Prowler custom roles across subscriptions. App Registration must be created separately."
   },
   "parameters": {
     "subscriptionIds": {
@@ -93,7 +89,7 @@
           "outputs": {
             "roleDefinitionId": {
               "type": "string",
-              "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleDefName'))]"
+              "value": "[subscriptionResourceId(parameters('subscriptionIds')[copyIndex()], 'Microsoft.Authorization/roleDefinitions', variables('roleDefName'))]"
             }
           }
         },
@@ -115,16 +111,21 @@
     "deploymentInfo": {
       "type": "object",
       "value": {
-        "message": "Custom roles created successfully. Please complete the following manual steps:",
-        "manualSteps": [
-          "1. Create App Registration in Azure AD with name 'Prowler Security Scanner'",
-          "2. Add API permissions: Domain.Read.All, Policy.Read.All, UserAuthenticationMethod.Read.All",
-          "3. Create client secret",
-          "4. Grant admin consent for API permissions",
-          "5. Assign Reader and ProwlerRole to the service principal on target subscriptions"
-        ],
+        "message": "Custom roles created successfully. Complete setup requires additional steps.",
         "subscriptionsConfigured": "[parameters('subscriptionIds')]",
-        "customRoleName": "[parameters('customRoleName')]"
+        "customRoleName": "[parameters('customRoleName')]",
+        "nextSteps": {
+          "1": "Create App Registration using Azure CLI or Portal",
+          "2": "Use the provided complete-setup.sh script for full automation",
+          "command": "cd ../scripts && ./setup-prowler.sh"
+        }
+      }
+    },
+    "roleDefinitionIds": {
+      "type": "array",
+      "copy": {
+        "count": "[length(parameters('subscriptionIds'))]",
+        "input": "[reference(concat('prowler-role-', parameters('subscriptionIds')[copyIndex()])).outputs.roleDefinitionId.value]"
       }
     }
   }

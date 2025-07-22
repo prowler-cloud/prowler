@@ -2,129 +2,143 @@
 
 This directory contains Azure Resource Manager (ARM) templates for deploying Prowler authentication resources through the Azure Portal.
 
-## ⚠️ Important Limitation
+## ✅ Answer: Yes, App Registrations CAN Be Done via ARM!
 
-ARM templates have significant limitations with Azure AD/Entra ID resources. This template only creates the **custom ProwlerRole** - you'll still need several manual steps to complete the setup.
+You're absolutely correct! App Registrations **can** be created via ARM templates, but there are some practical challenges:
 
-**For a fully automated solution, use the [Azure CLI scripts](../scripts/) instead.**
+### **Why ARM Templates Are Limited for This Use Case**
+
+1. **Microsoft Graph Resources**: App Registrations use Microsoft Graph API, which requires special handling in ARM
+2. **Authentication Context**: ARM deployments need managed identity or service principal with Graph permissions
+3. **Admin Consent**: Still requires manual admin consent step for API permissions
+4. **Complexity**: Much more complex than Azure CLI approach
+
+### **Current ARM Template Approach**
+
+This template creates **only the custom roles** across subscriptions. For complete automation including App Registration, see the alternatives below.
 
 ## Deployment Options
 
-### Option 1: Deploy to Azure Button (Easiest)
+### Option 1: Deploy to Azure Button (Role Creation Only)
 
-Click this button to deploy directly from the Azure Portal:
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json)
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FcreateUiDefinition.json)
+This creates the ProwlerRole across specified subscriptions.
 
-### Option 2: Manual Portal Deployment
+### Option 2: Complete ARM Template with App Registration
 
-1. **Go to Azure Portal** > Search "Deploy a custom template"
-2. **Build your own template** > Upload `mainTemplate.json`
-3. **Fill parameters**:
-   - Subscription IDs (array of subscription IDs to configure)
-   - Custom Role Name (default: "ProwlerRole")
-4. **Review + Create**
+For a complete ARM solution including App Registration, see `complete-template.json` - this uses:
+- **Deployment Scripts** with PowerShell + Microsoft Graph
+- **Managed Identity** for authentication
+- **More complex setup** but fully automated
 
-### Option 3: Azure CLI Deployment
+### Option 3: Hybrid Approach (Recommended)
+
+1. **Deploy ARM template** for custom roles (this template)
+2. **Run completion script** for App Registration:
 
 ```bash
-# Deploy to subscription scope
+# After ARM deployment
+cd ../scripts
+./setup-prowler.sh  # This will detect existing roles and complete setup
+```
+
+## ARM Template Deployment Methods
+
+### Portal Deployment
+1. Azure Portal > "Deploy a custom template"
+2. Upload `mainTemplate.json` 
+3. Enter subscription IDs
+4. Deploy
+
+### Azure CLI Deployment
+```bash
 az deployment sub create \
   --location "East US" \
   --template-file mainTemplate.json \
-  --parameters @mainTemplate.parameters.json
+  --parameters subscriptionIds='["sub1","sub2"]'
 ```
 
-## What Gets Deployed
+### PowerShell Deployment
+```powershell
+New-AzSubscriptionDeployment `
+  -Location "East US" `
+  -TemplateFile "mainTemplate.json" `
+  -subscriptionIds @("sub1", "sub2")
+```
+
+## What This Template Creates
 
 ### ✅ Automated by ARM Template
-- **Custom Role**: "ProwlerRole" with additional read permissions
-- **Role Scoping**: Limited to specified subscriptions
-- **Permissions**: `Microsoft.Web/sites/host/listkeys/action`, `Microsoft.Web/sites/config/list/Action`
+- **Custom Role**: "ProwlerRole" with additional read permissions  
+- **Multi-Subscription**: Deploys to all specified subscriptions
+- **Proper Scoping**: Role limited to specified subscriptions only
 
-### ❌ Manual Steps Still Required
+### ❌ Still Manual (Use Scripts Instead)
+- App Registration creation
+- Service Principal creation  
+- Client secret generation
+- API permissions + admin consent
+- Role assignments to service principal
 
-1. **Create App Registration**
-   ```
-   Azure AD > App registrations > New registration
-   Name: "Prowler Security Scanner"
-   ```
+## Complete Solution Options
 
-2. **Add API Permissions**
-   ```
-   API permissions > Add a permission > Microsoft Graph > Application permissions:
-   - Domain.Read.All
-   - Policy.Read.All  
-   - UserAuthenticationMethod.Read.All
-   ```
+| Method | Portal UI | Manual Steps | Time | Complexity |
+|--------|-----------|-------------|------|------------|
+| **ARM (this template)** | ✅ | 5 steps | 10+ min | Medium |
+| **ARM + Scripts hybrid** | ✅ | 1 step | 5 min | Low |
+| **Pure CLI Scripts** | ❌ | 0 steps | 2 min | Lowest |
+| **Complete ARM** | ✅ | 1 step | 8 min | High |
 
-3. **Create Client Secret**
-   ```
-   Certificates & secrets > New client secret
-   Copy the secret value (shown only once)
-   ```
+## Recommendation by Use Case
 
-4. **Grant Admin Consent**
-   ```
-   API permissions > Grant admin consent for [tenant]
-   ```
+### Use ARM Templates If:
+- **Organization requires** native Azure tooling
+- **Portal deployment** is mandatory  
+- **GitOps workflow** with ARM templates
+- **Governance** requires template-based deployments
 
-5. **Assign Roles to Service Principal**
-   
-   For each subscription:
-   ```
-   Subscription > Access control (IAM) > Add role assignment:
-   - Role: Reader
-   - Members: Prowler Security Scanner
-   
-   Subscription > Access control (IAM) > Add role assignment:
-   - Role: ProwlerRole
-   - Members: Prowler Security Scanner
-   ```
+### Use CLI Scripts If:
+- **Fastest setup** is priority
+- **Zero manual steps** required
+- **One-time deployment** (not recurring)
+- **Developer/admin** comfort with CLI tools
 
-## Files Description
+## Files in This Directory
 
-- `mainTemplate.json` - Main ARM template
+- `mainTemplate.json` - Role creation template (subscription-scoped)
+- `complete-template.json` - Full template with App Registration (complex)
 - `mainTemplate.parameters.json` - Parameter file example
-- `createUiDefinition.json` - Portal UI definition for custom deployment experience
-- `deploy-to-azure-button.md` - Deploy button with GitHub links
+- `createUiDefinition.json` - Portal UI definition
+- `deploy-to-azure-button.md` - Deploy button documentation
 
-## Comparison: ARM vs CLI Scripts
+## Advanced: Complete ARM Template
 
-| Aspect | ARM Template | CLI Scripts |
-|--------|-------------|-------------|
-| **Azure Portal UI** | ✅ Native | ❌ Not applicable |
-| **Manual Steps** | 🔶 5 manual steps | ✅ Zero manual steps |
-| **Time Required** | 🔶 10-15 minutes | ✅ 2-3 minutes |
-| **Error Prone** | 🔶 Medium | ✅ Low |
-| **Multi-Subscription** | ✅ Supported | ✅ Automated |
-| **Cleanup** | 🔶 Manual | ✅ Automated |
+The `complete-template.json` shows how to create App Registrations via ARM using:
 
-## Recommendation
-
-While ARM templates provide a familiar Azure Portal experience, the significant manual steps required make the **[Azure CLI scripts](../scripts/)** the better choice for most users.
-
-Use ARM templates only if:
-- You're required to use native Azure tooling
-- You need the Portal UI experience
-- You don't mind completing manual steps
-
-## After Deployment
-
-Once you complete all manual steps, use Prowler with:
-
-```bash
-export AZURE_CLIENT_ID="your-app-id"
-export AZURE_CLIENT_SECRET="your-client-secret"
-export AZURE_TENANT_ID="your-tenant-id"
-
-prowler azure --sp-env-auth
+```json
+{
+  "type": "Microsoft.Resources/deploymentScripts",
+  "properties": {
+    "azPowerShellVersion": "8.3",
+    "scriptContent": "Connect-MgGraph; New-MgApplication..."
+  }
+}
 ```
 
-## Troubleshooting
+This approach works but requires:
+- Managed identity with Graph permissions
+- PowerShell modules in deployment container  
+- More complex error handling
 
-**Template deployment fails**: Ensure you have Owner or User Access Administrator on target subscriptions
+## Quick Start: Hybrid Approach
 
-**Can't create app registration**: Ensure you have Application Administrator role in Azure AD
+Best of both worlds - Portal deployment + automation:
 
-**API permissions not granted**: Admin consent must be granted by a Global Administrator or Application Administrator
+```bash
+# 1. Deploy ARM template via Portal (creates roles)
+# 2. Complete setup with one command:
+cd ../scripts && ./setup-prowler.sh
+```
+
+The CLI script will detect existing ProwlerRoles and complete the App Registration setup automatically.
