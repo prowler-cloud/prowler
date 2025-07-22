@@ -71,12 +71,24 @@ class TestS3IntegrationUploads:
         assert isinstance(connection, Connection)
         assert str(connection.error) == "test error"
 
+    @patch("tasks.jobs.integrations.GenericCompliance")
+    @patch("tasks.jobs.integrations.OCSF")
+    @patch("tasks.jobs.integrations.HTML")
+    @patch("tasks.jobs.integrations.CSV")
+    @patch("tasks.jobs.integrations.glob")
     @patch("tasks.jobs.integrations.get_s3_client_from_integration")
     @patch("tasks.jobs.integrations.rls_transaction")
     @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.globals")
     def test_upload_s3_integration_uploads_serialized_outputs(
-        self, mock_globals, mock_integration_model, mock_rls, mock_get_s3
+        self,
+        mock_integration_model,
+        mock_rls,
+        mock_get_s3,
+        mock_glob,
+        mock_csv,
+        mock_html,
+        mock_ocsf,
+        mock_compliance,
     ):
         tenant_id = "tenant-id"
         provider_id = "provider-id"
@@ -92,23 +104,29 @@ class TestS3IntegrationUploads:
         mock_s3 = MagicMock()
         mock_get_s3.return_value = (True, mock_s3)
 
-        # Mock the CSV output class
-        mock_csv_class = MagicMock()
-        mock_output = MagicMock()
-        mock_csv_class.return_value = mock_output
-        mock_globals.get.return_value = mock_csv_class
+        # Mock the output classes to return mock instances
+        mock_csv_instance = MagicMock()
+        mock_html_instance = MagicMock()
+        mock_ocsf_instance = MagicMock()
+        mock_compliance_instance = MagicMock()
 
-        serialized_outputs = {
-            "regular": [
-                {"class_name": "Csv", "file_path": "/tmp/output.csv"},
-            ],
-            "compliance": [
-                {"class_name": "GenericCompliance", "file_path": "/tmp/compliance.csv"},
-            ],
-        }
+        mock_csv.return_value = mock_csv_instance
+        mock_html.return_value = mock_html_instance
+        mock_ocsf.return_value = mock_ocsf_instance
+        mock_compliance.return_value = mock_compliance_instance
+
+        # Mock glob to return test files
+        output_directory = "/tmp/prowler_output/scan123"
+        mock_glob.side_effect = [
+            ["/tmp/prowler_output/scan123.csv"],
+            ["/tmp/prowler_output/scan123.html"],
+            ["/tmp/prowler_output/scan123.json"],
+            ["/tmp/prowler_output/compliance/compliance.csv"],
+        ]
 
         with patch("os.path.exists", return_value=True):
-            result = upload_s3_integration(tenant_id, provider_id, serialized_outputs)
+            with patch("os.getenv", return_value="/tmp/prowler_api_output"):
+                result = upload_s3_integration(tenant_id, provider_id, output_directory)
 
         assert result is True
         mock_s3.send_to_bucket.assert_called_once()
@@ -126,15 +144,14 @@ class TestS3IntegrationUploads:
         integration = MagicMock()
         integration.id = "i-1"
         integration.connected = True
-        mock_connection = Connection()
-        mock_connection.is_connected = False
-        mock_connection.error = Exception("Connection failed")
+        mock_s3_client = MagicMock()
+        mock_s3_client.error = "Connection failed"
 
         mock_integration_model.objects.filter.return_value = [integration]
-        mock_get_s3.return_value = (False, mock_connection)
+        mock_get_s3.return_value = (False, mock_s3_client)
 
-        serialized_outputs = {"regular": [], "compliance": []}
-        result = upload_s3_integration(tenant_id, provider_id, serialized_outputs)
+        output_directory = "/tmp/prowler_output/scan123"
+        result = upload_s3_integration(tenant_id, provider_id, output_directory)
 
         assert result is False
         integration.save.assert_called_once()
@@ -150,8 +167,8 @@ class TestS3IntegrationUploads:
         self, mock_logger, mock_integration_model, mock_rls
     ):
         mock_integration_model.objects.filter.return_value = []
-        serialized_outputs = {"regular": [], "compliance": []}
-        result = upload_s3_integration("tenant", "provider", serialized_outputs)
+        output_directory = "/tmp/prowler_output/scan123"
+        result = upload_s3_integration("tenant", "provider", output_directory)
 
         assert result is False
         mock_logger.error.assert_called_once_with(
@@ -179,8 +196,8 @@ class TestS3IntegrationUploads:
         }
         mock_integration_model.objects.filter.return_value = [integration]
 
-        serialized_outputs = {"regular": [], "compliance": []}
-        result = upload_s3_integration(tenant_id, provider_id, serialized_outputs)
+        output_directory = "/tmp/prowler_output/scan123"
+        result = upload_s3_integration(tenant_id, provider_id, output_directory)
 
         assert result is False
         mock_logger.error.assert_any_call(

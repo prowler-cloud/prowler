@@ -487,31 +487,31 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.upload_s3_integration")
     def test_s3_integration_task_success(self, mock_upload):
         mock_upload.return_value = True
-        serialized_outputs = {"regular": [], "compliance": []}
+        output_directory = "/tmp/prowler_api_output/test"
 
         result = s3_integration_task(
             tenant_id=self.tenant_id,
             provider_id=self.provider_id,
-            serialized_outputs=serialized_outputs,
+            output_directory=output_directory,
         )
 
         assert result is True
         mock_upload.assert_called_once_with(
-            self.tenant_id, self.provider_id, serialized_outputs
+            self.tenant_id, self.provider_id, output_directory
         )
 
     @patch("tasks.tasks.upload_s3_integration")
     def test_s3_integration_task_failure(self, mock_upload):
         mock_upload.return_value = False
-        serialized_outputs = {"regular": [], "compliance": []}
+        output_directory = "/tmp/prowler_api_output/test"
 
         result = s3_integration_task(
             tenant_id=self.tenant_id,
             provider_id=self.provider_id,
-            serialized_outputs=serialized_outputs,
+            output_directory=output_directory,
         )
 
         assert result is False
         mock_upload.assert_called_once_with(
-            self.tenant_id, self.provider_id, serialized_outputs
+            self.tenant_id, self.provider_id, output_directory
         )
