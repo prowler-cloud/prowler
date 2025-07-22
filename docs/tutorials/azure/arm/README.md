@@ -143,6 +143,22 @@ This script will:
 - `createUiDefinition.json` - Portal UI definition
 - `deploy-to-azure-button.md` - Deploy button documentation
 
+## Troubleshooting Deployment Errors
+
+### Common Issues and Solutions
+
+#### 1. "Expected a value of type 'Array', but received a value of type 'String'"
+- **Problem**: Subscription IDs must be provided as a JSON array, not a string.
+- **Solution**: Use array syntax with square brackets: `["subscription-id"]`
+
+#### 2. "The template parameter 'roleName' is not found"
+- **Problem**: This occurs in nested deployments when parameters aren't properly passed.
+- **Solution**: Already fixed in the latest template version. The fix properly passes the subscription ID to the nested template.
+
+#### 3. Template Download Errors
+- **Problem**: "There was an error downloading the template from URI..."
+- **Solution**: This deployment now uses templates from your repository instead of the official prowler-cloud repository.
+
 ## Advanced: Complete ARM Template
 
 The `complete-template.json` shows how to create App Registrations via ARM using:
