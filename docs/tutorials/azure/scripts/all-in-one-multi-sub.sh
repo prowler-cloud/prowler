@@ -6,6 +6,11 @@
 # 2. Installation of jq (if needed)
 # 3. Azure login (if needed)
 # 4. Complete Prowler Azure authentication setup for multiple subscriptions
+#
+# IMPORTANT NOTES:
+# - You will need Application Administrator or Global Administrator role to create the app registration
+# - If you don't have Global Administrator role, the script will guide you through manual admin consent
+# - You will need User Access Administrator or Owner role on the subscriptions for role assignments
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -19,6 +24,13 @@ BOLD='\033[1m'
 echo -e "${BLUE}${BOLD}=======================================================${NC}"
 echo -e "${BLUE}${BOLD}   Prowler for Azure - Complete Setup (Multi-Sub)      ${NC}"
 echo -e "${BLUE}${BOLD}=======================================================${NC}"
+echo
+echo -e "${YELLOW}IMPORTANT PERMISSION REQUIREMENTS:${NC}"
+echo -e "- You need ${BOLD}Application Administrator${NC} or ${BOLD}Global Administrator${NC} role"
+echo -e "- For automatic admin consent, you need ${BOLD}Global Administrator${NC} role"
+echo -e "- For subscription access, you need ${BOLD}User Access Administrator${NC} or ${BOLD}Owner${NC} role"
+echo
+echo -e "${GREEN}Don't worry if you don't have all these roles - the script will guide you through alternatives.${NC}"
 echo
 
 # Check operating system
