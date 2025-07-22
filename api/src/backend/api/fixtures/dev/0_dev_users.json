@@ -24,5 +24,18 @@
       "is_active": true,
       "date_joined": "2024-09-18T09:04:20.850Z"
     }
+  },
+  {
+    "model": "api.user",
+    "pk": "6d4f8a91-3c2e-4b5a-8f7d-1e9c5b2a4d6f",
+    "fields": {
+      "password": "pbkdf2_sha256$870000$Z63pGJ7nre48hfcGbk5S0O$rQpKczAmijs96xa+gPVJifpT3Fetb8DOusl5Eq6gxac=",
+      "last_login": null,
+      "name": "E2E Test User",
+      "email": "e2e@prowler.com",
+      "company_name": "Prowler E2E Tests",
+      "is_active": true,
+      "date_joined": "2024-01-01T00:00:00.850Z"
+    }
   }
 ]
