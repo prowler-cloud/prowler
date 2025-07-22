@@ -988,7 +988,7 @@ class TestProviderViewSet:
                 },
                 {
                     "provider": "github",
-                    "uid": "a123456789012345678901234567890123456789",
+                    "uid": "a12345678901234567890123456789012345678",
                     "alias": "Long Username",
                 },
             ]
