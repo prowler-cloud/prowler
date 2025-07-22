@@ -92,6 +92,38 @@ jobs:
             done
             echo "All database fixtures loaded successfully!"
           '
+      - name: Verify API and test user setup
+        run: |
+          echo "Verifying API is ready and test user exists..."
+          # Wait a bit more for everything to be ready
+          sleep 5
+          # Test API health endpoint
+          curl -f http://localhost:${PROWLER_API_PORT}/api/v1/docs || {
+            echo "API health check failed"
+            exit 1
+          }
+          # Test login with e2e user to verify fixtures are loaded
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Content-Type: application/vnd.api+json" \
+            -H "Accept: application/vnd.api+json" \
+            -d '{
+              "data": {
+                "type": "tokens",
+                "attributes": {
+                  "email": "e2e@prowler.com",
+                  "password": "Thisisapassword123@"
+                }
+              }
+            }' \
+            http://localhost:${PROWLER_API_PORT}/api/v1/tokens)
+
+          if [ "$response" = "200" ]; then
+            echo "✅ Test user authentication successful"
+          else
+            echo "❌ Test user authentication failed (HTTP $response)"
+            echo "This indicates the fixtures may not be loaded correctly"
+            exit 1
+          fi
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -120,6 +152,8 @@ jobs:
         run: npm run build
       - name: Run Playwright tests
         working-directory: ./ui
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api/v1
         run: npm run test:e2e
       - name: Upload Playwright report
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
