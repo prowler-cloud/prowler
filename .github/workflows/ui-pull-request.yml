@@ -109,11 +109,11 @@ jobs:
 
             echo "🔍 Verifying users exist in database..."
             echo "Checking dev user..."
-            dev_exists=$(poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email='"'"'dev@prowler.com'"'"').exists())" --database admin)
+            dev_exists=$(poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email='"'"'dev@prowler.com'"'"').exists())")
             echo "Dev user exists: $dev_exists"
 
             echo "Checking e2e user..."
-            e2e_exists=$(poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email='"'"'e2e@prowler.com'"'"').exists())" --database admin)
+            e2e_exists=$(poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email='"'"'e2e@prowler.com'"'"').exists())")
             echo "E2E user exists: $e2e_exists"
 
             if [ "$dev_exists" != "True" ]; then
