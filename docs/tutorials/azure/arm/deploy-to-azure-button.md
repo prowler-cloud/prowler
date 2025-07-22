@@ -4,11 +4,13 @@
 
 Click the button below to deploy the Prowler custom role directly from the Azure Portal:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkourosh-forti-hands%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fkourosh-forti-hands%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FcreateUiDefinition.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkourosh-forti-hands%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json)
 
 ## What This Deploys
 
 This ARM template creates the **custom ProwlerRole** across your specified subscriptions. This is only part of the complete setup - you'll still need to manually create the App Registration.
+
+> **Important**: When entering subscription IDs in the deployment form, use array syntax: `["subscription-id-1", "subscription-id-2"]`. Including the square brackets is required.
 
 ### Created Resources
 
