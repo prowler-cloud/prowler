@@ -19,29 +19,35 @@ This template creates **only the custom roles** across subscriptions. For comple
 
 ## Deployment Options
 
-### Option 1: Deploy to Azure Button (Role Creation Only)
+### Option 1: Deploy to Azure Button (PARTIAL - Role Creation Only)
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json)
 
-This creates the ProwlerRole across specified subscriptions.
+**⚠️ Creates only ProwlerRole - requires 5 additional manual steps**
 
-### Option 2: Complete ARM Template with App Registration
+**After deployment, complete setup using:**
+- **Recommended**: Run `../scripts/setup-prowler.sh` (will detect existing roles and complete setup)
+- **Manual**: Follow the [original manual setup guide](../create-prowler-service-principal.md) and [subscription setup](../subscriptions.md)
+
+### Option 2: Complete ARM Template with App Registration (NEARLY COMPLETE)
 
 For a complete ARM solution including App Registration, see `complete-template.json` - this uses:
 - **Deployment Scripts** with PowerShell + Microsoft Graph
 - **Managed Identity** for authentication
-- **More complex setup** but fully automated
+- **⚠️ Still requires manual admin consent for API permissions**
 
-### Option 3: Hybrid Approach (Recommended)
+### Option 3: Hybrid Approach (MOST COMPLETE)
 
-1. **Deploy ARM template** for custom roles (this template)
-2. **Run completion script** for App Registration:
+1. **Deploy ARM template** for custom roles (this template) - **PARTIAL**
+2. **Run completion script** for everything else:
 
 ```bash
 # After ARM deployment
 cd ../scripts
-./setup-prowler.sh  # This will detect existing roles and complete setup
+./setup-prowler.sh  # Completes ALL remaining steps automatically
 ```
+
+**✅ This results in 100% complete setup**
 
 ## ARM Template Deployment Methods
 
@@ -81,14 +87,35 @@ New-AzSubscriptionDeployment `
 - API permissions + admin consent
 - Role assignments to service principal
 
+## Completion Guide After Option 1 Deployment
+
+If you deployed Option 1 (ARM template), you have the ProwlerRole created but need to complete these steps:
+
+### **Recommended: Automated Completion**
+```bash
+cd ../scripts
+./setup-prowler.sh
+```
+This script will:
+- Detect existing ProwlerRole
+- Create App Registration
+- Generate client secret
+- Grant admin consent
+- Assign all roles
+
+### **Manual Completion Steps**
+1. **Create App Registration** - [Guide](../create-prowler-service-principal.md)
+2. **Assign roles to subscriptions** - [Guide](../subscriptions.md)
+3. **Export environment variables and run Prowler**
+
 ## Complete Solution Options
 
-| Method | Portal UI | Manual Steps | Time | Complexity |
-|--------|-----------|-------------|------|------------|
-| **ARM (this template)** | ✅ | 5 steps | 10+ min | Medium |
-| **ARM + Scripts hybrid** | ✅ | 1 step | 5 min | Low |
-| **Pure CLI Scripts** | ❌ | 0 steps | 2 min | Lowest |
-| **Complete ARM** | ✅ | 1 step | 8 min | High |
+| Method | Portal UI | Manual Steps | Time | Completeness |
+|--------|-----------|-------------|------|-------------|
+| **Option 1: ARM (this template)** | ✅ | 5 steps | 10+ min | ⚠️ PARTIAL |
+| **Option 2: Complete ARM** | ✅ | 1 step | 8 min | 🟡 NEARLY COMPLETE |
+| **Option 3: ARM + Scripts hybrid** | ✅ | 1 step | 5 min | ✅ 100% COMPLETE |
+| **Pure CLI Scripts** | ❌ | 0 steps | 2 min | ✅ 100% COMPLETE |
 
 ## Recommendation by Use Case
 
