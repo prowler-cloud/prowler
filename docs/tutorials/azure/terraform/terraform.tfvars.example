@@ -1,0 +1,13 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and customize the values
+
+app_name = "Prowler Security Scanner"
+
+# List of Azure subscription IDs that Prowler should have access to scan
+subscription_ids = [
+  "12345678-1234-1234-1234-123456789012",
+  "87654321-4321-4321-4321-210987654321"
+]
+
+# Client secret expiry (default: 1 year)
+client_secret_expiry = "8760h"

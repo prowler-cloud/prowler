@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "subscriptionIds",
+        "type": "Microsoft.Common.EditableGrid",
+        "ariaLabel": "Azure subscription IDs",
+        "label": "Subscription IDs",
+        "constraints": {
+          "width": "Full",
+          "rows": {
+            "count": {
+              "min": 1,
+              "max": 10
+            }
+          },
+          "columns": [
+            {
+              "id": "subscriptionId",
+              "header": "Subscription ID",
+              "width": "1fr",
+              "element": {
+                "type": "Microsoft.Common.TextBox",
+                "placeholder": "12345678-1234-1234-1234-123456789012",
+                "constraints": {
+                  "required": true,
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                  "validationMessage": "Must be a valid UUID format"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "steps": [
+      {
+        "name": "configuration",
+        "label": "Configuration",
+        "elements": [
+          {
+            "name": "customRoleName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Custom Role Name",
+            "defaultValue": "ProwlerRole",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-zA-Z0-9 ._-]+$",
+              "validationMessage": "Role name can contain letters, numbers, spaces, dots, underscores and hyphens"
+            },
+            "toolTip": "Name for the custom role that will be created"
+          },
+          {
+            "name": "infoBox",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "This template creates the custom ProwlerRole across specified subscriptions. You will still need to manually create the App Registration and assign roles. See the documentation for complete setup instructions."
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "subscriptionIds": "[map(steps('basics').subscriptionIds, (item) => item.subscriptionId)]",
+      "customRoleName": "[steps('configuration').customRoleName]"
+    }
+  }
+}

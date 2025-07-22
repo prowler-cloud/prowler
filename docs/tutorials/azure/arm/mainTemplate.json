@@ -1,0 +1,131 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "8381960602397537918"
+    }
+  },
+  "parameters": {
+    "subscriptionIds": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of subscription IDs where Prowler should have access"
+      }
+    },
+    "customRoleName": {
+      "type": "string",
+      "defaultValue": "ProwlerRole",
+      "metadata": {
+        "description": "Name for the custom role"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[deployment().location]",
+      "metadata": {
+        "description": "Location for deployments"
+      }
+    }
+  },
+  "variables": {
+    "customRoleDescription": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role",
+    "customRoleActions": [
+      "Microsoft.Web/sites/host/listkeys/action",
+      "Microsoft.Web/sites/config/list/Action"
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "[concat('prowler-role-', parameters('subscriptionIds')[copyIndex()])]",
+      "subscriptionId": "[parameters('subscriptionIds')[copyIndex()]]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "roleDeploymentLoop",
+        "count": "[length(parameters('subscriptionIds'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "roleName": {
+              "type": "string"
+            },
+            "roleDescription": {
+              "type": "string"
+            },
+            "roleActions": {
+              "type": "array"
+            }
+          },
+          "variables": {
+            "roleDefName": "[guid(subscription().id, parameters('roleName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleDefinitions",
+              "apiVersion": "2022-04-01",
+              "name": "[variables('roleDefName')]",
+              "properties": {
+                "roleName": "[parameters('roleName')]",
+                "description": "[parameters('roleDescription')]",
+                "type": "CustomRole",
+                "permissions": [
+                  {
+                    "actions": "[parameters('roleActions')]",
+                    "notActions": [],
+                    "dataActions": [],
+                    "notDataActions": []
+                  }
+                ],
+                "assignableScopes": [
+                  "[subscription().id]"
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "roleDefinitionId": {
+              "type": "string",
+              "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleDefName'))]"
+            }
+          }
+        },
+        "parameters": {
+          "roleName": {
+            "value": "[parameters('customRoleName')]"
+          },
+          "roleDescription": {
+            "value": "[variables('customRoleDescription')]"
+          },
+          "roleActions": {
+            "value": "[variables('customRoleActions')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "deploymentInfo": {
+      "type": "object",
+      "value": {
+        "message": "Custom roles created successfully. Please complete the following manual steps:",
+        "manualSteps": [
+          "1. Create App Registration in Azure AD with name 'Prowler Security Scanner'",
+          "2. Add API permissions: Domain.Read.All, Policy.Read.All, UserAuthenticationMethod.Read.All",
+          "3. Create client secret",
+          "4. Grant admin consent for API permissions",
+          "5. Assign Reader and ProwlerRole to the service principal on target subscriptions"
+        ],
+        "subscriptionsConfigured": "[parameters('subscriptionIds')]",
+        "customRoleName": "[parameters('customRoleName')]"
+      }
+    }
+  }
+}

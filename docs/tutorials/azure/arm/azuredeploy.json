@@ -1,0 +1,111 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Creates Prowler App Registration and Service Principal with required permissions for Azure security scanning"
+  },
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "defaultValue": "Prowler Security Scanner",
+      "metadata": {
+        "description": "Name of the Prowler App Registration"
+      }
+    },
+    "subscriptionIds": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of subscription IDs that Prowler should have access to scan"
+      }
+    },
+    "clientSecretDisplayName": {
+      "type": "string",
+      "defaultValue": "Prowler Client Secret",
+      "metadata": {
+        "description": "Display name for the client secret"
+      }
+    }
+  },
+  "variables": {
+    "appRegistrationName": "[parameters('appName')]",
+    "customRoleName": "ProwlerRole",
+    "customRoleDescription": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role",
+    "readerRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "createCustomRoles",
+      "subscriptionId": "[parameters('subscriptionIds')[copyIndex()]]",
+      "location": "[deployment().location]",
+      "copy": {
+        "name": "customRoleLoop",
+        "count": "[length(parameters('subscriptionIds'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleDefinitions",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(subscription().subscriptionId, variables('customRoleName'))]",
+              "properties": {
+                "roleName": "[variables('customRoleName')]",
+                "description": "[variables('customRoleDescription')]",
+                "type": "CustomRole",
+                "permissions": [
+                  {
+                    "actions": [
+                      "Microsoft.Web/sites/host/listkeys/action",
+                      "Microsoft.Web/sites/config/list/Action"
+                    ]
+                  }
+                ],
+                "assignableScopes": [
+                  "[subscription().id]"
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "customRoleId": {
+              "type": "string",
+              "value": "[subscriptionResourceId(parameters('subscriptionIds')[copyIndex()], 'Microsoft.Authorization/roleDefinitions', guid(parameters('subscriptionIds')[copyIndex()], variables('customRoleName')))]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "applicationId": {
+      "type": "string",
+      "value": "[reference('appRegistration').appId]",
+      "metadata": {
+        "description": "The Application (Client) ID of the created app registration"
+      }
+    },
+    "tenantId": {
+      "type": "string",
+      "value": "[tenant().tenantId]",
+      "metadata": {
+        "description": "The Azure AD Tenant ID"
+      }
+    },
+    "servicePrincipalObjectId": {
+      "type": "string",
+      "value": "[reference('servicePrincipal').objectId]",
+      "metadata": {
+        "description": "The Object ID of the created service principal"
+      }
+    },
+    "deploymentInstructions": {
+      "type": "string",
+      "value": "[concat('App Registration created successfully. Manual steps required: 1) Create client secret in Azure Portal, 2) Grant admin consent for API permissions, 3) Assign Reader and ProwlerRole to subscriptions. See README for detailed instructions.')]"
+    }
+  }
+}
