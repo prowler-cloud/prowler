@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Control } from "react-hook-form";
 
 import { InfoIcon } from "@/components/icons";
@@ -15,23 +14,11 @@ export const M365ServicePrincipalUserForm = ({
     <>
       <div className="flex flex-col">
         <div className="text-md font-bold leading-9 text-default-foreground">
-          Service Principal + User Credentials
+          Connect using Application/Service Principal and User Credentials
         </div>
         <div className="text-sm text-default-500">
           Connect using Service Principal credentials combined with user
-          authentication for PowerShell modules.
-        </div>
-      </div>
-
-      <div className="flex items-center rounded-lg border border-system-info bg-system-info-medium p-3 text-sm dark:text-default-300">
-        <InfoIcon className="mr-2 inline h-4 w-4 flex-shrink-0" />
-        <div className="text-xs">
-          <p className="mb-2 font-extrabold">This method provides:</p>
-          <ul className="list-inside list-disc space-y-1">
-            <li>Service Principal authentication for Microsoft Graph APIs</li>
-            <li>User credentials for PowerShell modules access</li>
-            <li>Complete M365 service coverage</li>
-          </ul>
+          authentication.
         </div>
       </div>
 
@@ -82,7 +69,7 @@ export const M365ServicePrincipalUserForm = ({
       />
 
       <span className="text-xs font-bold text-default-500">
-        User Credentials for PowerShell
+        User Credentials
       </span>
 
       <CustomInput
@@ -117,19 +104,6 @@ export const M365ServicePrincipalUserForm = ({
           By September 2025, User Authentication will be deprecated.
         </p>
       </div>
-
-      <p className="text-sm text-default-500">
-        For more information on setting up authentication, see the{" "}
-        <Link
-          href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
-        >
-          M365 setup documentation
-        </Link>
-        .
-      </p>
     </>
   );
 };
