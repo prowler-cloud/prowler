@@ -57,6 +57,49 @@ check_prerequisites() {
     print_success "Prerequisites met"
 }
 
+get_graph_permissions() {
+    print_header "Getting Microsoft Graph API Information"
+    
+    # Get Microsoft Graph Service Principal ID
+    print_warning "Fetching Microsoft Graph service principal..."
+    GRAPH_SP=$(az ad sp list --display-name "Microsoft Graph" --query "[0]" 2>/dev/null)
+    
+    if [[ -z "$GRAPH_SP" || "$GRAPH_SP" == "null" ]]; then
+        print_error "Could not find Microsoft Graph service principal"
+        exit 1
+    fi
+    
+    GRAPH_APP_ID=$(echo $GRAPH_SP | jq -r '.appId')
+    print_success "Found Microsoft Graph App ID: $GRAPH_APP_ID"
+    
+    # Get required permission IDs dynamically
+    print_warning "Fetching required permission IDs..."
+    
+    # Get Domain.Read.All permission ID
+    DOMAIN_READ_ALL_ID=$(echo $GRAPH_SP | jq -r '.appRoles[] | select(.value=="Domain.Read.All") | .id')
+    if [[ -z "$DOMAIN_READ_ALL_ID" || "$DOMAIN_READ_ALL_ID" == "null" ]]; then
+        print_error "Could not find Domain.Read.All permission ID"
+        exit 1
+    fi
+    print_success "Domain.Read.All ID: $DOMAIN_READ_ALL_ID"
+    
+    # Get Policy.Read.All permission ID
+    POLICY_READ_ALL_ID=$(echo $GRAPH_SP | jq -r '.appRoles[] | select(.value=="Policy.Read.All") | .id')
+    if [[ -z "$POLICY_READ_ALL_ID" || "$POLICY_READ_ALL_ID" == "null" ]]; then
+        print_error "Could not find Policy.Read.All permission ID"
+        exit 1
+    fi
+    print_success "Policy.Read.All ID: $POLICY_READ_ALL_ID"
+    
+    # Get UserAuthenticationMethod.Read.All permission ID
+    USER_AUTH_READ_ALL_ID=$(echo $GRAPH_SP | jq -r '.appRoles[] | select(.value=="UserAuthenticationMethod.Read.All") | .id')
+    if [[ -z "$USER_AUTH_READ_ALL_ID" || "$USER_AUTH_READ_ALL_ID" == "null" ]]; then
+        print_error "Could not find UserAuthenticationMethod.Read.All permission ID"
+        exit 1
+    fi
+    print_success "UserAuthenticationMethod.Read.All ID: $USER_AUTH_READ_ALL_ID"
+}
+
 get_current_subscription() {
     echo ""
     print_header "Subscription Configuration"
@@ -96,48 +139,21 @@ create_app_registration() {
         
         # Update required permissions to ensure they're correct
         print_warning "Updating API permissions for existing app..."
-        az ad app update --id "$APP_ID" --required-resource-accesses @- << 'EOF' >/dev/null
+        PERMISSIONS_JSON=$(cat << EOF
 [
     {
-        "resourceAppId": "00000003-0000-0000-c000-000000000000",
+        "resourceAppId": "$GRAPH_APP_ID",
         "resourceAccess": [
             {
-                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+                "id": "$DOMAIN_READ_ALL_ID",
                 "type": "Role"
             },
             {
-                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+                "id": "$POLICY_READ_ALL_ID",
                 "type": "Role"
             },
             {
-                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
-                "type": "Role"
-            }
-        ]
-    }
-]
-EOF
-        print_success "Updated API permissions for existing app"
-    else
-        # Create new app registration
-        print_warning "Creating new app registration with name: $APP_NAME"
-        APP_OUTPUT=$(az ad app create \
-            --display-name "$APP_NAME" \
-            --required-resource-accesses @- << 'EOF'
-[
-    {
-        "resourceAppId": "00000003-0000-0000-c000-000000000000",
-        "resourceAccess": [
-            {
-                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
-                "type": "Role"
-            },
-            {
-                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
-                "type": "Role"
-            },
-            {
-                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
+                "id": "$USER_AUTH_READ_ALL_ID",
                 "type": "Role"
             }
         ]
@@ -145,6 +161,38 @@ EOF
 ]
 EOF
         )
+        
+        echo "$PERMISSIONS_JSON" | az ad app update --id "$APP_ID" --required-resource-accesses @- >/dev/null
+        print_success "Updated API permissions for existing app"
+    else
+        # Create new app registration
+        print_warning "Creating new app registration with name: $APP_NAME"
+        PERMISSIONS_JSON=$(cat << EOF
+[
+    {
+        "resourceAppId": "$GRAPH_APP_ID",
+        "resourceAccess": [
+            {
+                "id": "$DOMAIN_READ_ALL_ID",
+                "type": "Role"
+            },
+            {
+                "id": "$POLICY_READ_ALL_ID",
+                "type": "Role"
+            },
+            {
+                "id": "$USER_AUTH_READ_ALL_ID",
+                "type": "Role"
+            }
+        ]
+    }
+]
+EOF
+        )
+        
+        APP_OUTPUT=$(echo "$PERMISSIONS_JSON" | az ad app create \
+            --display-name "$APP_NAME" \
+            --required-resource-accesses @-)
         
         APP_ID=$(echo $APP_OUTPUT | jq -r '.appId')
         APP_OBJECT_ID=$(echo $APP_OUTPUT | jq -r '.id')
@@ -421,6 +469,7 @@ main() {
     echo ""
     
     check_prerequisites
+    get_graph_permissions
     get_current_subscription
     create_app_registration
     create_custom_role

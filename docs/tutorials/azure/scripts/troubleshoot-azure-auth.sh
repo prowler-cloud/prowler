@@ -126,7 +126,10 @@ if [[ -n "$AZURE_CLIENT_ID" ]]; then
         
         # Check API permissions
         print_info "Checking API permissions..."
-        PERMISSIONS=$(az ad app permission list --id "$AZURE_CLIENT_ID" --query "[?resourceAppId=='00000003-0000-0000-c000-000000000000'].resourceAccess[].id" -o tsv)
+        # Get Microsoft Graph App ID dynamically
+        GRAPH_APP_ID=$(az ad sp list --display-name "Microsoft Graph" --query "[0].appId" -o tsv 2>/dev/null)
+        
+        PERMISSIONS=$(az ad app permission list --id "$AZURE_CLIENT_ID" --query "[?resourceAppId=='$GRAPH_APP_ID'].resourceAccess[].id" -o tsv)
         
         REQUIRED_PERMISSIONS=(
             "7ab1d382-f21e-4acd-a863-ba3e13f7da61"  # Directory.Read.All
