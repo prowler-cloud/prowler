@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.10.0] (Prowler v5.10.0) UNRELEASED
+
+### Fixed
+- Use the correct @staticmethod decorator for `set_identity` and `set_session_config` methods in AwsProvider [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+
+---
+
 ## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed
