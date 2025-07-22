@@ -20,7 +20,7 @@ import {
   ERROR_MESSAGES,
   URLS,
   verifyLoadingState,
-} from "./auth-helpers";
+} from "./helpers";
 
 test.describe("Login Flow", () => {
   test.beforeEach(async ({ page }) => {
