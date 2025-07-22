@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Creates Prowler custom roles across subscriptions. App Registration must be created separately."
+  },
+  "parameters": {
+    "subscriptionIds": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of subscription IDs where Prowler should have access"
+      }
+    },
+    "customRoleName": {
+      "type": "string",
+      "defaultValue": "ProwlerRole",
+      "metadata": {
+        "description": "Name for the custom role"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[deployment().location]",
+      "metadata": {
+        "description": "Location for deployments"
+      }
+    }
+  },
+  "variables": {
+    "customRoleDescription": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role",
+    "customRoleActions": [
+      "Microsoft.Web/sites/host/listkeys/action",
+      "Microsoft.Web/sites/config/list/Action"
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/roleDefinitions",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(subscription().id, parameters('customRoleName'))]",
+      "properties": {
+        "roleName": "[parameters('customRoleName')]",
+        "description": "[variables('customRoleDescription')]",
+        "type": "CustomRole",
+        "permissions": [
+          {
+            "actions": "[variables('customRoleActions')]",
+            "notActions": [],
+            "dataActions": [],
+            "notDataActions": []
+          }
+        ],
+        "assignableScopes": [
+          "[subscription().id]"
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "deploymentInfo": {
+      "type": "object",
+      "value": {
+        "message": "Custom role created successfully. Complete setup requires additional steps.",
+        "subscriptionsConfigured": "[subscription().id]",
+        "customRoleName": "[parameters('customRoleName')]",
+        "nextSteps": {
+          "1": "Create App Registration using Azure CLI or Portal",
+          "2": "Use the provided complete-setup.sh script for full automation",
+          "command": "cd ../scripts && ./setup-prowler.sh"
+        }
+      }
+    },
+    "roleDefinitionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/roleDefinitions', guid(subscription().id, parameters('customRoleName')))]"
+    }
+  }
+}
