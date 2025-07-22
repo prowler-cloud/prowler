@@ -2,8 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.9.3] (Prowler UNRELEASED)
 
-## [v5.9.2] (Prowler UNRELEASED)
+### Fixed
+- Avoid false positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
+
+---
+
+## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed
 - Use the correct resource name in `defender_domain_dkim_enabled` check [(#8334)](https://github.com/prowler-cloud/prowler/pull/8334)
