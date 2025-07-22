@@ -83,14 +83,32 @@ jobs:
       - name: Load database fixtures for e2e tests
         run: |
           docker compose exec -T api sh -c '
-            echo "Loading all fixtures from api/fixtures/dev/..."
-            for fixture in api/fixtures/dev/*.json; do
+            echo "Loading fixtures in correct order..."
+
+            # Load users first
+            echo "Loading users..."
+            poetry run python manage.py loaddata api/fixtures/dev/0_dev_users.json --database admin
+
+            # Load tenants and memberships second
+            echo "Loading tenants and memberships..."
+            poetry run python manage.py loaddata api/fixtures/dev/1_dev_tenants.json --database admin
+
+            # Load remaining fixtures
+            echo "Loading remaining fixtures..."
+            for fixture in api/fixtures/dev/[2-9]*.json; do
               if [ -f "$fixture" ]; then
                 echo "Loading $fixture"
                 poetry run python manage.py loaddata "$fixture" --database admin
               fi
             done
-            echo "All database fixtures loaded successfully!"
+
+            echo "Verifying users exist in database..."
+            echo "Checking dev user..."
+            poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email=\"dev@prowler.com\").exists())" --database admin
+            echo "Checking e2e user..."
+            poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email=\"e2e@prowler.com\").exists())" --database admin
+
+            echo "All database fixtures loaded and verified successfully!"
           '
       - name: Verify API and test user setup
         run: |
