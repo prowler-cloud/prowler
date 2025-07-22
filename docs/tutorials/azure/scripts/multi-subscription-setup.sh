@@ -1,0 +1,307 @@
+#!/bin/bash
+
+# Prowler Azure Setup Script for Multiple Subscriptions
+# Automates the complete setup of Azure authentication for Prowler across multiple subscriptions
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Configuration
+APP_NAME="Prowler Security Scanner"
+CUSTOM_ROLE_NAME="ProwlerRole"
+
+# Functions
+print_header() {
+    echo -e "${BLUE}${BOLD}🔧 $1${NC}"
+    echo "======================================"
+}
+
+print_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
+check_prerequisites() {
+    print_header "Checking Prerequisites"
+    
+    if ! command -v az &> /dev/null; then
+        print_error "Azure CLI not found. Please install Azure CLI first."
+        echo "Install from: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli"
+        exit 1
+    fi
+    
+    if ! command -v jq &> /dev/null; then
+        print_error "jq not found. Please install jq first."
+        echo "Install from: https://stedolan.github.io/jq/download/"
+        exit 1
+    fi
+    
+    if ! az account show &> /dev/null; then
+        print_error "Please log in to Azure CLI first: az login"
+        exit 1
+    fi
+    
+    print_success "Prerequisites met"
+}
+
+get_subscription_ids() {
+    echo ""
+    print_header "Subscription Configuration"
+    
+    echo -e "${BLUE}${BOLD}Available subscriptions:${NC}"
+    az account list --query "[].{Name:name, SubscriptionId:id, State:state}" --output table
+    
+    echo ""
+    echo -e "${YELLOW}Enter subscription IDs that Prowler should scan (one per line, empty line to finish):${NC}"
+    
+    SUBSCRIPTION_IDS=()
+    while IFS= read -r line; do
+        if [[ -z "$line" ]]; then
+            break
+        fi
+        
+        # Validate subscription ID format (basic UUID validation)
+        if [[ $line =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+            SUBSCRIPTION_IDS+=("$line")
+            print_success "Added subscription: $line"
+        else
+            print_warning "Invalid subscription ID format: $line"
+        fi
+    done
+    
+    if [[ ${#SUBSCRIPTION_IDS[@]} -eq 0 ]]; then
+        print_error "No valid subscription IDs provided"
+        exit 1
+    fi
+    
+    echo ""
+    print_success "Will configure Prowler for ${#SUBSCRIPTION_IDS[@]} subscriptions"
+}
+
+create_app_registration() {
+    print_header "Creating App Registration"
+    
+    # Create app registration
+    print_warning "Creating app registration with name: $APP_NAME"
+    APP_OUTPUT=$(az ad app create \
+        --display-name "$APP_NAME" \
+        --required-resource-accesses @- << 'EOF'
+[
+    {
+        "resourceAppId": "00000003-0000-0000-c000-000000000000",
+        "resourceAccess": [
+            {
+                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+                "type": "Role"
+            },
+            {
+                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+                "type": "Role"
+            },
+            {
+                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
+                "type": "Role"
+            }
+        ]
+    }
+]
+EOF
+    )
+    
+    APP_ID=$(echo $APP_OUTPUT | jq -r '.appId')
+    APP_OBJECT_ID=$(echo $APP_OUTPUT | jq -r '.id')
+    
+    print_success "Created App Registration: $APP_ID"
+    
+    # Create service principal
+    print_warning "Creating service principal..."
+    SP_OUTPUT=$(az ad sp create --id $APP_ID)
+    SP_OBJECT_ID=$(echo $SP_OUTPUT | jq -r '.id')
+    
+    print_success "Created Service Principal: $SP_OBJECT_ID"
+    
+    # Create client secret
+    print_warning "Creating client secret..."
+    SECRET_OUTPUT=$(az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
+    CLIENT_SECRET=$(echo $SECRET_OUTPUT | jq -r '.password')
+    
+    print_success "Created client secret"
+    
+    # Grant admin consent (requires Global Administrator or Application Administrator)
+    echo ""
+    print_warning "Attempting to grant admin consent for API permissions..."
+    
+    if az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
+        print_success "Admin consent granted automatically"
+    else
+        print_warning "Could not grant admin consent automatically"
+        print_warning "Please manually grant admin consent in Azure Portal:"
+        print_warning "1. Go to Azure AD > App registrations > $APP_NAME"
+        print_warning "2. Click 'API permissions' > 'Grant admin consent'"
+    fi
+}
+
+create_custom_roles() {
+    print_header "Creating Custom Roles"
+    
+    for SUB_ID in "${SUBSCRIPTION_IDS[@]}"; do
+        print_warning "Creating ProwlerRole in subscription: $SUB_ID"
+        
+        # Check if role already exists
+        if az role definition list --name "$CUSTOM_ROLE_NAME" --subscription "$SUB_ID" --query "[0].roleName" -o tsv 2>/dev/null | grep -q "$CUSTOM_ROLE_NAME"; then
+            print_warning "ProwlerRole already exists in subscription $SUB_ID"
+        else
+            # Create custom role
+            az role definition create --subscription "$SUB_ID" --role-definition @- << EOF
+{
+    "Name": "$CUSTOM_ROLE_NAME",
+    "IsCustom": true,
+    "Description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role",
+    "AssignableScopes": ["/subscriptions/$SUB_ID"],
+    "Actions": [
+        "Microsoft.Web/sites/host/listkeys/action",
+        "Microsoft.Web/sites/config/list/Action"
+    ]
+}
+EOF
+            print_success "Created ProwlerRole in subscription: $SUB_ID"
+        fi
+    done
+}
+
+assign_roles() {
+    print_header "Assigning Roles"
+    
+    for SUB_ID in "${SUBSCRIPTION_IDS[@]}"; do
+        print_warning "Assigning roles in subscription: $SUB_ID"
+        
+        # Assign Reader role
+        print_warning "Assigning Reader role..."
+        if az role assignment create \
+            --role "Reader" \
+            --assignee $SP_OBJECT_ID \
+            --subscription "$SUB_ID" >/dev/null 2>&1; then
+            print_success "Assigned Reader role in $SUB_ID"
+        else
+            print_warning "Reader role assignment may already exist in $SUB_ID"
+        fi
+        
+        # Assign ProwlerRole
+        print_warning "Assigning ProwlerRole..."
+        if az role assignment create \
+            --role "$CUSTOM_ROLE_NAME" \
+            --assignee $SP_OBJECT_ID \
+            --subscription "$SUB_ID" >/dev/null 2>&1; then
+            print_success "Assigned ProwlerRole in $SUB_ID"
+        else
+            print_warning "ProwlerRole assignment may already exist in $SUB_ID"
+        fi
+    done
+}
+
+display_summary() {
+    print_header "Setup Complete!"
+    
+    TENANT_ID=$(az account show --query tenantId -o tsv)
+    
+    echo ""
+    echo -e "${GREEN}${BOLD}🎉 Prowler Azure authentication is now configured!${NC}"
+    echo ""
+    echo -e "${BLUE}${BOLD}Configuration Details:${NC}"
+    echo "----------------------"
+    echo -e "Application Name: ${BOLD}$APP_NAME${NC}"
+    echo -e "Application ID: ${BOLD}$APP_ID${NC}"
+    echo -e "Tenant ID: ${BOLD}$TENANT_ID${NC}"
+    echo -e "Subscriptions: ${BOLD}${#SUBSCRIPTION_IDS[@]}${NC}"
+    echo ""
+    
+    # Print all subscription IDs
+    echo -e "${BLUE}${BOLD}Configured Subscriptions:${NC}"
+    for SUB_ID in "${SUBSCRIPTION_IDS[@]}"; do
+        echo -e "- ${GREEN}$SUB_ID${NC}"
+    done
+    echo ""
+    
+    # Create a formatted box for the client secret
+    WIDTH=80
+    LINE=$(printf "%${WIDTH}s" | tr " " "-")
+    echo -e "${YELLOW}$LINE${NC}"
+    echo -e "${YELLOW}|${NC} ${BOLD}CLIENT SECRET (SAVE THIS SECURELY - IT WON'T BE SHOWN AGAIN!)${NC}"
+    echo -e "${YELLOW}$LINE${NC}"
+    echo -e "${YELLOW}|${NC} ${GREEN}${BOLD}$CLIENT_SECRET${NC}"
+    echo -e "${YELLOW}$LINE${NC}"
+    echo ""
+    
+    echo -e "${BLUE}${BOLD}Prowler App Instructions:${NC}"
+    echo "----------------------"
+    echo -e "1. Open Prowler App"
+    echo -e "2. Go to Configuration > Cloud Providers > Add Cloud Provider > Microsoft Azure"
+    echo -e "3. Enter these credentials:"
+    echo -e "   - Client ID: ${BOLD}$APP_ID${NC}"
+    echo -e "   - Client Secret: (use the value above)"
+    echo -e "   - Tenant ID: ${BOLD}$TENANT_ID${NC}"
+    echo -e "4. Click Next and complete the setup"
+    echo -e "5. Repeat for each subscription if needed"
+    echo ""
+    
+    echo -e "${BLUE}${BOLD}CLI Instructions:${NC}"
+    echo "----------------------"
+    echo "To use with Prowler CLI, run:"
+    echo ""
+    echo -e "${GREEN}export AZURE_CLIENT_ID=\"$APP_ID\"${NC}"
+    echo -e "${GREEN}export AZURE_CLIENT_SECRET=\"$CLIENT_SECRET\"${NC}"
+    echo -e "${GREEN}export AZURE_TENANT_ID=\"$TENANT_ID\"${NC}"
+    echo -e "${GREEN}prowler azure --sp-env-auth${NC}"
+    echo ""
+    echo -e "Prowler will automatically scan all configured subscriptions."
+    echo ""
+    
+    # Save configuration to file
+    CONFIG_FILE="prowler-config.env"
+    cat > $CONFIG_FILE << EOF
+# Prowler Azure Configuration
+# Generated on $(date)
+# Multi-subscription setup: ${#SUBSCRIPTION_IDS[@]} subscriptions
+export AZURE_CLIENT_ID="$APP_ID"
+export AZURE_CLIENT_SECRET="$CLIENT_SECRET"
+export AZURE_TENANT_ID="$TENANT_ID"
+EOF
+    
+    print_success "Configuration saved to $CONFIG_FILE"
+    echo -e "You can source this file with: ${GREEN}source $CONFIG_FILE${NC}"
+}
+
+# Main execution
+main() {
+    echo ""
+    echo -e "${BLUE}${BOLD}===================================================${NC}"
+    echo -e "${BLUE}${BOLD}   Prowler Azure Setup - Multiple Subscriptions     ${NC}"
+    echo -e "${BLUE}${BOLD}===================================================${NC}"
+    echo ""
+    echo -e "This script will configure Prowler across ${BOLD}multiple subscriptions${NC}."
+    echo -e "For single subscription setup, use ${BOLD}single-subscription-setup.sh${NC} instead."
+    echo ""
+    
+    check_prerequisites
+    get_subscription_ids
+    create_app_registration
+    create_custom_roles
+    assign_roles
+    display_summary
+}
+
+# Run main function
+main
