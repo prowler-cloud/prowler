@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 
 from api.db_utils import rls_transaction
 from api.models import Integration
+from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
@@ -105,7 +106,8 @@ def upload_s3_integration(
                     output_file_patterns = {
                         ".csv": CSV,
                         ".html": HTML,
-                        ".json": OCSF,
+                        ".ocsf.json": OCSF,
+                        ".asff.json": ASFF,
                     }
 
                     base_dir = os.path.dirname(output_directory)
