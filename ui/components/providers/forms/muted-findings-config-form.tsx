@@ -1,7 +1,6 @@
 "use client";
 
 import { Textarea } from "@nextui-org/react";
-import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 
@@ -13,7 +12,7 @@ import {
 } from "@/actions/processors";
 import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
+import { CustomButton, CustomLink } from "@/components/ui/custom";
 import { FormButtons } from "@/components/ui/form";
 import { fontMono } from "@/config/fonts";
 import { convertToYaml, parseYamlValidation } from "@/lib/yaml";
@@ -178,13 +177,12 @@ export const MutedFindingsConfigForm = ({
             </li>
             <li>
               Learn more about configuring the Mutelist{" "}
-              <Link
+              <CustomLink
                 href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/"
-                target="_blank"
                 className="text-primary-600 hover:underline"
               >
                 here
-              </Link>
+              </CustomLink>
               .
             </li>
             <li>

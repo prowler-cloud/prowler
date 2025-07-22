@@ -1,10 +1,9 @@
 "use client";
 
 import { Snippet } from "@nextui-org/react";
-import Link from "next/link";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { CustomSection } from "@/components/ui/custom";
+import { CustomLink, CustomSection } from "@/components/ui/custom";
 import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
@@ -151,15 +150,15 @@ export const FindingDetail = ({
                     {attributes.check_metadata.remediation.recommendation.text}
                   </p>
                   {attributes.check_metadata.remediation.recommendation.url && (
-                    <Link
+                    <CustomLink
                       href={
                         attributes.check_metadata.remediation.recommendation.url
                       }
-                      target="_blank"
-                      className="text-sm text-blue-500 hover:underline"
+                      className="text-blue-500 hover:underline"
+                      size="sm"
                     >
                       Learn more
-                    </Link>
+                    </CustomLink>
                   )}
                 </div>
               </InfoField>
@@ -179,13 +178,13 @@ export const FindingDetail = ({
             {/* Additional Resources section */}
             {attributes.check_metadata.remediation.code.other && (
               <InfoField label="Additional Resources">
-                <Link
+                <CustomLink
                   href={attributes.check_metadata.remediation.code.other}
-                  target="_blank"
-                  className="text-sm text-blue-500 hover:underline"
+                  className="text-blue-500 hover:underline"
+                  size="sm"
                 >
                   View documentation
-                </Link>
+                </CustomLink>
               </InfoField>
             )}
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { LogOut, User } from "lucide-react";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 import { logOut } from "@/actions/auth";
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/tooltip/tooltip";
 
 import { Button } from "../button/button";
+import { CustomLink } from "../custom";
 
 export const UserNav = () => {
   const { data: session } = useSession();
@@ -80,10 +80,14 @@ export const UserNav = () => {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem className="hover:cursor-pointer" asChild>
-            <Link href="/profile" className="flex items-center">
+            <CustomLink
+              href="/profile"
+              className="flex items-center font-normal text-prowler-black dark:text-prowler-white"
+              target="_self"
+            >
               <User className="text-muted-foreground mr-3 h-4 w-4" />
               Account
-            </Link>
+            </CustomLink>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

@@ -1,12 +1,15 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
-import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import {
+  CustomButton,
+  CustomLink,
+  CustomTextarea,
+} from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 
 interface SuggestedAction {
@@ -138,12 +141,14 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 ? "Please configure your OpenAI API key to use Lighthouse AI."
                 : "OpenAI API key is invalid. Please update your key to use Lighthouse AI."}
             </p>
-            <Link
+            <CustomLink
               href="/lighthouse/config"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              target="_self"
+              size="sm"
             >
               Configure API Key
-            </Link>
+            </CustomLink>
           </div>
         </div>
       )}

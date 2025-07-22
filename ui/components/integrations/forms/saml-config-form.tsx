@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { z } from "zod";
@@ -8,7 +7,11 @@ import { z } from "zod";
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomServerInput } from "@/components/ui/custom";
+import {
+  CustomButton,
+  CustomLink,
+  CustomServerInput,
+} from "@/components/ui/custom";
 import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { apiBaseUrl } from "@/lib";
@@ -239,9 +242,13 @@ export const SamlConfigForm = ({
               assign the user&apos;s role. If the role does not exist, one will
               be created with minimal permissions. You can assign permissions to
               roles on the{" "}
-              <Link href="/roles">
+              <CustomLink
+                href="/roles"
+                target="_self"
+                className="text-gray-600 underline dark:text-gray-400"
+              >
                 <span className="underline">Roles</span>
-              </Link>{" "}
+              </CustomLink>{" "}
               page.
             </p>
           </div>

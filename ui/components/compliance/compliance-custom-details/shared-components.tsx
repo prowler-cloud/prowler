@@ -1,5 +1,6 @@
-import Link from "next/link";
+"use client";
 
+import { CustomLink } from "@/components/ui/custom";
 import { cn } from "@/lib/utils";
 
 export const ComplianceLink = ({
@@ -10,14 +11,13 @@ export const ComplianceLink = ({
   children: React.ReactNode;
 }) => {
   return (
-    <Link
+    <CustomLink
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="break-all text-sm text-blue-600 decoration-1 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+      className="break-all text-blue-600 decoration-1 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+      size="sm"
     >
       {children}
-    </Link>
+    </CustomLink>
   );
 };
 

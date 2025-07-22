@@ -14,7 +14,7 @@ import { PasswordRequirementsMessage } from "@/components/auth/oss/password-vali
 import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomButton, CustomInput, CustomLink } from "@/components/ui/custom";
 import {
   Form,
   FormControl,
@@ -301,13 +301,12 @@ export const AuthForm = ({
                               onChange={(e) => field.onChange(e.target.checked)}
                             >
                               I agree with the&nbsp;
-                              <Link
+                              <CustomLink
                                 href="https://prowler.com/terms-of-service/"
                                 size="sm"
-                                target="_blank"
                               >
                                 Terms of Service
-                              </Link>
+                              </CustomLink>
                               &nbsp;of Prowler
                             </Checkbox>
                           </FormControl>
@@ -359,6 +358,8 @@ export const AuthForm = ({
                       content={
                         <div className="flex-inline text-small">
                           Social Login with Google is not enabled.{" "}
+                          {/* TODO: The following <Link> component doesn't currently have an href prop, so it hasn't been replaced with CustomLink. Once href is provided,
+                          update this to use CustomLink instead. */}
                           <Link
                             target="_blank"
                             rel="noopener noreferrer"
@@ -392,6 +393,8 @@ export const AuthForm = ({
                       content={
                         <div className="flex-inline text-small">
                           Social Login with Github is not enabled.{" "}
+                          {/* TODO: The following <Link> component doesn't currently have an href prop, so it hasn't been replaced with CustomLink. Once href is provided,
+                          update this to use CustomLink instead. */}
                           <Link
                             target="_blank"
                             rel="noopener noreferrer"
@@ -451,12 +454,16 @@ export const AuthForm = ({
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;
-              <Link href="/sign-up">Sign up</Link>
+              <CustomLink href="/sign-up" target="_self">
+                Sign up
+              </CustomLink>
             </p>
           ) : (
             <p className="text-center text-small">
               Already have an account?&nbsp;
-              <Link href="/sign-in">Log in</Link>
+              <CustomLink href="/sign-in" target="_self">
+                Log in
+              </CustomLink>
             </p>
           )}
         </div>

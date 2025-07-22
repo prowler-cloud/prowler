@@ -1,5 +1,5 @@
+"use client";
 import { MenuIcon } from "lucide-react";
-import Link from "next/link";
 
 import { ProwlerExtended } from "@/components/icons";
 import {
@@ -13,6 +13,7 @@ import {
 import { Menu } from "@/components/ui/sidebar/menu";
 
 import { Button } from "../button/button";
+import { CustomLink } from "../custom";
 
 export function SheetMenu() {
   return (
@@ -34,9 +35,13 @@ export function SheetMenu() {
             variant="link"
             asChild
           >
-            <Link href="/" className="flex items-center gap-2">
+            <CustomLink
+              href="/"
+              className="flex items-center gap-2"
+              target="_self"
+            >
               <ProwlerExtended />
-            </Link>
+            </CustomLink>
           </Button>
         </SheetHeader>
         <Menu isOpen />
