@@ -4,7 +4,7 @@
 
 Click the button below to deploy the Prowler custom role directly from the Azure Portal:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FcreateUiDefinition.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkourosh-forti-hands%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fkourosh-forti-hands%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FcreateUiDefinition.json)
 
 ## What This Deploys
 
