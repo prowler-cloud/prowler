@@ -111,15 +111,15 @@ create_app_registration() {
         "resourceAppId": "00000003-0000-0000-c000-000000000000",
         "resourceAccess": [
             {
-                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",  // Domain.Read.All
                 "type": "Role"
             },
             {
-                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",  // Policy.Read.All
                 "type": "Role"
             },
             {
-                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
+                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",  // UserAuthenticationMethod.Read.All
                 "type": "Role"
             }
         ]
@@ -138,15 +138,15 @@ EOF
         "resourceAppId": "00000003-0000-0000-c000-000000000000",
         "resourceAccess": [
             {
-                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+                "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",  // Domain.Read.All
                 "type": "Role"
             },
             {
-                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
+                "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",  // Policy.Read.All
                 "type": "Role"
             },
             {
-                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",
+                "id": "38d9df27-64da-44fd-b7c5-a6fbac20248f",  // UserAuthenticationMethod.Read.All
                 "type": "Role"
             }
         ]
