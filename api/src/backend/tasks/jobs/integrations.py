@@ -116,7 +116,10 @@ def upload_s3_integration(
                         output_class = globals().get(class_name)
                         if output_class and file_path and os.path.exists(file_path):
                             output = output_class(
-                                findings=[], compliance=None, file_path=file_path
+                                findings=[],
+                                compliance=None,
+                                file_path=file_path,
+                                file_extension=".csv",
                             )
                             # Create file descriptor for the existing file to avoid temp file creation
                             output.create_file_descriptor(file_path)
