@@ -82,34 +82,53 @@ jobs:
           echo "Database migrations completed!"
       - name: Load database fixtures for e2e tests
         run: |
+          echo "🔄 Starting fixture loading process..."
           docker compose exec -T api sh -c '
+            set -e  # Exit on any error
             echo "Loading fixtures in correct order..."
 
             # Load users first
-            echo "Loading users..."
+            echo "📁 Loading users..."
             poetry run python manage.py loaddata api/fixtures/dev/0_dev_users.json --database admin
+            echo "✅ Users loaded successfully"
 
             # Load tenants and memberships second
-            echo "Loading tenants and memberships..."
+            echo "📁 Loading tenants and memberships..."
             poetry run python manage.py loaddata api/fixtures/dev/1_dev_tenants.json --database admin
+            echo "✅ Tenants and memberships loaded successfully"
 
             # Load remaining fixtures
-            echo "Loading remaining fixtures..."
+            echo "📁 Loading remaining fixtures..."
             for fixture in api/fixtures/dev/[2-9]*.json; do
               if [ -f "$fixture" ]; then
                 echo "Loading $fixture"
                 poetry run python manage.py loaddata "$fixture" --database admin
               fi
             done
+            echo "✅ All remaining fixtures loaded successfully"
 
-            echo "Verifying users exist in database..."
+            echo "🔍 Verifying users exist in database..."
             echo "Checking dev user..."
-            poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email=\"dev@prowler.com\").exists())" --database admin
-            echo "Checking e2e user..."
-            poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email=\"e2e@prowler.com\").exists())" --database admin
+            dev_exists=$(poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email='"'"'dev@prowler.com'"'"').exists())" --database admin)
+            echo "Dev user exists: $dev_exists"
 
-            echo "All database fixtures loaded and verified successfully!"
+            echo "Checking e2e user..."
+            e2e_exists=$(poetry run python manage.py shell -c "from api.models import User; print(User.objects.filter(email='"'"'e2e@prowler.com'"'"').exists())" --database admin)
+            echo "E2E user exists: $e2e_exists"
+
+            if [ "$dev_exists" != "True" ]; then
+              echo "❌ Dev user not found in database!"
+              exit 1
+            fi
+
+            if [ "$e2e_exists" != "True" ]; then
+              echo "❌ E2E user not found in database!"
+              exit 1
+            fi
+
+            echo "✅ All database fixtures loaded and verified successfully!"
           '
+          echo "🎉 Fixture loading completed successfully"
       - name: Verify API and test user setup
         run: |
           echo "Verifying API is ready and test user exists..."
