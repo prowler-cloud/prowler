@@ -80,6 +80,9 @@ jobs:
             poetry run python manage.py migrate --database admin
           '
           echo "Database migrations completed!"
+      - name: Copy fixtures into api container
+        run: |
+          docker cp ./api/fixtures/dev/. api:/app/api/fixtures/dev/
       - name: Load database fixtures for e2e tests
         run: |
           docker compose exec -T api sh -c '
