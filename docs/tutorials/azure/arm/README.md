@@ -54,7 +54,11 @@ cd ../scripts
 ### Portal Deployment
 1. Azure Portal > "Deploy a custom template"
 2. Upload `mainTemplate.json` 
-3. Enter subscription IDs
+3. Enter subscription IDs as an array:
+   ```json
+   ["subscription-id-1", "subscription-id-2"]
+   ```
+   > **Important**: When entering subscription IDs, you must include the square brackets even for a single subscription ID: `["subscription-id"]`
 4. Deploy
 
 ### Azure CLI Deployment
