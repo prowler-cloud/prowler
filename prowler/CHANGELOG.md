@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.9.2] (Prowler v5.9.2) UNRELEASED
+## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed
 - Use the correct resource name in `defender_domain_dkim_enabled` check [(#8334)](https://github.com/prowler-cloud/prowler/pull/8334)
