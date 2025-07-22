@@ -251,9 +251,8 @@ class TestCheckIntegrations:
 
 @pytest.mark.django_db
 class TestProwlerIntegrationConnectionTest:
-    @patch("api.utils.AwsProvider")
     @patch("api.utils.S3")
-    def test_s3_integration_connection_success(self, mock_s3_class, mock_aws_provider):
+    def test_s3_integration_connection_success(self, mock_s3_class):
         """Test successful S3 integration connection."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AMAZON_S3
@@ -263,37 +262,43 @@ class TestProwlerIntegrationConnectionTest:
         }
         integration.configuration = {"bucket_name": "test-bucket"}
 
-        mock_session = MagicMock()
-        mock_aws_provider.return_value.session.current_session = mock_session
-
         mock_connection = Connection(is_connected=True)
         mock_s3_class.test_connection.return_value = mock_connection
 
         result = prowler_integration_connection_test(integration)
 
         assert result.is_connected is True
-        mock_aws_provider.assert_called_once_with(**integration.credentials)
         mock_s3_class.test_connection.assert_called_once_with(
             **integration.credentials,
             bucket_name="test-bucket",
             raise_on_exception=False,
         )
 
-    @patch("api.utils.AwsProvider")
-    def test_aws_provider_exception_handling(self, mock_aws_provider):
-        """Test AWS provider exception is properly caught and returned."""
+    @patch("api.utils.S3")
+    def test_aws_provider_exception_handling(self, mock_s3_class):
+        """Test S3 connection exception is properly caught and returned."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AMAZON_S3
-        integration.credentials = {"invalid": "credentials"}
+        integration.credentials = {
+            "aws_access_key_id": "invalid",
+            "aws_secret_access_key": "credentials",
+        }
         integration.configuration = {"bucket_name": "test-bucket"}
 
         test_exception = Exception("Invalid credentials")
-        mock_aws_provider.side_effect = test_exception
+        mock_connection = Connection(is_connected=False, error=test_exception)
+        mock_s3_class.test_connection.return_value = mock_connection
 
         result = prowler_integration_connection_test(integration)
 
         assert result.is_connected is False
         assert result.error == test_exception
+        mock_s3_class.test_connection.assert_called_once_with(
+            aws_access_key_id="invalid",
+            aws_secret_access_key="credentials",
+            bucket_name="test-bucket",
+            raise_on_exception=False,
+        )
 
     @patch("api.utils.AwsProvider")
     @patch("api.utils.S3")
