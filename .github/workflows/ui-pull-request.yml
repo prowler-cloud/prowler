@@ -97,13 +97,57 @@ jobs:
           echo "Verifying API is ready and test user exists..."
           # Wait a bit more for everything to be ready
           sleep 5
+
           # Test API health endpoint
-          curl -f http://localhost:${PROWLER_API_PORT}/api/v1/docs || {
-            echo "API health check failed"
+          echo "Testing API docs endpoint..."
+          curl -f http://localhost:${PROWLER_API_PORT}/api/v1/docs >/dev/null || {
+            echo "❌ API health check failed"
             exit 1
           }
-          # Test login with e2e user to verify fixtures are loaded
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          echo "✅ API docs endpoint is responding"
+
+          # Test schema endpoint for more detailed API verification
+          echo "Testing API schema endpoint..."
+          schema_response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${PROWLER_API_PORT}/api/v1/schema)
+          if [ "$schema_response" = "200" ]; then
+            echo "✅ API schema endpoint is responding"
+          else
+            echo "⚠️  API schema endpoint returned HTTP $schema_response"
+          fi
+
+          # Test with dev user first (known working user from README)
+          echo "Testing authentication with dev user..."
+          dev_response=$(curl -s -w "HTTP_CODE:%{http_code}" -X POST \
+            -H "Content-Type: application/vnd.api+json" \
+            -H "Accept: application/vnd.api+json" \
+            -d '{
+              "data": {
+                "type": "tokens",
+                "attributes": {
+                  "email": "dev@prowler.com",
+                  "password": "Thisisapassword123@"
+                }
+              }
+            }' \
+            http://localhost:${PROWLER_API_PORT}/api/v1/tokens)
+
+          dev_http_code=$(echo "$dev_response" | grep -o 'HTTP_CODE:[0-9]*' | cut -d':' -f2)
+          dev_body=$(echo "$dev_response" | sed 's/HTTP_CODE:[0-9]*$//')
+
+          echo "Dev user response (HTTP $dev_http_code):"
+          echo "$dev_body" | head -c 500
+          echo ""
+
+          if [ "$dev_http_code" = "200" ]; then
+            echo "✅ Dev user authentication successful"
+          else
+            echo "❌ Dev user authentication failed (HTTP $dev_http_code)"
+            echo "This indicates a general API issue"
+          fi
+
+          # Test with e2e user
+          echo "Testing authentication with e2e user..."
+          e2e_response=$(curl -s -w "HTTP_CODE:%{http_code}" -X POST \
             -H "Content-Type: application/vnd.api+json" \
             -H "Accept: application/vnd.api+json" \
             -d '{
@@ -117,11 +161,22 @@ jobs:
             }' \
             http://localhost:${PROWLER_API_PORT}/api/v1/tokens)
 
-          if [ "$response" = "200" ]; then
-            echo "✅ Test user authentication successful"
+          e2e_http_code=$(echo "$e2e_response" | grep -o 'HTTP_CODE:[0-9]*' | cut -d':' -f2)
+          e2e_body=$(echo "$e2e_response" | sed 's/HTTP_CODE:[0-9]*$//')
+
+          echo "E2E user response (HTTP $e2e_http_code):"
+          echo "$e2e_body" | head -c 500
+          echo ""
+
+          if [ "$e2e_http_code" = "200" ]; then
+            echo "✅ E2E user authentication successful"
           else
-            echo "❌ Test user authentication failed (HTTP $response)"
-            echo "This indicates the fixtures may not be loaded correctly"
+            echo "❌ E2E user authentication failed (HTTP $e2e_http_code)"
+            if [ "$dev_http_code" = "200" ]; then
+              echo "Dev user works but E2E user doesn't - fixture loading issue with E2E user"
+            else
+              echo "Both users fail - general API or fixture loading issue"
+            fi
             exit 1
           fi
       - name: Setup Node.js
