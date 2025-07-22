@@ -82,7 +82,7 @@ jobs:
           echo "Database migrations completed!"
       - name: Copy local fixtures into API container
         run: |
-          docker cp ./api/src/backend/api/fixtures/dev/. api:/home/prowler/backend/api/fixtures/dev
+          docker cp ./api/src/backend/api/fixtures/dev/. prowler-api:/home/prowler/backend/api/fixtures/dev
       - name: Load database fixtures for e2e tests
         run: |
           docker compose exec -T api sh -c '
