@@ -7,7 +7,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0035_finding_muted_reason"),
+        ("api", "0042_scan_scans_prov_ins_desc_idx"),
     ]
 
     operations = [
