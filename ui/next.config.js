@@ -15,9 +15,11 @@ const cspHeader = `
 
 module.exports = {
   poweredByHeader: false,
-  // ...(process.env.NODE_ENV === "production" && {
-  output: "standalone",
-  // }),
+  // Use standalone only in production deployments, not for CI/testing
+  ...(process.env.NODE_ENV === "production" &&
+    !process.env.CI && {
+      output: "standalone",
+    }),
   async headers() {
     return [
       {
