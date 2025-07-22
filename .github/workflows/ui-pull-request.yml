@@ -61,7 +61,7 @@ jobs:
           persist-credentials: false
       - name: Start needed services with docker compose
         run: |
-          docker compose up -d api worker worker-beat
+          docker compose up -d
       - name: Wait for prowler-api to respond
         run: |
           echo "Waiting for prowler-api..."
