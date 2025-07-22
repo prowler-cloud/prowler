@@ -78,7 +78,6 @@ export const GitHubCredentialsForm = ({
       <CustomInput
         control={control}
         name={ProviderCredentialFields.GITHUB_APP_ID}
-        type="number"
         label="GitHub App ID"
         labelPlacement="inside"
         placeholder="Enter the GitHub App ID"
@@ -184,7 +183,6 @@ export const GitHubCredentialsForm = ({
         <CustomInput
           control={control}
           name={ProviderCredentialFields.GITHUB_APP_ID}
-          type="number"
           label="GitHub App ID"
           labelPlacement="inside"
           placeholder="Enter the GitHub App ID"
