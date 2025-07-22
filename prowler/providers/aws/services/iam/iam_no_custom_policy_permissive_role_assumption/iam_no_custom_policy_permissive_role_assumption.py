@@ -13,7 +13,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                 return any("*" in r for r in resource)
             return False
 
-        for policy in iam_client.policies:
+        for policy in iam_client.policies.values():
             # Check only custom policies
             if policy.type == "Custom":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
