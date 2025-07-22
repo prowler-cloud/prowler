@@ -1,9 +1,14 @@
 import os
+from glob import glob
 
 from celery.utils.log import get_task_logger
 
 from api.db_utils import rls_transaction
 from api.models import Integration
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+from prowler.lib.outputs.csv.csv import CSV
+from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.common.models import Connection
 
@@ -40,17 +45,16 @@ def get_s3_client_from_integration(
 
 
 def upload_s3_integration(
-    tenant_id: str, provider_id: str, serialized_outputs: dict
+    tenant_id: str, provider_id: str, output_directory: str
 ) -> bool:
     """
     Upload the specified output files to an S3 bucket from an integration.
-    If the S3 bucket environment variables are not configured,
-    the function returns None without performing an upload.
+    Reconstructs output objects from files in the output directory instead of using serialized data.
 
     Args:
         tenant_id (str): The tenant identifier, used as part of the S3 key prefix.
         provider_id (str): The provider identifier, used as part of the S3 key prefix.
-        serialized_outputs (dict): Dictionary containing serialized output information with file paths and classes.
+        output_directory (str): Path to the directory containing output files.
 
     Returns:
         bool: True if all integrations were executed, False otherwise.
@@ -77,6 +81,13 @@ def upload_s3_integration(
         for integration in integrations:
             try:
                 connected, s3 = get_s3_client_from_integration(integration)
+                # Since many scans will be send to the same S3 bucket, we need to
+                # add the output directory to the S3 output directory to avoid
+                # overwriting the files and known the scan origin.
+                folder = os.getenv("OUTPUT_DIRECTORY", "/tmp/prowler_api_output")
+                s3._output_directory = (
+                    f"{s3._output_directory}{output_directory.split(folder)[-1]}"
+                )
             except Exception as e:
                 logger.error(
                     f"S3 connection failed for integration {integration.id}: {e}"
@@ -85,43 +96,37 @@ def upload_s3_integration(
 
             if connected:
                 try:
-                    # Recreate generated_outputs from serialized info.
-                    # This is necessary because Celery cannot serialize complex output objects
-                    # (CSV, HTML, ASFF, etc.) across task boundaries. We receive serialized
-                    # metadata and reconstruct the objects here to use with send_to_bucket().
-                    # This approach maintains compatibility with the existing CLI send_to_bucket() method.
+                    # Reconstruct generated_outputs from files in output directory
+                    # This approach scans the output directory for files and creates the appropriate
+                    # output objects based on file extensions and naming patterns.
                     generated_outputs = {"regular": [], "compliance": []}
 
-                    # Recreate regular outputs
-                    for output_info in serialized_outputs.get("regular", []):
-                        class_name = output_info["class_name"]
-                        file_path = output_info["file_path"]
-                        output_class = globals().get(class_name)
-                        if output_class and file_path and os.path.exists(file_path):
-                            if class_name == "GenericCompliance":
-                                output = output_class(
-                                    findings=[], compliance=None, file_path=file_path
-                                )
-                            else:
+                    # Find and recreate regular outputs (CSV, HTML, OCSF)
+                    output_file_patterns = {
+                        ".csv": CSV,
+                        ".html": HTML,
+                        ".json": OCSF,
+                    }
+
+                    base_dir = os.path.dirname(output_directory)
+                    for extension, output_class in output_file_patterns.items():
+                        pattern = f"{output_directory}*{extension}"
+                        for file_path in glob(pattern):
+                            if os.path.exists(file_path):
                                 output = output_class(findings=[], file_path=file_path)
+                                output.create_file_descriptor(file_path)
+                                generated_outputs["regular"].append(output)
 
-                            # Create file descriptor for the existing file to avoid temp file creation
-                            output.create_file_descriptor(file_path)
-                            generated_outputs["regular"].append(output)
-
-                    # Recreate compliance outputs
-                    for output_info in serialized_outputs.get("compliance", []):
-                        class_name = output_info["class_name"]
-                        file_path = output_info["file_path"]
-                        output_class = globals().get(class_name)
-                        if output_class and file_path and os.path.exists(file_path):
-                            output = output_class(
+                    # Find and recreate compliance outputs
+                    compliance_pattern = os.path.join(base_dir, "compliance", "*.csv")
+                    for file_path in glob(compliance_pattern):
+                        if os.path.exists(file_path):
+                            output = GenericCompliance(
                                 findings=[],
                                 compliance=None,
                                 file_path=file_path,
                                 file_extension=".csv",
                             )
-                            # Create file descriptor for the existing file to avoid temp file creation
                             output.create_file_descriptor(file_path)
                             generated_outputs["compliance"].append(output)
 

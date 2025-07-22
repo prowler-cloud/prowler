@@ -318,12 +318,6 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     output_writers = {}
     compliance_writers = {}
-    # We need to serialize output objects for Celery task communication because:
-    # - Output objects (CSV, HTML, ASFF, etc.) are not JSON serializable
-    # - Celery requires JSON serializable data to pass between tasks
-    # - We extract essential info (class_name, file_path) to recreate objects later
-    # - This approach allows us to reuse the existing send_to_bucket() function used by CLI
-    serialized_outputs = {"regular": [], "compliance": []}
 
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
@@ -352,16 +346,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 ),
                 is_last,
             )
-            if initialization:
-                serialized_outputs["regular"].append(
-                    {
-                        "class_name": writer.__class__.__name__,
-                        "file_path": (
-                            writer.file_path if hasattr(writer, "file_path") else None
-                        ),
-                    }
-                )
-            else:
+            if not initialization:
                 writer.transform(fos)
             writer.batch_write_data_to_file(**extra)
             writer._data.clear()
@@ -389,16 +374,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 ),
                 is_last,
             )
-            if initialization:
-                serialized_outputs["compliance"].append(
-                    {
-                        "class_name": writer.__class__.__name__,
-                        "file_path": (
-                            writer.file_path if hasattr(writer, "file_path") else None
-                        ),
-                    }
-                )
-            else:
+            if not initialization:
                 writer.transform(fos, compliance_obj, name)
             writer.batch_write_data_to_file()
             writer._data.clear()
@@ -414,14 +390,12 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         )
 
     if s3_integrations:
-        # Pass serialized output metadata to S3 integration task instead of the actual objects
-        # to avoid Celery JSON serialization errors with complex output classes.
-        # This allows reusing the existing send_to_bucket() method without modifications.
+        # Pass the output directory path to S3 integration task to reconstruct objects from files
         s3_integration_task.apply_async(
             kwargs={
                 "tenant_id": tenant_id,
                 "provider_id": provider_id,
-                "serialized_outputs": serialized_outputs,
+                "output_directory": out_dir,
             }
         ).get(
             disable_sync_subtasks=False
@@ -527,7 +501,7 @@ def check_integrations_task(tenant_id: str, provider_id: str):
 def s3_integration_task(
     tenant_id: str,
     provider_id: str,
-    serialized_outputs: dict,
+    output_directory: str,
 ):
     """
     Process S3 integrations for a provider.
@@ -535,6 +509,6 @@ def s3_integration_task(
     Args:
         tenant_id (str): The tenant identifier
         provider_id (str): The provider identifier
-        serialized_outputs (dict): Dictionary containing serialized output information
+        output_directory (str): Path to the directory containing output files
     """
-    return upload_s3_integration(tenant_id, provider_id, serialized_outputs)
+    return upload_s3_integration(tenant_id, provider_id, output_directory)
