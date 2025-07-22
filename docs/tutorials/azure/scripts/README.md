@@ -53,8 +53,16 @@ If you already have Azure CLI and jq installed:
 
 ### Permissions Required
 
-- **Application Administrator** (for app registration)
+- **Application Administrator** or **Global Administrator** (for app registration and admin consent)
 - **User Access Administrator** or **Owner** (for subscription role assignments)
+
+### About Admin Consent
+
+To programmatically grant admin consent for API permissions, you need:
+- **Global Administrator** or 
+- **Privileged Role Administrator** and **Application Administrator** roles
+
+If you don't have these roles, the script will guide you through granting admin consent manually with a browser-based workflow. This is a common scenario and the script handles it automatically.
 
 ## Usage with Prowler App
 
@@ -88,7 +96,16 @@ If you get permission errors:
 
 ### Admin Consent Issues
 
-If admin consent fails automatically:
-1. Go to Azure Portal > Azure AD > App registrations
-2. Find "Prowler Security Scanner"
-3. Click "API permissions" > "Grant admin consent"
+The scripts now handle admin consent issues interactively by:
+1. Detecting when automated consent fails
+2. Providing a direct URL to the consent page
+3. Offering to open the browser automatically
+4. Guiding you through the consent process
+5. Validating that consent was successfully granted
+
+If you encounter any issues with admin consent:
+1. Ensure you're logged in with an account that has **Global Administrator** rights
+2. Go to Azure Portal > Azure AD > App registrations
+3. Find "Prowler Security Scanner"
+4. Click "API permissions" > "Grant admin consent"
+5. Verify that all permissions show green checkmarks

@@ -138,10 +138,57 @@ EOF
     if az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
         print_success "Admin consent granted automatically"
     else
-        print_warning "Could not grant admin consent automatically"
-        print_warning "Please manually grant admin consent in Azure Portal:"
-        print_warning "1. Go to Azure AD > App registrations > $APP_NAME"
-        print_warning "2. Click 'API permissions' > 'Grant admin consent'"
+        echo ""
+        print_warning "Could not grant admin consent automatically. This is a common issue."
+        print_warning "We need to complete this step manually for the setup to work correctly."
+        echo ""
+        
+        # Create consent URL
+        TENANT_ID=$(az account show --query tenantId -o tsv)
+        CONSENT_URL="https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/CallAnAPI/appId/$APP_ID/isMSAApp/"
+        
+        echo -e "${YELLOW}${BOLD}Admin Consent Required:${NC}"
+        echo "--------------------------------------"
+        echo -e "1. ${BOLD}Open this URL in your browser:${NC}"
+        echo -e "   ${BLUE}$CONSENT_URL${NC}"
+        echo -e "2. Sign in as an admin if needed"
+        echo -e "3. Click 'API permissions' in the left menu"
+        echo -e "4. Click the '${BOLD}Grant admin consent for <your directory>${NC}' button"
+        echo -e "5. Click 'Yes' when prompted"
+        echo -e "6. You should see green checkmarks next to all permissions"
+        echo ""
+        
+        # Try to open the URL automatically
+        if command -v open &>/dev/null; then
+            echo -e "${YELLOW}Would you like to open the consent page automatically? (y/n)${NC}"
+            read -r OPEN_BROWSER
+            if [[ "$OPEN_BROWSER" =~ ^[Yy]$ ]]; then
+                echo "Opening browser..."
+                open "$CONSENT_URL"
+            fi
+        elif command -v xdg-open &>/dev/null; then
+            echo -e "${YELLOW}Would you like to open the consent page automatically? (y/n)${NC}"
+            read -r OPEN_BROWSER
+            if [[ "$OPEN_BROWSER" =~ ^[Yy]$ ]]; then
+                echo "Opening browser..."
+                xdg-open "$CONSENT_URL"
+            fi
+        fi
+        
+        echo ""
+        echo -e "${YELLOW}Press Enter after you've granted admin consent...${NC}"
+        read -r
+        
+        # Verify if consent was granted by checking one of the permissions
+        echo "Verifying admin consent..."
+        CONSENT_CHECK=$(az ad app show --id $APP_ID --query "appRoles[?value=='Domain.Read.All'].allowedMemberTypes" -o tsv 2>/dev/null)
+        
+        if [[ -n "$CONSENT_CHECK" ]]; then
+            print_success "Admin consent verified successfully!"
+        else
+            print_warning "Could not verify admin consent. This may affect Prowler's ability to scan certain resources."
+            print_warning "You can try granting consent again later using the Azure portal."
+        fi
     fi
 }
 
