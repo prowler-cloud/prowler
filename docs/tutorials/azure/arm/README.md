@@ -21,7 +21,7 @@ This template creates **only the custom roles** across subscriptions. For comple
 
 ### Option 1: Deploy to Azure Button (PARTIAL - Role Creation Only)
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkourosh-forti-hands%2Fprowler%2Fmaster%2Fdocs%2Ftutorials%2Fazure%2Farm%2FmainTemplate.json)
 
 **⚠️ Creates only ProwlerRole - requires 5 additional manual steps**
 

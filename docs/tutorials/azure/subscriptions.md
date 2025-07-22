@@ -61,13 +61,13 @@ az role assignment create --role "Reader" --assignee <user, group, or service pr
 
 ### Prowler Custom Role
 
-Moreover, some additional read-only permissions not included in the built-in reader role are needed for some checks, for this kind of checks we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Once the custom role is created you can assign it in the same way as the `Reader` role.
+Moreover, some additional read-only permissions not included in the built-in reader role are needed for some checks, for this kind of checks we use a custom role. This role is defined in [prowler-azure-custom-role](https://github.com/kourosh-forti-hands/prowler/blob/master/permissions/prowler-azure-custom-role.json). Once the custom role is created you can assign it in the same way as the `Reader` role.
 
 The checks that needs the `ProwlerRole` can be consulted in the [requirements section](../../getting-started/requirements.md#checks-that-require-prowlerrole).
 
 #### Create ProwlerRole from Azure Portal
 
-1. Download the [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json) file and modify the `assignableScopes` field to be the subscription ID where the role assignment is going to be made, it should be shomething like `/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
+1. Download the [prowler-azure-custom-role](https://github.com/kourosh-forti-hands/prowler/blob/master/permissions/prowler-azure-custom-role.json) file and modify the `assignableScopes` field to be the subscription ID where the role assignment is going to be made, it should be shomething like `/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`.
 2. Access your subscription.
 3. Select "Access control (IAM)".
 4. Click on "+ Add" and select "Add custom role".

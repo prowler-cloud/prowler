@@ -124,7 +124,7 @@ Assign the following Microsoft Graph permissions:
 
 ### Assign Permissions at the Subscription Level
 
-1. Download the [Prowler Azure Custom Role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json)
+1. Download the [Prowler Azure Custom Role](https://github.com/kourosh-forti-hands/prowler/blob/master/permissions/prowler-azure-custom-role.json)
 
     ![Azure Custom Role](./img/download-prowler-role.png)
 
