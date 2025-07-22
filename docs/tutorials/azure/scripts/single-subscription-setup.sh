@@ -240,7 +240,7 @@ EOF
     echo ""
     print_warning "Attempting to grant admin consent for API permissions..."
     
-    if az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
+    if timeout 30s az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
         print_success "Admin consent granted automatically"
     else
         echo ""
