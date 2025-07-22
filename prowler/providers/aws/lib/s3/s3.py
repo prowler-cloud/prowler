@@ -1,7 +1,6 @@
 import os
 import tempfile
 from os import path
-from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
@@ -207,7 +206,6 @@ class S3:
 
                         if key == "compliance":
                             object_name = f"{bucket_directory}/{key}/{basename}"
-                            file_extension = Path(basename).suffix
                         else:
                             object_name = f"{bucket_directory}/{self.generate_subfolder_name_by_extension(output.file_extension)}/{basename}"
                         logger.info(
