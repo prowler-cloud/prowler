@@ -405,61 +405,49 @@ def is_policy_public(
         for statement in policy.get("Statement", []):
             # Only check allow statements
             if statement["Effect"] == "Allow":
+                has_public_access = has_public_principal(statement)
+
                 principal = statement.get("Principal", "")
-                if (
-                    "*" in principal
-                    or "arn:aws:iam::*:root" in principal
-                    or (
-                        isinstance(principal, dict)
-                        and (
-                            "*" in principal.get("AWS", "")
-                            or "arn:aws:iam::*:root" in principal.get("AWS", "")
-                            or (
-                                isinstance(principal.get("AWS"), str)
-                                and source_account
-                                and not is_cross_account_allowed
-                                and source_account not in principal.get("AWS", "")
-                            )
-                            or (
-                                isinstance(principal.get("AWS"), list)
-                                and (
-                                    "*" in principal["AWS"]
-                                    or "arn:aws:iam::*:root" in principal["AWS"]
-                                    or (
-                                        source_account
-                                        and not is_cross_account_allowed
-                                        and not any(
-                                            source_account in principal_aws
-                                            for principal_aws in principal["AWS"]
-                                        )
-                                    )
-                                )
-                            )
-                            or "*" in principal.get("CanonicalUser", "")
-                            or "arn:aws:iam::*:root"
-                            in principal.get("CanonicalUser", "")
-                            or check_cross_service_confused_deputy
-                            and (
-                                # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
-                                (
-                                    ".amazonaws.com" in principal.get("Service", "")
-                                    or ".amazon.com" in principal.get("Service", "")
-                                    or "*" in principal.get("Service", "")
-                                )
-                                and (
-                                    "secretsmanager.amazonaws.com"
-                                    not in principal.get(
-                                        "Service", ""
-                                    )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
-                                    or "eks.amazonaws.com"
-                                    not in principal.get(
-                                        "Service", ""
-                                    )  # AWS ensures that resources called by EKS are executed in the same AWS account
-                                )
-                            )
+                if not has_public_access and isinstance(principal, dict):
+                    # Check for cross-account access when not allowed
+                    if (
+                        isinstance(principal.get("AWS"), str)
+                        and source_account
+                        and not is_cross_account_allowed
+                        and source_account not in principal.get("AWS", "")
+                    ) or (
+                        isinstance(principal.get("AWS"), list)
+                        and source_account
+                        and not is_cross_account_allowed
+                        and not any(
+                            source_account in principal_aws
+                            for principal_aws in principal["AWS"]
                         )
-                    )
-                ) and (
+                    ):
+                        has_public_access = True
+
+                    # Check for cross-service confused deputy
+                    if check_cross_service_confused_deputy and (
+                        # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
+                        (
+                            ".amazonaws.com" in principal.get("Service", "")
+                            or ".amazon.com" in principal.get("Service", "")
+                            or "*" in principal.get("Service", "")
+                        )
+                        and (
+                            "secretsmanager.amazonaws.com"
+                            not in principal.get(
+                                "Service", ""
+                            )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
+                            or "eks.amazonaws.com"
+                            not in principal.get(
+                                "Service", ""
+                            )  # AWS ensures that resources called by EKS are executed in the same AWS account
+                        )
+                    ):
+                        has_public_access = True
+
+                if has_public_access and (
                     not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
                     or (
                         statement.get(
