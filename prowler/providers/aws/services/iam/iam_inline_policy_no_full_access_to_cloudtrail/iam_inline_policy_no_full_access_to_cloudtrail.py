@@ -9,7 +9,7 @@ class iam_inline_policy_no_full_access_to_cloudtrail(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
 
-        for policy in iam_client.policies:
+        for policy in iam_client.policies.values():
             # Check only inline policies
             if policy.type == "Inline":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)

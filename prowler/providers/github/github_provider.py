@@ -99,6 +99,7 @@ class GithubProvider(Provider):
         personal_access_token: str = "",
         oauth_app_token: str = "",
         github_app_key: str = "",
+        github_app_key_content: str = "",
         github_app_id: int = 0,
         # Provider configuration
         config_path: str = None,
@@ -114,6 +115,7 @@ class GithubProvider(Provider):
             personal_access_token (str): GitHub personal access token.
             oauth_app_token (str): GitHub OAuth App token.
             github_app_key (str): GitHub App key.
+            github_app_key_content (str): GitHub App key content.
             github_app_id (int): GitHub App ID.
             config_path (str): Path to the audit configuration file.
             config_content (dict): Audit configuration content.
@@ -128,6 +130,7 @@ class GithubProvider(Provider):
             oauth_app_token,
             github_app_id,
             github_app_key,
+            github_app_key_content,
         )
 
         # Set the authentication method
