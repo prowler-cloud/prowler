@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
@@ -21,6 +21,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from psqlextra.manager import PostgresManager
@@ -305,122 +306,6 @@ class APIKey(RowLevelSecurityProtectedModel):
         if not self.prefix:
             raise ValueError("API key prefix must be set before saving")
         super().save(*args, **kwargs)
-
-
-class APIKeyActivity(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
-    """
-    Model for tracking comprehensive API key activity for security auditing and compliance.
-
-    This model provides persistent logging of all API key usage, including:
-    - Key identifier and name for audit trails
-    - User information for accountability
-    - Endpoint access patterns for security monitoring
-    - Timestamp and source IP for incident response
-    - Request/response metadata for forensic analysis
-
-    All API key requests are logged here regardless of success/failure status
-    to provide complete visibility into API key usage patterns.
-
-    APIKeyActivity uses a partitioned table to store activity records. The partitions are created based on the UUIDv7 `id` field.
-
-    Note when creating migrations, you must use `python manage.py pgmakemigrations` to create the migrations.
-    """
-
-    objects = PostgresManager()
-    all_objects = models.Manager()
-
-    class PartitioningMeta:
-        method = PostgresPartitioningMethod.RANGE
-        key = ["id"]
-
-    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
-    timestamp = models.DateTimeField(auto_now_add=True, editable=False, db_index=True)
-
-    # API Key identification - critical for audit trails
-    api_key = models.ForeignKey(
-        APIKey,
-        on_delete=models.CASCADE,
-        related_name="activity_logs",
-        related_query_name="activity_log",
-        help_text="API key that was used for this request",
-    )
-
-    # Request details - for security monitoring
-    method = models.CharField(max_length=10, help_text="HTTP method (GET, POST, etc.)")
-    endpoint = models.CharField(
-        max_length=500, help_text="API endpoint that was accessed"
-    )
-    source_ip = models.GenericIPAddressField(
-        help_text="Source IP address of the request", db_index=True
-    )
-    user_agent = models.TextField(
-        blank=True, null=True, help_text="User agent string from the request"
-    )
-
-    # Response details - for forensic analysis
-    status_code = models.IntegerField(help_text="HTTP status code of the response")
-    response_size = models.IntegerField(
-        null=True, blank=True, help_text="Size of the response in bytes"
-    )
-    duration_ms = models.IntegerField(
-        null=True, blank=True, help_text="Request duration in milliseconds"
-    )
-
-    # Additional context for security analysis
-    query_params = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Query parameters from the request (for audit purposes)",
-    )
-
-    class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "api_key_activities"
-        ordering = ["-timestamp"]
-
-        indexes = [
-            # Primary lookup patterns for security monitoring
-            models.Index(
-                fields=["api_key", "-timestamp"], name="api_key_activity_key_time_idx"
-            ),
-            models.Index(
-                fields=["tenant_id", "-timestamp"], name="api_key_activity_tenant_idx"
-            ),
-            # Security analysis indexes
-            models.Index(
-                fields=["source_ip", "-timestamp"], name="api_key_activity_ip_time_idx"
-            ),
-            models.Index(
-                fields=["endpoint", "-timestamp"], name="api_key_activity_endpoint_idx"
-            ),
-            models.Index(
-                fields=["status_code", "-timestamp"], name="api_key_activity_status_idx"
-            ),
-            # Incident response indexes
-            models.Index(
-                fields=["tenant_id", "api_key", "source_ip", "-timestamp"],
-                name="api_key_activity_incident_idx",
-            ),
-        ]
-
-        constraints = [
-            RowLevelSecurityConstraint(
-                field="tenant_id",
-                name="rls_on_%(class)s",
-                statements=["SELECT", "INSERT", "DELETE"],
-            ),
-            RowLevelSecurityConstraint(
-                field="tenant_id",
-                name="rls_on_%(class)s_default",
-                partition_name="default",
-                statements=["SELECT", "INSERT", "DELETE"],
-            ),
-        ]
-
-    class JSONAPIMeta:
-        resource_name = "api-key-activities"
-
-    def __str__(self):
-        return f"API Key Activity: {self.api_key.name} - {self.method} {self.endpoint} at {self.timestamp}"
 
 
 class Membership(models.Model):

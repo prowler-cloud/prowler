@@ -16,7 +16,7 @@ from django.test import RequestFactory
 from django.utils import timezone
 from datetime import timedelta
 
-from api.models import APIKey, APIKeyActivity, Tenant
+from api.models import APIKey, Tenant
 from api.authentication import APIKeyAuthentication
 from api.middleware import APILoggingMiddleware
 from rest_framework import exceptions
@@ -231,7 +231,7 @@ class TestAPIKeySecurityScenarios:
         assert api_key2.is_valid() is False
 
     def test_api_key_activity_logging_security_data(self, valid_api_key):
-        """Test that security-relevant data is logged in API key activity."""
+        """Test that security-relevant data is logged in structured application logs."""
         factory = RequestFactory()
         request = factory.post("/api/v1/sensitive-endpoint")
         request.META["REMOTE_ADDR"] = "192.168.1.100"
@@ -251,16 +251,27 @@ class TestAPIKeySecurityScenarios:
         with patch("api.middleware.extract_auth_info") as mock_extract_auth_info:
             mock_extract_auth_info.return_value = auth_info
 
+            # Mock the logger to capture log calls
             middleware = APILoggingMiddleware(lambda req: response)
-            middleware(request)
+            with patch.object(middleware, "logger") as mock_logger:
+                middleware(request)
 
-            # Verify security-relevant activity was logged
-            activity = APIKeyActivity.objects.first()
-            assert activity.api_key == valid_api_key
-            assert activity.source_ip == "192.168.1.100"
-            assert activity.user_agent == "PotentialThreatAgent/1.0"
-            assert activity.status_code == 403
-            assert activity.endpoint == "/api/v1/sensitive-endpoint"
+                # Verify security-relevant data was logged
+                mock_logger.info.assert_called_once()
+                call_args = mock_logger.info.call_args
+
+                # Check the log message contains API key info
+                assert "API Key:" in call_args[0][0]
+
+                # Check the extra data contains security-relevant information
+                extra_data = call_args[1]["extra"]
+                assert extra_data["api_key_id"] == str(valid_api_key.id)
+                assert extra_data["api_key_name"] == valid_api_key.name
+                assert extra_data["source_ip"] == "192.168.1.100"
+                assert extra_data["user_agent"] == "PotentialThreatAgent/1.0"
+                assert extra_data["status_code"] == 403
+                assert extra_data["path"] == "/api/v1/sensitive-endpoint"
+                assert extra_data["is_api_key_request"] is True
 
     def test_api_key_brute_force_protection_simulation(self, tenant):
         """Test simulation of brute force attacks on API key validation."""

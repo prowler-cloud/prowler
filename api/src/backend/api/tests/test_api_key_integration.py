@@ -17,7 +17,7 @@ from rest_framework.test import APIClient
 from django.utils import timezone
 from datetime import timedelta
 
-from api.models import APIKey, APIKeyActivity, Tenant
+from api.models import APIKey, Tenant
 
 
 @pytest.mark.django_db
@@ -290,7 +290,6 @@ class TestAPIKeyIntegrationWorkflows:
         )
 
         raw_api_key = create_response.json()["data"]["attributes"]["key"]
-        api_key_id = create_response.json()["data"]["id"]
 
         # Use API key for various operations
         api_client = APIClient()
@@ -308,16 +307,8 @@ class TestAPIKeyIntegrationWorkflows:
             # Some endpoints might return 404 or other status codes based on data
             # The important thing is that the request was processed and logged
 
-        # Verify activity logging
-        activities = APIKeyActivity.objects.filter(api_key_id=api_key_id)
-        assert activities.count() >= len(endpoints)
-
-        # Verify logged data quality
-        for activity in activities:
-            assert activity.method == "GET"
-            assert activity.endpoint in [endpoint for endpoint in endpoints]
-            assert activity.source_ip is not None
-            assert activity.timestamp is not None
+        # Note: API key activity is now logged to application logs only
+        # This test verifies that the API key works correctly for multiple endpoints
 
     def test_api_key_error_handling_integration(self, authenticated_jwt_client, tenant):
         """Test API key error handling in real scenarios."""
