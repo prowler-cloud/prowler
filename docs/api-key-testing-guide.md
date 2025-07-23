@@ -117,12 +117,6 @@ echo $ROLES_RESPONSE | jq .
 ADMIN_ROLE_ID=$(echo $ROLES_RESPONSE | jq -r '.data[] | select(.attributes.name == "admin") | .id')
 echo "Admin Role ID: $ADMIN_ROLE_ID"
 
-# Final check that we have a valid role ID
-if [ -z "$ADMIN_ROLE_ID" ] || [ "$ADMIN_ROLE_ID" = "null" ]; then
-  echo "❌ No roles available! Cannot create API key without a role."
-  exit 1
-fi
-
 # Step 5: Create API key
 echo "Creating API key..."
 
@@ -156,12 +150,8 @@ echo $API_KEY_RESPONSE | jq .
 API_KEY=$(echo $API_KEY_RESPONSE | jq -r '.data.attributes.key')
 API_KEY_ID=$(echo $API_KEY_RESPONSE | jq -r '.data.id')
 
-echo "✅ API Key created successfully!"
 echo "API Key: $API_KEY"
 echo "API Key ID: $API_KEY_ID"
-
-# Test the API key
-echo "Testing API key..."
 
 # List providers
 curl -X GET http://localhost:8080/api/v1/providers \

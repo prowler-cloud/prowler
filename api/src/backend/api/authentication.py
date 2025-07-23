@@ -7,7 +7,8 @@ import logging
 from django.utils import timezone
 from rest_framework import authentication, exceptions
 
-from api.db_utils import MainRouter, rls_transaction
+from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.models import APIKey, APIKeyUser
 
 logger = logging.getLogger(__name__)
