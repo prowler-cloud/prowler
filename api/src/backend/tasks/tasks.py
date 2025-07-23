@@ -21,7 +21,7 @@ from tasks.jobs.export import (
     _generate_output_directory,
     _upload_to_s3,
 )
-from tasks.jobs.integrations import check_integrations, upload_s3_integration
+from tasks.jobs.integrations import upload_s3_integration
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -481,16 +481,43 @@ def check_integrations_task(tenant_id: str, provider_id: str):
         tenant_id (str): The tenant identifier
         provider_id (str): The provider identifier
     """
-    result = check_integrations(tenant_id, provider_id)
+    logger.info(f"Checking integrations for provider {provider_id}")
+
+    try:
+        with rls_transaction(tenant_id):
+            integrations = Integration.objects.filter(
+                integrationproviderrelationship__provider_id=provider_id
+            )
+
+            if not integrations.exists():
+                logger.info(f"No integrations configured for provider {provider_id}")
+                return {"integrations_processed": 0}
+
+        integration_tasks = []
+
+        # TODO: Add other integration types here
+        # slack_integrations = integrations.filter(
+        #     integration_type=Integration.IntegrationChoices.SLACK
+        # )
+        # if slack_integrations.exists():
+        #     integration_tasks.append(
+        #        slack_integration_task.s(
+        #            tenant_id=tenant_id,
+        #            provider_id=provider_id,
+        #        )
+        #     )
+
+    except Exception as e:
+        logger.error(f"Integration check failed for provider {provider_id}: {str(e)}")
+        return {"integrations_processed": 0, "error": str(e)}
 
     # Execute all integration tasks in parallel if any were found
-    integration_tasks = result.get("tasks", [])
     if integration_tasks:
         job = group(integration_tasks)
         job.apply_async()
         logger.info(f"Launched {len(integration_tasks)} integration task(s)")
 
-    return {"integrations_processed": result["integrations_processed"]}
+    return {"integrations_processed": len(integration_tasks)}
 
 
 @shared_task(
