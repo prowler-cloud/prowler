@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { ProviderSelector } from "@/components/integrations/provider-selector";
+import { ProviderSelector } from "@/components/providers/provider-selector";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -117,17 +117,27 @@ export const S3IntegrationForm = ({
         });
         onSuccess();
       } else if (result.errors) {
+        const errorMessage = result.errors.general;
+
         toast({
           variant: "destructive",
-          title: "Error",
-          description: `Failed to ${isEditing ? "update" : "create"} S3 integration. Please check your credentials.`,
+          title: `Failed to ${isEditing ? "update" : "create"} S3 integration`,
+          description: errorMessage,
         });
       }
     } catch (error) {
+      console.error(
+        `Error ${isEditing ? "updating" : "creating"} S3 integration:`,
+        error,
+      );
+
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Connection Error",
+        description: `${errorMessage}. Please check your network connection and try again.`,
       });
     }
   };

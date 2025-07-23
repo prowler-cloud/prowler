@@ -14,7 +14,8 @@ import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
-import { S3IntegrationForm } from "./forms";
+import { S3IntegrationForm } from "./s3-integration-form";
+import { S3IntegrationCardSkeleton } from "./skeleton-s3-integration-card";
 
 interface S3IntegrationsManagerProps {
   integrations: IntegrationProps[];
@@ -30,6 +31,7 @@ export const S3IntegrationsManager = ({
     useState<IntegrationProps | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState<string | null>(null);
+  const [isOperationLoading, setIsOperationLoading] = useState(false);
   const { toast } = useToast();
 
   const handleAddIntegration = () => {
@@ -79,7 +81,8 @@ export const S3IntegrationsManager = ({
       if (result.success) {
         toast({
           title: "Success!",
-          description: "Connection test started successfully.",
+          description:
+            "Connection test started. It may take some time to complete.",
         });
       } else if (result.errors?.general) {
         toast({
@@ -95,7 +98,9 @@ export const S3IntegrationsManager = ({
         description: "Failed to test connection. Please try again.",
       });
     } finally {
-      setIsTesting(null);
+      setTimeout(() => {
+        setIsTesting(null);
+      }, 5000);
     }
   };
 
@@ -107,7 +112,11 @@ export const S3IntegrationsManager = ({
   const handleFormSuccess = () => {
     setIsModalOpen(false);
     setEditingIntegration(null);
-    // No need for manual reload, revalidatePath handles it
+    setIsOperationLoading(true);
+    // Reset loading state after a short delay to show the skeleton briefly
+    setTimeout(() => {
+      setIsOperationLoading(false);
+    }, 1500);
   };
 
   return (
@@ -151,7 +160,12 @@ export const S3IntegrationsManager = ({
         </div>
 
         {/* Integrations List */}
-        {integrations.length > 0 && (
+        {isOperationLoading ? (
+          <S3IntegrationCardSkeleton
+            variant="manager"
+            count={integrations.length || 1}
+          />
+        ) : integrations.length > 0 ? (
           <div className="grid gap-4">
             {integrations.map((integration) => (
               <Card key={integration.id} className="dark:bg-prowler-blue-400">
@@ -242,7 +256,7 @@ export const S3IntegrationsManager = ({
               </Card>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </>
   );

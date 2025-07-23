@@ -2,7 +2,7 @@ import React from "react";
 
 import { getIntegrations } from "@/actions/integrations";
 import { getProviders } from "@/actions/providers";
-import { S3IntegrationsManager } from "@/components/integrations/s3-integrations-manager";
+import { S3IntegrationsManager } from "@/components/integrations/s3/s3-integrations-manager";
 import { ContentLayout } from "@/components/ui";
 
 export default async function S3Integrations() {

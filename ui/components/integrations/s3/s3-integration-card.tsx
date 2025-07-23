@@ -8,12 +8,16 @@ import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { CustomButton } from "@/components/ui/custom";
 import { IntegrationProps } from "@/types/integrations";
 
+import { S3IntegrationCardSkeleton } from "./skeleton-s3-integration-card";
+
 interface S3IntegrationCardProps {
   integrations?: IntegrationProps[];
+  isLoading?: boolean;
 }
 
 export const S3IntegrationCard = ({
   integrations = [],
+  isLoading = false,
 }: S3IntegrationCardProps) => {
   const s3Integrations = integrations.filter(
     (integration) => integration.attributes.integration_type === "amazon_s3",
@@ -23,6 +27,15 @@ export const S3IntegrationCard = ({
   const connectedCount = s3Integrations.filter(
     (integration) => integration.attributes.connected,
   ).length;
+
+  if (isLoading) {
+    return (
+      <S3IntegrationCardSkeleton
+        variant="main"
+        count={s3Integrations.length || 1}
+      />
+    );
+  }
 
   return (
     <Card className="dark:bg-prowler-blue-400">
@@ -128,7 +141,7 @@ export const S3IntegrationCard = ({
             <>
               <div className="text-sm">
                 <span className="font-medium">Status: </span>
-                <span className="text-gray-500">Not Configured</span>
+                <span className="text-gray-500">Not configured</span>
               </div>
 
               <div className="space-y-3">
