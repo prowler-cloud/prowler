@@ -60,6 +60,10 @@ junit-reports/
 *.tfstate
 *.tfstate.*
 
+# Claude
+CLAUDE.md
+.claude/
+
 # .env
 ui/.env*
 api/.env*
