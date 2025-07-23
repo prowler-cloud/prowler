@@ -6,6 +6,7 @@ from config.custom_logging import BackendLogger
 from api.db_utils import rls_transaction
 from api.models import APIKeyActivity, APIKey
 
+
 def extract_auth_info(request) -> Dict[str, Optional[str]]:
     """Extract authentication information from the request."""
     user_id = None
