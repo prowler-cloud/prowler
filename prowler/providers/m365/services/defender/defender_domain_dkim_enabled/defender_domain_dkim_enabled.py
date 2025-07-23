@@ -26,7 +26,7 @@ class defender_domain_dkim_enabled(Check):
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=config,
-                resource_name="DKIM Configuration",
+                resource_name=config.id,
                 resource_id=config.id,
             )
             report.status = "FAIL"
