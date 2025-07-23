@@ -7,7 +7,7 @@ import logging
 from django.utils import timezone
 from rest_framework import authentication, exceptions
 
-from api.db_utils import rls_transaction
+from api.db_utils import MainRouter, rls_transaction
 from api.models import APIKey, APIKeyUser
 
 logger = logging.getLogger(__name__)
@@ -51,9 +51,9 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         logger.debug(f"Looking for API key with prefix: {prefix}")
 
         # Find potential API keys by prefix, then verify with password check
-        # Use all_objects to bypass RLS since we don't have tenant context yet
+        # Use admin database to bypass RLS since we don't have tenant context yet
         # This is necessary because we need to authenticate the API key to GET the tenant context
-        candidate_keys = APIKey.all_objects.filter(prefix=prefix)
+        candidate_keys = APIKey.objects.using(MainRouter.admin_db).filter(prefix=prefix)
 
         logger.debug(f"Found {candidate_keys.count()} candidate keys")
 

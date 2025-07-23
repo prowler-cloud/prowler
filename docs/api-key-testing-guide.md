@@ -1,11 +1,50 @@
 # API Key Testing Guide for Local Docker Deployment
 
+> **✅ Issue Resolved**: The API key authentication bug that was causing "Invalid API key" errors has been fixed. API keys now work correctly for all endpoints.
+
 This guide walks you through setting up and testing API keys on your local Prowler Docker deployment.
 
 ## Prerequisites
 
 - Docker and docker-compose installed
 - Basic understanding of REST API testing tools (curl, Postman, etc.)
+
+## Important: API Key Role Requirement
+
+**As of the latest version, all API keys must be associated with a role.** When creating an API key, you must specify a role that defines the permissions for that key. 
+
+### ⚠️ Important Format Note
+
+Due to the current API implementation, the role must be specified in the `attributes` section as a resource identifier object, **not** in the standard JSON:API `relationships` section:
+
+```json
+{
+  "data": {
+    "type": "api-keys",
+    "attributes": {
+      "name": "My API Key",
+      "role": {
+        "type": "roles", 
+        "id": "ROLE_ID"
+      }
+    }
+  }
+}
+```
+
+### Default Roles
+
+When a tenant is created, an "admin" role is automatically created with full permissions:
+
+- `manage_users`: true
+- `manage_account`: true  
+- `manage_billing`: true
+- `manage_providers`: true
+- `manage_integrations`: true
+- `manage_scans`: true
+- `unlimited_visibility`: true
+
+You can create additional custom roles with specific permission sets as needed.
 
 ## Start the Local Docker Environment
 
@@ -69,24 +108,56 @@ TENANT_RESPONSE=$(curl -s -X GET http://localhost:8080/api/v1/tenants \
 TENANT_ID=$(echo $TENANT_RESPONSE | jq -r '.data[0].id')
 echo "Tenant ID: $TENANT_ID"
 
-# Step 4: Create API key
+# Step 4: Get available roles for the tenant
+echo "Getting available roles..."
+ROLES_RESPONSE=$(curl -s -X GET http://localhost:8080/api/v1/roles \
+  -H "Authorization: Bearer $JWT_TOKEN")
+
+echo $ROLES_RESPONSE | jq .
+ADMIN_ROLE_ID=$(echo $ROLES_RESPONSE | jq -r '.data[] | select(.attributes.name == "admin") | .id')
+echo "Admin Role ID: $ADMIN_ROLE_ID"
+
+# Final check that we have a valid role ID
+if [ -z "$ADMIN_ROLE_ID" ] || [ "$ADMIN_ROLE_ID" = "null" ]; then
+  echo "❌ No roles available! Cannot create API key without a role."
+  exit 1
+fi
+
+# Step 5: Create API key
 echo "Creating API key..."
+
+# Prepare the JSON payload for debugging
+# NOTE: Due to current API implementation, role must be in attributes, not relationships
+API_KEY_PAYLOAD="{
+  \"data\": {
+    \"type\": \"api-keys\",
+    \"attributes\": {
+      \"name\": \"My Test API Key\",
+      \"expires_at\": null,
+      \"role\": {
+        \"type\": \"roles\",
+        \"id\": \"$ADMIN_ROLE_ID\"
+      }
+    }
+  }
+}"
+
+echo "Sending payload:"
+echo $API_KEY_PAYLOAD | jq .
+
 API_KEY_RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/tenants/$TENANT_ID/api-keys/create \
   -H "Content-Type: application/vnd.api+json" \
   -H "Authorization: Bearer $JWT_TOKEN" \
-  -d '{
-    "data": {
-      "type": "api-keys",
-      "attributes": {
-        "name": "My Test API Key",
-        "expires_at": null
-      }
-    }
-  }')
+  -d "$API_KEY_PAYLOAD")
+
+echo "API Key Creation Response:"
+echo $API_KEY_RESPONSE | jq .
 
 API_KEY=$(echo $API_KEY_RESPONSE | jq -r '.data.attributes.key')
-echo "API Key: $API_KEY"
 API_KEY_ID=$(echo $API_KEY_RESPONSE | jq -r '.data.id')
+
+echo "✅ API Key created successfully!"
+echo "API Key: $API_KEY"
 echo "API Key ID: $API_KEY_ID"
 
 # Test the API key
@@ -169,7 +240,11 @@ EXPIRED_KEY_RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/tenants/$TEN
       \"type\": \"api-keys\",
       \"attributes\": {
         \"name\": \"Short-lived Test Key\",
-        \"expires_at\": \"$EXPIRE_TIME\"
+        \"expires_at\": \"$EXPIRE_TIME\",
+        \"role\": {
+          \"type\": \"roles\",
+          \"id\": \"$ADMIN_ROLE_ID\"
+        }
       }
     }
   }")
@@ -231,12 +306,27 @@ curl -X GET http://localhost:8080/api/v1/providers \
    - Verify key hasn't expired or been revoked
    - Ensure correct Authorization header format
 
-2. **Database Connection Errors**
+2. **400 Bad Request with "role field is required"**
+   - This error occurs when creating an API key without specifying a role
+   - **Important:** Due to the current API implementation, the role must be specified in `attributes`, not `relationships`
+   - **Common causes:**
+     - Role ID is empty or null (check if admin role exists)
+     - Wrong role format (role should be `{"type": "roles", "id": "ROLE_ID"}` in attributes)
+     - Wrong role name (use exact name "admin" or check available role names)
+     - No roles exist in the tenant (create a role first)
+   - **Debug steps:**
+     - First fetch available roles: `GET /api/v1/roles`
+     - Check if admin role exists: `jq '.data[] | select(.attributes.name == "admin")'`
+     - If no admin role, use any available role or create one
+     - Verify the role is in attributes section as resource identifier object
+     - Correct format: `"attributes": {"role": {"type": "roles", "id": "ROLE_ID"}}`
+
+3. **Database Connection Errors**
    - Verify PostgreSQL container is running: `docker ps | grep postgres`
    - Check database credentials in `.env` file
    - Wait for migrations to complete: `docker logs api-dev-container`
 
-3. **Service Not Responding**
+4. **Service Not Responding**
    - Check all containers are healthy: `docker-compose ps`
    - Verify port 8080 is not in use: `lsof -i :8080`
    - Check API container logs: `docker logs api-dev-container`
