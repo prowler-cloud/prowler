@@ -21,8 +21,8 @@ class TestProwlerWrapperSecurity(unittest.TestCase):
         # Create a temporary directory for testing
         self.test_dir = tempfile.mkdtemp()
         self.prowler_wrapper_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            'prowler-wrapper.py'
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 
+            'contrib', 'wazuh', 'prowler-wrapper.py'
         )
         
     def tearDown(self):
