@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Link, Tooltip } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -80,6 +81,8 @@ export const AuthForm = ({
   const isSamlMode = form.watch("isSamlMode");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    //getting an new posthog init
+    posthog.reset(true);
     if (type === "sign-in") {
       if (data.isSamlMode) {
         const email = data.email.toLowerCase();
@@ -107,6 +110,11 @@ export const AuthForm = ({
         password: data.password,
       });
       if (result?.message === "Success") {
+        posthog.identify(data.email.toLowerCase());
+        posthog.capture("user_login", {
+          email: data.email.toLocaleLowerCase(),
+          timestamp: Date.now(),
+        });
         router.push("/");
       } else if (result?.errors && "credentials" in result.errors) {
         form.setError("email", {
@@ -128,6 +136,20 @@ export const AuthForm = ({
       const newUser = await createNewUser(data);
 
       if (!newUser.errors) {
+        let firstName = "";
+        let lastName = "";
+        if (data.name) {
+          const nameParts = data.name.trim().split(" ");
+          firstName = nameParts[0] || "";
+          lastName = nameParts.slice(1).join(" ") || "";
+        }
+        posthog.capture("user_registered", {
+          email: data.email.toLocaleLowerCase(),
+          firstname: firstName,
+          lastname: lastName,
+          company: data.company || "",
+          timestamp: Date.now(),
+        });
         toast({
           title: "Success!",
           description: "The user was registered successfully.",

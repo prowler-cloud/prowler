@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import { Checkbox } from "@nextui-org/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -145,6 +146,13 @@ export const TestConnectionForm = ({
               });
             } else {
               setIsRedirecting(true);
+              // Capture PostHog event for successful cloud connection
+              posthog.capture("cloud_connection_success", {
+                provider_type: providerType,
+                provider_alias: providerData.data.attributes.alias,
+                scan_type: form.watch("runOnce") ? "single" : "scheduled",
+                timestamp: Date.now(),
+              });
               router.push("/scans");
             }
           } catch (error) {
