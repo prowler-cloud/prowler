@@ -196,7 +196,7 @@ export type AWSCredentialsRole = {
   [ProviderCredentialFields.AWS_SESSION_TOKEN]?: string;
   [ProviderCredentialFields.EXTERNAL_ID]?: string;
   [ProviderCredentialFields.ROLE_SESSION_NAME]?: string;
-  [ProviderCredentialFields.SESSION_DURATION]?: number;
+  [ProviderCredentialFields.SESSION_DURATION]?: string;
   [ProviderCredentialFields.CREDENTIALS_TYPE]?:
     | "aws-sdk-default"
     | "access-secret-key";
@@ -238,7 +238,7 @@ export type KubernetesCredentials = {
 export type GitHubCredentials = {
   [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]?: string;
   [ProviderCredentialFields.OAUTH_APP_TOKEN]?: string;
-  [ProviderCredentialFields.GITHUB_APP_ID]?: number;
+  [ProviderCredentialFields.GITHUB_APP_ID]?: string;
   [ProviderCredentialFields.GITHUB_APP_KEY]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };

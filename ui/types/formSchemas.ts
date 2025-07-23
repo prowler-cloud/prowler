@@ -184,7 +184,7 @@ export const addCredentialsFormSchema = (providerType: string) =>
                         .string()
                         .optional(),
                       [ProviderCredentialFields.GITHUB_APP_ID]: z
-                        .number()
+                        .string()
                         .optional(),
                       [ProviderCredentialFields.GITHUB_APP_KEY]: z
                         .string()
