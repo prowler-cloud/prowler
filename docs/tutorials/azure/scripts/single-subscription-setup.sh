@@ -45,9 +45,39 @@ run_with_timeout() {
     
     if command -v timeout &> /dev/null; then
         timeout "$timeout_duration" "$@"
+    elif command -v gtimeout &> /dev/null; then
+        # macOS with GNU coreutils via Homebrew
+        gtimeout "$timeout_duration" "$@"
     else
-        # Fallback: run command without timeout
-        "$@"
+        # Fallback: run command without timeout but with a background job killer
+        local temp_pid_file=$(mktemp)
+        "$@" &
+        local cmd_pid=$!
+        echo $cmd_pid > "$temp_pid_file"
+        
+        # Convert timeout duration to seconds (remove 's' suffix)
+        local timeout_seconds=${timeout_duration%s}
+        
+        # Wait for the command or timeout
+        local count=0
+        while kill -0 $cmd_pid 2>/dev/null && [ $count -lt $timeout_seconds ]; do
+            sleep 1
+            count=$((count + 1))
+        done
+        
+        # If still running, kill it
+        if kill -0 $cmd_pid 2>/dev/null; then
+            print_warning "Command timed out after ${timeout_seconds} seconds"
+            kill -9 $cmd_pid 2>/dev/null
+            rm -f "$temp_pid_file"
+            return 124  # timeout exit code
+        fi
+        
+        # Wait for the command to finish and get its exit code
+        wait $cmd_pid
+        local exit_code=$?
+        rm -f "$temp_pid_file"
+        return $exit_code
     fi
 }
 
@@ -432,12 +462,36 @@ assign_roles() {
         print_success "Reader role is already assigned in $SUBSCRIPTION_ID"
     else
         print_warning "Assigning Reader role..."
-        ROLE_ASSIGNMENT_OUTPUT=$(run_with_timeout 60s az role assignment create \
+        print_info "Command: az role assignment create --role \"Reader\" --assignee \"$SP_OBJECT_ID\" --subscription \"$SUBSCRIPTION_ID\""
+        
+        # First try without timeout to see if it's a timeout issue
+        print_info "Trying role assignment without timeout first..."
+        ROLE_ASSIGNMENT_OUTPUT=$(az role assignment create \
             --role "Reader" \
             --assignee "$SP_OBJECT_ID" \
-            --subscription "$SUBSCRIPTION_ID" 2>&1)
+            --subscription "$SUBSCRIPTION_ID" 2>&1 &)
+        ASSIGNMENT_PID=$!
         
-        if [ $? -eq 0 ]; then
+        # Wait up to 30 seconds
+        local wait_count=0
+        while kill -0 $ASSIGNMENT_PID 2>/dev/null && [ $wait_count -lt 30 ]; do
+            echo -n "."
+            sleep 1
+            wait_count=$((wait_count + 1))
+        done
+        echo ""
+        
+        if kill -0 $ASSIGNMENT_PID 2>/dev/null; then
+            print_warning "Command is taking longer than 30 seconds, killing it..."
+            kill -9 $ASSIGNMENT_PID 2>/dev/null
+            ASSIGNMENT_EXIT_CODE=124
+            ROLE_ASSIGNMENT_OUTPUT="Command timed out after 30 seconds"
+        else
+            wait $ASSIGNMENT_PID
+            ASSIGNMENT_EXIT_CODE=$?
+        fi
+        
+        if [ $ASSIGNMENT_EXIT_CODE -eq 0 ]; then
             print_success "Assigned Reader role in $SUBSCRIPTION_ID"
         else
             print_error "Failed to assign Reader role. Error details:"
