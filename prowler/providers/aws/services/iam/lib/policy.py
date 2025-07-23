@@ -223,6 +223,108 @@ def check_full_service_access(service: str, policy: dict) -> bool:
     return all_target_service_actions.issubset(actions_allowed_on_all_resources)
 
 
+def has_public_principal(statement: dict) -> bool:
+    """
+    Check if a policy statement has a public principal.
+
+    Args:
+        statement (dict): IAM policy statement
+
+    Returns:
+        bool: True if the statement has a public principal, False otherwise
+    """
+    principal = statement.get("Principal", "")
+    return (
+        "*" in principal
+        or "arn:aws:iam::*:root" in principal
+        or (
+            isinstance(principal, dict)
+            and (
+                "*" in principal.get("AWS", "")
+                or "arn:aws:iam::*:root" in principal.get("AWS", "")
+                or (
+                    isinstance(principal.get("AWS"), list)
+                    and (
+                        "*" in principal["AWS"]
+                        or "arn:aws:iam::*:root" in principal["AWS"]
+                    )
+                )
+                or "*" in principal.get("CanonicalUser", "")
+                or "arn:aws:iam::*:root" in principal.get("CanonicalUser", "")
+            )
+        )
+    )
+
+
+def has_restrictive_source_arn_condition(
+    statement: dict, source_account: str = ""
+) -> bool:
+    """
+    Check if a policy statement has a restrictive aws:SourceArn condition.
+
+    A SourceArn condition is considered restrictive if:
+    1. It doesn't contain overly permissive wildcards (like "*" or "arn:aws:s3:::*")
+    2. When source_account is provided, the ARN either contains no account field (like S3 buckets)
+       or contains the source_account
+
+    Args:
+        statement (dict): IAM policy statement
+        source_account (str): The account to check restrictions for (optional)
+
+    Returns:
+        bool: True if the statement has a restrictive aws:SourceArn condition, False otherwise
+    """
+    if "Condition" not in statement:
+        return False
+
+    for condition_operator in statement["Condition"]:
+        for condition_key, condition_value in statement["Condition"][
+            condition_operator
+        ].items():
+            if condition_key.lower() == "aws:sourcearn":
+                arn_values = (
+                    condition_value
+                    if isinstance(condition_value, list)
+                    else [condition_value]
+                )
+
+                for arn_value in arn_values:
+                    if (
+                        arn_value == "*"  # Global wildcard
+                        or arn_value.count("*")
+                        >= 3  # Too many wildcards (e.g., arn:aws:*:*:*:*)
+                        or (
+                            isinstance(arn_value, str)
+                            and (
+                                arn_value.endswith(
+                                    ":::*"
+                                )  # Service-wide wildcard (e.g., arn:aws:s3:::*)
+                                or arn_value.endswith(
+                                    ":*"
+                                )  # Resource wildcard (e.g., arn:aws:sns:us-east-1:123456789012:*)
+                            )
+                        )
+                    ):
+                        return False
+
+                    if source_account:
+                        arn_parts = arn_value.split(":")
+                        if len(arn_parts) > 4 and arn_parts[4] and arn_parts[4] != "*":
+                            if arn_parts[4].isdigit():
+                                if source_account not in arn_value:
+                                    return False
+                            else:
+                                if arn_parts[4] != source_account:
+                                    return False
+                        elif len(arn_parts) > 4 and arn_parts[4] == "*":
+                            return False
+                        # else: ARN doesn't contain account field (like S3 bucket), so it's restrictive
+
+                return True
+
+    return False
+
+
 def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
     """Check if the policy condition is coming from a private IP address.
 
@@ -499,30 +601,24 @@ def is_condition_block_restrictive(
                                     and "aws:sourcevpce" != value
                                 ):
                                     if value == "aws:sourcearn":
-                                        # Check if ARN contains an account number
-                                        # ARN format: arn:partition:service:region:account:resource
-                                        arn_parts = item.split(":")
-                                        if (
-                                            len(arn_parts) > 4
-                                            and arn_parts[4]
-                                            and arn_parts[4] != "*"
-                                        ):
-                                            # ARN contains specific account field, check if it matches
-                                            if arn_parts[4].isdigit():
-                                                # Valid account number, check if it matches
-                                                if source_account not in item:
-                                                    is_condition_key_restrictive = False
-                                                    break
-                                            else:
-                                                # Non-numeric account field, treat as mismatch unless it matches exactly
-                                                if arn_parts[4] != source_account:
-                                                    is_condition_key_restrictive = False
-                                                    break
-                                        elif len(arn_parts) > 4 and arn_parts[4] == "*":
-                                            # ARN has wildcard account, not restrictive
-                                            is_condition_key_restrictive = False
+                                        # Use the specialized function to properly validate SourceArn restrictions
+                                        # Create a minimal statement to test with our function
+                                        test_statement = {
+                                            "Condition": {
+                                                condition_operator: {
+                                                    value: condition_statement[
+                                                        condition_operator
+                                                    ][value]
+                                                }
+                                            }
+                                        }
+                                        is_condition_key_restrictive = (
+                                            has_restrictive_source_arn_condition(
+                                                test_statement, source_account
+                                            )
+                                        )
+                                        if not is_condition_key_restrictive:
                                             break
-                                        # else: ARN doesn't contain account field (like S3 bucket), so it's restrictive
                                     else:
                                         if source_account not in item:
                                             is_condition_key_restrictive = False
@@ -543,32 +639,22 @@ def is_condition_block_restrictive(
                                 is_condition_valid = True
                             else:
                                 if value == "aws:sourcearn":
-                                    condition_value = condition_statement[
-                                        condition_operator
-                                    ][value]
-                                    # Check if ARN contains an account number
-                                    # ARN format: arn:partition:service:region:account:resource
-                                    arn_parts = condition_value.split(":")
-                                    if (
-                                        len(arn_parts) > 4
-                                        and arn_parts[4]
-                                        and arn_parts[4] != "*"
-                                    ):
-                                        # ARN contains specific account field, check if it matches
-                                        if arn_parts[4].isdigit():
-                                            # Valid account number, check if it matches
-                                            if source_account in condition_value:
-                                                is_condition_valid = True
-                                        else:
-                                            # Non-numeric account field, treat as match only if it matches exactly
-                                            if arn_parts[4] == source_account:
-                                                is_condition_valid = True
-                                    elif len(arn_parts) > 4 and arn_parts[4] == "*":
-                                        # ARN has wildcard account, not restrictive
-                                        pass
-                                    else:
-                                        # ARN doesn't contain account field (like S3 bucket), so it's restrictive
-                                        is_condition_valid = True
+                                    # Use the specialized function to properly validate SourceArn restrictions
+                                    # Create a minimal statement to test with our function
+                                    test_statement = {
+                                        "Condition": {
+                                            condition_operator: {
+                                                value: condition_statement[
+                                                    condition_operator
+                                                ][value]
+                                            }
+                                        }
+                                    }
+                                    is_condition_valid = (
+                                        has_restrictive_source_arn_condition(
+                                            test_statement, source_account
+                                        )
+                                    )
                                 else:
                                     if (
                                         source_account
