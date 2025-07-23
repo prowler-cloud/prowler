@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Use the correct resource name in `defender_domain_dkim_enabled` check [(#8334)](https://github.com/prowler-cloud/prowler/pull/8334)
+- Avoid multiple moduleerror calls in M365 provider [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
 
 ---
 
