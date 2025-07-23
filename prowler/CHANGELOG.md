@@ -1,7 +1,6 @@
 # Prowler SDK Changelog
 
 All notable changes to the **Prowler SDK** are documented in this file.
----
 
 ## [v5.10.0] (Prowler UNRELEASED)
 
