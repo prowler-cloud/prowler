@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from tasks.jobs.integrations import (
-    check_integrations,
     get_s3_client_from_integration,
     upload_s3_integration,
 )
@@ -208,45 +207,6 @@ class TestS3IntegrationUploads:
         mock_logger.error.assert_any_call(
             "S3 connection failed for integration i-1: failed"
         )
-
-
-@pytest.mark.django_db
-class TestCheckIntegrations:
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Integration")
-    def test_check_integrations_no_integrations(self, mock_integration_model, mock_rls):
-        mock_integration_model.objects.filter.return_value.exists.return_value = False
-
-        result = check_integrations("tenant-id", "provider-id")
-
-        assert result == {"integrations_processed": 0}
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Integration")
-    def test_check_integrations_with_integrations(
-        self, mock_integration_model, mock_rls
-    ):
-        mock_integration_model.objects.filter.return_value.exists.return_value = True
-
-        result = check_integrations("tenant-id", "provider-id")
-
-        assert result["integrations_processed"] == 0
-        assert result["tasks"] == []
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.logger")
-    def test_check_integrations_exception(
-        self, mock_logger, mock_integration_model, mock_rls
-    ):
-        mock_rls.side_effect = Exception("Database error")
-
-        result = check_integrations("tenant-id", "provider-id")
-
-        assert result["integrations_processed"] == 0
-        assert "error" in result
-        assert result["error"] == "Database error"
-        mock_logger.error.assert_called_once()
 
 
 @pytest.mark.django_db
