@@ -256,10 +256,13 @@ EOF
     else
         # Create service principal
         print_warning "Creating service principal..."
-        SP_OUTPUT=$(run_with_timeout 60s az ad sp create --id $APP_ID 2>/dev/null)
+        SP_OUTPUT=$(run_with_timeout 60s az ad sp create --id $APP_ID 2>&1)
         
         if [ $? -ne 0 ]; then
-            print_warning "Service principal creation failed. It might already exist."
+            print_error "Service principal creation failed. Error details:"
+            echo "$SP_OUTPUT"
+            
+            print_warning "Checking if it exists anyway..."
             EXISTING_SP=$(az ad sp list --filter "appId eq '$APP_ID'" --query "[0]" 2>/dev/null)
             
             if [[ $EXISTING_SP != "null" && -n "$EXISTING_SP" ]]; then
@@ -267,12 +270,28 @@ EOF
                 print_warning "Found existing Service Principal: $SP_OBJECT_ID"
             else
                 print_error "Failed to create or find service principal for app ID: $APP_ID"
+                print_info "Please check if you have sufficient permissions to create service principals."
                 exit 1
             fi
         else
             SP_OBJECT_ID=$(echo $SP_OUTPUT | jq -r '.id')
             print_success "Created Service Principal: $SP_OBJECT_ID"
+            
+            # Wait a moment for service principal to propagate
+            print_warning "Waiting 10 seconds for service principal to propagate..."
+            sleep 10
         fi
+    fi
+    
+    # Verify the service principal exists and get its details
+    print_info "Verifying service principal details..."
+    SP_DETAILS=$(az ad sp show --id "$SP_OBJECT_ID" --query "{ObjectId:id,AppId:appId,DisplayName:displayName}" 2>/dev/null)
+    
+    if [[ -n "$SP_DETAILS" && "$SP_DETAILS" != "null" ]]; then
+        echo "Service Principal Details:"
+        echo "$SP_DETAILS" | jq .
+    else
+        print_error "Cannot retrieve service principal details. This may cause role assignment issues."
     fi
     
     # Create client secret
