@@ -1347,6 +1347,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GITHUB.value:
+                serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
@@ -1421,6 +1423,16 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
 
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class GithubProviderSecret(serializers.Serializer):
+    personal_access_token = serializers.CharField(required=False)
+    oauth_app_token = serializers.CharField(required=False)
+    github_app_id = serializers.IntegerField(required=False)
+    github_app_key_content = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"

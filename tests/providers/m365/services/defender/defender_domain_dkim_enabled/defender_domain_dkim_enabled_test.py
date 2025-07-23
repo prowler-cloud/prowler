@@ -43,7 +43,7 @@ class Test_defender_domain_dkim_enabled:
                 == "DKIM is enabled for domain with ID domain1."
             )
             assert result[0].resource == defender_client.dkim_configurations[0].dict()
-            assert result[0].resource_name == "DKIM Configuration"
+            assert result[0].resource_name == "domain1"
             assert result[0].resource_id == "domain1"
             assert result[0].location == "global"
 
@@ -86,7 +86,7 @@ class Test_defender_domain_dkim_enabled:
                 == "DKIM is not enabled for domain with ID domain2."
             )
             assert result[0].resource == defender_client.dkim_configurations[0].dict()
-            assert result[0].resource_name == "DKIM Configuration"
+            assert result[0].resource_name == "domain2"
             assert result[0].resource_id == "domain2"
             assert result[0].location == "global"
 

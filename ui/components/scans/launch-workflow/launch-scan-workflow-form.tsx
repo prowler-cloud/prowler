@@ -29,9 +29,13 @@ export const LaunchScanWorkflow = ({
   const formSchema = z.object({
     ...onDemandScanFormSchema().shape,
     scanName: z
-      .string()
-      .min(3, "Must have at least 3 characters")
-      .or(z.literal(""))
+      .union([
+        z
+          .string()
+          .min(3, "Must be at least 3 characters")
+          .max(32, "Must not exceed 32 characters"),
+        z.literal(""),
+      ])
       .optional(),
   });
 
@@ -101,7 +105,7 @@ export const LaunchScanWorkflow = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="min-w-48 self-end"
+                  className="h-[3.4rem] min-w-[15.2rem] self-end"
                 >
                   <CustomInput
                     control={form.control}

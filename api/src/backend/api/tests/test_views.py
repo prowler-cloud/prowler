@@ -967,6 +967,31 @@ class TestProviderViewSet:
                     "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
                     "alias": "test",
                 },
+                {
+                    "provider": "github",
+                    "uid": "test-user",
+                    "alias": "test",
+                },
+                {
+                    "provider": "github",
+                    "uid": "test-organization",
+                    "alias": "GitHub Org",
+                },
+                {
+                    "provider": "github",
+                    "uid": "prowler-cloud",
+                    "alias": "Prowler",
+                },
+                {
+                    "provider": "github",
+                    "uid": "microsoft",
+                    "alias": "Microsoft",
+                },
+                {
+                    "provider": "github",
+                    "uid": "a12345678901234567890123456789012345678",
+                    "alias": "Long Username",
+                },
             ]
         ),
     )
@@ -1078,6 +1103,42 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "m365-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "github",
+                        "uid": "-invalid-start",
+                        "alias": "test",
+                    },
+                    "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "github",
+                        "uid": "invalid@username",
+                        "alias": "test",
+                    },
+                    "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "github",
+                        "uid": "invalid_username",
+                        "alias": "test",
+                    },
+                    "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "github",
+                        "uid": "a" * 40,
+                        "alias": "test",
+                    },
+                    "github-uid",
                     "uid",
                 ),
             ]
