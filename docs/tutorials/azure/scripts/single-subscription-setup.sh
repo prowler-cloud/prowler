@@ -215,7 +215,10 @@ create_app_registration() {
         
         # Update required permissions to ensure they're correct
         print_warning "Updating API permissions for existing app..."
-        PERMISSIONS_JSON=$(cat << EOF
+        
+        # Create temporary JSON file for permissions
+        TEMP_PERMISSIONS_FILE=$(mktemp)
+        cat > "$TEMP_PERMISSIONS_FILE" << EOF
 [
     {
         "resourceAppId": "$GRAPH_APP_ID",
@@ -236,10 +239,16 @@ create_app_registration() {
     }
 ]
 EOF
-        )
         
-        echo "$PERMISSIONS_JSON" | run_with_timeout 60s az ad app update --id "$APP_ID" --required-resource-accesses @- >/dev/null
-        print_success "Updated API permissions for existing app"
+        run_with_timeout 60s az ad app update --id "$APP_ID" --required-resource-accesses "@$TEMP_PERMISSIONS_FILE" >/dev/null
+        UPDATE_RESULT=$?
+        rm -f "$TEMP_PERMISSIONS_FILE"
+        
+        if [ $UPDATE_RESULT -eq 0 ]; then
+            print_success "Updated API permissions for existing app"
+        else
+            print_error "Failed to update API permissions for existing app"
+        fi
     else
         # Create new app registration
         print_warning "Creating new app registration with name: $APP_NAME"
@@ -464,32 +473,11 @@ assign_roles() {
         print_warning "Assigning Reader role..."
         print_info "Command: az role assignment create --role \"Reader\" --assignee \"$SP_OBJECT_ID\" --subscription \"$SUBSCRIPTION_ID\""
         
-        # First try without timeout to see if it's a timeout issue
-        print_info "Trying role assignment without timeout first..."
-        ROLE_ASSIGNMENT_OUTPUT=$(az role assignment create \
+        ROLE_ASSIGNMENT_OUTPUT=$(run_with_timeout 60s az role assignment create \
             --role "Reader" \
             --assignee "$SP_OBJECT_ID" \
-            --subscription "$SUBSCRIPTION_ID" 2>&1 &)
-        ASSIGNMENT_PID=$!
-        
-        # Wait up to 30 seconds
-        local wait_count=0
-        while kill -0 $ASSIGNMENT_PID 2>/dev/null && [ $wait_count -lt 30 ]; do
-            echo -n "."
-            sleep 1
-            wait_count=$((wait_count + 1))
-        done
-        echo ""
-        
-        if kill -0 $ASSIGNMENT_PID 2>/dev/null; then
-            print_warning "Command is taking longer than 30 seconds, killing it..."
-            kill -9 $ASSIGNMENT_PID 2>/dev/null
-            ASSIGNMENT_EXIT_CODE=124
-            ROLE_ASSIGNMENT_OUTPUT="Command timed out after 30 seconds"
-        else
-            wait $ASSIGNMENT_PID
-            ASSIGNMENT_EXIT_CODE=$?
-        fi
+            --subscription "$SUBSCRIPTION_ID" 2>&1)
+        ASSIGNMENT_EXIT_CODE=$?
         
         if [ $ASSIGNMENT_EXIT_CODE -eq 0 ]; then
             print_success "Assigned Reader role in $SUBSCRIPTION_ID"
@@ -497,18 +485,35 @@ assign_roles() {
             print_error "Failed to assign Reader role. Error details:"
             echo "$ROLE_ASSIGNMENT_OUTPUT"
             
-            # Try alternative assignment using app ID instead of SP object ID
-            print_warning "Trying alternative assignment using App ID instead..."
-            ROLE_ASSIGNMENT_OUTPUT2=$(run_with_timeout 60s az role assignment create \
-                --role "Reader" \
-                --assignee "$APP_ID" \
-                --subscription "$SUBSCRIPTION_ID" 2>&1)
-            
-            if [ $? -eq 0 ]; then
-                print_success "Assigned Reader role using App ID in $SUBSCRIPTION_ID"
+            # Check if it's a permissions issue
+            if [[ "$ROLE_ASSIGNMENT_OUTPUT" == *"Authorization failed"* ]] || [[ "$ROLE_ASSIGNMENT_OUTPUT" == *"does not have authorization"* ]]; then
+                echo ""
+                print_error "PERMISSIONS ISSUE DETECTED!"
+                echo "You need 'User Access Administrator' or 'Owner' role on the subscription to assign roles."
+                echo ""
+                echo "Solutions:"
+                echo "1. Ask your Azure administrator to assign you 'User Access Administrator' role"
+                echo "2. Or have them run these commands to assign the roles manually:"
+                echo ""
+                echo "   az role assignment create --role \"Reader\" --assignee \"$SP_OBJECT_ID\" --subscription \"$SUBSCRIPTION_ID\""
+                echo "   az role assignment create --role \"ProwlerRole\" --assignee \"$SP_OBJECT_ID\" --subscription \"$SUBSCRIPTION_ID\""
+                echo ""
+                echo "3. Or use Management Groups as described here:"
+                echo "   https://github.com/prowler-cloud/prowler/blob/master/docs/tutorials/azure/subscriptions.md#recommendation-for-multiple-subscriptions"
             else
-                print_error "Failed to assign Reader role with App ID as well. Error:"
-                echo "$ROLE_ASSIGNMENT_OUTPUT2"
+                # Try alternative assignment using app ID instead of SP object ID
+                print_warning "Trying alternative assignment using App ID instead..."
+                ROLE_ASSIGNMENT_OUTPUT2=$(run_with_timeout 60s az role assignment create \
+                    --role "Reader" \
+                    --assignee "$APP_ID" \
+                    --subscription "$SUBSCRIPTION_ID" 2>&1)
+                
+                if [ $? -eq 0 ]; then
+                    print_success "Assigned Reader role using App ID in $SUBSCRIPTION_ID"
+                else
+                    print_error "Failed to assign Reader role with App ID as well. Error:"
+                    echo "$ROLE_ASSIGNMENT_OUTPUT2"
+                fi
             fi
         fi
     fi
@@ -532,18 +537,24 @@ assign_roles() {
             print_error "Failed to assign ProwlerRole. Error details:"
             echo "$PROWLER_ASSIGNMENT_OUTPUT"
             
-            # Try alternative assignment using app ID instead of SP object ID
-            print_warning "Trying ProwlerRole assignment using App ID instead..."
-            PROWLER_ASSIGNMENT_OUTPUT2=$(run_with_timeout 60s az role assignment create \
-                --role "$CUSTOM_ROLE_NAME" \
-                --assignee "$APP_ID" \
-                --subscription "$SUBSCRIPTION_ID" 2>&1)
-            
-            if [ $? -eq 0 ]; then
-                print_success "Assigned ProwlerRole using App ID in $SUBSCRIPTION_ID"
+            # Check if it's a permissions issue
+            if [[ "$PROWLER_ASSIGNMENT_OUTPUT" == *"Authorization failed"* ]] || [[ "$PROWLER_ASSIGNMENT_OUTPUT" == *"does not have authorization"* ]]; then
+                print_warning "ProwlerRole assignment also failed due to permissions."
+                print_warning "See the Reader role assignment error above for solutions."
             else
-                print_error "Failed to assign ProwlerRole with App ID as well. Error:"
-                echo "$PROWLER_ASSIGNMENT_OUTPUT2"
+                # Try alternative assignment using app ID instead of SP object ID
+                print_warning "Trying ProwlerRole assignment using App ID instead..."
+                PROWLER_ASSIGNMENT_OUTPUT2=$(run_with_timeout 60s az role assignment create \
+                    --role "$CUSTOM_ROLE_NAME" \
+                    --assignee "$APP_ID" \
+                    --subscription "$SUBSCRIPTION_ID" 2>&1)
+                
+                if [ $? -eq 0 ]; then
+                    print_success "Assigned ProwlerRole using App ID in $SUBSCRIPTION_ID"
+                else
+                    print_error "Failed to assign ProwlerRole with App ID as well. Error:"
+                    echo "$PROWLER_ASSIGNMENT_OUTPUT2"
+                fi
             fi
         fi
     fi
