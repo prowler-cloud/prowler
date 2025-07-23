@@ -20,13 +20,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.9.1] (Prowler 5.9.1)
-
-### Fixed
-- Calculate failed findings during scans to prevent heavy database queries [(#8322)](https://github.com/prowler-cloud/prowler/pull/8322)
-
----
-
 ## [v5.9.0] (Prowler v5.9.0)
 
 ### Added
