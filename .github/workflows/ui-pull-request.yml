@@ -62,9 +62,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Start needed services with docker compose
+        if: github.repository == 'prowler-cloud/prowler'
         run: |
           docker compose up -d api worker worker-beat
       - name: Wait for prowler-api to respond
+        if: github.repository == 'prowler-cloud/prowler'
         run: |
           echo "Waiting for prowler-api..."
           for i in {1..30}; do
@@ -76,6 +78,7 @@ jobs:
             sleep 3
           done
       - name: Run database migrations
+        if: github.repository == 'prowler-cloud/prowler'
         run: |
           echo "Running Django migrations..."
           docker compose exec -T api sh -c '
@@ -83,9 +86,11 @@ jobs:
           '
           echo "Database migrations completed!"
       - name: Copy local fixtures into API container
+        if: github.repository == 'prowler-cloud/prowler'
         run: |
           docker cp ./api/src/backend/api/fixtures/dev/. prowler-api-1:/home/prowler/backend/api/fixtures/dev
       - name: Load database fixtures for e2e tests
+        if: github.repository == 'prowler-cloud/prowler'
         run: |
           docker compose exec -T api sh -c '
             echo "Loading all fixtures from api/fixtures/dev/..."
@@ -133,7 +138,7 @@ jobs:
           retention-days: 30
 
       - name: Cleanup services
-        if: always()
+        if: github.repository == 'prowler-cloud/prowler'
         run: |
           echo "Shutting down services..."
           docker-compose down -v || true
