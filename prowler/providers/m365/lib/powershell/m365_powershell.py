@@ -6,11 +6,10 @@ import msal
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
-    M365ExchangeConnectionError,
     M365GraphConnectionError,
-    M365TeamsConnectionError,
     M365UserNotBelongingToTenantError,
 )
+from prowler.providers.m365.lib.jwt.jwt_decoder import decode_jwt, decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
@@ -191,6 +190,7 @@ class M365PowerShell(PowerShellSession):
                 logger.info("Testing Microsoft Graph connection...")
                 self.test_graph_connection()
                 logger.info("Microsoft Graph connection successful")
+                return True
             except Exception as e:
                 logger.error(f"Microsoft Graph connection failed: {e}")
                 raise M365GraphConnectionError(
@@ -198,34 +198,6 @@ class M365PowerShell(PowerShellSession):
                     original_exception=e,
                     message="Check your Microsoft Application credentials and ensure the app has proper permissions",
                 )
-
-            # Test Microsoft Teams connection
-            try:
-                logger.info("Testing Microsoft Teams connection...")
-                self.test_teams_connection()
-                logger.info("Microsoft Teams connection successful")
-            except Exception as e:
-                logger.error(f"Microsoft Teams connection failed: {e}")
-                raise M365TeamsConnectionError(
-                    file=os.path.basename(__file__),
-                    original_exception=e,
-                    message="Ensure the application has proper permission granted to access Microsoft Teams.",
-                )
-
-            # Test Exchange Online connection
-            try:
-                logger.info("Testing Exchange Online connection...")
-                self.test_exchange_connection()
-                logger.info("Exchange Online connection successful")
-            except Exception as e:
-                logger.error(f"Exchange Online connection failed: {e}")
-                raise M365ExchangeConnectionError(
-                    file=os.path.basename(__file__),
-                    original_exception=e,
-                    message="Ensure the application has proper permission granted to access Exchange Online.",
-                )
-
-            return True
 
     def test_graph_connection(self) -> bool:
         """Test Microsoft Graph API connection and raise exception if it fails."""
@@ -253,19 +225,20 @@ class M365PowerShell(PowerShellSession):
             self.execute(
                 '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
             )
-            if self.execute("Write-Output $teamsToken") == "":
-                raise M365TeamsConnectionError(
-                    file=os.path.basename(__file__),
-                    message="Microsoft Teams token is empty or invalid.",
+            permissions = decode_jwt(self.execute("Write-Output $teamsToken")).get(
+                "roles", []
+            )
+            if "application_access" not in permissions:
+                logger.error(
+                    "Microsoft Teams connection failed: Please check your permissions and try again."
                 )
+                return False
             return True
         except Exception as e:
-            logger.error(f"Microsoft Teams connection failed: {e}")
-            raise M365TeamsConnectionError(
-                file=os.path.basename(__file__),
-                original_exception=e,
-                message=f"Failed to connect to Microsoft Teams API: {str(e)}",
+            logger.error(
+                f"Microsoft Teams connection failed: {e}. Please check your permissions and try again."
             )
+            return False
 
     def test_exchange_connection(self) -> bool:
         """Test Exchange Online API connection and raise exception if it fails."""
@@ -276,19 +249,19 @@ class M365PowerShell(PowerShellSession):
             self.execute(
                 '$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
             )
-            if self.execute("Write-Output $exchangeToken") == "":
-                raise M365ExchangeConnectionError(
-                    file=os.path.basename(__file__),
-                    message="Exchange Online token is empty or invalid.",
+            token = decode_msal_token(self.execute("Write-Output $exchangeToken"))
+            permissions = token.get("roles", [])
+            if "Exchange.ManageAsApp" not in permissions:
+                logger.error(
+                    "Exchange Online connection failed: Please check your permissions and try again."
                 )
+                return False
             return True
         except Exception as e:
-            logger.error(f"Exchange Online connection failed: {e}")
-            raise M365ExchangeConnectionError(
-                file=os.path.basename(__file__),
-                original_exception=e,
-                message=f"Failed to connect to Exchange Online API: {str(e)}",
+            logger.error(
+                f"Exchange Online connection failed: {e}. Please check your permissions and try again."
             )
+            return False
 
     def connect_microsoft_teams(self) -> dict:
         """
@@ -302,18 +275,22 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
-        if self.execute("Write-Output $credential") != "":  # User Auth
-            return self.execute("Connect-MicrosoftTeams -Credential $credential")
-        else:  # Application Auth
-            self.execute(
-                '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
-            )
-            self.execute(
-                '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
-            )
-            return self.execute(
-                'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
-            )
+        # User Auth
+        if self.execute("Write-Output $credential") != "":
+            connection = self.execute("Connect-MicrosoftTeams -Credential $credential")
+            if not connection:
+                logger.error(
+                    "Microsoft Teams connection failed: Please check your permissions and try again."
+                )
+            return connection
+        # Application Auth
+        else:
+            connection = self.test_teams_connection()
+            if connection:
+                self.execute(
+                    'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+                )
+            return connection
 
     def get_teams_settings(self) -> dict:
         """
@@ -407,18 +384,24 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Exchange Online PowerShell module to be installed.
         """
-        if self.execute("Write-Output $credential") != "":  # User Auth
-            return self.execute("Connect-ExchangeOnline -Credential $credential")
-        else:  # Application Auth
-            self.execute(
-                '$SecureSecret = ConvertTo-SecureString "$clientSecret" -AsPlainText -Force'
-            )
-            self.execute(
-                '$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
-            )
-            return self.execute(
-                'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
-            )
+        # User Auth
+        if self.execute("Write-Output $credential") != "":
+            connection = self.execute("Connect-ExchangeOnline -Credential $credential")
+            if connection:
+                return True
+            else:
+                logger.error(
+                    "Exchange Online connection failed: Please check your permissions and try again."
+                )
+                return False
+        # Application Auth
+        else:
+            connection = self.test_exchange_connection()
+            if connection:
+                self.execute(
+                    'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
+                )
+            return connection
 
     def get_audit_log_config(self) -> dict:
         """
