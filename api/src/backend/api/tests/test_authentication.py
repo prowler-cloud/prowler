@@ -3,7 +3,7 @@ Tests for API Key Authentication functionality.
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from django.test import RequestFactory
 from django.utils import timezone
 from datetime import timedelta

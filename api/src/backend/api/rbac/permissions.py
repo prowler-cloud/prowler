@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Optional
 
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 from rest_framework.permissions import BasePermission
 
