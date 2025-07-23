@@ -23,11 +23,11 @@ import argparse
 import json
 import os
 import re
+import shlex
 import signal
 import socket
 import subprocess
 import sys
-import shlex
 from datetime import datetime
 
 ################################################################################
@@ -146,9 +146,9 @@ def _get_script_arguments():
 
 def _run_prowler(prowler_args):
     _debug("Running prowler with args: {0}".format(prowler_args), 1)
-    _prowler_command = shlex.split("{prowler}/prowler {args}".format(
-        prowler=PATH_TO_PROWLER, args=prowler_args
-    ))
+    _prowler_command = shlex.split(
+        "{prowler}/prowler {args}".format(prowler=PATH_TO_PROWLER, args=prowler_args)
+    )
     _debug("Running command: {0}".format(" ".join(_prowler_command)), 2)
     _process = subprocess.Popen(_prowler_command, stdout=subprocess.PIPE)
     _output, _error = _process.communicate()
