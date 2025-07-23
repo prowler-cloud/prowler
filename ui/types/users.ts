@@ -150,11 +150,6 @@ export interface TenantDetailData {
   };
 }
 
-export interface RoleRelationship {
-  id: string;
-  type: "roles";
-}
-
 // API Key types
 export interface APIKey {
   id: string;
