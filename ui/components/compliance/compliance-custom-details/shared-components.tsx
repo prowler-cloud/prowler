@@ -11,11 +11,7 @@ export const ComplianceLink = ({
   children: React.ReactNode;
 }) => {
   return (
-    <CustomLink
-      href={href}
-      className="break-all text-blue-600 decoration-1 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-      size="sm"
-    >
+    <CustomLink href={href} className="break-all decoration-1" size="sm">
       {children}
     </CustomLink>
   );
