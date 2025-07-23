@@ -13,6 +13,11 @@ class iam_audit_logs_enabled(Check):
                 resource=cloudresourcemanager_client.projects[project.id],
                 project_id=project.id,
                 location=cloudresourcemanager_client.region,
+                resource_name=(
+                    cloudresourcemanager_client.projects[project.id].name
+                    if cloudresourcemanager_client.projects[project.id].name
+                    else "GCP Project"
+                ),
             )
             report.status = "PASS"
             report.status_extended = f"Audit Logs are enabled for project {project.id}."
