@@ -4,9 +4,7 @@ import pytest
 
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
-    M365ExchangeConnectionError,
     M365GraphConnectionError,
-    M365TeamsConnectionError,
     M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
@@ -744,7 +742,8 @@ class Testm365PowerShell:
         session.close()
 
     @patch("subprocess.Popen")
-    def test_test_teams_connection_success(self, mock_popen):
+    @patch("prowler.providers.m365.lib.powershell.m365_powershell.decode_jwt")
+    def test_test_teams_connection_success(self, mock_decode_jwt, mock_popen):
         """Test test_teams_connection when token is valid"""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
@@ -766,17 +765,23 @@ class Testm365PowerShell:
             return None
 
         session.execute = MagicMock(side_effect=mock_execute)
+        # Mock JWT decode to return proper permissions
+        mock_decode_jwt.return_value = {"roles": ["application_access"]}
 
         result = session.test_teams_connection()
 
         assert result is True
         # Verify all expected PowerShell commands were called
         assert session.execute.call_count == 3
+        mock_decode_jwt.assert_called_once_with("valid_teams_token")
         session.close()
 
     @patch("subprocess.Popen")
-    def test_test_teams_connection_empty_token(self, mock_popen):
-        """Test test_teams_connection when token is empty"""
+    @patch("prowler.providers.m365.lib.powershell.m365_powershell.decode_jwt")
+    def test_test_teams_connection_missing_permissions(
+        self, mock_decode_jwt, mock_popen
+    ):
+        """Test test_teams_connection when token lacks required permissions"""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
         credentials = M365Credentials(user="test@example.com", passwd="test_password")
@@ -790,18 +795,23 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock execute to return empty token when checking
+        # Mock execute to return valid token but decode returns no permissions
         def mock_execute(command, *args, **kwargs):
             if "Write-Output $teamsToken" in command:
-                return ""
+                return "valid_teams_token"
             return None
 
         session.execute = MagicMock(side_effect=mock_execute)
+        # Mock JWT decode to return missing required permission
+        mock_decode_jwt.return_value = {"roles": ["other_permission"]}
 
-        with pytest.raises(M365TeamsConnectionError) as exc_info:
-            session.test_teams_connection()
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_teams_connection()
 
-        assert "Microsoft Teams token is empty or invalid" in str(exc_info.value)
+        assert result is False
+        mock_error.assert_called_once_with(
+            "Microsoft Teams connection failed: Please check your permissions and try again."
+        )
         session.close()
 
     @patch("subprocess.Popen")
@@ -823,16 +833,18 @@ class Testm365PowerShell:
         # Mock execute to raise an exception
         session.execute = MagicMock(side_effect=Exception("Teams API error"))
 
-        with pytest.raises(M365TeamsConnectionError) as exc_info:
-            session.test_teams_connection()
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_teams_connection()
 
-        assert "Failed to connect to Microsoft Teams API: Teams API error" in str(
-            exc_info.value
+        assert result is False
+        mock_error.assert_called_once_with(
+            "Microsoft Teams connection failed: Teams API error. Please check your permissions and try again."
         )
         session.close()
 
     @patch("subprocess.Popen")
-    def test_test_exchange_connection_success(self, mock_popen):
+    @patch("prowler.providers.m365.lib.powershell.m365_powershell.decode_msal_token")
+    def test_test_exchange_connection_success(self, mock_decode_msal_token, mock_popen):
         """Test test_exchange_connection when token is valid"""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
@@ -854,17 +866,23 @@ class Testm365PowerShell:
             return None
 
         session.execute = MagicMock(side_effect=mock_execute)
+        # Mock MSAL token decode to return proper permissions
+        mock_decode_msal_token.return_value = {"roles": ["Exchange.ManageAsApp"]}
 
         result = session.test_exchange_connection()
 
         assert result is True
         # Verify all expected PowerShell commands were called
         assert session.execute.call_count == 3
+        mock_decode_msal_token.assert_called_once_with("valid_exchange_token")
         session.close()
 
     @patch("subprocess.Popen")
-    def test_test_exchange_connection_empty_token(self, mock_popen):
-        """Test test_exchange_connection when token is empty"""
+    @patch("prowler.providers.m365.lib.powershell.m365_powershell.decode_msal_token")
+    def test_test_exchange_connection_missing_permissions(
+        self, mock_decode_msal_token, mock_popen
+    ):
+        """Test test_exchange_connection when token lacks required permissions"""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
         credentials = M365Credentials(user="test@example.com", passwd="test_password")
@@ -878,18 +896,23 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock execute to return empty token when checking
+        # Mock execute to return valid token but decode returns no permissions
         def mock_execute(command, *args, **kwargs):
             if "Write-Output $exchangeToken" in command:
-                return ""
+                return "valid_exchange_token"
             return None
 
         session.execute = MagicMock(side_effect=mock_execute)
+        # Mock MSAL token decode to return missing required permission
+        mock_decode_msal_token.return_value = {"roles": ["other_permission"]}
 
-        with pytest.raises(M365ExchangeConnectionError) as exc_info:
-            session.test_exchange_connection()
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_exchange_connection()
 
-        assert "Exchange Online token is empty or invalid" in str(exc_info.value)
+        assert result is False
+        mock_error.assert_called_once_with(
+            "Exchange Online connection failed: Please check your permissions and try again."
+        )
         session.close()
 
     @patch("subprocess.Popen")
@@ -911,11 +934,12 @@ class Testm365PowerShell:
         # Mock execute to raise an exception
         session.execute = MagicMock(side_effect=Exception("Exchange API error"))
 
-        with pytest.raises(M365ExchangeConnectionError) as exc_info:
-            session.test_exchange_connection()
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_exchange_connection()
 
-        assert "Failed to connect to Exchange Online API: Exchange API error" in str(
-            exc_info.value
+        assert result is False
+        mock_error.assert_called_once_with(
+            "Exchange Online connection failed: Exchange API error. Please check your permissions and try again."
         )
         session.close()
 
