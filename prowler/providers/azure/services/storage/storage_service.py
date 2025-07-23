@@ -70,17 +70,44 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
-                            default_to_entra_authorization=getattr(
-                                storage_account,
-                                "default_to_o_auth_authentication",
-                                False,
+                            default_to_entra_authorization=(
+                                False
+                                if getattr(
+                                    storage_account,
+                                    "default_to_o_auth_authentication",
+                                    False,
+                                )
+                                is None
+                                else getattr(
+                                    storage_account,
+                                    "default_to_o_auth_authentication",
+                                    False,
+                                )
                             ),
                             replication_settings=replication_settings,
-                            allow_cross_tenant_replication=getattr(
-                                storage_account, "allow_cross_tenant_replication", True
+                            allow_cross_tenant_replication=(
+                                True
+                                if getattr(
+                                    storage_account,
+                                    "allow_cross_tenant_replication",
+                                    True,
+                                )
+                                is None
+                                else getattr(
+                                    storage_account,
+                                    "allow_cross_tenant_replication",
+                                    True,
+                                )
                             ),
-                            allow_shared_key_access=getattr(
-                                storage_account, "allow_shared_key_access", True
+                            allow_shared_key_access=(
+                                True
+                                if getattr(
+                                    storage_account, "allow_shared_key_access", True
+                                )
+                                is None
+                                else getattr(
+                                    storage_account, "allow_shared_key_access", True
+                                )
                             ),
                         )
                     )
