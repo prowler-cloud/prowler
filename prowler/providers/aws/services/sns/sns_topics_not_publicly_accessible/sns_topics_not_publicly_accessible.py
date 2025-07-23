@@ -34,30 +34,49 @@ class sns_topics_not_publicly_accessible(Check):
                             condition_account = False
                             condition_org = False
                             condition_endpoint = False
-                            if (
-                                "Condition" in statement
-                                and is_condition_block_restrictive(
-                                    statement["Condition"],
-                                    sns_client.audited_account,
-                                )
-                            ):
-                                condition_account = True
-                            if (
-                                "Condition" in statement
-                                and is_condition_block_restrictive_organization(
-                                    statement["Condition"],
-                                )
-                            ):
-                                condition_org = True
-                            if (
-                                "Condition" in statement
-                                and is_condition_block_restrictive_sns_endpoint(
-                                    statement["Condition"],
-                                )
-                            ):
-                                condition_endpoint = True
+                            condition_source_arn = False
 
-                            if condition_account and condition_org:
+                            # Check for aws:SourceArn condition first
+                            if "Condition" in statement:
+                                for condition_operator in statement["Condition"]:
+                                    for condition_key in statement["Condition"][
+                                        condition_operator
+                                    ]:
+                                        if condition_key.lower() == "aws:sourcearn":
+                                            condition_source_arn = True
+                                            break
+                                    if condition_source_arn:
+                                        break
+
+                            # Only check other conditions if not aws:SourceArn
+                            if not condition_source_arn:
+                                if (
+                                    "Condition" in statement
+                                    and is_condition_block_restrictive(
+                                        statement["Condition"],
+                                        sns_client.audited_account,
+                                    )
+                                ):
+                                    condition_account = True
+                                if (
+                                    "Condition" in statement
+                                    and is_condition_block_restrictive_organization(
+                                        statement["Condition"],
+                                    )
+                                ):
+                                    condition_org = True
+                                if (
+                                    "Condition" in statement
+                                    and is_condition_block_restrictive_sns_endpoint(
+                                        statement["Condition"],
+                                    )
+                                ):
+                                    condition_endpoint = True
+
+                            if condition_source_arn:
+                                # aws:SourceArn conditions make the topic not publicly accessible
+                                report.status_extended = f"SNS topic {topic.name} is not publicly accessible."
+                            elif condition_account and condition_org:
                                 report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the account {sns_client.audited_account} and an organization."
                             elif condition_account:
                                 report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the account {sns_client.audited_account}."

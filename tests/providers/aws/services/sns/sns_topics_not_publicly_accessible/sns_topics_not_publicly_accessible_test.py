@@ -454,7 +454,7 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SNS topic {topic_name} is not public because its policy only allows access from the account {AWS_ACCOUNT_NUMBER}."
+                == f"SNS topic {topic_name} is not publicly accessible."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
@@ -490,7 +490,7 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SNS topic {topic_name} is not public because its policy only allows access from the account {AWS_ACCOUNT_NUMBER}."
+                == f"SNS topic {topic_name} is not publicly accessible."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
