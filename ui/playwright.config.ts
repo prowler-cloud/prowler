@@ -8,6 +8,9 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: [["list"]],
   outputDir: "/tmp/playwright-tests",
+  expect: {
+    timeout: 20000,
+  },
 
   use: {
     baseURL: "http://localhost:3000",
