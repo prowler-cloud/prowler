@@ -53,7 +53,9 @@ jobs:
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: http://localhost:3000
       PROWLER_API_PORT: 8080
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api/v1
+      NEXT_PUBLIC_API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://localhost:8080/api/v1' }}
+      E2E_USER: ${{ secrets.E2E_USER }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
