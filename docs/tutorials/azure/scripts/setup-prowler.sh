@@ -33,6 +33,19 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Function to run commands with timeout if available
+run_with_timeout() {
+    local timeout_duration="$1"
+    shift
+    
+    if command -v timeout &> /dev/null; then
+        timeout "$timeout_duration" "$@"
+    else
+        # Fallback: run command without timeout
+        "$@"
+    fi
+}
+
 check_prerequisites() {
     print_header "Checking Prerequisites"
     
@@ -189,7 +202,7 @@ create_app_registration() {
 EOF
     )
     
-    APP_OUTPUT=$(echo "$PERMISSIONS_JSON" | timeout 60s az ad app create \
+    APP_OUTPUT=$(echo "$PERMISSIONS_JSON" | run_with_timeout 60s az ad app create \
         --display-name "$APP_NAME" \
         --required-resource-accesses @-)
     
@@ -199,13 +212,13 @@ EOF
     print_success "Created App Registration: $APP_ID"
     
     # Create service principal
-    SP_OUTPUT=$(timeout 60s az ad sp create --id $APP_ID)
+    SP_OUTPUT=$(run_with_timeout 60s az ad sp create --id $APP_ID)
     SP_OBJECT_ID=$(echo $SP_OUTPUT | jq -r '.id')
     
     print_success "Created Service Principal: $SP_OBJECT_ID"
     
     # Create client secret
-    SECRET_OUTPUT=$(timeout 60s az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
+    SECRET_OUTPUT=$(run_with_timeout 60s az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
     CLIENT_SECRET=$(echo $SECRET_OUTPUT | jq -r '.password')
     
     print_success "Created client secret"
@@ -214,7 +227,7 @@ EOF
     echo ""
     print_warning "Attempting to grant admin consent for API permissions..."
     
-    if timeout 30s az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
+    if run_with_timeout 30s az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
         print_success "Admin consent granted automatically"
     else
         echo ""
@@ -282,7 +295,7 @@ create_custom_role() {
             print_warning "ProwlerRole already exists in subscription $SUB_ID"
         else
             # Create custom role
-            timeout 60s az role definition create --subscription "$SUB_ID" --role-definition @- << EOF
+            run_with_timeout 60s az role definition create --subscription "$SUB_ID" --role-definition @- << EOF
 {
     "Name": "$CUSTOM_ROLE_NAME",
     "IsCustom": true,
@@ -306,7 +319,7 @@ assign_roles() {
         print_warning "Assigning roles in subscription: $SUB_ID"
         
         # Assign Reader role
-        if timeout 60s az role assignment create \
+        if run_with_timeout 60s az role assignment create \
             --role "Reader" \
             --assignee $SP_OBJECT_ID \
             --subscription "$SUB_ID" >/dev/null 2>&1; then
@@ -316,7 +329,7 @@ assign_roles() {
         fi
         
         # Assign ProwlerRole
-        if timeout 60s az role assignment create \
+        if run_with_timeout 60s az role assignment create \
             --role "$CUSTOM_ROLE_NAME" \
             --assignee $SP_OBJECT_ID \
             --subscription "$SUB_ID" >/dev/null 2>&1; then

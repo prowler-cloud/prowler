@@ -34,6 +34,19 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Function to run commands with timeout if available
+run_with_timeout() {
+    local timeout_duration="$1"
+    shift
+    
+    if command -v timeout &> /dev/null; then
+        timeout "$timeout_duration" "$@"
+    else
+        # Fallback: run command without timeout
+        "$@"
+    fi
+}
+
 check_prerequisites() {
     print_header "Checking Prerequisites"
     
@@ -191,7 +204,7 @@ create_app_registration() {
 EOF
         )
         
-        echo "$PERMISSIONS_JSON" | timeout 60s az ad app update --id "$APP_ID" --required-resource-accesses @- >/dev/null
+        echo "$PERMISSIONS_JSON" | run_with_timeout 60s az ad app update --id "$APP_ID" --required-resource-accesses @- >/dev/null
         print_success "Updated API permissions for existing app"
     else
         # Create new app registration
@@ -219,7 +232,7 @@ EOF
 EOF
         )
         
-        APP_OUTPUT=$(echo "$PERMISSIONS_JSON" | timeout 60s az ad app create \
+        APP_OUTPUT=$(echo "$PERMISSIONS_JSON" | run_with_timeout 60s az ad app create \
             --display-name "$APP_NAME" \
             --required-resource-accesses @-)
         
@@ -239,7 +252,7 @@ EOF
     else
         # Create service principal
         print_warning "Creating service principal..."
-        SP_OUTPUT=$(timeout 60s az ad sp create --id $APP_ID 2>/dev/null)
+        SP_OUTPUT=$(run_with_timeout 60s az ad sp create --id $APP_ID 2>/dev/null)
         
         if [ $? -ne 0 ]; then
             print_warning "Service principal creation failed. It might already exist."
@@ -260,7 +273,7 @@ EOF
     
     # Create client secret
     print_warning "Creating client secret..."
-    SECRET_OUTPUT=$(timeout 60s az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
+    SECRET_OUTPUT=$(run_with_timeout 60s az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
     CLIENT_SECRET=$(echo $SECRET_OUTPUT | jq -r '.password')
     
     print_success "Created/updated client secret"
@@ -269,7 +282,7 @@ EOF
     echo ""
     print_warning "Attempting to grant admin consent for API permissions..."
     
-    if timeout 30s az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
+    if run_with_timeout 30s az ad app permission admin-consent --id $APP_ID 2>/dev/null; then
         print_success "Admin consent granted automatically"
     else
         echo ""
@@ -347,7 +360,7 @@ create_custom_role() {
             az role definition delete --name "$ROLE_ID" --subscription "$SUBSCRIPTION_ID" >/dev/null
             
             # Create custom role
-            timeout 60s az role definition create --subscription "$SUBSCRIPTION_ID" --role-definition @- << EOF >/dev/null
+            run_with_timeout 60s az role definition create --subscription "$SUBSCRIPTION_ID" --role-definition @- << EOF >/dev/null
 {
     "Name": "$CUSTOM_ROLE_NAME",
     "IsCustom": true,
@@ -366,7 +379,7 @@ EOF
     else
         # Create custom role
         print_warning "Creating new ProwlerRole..."
-        timeout 60s az role definition create --subscription "$SUBSCRIPTION_ID" --role-definition @- << EOF >/dev/null
+        run_with_timeout 60s az role definition create --subscription "$SUBSCRIPTION_ID" --role-definition @- << EOF >/dev/null
 {
     "Name": "$CUSTOM_ROLE_NAME",
     "IsCustom": true,
@@ -395,7 +408,7 @@ assign_roles() {
         print_success "Reader role is already assigned in $SUBSCRIPTION_ID"
     else
         print_warning "Assigning Reader role..."
-        if timeout 60s az role assignment create \
+        if run_with_timeout 60s az role assignment create \
             --role "Reader" \
             --assignee "$SP_OBJECT_ID" \
             --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
@@ -413,7 +426,7 @@ assign_roles() {
         print_success "ProwlerRole is already assigned in $SUBSCRIPTION_ID"
     else
         print_warning "Assigning ProwlerRole..."
-        if timeout 60s az role assignment create \
+        if run_with_timeout 60s az role assignment create \
             --role "$CUSTOM_ROLE_NAME" \
             --assignee "$SP_OBJECT_ID" \
             --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
