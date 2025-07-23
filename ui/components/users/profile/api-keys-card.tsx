@@ -6,7 +6,7 @@ import { Copy, Eye, Key, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { createAPIKey, revokeAPIKey } from "@/actions/users/api-keys";
-import { Button as CustomButton } from "@/components/ui/button/button";
+import { CustomButton } from "@/components/ui/custom";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { APIKey } from "@/types/users";
+
 
 interface APIKeysCardProps {
   apiKeys: APIKey[];
@@ -148,7 +149,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
           </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
-              <CustomButton>
+              <CustomButton ariaLabel="Create API Key" color="action" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Create API Key
               </CustomButton>
@@ -198,14 +199,24 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
               </div>
               <DialogFooter>
                 <CustomButton
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
+                  ariaLabel="Cancel"
+                  type="button"
+                  className="w-full bg-transparent"
+                  variant="faded"
+                  size="lg"
+                  onPress={() => setShowCreateDialog(false)}
                 >
                   Cancel
                 </CustomButton>
                 <CustomButton
-                  onClick={handleCreateKey}
-                  disabled={!keyName || isCreating}
+                  ariaLabel="Create Key"
+                  type="submit"
+                  className="w-full"
+                  variant="solid"
+                  color="action"
+                  size="lg"
+                  onPress={handleCreateKey}
+                  isDisabled={!keyName || isCreating}
                 >
                   {isCreating ? "Creating..." : "Create Key"}
                 </CustomButton>
@@ -266,10 +277,11 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <CustomButton
+                        ariaLabel="Revoke API Key"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRevokeKey(apiKey)}
-                        disabled={isDeleting === apiKey.id}
+                        onPress={() => handleRevokeKey(apiKey)}
+                        isDisabled={isDeleting === apiKey.id}
                       >
                         <Trash2 className="h-4 w-4" />
                       </CustomButton>
@@ -301,11 +313,13 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
               <div className="flex items-center space-x-2">
                 <Input value={newKey} readOnly className="font-mono text-xs" />
                 <CustomButton
-                  size="icon"
-                  variant="outline"
-                  onClick={() => copyToClipboard(newKey)}
+                  ariaLabel="Copy API Key"
+                  size="sm"
+                  variant="bordered"
+                  className="min-w-unit-8 w-unit-8 h-unit-8 px-0"
+                  onPress={() => copyToClipboard(newKey)}
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-4 w-4 text-foreground" />
                 </CustomButton>
               </div>
             </div>
@@ -329,7 +343,10 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
             </div>
           </div>
           <DialogFooter>
-            <CustomButton onClick={() => setShowKeyDialog(false)}>
+            <CustomButton
+              ariaLabel="Done"
+              onPress={() => setShowKeyDialog(false)}
+            >
               Done
             </CustomButton>
           </DialogFooter>
