@@ -68,13 +68,9 @@ export async function createAPIKey(
       attributes: {
         name: data.name,
         expires_at: data.expires_at,
-      },
-      relationships: {
         role: {
-          data: {
-            type: "roles",
-            id: data.role,
-          },
+          type: "roles",
+          id: data.role,
         },
       },
     },

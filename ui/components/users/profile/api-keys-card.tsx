@@ -10,7 +10,7 @@ import {
   getRolesForAPIKeys,
   revokeAPIKey,
 } from "@/actions/users/api-keys";
-import { CustomButton } from "@/components/ui/custom";
+import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,8 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showKeyDialog, setShowKeyDialog] = useState(false);
+  const [showRevokeConfirmation, setShowRevokeConfirmation] = useState(false);
+  const [apiKeyToRevoke, setApiKeyToRevoke] = useState<APIKey | null>(null);
   const [newKey, setNewKey] = useState("");
   const [newKeyName, setNewKeyName] = useState("");
   const [keyName, setKeyName] = useState("");
@@ -148,9 +150,16 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
   };
 
   const handleRevokeKey = async (apiKey: APIKey) => {
-    setIsDeleting(apiKey.id);
+    setApiKeyToRevoke(apiKey);
+    setShowRevokeConfirmation(true);
+  };
+
+  const confirmRevokeKey = async () => {
+    if (!apiKeyToRevoke) return;
+
+    setIsDeleting(apiKeyToRevoke.id);
     try {
-      await revokeAPIKey(apiKey.id);
+      await revokeAPIKey(apiKeyToRevoke.id);
       toast({
         title: "API Key revoked",
         description: "The API key has been revoked successfully.",
@@ -164,6 +173,8 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
       });
     } finally {
       setIsDeleting(null);
+      setShowRevokeConfirmation(false);
+      setApiKeyToRevoke(null);
     }
   };
 
@@ -363,6 +374,48 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
           )}
         </CardBody>
       </Card>
+
+      {/* Revoke Confirmation Modal */}
+      <CustomAlertModal
+        isOpen={showRevokeConfirmation}
+        onOpenChange={setShowRevokeConfirmation}
+        title="Are you absolutely sure?"
+        description={`This action cannot be undone. This will permanently revoke the API key "${apiKeyToRevoke?.attributes.name}" and any applications using it will lose access immediately.`}
+      >
+        <div className="flex w-full justify-center space-x-6">
+          <CustomButton
+            type="button"
+            ariaLabel="Cancel"
+            className="w-full bg-transparent"
+            variant="faded"
+            size="lg"
+            onPress={() => {
+              setShowRevokeConfirmation(false);
+              setApiKeyToRevoke(null);
+            }}
+            isDisabled={isDeleting === apiKeyToRevoke?.id}
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            type="button"
+            ariaLabel="Revoke API Key"
+            className="w-full"
+            variant="solid"
+            color="danger"
+            size="lg"
+            isLoading={isDeleting === apiKeyToRevoke?.id}
+            startContent={
+              isDeleting !== apiKeyToRevoke?.id && <Trash2 size={20} />
+            }
+            onPress={confirmRevokeKey}
+          >
+            {isDeleting === apiKeyToRevoke?.id
+              ? "Revoking..."
+              : "Revoke API Key"}
+          </CustomButton>
+        </div>
+      </CustomAlertModal>
 
       <Dialog open={showKeyDialog} onOpenChange={setShowKeyDialog}>
         <DialogContent>
