@@ -12,15 +12,18 @@ import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { IntegrationProps } from "@/types/integrations";
+import { ProviderProps } from "@/types/providers";
 
-import { S3IntegrationForm } from "./s3-integration-form";
+import { S3IntegrationForm } from "./forms";
 
 interface S3IntegrationsManagerProps {
   integrations: IntegrationProps[];
+  providers: ProviderProps[];
 }
 
 export const S3IntegrationsManager = ({
   integrations,
+  providers,
 }: S3IntegrationsManagerProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIntegration, setEditingIntegration] =
@@ -49,8 +52,7 @@ export const S3IntegrationsManager = ({
           title: "Success!",
           description: "S3 integration deleted successfully.",
         });
-        // Refresh page to update the list
-        window.location.reload();
+        // No need for manual reload, revalidatePath handles it
       } else if (result.errors?.general) {
         toast({
           variant: "destructive",
@@ -105,8 +107,7 @@ export const S3IntegrationsManager = ({
   const handleFormSuccess = () => {
     setIsModalOpen(false);
     setEditingIntegration(null);
-    // Refresh page to update the list
-    window.location.reload();
+    // No need for manual reload, revalidatePath handles it
   };
 
   return (
@@ -120,6 +121,7 @@ export const S3IntegrationsManager = ({
       >
         <S3IntegrationForm
           integration={editingIntegration}
+          providers={providers}
           onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
         />
@@ -163,8 +165,11 @@ export const S3IntegrationsManager = ({
                             "Unknown Bucket"}
                         </h4>
                         <p className="text-xs text-gray-500">
-                          Path:{" "}
-                          {integration.attributes.configuration.path || "/"}
+                          Output Directory:{" "}
+                          {integration.attributes.configuration
+                            .output_directory ||
+                            integration.attributes.configuration.path ||
+                            "/"}
                         </p>
                       </div>
                     </div>
@@ -188,7 +193,7 @@ export const S3IntegrationsManager = ({
                         <span className="font-medium">Auth:</span>{" "}
                         {integration.attributes.configuration.credentials
                           ?.role_arn
-                          ? "IAM Role"
+                          ? "IAM Role + Static Credentials"
                           : "Static Credentials"}
                       </p>
                       {integration.attributes.connection_last_checked_at && (

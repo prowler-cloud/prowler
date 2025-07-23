@@ -1,19 +1,24 @@
 import React from "react";
 
 import { getIntegrations } from "@/actions/integrations";
+import { getProviders } from "@/actions/providers";
+import { S3IntegrationsManager } from "@/components/integrations/s3-integrations-manager";
 import { ContentLayout } from "@/components/ui";
 
-import { S3IntegrationsManager } from "./s3-integrations-manager";
-
 export default async function S3Integrations() {
-  const integrations = await getIntegrations(
-    new URLSearchParams({ "filter[integration_type]": "amazon_s3" }),
-  );
+  const [integrations, providers] = await Promise.all([
+    getIntegrations(
+      new URLSearchParams({ "filter[integration_type]": "amazon_s3" }),
+    ),
+    //Todo: review with API
+    getProviders({ pageSize: 100 }), // Get all providers for selection
+  ]);
 
   const s3Integrations = integrations?.data || [];
+  const availableProviders = providers?.data || [];
 
   return (
-    <ContentLayout title="Amazon S3 Integrations" icon="tabler:cloud-upload">
+    <ContentLayout title="Amazon S3 Integrations">
       <div className="space-y-6">
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -40,13 +45,16 @@ export default async function S3Integrations() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                IAM role or static credentials
+                IAM role and static credentials
               </li>
             </ul>
           </div>
         </div>
 
-        <S3IntegrationsManager integrations={s3Integrations} />
+        <S3IntegrationsManager
+          integrations={s3Integrations}
+          providers={availableProviders}
+        />
       </div>
     </ContentLayout>
   );
