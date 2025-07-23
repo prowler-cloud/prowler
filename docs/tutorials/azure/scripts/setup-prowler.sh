@@ -48,9 +48,38 @@ check_prerequisites() {
         exit 1
     fi
     
+    # Check Azure login status
     if ! az account show &> /dev/null; then
-        print_error "Please log in to Azure CLI first: az login"
-        exit 1
+        print_warning "Not logged in to Azure CLI. Starting login process..."
+        echo ""
+        echo -e "${YELLOW}${BOLD}Azure Login Required:${NC}"
+        echo "--------------------------------------"
+        echo -e "1. We'll run '${BOLD}az login${NC}' which may open your browser"
+        echo -e "2. If a browser opens, complete the login process"
+        echo -e "3. If you see a device code, follow the instructions to authenticate"
+        echo -e "4. Come back here and press Enter when login is complete"
+        echo ""
+        echo -e "${YELLOW}Press Enter to start Azure login...${NC}"
+        read -r
+        
+        # Start az login
+        print_warning "Running 'az login'..."
+        az login
+        
+        # Wait for user confirmation that login is complete
+        echo ""
+        echo -e "${YELLOW}Press Enter after you've completed the Azure login process...${NC}"
+        read -r
+        
+        # Verify login worked
+        if az account show &> /dev/null; then
+            print_success "Azure login successful!"
+        else
+            print_error "Azure login failed. Please try running 'az login' manually."
+            exit 1
+        fi
+    else
+        print_success "Already logged in to Azure CLI"
     fi
     
     print_success "Prerequisites met"
@@ -160,7 +189,7 @@ create_app_registration() {
 EOF
     )
     
-    APP_OUTPUT=$(echo "$PERMISSIONS_JSON" | az ad app create \
+    APP_OUTPUT=$(echo "$PERMISSIONS_JSON" | timeout 60s az ad app create \
         --display-name "$APP_NAME" \
         --required-resource-accesses @-)
     
@@ -170,13 +199,13 @@ EOF
     print_success "Created App Registration: $APP_ID"
     
     # Create service principal
-    SP_OUTPUT=$(az ad sp create --id $APP_ID)
+    SP_OUTPUT=$(timeout 60s az ad sp create --id $APP_ID)
     SP_OBJECT_ID=$(echo $SP_OUTPUT | jq -r '.id')
     
     print_success "Created Service Principal: $SP_OBJECT_ID"
     
     # Create client secret
-    SECRET_OUTPUT=$(az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
+    SECRET_OUTPUT=$(timeout 60s az ad app credential reset --id $APP_ID --display-name "Prowler Client Secret")
     CLIENT_SECRET=$(echo $SECRET_OUTPUT | jq -r '.password')
     
     print_success "Created client secret"
@@ -253,7 +282,7 @@ create_custom_role() {
             print_warning "ProwlerRole already exists in subscription $SUB_ID"
         else
             # Create custom role
-            az role definition create --subscription "$SUB_ID" --role-definition @- << EOF
+            timeout 60s az role definition create --subscription "$SUB_ID" --role-definition @- << EOF
 {
     "Name": "$CUSTOM_ROLE_NAME",
     "IsCustom": true,
@@ -277,7 +306,7 @@ assign_roles() {
         print_warning "Assigning roles in subscription: $SUB_ID"
         
         # Assign Reader role
-        if az role assignment create \
+        if timeout 60s az role assignment create \
             --role "Reader" \
             --assignee $SP_OBJECT_ID \
             --subscription "$SUB_ID" >/dev/null 2>&1; then
@@ -287,7 +316,7 @@ assign_roles() {
         fi
         
         # Assign ProwlerRole
-        if az role assignment create \
+        if timeout 60s az role assignment create \
             --role "$CUSTOM_ROLE_NAME" \
             --assignee $SP_OBJECT_ID \
             --subscription "$SUB_ID" >/dev/null 2>&1; then
