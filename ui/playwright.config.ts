@@ -34,6 +34,8 @@ export default defineConfig({
       AUTH_SECRET: process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
       AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
+      E2E_USER: process.env.E2E_USER || "e2e@prowler.com",
+      E2E_PASSWORD: process.env.E2E_PASSWORD || "Thisisapassword123@",
     },
   },
 });
