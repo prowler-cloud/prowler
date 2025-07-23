@@ -8,6 +8,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
 - Support App Key Content in GitHub provider [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 
+### Fixed
+- False positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
+
 ---
 
 ## [v5.9.3] (Prowler UNRELEASED)
