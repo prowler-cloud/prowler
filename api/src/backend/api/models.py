@@ -48,7 +48,6 @@ from api.db_utils import (
 )
 from api.exceptions import ModelValidationError
 from api.rls import (
-    APIKeyRowLevelSecurityConstraint,
     BaseSecurityConstraint,
     RowLevelSecurityConstraint,
     RowLevelSecurityProtectedModel,
@@ -239,7 +238,7 @@ class APIKey(RowLevelSecurityProtectedModel):
             ),
         ]
         constraints = [
-            APIKeyRowLevelSecurityConstraint(
+            RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
