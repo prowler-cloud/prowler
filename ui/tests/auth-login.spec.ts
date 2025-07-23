@@ -196,6 +196,11 @@ test.describe("Accessibility", () => {
 
     await page.keyboard.press("Tab"); // Show password button
     await page.keyboard.press("Tab"); // Login button
+
+    if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+      await page.keyboard.press("Tab"); // Forgot password
+    }
+
     await expect(page.getByRole("button", { name: "Log in" })).toBeFocused();
   });
 
