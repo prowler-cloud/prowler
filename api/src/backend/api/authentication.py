@@ -8,6 +8,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 from rest_framework import authentication, exceptions
 
+from api.db_utils import rls_transaction
 from api.models import APIKey
 
 logger = logging.getLogger(__name__)
@@ -81,9 +82,6 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
                 raise exceptions.AuthenticationFailed("API key has expired.")
 
         logger.debug("API key is valid, updating last_used_at")
-
-        # Update last used timestamp within RLS context
-        from api.db_utils import rls_transaction
 
         try:
             with rls_transaction(str(api_key.tenant_id)):

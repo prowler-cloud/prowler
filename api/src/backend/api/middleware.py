@@ -3,7 +3,8 @@ import time
 from typing import Optional, Dict
 
 from config.custom_logging import BackendLogger
-
+from api.db_utils import rls_transaction
+from api.models import APIKeyActivity, APIKey
 
 def extract_auth_info(request) -> Dict[str, Optional[str]]:
     """Extract authentication information from the request."""
@@ -103,9 +104,6 @@ class APILoggingMiddleware:
         - Compromised key detection
         """
         try:
-            from api.models import APIKeyActivity, APIKey
-            from api.db_utils import rls_transaction
-
             # Use RLS context for both reading the API key and creating the activity log
             tenant_id = auth_info.get("tenant_id")
             if not tenant_id:

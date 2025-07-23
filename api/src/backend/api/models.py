@@ -10,6 +10,7 @@ from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
@@ -19,6 +20,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
@@ -212,7 +214,6 @@ class APIKey(RowLevelSecurityProtectedModel):
 
     def is_valid(self):
         """Check if the API key is still valid (not expired or revoked)."""
-        from django.utils import timezone
 
         if self.revoked_at:
             return False
@@ -222,8 +223,6 @@ class APIKey(RowLevelSecurityProtectedModel):
 
     def revoke(self):
         """Revoke the API key."""
-        from django.utils import timezone
-
         self.revoked_at = timezone.now()
         self.save()
 
@@ -252,15 +251,12 @@ class APIKey(RowLevelSecurityProtectedModel):
     @classmethod
     def hash_key(cls, key):
         """Hash an API key using Django's secure password hashing."""
-        from django.contrib.auth.hashers import make_password
 
         return make_password(key)
 
     @classmethod
     def verify_key(cls, key, key_hash):
         """Verify an API key against its hash using Django's password verification."""
-        from django.contrib.auth.hashers import check_password
-
         return check_password(key, key_hash)
 
     def __str__(self):

@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional
 
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 from rest_framework.permissions import BasePermission
 
@@ -28,8 +29,6 @@ class IsAuthenticated(BasePermission):
     """
 
     def has_permission(self, request, view):
-        from django.contrib.auth.models import AnonymousUser
-
         # Handle regular authenticated users (JWT)
         if request.user and request.user.is_authenticated:
             return True
@@ -50,8 +49,6 @@ class HasPermissions(BasePermission):
     """
 
     def has_permission(self, request, view):
-        from django.contrib.auth.models import AnonymousUser
-
         required_permissions = getattr(view, "required_permissions", [])
         if not required_permissions:
             return True
@@ -93,8 +90,6 @@ def get_role(user: User, request=None) -> Optional[Role]:
         or a virtual unlimited role for API key authentication,
         otherwise None.
     """
-    from django.contrib.auth.models import AnonymousUser
-
     # Handle API key authentication
     if isinstance(user, AnonymousUser) and request and hasattr(request, "auth"):
         auth_info = request.auth
