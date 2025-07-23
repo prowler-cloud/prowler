@@ -277,8 +277,12 @@ class M365PowerShell(PowerShellSession):
         """
         # User Auth
         if self.execute("Write-Output $credential") != "":
-            connection = self.execute("Connect-MicrosoftTeams -Credential $credential")
-            if not connection:
+            self.execute("Connect-MicrosoftTeams -Credential $credential")
+            # Test connection with a simple call
+            connection = self.execute("Get-CsTeamsClientConfiguration")
+            if connection:
+                return True
+            else:
                 logger.error(
                     "Microsoft Teams connection failed: Please check your permissions and try again."
                 )
@@ -386,7 +390,8 @@ class M365PowerShell(PowerShellSession):
         """
         # User Auth
         if self.execute("Write-Output $credential") != "":
-            connection = self.execute("Connect-ExchangeOnline -Credential $credential")
+            self.execute("Connect-ExchangeOnline -Credential $credential")
+            connection = self.execute("Get-OrganizationConfig")
             if connection:
                 return True
             else:
