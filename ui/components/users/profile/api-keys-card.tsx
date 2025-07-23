@@ -39,6 +39,14 @@ interface APIKeysCardProps {
   apiKeys: APIKey[];
 }
 
+const EXPIRATION_OPTIONS = [
+  { label: "Never", value: 1 },
+  { label: "1 Day", value: 2 },
+  { label: "7 Days", value: 3 },
+  { label: "30 Days", value: 4 },
+  { label: "90 Days", value: 5 },
+] as const;
+
 export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -46,26 +54,26 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
   const [newKey, setNewKey] = useState("");
   const [newKeyName, setNewKeyName] = useState("");
   const [keyName, setKeyName] = useState("");
-  const [expirationOption, setExpirationOption] = useState("never");
+  const [expirationOption, setExpirationOption] = useState(1); // Default to "Never"
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleCreateKey = async () => {
     setIsCreating(true);
     try {
       let expires_at = null;
-      if (expirationOption !== "never") {
+      if (expirationOption !== 1) { // Not "Never"
         const date = new Date();
         switch (expirationOption) {
-          case "1day":
+          case 2: // 1 Day
             date.setDate(date.getDate() + 1);
             break;
-          case "7days":
+          case 3: // 7 Days
             date.setDate(date.getDate() + 7);
             break;
-          case "30days":
+          case 4: // 30 Days
             date.setDate(date.getDate() + 30);
             break;
-          case "90days":
+          case 5: // 90 Days
             date.setDate(date.getDate() + 90);
             break;
         }
@@ -78,7 +86,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
       setShowCreateDialog(false);
       setShowKeyDialog(true);
       setKeyName("");
-      setExpirationOption("never");
+      setExpirationOption(1); // Reset to "Never"
 
       toast({
         title: "API Key created",
@@ -166,18 +174,18 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                 <div className="space-y-2">
                   <Label htmlFor="expiration">Expiration</Label>
                   <Select
-                    value={expirationOption}
-                    onValueChange={setExpirationOption}
+                    value={expirationOption.toString()}
+                    onValueChange={(value) => setExpirationOption(Number(value))}
                   >
                     <SelectTrigger id="expiration">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="never">Never</SelectItem>
-                      <SelectItem value="1day">1 day</SelectItem>
-                      <SelectItem value="7days">7 days</SelectItem>
-                      <SelectItem value="30days">30 days</SelectItem>
-                      <SelectItem value="90days">90 days</SelectItem>
+                      {EXPIRATION_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value.toString()}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
