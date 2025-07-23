@@ -3,7 +3,7 @@ Tests for API Key Authentication functionality.
 """
 
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from django.test import RequestFactory
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
@@ -310,9 +310,6 @@ class TestAPIKeyAuthentication:
         with patch.object(valid_api_key, "save") as mock_save:
             # Mock the APIKey.all_objects.filter() to return our key (not objects.filter)
             with patch("api.models.APIKey.all_objects.filter") as mock_filter:
-                # Create a mock queryset that behaves like Django queryset
-                from unittest.mock import MagicMock
-
                 mock_queryset = MagicMock()
                 mock_queryset.count.return_value = 1
                 mock_queryset.__iter__.return_value = iter([valid_api_key])
