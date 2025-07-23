@@ -94,53 +94,36 @@ export const CustomInput = <T extends FieldValues>({
     <FormField
       control={control}
       name={name}
-      render={({ field }) => {
-        // Handle number type conversion
-        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const value = e.target.value;
-          if (type === "number") {
-            // Convert empty string to undefined, otherwise convert to number
-            const numValue = value === "" ? undefined : Number(value);
-            field.onChange(numValue);
-          } else {
-            field.onChange(value);
-          }
-        };
-
-        return (
-          <>
-            <FormControl>
-              <Input
-                id={name}
-                classNames={{
-                  label:
-                    "tracking-tight font-light !text-default-500 text-xs !z-0",
-                  input: "text-default-500 text-small",
-                }}
-                isRequired={inputIsRequired}
-                label={inputLabel}
-                labelPlacement={labelPlacement}
-                placeholder={inputPlaceholder}
-                type={inputType}
-                variant={variant}
-                size={size}
-                isInvalid={isInvalid}
-                defaultValue={defaultValue}
-                endContent={endContent}
-                isDisabled={isDisabled}
-                isReadOnly={isReadOnly}
-                value={field.value ?? ""}
-                onChange={handleChange}
-                onBlur={field.onBlur}
-                name={field.name}
-              />
-            </FormControl>
-            {showFormMessage && (
-              <FormMessage className="max-w-full text-xs text-system-error dark:text-system-error" />
-            )}
-          </>
-        );
-      }}
+      render={({ field }) => (
+        <>
+          <FormControl>
+            <Input
+              id={name}
+              classNames={{
+                label:
+                  "tracking-tight font-light !text-default-500 text-xs !z-0",
+                input: "text-default-500 text-small",
+              }}
+              isRequired={inputIsRequired}
+              label={inputLabel}
+              labelPlacement={labelPlacement}
+              placeholder={inputPlaceholder}
+              type={inputType}
+              variant={variant}
+              size={size}
+              isInvalid={isInvalid}
+              defaultValue={defaultValue}
+              endContent={endContent}
+              isDisabled={isDisabled}
+              isReadOnly={isReadOnly}
+              {...field}
+            />
+          </FormControl>
+          {showFormMessage && (
+            <FormMessage className="max-w-full text-xs text-system-error dark:text-system-error" />
+          )}
+        </>
+      )}
     />
   );
 };

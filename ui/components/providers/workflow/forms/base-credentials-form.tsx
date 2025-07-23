@@ -134,7 +134,10 @@ export const BaseCredentialsForm = ({
           {showBackButton &&
             (searchParamsObj.get("via") === "credentials" ||
               searchParamsObj.get("via") === "role" ||
-              searchParamsObj.get("via") === "service-account") && (
+              searchParamsObj.get("via") === "service-account" ||
+              searchParamsObj.get("via") === "personal_access_token" ||
+              searchParamsObj.get("via") === "oauth_app_token" ||
+              searchParamsObj.get("via") === "github_app") && (
               <CustomButton
                 type="button"
                 ariaLabel="Back"
