@@ -182,7 +182,6 @@ class BaseSecurityConstraint(models.BaseConstraint):
         return path, args, kwargs
 
 
-
 class RowLevelSecurityProtectedModel(models.Model):
     tenant = models.ForeignKey("Tenant", on_delete=models.CASCADE)
 
