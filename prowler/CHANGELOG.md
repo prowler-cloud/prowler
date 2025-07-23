@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
+- Add explicit resource name to GCP and Azure Defender checks [(#8352)](https://github.com/prowler-cloud/prowler/pull/8352)
 
 ---
 
