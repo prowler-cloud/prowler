@@ -6,7 +6,7 @@ import { Copy, Eye, Key, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { createAPIKey, revokeAPIKey } from "@/actions/users/api-keys";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
   DialogContent,
@@ -15,15 +15,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui/dialog/dialog";
+import { Label } from "@/components/ui/label/Label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select/Select";
 import {
   Table,
   TableBody,
