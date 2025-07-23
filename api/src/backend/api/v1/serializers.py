@@ -342,12 +342,17 @@ class APIKeySerializer(BaseSerializerV1):
     Serializer for listing API Keys.
     """
 
+    role = serializers.ResourceRelatedField(
+        read_only=True, help_text="Role associated with this API key"
+    )
+
     class Meta:
         model = APIKey
         fields = [
             "id",
             "name",
             "prefix",
+            "role",
             "expires_at",
             "last_used_at",
             "created_at",
@@ -371,21 +376,41 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
         help_text="Expiration time. If not provided, the key never expires.",
     )
 
+    role = serializers.ResourceRelatedField(
+        queryset=Role.objects.all(),
+        required=True,
+        help_text="Role that defines the permissions for this API key",
+    )
+
     # This field will only be included in the response
     key = serializers.CharField(read_only=True)
 
     class Meta:
         model = APIKey
-        fields = ["id", "name", "expires_at", "key", "prefix", "created_at"]
+        fields = ["id", "name", "expires_at", "role", "key", "prefix", "created_at"]
         extra_kwargs = {
             "id": {"read_only": True},
             "prefix": {"read_only": True},
             "created_at": {"read_only": True},
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter roles by tenant context
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["role"].queryset = Role.objects.filter(tenant_id=tenant_id)
+
     def validate_expires_at(self, value):
         if value and value <= timezone.now():
             raise serializers.ValidationError("Expiration date must be in the future.")
+        return value
+
+    def validate_role(self, value):
+        """Validate that the role belongs to the current tenant."""
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id and value.tenant_id != tenant_id:
+            raise serializers.ValidationError("Role must belong to the current tenant.")
         return value
 
     def create(self, validated_data):

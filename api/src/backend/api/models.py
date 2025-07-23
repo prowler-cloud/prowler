@@ -166,10 +166,11 @@ class APIKeyUser:
     AnonymousUser, which improves security and clarity in the authentication system.
     """
 
-    def __init__(self, api_key_id, api_key_name, tenant_id):
+    def __init__(self, api_key_id, api_key_name, tenant_id, role=None):
         self.api_key_id = api_key_id
         self.api_key_name = api_key_name
         self.tenant_id = tenant_id
+        self.role = role  # Store the role for RBAC
         # Set a synthetic ID for consistency with User interface
         self.id = f"api_key_{api_key_id}"
         self.pk = self.id
@@ -193,7 +194,7 @@ class APIKeyUser:
         return f"APIKeyUser({self.api_key_name})"
 
     def __repr__(self):
-        return f"APIKeyUser(api_key_id={self.api_key_id}, api_key_name={self.api_key_name}, tenant_id={self.tenant_id})"
+        return f"APIKeyUser(api_key_id={self.api_key_id}, api_key_name={self.api_key_name}, tenant_id={self.tenant_id}, role={self.role})"
 
 
 class APIKey(RowLevelSecurityProtectedModel):
@@ -217,6 +218,12 @@ class APIKey(RowLevelSecurityProtectedModel):
     )
     prefix = models.CharField(
         max_length=10, help_text="Prefix of the API key for identification"
+    )
+    role = models.ForeignKey(
+        "Role",
+        on_delete=models.CASCADE,
+        related_name="api_keys",
+        help_text="Role that defines the permissions for this API key",
     )
     expires_at = models.DateTimeField(
         null=True, blank=True, help_text="Expiration time. Null means no expiration."

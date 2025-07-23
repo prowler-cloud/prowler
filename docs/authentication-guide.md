@@ -182,7 +182,7 @@ curl -X POST https://api.prowler.com/api/v1/users/{user-id}/api-keys \
 
 ## Permission Scopes and Access Control
 
-Both JWT tokens and API keys inherit the same permission scopes from the associated user account through Prowler's Role-Based Access Control (RBAC) system.
+Both JWT tokens and API keys inherit permission scopes from their associated roles through Prowler's Role-Based Access Control (RBAC) system.
 
 ### Permission Types
 
@@ -193,6 +193,42 @@ Both JWT tokens and API keys inherit the same permission scopes from the associa
 - **`MANAGE_INTEGRATIONS`**: Set up and manage third-party integrations
 - **`MANAGE_SCANS`**: Trigger and manage security scans
 - **`UNLIMITED_VISIBILITY`**: Bypass data filtering
+
+### API Key RBAC
+
+API keys must be associated with a specific role that defines their permissions. When creating an API key:
+
+1. **Role Selection Required**: You must select a role that defines what permissions the API key will have
+2. **Permission Inheritance**: The API key inherits all permissions from its associated role
+3. **No Privilege Escalation**: API keys cannot perform actions beyond what their assigned role allows
+4. **Audit Trail**: All API key actions are logged with their associated role for accountability
+
+#### Creating Role-Restricted API Keys
+
+When creating an API key via the UI or API, you must specify a role:
+
+```bash
+curl -X POST https://api.prowler.com/api/v1/tenants/{tenant-id}/api-keys/create \
+  -H "Authorization: Bearer your-jwt-token" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "api-keys",
+      "attributes": {
+        "name": "CI/CD Pipeline Key",
+        "expires_at": "2024-12-31T23:59:59Z"
+      },
+      "relationships": {
+        "role": {
+          "data": {
+            "type": "roles",
+            "id": "your-role-id"
+          }
+        }
+      }
+    }
+  }'
+```
 
 ### Scope Inheritance
 

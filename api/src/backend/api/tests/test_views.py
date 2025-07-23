@@ -7443,3 +7443,202 @@ class TestAPIKeyCRUDEndpoints:
         # Should succeed on retry
         assert response.status_code == status.HTTP_201_CREATED
         assert mock_generate_key.call_count == 2
+
+
+class TestAPIKeyRBAC:
+    """Test API Key RBAC functionality."""
+
+    @pytest.fixture
+    def limited_role(self, tenants_fixture):
+        """Create a role with limited permissions."""
+        tenant = tenants_fixture[0]
+        return Role.objects.create(
+            name="Limited Role",
+            tenant_id=tenant.id,
+            manage_providers=True,
+            manage_scans=True,
+            manage_users=False,
+            manage_account=False,
+            unlimited_visibility=False,
+        )
+
+    @pytest.fixture
+    def api_key_with_role(self, tenants_fixture, limited_role):
+        """Create an API key with a specific role."""
+        tenant = tenants_fixture[0]
+        raw_key = APIKey.generate_key()
+        prefix = APIKey.extract_prefix(raw_key)
+        key_hash = APIKey.hash_key(raw_key)
+
+        api_key = APIKey.objects.create(
+            name="Test RBAC Key",
+            tenant_id=tenant.id,
+            key_hash=key_hash,
+            prefix=prefix,
+            role=limited_role,
+        )
+        api_key._raw_key = raw_key
+        return api_key
+
+    def test_api_key_creation_requires_role(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that API key creation requires a role."""
+        tenant = tenants_fixture[0]
+
+        # Create a role first
+        role = Role.objects.create(
+            name="Test Role",
+            tenant_id=tenant.id,
+            manage_providers=True,
+            manage_scans=True,
+        )
+
+        api_key_data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {"name": "Test API Key", "expires_at": None},
+                "relationships": {
+                    "role": {
+                        "data": {
+                            "type": "roles",
+                            "id": str(role.id),
+                        }
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
+            data=api_key_data,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()["data"]
+
+        # Verify the API key was created with the role
+        created_api_key = APIKey.objects.get(id=data["id"])
+        assert created_api_key.role.id == role.id
+
+    def test_api_key_creation_without_role_fails(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that API key creation without a role fails."""
+        tenant = tenants_fixture[0]
+
+        api_key_data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {"name": "Test API Key", "expires_at": None},
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("tenant-api-keys-create", kwargs={"pk": tenant.id}),
+            data=api_key_data,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.authentication.APIKeyAuthentication.authenticate_credentials")
+    def test_api_key_respects_role_permissions(
+        self, mock_auth, api_client, api_key_with_role
+    ):
+        """Test that API key authentication respects role permissions."""
+        from api.models import APIKeyUser
+
+        # Mock the authentication to return our API key user
+        api_key_user = APIKeyUser(
+            api_key_id=str(api_key_with_role.id),
+            api_key_name=api_key_with_role.name,
+            tenant_id=str(api_key_with_role.tenant_id),
+            role=api_key_with_role.role,
+        )
+        mock_auth.return_value = (
+            api_key_user,
+            {"tenant_id": str(api_key_with_role.tenant_id)},
+        )
+
+        # Test accessing an endpoint that requires MANAGE_USERS permission (which the role doesn't have)
+        response = api_client.get(
+            reverse("user-list"),
+            HTTP_AUTHORIZATION=f"ApiKey {api_key_with_role._raw_key}",
+        )
+
+        # Should be forbidden because the role doesn't have manage_users permission
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.authentication.APIKeyAuthentication.authenticate_credentials")
+    def test_api_key_allows_permitted_actions(
+        self, mock_auth, api_client, api_key_with_role
+    ):
+        """Test that API key allows actions permitted by its role."""
+        from api.models import APIKeyUser
+
+        # Mock the authentication to return our API key user
+        api_key_user = APIKeyUser(
+            api_key_id=str(api_key_with_role.id),
+            api_key_name=api_key_with_role.name,
+            tenant_id=str(api_key_with_role.tenant_id),
+            role=api_key_with_role.role,
+        )
+        mock_auth.return_value = (
+            api_key_user,
+            {"tenant_id": str(api_key_with_role.tenant_id)},
+        )
+
+        # Test accessing an endpoint that requires MANAGE_PROVIDERS permission (which the role has)
+        response = api_client.get(
+            reverse("provider-list"),
+            HTTP_AUTHORIZATION=f"ApiKey {api_key_with_role._raw_key}",
+        )
+
+        # Should be allowed because the role has manage_providers permission
+        assert response.status_code in [
+            status.HTTP_200_OK,
+            status.HTTP_404_NOT_FOUND,
+        ]  # 404 if no providers exist
+
+    def test_api_key_cross_tenant_validation(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that API keys cannot be created with roles from other tenants."""
+        if len(tenants_fixture) < 2:
+            pytest.skip("Need at least 2 tenants for cross-tenant test")
+
+        tenant1 = tenants_fixture[0]
+        tenant2 = tenants_fixture[1]
+
+        # Create a role in tenant2
+        role_tenant2 = Role.objects.create(
+            name="Cross Tenant Role",
+            tenant_id=tenant2.id,
+            manage_providers=True,
+        )
+
+        # Try to create API key in tenant1 with role from tenant2
+        api_key_data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {"name": "Cross Tenant Key", "expires_at": None},
+                "relationships": {
+                    "role": {
+                        "data": {
+                            "type": "roles",
+                            "id": str(role_tenant2.id),
+                        }
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("tenant-api-keys-create", kwargs={"pk": tenant1.id}),
+            data=api_key_data,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

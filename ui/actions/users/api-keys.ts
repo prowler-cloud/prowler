@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth.config";
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
-import { APIKey, APIKeyCreateData, APIKeyCreateResponse } from "@/types/users";
+import {
+  APIKey,
+  APIKeyCreateData,
+  APIKeyCreateResponse,
+  RoleDetail,
+} from "@/types/users";
 
 export async function getAPIKeys(): Promise<{ data: APIKey[] }> {
   const session = await auth();
@@ -27,6 +32,27 @@ export async function getAPIKeys(): Promise<{ data: APIKey[] }> {
   return response.json();
 }
 
+export async function getRolesForAPIKeys(): Promise<{ data: RoleDetail[] }> {
+  const session = await auth();
+  if (!session?.tenantId) {
+    throw new Error("No tenant ID found in session");
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/roles`);
+
+  const response = await fetch(url.toString(), {
+    cache: "no-store",
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch roles");
+  }
+
+  return response.json();
+}
+
 export async function createAPIKey(
   data: APIKeyCreateData,
 ): Promise<APIKeyCreateResponse> {
@@ -39,7 +65,18 @@ export async function createAPIKey(
   const body = {
     data: {
       type: "api-keys",
-      attributes: data,
+      attributes: {
+        name: data.name,
+        expires_at: data.expires_at,
+      },
+      relationships: {
+        role: {
+          data: {
+            type: "roles",
+            id: data.role,
+          },
+        },
+      },
     },
   };
 

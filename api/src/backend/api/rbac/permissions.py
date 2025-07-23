@@ -52,7 +52,14 @@ class HasPermissions(BasePermission):
 
         # Handle API key authentication
         if isinstance(request.user, APIKeyUser):
-            # API keys have unlimited permissions within their tenant
+            # Check API key's role permissions instead of granting unlimited access
+            if not request.user.role:
+                return False
+
+            for perm in required_permissions:
+                if not getattr(request.user.role, perm.value, False):
+                    return False
+
             return True
 
         # Handle regular user authentication
@@ -78,40 +85,17 @@ def get_role(user: User, request=None) -> Optional[Role]:
     """
     Retrieve the first role assigned to the given user.
 
-    For API key authentication, returns a virtual role with unlimited visibility.
+    For API key authentication, returns the role associated with the API key.
 
     Returns:
         The user's first Role instance if the user has any roles,
-        or a virtual unlimited role for API key authentication,
+        or the API key's role for API key authentication,
         otherwise None.
     """
     # Handle API key authentication
     if isinstance(user, APIKeyUser):
-        # Create a virtual role with unlimited permissions for API keys
-        # This allows API keys to access all resources within their tenant
-        # Use a simple object instead of Role model to avoid many-to-many field issues
-        virtual_role = type(
-            "VirtualRole",
-            (),
-            {
-                "id": None,
-                "name": "api_key_unlimited",
-                "tenant_id": user.tenant_id,
-                "manage_users": True,
-                "manage_account": True,
-                "manage_billing": True,
-                "manage_providers": True,
-                "manage_integrations": True,
-                "manage_scans": True,
-                "unlimited_visibility": True,
-                "provider_groups": type(
-                    "MockManager",
-                    (),
-                    {"all": lambda: Role.objects.none(), "exists": lambda: False},
-                )(),
-            },
-        )()
-        return virtual_role
+        # Return the actual role associated with the API key
+        return user.role
 
     return user.roles.first()
 

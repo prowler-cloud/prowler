@@ -3,9 +3,13 @@
 import { Card, CardBody, CardHeader, Input } from "@nextui-org/react";
 import { format } from "date-fns";
 import { Copy, Eye, Key, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { createAPIKey, revokeAPIKey } from "@/actions/users/api-keys";
+import {
+  createAPIKey,
+  getRolesForAPIKeys,
+  revokeAPIKey,
+} from "@/actions/users/api-keys";
 import { CustomButton } from "@/components/ui/custom";
 import {
   Dialog,
@@ -33,7 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
-import { APIKey } from "@/types/users";
+import { APIKey, RoleDetail } from "@/types/users";
 
 interface APIKeysCardProps {
   apiKeys: APIKey[];
@@ -54,10 +58,43 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
   const [newKey, setNewKey] = useState("");
   const [newKeyName, setNewKeyName] = useState("");
   const [keyName, setKeyName] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [expirationOption, setExpirationOption] = useState(1); // Default to "Never"
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [roles, setRoles] = useState<RoleDetail[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false);
+
+  // Fetch roles when the dialog opens
+  useEffect(() => {
+    if (showCreateDialog) {
+      setIsLoadingRoles(true);
+      getRolesForAPIKeys()
+        .then((response) => {
+          setRoles(response.data);
+        })
+        .catch((_error) => {
+          toast({
+            title: "Error",
+            description: "Failed to fetch roles",
+            variant: "destructive",
+          });
+        })
+        .finally(() => {
+          setIsLoadingRoles(false);
+        });
+    }
+  }, [showCreateDialog]);
 
   const handleCreateKey = async () => {
+    if (!selectedRole) {
+      toast({
+        title: "Error",
+        description: "Please select a role for the API key",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreating(true);
     try {
       let expires_at = null;
@@ -81,12 +118,17 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
         expires_at = date.toISOString();
       }
 
-      const response = await createAPIKey({ name: keyName, expires_at });
+      const response = await createAPIKey({
+        name: keyName,
+        expires_at,
+        role: selectedRole,
+      });
       setNewKey(response.data.attributes.key);
       setNewKeyName(response.data.attributes.name);
       setShowCreateDialog(false);
       setShowKeyDialog(true);
       setKeyName("");
+      setSelectedRole("");
       setExpirationOption(1); // Reset to "Never"
 
       toast({
@@ -173,6 +215,35 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select
+                    value={selectedRole}
+                    onValueChange={(value) => setSelectedRole(value)}
+                    disabled={isLoadingRoles}
+                  >
+                    <SelectTrigger id="role">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingRoles ? (
+                        <SelectItem value="__loading__" disabled>
+                          Loading roles...
+                        </SelectItem>
+                      ) : roles.length === 0 ? (
+                        <SelectItem value="__no_roles__" disabled>
+                          No roles found.
+                        </SelectItem>
+                      ) : (
+                        roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.attributes.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="expiration">Expiration</Label>
                   <Select
                     value={expirationOption.toString()}
@@ -215,7 +286,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                   color="action"
                   size="lg"
                   onPress={handleCreateKey}
-                  isDisabled={!keyName || isCreating}
+                  isDisabled={!keyName || isCreating || !selectedRole}
                 >
                   {isCreating ? "Creating..." : "Create Key"}
                 </CustomButton>

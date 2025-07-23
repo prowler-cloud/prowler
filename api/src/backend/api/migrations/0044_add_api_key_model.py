@@ -1,7 +1,8 @@
-# Generated manually for API Key model with multi-tenancy
-# This migration creates API keys with secure prefix-based lookup and tenant management
+# Generated manually for API Key model with multi-tenancy and RBAC support
+# This migration creates API keys with secure prefix-based lookup, tenant management, and role-based permissions
 
 import django.core.validators
+import django.db.models.deletion
 from django.db import migrations, models
 import uuid
 
@@ -47,6 +48,15 @@ class Migration(migrations.Migration):
                     models.CharField(
                         max_length=10,
                         help_text="Prefix of the API key for identification",
+                    ),
+                ),
+                (
+                    "role",
+                    models.ForeignKey(
+                        help_text="Role that defines the permissions for this API key",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="api_keys",
+                        to="api.role",
                     ),
                 ),
                 (

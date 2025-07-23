@@ -108,6 +108,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             api_key_id=str(api_key.id),
             api_key_name=api_key.name,
             tenant_id=str(api_key.tenant_id),
+            role=api_key.role,  # Include the role for RBAC
         )
 
         return (api_key_user, auth_info)
