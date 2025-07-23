@@ -6,7 +6,7 @@ import { Copy, Eye, Key, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { createAPIKey, revokeAPIKey } from "@/actions/users/api-keys";
-import { Button } from "@/components/ui/button/button";
+import { Button as CustomButton } from "@/components/ui/button/button";
 import {
   Dialog,
   DialogContent,
@@ -61,7 +61,8 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
     setIsCreating(true);
     try {
       let expires_at = null;
-      if (expirationOption !== 1) { // Not "Never"
+      if (expirationOption !== 1) {
+        // Not "Never"
         const date = new Date();
         switch (expirationOption) {
           case 2: // 1 Day
@@ -147,10 +148,10 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
           </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
-              <Button>
+              <CustomButton>
                 <Plus className="mr-2 h-4 w-4" />
                 Create API Key
-              </Button>
+              </CustomButton>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -175,14 +176,19 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                   <Label htmlFor="expiration">Expiration</Label>
                   <Select
                     value={expirationOption.toString()}
-                    onValueChange={(value) => setExpirationOption(Number(value))}
+                    onValueChange={(value) =>
+                      setExpirationOption(Number(value))
+                    }
                   >
                     <SelectTrigger id="expiration">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {EXPIRATION_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value.toString()}>
+                        <SelectItem
+                          key={option.value}
+                          value={option.value.toString()}
+                        >
                           {option.label}
                         </SelectItem>
                       ))}
@@ -191,18 +197,18 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                 </div>
               </div>
               <DialogFooter>
-                <Button
+                <CustomButton
                   variant="outline"
                   onClick={() => setShowCreateDialog(false)}
                 >
                   Cancel
-                </Button>
-                <Button
+                </CustomButton>
+                <CustomButton
                   onClick={handleCreateKey}
                   disabled={!keyName || isCreating}
                 >
                   {isCreating ? "Creating..." : "Create Key"}
-                </Button>
+                </CustomButton>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -259,14 +265,14 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                         : "Never"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
+                      <CustomButton
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRevokeKey(apiKey)}
                         disabled={isDeleting === apiKey.id}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </CustomButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -294,13 +300,13 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
               <Label>API Key</Label>
               <div className="flex items-center space-x-2">
                 <Input value={newKey} readOnly className="font-mono text-xs" />
-                <Button
+                <CustomButton
                   size="icon"
                   variant="outline"
                   onClick={() => copyToClipboard(newKey)}
                 >
                   <Copy className="h-4 w-4" />
-                </Button>
+                </CustomButton>
               </div>
             </div>
             <div className="rounded-md bg-yellow-50 p-4 dark:bg-yellow-950">
@@ -323,7 +329,9 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setShowKeyDialog(false)}>Done</Button>
+            <CustomButton onClick={() => setShowKeyDialog(false)}>
+              Done
+            </CustomButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
