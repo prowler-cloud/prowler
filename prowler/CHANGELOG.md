@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [v5.10.0] (Prowler UNRELEASED)
 
 ### Added
@@ -19,7 +17,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> a69d0d16c (fix(azure/storage): handle when Azure API set values to None (#8325))
 ## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed
