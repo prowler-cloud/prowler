@@ -5,11 +5,8 @@ import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
-import {
-  CustomButton,
-  CustomLink,
-  CustomTextarea,
-} from "@/components/ui/custom";
+import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 
 interface SuggestedAction {

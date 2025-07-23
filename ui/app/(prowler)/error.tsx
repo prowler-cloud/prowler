@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { RocketIcon } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 
 export default function Error({
   error,

@@ -3,6 +3,7 @@
 import { Card, CardBody } from "@nextui-org/react";
 import { Chip } from "@nextui-org/react";
 import { TrendingUp } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React, { useMemo } from "react";
 import { Label, Pie, PieChart } from "recharts";
@@ -14,7 +15,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart/Chart";
-import { CustomLink } from "@/components/ui/custom";
 
 const calculatePercent = (
   chartData: { findings: string; number: number; fill: string }[],
@@ -173,10 +173,9 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
           <div className="flex min-h-[156px] flex-col justify-start gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
-                <CustomLink
+                <Link
                   href="/findings?filter[status]=PASS"
-                  className="flex items-center space-x-2 text-prowler-black-900 dark:text-prowler-white"
-                  target="_self"
+                  className="flex items-center space-x-2"
                 >
                   <Chip
                     className="h-5"
@@ -189,7 +188,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                     {chartData[0].number}
                   </Chip>
                   <span>{updatedChartData[0].percent}</span>
-                </CustomLink>
+                </Link>
               </div>
               <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
                 {pass_new > 0 ? (
@@ -207,10 +206,9 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center align-middle">
-                <CustomLink
+                <Link
                   href="/findings?filter[status]=FAIL"
-                  className="flex items-center space-x-2 text-prowler-black-900 dark:text-prowler-white"
-                  target="_self"
+                  className="flex items-center space-x-2"
                 >
                   <Chip
                     className="h-5"
@@ -223,7 +221,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                     {chartData[1].number}
                   </Chip>
                   <span>{updatedChartData[1].percent}</span>
-                </CustomLink>
+                </Link>
               </div>
               <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
                 +{fail_new} fail findings from last day{" "}
@@ -235,10 +233,9 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
               {shouldShowMuted ? (
                 <>
                   <div className="flex items-center space-x-2">
-                    <CustomLink
+                    <Link
                       href="/findings?filter[muted]=true"
-                      className="flex items-center space-x-2 text-prowler-black-900 dark:text-prowler-white"
-                      target="_self"
+                      className="flex items-center space-x-2"
                     >
                       <Chip
                         className="h-5"
@@ -256,7 +253,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                           (item) => item.findings === "Muted",
                         )?.percent || "0%"}
                       </span>
-                    </CustomLink>
+                    </Link>
                   </div>
                   <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
                     {muted_new > 0 ? (

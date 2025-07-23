@@ -4,7 +4,6 @@ export * from "./custom-button";
 export * from "./custom-dropdown-filter";
 export * from "./custom-dropdown-selection";
 export * from "./custom-input";
-export * from "./custom-link";
 export * from "./custom-loader";
 export * from "./custom-radio";
 export * from "./custom-section";

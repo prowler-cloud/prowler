@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import React from "react";
 
@@ -16,29 +14,38 @@ interface CustomLinkProps
   size?: string;
 }
 
-export const CustomLink = ({
-  href,
-  target = "_blank",
-  ariaLabel,
-  className,
-  children,
-  scroll = true,
-  size = "xs",
-  ...props
-}: CustomLinkProps) => {
-  return (
-    <Link
-      href={href}
-      scroll={scroll}
-      className={cn(`text-${size} font-medium text-primary`, className)}
-      aria-label={ariaLabel}
-      target={target}
-      rel="noopener noreferrer"
-      {...props}
-    >
-      {children}
-    </Link>
-  );
-};
+export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
+  (
+    {
+      href,
+      target = "_blank",
+      ariaLabel,
+      className,
+      children,
+      scroll = true,
+      size = "xs",
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <Link
+        ref={ref}
+        href={href}
+        scroll={scroll}
+        className={cn(
+          `text-${size} break-all font-medium text-primary decoration-1 hover:underline`,
+          className,
+        )}
+        aria-label={ariaLabel}
+        target={target}
+        rel="noopener noreferrer"
+        {...props}
+      >
+        {children}
+      </Link>
+    );
+  },
+);
 
 CustomLink.displayName = "CustomLink";

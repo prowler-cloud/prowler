@@ -1,21 +1,4 @@
-"use client";
-
-import { CustomLink } from "@/components/ui/custom";
 import { cn } from "@/lib/utils";
-
-export const ComplianceLink = ({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <CustomLink href={href} className="break-all decoration-1" size="sm">
-      {children}
-    </CustomLink>
-  );
-};
 
 export const ComplianceDetailContainer = ({
   children,

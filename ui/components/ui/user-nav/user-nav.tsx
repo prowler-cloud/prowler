@@ -9,6 +9,8 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar/avatar";
+import { Button } from "@/components/ui/button/button";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,9 +26,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
-
-import { Button } from "../button/button";
-import { CustomLink } from "../custom";
 
 export const UserNav = () => {
   const { data: session } = useSession();

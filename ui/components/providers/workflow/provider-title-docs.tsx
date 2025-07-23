@@ -1,6 +1,6 @@
 "use client";
 
-import { CustomLink } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { getProviderName } from "@/components/ui/entities/get-provider-logo";
 import { getProviderLogo } from "@/components/ui/entities/get-provider-logo";
 import { getProviderHelpText } from "@/lib";

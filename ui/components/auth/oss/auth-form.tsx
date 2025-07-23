@@ -14,7 +14,8 @@ import { PasswordRequirementsMessage } from "@/components/auth/oss/password-vali
 import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput, CustomLink } from "@/components/ui/custom";
+import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import {
   Form,
   FormControl,

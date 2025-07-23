@@ -7,11 +7,8 @@ import { z } from "zod";
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomLink,
-  CustomServerInput,
-} from "@/components/ui/custom";
+import { CustomButton, CustomServerInput } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { apiBaseUrl } from "@/lib";
@@ -243,7 +240,7 @@ export const SamlConfigForm = ({
               be created with minimal permissions. You can assign permissions to
               roles on the{" "}
               <CustomLink href="/roles" target="_self">
-                <span className="underline">Roles</span>
+                <span>Roles</span>
               </CustomLink>{" "}
               page.
             </p>

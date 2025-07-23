@@ -1,7 +1,8 @@
 import { Control } from "react-hook-form";
 
 import { InfoIcon } from "@/components/icons";
-import { CustomInput, CustomLink } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { M365Credentials } from "@/types";
 
 export const M365CredentialsForm = ({
@@ -58,7 +59,6 @@ export const M365CredentialsForm = ({
         Microsoft&apos;s on-going MFA enforcement across all tenants (see{" "}
         <CustomLink
           href="https://azure.microsoft.com/en-us/blog/announcing-mandatory-multi-factor-authentication-for-azure-sign-in/"
-          className="hover:underline"
           size="sm"
         >
           Microsoft docs
@@ -76,7 +76,6 @@ export const M365CredentialsForm = ({
         Due to that change, you must only{" "}
         <CustomLink
           href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365/#step-3-configure-your-m365-account"
-          className="hover:underline"
           size="sm"
         >
           use application authentication

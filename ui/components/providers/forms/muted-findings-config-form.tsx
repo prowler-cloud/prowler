@@ -12,7 +12,8 @@ import {
 } from "@/actions/processors";
 import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomLink } from "@/components/ui/custom";
+import { CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { FormButtons } from "@/components/ui/form";
 import { fontMono } from "@/config/fonts";
 import { convertToYaml, parseYamlValidation } from "@/lib/yaml";
@@ -177,10 +178,7 @@ export const MutedFindingsConfigForm = ({
             </li>
             <li>
               Learn more about configuring the Mutelist{" "}
-              <CustomLink
-                href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/"
-                className="hover:underline"
-              >
+              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/">
                 here
               </CustomLink>
               .

@@ -6,11 +6,8 @@ import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
 import { useToast } from "@/components/ui";
-import {
-  CustomAlertModal,
-  CustomButton,
-  CustomLink,
-} from "@/components/ui/custom";
+import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 
 import { SamlConfigForm } from "./forms";
 

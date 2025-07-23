@@ -3,7 +3,8 @@
 import { Snippet } from "@nextui-org/react";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { CustomLink, CustomSection } from "@/components/ui/custom";
+import { CustomSection } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
@@ -154,7 +155,6 @@ export const FindingDetail = ({
                       href={
                         attributes.check_metadata.remediation.recommendation.url
                       }
-                      className="hover:underline"
                       size="sm"
                     >
                       Learn more
@@ -180,7 +180,6 @@ export const FindingDetail = ({
               <InfoField label="Additional Resources">
                 <CustomLink
                   href={attributes.check_metadata.remediation.code.other}
-                  className="hover:underline"
                   size="sm"
                 >
                   View documentation
