@@ -1012,18 +1012,16 @@ class TenantViewSet(BaseTenantViewset):
     def initial(self, request, *args, **kwargs):
         """Custom initial method to extract tenant_id from JWT or API key authentication."""
         import logging
-        from django.contrib.auth.models import AnonymousUser
+        from api.models import APIKeyUser
 
         logger = logging.getLogger(__name__)
 
         # Extract tenant_id from auth (works for both JWT and API key)
         tenant_id_from_auth = None
         if request.auth:
-            # For API key authentication, check if user is AnonymousUser
-            if isinstance(request.user, AnonymousUser) and request.auth.get(
-                "api_key_id"
-            ):
-                tenant_id_from_auth = request.auth.get("tenant_id")
+            # For API key authentication, check if user is APIKeyUser
+            if isinstance(request.user, APIKeyUser):
+                tenant_id_from_auth = request.user.tenant_id
                 logger.debug(f"Extracted tenant_id from API key: {tenant_id_from_auth}")
             else:
                 # For JWT authentication
@@ -1045,17 +1043,13 @@ class TenantViewSet(BaseTenantViewset):
         super().initial(request, *args, **kwargs)
 
     def get_queryset(self):
-        from django.contrib.auth.models import AnonymousUser
+        from api.models import APIKeyUser
 
         # Handle API key authentication - return the tenant associated with the API key
-        if isinstance(self.request.user, AnonymousUser) and hasattr(
-            self.request, "auth"
-        ):
-            auth_info = self.request.auth
-            if auth_info and auth_info.get("api_key_id"):
-                tenant_id = auth_info.get("tenant_id")
-                queryset = Tenant.objects.filter(id=tenant_id)
-                return queryset.prefetch_related("memberships")
+        if isinstance(self.request.user, APIKeyUser):
+            tenant_id = self.request.user.tenant_id
+            queryset = Tenant.objects.filter(id=tenant_id)
+            return queryset.prefetch_related("memberships")
 
         # Handle regular user authentication
         queryset = Tenant.objects.filter(membership__user=self.request.user)

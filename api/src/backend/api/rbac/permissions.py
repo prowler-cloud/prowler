@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 from rest_framework.permissions import BasePermission
 
 from api.db_router import MainRouter
-from api.models import Provider, Role, User
+from api.models import Provider, Role, User, APIKeyUser
 
 
 class Permissions(Enum):
@@ -33,11 +33,9 @@ class IsAuthenticated(BasePermission):
         if request.user and request.user.is_authenticated:
             return True
 
-        # Handle API key authentication (returns AnonymousUser with auth info)
-        if isinstance(request.user, AnonymousUser) and hasattr(request, "auth"):
-            auth_info = request.auth
-            if auth_info and auth_info.get("api_key_id"):
-                return True
+        # Handle API key authentication (returns APIKeyUser)
+        if isinstance(request.user, APIKeyUser):
+            return True
 
         return False
 
@@ -54,11 +52,9 @@ class HasPermissions(BasePermission):
             return True
 
         # Handle API key authentication
-        if isinstance(request.user, AnonymousUser) and hasattr(request, "auth"):
-            auth_info = request.auth
-            if auth_info and auth_info.get("api_key_id"):
-                # API keys have unlimited permissions within their tenant
-                return True
+        if isinstance(request.user, APIKeyUser):
+            # API keys have unlimited permissions within their tenant
+            return True
 
         # Handle regular user authentication
         try:
@@ -91,34 +87,32 @@ def get_role(user: User, request=None) -> Optional[Role]:
         otherwise None.
     """
     # Handle API key authentication
-    if isinstance(user, AnonymousUser) and request and hasattr(request, "auth"):
-        auth_info = request.auth
-        if auth_info and auth_info.get("api_key_id"):
-            # Create a virtual role with unlimited permissions for API keys
-            # This allows API keys to access all resources within their tenant
-            # Use a simple object instead of Role model to avoid many-to-many field issues
-            virtual_role = type(
-                "VirtualRole",
-                (),
-                {
-                    "id": None,
-                    "name": "api_key_unlimited",
-                    "tenant_id": auth_info.get("tenant_id"),
-                    "manage_users": True,
-                    "manage_account": True,
-                    "manage_billing": True,
-                    "manage_providers": True,
-                    "manage_integrations": True,
-                    "manage_scans": True,
-                    "unlimited_visibility": True,
-                    "provider_groups": type(
-                        "MockManager",
-                        (),
-                        {"all": lambda: Role.objects.none(), "exists": lambda: False},
-                    )(),
-                },
-            )()
-            return virtual_role
+    if isinstance(user, APIKeyUser):
+        # Create a virtual role with unlimited permissions for API keys
+        # This allows API keys to access all resources within their tenant
+        # Use a simple object instead of Role model to avoid many-to-many field issues
+        virtual_role = type(
+            "VirtualRole",
+            (),
+            {
+                "id": None,
+                "name": "api_key_unlimited",
+                "tenant_id": user.tenant_id,
+                "manage_users": True,
+                "manage_account": True,
+                "manage_billing": True,
+                "manage_providers": True,
+                "manage_integrations": True,
+                "manage_scans": True,
+                "unlimited_visibility": True,
+                "provider_groups": type(
+                    "MockManager",
+                    (),
+                    {"all": lambda: Role.objects.none(), "exists": lambda: False},
+                )(),
+            },
+        )()
+        return virtual_role
 
     return user.roles.first()
 

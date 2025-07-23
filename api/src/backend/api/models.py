@@ -159,6 +159,44 @@ class User(AbstractBaseUser):
         resource_name = "users"
 
 
+class APIKeyUser:
+    """
+    A user-like object specifically for API key authentication.
+
+    This class provides a proper user identity for API key requests instead of using
+    AnonymousUser, which improves security and clarity in the authentication system.
+    """
+
+    def __init__(self, api_key_id, api_key_name, tenant_id):
+        self.api_key_id = api_key_id
+        self.api_key_name = api_key_name
+        self.tenant_id = tenant_id
+        # Set a synthetic ID for consistency with User interface
+        self.id = f"api_key_{api_key_id}"
+        self.pk = self.id
+
+    @property
+    def is_authenticated(self):
+        """API key users are always considered authenticated."""
+        return True
+
+    @property
+    def is_anonymous(self):
+        """API key users are not anonymous."""
+        return False
+
+    @property
+    def is_active(self):
+        """API key users are considered active by default."""
+        return True
+
+    def __str__(self):
+        return f"APIKeyUser({self.api_key_name})"
+
+    def __repr__(self):
+        return f"APIKeyUser(api_key_id={self.api_key_id}, api_key_name={self.api_key_name}, tenant_id={self.tenant_id})"
+
+
 class APIKey(RowLevelSecurityProtectedModel):
     """
     Model for API Keys that can be used for programmatic access to the API.

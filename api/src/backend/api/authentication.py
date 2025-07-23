@@ -4,12 +4,11 @@ API Key Authentication for Prowler API.
 
 import logging
 
-from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
 from rest_framework import authentication, exceptions
 
 from api.db_utils import rls_transaction
-from api.models import APIKey
+from api.models import APIKey, APIKeyUser
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +91,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
             logger.warning(f"Failed to update last_used_at: {type(e).__name__}: {e}")
             # Don't fail authentication if we can't update the timestamp
 
-        # Return anonymous user and auth token
+        # Return APIKeyUser and auth token
         # For API Key auth, the tenant_id comes from the API key itself
         auth_info = {
             "api_key_id": str(api_key.id),
@@ -103,7 +102,15 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         logger.debug(
             f"Returning successful authentication for tenant: {api_key.tenant_id}"
         )
-        return (AnonymousUser(), auth_info)
+
+        # Create APIKeyUser instance instead of AnonymousUser
+        api_key_user = APIKeyUser(
+            api_key_id=str(api_key.id),
+            api_key_name=api_key.name,
+            tenant_id=str(api_key.tenant_id),
+        )
+
+        return (api_key_user, auth_info)
 
     def authenticate_header(self, request):
         return self.keyword

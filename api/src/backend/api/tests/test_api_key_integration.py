@@ -182,8 +182,10 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Test that API key authentication provides correct tenant context
         user, auth_info = auth.authenticate(request)
-        assert user.is_anonymous
-        assert auth_info["tenant_id"] == str(tenant.id)  # Tenant-bound!
+        from api.models import APIKeyUser
+
+        assert isinstance(user, APIKeyUser)
+        assert user.tenant_id == str(tenant.id)  # Tenant-bound!
         assert "api_key_id" in auth_info
 
         # Test that expired key is rejected
@@ -256,10 +258,14 @@ class TestAPIKeyIntegrationWorkflows:
         user2, auth_info2 = auth.authenticate(request2)
 
         # Verify each API key is bound to its own tenant
-        assert user1.is_anonymous and user2.is_anonymous  # Both return AnonymousUser
-        assert auth_info1["tenant_id"] == str(tenant1.id)  # Key 1 bound to tenant 1
-        assert auth_info2["tenant_id"] == str(tenant2.id)  # Key 2 bound to tenant 2
-        assert auth_info1["tenant_id"] != auth_info2["tenant_id"]  # Different tenants!
+        from api.models import APIKeyUser
+
+        assert isinstance(user1, APIKeyUser) and isinstance(
+            user2, APIKeyUser
+        )  # Both return APIKeyUser
+        assert user1.tenant_id == str(tenant1.id)  # Key 1 bound to tenant 1
+        assert user2.tenant_id == str(tenant2.id)  # Key 2 bound to tenant 2
+        assert user1.tenant_id != user2.tenant_id  # Different tenants!
 
         # Verify the tenant context is correctly set for each request
         # (This would be verified through middleware and actual data filtering in real usage)
@@ -428,8 +434,10 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Authenticate and verify tenant-bound context
         user, auth_info = auth.authenticate(request)
-        assert user.is_anonymous  # API keys return AnonymousUser
-        assert auth_info["tenant_id"] == str(
+        from api.models import APIKeyUser
+
+        assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
+        assert user.tenant_id == str(
             tenant.id
         )  # Correct tenant context for permissions!
 
@@ -478,8 +486,10 @@ class TestAPIKeyIntegrationWorkflows:
             request.META["HTTP_AUTHORIZATION"] = f"ApiKey {raw_key}"
 
             user, auth_info = auth.authenticate(request)
-            assert user.is_anonymous  # API keys return AnonymousUser
-            assert auth_info["tenant_id"] == str(tenant.id)  # All bound to same tenant!
+            from api.models import APIKeyUser
+
+            assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
+            assert user.tenant_id == str(tenant.id)  # All bound to same tenant!
             assert auth_info["api_key_name"] == f"Multi Key Test {i}"
 
         # Test listing shows all keys for the tenant
@@ -530,8 +540,10 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Authenticate using the API key - this should update last_used_at
         user, auth_info = auth.authenticate(request)
-        assert user.is_anonymous  # API keys return AnonymousUser
-        assert auth_info["tenant_id"] == str(tenant.id)  # Tenant-bound!
+        from api.models import APIKeyUser
+
+        assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
+        assert user.tenant_id == str(tenant.id)  # Tenant-bound!
 
         # Verify last_used_at was updated
         updated_key = APIKey.objects.get(id=api_key_id)
@@ -625,8 +637,10 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Verify API key is tenant-bound for real data access
         user, auth_info = auth.authenticate(request)
-        assert user.is_anonymous  # API keys return AnonymousUser
-        assert auth_info["tenant_id"] == str(tenant.id)  # Tenant-bound for data access!
+        from api.models import APIKeyUser
+
+        assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
+        assert user.tenant_id == str(tenant.id)  # Tenant-bound for data access!
 
 
 @pytest.mark.django_db
