@@ -34,6 +34,10 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+print_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
 # Function to run commands with timeout if available
 run_with_timeout() {
     local timeout_duration="$1"
@@ -399,6 +403,7 @@ assign_roles() {
     print_header "Assigning Roles"
     
     print_warning "Checking role assignments in subscription: $SUBSCRIPTION_ID"
+    print_info "Service Principal Object ID: $SP_OBJECT_ID"
     
     # Check if Reader role is already assigned
     print_warning "Checking Reader role assignment..."
@@ -408,13 +413,30 @@ assign_roles() {
         print_success "Reader role is already assigned in $SUBSCRIPTION_ID"
     else
         print_warning "Assigning Reader role..."
-        if run_with_timeout 60s az role assignment create \
+        ROLE_ASSIGNMENT_OUTPUT=$(run_with_timeout 60s az role assignment create \
             --role "Reader" \
             --assignee "$SP_OBJECT_ID" \
-            --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
+            --subscription "$SUBSCRIPTION_ID" 2>&1)
+        
+        if [ $? -eq 0 ]; then
             print_success "Assigned Reader role in $SUBSCRIPTION_ID"
         else
-            print_warning "Failed to assign Reader role. It may already exist."
+            print_error "Failed to assign Reader role. Error details:"
+            echo "$ROLE_ASSIGNMENT_OUTPUT"
+            
+            # Try alternative assignment using app ID instead of SP object ID
+            print_warning "Trying alternative assignment using App ID instead..."
+            ROLE_ASSIGNMENT_OUTPUT2=$(run_with_timeout 60s az role assignment create \
+                --role "Reader" \
+                --assignee "$APP_ID" \
+                --subscription "$SUBSCRIPTION_ID" 2>&1)
+            
+            if [ $? -eq 0 ]; then
+                print_success "Assigned Reader role using App ID in $SUBSCRIPTION_ID"
+            else
+                print_error "Failed to assign Reader role with App ID as well. Error:"
+                echo "$ROLE_ASSIGNMENT_OUTPUT2"
+            fi
         fi
     fi
     
@@ -426,13 +448,52 @@ assign_roles() {
         print_success "ProwlerRole is already assigned in $SUBSCRIPTION_ID"
     else
         print_warning "Assigning ProwlerRole..."
-        if run_with_timeout 60s az role assignment create \
+        PROWLER_ASSIGNMENT_OUTPUT=$(run_with_timeout 60s az role assignment create \
             --role "$CUSTOM_ROLE_NAME" \
             --assignee "$SP_OBJECT_ID" \
-            --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1; then
+            --subscription "$SUBSCRIPTION_ID" 2>&1)
+        
+        if [ $? -eq 0 ]; then
             print_success "Assigned ProwlerRole in $SUBSCRIPTION_ID"
         else
-            print_warning "Failed to assign ProwlerRole. It may already exist."
+            print_error "Failed to assign ProwlerRole. Error details:"
+            echo "$PROWLER_ASSIGNMENT_OUTPUT"
+            
+            # Try alternative assignment using app ID instead of SP object ID
+            print_warning "Trying ProwlerRole assignment using App ID instead..."
+            PROWLER_ASSIGNMENT_OUTPUT2=$(run_with_timeout 60s az role assignment create \
+                --role "$CUSTOM_ROLE_NAME" \
+                --assignee "$APP_ID" \
+                --subscription "$SUBSCRIPTION_ID" 2>&1)
+            
+            if [ $? -eq 0 ]; then
+                print_success "Assigned ProwlerRole using App ID in $SUBSCRIPTION_ID"
+            else
+                print_error "Failed to assign ProwlerRole with App ID as well. Error:"
+                echo "$PROWLER_ASSIGNMENT_OUTPUT2"
+            fi
+        fi
+    fi
+    
+    # Final verification
+    echo ""
+    print_info "Final verification of role assignments..."
+    
+    # Check all role assignments for this service principal
+    ALL_ASSIGNMENTS=$(az role assignment list --assignee "$SP_OBJECT_ID" --subscription "$SUBSCRIPTION_ID" --query "[].{Role:roleDefinitionName, Scope:scope}" -o table 2>/dev/null)
+    
+    if [[ -n "$ALL_ASSIGNMENTS" ]]; then
+        echo "Current role assignments for Service Principal:"
+        echo "$ALL_ASSIGNMENTS"
+    else
+        print_warning "No role assignments found for Service Principal. Checking with App ID..."
+        ALL_ASSIGNMENTS_APP=$(az role assignment list --assignee "$APP_ID" --subscription "$SUBSCRIPTION_ID" --query "[].{Role:roleDefinitionName, Scope:scope}" -o table 2>/dev/null)
+        
+        if [[ -n "$ALL_ASSIGNMENTS_APP" ]]; then
+            echo "Current role assignments for App ID:"
+            echo "$ALL_ASSIGNMENTS_APP"
+        else
+            print_error "No role assignments found for either Service Principal or App ID!"
         fi
     fi
 }
