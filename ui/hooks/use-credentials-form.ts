@@ -9,6 +9,7 @@ import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
   addCredentialsFormSchema,
+  addCredentialsM365UserFormSchema,
   addCredentialsRoleFormSchema,
   addCredentialsServiceAccountFormSchema,
   ProviderType,
@@ -45,6 +46,9 @@ export const useCredentialsForm = ({
     }
     if (providerType === "gcp" && via === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
+    }
+    if (providerType === "m365" && via === "service-principal-user") {
+      return addCredentialsM365UserFormSchema();
     }
     return addCredentialsFormSchema(providerType);
   };
