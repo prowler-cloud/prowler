@@ -21,15 +21,15 @@ class Exchange(M365Service):
         self.mailbox_audit_properties = []
 
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.organization_config = self._get_organization_config()
-            self.mailboxes_config = self._get_mailbox_audit_config()
-            self.external_mail_config = self._get_external_mail_config()
-            self.transport_rules = self._get_transport_rules()
-            self.transport_config = self._get_transport_config()
-            self.mailbox_policy = self._get_mailbox_policy()
-            self.role_assignment_policies = self._get_role_assignment_policies()
-            self.mailbox_audit_properties = self._get_mailbox_audit_properties()
+            if self.powershell.connect_exchange_online():
+                self.organization_config = self._get_organization_config()
+                self.mailboxes_config = self._get_mailbox_audit_config()
+                self.external_mail_config = self._get_external_mail_config()
+                self.transport_rules = self._get_transport_rules()
+                self.transport_config = self._get_transport_config()
+                self.mailbox_policy = self._get_mailbox_policy()
+                self.role_assignment_policies = self._get_role_assignment_policies()
+                self.mailbox_audit_properties = self._get_mailbox_audit_properties()
             self.powershell.close()
 
     def _get_organization_config(self):

@@ -24,6 +24,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [v5.9.3] (Prowler UNRELEASED)
+
+### Fixed
+- Avoid multiple moduleerror calls in M365 provider [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
+
+---
+
 ## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed

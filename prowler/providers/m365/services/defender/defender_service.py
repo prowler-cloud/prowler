@@ -21,18 +21,18 @@ class Defender(M365Service):
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.malware_policies = self._get_malware_filter_policy()
-            self.malware_rules = self._get_malware_filter_rule()
-            self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
-            self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
-            self.antiphishing_policies = self._get_antiphishing_policy()
-            self.antiphishing_rules = self._get_antiphishing_rules()
-            self.connection_filter_policy = self._get_connection_filter_policy()
-            self.dkim_configurations = self._get_dkim_config()
-            self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
-            self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
-            self.report_submission_policy = self._get_report_submission_policy()
+            if self.powershell.connect_exchange_online():
+                self.malware_policies = self._get_malware_filter_policy()
+                self.malware_rules = self._get_malware_filter_rule()
+                self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
+                self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
+                self.antiphishing_policies = self._get_antiphishing_policy()
+                self.antiphishing_rules = self._get_antiphishing_rules()
+                self.connection_filter_policy = self._get_connection_filter_policy()
+                self.dkim_configurations = self._get_dkim_config()
+                self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
+                self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
+                self.report_submission_policy = self._get_report_submission_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
