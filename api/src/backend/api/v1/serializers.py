@@ -983,6 +983,14 @@ class ScanComplianceReportSerializer(serializers.Serializer):
         fields = ["id", "name"]
 
 
+class ScanThreatscoreReportSerializer(serializers.Serializer):
+    id = serializers.CharField(source="scan")
+
+    class Meta:
+        resource_name = "scan-reports"
+        fields = ["id"]
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model
@@ -1806,14 +1814,6 @@ class ComplianceOverviewMetadataSerializer(serializers.Serializer):
 
     class JSONAPIMeta:
         resource_name = "compliance-overviews-metadata"
-
-
-class ComplianceOverviewThreatscoreReportSerializer(serializers.Serializer):
-    id = serializers.CharField(source="scan")
-
-    class Meta:
-        resource_name = "scan-threatscore-reports"
-        fields = ["id"]
 
 
 # Overviews

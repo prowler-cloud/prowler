@@ -5,6 +5,7 @@ import { Spacer } from "@nextui-org/react";
 import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 
+import { ThreatscoreDownloadButton } from "../threatscore-download-button";
 import { DataCompliance } from "./data-compliance";
 import { SelectScanComplianceDataProps } from "./scan-selector";
 
@@ -15,6 +16,8 @@ interface ComplianceHeaderProps {
   showRegionFilter?: boolean;
   framework?: string; // Framework name to show specific filters
   showProviders?: boolean;
+  scanId?: string;
+  complianceId?: string;
 }
 
 export const ComplianceHeader = ({
@@ -24,9 +27,11 @@ export const ComplianceHeader = ({
   showRegionFilter = true,
   framework,
   showProviders = true,
+  scanId,
+  complianceId,
 }: ComplianceHeaderProps) => {
   const frameworkFilters = [];
-
+  const providerType = complianceId?.split("_").at(-1);
   // Add CIS Profile Level filter if framework is CIS
   if (framework === "CIS") {
     frameworkFilters.push({
@@ -64,7 +69,19 @@ export const ComplianceHeader = ({
           </div>
         </>
       )}
-      {allFilters.length > 0 && <DataTableFilterCustom filters={allFilters} />}
+      <div className="flex items-center justify-between">
+        {allFilters.length > 0 && (
+          <DataTableFilterCustom filters={allFilters} />
+        )}
+        {scanId &&
+          framework === "ProwlerThreatScore" &&
+          providerType &&
+          ["aws", "azure", "gcp", "m365"].includes(providerType) && (
+            <div className="flex items-center gap-2">
+              <ThreatscoreDownloadButton scanId={scanId} />
+            </div>
+          )}
+      </div>
       <Spacer y={8} />
     </>
   );

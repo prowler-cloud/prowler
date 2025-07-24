@@ -240,6 +240,7 @@ def _generate_output_directory(
         >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
         '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
         '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
+        '/tmp/tenant-1234/aws/scan-5678/threatscore/prowler-output-2023-02-15T12:34:56'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -256,4 +257,10 @@ def _generate_output_directory(
     )
     os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
 
-    return path, compliance_path
+    threatscore_path = (
+        f"{output_directory}/{tenant_id}/{scan_id}/threatscore/prowler-output-"
+        f"{prowler_provider_sanitized}-{output_file_timestamp}"
+    )
+    os.makedirs("/".join(threatscore_path.split("/")[:-1]), exist_ok=True)
+
+    return path, compliance_path, threatscore_path

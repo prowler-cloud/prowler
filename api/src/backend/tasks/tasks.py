@@ -281,7 +281,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir = _generate_output_directory(
+    out_dir, comp_dir, _ = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
