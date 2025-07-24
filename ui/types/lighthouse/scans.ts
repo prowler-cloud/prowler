@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-const providerTypeEnum = z.enum(["", "aws", "azure", "gcp", "kubernetes"]);
+const providerTypeEnum = z.enum([
+  "",
+  "aws",
+  "azure",
+  "gcp",
+  "kubernetes",
+  "github",
+]);
 const stateEnum = z.enum([
   "",
   "available",

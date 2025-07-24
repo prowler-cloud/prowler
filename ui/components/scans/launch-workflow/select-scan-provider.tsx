@@ -66,6 +66,7 @@ export const SelectScanProvider = <
                           | "azure"
                           | "gcp"
                           | "kubernetes"
+                          | "github"
                       }
                       entityAlias={selectedItem.alias}
                       entityId={selectedItem.uid}
@@ -91,6 +92,7 @@ export const SelectScanProvider = <
                           | "azure"
                           | "gcp"
                           | "kubernetes"
+                          | "github"
                       }
                       entityAlias={item.alias}
                       entityId={item.uid}

@@ -22,7 +22,7 @@ export const ProviderTitleDocs = ({
         </span>
       </div>
       <div className="flex items-end gap-x-2">
-        <p className="text-sm text-default-500">
+        <p className="whitespace-nowrap text-sm text-default-500">
           {getProviderHelpText(providerType as string).text}
         </p>
         <CustomLink
