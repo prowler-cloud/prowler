@@ -54,12 +54,11 @@ export const S3IntegrationsManager = ({
           title: "Success!",
           description: "S3 integration deleted successfully.",
         });
-        // No need for manual reload, revalidatePath handles it
-      } else if (result.errors?.general) {
+      } else if (result.error) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: result.errors.general,
+          title: "Delete Failed",
+          description: result.error,
         });
       }
     } catch (error) {
@@ -84,11 +83,11 @@ export const S3IntegrationsManager = ({
           description:
             "Connection test started. It may take some time to complete.",
         });
-      } else if (result.errors?.general) {
+      } else if (result.error) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: result.errors.general,
+          title: "Connection Test Failed",
+          description: result.error,
         });
       }
     } catch (error) {

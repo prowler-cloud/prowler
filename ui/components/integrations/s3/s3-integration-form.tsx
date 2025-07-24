@@ -11,8 +11,10 @@ import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { filterEmptyValues } from "@/lib";
-import { s3IntegrationFormSchema } from "@/types/integrations";
-import { IntegrationProps } from "@/types/integrations";
+import {
+  IntegrationProps,
+  s3IntegrationFormSchema,
+} from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
 interface S3IntegrationFormProps {
@@ -30,10 +32,7 @@ export const S3IntegrationForm = ({
 }: S3IntegrationFormProps) => {
   const { data: session } = useSession();
   const { toast } = useToast();
-
   const isEditing = !!integration;
-
-  // Check if the integration has IAM role configured
   const hasIamRole =
     !!integration?.attributes.configuration.credentials?.role_arn;
 
@@ -71,13 +70,11 @@ export const S3IntegrationForm = ({
   const onSubmit = async (values: any) => {
     const formData = new FormData();
 
-    // Build configuration object for S3 integration
     const configuration = {
       bucket_name: values.bucket_name,
       output_directory: values.output_directory,
     };
 
-    // Build credentials object - always include static credentials
     const credentials: any = filterEmptyValues({
       aws_access_key_id: values.aws_access_key_id,
       aws_secret_access_key: values.aws_secret_access_key,
@@ -110,18 +107,35 @@ export const S3IntegrationForm = ({
         result = await createIntegration(formData);
       }
 
-      if (result.success) {
+      if ("success" in result) {
         toast({
           title: "Success!",
           description: `S3 integration ${isEditing ? "updated" : "created"} successfully.`,
         });
+
+        if ("testConnection" in result) {
+          if (result.testConnection.success) {
+            toast({
+              title: "Connection Test Started!",
+              description:
+                "Connection test started. It may take some time to complete.",
+            });
+          } else if (result.testConnection.error) {
+            toast({
+              variant: "destructive",
+              title: "Connection Test Failed",
+              description: result.testConnection.error,
+            });
+          }
+        }
+
         onSuccess();
-      } else if (result.errors) {
-        const errorMessage = result.errors.general;
+      } else if ("error" in result) {
+        const errorMessage = result.error;
 
         toast({
           variant: "destructive",
-          title: `Failed to ${isEditing ? "update" : "create"} S3 integration`,
+          title: "S3 Integration Error",
           description: errorMessage,
         });
       }

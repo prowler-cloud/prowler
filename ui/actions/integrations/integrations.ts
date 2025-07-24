@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  handleApiError,
+  parseStringify,
+} from "@/lib";
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -18,15 +23,15 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
     const response = await fetch(url.toString(), {
       method: "GET",
       headers,
-      cache: "no-store",
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch integrations: ${response.statusText}`);
+    if (response.ok) {
+      const data = await response.json();
+      return parseStringify(data);
     }
 
-    const data = await response.json();
-    return parseStringify(data);
+    console.error(`Failed to fetch integrations: ${response.statusText}`);
+    return { data: [], meta: { pagination: { count: 0 } } };
   } catch (error) {
     console.error("Error fetching integrations:", error);
     return { data: [], meta: { pagination: { count: 0 } } };
@@ -41,22 +46,24 @@ export const getIntegration = async (id: string) => {
     const response = await fetch(url.toString(), {
       method: "GET",
       headers,
-      cache: "no-store",
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch integration: ${response.statusText}`);
+    if (response.ok) {
+      const data = await response.json();
+      return parseStringify(data);
     }
 
-    const data = await response.json();
-    return parseStringify(data);
+    console.error(`Failed to fetch integration: ${response.statusText}`);
+    return null;
   } catch (error) {
     console.error("Error fetching integration:", error);
     return null;
   }
 };
 
-export const createIntegration = async (formData: FormData) => {
+export const createIntegration = async (
+  formData: FormData,
+): Promise<{ success: string; testConnection?: any } | { error: string }> => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations`);
 
@@ -72,7 +79,7 @@ export const createIntegration = async (formData: FormData) => {
         attributes: {
           integration_type,
           configuration,
-          credentials, // credentials should be at attributes level, not inside configuration
+          credentials,
         },
         relationships: {
           providers: {
@@ -92,28 +99,24 @@ export const createIntegration = async (formData: FormData) => {
     });
 
     if (response.ok) {
-      revalidatePath("/integrations/s3");
-      return { success: "Integration created successfully!" };
-    } else {
-      const errorData = await response.json().catch(() => ({}));
+      const responseData = await response.json();
+      const integrationId = responseData.data.id;
+
+      const testResult = await testIntegrationConnection(integrationId);
+
       return {
-        errors: {
-          general:
-            errorData.errors?.[0]?.detail ||
-            `Failed to create integration: ${response.statusText}`,
-        },
+        success: "Integration created successfully!",
+        testConnection: testResult,
       };
     }
+
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      errorData.errors?.[0]?.detail ||
+      `Unable to create S3 integration: ${response.statusText}`;
+    return { error: errorMessage };
   } catch (error) {
-    console.error("Error creating integration:", error);
-    return {
-      errors: {
-        general:
-          error instanceof Error
-            ? error.message
-            : "Error creating integration. Please try again.",
-      },
-    };
+    return handleApiError(error);
   }
 };
 
@@ -142,12 +145,10 @@ export const updateIntegration = async (id: string, formData: FormData) => {
       },
     };
 
-    // Add credentials if provided (they might not be included in updates for security)
     if (credentials) {
       integrationData.data.attributes.credentials = credentials;
     }
 
-    // Add relationships if providers are specified
     if (providers) {
       integrationData.data.relationships = {
         providers: {
@@ -166,28 +167,22 @@ export const updateIntegration = async (id: string, formData: FormData) => {
     });
 
     if (response.ok) {
-      revalidatePath("/integrations/s3");
-      return { success: "Integration updated successfully!" };
-    } else {
-      const errorData = await response.json().catch(() => ({}));
+      // Automatically test the connection after updating
+      const testResult = await testIntegrationConnection(id);
+
       return {
-        errors: {
-          general:
-            errorData.errors?.[0]?.detail ||
-            `Failed to update integration: ${response.statusText}`,
-        },
+        success: "Integration updated successfully!",
+        testConnection: testResult,
       };
     }
+
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      errorData.errors?.[0]?.detail ||
+      `Unable to update S3 integration: ${response.statusText}`;
+    return { error: errorMessage };
   } catch (error) {
-    console.error("Error updating integration:", error);
-    return {
-      errors: {
-        general:
-          error instanceof Error
-            ? error.message
-            : "Error updating integration. Please try again.",
-      },
-    };
+    return handleApiError(error);
   }
 };
 
@@ -201,26 +196,18 @@ export const deleteIntegration = async (id: string) => {
       headers,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.errors?.[0]?.detail ||
-          `Failed to delete integration: ${response.statusText}`,
-      );
+    if (response.ok) {
+      revalidatePath("/integrations/s3");
+      return { success: "Integration deleted successfully!" };
     }
 
-    revalidatePath("/integrations/s3");
-    return { success: "Integration deleted successfully!" };
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      errorData.errors?.[0]?.detail ||
+      `Unable to delete S3 integration: ${response.statusText}`;
+    return { error: errorMessage };
   } catch (error) {
-    console.error("Error deleting integration:", error);
-    return {
-      errors: {
-        general:
-          error instanceof Error
-            ? error.message
-            : "Error deleting integration. Please try again.",
-      },
-    };
+    return handleApiError(error);
   }
 };
 
@@ -234,28 +221,22 @@ export const testIntegrationConnection = async (id: string) => {
       headers,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.errors?.[0]?.detail ||
-          `Failed to test connection: ${response.statusText}`,
-      );
+    if (response.ok) {
+      const data = await response.json();
+      revalidatePath("/integrations/s3");
+
+      return {
+        success: "Connection test started successfully!",
+        data: parseStringify(data),
+      };
     }
 
-    const data = await response.json();
-    return {
-      success: "Connection test started successfully!",
-      data: parseStringify(data),
-    };
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      errorData.errors?.[0]?.detail ||
+      `Unable to test S3 integration connection: ${response.statusText}`;
+    return { error: errorMessage };
   } catch (error) {
-    console.error("Error testing integration connection:", error);
-    return {
-      errors: {
-        general:
-          error instanceof Error
-            ? error.message
-            : "Error testing connection. Please try again.",
-      },
-    };
+    return handleApiError(error);
   }
 };

@@ -1,11 +1,4 @@
-import { revalidatePath } from "next/cache";
-
-import {
-  filterEmptyValues,
-  getErrorMessage,
-  getFormValue,
-  parseStringify,
-} from "@/lib";
+import { filterEmptyValues, getFormValue } from "@/lib";
 import { ProviderType } from "@/types";
 
 import { ProviderCredentialFields } from "./provider-credential-fields";
@@ -185,26 +178,4 @@ export const buildSecretConfig = (
   }
 
   return builder();
-};
-
-// Helper function to handle API responses consistently
-export const handleApiResponse = async (
-  response: Response,
-  pathToRevalidate?: string,
-) => {
-  const data = await response.json();
-
-  if (pathToRevalidate) {
-    revalidatePath(pathToRevalidate);
-  }
-
-  return parseStringify(data);
-};
-
-// Helper function to handle API errors consistently
-export const handleApiError = (error: unknown) => {
-  console.error(error);
-  return {
-    error: getErrorMessage(error),
-  };
 };
