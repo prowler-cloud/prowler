@@ -109,13 +109,12 @@ Prowler will follow the same credentials search as [Google authentication librar
 
 Prowler for Google Cloud needs the following permissions to be set:
 
-- **Viewer (`roles/viewer`) IAM role**: granted at the project / folder / org level in order to scan the target projects
+- **Reader (`roles/reader`) IAM role**: granted at the project / folder / org level in order to scan the target projects
 
 - **Project level settings**: you need to have at least one project with the below settings:
     - Identity and Access Management (IAM) API (`iam.googleapis.com`) enabled by either using the
     [Google Cloud API UI](https://console.cloud.google.com/apis/api/iam.googleapis.com/metrics) or
     by using the gcloud CLI `gcloud services enable iam.googleapis.com --project <your-project-id>` command
-    - Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`) IAM role
     - Set the quota project to be this project by either running `gcloud auth application-default set-quota-project <project-id>` or by setting an environment variable:
     `export GOOGLE_CLOUD_QUOTA_PROJECT=<project-id>`
 
