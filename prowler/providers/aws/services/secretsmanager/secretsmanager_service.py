@@ -71,7 +71,6 @@ class SecretsManager(AWSService):
         except ClientError as error:
             if error.response["Error"]["Code"] in [
                 "ResourceNotFoundException",
-                "InvalidRequestException",
             ]:
                 logger.warning(
                     f"{self.region} --"
