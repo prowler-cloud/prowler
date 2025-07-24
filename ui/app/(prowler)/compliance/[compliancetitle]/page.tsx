@@ -135,7 +135,6 @@ export default async function ComplianceDetail({
         framework={compliancetitle}
         showProviders={false}
         scanId={selectedScanId || undefined}
-        complianceId={complianceId}
       />
 
       <Suspense

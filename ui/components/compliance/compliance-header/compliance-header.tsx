@@ -17,7 +17,6 @@ interface ComplianceHeaderProps {
   framework?: string; // Framework name to show specific filters
   showProviders?: boolean;
   scanId?: string;
-  complianceId?: string;
 }
 
 export const ComplianceHeader = ({
@@ -28,10 +27,8 @@ export const ComplianceHeader = ({
   framework,
   showProviders = true,
   scanId,
-  complianceId,
 }: ComplianceHeaderProps) => {
   const frameworkFilters = [];
-  const providerType = complianceId?.split("_").at(-1);
   // Add CIS Profile Level filter if framework is CIS
   if (framework === "CIS") {
     frameworkFilters.push({
@@ -74,9 +71,7 @@ export const ComplianceHeader = ({
           <DataTableFilterCustom filters={allFilters} />
         )}
         {scanId &&
-          framework === "ProwlerThreatScore" &&
-          providerType &&
-          ["aws", "azure", "gcp", "m365"].includes(providerType) && (
+          framework === "ProwlerThreatScore" && (
             <div className="flex items-center gap-2">
               <ThreatscoreDownloadButton scanId={scanId} />
             </div>
