@@ -196,7 +196,7 @@ export type AWSCredentialsRole = {
   [ProviderCredentialFields.AWS_SESSION_TOKEN]?: string;
   [ProviderCredentialFields.EXTERNAL_ID]?: string;
   [ProviderCredentialFields.ROLE_SESSION_NAME]?: string;
-  [ProviderCredentialFields.SESSION_DURATION]?: string;
+  [ProviderCredentialFields.SESSION_DURATION]?: number;
   [ProviderCredentialFields.CREDENTIALS_TYPE]?:
     | "aws-sdk-default"
     | "access-secret-key";

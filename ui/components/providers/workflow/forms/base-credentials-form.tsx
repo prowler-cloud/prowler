@@ -30,6 +30,15 @@ import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
 
+const VIA_VALUES_WITH_BACK_BUTTON = [
+  "credentials",
+  "role",
+  "service-account",
+  "personal_access_token",
+  "oauth_app_token",
+  "github_app",
+] as const;
+
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
@@ -61,6 +70,73 @@ export const BaseCredentialsForm = ({
     successNavigationUrl,
   });
 
+  const currentVia = searchParamsObj.get("via");
+
+  // Determinar si se debe mostrar el botón de retroceso
+  const shouldShowBackButton =
+    showBackButton && VIA_VALUES_WITH_BACK_BUTTON.includes(currentVia as any);
+
+  // Función para renderizar el formulario de credenciales apropiado
+  const renderCredentialsForm = () => {
+    switch (providerType) {
+      case "aws":
+        return currentVia === "role" ? (
+          <AWSRoleCredentialsForm
+            control={form.control as unknown as Control<AWSCredentialsRole>}
+            setValue={form.setValue as any}
+            externalId={externalId}
+          />
+        ) : (
+          <AWSStaticCredentialsForm
+            control={form.control as unknown as Control<AWSCredentials>}
+          />
+        );
+
+      case "azure":
+        return (
+          <AzureCredentialsForm
+            control={form.control as unknown as Control<AzureCredentials>}
+          />
+        );
+
+      case "m365":
+        return (
+          <M365CredentialsForm
+            control={form.control as unknown as Control<M365Credentials>}
+          />
+        );
+
+      case "gcp":
+        return currentVia === "service-account" ? (
+          <GCPServiceAccountKeyForm
+            control={form.control as unknown as Control<GCPServiceAccountKey>}
+          />
+        ) : (
+          <GCPDefaultCredentialsForm
+            control={form.control as unknown as Control<GCPDefaultCredentials>}
+          />
+        );
+
+      case "kubernetes":
+        return (
+          <KubernetesCredentialsForm
+            control={form.control as unknown as Control<KubernetesCredentials>}
+          />
+        );
+
+      case "github":
+        return (
+          <GitHubCredentialsForm
+            control={form.control as unknown as Control<GitHubCredentials>}
+            via={currentVia || undefined}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <Form {...form}>
       <form
@@ -82,76 +158,24 @@ export const BaseCredentialsForm = ({
 
         <Divider />
 
-        {providerType === "aws" && searchParamsObj.get("via") === "role" && (
-          <AWSRoleCredentialsForm
-            control={form.control as unknown as Control<AWSCredentialsRole>}
-            setValue={form.setValue as any}
-            externalId={externalId}
-          />
-        )}
-        {providerType === "aws" && searchParamsObj.get("via") !== "role" && (
-          <AWSStaticCredentialsForm
-            control={form.control as unknown as Control<AWSCredentials>}
-          />
-        )}
-        {providerType === "azure" && (
-          <AzureCredentialsForm
-            control={form.control as unknown as Control<AzureCredentials>}
-          />
-        )}
-        {providerType === "m365" && (
-          <M365CredentialsForm
-            control={form.control as unknown as Control<M365Credentials>}
-          />
-        )}
-        {providerType === "gcp" &&
-          searchParamsObj.get("via") === "service-account" && (
-            <GCPServiceAccountKeyForm
-              control={form.control as unknown as Control<GCPServiceAccountKey>}
-            />
-          )}
-        {providerType === "gcp" &&
-          searchParamsObj.get("via") !== "service-account" && (
-            <GCPDefaultCredentialsForm
-              control={
-                form.control as unknown as Control<GCPDefaultCredentials>
-              }
-            />
-          )}
-        {providerType === "kubernetes" && (
-          <KubernetesCredentialsForm
-            control={form.control as unknown as Control<KubernetesCredentials>}
-          />
-        )}
-        {providerType === "github" && (
-          <GitHubCredentialsForm
-            control={form.control as unknown as Control<GitHubCredentials>}
-            via={searchParamsObj.get("via") || undefined}
-          />
-        )}
+        {renderCredentialsForm()}
 
         <div className="flex w-full justify-end sm:space-x-6">
-          {showBackButton &&
-            (searchParamsObj.get("via") === "credentials" ||
-              searchParamsObj.get("via") === "role" ||
-              searchParamsObj.get("via") === "service-account" ||
-              searchParamsObj.get("via") === "personal_access_token" ||
-              searchParamsObj.get("via") === "oauth_app_token" ||
-              searchParamsObj.get("via") === "github_app") && (
-              <CustomButton
-                type="button"
-                ariaLabel="Back"
-                className="w-1/2 bg-transparent"
-                variant="faded"
-                size="lg"
-                radius="lg"
-                onPress={handleBackStep}
-                startContent={!isLoading && <ChevronLeftIcon size={24} />}
-                isDisabled={isLoading}
-              >
-                <span>Back</span>
-              </CustomButton>
-            )}
+          {shouldShowBackButton && (
+            <CustomButton
+              type="button"
+              ariaLabel="Back"
+              className="w-1/2 bg-transparent"
+              variant="faded"
+              size="lg"
+              radius="lg"
+              onPress={handleBackStep}
+              startContent={!isLoading && <ChevronLeftIcon size={24} />}
+              isDisabled={isLoading}
+            >
+              <span>Back</span>
+            </CustomButton>
+          )}
           <CustomButton
             type="submit"
             ariaLabel="Save"

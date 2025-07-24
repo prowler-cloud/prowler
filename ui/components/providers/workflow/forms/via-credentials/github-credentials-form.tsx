@@ -11,13 +11,22 @@ export const GitHubCredentialsForm = ({
   control: Control<GitHubCredentials>;
   via?: string;
 }) => {
+  const renderHeader = (description: string) => (
+    <div className="flex flex-col">
+      <h2 className="text-md font-bold leading-9 text-default-foreground">
+        Connect via Credentials
+      </h2>
+      <div className="text-sm text-default-500">{description}</div>
+    </div>
+  );
+
   const renderPersonalAccessTokenFields = () => (
     <div className="space-y-3">
       <div className="border-b border-divider pb-2">
         <h3 className="text-sm font-semibold text-default-foreground">
           Personal Access Token
         </h3>
-        <p className="text-xs text-default-500">
+        <p className="text-sm text-default-500">
           Use a personal access token for individual user authentication
         </p>
       </div>
@@ -45,7 +54,7 @@ export const GitHubCredentialsForm = ({
         <h3 className="text-sm font-semibold text-default-foreground">
           OAuth App Token
         </h3>
-        <p className="text-xs text-default-500">
+        <p className="text-sm text-default-500">
           Use an OAuth app token for application-level authentication
         </p>
       </div>
@@ -71,7 +80,7 @@ export const GitHubCredentialsForm = ({
         <h3 className="text-sm font-semibold text-default-foreground">
           GitHub App
         </h3>
-        <p className="text-xs text-default-500">
+        <p className="text-sm text-default-500">
           Use GitHub App credentials (both App ID and Private Key are required)
         </p>
       </div>
@@ -105,15 +114,9 @@ export const GitHubCredentialsForm = ({
 
   const renderAllOptions = () => (
     <>
-      <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
-          Connect via Credentials
-        </div>
-        <div className="text-sm text-default-500">
-          Choose one of the following authentication methods for your GitHub
-          credentials:
-        </div>
-      </div>
+      {renderHeader(
+        "Choose one of the following authentication methods for your GitHub credentials:",
+      )}
 
       {/* Option 1: Personal Access Token */}
       <div className="space-y-3">
@@ -121,7 +124,7 @@ export const GitHubCredentialsForm = ({
           <h3 className="text-sm font-semibold text-default-foreground">
             Option 1: Personal Access Token
           </h3>
-          <p className="text-xs text-default-500">
+          <p className="text-sm text-default-500">
             Use a personal access token for individual user authentication
           </p>
         </div>
@@ -148,7 +151,7 @@ export const GitHubCredentialsForm = ({
           <h3 className="text-sm font-semibold text-default-foreground">
             Option 2: OAuth App Token
           </h3>
-          <p className="text-xs text-default-500">
+          <p className="text-sm text-default-500">
             Use an OAuth app token for application-level authentication
           </p>
         </div>
@@ -175,7 +178,7 @@ export const GitHubCredentialsForm = ({
           <h3 className="text-sm font-semibold text-default-foreground">
             Option 3: GitHub App
           </h3>
-          <p className="text-xs text-default-500">
+          <p className="text-sm text-default-500">
             Use GitHub App credentials (both App ID and Private Key are
             required)
           </p>
@@ -213,14 +216,9 @@ export const GitHubCredentialsForm = ({
   if (via) {
     return (
       <>
-        <div className="flex flex-col">
-          <div className="text-md font-bold leading-9 text-default-foreground">
-            Connect via Credentials
-          </div>
-          <div className="text-sm text-default-500">
-            Enter your GitHub credentials for the selected authentication method
-          </div>
-        </div>
+        {renderHeader(
+          "Enter your GitHub credentials for the selected authentication method",
+        )}
 
         {via === "personal_access_token" && renderPersonalAccessTokenFields()}
         {via === "oauth_app_token" && renderOAuthAppTokenFields()}
