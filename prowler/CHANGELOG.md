@@ -2,7 +2,28 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.9.2] (Prowler v5.9.2) UNRELEASED
+## [v5.10.0] (Prowler UNRELEASED)
+
+### Added
+- `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
+- Support App Key Content in GitHub provider [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
+
+### Changed
+- Handle some AWS errors as warnings instead of errors [(#8347)](https://github.com/prowler-cloud/prowler/pull/8347)
+
+### Fixed
+- False positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
+
+---
+
+## [v5.9.3] (Prowler UNRELEASED)
+
+### Fixed
+- Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
+
+---
+
+## [v5.9.2] (Prowler v5.9.2)
 
 ### Fixed
 - `sns_topics_not_publicly_accessible` false positive with `aws:SourceArn` conditions [(#8326)](https://github.com/prowler-cloud/prowler/issues/8326)
@@ -40,12 +61,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update `entra_users_mfa_capable` check to use the correct resource name and ID [(#8288)](https://github.com/prowler-cloud/prowler/pull/8288)
 - Handle multiple services and severities while listing checks [(#8302)](https://github.com/prowler-cloud/prowler/pull/8302)
 - Handle `tenant_id` for M365 Mutelist [(#8306)](https://github.com/prowler-cloud/prowler/pull/8306)
-
----
-
-## [v5.8.2] (Prowler 5.8.2)
-
-### Fixed
 - Fix error in Dashboard Overview page when reading CSV files [(#8257)](https://github.com/prowler-cloud/prowler/pull/8257)
 
 ---

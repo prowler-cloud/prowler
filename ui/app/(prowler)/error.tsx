@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
 
 import { RocketIcon } from "@/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 
 export default function Error({
   error,
@@ -27,9 +27,9 @@ export default function Error({
         We&apos;re sorry for the inconvenience. Please try again or contact
         support if the problem persists.
       </AlertDescription>
-      <Link href="/" className="font-bold">
+      <CustomLink href="/" target="_self" className="font-bold">
         Go to the homepage
-      </Link>
+      </CustomLink>
     </Alert>
   );
 }
