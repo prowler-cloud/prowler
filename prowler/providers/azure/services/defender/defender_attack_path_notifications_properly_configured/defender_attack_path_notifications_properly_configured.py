@@ -31,6 +31,11 @@ class defender_attack_path_notifications_properly_configured(Check):
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=contact_configuration
                 )
+                report.resource_name = (
+                    contact_configuration.name
+                    if contact_configuration.name
+                    else "Security Contact"
+                )
                 report.subscription = subscription_name
                 actual_risk_level = getattr(
                     contact_configuration, "attack_path_minimal_risk_level", None

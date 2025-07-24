@@ -113,7 +113,7 @@ class Test_iam_no_service_roles_at_project_level:
                 result[0].status_extended,
             )
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == GCP_PROJECT_ID
+            assert result[0].resource_name == "test"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == cloudresourcemanager_client.region
 
@@ -255,6 +255,6 @@ class Test_iam_no_service_roles_at_project_level:
                 result[0].status_extended,
             )
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == GCP_PROJECT_ID
+            assert result[0].resource_name == "GCP Project"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == cloudresourcemanager_client.region
