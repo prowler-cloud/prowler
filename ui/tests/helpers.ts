@@ -13,8 +13,8 @@ export const URLS = {
 
 export const TEST_CREDENTIALS = {
   VALID: {
-    email: "e2e@prowler.com",
-    password: "Thisisapassword123@",
+    email: process.env.E2E_USER || "e2e@prowler.com",
+    password: process.env.E2E_PASSWORD || "Thisisapassword123@",
   },
   INVALID: {
     email: "invalid@example.com",
