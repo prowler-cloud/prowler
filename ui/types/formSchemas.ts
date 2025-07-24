@@ -213,6 +213,61 @@ export const addCredentialsFormSchema = (providerType: string) =>
           });
         }
       }
+
+      if (providerType === "github") {
+        const hasPersonalAccessToken = !!data[ProviderCredentialFields.PERSONAL_ACCESS_TOKEN];
+        const hasOAuthAppToken = !!data[ProviderCredentialFields.OAUTH_APP_TOKEN];
+        const hasGitHubAppId = !!data[ProviderCredentialFields.GITHUB_APP_ID];
+        const hasGitHubAppKey = !!data[ProviderCredentialFields.GITHUB_APP_KEY];
+
+        // Validate Personal Access Token - show error if field is empty or undefined
+        if (!data[ProviderCredentialFields.PERSONAL_ACCESS_TOKEN] || data[ProviderCredentialFields.PERSONAL_ACCESS_TOKEN].trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Personal Access Token cannot be empty",
+            path: [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN],
+          });
+        }
+
+        // Validate OAuth App Token - show error if field is empty or undefined
+        if (!data[ProviderCredentialFields.OAUTH_APP_TOKEN] || data[ProviderCredentialFields.OAUTH_APP_TOKEN].trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "OAuth App Token cannot be empty",
+            path: [ProviderCredentialFields.OAUTH_APP_TOKEN],
+          });
+        }
+
+        // Validate GitHub App ID - show error if field is empty or undefined
+        if (!data[ProviderCredentialFields.GITHUB_APP_ID] || data[ProviderCredentialFields.GITHUB_APP_ID].trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "GitHub App ID cannot be empty",
+            path: [ProviderCredentialFields.GITHUB_APP_ID],
+          });
+        }
+
+        // Validate GitHub App Key - show error if field is empty or undefined
+        if (!data[ProviderCredentialFields.GITHUB_APP_KEY] || data[ProviderCredentialFields.GITHUB_APP_KEY].trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "GitHub App Key cannot be empty",
+            path: [ProviderCredentialFields.GITHUB_APP_KEY],
+          });
+        }
+        // Check if any field has been filled out
+        const hasAnyValue = hasPersonalAccessToken || hasOAuthAppToken || (hasGitHubAppId && hasGitHubAppKey);
+
+        // If no field has been filled out, show the general message
+        if (!hasAnyValue) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please provide at least one authentication method",
+            path: [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN],
+          });
+        }
+
+      }
     });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
