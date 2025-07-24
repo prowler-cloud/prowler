@@ -16,7 +16,7 @@ jobs:
     env:
       AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
-      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_URL: 'http://localhost:3000'
       NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
     steps:
       - name: Checkout repository
