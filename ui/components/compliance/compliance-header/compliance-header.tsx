@@ -70,12 +70,11 @@ export const ComplianceHeader = ({
         {allFilters.length > 0 && (
           <DataTableFilterCustom filters={allFilters} />
         )}
-        {scanId &&
-          framework === "ProwlerThreatScore" && (
-            <div className="flex items-center gap-2">
-              <ThreatscoreDownloadButton scanId={scanId} />
-            </div>
-          )}
+        {scanId && framework === "ProwlerThreatScore" && (
+          <div className="flex items-center gap-2">
+            <ThreatscoreDownloadButton scanId={scanId} />
+          </div>
+        )}
       </div>
       <Spacer y={8} />
     </>
