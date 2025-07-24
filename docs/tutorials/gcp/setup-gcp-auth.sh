@@ -89,21 +89,99 @@ echo -e "\n${YELLOW}Initializing gcloud configuration...${NC}"
 echo -e "${YELLOW}Please follow the prompts to configure your GCP account.${NC}"
 gcloud init
 
-# Step 4: Set up Application Default Credentials
-echo -e "\n${YELLOW}Setting up Application Default Credentials for Prowler...${NC}"
-echo -e "${YELLOW}This will open a browser window for authentication.${NC}"
-gcloud auth application-default login
+# Step 4: Set up project
+echo -e "\n${YELLOW}Setting up GCP project...${NC}"
 
-# Step 5: Get current project ID
-PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
+# Get current project if any
+CURRENT_PROJECT=$(gcloud config get-value project 2>/dev/null)
 
-if [ -z "$PROJECT_ID" ]; then
-    echo -e "\n${YELLOW}No default project set. Please enter your GCP Project ID:${NC}"
-    read -r PROJECT_ID
-    gcloud config set project "$PROJECT_ID"
+if [ -n "$CURRENT_PROJECT" ]; then
+    echo -e "Current project: ${GREEN}$CURRENT_PROJECT${NC}"
+    read -p "Do you want to use this project? (Y/n): " USE_CURRENT
+    
+    if [[ ! $USE_CURRENT =~ ^[Nn]$ ]]; then
+        PROJECT_ID="$CURRENT_PROJECT"
+        echo -e "${GREEN}✓ Using current project: $PROJECT_ID${NC}"
+    else
+        # User doesn't want to use current project
+        CURRENT_PROJECT=""
+    fi
 fi
 
-echo -e "\n${GREEN}✓ Using project: $PROJECT_ID${NC}"
+if [ -z "$CURRENT_PROJECT" ] || [[ $USE_CURRENT =~ ^[Nn]$ ]]; then
+    echo -e "\n${YELLOW}Project options:${NC}"
+    echo "1. Create a new project called 'ProwlerTest'"
+    echo "2. Use an existing project"
+    read -p "Choose option (1/2): " PROJECT_OPTION
+    
+    if [ "$PROJECT_OPTION" = "1" ]; then
+        echo -e "\n${YELLOW}Creating project 'ProwlerTest'...${NC}"
+        if gcloud projects create ProwlerTest 2>/dev/null; then
+            echo -e "${GREEN}✓ Project 'ProwlerTest' created successfully${NC}"
+            PROJECT_ID="ProwlerTest"
+        else
+            echo -e "${YELLOW}⚠ Could not create project 'ProwlerTest'.${NC}"
+            echo "This could be because:"
+            echo "- Project ID already exists"
+            echo "- You don't have permission to create projects"
+            echo "- Billing account is required"
+            
+            read -p "Do you want to try using 'ProwlerTest' anyway? (y/N): " USE_ANYWAY
+            if [[ $USE_ANYWAY =~ ^[Yy]$ ]]; then
+                PROJECT_ID="ProwlerTest"
+                echo -e "${YELLOW}Will attempt to use existing 'ProwlerTest' project${NC}"
+            else
+                echo -e "${YELLOW}Please enter an existing project ID:${NC}"
+                read -r PROJECT_ID
+            fi
+        fi
+    else
+        echo -e "\n${YELLOW}Please enter your existing GCP Project ID:${NC}"
+        read -r PROJECT_ID
+    fi
+    
+    # Set the project
+    if gcloud config set project "$PROJECT_ID" 2>/dev/null; then
+        echo -e "${GREEN}✓ Project set to: $PROJECT_ID${NC}"
+    else
+        echo -e "${YELLOW}⚠ Warning: Could not set project to '$PROJECT_ID'${NC}"
+        echo -e "${YELLOW}This might be because the project doesn't exist or you don't have access.${NC}"
+        echo -e "${YELLOW}Continuing anyway - you may need to fix this manually.${NC}"
+    fi
+fi
+
+# Step 5: Set up Application Default Credentials with proper scopes
+echo -e "\n${YELLOW}Setting up Application Default Credentials for Prowler...${NC}"
+echo -e "${YELLOW}This will open a browser window for authentication.${NC}"
+echo -e "${YELLOW}Make sure to consent to ALL requested scopes for proper functionality.${NC}"
+
+# Try with --no-browser first if the web authentication fails
+if ! gcloud auth application-default login; then
+    echo -e "\n${YELLOW}Web authentication failed. Trying with --no-browser option...${NC}"
+    echo -e "${YELLOW}You will need to copy and paste an authentication code.${NC}"
+    if ! gcloud auth application-default login --no-browser; then
+        echo -e "\n${RED}Authentication failed. This might be due to scope consent issues.${NC}"
+        echo -e "${YELLOW}Please try the following manually:${NC}"
+        echo -e "1. Run: ${YELLOW}gcloud auth application-default revoke${NC}"
+        echo -e "2. Run: ${YELLOW}gcloud auth application-default login${NC}"
+        echo -e "3. Make sure to consent to ALL scopes when prompted"
+        echo -e "4. Re-run this script"
+        exit 1
+    fi
+fi
+
+# Verify authentication worked
+if ! gcloud auth application-default print-access-token >/dev/null 2>&1; then
+    echo -e "\n${RED}Authentication verification failed.${NC}"
+    echo -e "${YELLOW}The cloud-platform scope may not have been consented to.${NC}"
+    echo -e "${YELLOW}Please run the following commands manually:${NC}"
+    echo -e "1. ${YELLOW}gcloud auth application-default revoke${NC}"
+    echo -e "2. ${YELLOW}gcloud auth application-default login${NC}"
+    echo -e "3. Make sure to consent to ALL scopes, especially 'cloud-platform'"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Authentication successful with proper scopes${NC}"
 
 # Step 6: Enable required APIs
 echo -e "\n${YELLOW}Enabling required APIs for Prowler scanning...${NC}"
