@@ -102,7 +102,6 @@ class SSM(AWSService):
         except ClientError as error:
             if error.response["Error"]["Code"] in [
                 "InvalidDocumentOperation",
-                "ResourceNotFoundException",
             ]:
                 logger.warning(
                     f"{regional_client.region} --"

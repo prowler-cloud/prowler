@@ -75,7 +75,6 @@ class ElasticBeanstalk(AWSService):
         except ClientError as error:
             if error.response["Error"]["Code"] in [
                 "InvalidParameterValue",
-                "ResourceNotFoundException",
             ]:
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -100,7 +99,6 @@ class ElasticBeanstalk(AWSService):
         except ClientError as error:
             if error.response["Error"]["Code"] in [
                 "ResourceNotFoundException",
-                "InvalidParameterValue",
             ]:
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
