@@ -1,25 +1,4 @@
-import Link from "next/link";
-
 import { cn } from "@/lib/utils";
-
-export const ComplianceLink = ({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <Link
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="break-all text-sm text-blue-600 decoration-1 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-    >
-      {children}
-    </Link>
-  );
-};
 
 export const ComplianceDetailContainer = ({
   children,
