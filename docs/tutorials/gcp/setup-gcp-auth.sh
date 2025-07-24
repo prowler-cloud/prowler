@@ -140,13 +140,32 @@ if [ -z "$CURRENT_PROJECT" ] || [[ $USE_CURRENT =~ ^[Nn]$ ]]; then
         read -r PROJECT_ID
     fi
     
-    # Set the project
-    if gcloud config set project "$PROJECT_ID" 2>/dev/null; then
-        echo -e "${GREEN}✓ Project set to: $PROJECT_ID${NC}"
+    # Validate and set the project
+    echo -e "\n${YELLOW}Validating project '$PROJECT_ID'...${NC}"
+    if gcloud projects describe "$PROJECT_ID" >/dev/null 2>&1; then
+        gcloud config set project "$PROJECT_ID"
+        echo -e "${GREEN}✓ Project validated and set to: $PROJECT_ID${NC}"
     else
-        echo -e "${YELLOW}⚠ Warning: Could not set project to '$PROJECT_ID'${NC}"
-        echo -e "${YELLOW}This might be because the project doesn't exist or you don't have access.${NC}"
-        echo -e "${YELLOW}Continuing anyway - you may need to fix this manually.${NC}"
+        echo -e "${RED}✗ Project '$PROJECT_ID' does not exist or you don't have access to it.${NC}"
+        echo -e "${YELLOW}Please check:${NC}"
+        echo "1. The project ID is correct (project IDs are globally unique)"
+        echo "2. You have access to the project"
+        echo "3. The project exists in your GCP account"
+        
+        echo -e "\n${YELLOW}Available projects in your account:${NC}"
+        gcloud projects list --format="table(projectId,name,projectNumber)" 2>/dev/null || echo "Could not list projects"
+        
+        echo -e "\n${YELLOW}Please enter a valid project ID from the list above:${NC}"
+        read -r PROJECT_ID
+        
+        if gcloud projects describe "$PROJECT_ID" >/dev/null 2>&1; then
+            gcloud config set project "$PROJECT_ID"
+            echo -e "${GREEN}✓ Project validated and set to: $PROJECT_ID${NC}"
+        else
+            echo -e "${RED}✗ Project '$PROJECT_ID' is still not valid. Exiting.${NC}"
+            echo "Please ensure you have a valid GCP project and re-run this script."
+            exit 1
+        fi
     fi
 fi
 
@@ -183,25 +202,45 @@ fi
 
 echo -e "${GREEN}✓ Authentication successful with proper scopes${NC}"
 
-# Step 6: Enable required APIs
+# Step 6: Set quota project first
+echo -e "\n${YELLOW}Setting quota project...${NC}"
+if gcloud auth application-default set-quota-project "$PROJECT_ID" 2>/dev/null; then
+    echo -e "${GREEN}✓ Quota project set to: $PROJECT_ID${NC}"
+else
+    echo -e "${YELLOW}⚠ Could not set quota project. This may cause API quota issues.${NC}"
+fi
+
+# Step 7: Enable required APIs
 echo -e "\n${YELLOW}Enabling required APIs for Prowler scanning...${NC}"
 
-# Enable IAM API
-echo "Enabling Identity and Access Management (IAM) API..."
-gcloud services enable iam.googleapis.com --project "$PROJECT_ID"
+# Verify we have a valid project set
+CURRENT_PROJECT=$(gcloud config get-value project 2>/dev/null)
+if [ -z "$CURRENT_PROJECT" ]; then
+    echo -e "${RED}✗ No project is set. Cannot enable APIs.${NC}"
+    exit 1
+fi
 
-# Enable other commonly needed APIs for security scanning
-echo "Enabling additional APIs for comprehensive scanning..."
-gcloud services enable cloudresourcemanager.googleapis.com --project "$PROJECT_ID"
-gcloud services enable serviceusage.googleapis.com --project "$PROJECT_ID"
-gcloud services enable logging.googleapis.com --project "$PROJECT_ID"
-gcloud services enable monitoring.googleapis.com --project "$PROJECT_ID"
-gcloud services enable compute.googleapis.com --project "$PROJECT_ID"
-gcloud services enable storage-api.googleapis.com --project "$PROJECT_ID"
+echo -e "Enabling APIs for project: ${GREEN}$CURRENT_PROJECT${NC}"
 
-# Step 7: Set quota project
-echo -e "\n${YELLOW}Setting quota project...${NC}"
-gcloud auth application-default set-quota-project "$PROJECT_ID"
+# Enable APIs with error handling
+enable_api() {
+    local api=$1
+    local description=$2
+    echo "Enabling $description..."
+    if gcloud services enable "$api" --project "$CURRENT_PROJECT" 2>/dev/null; then
+        echo -e "${GREEN}✓ $description enabled${NC}"
+    else
+        echo -e "${YELLOW}⚠ Could not enable $description${NC}"
+    fi
+}
+
+enable_api "iam.googleapis.com" "Identity and Access Management (IAM) API"
+enable_api "cloudresourcemanager.googleapis.com" "Cloud Resource Manager API"
+enable_api "serviceusage.googleapis.com" "Service Usage API"
+enable_api "logging.googleapis.com" "Cloud Logging API"
+enable_api "monitoring.googleapis.com" "Cloud Monitoring API"
+enable_api "compute.googleapis.com" "Compute Engine API"
+enable_api "storage-api.googleapis.com" "Cloud Storage API"
 
 # Step 8: Display current configuration
 echo -e "\n${GREEN}=== Configuration Summary ===${NC}"
