@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.9.3] (Prowler v5.9.3)
+
+### 🔄 Changed
+
+- Display error messages and allow editing last message in Lighthouse [(#8358)](https://github.com/prowler-cloud/prowler/pull/8358)
+
 ## [v1.9.0] (Prowler v5.9.0)
 
 ### 🚀 Added
