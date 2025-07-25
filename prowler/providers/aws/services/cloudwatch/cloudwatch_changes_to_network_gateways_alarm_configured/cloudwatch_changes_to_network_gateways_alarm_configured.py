@@ -31,7 +31,9 @@ class cloudwatch_changes_to_network_gateways_alarm_configured(Check):
                 report.status_extended = "No CloudWatch log groups found with metric filters or alarms associated."
                 report.region = logs_client.region
                 report.resource_id = logs_client.audited_account
-                report.resource_arn = logs_client.log_group_arn_template
+                report.resource_arn = logs_client._get_account_arn_template(
+                    logs_client.region
+                )
                 report.resource_tags = []
 
             findings.append(report)
