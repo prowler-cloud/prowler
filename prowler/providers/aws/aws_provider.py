@@ -469,8 +469,8 @@ class AwsProvider(Provider):
 
         return profile_region
 
+    @staticmethod
     def set_identity(
-        self,
         caller_identity: AWSCallerIdentity,
         profile: str,
         regions: set,
@@ -991,7 +991,8 @@ class AwsProvider(Provider):
         mfa_TOTP = input("Enter MFA code: ")
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
-    def set_session_config(self, retries_max_attempts: int) -> Config:
+    @staticmethod
+    def set_session_config(retries_max_attempts: int) -> Config:
         """
         set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
 

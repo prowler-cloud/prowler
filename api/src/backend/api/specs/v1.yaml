@@ -2871,6 +2871,49 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/integrations/{id}/connection:
+    post:
+      operationId: integrations_connection_create
+      description: Try to verify integration connection
+      summary: Check integration connection
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this integration.
+        required: true
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
+  /api/v1/integrations/securityhub/{provider_id}:
+    get:
+      operationId: integrations_securityhub_retrieve
+      description: Retrieve the active SecurityHub regions for a specific provider
+      summary: Get SecurityHub regions for provider
+      parameters:
+      - in: path
+        name: provider_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
@@ -5143,6 +5186,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5151,6 +5195,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5161,6 +5206,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5171,6 +5217,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5403,6 +5450,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5411,6 +5459,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5421,6 +5470,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5431,6 +5481,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5669,6 +5720,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5677,6 +5729,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5687,6 +5740,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5697,6 +5751,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
