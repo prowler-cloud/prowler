@@ -1,22 +1,29 @@
 import json
 import time
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, Sum, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Sum, When
 from tasks.utils import CustomEncoder
 
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_utils import create_objects_in_batches, rls_transaction
+from api.db_utils import (
+    create_objects_in_batches,
+    rls_transaction,
+    update_objects_in_batches,
+)
+from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
+    Processor,
     Provider,
     Resource,
     ResourceScanSummary,
@@ -101,7 +108,10 @@ def _store_resources(
 
 
 def perform_prowler_scan(
-    tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
+    tenant_id: str,
+    scan_id: str,
+    provider_id: str,
+    checks_to_execute: list[str] | None = None,
 ):
     """
     Perform a scan using Prowler and store the findings and resources in the database.
@@ -132,14 +142,28 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
 
+    # Find the mutelist processor if it exists
+    with rls_transaction(tenant_id):
+        try:
+            mutelist_processor = Processor.objects.get(
+                tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
+            )
+        except Processor.DoesNotExist:
+            mutelist_processor = None
+        except Exception as e:
+            logger.error(f"Error processing mutelist rules: {e}")
+            mutelist_processor = None
+
     try:
         with rls_transaction(tenant_id):
             try:
-                prowler_provider = initialize_prowler_provider(provider_instance)
+                prowler_provider = initialize_prowler_provider(
+                    provider_instance, mutelist_processor
+                )
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
-                exc = ValueError(
+                exc = ProviderConnectionError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )
             finally:
@@ -159,6 +183,7 @@ def perform_prowler_scan(
         resource_cache = {}
         tag_cache = {}
         last_status_cache = {}
+        resource_failed_findings_cache = defaultdict(int)
 
         for progress, findings in prowler_scan.scan():
             for finding in findings:
@@ -184,6 +209,9 @@ def perform_prowler_scan(
                                     },
                                 )
                                 resource_cache[resource_uid] = resource_instance
+
+                                # Initialize all processed resources in the cache
+                                resource_failed_findings_cache[resource_uid] = 0
                             else:
                                 resource_instance = resource_cache[resource_uid]
 
@@ -274,6 +302,9 @@ def perform_prowler_scan(
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
+                    # If the finding is muted at this time the reason must be the configured Mutelist
+                    muted_reason = "Muted by mutelist" if finding.muted else None
+
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
@@ -289,9 +320,15 @@ def perform_prowler_scan(
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
                         muted=finding.muted,
+                        muted_reason=muted_reason,
                         compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
+
+                    # Increment failed_findings_count cache if the finding status is FAIL and not muted
+                    if status == FindingStatus.FAIL and not finding.muted:
+                        resource_uid = finding.resource_uid
+                        resource_failed_findings_cache[resource_uid] += 1
 
                 # Update scan resource summaries
                 scan_resource_cache.add(
@@ -309,6 +346,24 @@ def perform_prowler_scan(
                 scan_instance.save()
 
         scan_instance.state = StateChoices.COMPLETED
+
+        # Update failed_findings_count for all resources in batches if scan completed successfully
+        if resource_failed_findings_cache:
+            resources_to_update = []
+            for resource_uid, failed_count in resource_failed_findings_cache.items():
+                if resource_uid in resource_cache:
+                    resource_instance = resource_cache[resource_uid]
+                    resource_instance.failed_findings_count = failed_count
+                    resources_to_update.append(resource_instance)
+
+            if resources_to_update:
+                update_objects_in_batches(
+                    tenant_id=tenant_id,
+                    model=Resource,
+                    objects=resources_to_update,
+                    fields=["failed_findings_count"],
+                    batch_size=1000,
+                )
 
     except Exception as e:
         logger.error(f"Error performing scan {scan_id}: {e}")
@@ -361,6 +416,9 @@ def aggregate_findings(tenant_id: str, scan_id: str):
     metrics such as counts of failed, passed, and muted findings, as well as their deltas (new,
     changed, unchanged). The results are grouped by `check_id`, `service`, `severity`, and `region`.
     These aggregated metrics are then stored in the `ScanSummary` table.
+
+    Additionally, it updates the failed_findings_count field for each resource based on the most
+    recent findings for each finding.uid.
 
     Args:
         tenant_id (str): The ID of the tenant to which the scan belongs.
@@ -530,18 +588,27 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             prowler_provider = return_prowler_provider(provider_instance)
 
         # Get check status data by region from findings
+        findings = (
+            Finding.all_objects.filter(scan_id=scan_id, muted=False)
+            .only("id", "check_id", "status")
+            .prefetch_related(
+                Prefetch(
+                    "resources",
+                    queryset=Resource.objects.only("id", "region"),
+                    to_attr="small_resources",
+                )
+            )
+            .iterator(chunk_size=1000)
+        )
+
         check_status_by_region = {}
         with rls_transaction(tenant_id):
-            findings = Finding.objects.filter(scan_id=scan_id, muted=False)
             for finding in findings:
-                # Get region from resources
-                for resource in finding.resources.all():
+                for resource in finding.small_resources:
                     region = resource.region
-                    region_dict = check_status_by_region.setdefault(region, {})
-                    current_status = region_dict.get(finding.check_id)
-                    if current_status == "FAIL":
-                        continue
-                    region_dict[finding.check_id] = finding.status
+                    current_status = check_status_by_region.setdefault(region, {})
+                    if current_status.get(finding.check_id) != "FAIL":
+                        current_status[finding.check_id] = finding.status
 
         try:
             # Try to get regions from provider

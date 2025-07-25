@@ -6,6 +6,7 @@
   :root {
     --chart-success: 146 80% 35%;
     --chart-fail: 339 90% 51%;
+    --chart-muted: 45 93% 47%;
     --chart-critical: 336 75% 39%;
     --chart-high: 339 90% 51%;
     --chart-medium: 26 100% 55%;
@@ -19,6 +20,7 @@
   .dark {
     --chart-success: 146 80% 35%;
     --chart-fail: 339 90% 51%;
+    --chart-muted: 45 93% 47%;
     --chart-critical: 336 75% 39%;
     --chart-high: 339 90% 51%;
     --chart-medium: 26 100% 55%;
@@ -32,7 +34,6 @@
 }
 
 @layer utilities {
-
   /* Hide scrollbar */
   .no-scrollbar {
     scrollbar-width: none;
@@ -44,7 +45,6 @@
 }
 
 @layer components {
-
   .animate-download-icon polyline,
   .animate-download-icon line {
     @apply animate-drop-arrow;

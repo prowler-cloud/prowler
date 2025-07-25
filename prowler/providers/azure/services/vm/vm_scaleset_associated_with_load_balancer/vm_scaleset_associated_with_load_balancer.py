@@ -24,7 +24,11 @@ class vm_scaleset_associated_with_load_balancer(Check):
                 report.location = scale_set.location
                 if scale_set.load_balancer_backend_pools:
                     report.status = "PASS"
-                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription}' is associated with load balancer backend pool(s): {', '.join(scale_set.load_balancer_backend_pools)}."
+                    backend_pool_names = [
+                        pool.split("/")[-1]
+                        for pool in scale_set.load_balancer_backend_pools
+                    ]
+                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription}' is associated with load balancer backend pool(s): {', '.join(backend_pool_names)}."
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription}' is not associated with any load balancer backend pool."

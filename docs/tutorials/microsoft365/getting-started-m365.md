@@ -30,7 +30,7 @@ Go to the Entra ID portal, then you can search for `Domain` or go to Identity > 
 
 ![Custom Domain Names](./img/custom-domain-names.png)
 
-Once you are there just select the domain you want to use.
+Once you are there just select the domain you want to use as unique identifier for your M365 account in Prowler Cloud/App.
 
 ---
 
@@ -139,10 +139,7 @@ The permissions you need to grant depends on whether you are using user credenti
     Make sure you add the correct set of permissions for the authentication method you are using.
 
 
-#### If using application(service principal) authentication
-
-???+ warning "Warning"
-    Currently Prowler Cloud only supports user authentication.
+#### If using application(service principal) authentication (Recommended)
 
 To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration.
 
@@ -159,19 +156,21 @@ To grant the permissions for the PowerShell modules via application authenticati
 
     ![Exchange.ManageAsApp Permission](./img/exchange-permission.png)
 
-    You also need to assign the `Exchange Administrator` role to the app. For that go to `Roles and administrators` and in the `Administrative roles` section click `here` to go to the directory level assignment:
+    You also need to assign the `Global Reader` role to the app. For that go to `Roles and administrators` and in the `Administrative roles` section click `here` to go to the directory level assignment:
 
     ![Roles and administrators](./img/here.png)
 
-    Once in the directory level assignment, search for `Exchange Administrator` and click on it to open the assginments page of that role.
+    Once in the directory level assignment, search for `Global Reader` and click on it to open the assginments page of that role.
 
-    ![Exchange Administrator Role](./img/exchange-administrator-role.png)
+    ![Global Reader Role](./img/global-reader-role.png)
 
     Click on `Add assignments`, search for your app and click on `Assign`.
 
     You have to select it as `Active` and click on `Assign` to assign the role to the app.
 
-    ![Assign Exchange Administrator Role](./img/assign-exchange-administrator-role.png)
+    ![Assign Global Reader Role](./img/assign-global-reader-role.png)
+
+    For more information about the need of adding this role, see [Microsoft documentation](https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps#step-5-assign-microsoft-entra-roles-to-the-application). You can select any other role of the specified.
 
 2. Add Teams API:
 
@@ -191,12 +190,15 @@ To grant the permissions for the PowerShell modules via application authenticati
 
     ![Final Permission Assignment](./img/final-permissions.png)
 
+---
+
+#### If using user authentication
+
+This method is not recommended because it requires a user with MFA enabled and Microsoft will not allow MFA capable users to authenticate programmatically after 1st September 2025. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mandatory-multifactor-authentication?tabs=dotnet) for more information.
+
 ???+ warning
     Remember that if the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
 
----
-
-#### If using user authentication (Currently Prowler Cloud only supports this method)
 
 1. Search and select:
 
@@ -253,6 +255,8 @@ To grant the permissions for the PowerShell modules via application authenticati
     - `Client ID`
     - `Tenant ID`
     - `AZURE_CLIENT_SECRET` from earlier
+
+    If you are using user authentication, also add:
     - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
     - `M365_PASSWORD` the password of the user
 

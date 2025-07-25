@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.lib.policy import (
+    has_public_principal,
+    has_restrictive_source_arn_condition,
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
@@ -16,46 +18,26 @@ class sns_topics_not_publicly_accessible(Check):
             report.status_extended = (
                 f"SNS topic {topic.name} is not publicly accessible."
             )
+
             if topic.policy:
                 for statement in topic.policy["Statement"]:
-                    # Only check allow statements
-                    if statement["Effect"] == "Allow":
-                        if (
-                            "*" in statement["Principal"]
-                            or (
-                                "AWS" in statement["Principal"]
-                                and "*" in statement["Principal"]["AWS"]
+                    if statement["Effect"] == "Allow" and has_public_principal(
+                        statement
+                    ):
+                        if has_restrictive_source_arn_condition(statement):
+                            break
+                        elif "Condition" in statement:
+                            condition_account = is_condition_block_restrictive(
+                                statement["Condition"], sns_client.audited_account
                             )
-                            or (
-                                "CanonicalUser" in statement["Principal"]
-                                and "*" in statement["Principal"]["CanonicalUser"]
+                            condition_org = is_condition_block_restrictive_organization(
+                                statement["Condition"]
                             )
-                        ):
-                            condition_account = False
-                            condition_org = False
-                            condition_endpoint = False
-                            if (
-                                "Condition" in statement
-                                and is_condition_block_restrictive(
-                                    statement["Condition"],
-                                    sns_client.audited_account,
+                            condition_endpoint = (
+                                is_condition_block_restrictive_sns_endpoint(
+                                    statement["Condition"]
                                 )
-                            ):
-                                condition_account = True
-                            if (
-                                "Condition" in statement
-                                and is_condition_block_restrictive_organization(
-                                    statement["Condition"],
-                                )
-                            ):
-                                condition_org = True
-                            if (
-                                "Condition" in statement
-                                and is_condition_block_restrictive_sns_endpoint(
-                                    statement["Condition"],
-                                )
-                            ):
-                                condition_endpoint = True
+                            )
 
                             if condition_account and condition_org:
                                 report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the account {sns_client.audited_account} and an organization."
@@ -69,7 +51,11 @@ class sns_topics_not_publicly_accessible(Check):
                                 report.status = "FAIL"
                                 report.status_extended = f"SNS topic {topic.name} is public because its policy allows public access."
                                 break
+                        else:
+                            # Public principal with no conditions = public
+                            report.status = "FAIL"
+                            report.status_extended = f"SNS topic {topic.name} is public because its policy allows public access."
+                            break
 
             findings.append(report)
-
         return findings

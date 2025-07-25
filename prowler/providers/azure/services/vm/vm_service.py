@@ -63,6 +63,42 @@ class VirtualMachines(AzureService):
                             if extension
                         ]
 
+                    # Collect LinuxConfiguration.disablePasswordAuthentication if available
+                    linux_configuration = None
+                    os_profile = getattr(vm, "os_profile", None)
+                    if os_profile:
+                        linux_conf = getattr(os_profile, "linux_configuration", None)
+                        if linux_conf:
+                            linux_configuration = LinuxConfiguration(
+                                disable_password_authentication=getattr(
+                                    linux_conf, "disable_password_authentication", False
+                                )
+                            )
+
+                    # Convert Azure SDK SecurityProfile to custom SecurityProfile dataclass
+                    azure_security_profile = getattr(vm, "security_profile", None)
+                    security_profile = None
+                    if azure_security_profile:
+                        uefi_settings = None
+                        azure_uefi_settings = getattr(
+                            azure_security_profile, "uefi_settings", None
+                        )
+                        if azure_uefi_settings:
+                            uefi_settings = UefiSettings(
+                                secure_boot_enabled=getattr(
+                                    azure_uefi_settings, "secure_boot_enabled", False
+                                ),
+                                v_tpm_enabled=getattr(
+                                    azure_uefi_settings, "v_tpm_enabled", False
+                                ),
+                            )
+                        security_profile = SecurityProfile(
+                            security_type=getattr(
+                                azure_security_profile, "security_type", None
+                            ),
+                            uefi_settings=uefi_settings,
+                        )
+
                     virtual_machines[subscription_name].update(
                         {
                             vm.id: VirtualMachine(
@@ -91,8 +127,19 @@ class VirtualMachines(AzureService):
                                     else None
                                 ),
                                 location=vm.location,
-                                security_profile=getattr(vm, "security_profile", None),
+                                security_profile=security_profile,
                                 extensions=extensions,
+                                vm_size=getattr(
+                                    getattr(vm, "hardware_profile", None),
+                                    "vm_size",
+                                    None,
+                                ),
+                                image_reference=getattr(
+                                    getattr(storage_profile, "image_reference", None),
+                                    "id",
+                                    None,
+                                ),
+                                linux_configuration=linux_configuration,
                             )
                         }
                     )
@@ -246,7 +293,6 @@ class VirtualMachines(AzureService):
             )
         return vm_instance_ids
 
-
 @dataclass
 class UefiSettings:
     secure_boot_enabled: bool
@@ -289,6 +335,10 @@ class VirtualMachineExtension(BaseModel):
     id: str
 
 
+class LinuxConfiguration(BaseModel):
+    disable_password_authentication: bool
+
+
 class VirtualMachine(BaseModel):
     resource_id: str
     resource_name: str
@@ -296,6 +346,9 @@ class VirtualMachine(BaseModel):
     security_profile: Optional[SecurityProfile]
     extensions: list[VirtualMachineExtension]
     storage_profile: Optional[StorageProfile] = None
+    vm_size: Optional[str] = None
+    image_reference: Optional[str] = None
+    linux_configuration: Optional[LinuxConfiguration] = None
 
 
 class Disk(BaseModel):
