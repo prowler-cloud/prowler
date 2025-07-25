@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
 - Support App Key Content in GitHub provider [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - CIS 4.0 for the Azure provider [(#7782)](https://github.com/prowler-cloud/prowler/pull/7782)
+- `vm_desired_sku_size` check for Azure provider [(#8191)](https://github.com/prowler-cloud/prowler/pull/8191)
 
 ### Changed
 - Handle some AWS errors as warnings instead of errors [(#8347)](https://github.com/prowler-cloud/prowler/pull/8347)
