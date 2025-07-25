@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "vm_desired_sku_size",
-  "CheckTitle": "Check for Organization's Desired VM SKU Size(s)",
+  "CheckTitle": "Ensure that your virtual machine instances are using SKU sizes that are approved by your organization",
   "CheckType": [],
   "ServiceName": "vm",
   "SubServiceName": "",
