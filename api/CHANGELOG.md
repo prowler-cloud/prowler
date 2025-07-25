@@ -2,6 +2,20 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.11.0] (Prowler UNRELEASED)
+
+### Added
+- Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
+
+---
+
+## [1.10.2] (Prowler v5.9.2)
+
+### Changed
+- Optimized queries for resources views [(#8336)](https://github.com/prowler-cloud/prowler/pull/8336)
+
+---
+
 ## [v1.10.1] (Prowler v5.9.1)
 
 ### Fixed
