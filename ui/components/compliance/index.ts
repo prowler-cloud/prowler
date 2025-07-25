@@ -19,3 +19,4 @@ export * from "./skeletons/compliance-accordion-skeleton";
 export * from "./skeletons/compliance-grid-skeleton";
 export * from "./skeletons/heatmap-chart-skeleton";
 export * from "./skeletons/pie-chart-skeleton";
+export * from "./threatscore-download-button";

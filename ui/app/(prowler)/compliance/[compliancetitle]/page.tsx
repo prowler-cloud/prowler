@@ -134,6 +134,7 @@ export default async function ComplianceDetail({
         showSearch={false}
         framework={compliancetitle}
         showProviders={false}
+        scanId={selectedScanId || undefined}
       />
 
       <Suspense

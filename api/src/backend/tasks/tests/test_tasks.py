@@ -420,8 +420,13 @@ class TestScanCompleteTasks:
     @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
+    @patch("tasks.tasks.generate_threatscore_report_task.si")
     def test_scan_complete_tasks(
-        self, mock_outputs_task, mock_scan_summary_task, mock_compliance_tasks
+        self,
+        mock_threatscore_task,
+        mock_outputs_task,
+        mock_scan_summary_task,
+        mock_compliance_tasks,
     ):
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
         mock_compliance_tasks.assert_called_once_with(
@@ -432,6 +437,11 @@ class TestScanCompleteTasks:
             tenant_id="tenant-id",
         )
         mock_outputs_task.assert_called_once_with(
+            scan_id="scan-id",
+            provider_id="provider-id",
+            tenant_id="tenant-id",
+        )
+        mock_threatscore_task.assert_called_once_with(
             scan_id="scan-id",
             provider_id="provider-id",
             tenant_id="tenant-id",
