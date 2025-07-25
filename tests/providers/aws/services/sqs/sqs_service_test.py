@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import botocore
 from boto3 import client
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.sqs.sqs_service import SQS
@@ -12,7 +13,6 @@ from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
 )
-from botocore.exceptions import ClientError
 
 test_queue = "test-queue"
 test_key = str(uuid4())
@@ -123,12 +123,16 @@ class Test_SQS_Service:
 
         queue_url = f"https://sqs.{AWS_REGION_EU_WEST_1}.amazonaws.com/{AWS_ACCOUNT_NUMBER}/{test_queue}"
         sqs_service.queues = [
-            type("Queue", (), {
-                "id": queue_url,
-                "name": test_queue,
-                "arn": test_queue_arn,
-                "region": AWS_REGION_EU_WEST_1
-            })()
+            type(
+                "Queue",
+                (),
+                {
+                    "id": queue_url,
+                    "name": test_queue,
+                    "arn": test_queue_arn,
+                    "region": AWS_REGION_EU_WEST_1,
+                },
+            )()
         ]
 
         def mock_get_queue_attributes(**kwargs):
@@ -136,10 +140,10 @@ class Test_SQS_Service:
                 {
                     "Error": {
                         "Code": "AWS.SimpleQueueService.NonExistentQueue",
-                        "Message": "The specified queue does not exist."
+                        "Message": "The specified queue does not exist.",
                     }
                 },
-                "GetQueueAttributes"
+                "GetQueueAttributes",
             )
 
         with patch.object(
@@ -150,4 +154,3 @@ class Test_SQS_Service:
             sqs_service._get_queue_attributes()
 
         assert sqs_service.queues == []
-
