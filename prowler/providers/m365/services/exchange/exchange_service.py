@@ -123,7 +123,6 @@ class Exchange(M365Service):
                 rules_data = [rules_data]
             for rule in rules_data:
                 if rule:
-                    # Handle None values for sender_domain_is and redirect_message_to
                     sender_domain_is = rule.get("SenderDomainIs", [])
                     if sender_domain_is is None:
                         sender_domain_is = []

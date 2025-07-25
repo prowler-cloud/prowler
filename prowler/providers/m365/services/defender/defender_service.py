@@ -44,14 +44,12 @@ class Defender(M365Service):
                 malware_policy = [malware_policy]
             for policy in malware_policy:
                 if policy:
-                    # Ensure file_types is a valid list, handle None values
                     file_types_raw = policy.get("FileTypes", [])
                     file_types = []
                     if file_types_raw is not None:
                         if isinstance(file_types_raw, list):
                             file_types = file_types_raw
                         else:
-                            # Convert non-list values to list or use empty list
                             try:
                                 if isinstance(file_types_raw, str):
                                     file_types = [file_types_raw]
@@ -276,16 +274,13 @@ class Defender(M365Service):
                 inbound_spam_policy = [inbound_spam_policy]
             for policy in inbound_spam_policy:
                 if policy:
-                    # Ensure allowed_sender_domains contains only valid strings
                     allowed_domains_raw = policy.get("AllowedSenderDomains", [])
                     allowed_domains = []
 
-                    # Handle case where PowerShell returns AllowedSenderDomains as a JSON string
                     if isinstance(allowed_domains_raw, str):
                         try:
                             import json
 
-                            # Try to parse as JSON string (e.g., "[\"domain.com\"]")
                             parsed_domains = json.loads(allowed_domains_raw)
                             if isinstance(parsed_domains, list):
                                 allowed_domains_raw = parsed_domains
@@ -305,7 +300,6 @@ class Defender(M365Service):
                             if isinstance(domain, str):
                                 allowed_domains.append(domain)
                             else:
-                                # Convert non-string values to string or skip them
                                 try:
                                     allowed_domains.append(str(domain))
                                 except (ValueError, TypeError):
