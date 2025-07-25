@@ -4,12 +4,12 @@
 // 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com;
-  connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://js.stripe.com https://www.googletagmanager.com;
-  img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://*.posthog.com;
+  connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://js.stripe.com https://www.googletagmanager.com https://*.posthog.com;
+  img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://*.posthog.com;
   font-src 'self';
   style-src 'self' 'unsafe-inline';
-  frame-src 'self' https://js.stripe.com https://www.googletagmanager.com;
+  frame-src 'self' https://js.stripe.com https://www.googletagmanager.com https://*.posthog.com;
   frame-ancestors 'none';
 `;
 
