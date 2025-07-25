@@ -7,9 +7,10 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation, Processor, Provider, Resource
+from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
 from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -173,6 +174,37 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )
+
+
+def prowler_integration_connection_test(integration: Integration) -> Connection:
+    """Test the connection to a Prowler integration based on the given integration type.
+
+    Args:
+        integration (Integration): The integration object containing the integration type and associated credentials.
+
+    Returns:
+        Connection: A connection object representing the result of the connection test for the specified integration.
+    """
+    if integration.integration_type == Integration.IntegrationChoices.AMAZON_S3:
+        return S3.test_connection(
+            **integration.credentials,
+            bucket_name=integration.configuration["bucket_name"],
+            raise_on_exception=False,
+        )
+    # TODO: It is possible that we can unify the connection test for all integrations, but need refactoring
+    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified making some changes in the SDK.
+    elif (
+        integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+    ):
+        pass
+    elif integration.integration_type == Integration.IntegrationChoices.JIRA:
+        pass
+    elif integration.integration_type == Integration.IntegrationChoices.SLACK:
+        pass
+    else:
+        raise ValueError(
+            f"Integration type {integration.integration_type} not supported"
+        )
 
 
 def validate_invitation(

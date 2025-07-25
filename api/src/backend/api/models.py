@@ -438,7 +438,7 @@ class Scan(RowLevelSecurityProtectedModel):
     scheduler_task = models.ForeignKey(
         PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
-    output_location = models.CharField(blank=True, null=True, max_length=200)
+    output_location = models.CharField(blank=True, null=True, max_length=4096)
     provider = models.ForeignKey(
         Provider,
         on_delete=models.CASCADE,
@@ -1346,7 +1346,7 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
-        S3 = "amazon_s3", _("Amazon S3")
+        AMAZON_S3 = "amazon_s3", _("Amazon S3")
         AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
         JIRA = "jira", _("JIRA")
         SLACK = "slack", _("Slack")
@@ -1372,6 +1372,10 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
+            models.UniqueConstraint(
+                fields=("configuration", "tenant"),
+                name="unique_configuration_per_tenant",
+            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",

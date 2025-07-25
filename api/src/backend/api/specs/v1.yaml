@@ -2871,6 +2871,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/integrations/{id}/connection:
+    post:
+      operationId: integrations_connection_create
+      description: Try to verify integration connection
+      summary: Check integration connection
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this integration.
+        required: true
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
