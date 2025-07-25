@@ -44,6 +44,25 @@ class Defender(M365Service):
                 malware_policy = [malware_policy]
             for policy in malware_policy:
                 if policy:
+                    # Ensure file_types is a valid list, handle None values
+                    file_types_raw = policy.get("FileTypes", [])
+                    file_types = []
+                    if file_types_raw is not None:
+                        if isinstance(file_types_raw, list):
+                            file_types = file_types_raw
+                        else:
+                            # Convert non-list values to list or use empty list
+                            try:
+                                if isinstance(file_types_raw, str):
+                                    file_types = [file_types_raw]
+                                else:
+                                    file_types = [str(file_types_raw)]
+                            except (ValueError, TypeError):
+                                logger.warning(
+                                    f"Skipping invalid file_types value: {file_types_raw}"
+                                )
+                                file_types = []
+
                     malware_policies.append(
                         MalwarePolicy(
                             enable_file_filter=policy.get("EnableFileFilter", False),
@@ -54,7 +73,7 @@ class Defender(M365Service):
                             internal_sender_admin_address=policy.get(
                                 "InternalSenderAdminAddress", ""
                             ),
-                            file_types=policy.get("FileTypes", []),
+                            file_types=file_types,
                             is_default=policy.get("IsDefault", False),
                         )
                     )
@@ -257,12 +276,47 @@ class Defender(M365Service):
                 inbound_spam_policy = [inbound_spam_policy]
             for policy in inbound_spam_policy:
                 if policy:
+                    # Ensure allowed_sender_domains contains only valid strings
+                    allowed_domains_raw = policy.get("AllowedSenderDomains", [])
+                    allowed_domains = []
+
+                    # Handle case where PowerShell returns AllowedSenderDomains as a JSON string
+                    if isinstance(allowed_domains_raw, str):
+                        try:
+                            import json
+
+                            # Try to parse as JSON string (e.g., "[\"domain.com\"]")
+                            parsed_domains = json.loads(allowed_domains_raw)
+                            if isinstance(parsed_domains, list):
+                                allowed_domains_raw = parsed_domains
+                            else:
+                                logger.warning(
+                                    f"Expected list from JSON string, got: {type(parsed_domains)}"
+                                )
+                                allowed_domains_raw = []
+                        except (json.JSONDecodeError, ValueError) as e:
+                            logger.warning(
+                                f"Failed to parse AllowedSenderDomains as JSON: {e}"
+                            )
+                            allowed_domains_raw = []
+
+                    if allowed_domains_raw:
+                        for domain in allowed_domains_raw:
+                            if isinstance(domain, str):
+                                allowed_domains.append(domain)
+                            else:
+                                # Convert non-string values to string or skip them
+                                try:
+                                    allowed_domains.append(str(domain))
+                                except (ValueError, TypeError):
+                                    logger.warning(
+                                        f"Skipping invalid domain value: {domain}"
+                                    )
+
                     inbound_spam_policies.append(
                         DefenderInboundSpamPolicy(
                             identity=policy.get("Identity", ""),
-                            allowed_sender_domains=policy.get(
-                                "AllowedSenderDomains", []
-                            ),
+                            allowed_sender_domains=allowed_domains,
                             default=policy.get("IsDefault", False),
                         )
                     )
