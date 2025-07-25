@@ -3,7 +3,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from tasks.jobs.integrations import (
     get_s3_client_from_integration,
+    get_security_hub_client_from_integration,
     upload_s3_integration,
+    upload_security_hub_integration,
 )
 
 from api.models import Integration
@@ -384,30 +386,89 @@ class TestProwlerIntegrationConnectionTest:
         assert result.is_connected is False
         assert str(result.error) == "Bucket not found"
 
-    @patch("api.utils.AwsProvider")
-    @patch("api.utils.S3")
-    def test_aws_security_hub_integration_connection(
-        self, mock_s3_class, mock_aws_provider
+    @patch("api.utils.SecurityHub")
+    @patch("api.utils.initialize_prowler_provider")
+    def test_aws_security_hub_integration_connection_success(
+        self, mock_initialize_provider, mock_security_hub_class
     ):
-        """Test AWS Security Hub integration only validates AWS session."""
+        """Test successful AWS Security Hub integration connection."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
         integration.credentials = {
             "aws_access_key_id": "AKIA...",
             "aws_secret_access_key": "SECRET",
         }
-        integration.configuration = {"region": "us-east-1"}
+        integration.configuration = {"send_only_fails": True}
 
-        mock_session = MagicMock()
-        mock_aws_provider.return_value.session.current_session = mock_session
+        # Mock integration provider relationship
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
 
-        # For AWS Security Hub, the function should return early after AWS session validation
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_prowler_provider.identity.account = "123456789012"
+        mock_prowler_provider.identity.partition = "aws"
+        mock_prowler_provider.session.current_session = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock successful SecurityHub connection
+        mock_connection = Connection(is_connected=True)
+        mock_security_hub_class.test_connection.return_value = mock_connection
+
         result = prowler_integration_connection_test(integration)
 
-        # The function should not reach S3 test_connection for AWS_SECURITY_HUB
-        mock_s3_class.test_connection.assert_not_called()
-        # Since no exception was raised during AWS session creation, return None (success)
-        assert result is None
+        assert result.is_connected is True
+        mock_security_hub_class.test_connection.assert_called_once_with(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            session=mock_prowler_provider.session.current_session,
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.SecurityHub")
+    @patch("api.utils.initialize_prowler_provider")
+    def test_aws_security_hub_integration_connection_failure(
+        self, mock_initialize_provider, mock_security_hub_class
+    ):
+        """Test AWS Security Hub integration connection failure."""
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
+        integration.credentials = {
+            "aws_access_key_id": "INVALID",
+            "aws_secret_access_key": "CREDENTIALS",
+        }
+        integration.configuration = {"send_only_fails": False}
+
+        # Mock integration provider relationship
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_prowler_provider.identity.account = "123456789012"
+        mock_prowler_provider.identity.partition = "aws"
+        mock_prowler_provider.session.current_session = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock failed SecurityHub connection
+        test_exception = Exception("SecurityHub not enabled")
+        mock_connection = Connection(is_connected=False, error=test_exception)
+        mock_security_hub_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is False
+        assert result.error == test_exception
 
     def test_unsupported_integration_type(self):
         """Test unsupported integration type raises ValueError."""
@@ -420,3 +481,550 @@ class TestProwlerIntegrationConnectionTest:
             ValueError, match="Integration type UNSUPPORTED_TYPE not supported"
         ):
             prowler_integration_connection_test(integration)
+
+
+@pytest.mark.django_db
+class TestSecurityHubIntegrationUploads:
+    @patch("tasks.jobs.integrations.SecurityHub.test_connection")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    def test_get_security_hub_client_from_integration_success(
+        self, mock_initialize_provider, mock_test_connection
+    ):
+        """Test successful SecurityHub client creation."""
+        # Mock integration
+        mock_integration = MagicMock()
+        mock_integration.configuration = {"send_only_fails": True}
+
+        # Mock provider
+        mock_provider = MagicMock()
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_prowler_provider.identity.account = "123456789012"
+        mock_prowler_provider.identity.partition = "aws"
+        mock_prowler_provider.identity.audited_regions = ["us-east-1", "us-west-2"]
+        mock_prowler_provider.session.current_session = MagicMock()
+        mock_prowler_provider.get_available_aws_service_regions.return_value = [
+            "us-east-1",
+            "us-west-2",
+        ]
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock successful connection
+        mock_connection = MagicMock()
+        mock_connection.is_connected = True
+        mock_test_connection.return_value = mock_connection
+
+        # Mock findings
+        mock_findings = [{"finding": "test"}]
+
+        with patch("tasks.jobs.integrations.SecurityHub") as mock_security_hub_class:
+            mock_security_hub = MagicMock()
+            mock_security_hub_class.return_value = mock_security_hub
+
+            connected, security_hub = get_security_hub_client_from_integration(
+                mock_integration, mock_provider, mock_findings
+            )
+
+        assert connected is True
+        assert security_hub == mock_security_hub
+
+        # Verify SecurityHub was initialized with correct parameters
+        mock_security_hub_class.assert_called_once_with(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            aws_session=mock_prowler_provider.session.current_session,
+            findings=mock_findings,
+            send_only_fails=True,
+            aws_security_hub_available_regions=["us-east-1", "us-west-2"],
+        )
+
+    @patch("tasks.jobs.integrations.SecurityHub.test_connection")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    def test_get_security_hub_client_from_integration_failure(
+        self, mock_initialize_provider, mock_test_connection
+    ):
+        """Test SecurityHub client creation failure."""
+        # Mock integration
+        mock_integration = MagicMock()
+        mock_integration.configuration = {"send_only_fails": False}
+
+        # Mock provider
+        mock_provider = MagicMock()
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_prowler_provider.identity.account = "123456789012"
+        mock_prowler_provider.identity.partition = "aws"
+        mock_prowler_provider.session.current_session = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock failed connection
+        mock_connection = MagicMock()
+        mock_connection.is_connected = False
+        mock_connection.error = "Connection failed"
+        mock_test_connection.return_value = mock_connection
+
+        # Mock findings
+        mock_findings = [{"finding": "test"}]
+
+        connected, connection = get_security_hub_client_from_integration(
+            mock_integration, mock_provider, mock_findings
+        )
+
+        assert connected is False
+        assert connection == mock_connection
+
+        # Verify test_connection was called with correct parameters
+        mock_test_connection.assert_called_once_with(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            session=mock_prowler_provider.session.current_session,
+            raise_on_exception=False,
+        )
+
+    @patch("tasks.jobs.integrations.SecurityHub.test_connection")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    def test_get_security_hub_client_from_integration_no_audited_regions(
+        self, mock_initialize_provider, mock_test_connection
+    ):
+        """Test SecurityHub client creation when no audited regions are specified."""
+        # Mock integration
+        mock_integration = MagicMock()
+        mock_integration.configuration = {"send_only_fails": False}
+
+        # Mock provider
+        mock_provider = MagicMock()
+
+        # Mock prowler provider with no audited regions
+        mock_prowler_provider = MagicMock()
+        mock_prowler_provider.identity.account = "123456789012"
+        mock_prowler_provider.identity.partition = "aws"
+        mock_prowler_provider.identity.audited_regions = None
+        mock_prowler_provider.session.current_session = MagicMock()
+        mock_prowler_provider.get_available_aws_service_regions.return_value = [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1",
+        ]
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock successful connection
+        mock_connection = MagicMock()
+        mock_connection.is_connected = True
+        mock_test_connection.return_value = mock_connection
+
+        # Mock findings
+        mock_findings = [{"finding": "test"}]
+
+        with patch("tasks.jobs.integrations.SecurityHub") as mock_security_hub_class:
+            mock_security_hub = MagicMock()
+            mock_security_hub_class.return_value = mock_security_hub
+
+            connected, security_hub = get_security_hub_client_from_integration(
+                mock_integration, mock_provider, mock_findings
+            )
+
+        assert connected is True
+
+        # Verify SecurityHub was initialized with available regions
+        mock_security_hub_class.assert_called_once_with(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            aws_session=mock_prowler_provider.session.current_session,
+            findings=mock_findings,
+            send_only_fails=False,
+            aws_security_hub_available_regions=["us-east-1", "us-west-2", "eu-west-1"],
+        )
+
+    @patch("tasks.jobs.integrations.ASFF")
+    @patch("tasks.jobs.integrations.FindingOutput")
+    @patch("tasks.jobs.integrations.batched")
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_success(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+        mock_batched,
+        mock_finding_output,
+        mock_asff,
+    ):
+        """Test successful SecurityHub integration upload."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock integration
+        integration = MagicMock()
+        integration.id = "integration-1"
+        integration.configuration = {
+            "send_only_fails": True,
+            "skip_archive_previous": False,
+        }
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        # Mock provider
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock findings
+        mock_findings = [MagicMock(), MagicMock()]
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            mock_findings
+        )
+
+        # Mock batched to return findings in one batch
+        mock_batched.return_value = [(mock_findings, None)]
+
+        # Mock transformed findings
+        transformed_findings = [MagicMock(), MagicMock()]
+        mock_finding_output.transform_api_finding.side_effect = transformed_findings
+
+        # Mock ASFF transformer
+        mock_asff_instance = MagicMock()
+        mock_asff_instance.data = [{"asff": "finding1"}, {"asff": "finding2"}]
+        mock_asff_instance._data = MagicMock()
+        mock_asff.return_value = mock_asff_instance
+
+        # Mock SecurityHub client
+        mock_security_hub = MagicMock()
+        mock_security_hub.batch_send_to_security_hub.return_value = 2
+        mock_security_hub.archive_previous_findings.return_value = 5
+        mock_get_security_hub.return_value = (True, mock_security_hub)
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is True
+
+        # Verify findings were transformed and sent
+        assert mock_finding_output.transform_api_finding.call_count == 2
+        mock_asff.assert_called_once()
+        mock_asff_instance.transform.assert_called_once_with(transformed_findings)
+        mock_security_hub.batch_send_to_security_hub.assert_called_once()
+        mock_security_hub.archive_previous_findings.assert_called_once()
+
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_no_integrations(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+    ):
+        """Test SecurityHub upload when no integrations are found."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock no integrations found
+        mock_integration_model.objects.filter.return_value = []
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is False
+
+    @patch("tasks.jobs.integrations.batched")
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_no_findings(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+        mock_batched,
+    ):
+        """Test SecurityHub upload when no findings are found."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock integration
+        integration = MagicMock()
+        integration.id = "integration-1"
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        # Mock provider
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock no findings
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            []
+        )
+        mock_batched.return_value = []
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is True  # No findings is considered success
+
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_connection_failure(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+    ):
+        """Test SecurityHub upload when connection fails."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock integration
+        integration = MagicMock()
+        integration.id = "integration-1"
+        integration.connected = True
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        # Mock provider
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock findings exist
+        mock_findings = [MagicMock()]
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            mock_findings
+        )
+
+        # Mock failed connection
+        mock_connection = MagicMock()
+        mock_connection.error = "Connection failed"
+        mock_get_security_hub.return_value = (False, mock_connection)
+
+        with patch("tasks.jobs.integrations.batched") as mock_batched:
+            with patch("tasks.jobs.integrations.FindingOutput") as mock_finding_output:
+                with patch("tasks.jobs.integrations.ASFF") as mock_asff:
+                    # Mock batched and transformation
+                    mock_batched.return_value = [(mock_findings, None)]
+                    transformed_findings = [MagicMock()]
+                    mock_finding_output.transform_api_finding.return_value = (
+                        transformed_findings[0]
+                    )
+
+                    mock_asff_instance = MagicMock()
+                    mock_asff_instance.data = [{"asff": "finding1"}]
+                    mock_asff_instance._data = MagicMock()
+                    mock_asff.return_value = mock_asff_instance
+
+                    result = upload_security_hub_integration(
+                        tenant_id, provider_id, scan_id
+                    )
+
+        assert result is False
+        # Integration should be marked as disconnected
+        integration.save.assert_called_once()
+        assert integration.connected is False
+
+    @patch("tasks.jobs.integrations.ASFF")
+    @patch("tasks.jobs.integrations.FindingOutput")
+    @patch("tasks.jobs.integrations.batched")
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_skip_archive(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+        mock_batched,
+        mock_finding_output,
+        mock_asff,
+    ):
+        """Test SecurityHub upload with skip_archive_previous enabled."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock integration with skip_archive_previous enabled
+        integration = MagicMock()
+        integration.id = "integration-1"
+        integration.configuration = {
+            "send_only_fails": False,
+            "skip_archive_previous": True,
+        }
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        # Mock provider
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock findings
+        mock_findings = [MagicMock()]
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            mock_findings
+        )
+
+        # Mock batched and transformation
+        mock_batched.return_value = [(mock_findings, None)]
+        transformed_findings = [MagicMock()]
+        mock_finding_output.transform_api_finding.return_value = transformed_findings[0]
+
+        # Mock ASFF transformer
+        mock_asff_instance = MagicMock()
+        mock_asff_instance.data = [{"asff": "finding1"}]
+        mock_asff_instance._data = MagicMock()
+        mock_asff.return_value = mock_asff_instance
+
+        # Mock SecurityHub client
+        mock_security_hub = MagicMock()
+        mock_security_hub.batch_send_to_security_hub.return_value = 1
+        mock_get_security_hub.return_value = (True, mock_security_hub)
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is True
+
+        # Verify archiving was skipped
+        mock_security_hub.archive_previous_findings.assert_not_called()
+        mock_security_hub.batch_send_to_security_hub.assert_called_once()
+
+    @patch("tasks.jobs.integrations.ASFF")
+    @patch("tasks.jobs.integrations.FindingOutput")
+    @patch("tasks.jobs.integrations.batched")
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_archive_failure(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+        mock_batched,
+        mock_finding_output,
+        mock_asff,
+    ):
+        """Test SecurityHub upload when archiving fails but sending succeeds."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock integration
+        integration = MagicMock()
+        integration.id = "integration-1"
+        integration.configuration = {
+            "send_only_fails": False,
+            "skip_archive_previous": False,
+        }
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        # Mock provider
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock findings
+        mock_findings = [MagicMock()]
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            mock_findings
+        )
+
+        # Mock batched and transformation
+        mock_batched.return_value = [(mock_findings, None)]
+        transformed_findings = [MagicMock()]
+        mock_finding_output.transform_api_finding.return_value = transformed_findings[0]
+
+        # Mock ASFF transformer
+        mock_asff_instance = MagicMock()
+        mock_asff_instance.data = [{"asff": "finding1"}]
+        mock_asff_instance._data = MagicMock()
+        mock_asff.return_value = mock_asff_instance
+
+        # Mock SecurityHub client - sending succeeds, archiving fails
+        mock_security_hub = MagicMock()
+        mock_security_hub.batch_send_to_security_hub.return_value = 1
+        mock_security_hub.archive_previous_findings.side_effect = Exception(
+            "Archive failed"
+        )
+        mock_get_security_hub.return_value = (True, mock_security_hub)
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is True  # Should still succeed even if archiving fails
+
+        # Verify both methods were called
+        mock_security_hub.batch_send_to_security_hub.assert_called_once()
+        mock_security_hub.archive_previous_findings.assert_called_once()
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_general_exception(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+    ):
+        """Test SecurityHub upload handles general exceptions."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock exception during integration retrieval
+        mock_integration_model.objects.filter.side_effect = Exception("Database error")
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is False
