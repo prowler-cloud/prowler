@@ -46,6 +46,7 @@ from api.v1.serializer_utils.integrations import (
     IntegrationConfigField,
     IntegrationCredentialField,
     S3ConfigSerializer,
+    SecurityHubConfigSerializer,
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
@@ -1191,6 +1192,13 @@ class FindingDynamicFilterSerializer(serializers.Serializer):
         resource_name = "finding-dynamic-filters"
 
 
+class SecurityHubRegionsSerializer(serializers.Serializer):
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    class Meta:
+        resource_name = "securityhub-regions"
+
+
 class FindingMetadataSerializer(serializers.Serializer):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
@@ -1970,14 +1978,21 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
         if integration_type == Integration.IntegrationChoices.AMAZON_S3:
             config_serializer = S3ConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
-            # TODO: This will be required for AWS Security Hub
-            # if providers and not all(
-            #     provider.provider == Provider.ProviderChoices.AWS
-            #     for provider in providers
-            # ):
-            #     raise serializers.ValidationError(
-            #         {"providers": "All providers must be AWS for the S3 integration."}
-            #     )
+        elif integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
+            if len(providers) > 1:
+                raise serializers.ValidationError(
+                    {
+                        "providers": "Only one provider is supported for the Security Hub integration."
+                    }
+                )
+            if providers[0].provider != Provider.ProviderChoices.AWS:
+                raise serializers.ValidationError(
+                    {
+                        "providers": "The provider must be AWS type for the Security Hub integration."
+                    }
+                )
+            config_serializer = SecurityHubConfigSerializer
+            credentials_serializers = [AWSCredentialSerializer]
         else:
             raise serializers.ValidationError(
                 {

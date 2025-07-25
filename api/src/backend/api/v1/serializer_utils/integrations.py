@@ -50,6 +50,13 @@ class S3ConfigSerializer(BaseValidateSerializer):
         resource_name = "integrations"
 
 
+class SecurityHubConfigSerializer(BaseValidateSerializer):
+    send_only_fails = serializers.BooleanField(default=False)
+
+    class Meta:
+        resource_name = "integrations"
+
+
 class AWSCredentialSerializer(BaseValidateSerializer):
     role_arn = serializers.CharField(required=False)
     external_id = serializers.CharField(required=False)

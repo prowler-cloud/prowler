@@ -126,7 +126,7 @@ class SecurityHub:
         if aws_security_hub_available_regions:
             self._enabled_regions = self.verify_enabled_per_region(
                 aws_security_hub_available_regions,
-                aws_session,
+                self._session,
                 aws_account_id,
                 aws_partition,
             )

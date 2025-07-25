@@ -2,15 +2,20 @@ import os
 from glob import glob
 
 from celery.utils.log import get_task_logger
+from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
+from tasks.utils import batched
 
 from api.db_utils import rls_transaction
-from api.models import Integration
+from api.models import Finding, Integration, Provider
+from api.utils import initialize_prowler_provider
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.lib.s3.s3 import S3
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
 
 logger = get_task_logger(__name__)
@@ -157,4 +162,204 @@ def upload_s3_integration(
         return result
     except Exception as e:
         logger.error(f"S3 integrations failed for provider {provider_id}: {str(e)}")
+        return False
+
+
+def get_security_hub_client_from_integration(
+    integration: Integration, provider: Provider, findings: list
+) -> tuple[bool, SecurityHub | Connection]:
+    """
+    Create and return a SecurityHub client using AWS credentials from an integration.
+
+    Args:
+        integration (Integration): The integration to get the Security Hub client from.
+        provider (Provider): The provider object containing account info.
+        findings (list): List of findings in ASFF format to send to Security Hub.
+
+    Returns:
+        tuple[bool, SecurityHub | Connection]: A tuple containing a boolean indicating
+        if the connection was successful and the SecurityHub client or connection object.
+    """
+    # Initialize prowler provider to get aws_account_id and aws_partition
+    prowler_provider = initialize_prowler_provider(provider)
+
+    # Test connection first using the same pattern as prowler_integration_connection_test
+    connection = SecurityHub.test_connection(
+        aws_account_id=prowler_provider.identity.account,
+        aws_partition=prowler_provider.identity.partition,
+        session=prowler_provider.session.current_session,
+        raise_on_exception=False,
+    )
+
+    if connection.is_connected:
+        security_hub_regions = (
+            prowler_provider.get_available_aws_service_regions(
+                "securityhub",
+                prowler_provider.identity.partition,
+                prowler_provider.identity.audited_regions,
+            )
+            if not prowler_provider.identity.audited_regions
+            else prowler_provider.identity.audited_regions
+        )
+
+        # Create SecurityHub client with all necessary parameters
+        security_hub = SecurityHub(
+            aws_account_id=prowler_provider.identity.account,
+            aws_partition=prowler_provider.identity.partition,
+            aws_session=prowler_provider.session.current_session,
+            findings=findings,
+            send_only_fails=integration.configuration.get("send_only_fails", False),
+            aws_security_hub_available_regions=security_hub_regions,
+        )
+        return True, security_hub
+
+    return False, connection
+
+
+def upload_security_hub_integration(
+    tenant_id: str, provider_id: str, scan_id: str
+) -> bool:
+    """
+    Upload findings to AWS Security Hub using configured integrations.
+
+    This function retrieves findings from the database, transforms them to ASFF format,
+    and sends them to AWS Security Hub using the configured integration credentials.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        provider_id (str): The provider identifier.
+        scan_id (str): The scan identifier for which to send findings.
+
+    Returns:
+        bool: True if all integrations executed successfully, False otherwise.
+    """
+    logger.info(f"Processing Security Hub integrations for provider {provider_id}")
+
+    try:
+        with rls_transaction(tenant_id):
+            # Get Security Hub integrations for this provider
+            integrations = list(
+                Integration.objects.filter(
+                    integrationproviderrelationship__provider_id=provider_id,
+                    integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                )
+            )
+
+            if not integrations:
+                logger.error(
+                    f"No Security Hub integrations found for provider {provider_id}"
+                )
+                return False
+
+            # Get the provider object
+            provider = Provider.objects.get(id=provider_id)
+
+            # Initialize prowler provider for finding transformation
+            prowler_provider = initialize_prowler_provider(provider)
+
+            # Get findings from database and transform them to ASFF format
+            logger.info(f"Transforming findings for scan {scan_id}")
+            asff_findings = []
+
+            # Process findings in batches to avoid memory issues
+            qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+            for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+                # Transform findings using the same method as the report generation
+                transformed_findings = [
+                    FindingOutput.transform_api_finding(finding, prowler_provider)
+                    for finding in batch
+                ]
+
+                # Convert to ASFF format using the ASFF transformer
+                asff_transformer = ASFF(
+                    findings=transformed_findings,
+                    file_path="",  # Not needed for integration
+                    file_extension="json",
+                )
+                asff_transformer.transform(transformed_findings)
+
+                # Add the transformed ASFF data to our findings list
+                asff_findings.extend(asff_transformer.data)
+
+                # Clear the transformer data for memory efficiency
+                asff_transformer._data.clear()
+
+        if not asff_findings:
+            logger.info(f"No findings to send to Security Hub for scan {scan_id}")
+            return True
+
+        logger.info(f"Found {len(asff_findings)} findings to send to Security Hub")
+
+        # Process each Security Hub integration
+        integration_executions = 0
+        for integration in integrations:
+            try:
+                # Create Security Hub client with integration credentials
+                connected, security_hub = get_security_hub_client_from_integration(
+                    integration, provider, asff_findings
+                )
+
+                if not connected:
+                    logger.error(
+                        f"Security Hub connection failed for integration {integration.id}: {security_hub.error}"
+                    )
+                    # Mark integration as disconnected
+                    with rls_transaction(tenant_id):
+                        integration.connected = False
+                        integration.save()
+                    continue
+
+                # Send findings to Security Hub
+                logger.info(
+                    f"Sending {len(asff_findings)} findings to Security Hub via integration {integration.id}"
+                )
+                findings_sent = security_hub.batch_send_to_security_hub()
+
+                if findings_sent > 0:
+                    logger.info(
+                        f"Successfully sent {findings_sent} findings to Security Hub via integration {integration.id}"
+                    )
+                    integration_executions += 1
+                else:
+                    logger.warning(
+                        f"No findings were sent to Security Hub via integration {integration.id}"
+                    )
+
+                # Archive previous findings if configured to do so
+                if not integration.configuration.get("skip_archive_previous", False):
+                    logger.info(
+                        f"Archiving previous findings in Security Hub via integration {integration.id}"
+                    )
+                    try:
+                        findings_archived = security_hub.archive_previous_findings()
+                        logger.info(
+                            f"Successfully archived {findings_archived} previous findings in Security Hub"
+                        )
+                    except Exception as archive_error:
+                        logger.warning(
+                            f"Failed to archive previous findings: {str(archive_error)}"
+                        )
+
+            except Exception as e:
+                logger.error(
+                    f"Security Hub integration {integration.id} failed: {str(e)}"
+                )
+                continue
+
+        result = integration_executions == len(integrations)
+        if result:
+            logger.info(
+                f"All Security Hub integrations completed successfully for provider {provider_id}"
+            )
+        else:
+            logger.error(
+                f"Some Security Hub integrations failed for provider {provider_id}"
+            )
+
+        return result
+
+    except Exception as e:
+        logger.error(
+            f"Security Hub integrations failed for provider {provider_id}: {str(e)}"
+        )
         return False
