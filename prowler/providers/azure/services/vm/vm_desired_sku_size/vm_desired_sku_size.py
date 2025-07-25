@@ -42,7 +42,7 @@ class vm_desired_sku_size(Check):
                     report.status_extended = f"VM {vm.resource_name} is using desired SKU size {vm.vm_size} in subscription {subscription_name}."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"VM {vm.resource_name} is not using a desired SKU size in subscription {subscription_name}."
+                    report.status_extended = f"VM {vm.resource_name} is using {vm.vm_size} which is not a desired SKU size in subscription {subscription_name}."
 
                 findings.append(report)
 

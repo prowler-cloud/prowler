@@ -223,7 +223,7 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is not using a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using Standard_B1s which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_vm_using_non_desired_sku_size_custom_config(self):
@@ -279,7 +279,7 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is not using a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using Standard_A8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_vm_with_none_vm_size(self):
@@ -333,7 +333,7 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is not using a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using None which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_multiple_vms_different_statuses(self):
@@ -446,7 +446,7 @@ class Test_vm_desired_sku_size:
             assert fail_result.resource_id == vm_id_2
             assert (
                 fail_result.status_extended
-                == f"VM VMNotApproved is not using a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMNotApproved is using Standard_B1s which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
             # Find the second PASS result
@@ -600,7 +600,7 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is not using a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using Standard_A8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_case_sensitive_sku_size_matching(self):
@@ -656,5 +656,5 @@ class Test_vm_desired_sku_size:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is not using a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"VM VMTest is using standard_a8_v2 which is not a desired SKU size in subscription {AZURE_SUBSCRIPTION_ID}."
             )
