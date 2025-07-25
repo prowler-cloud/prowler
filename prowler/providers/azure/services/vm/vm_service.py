@@ -234,12 +234,17 @@ class VirtualMachines(AzureService):
                                 for pool in pools:
                                     if getattr(pool, "id", None):
                                         backend_pools.append(pool.id)
+                    # Get instance IDs using the private method
+                    instance_ids = self._get_vmss_instance_ids(
+                        subscription_name, scale_set.id
+                    )
                     vm_scale_sets[subscription_name][scale_set.id] = (
                         VirtualMachineScaleSet(
                             resource_id=scale_set.id,
                             resource_name=scale_set.name,
                             location=scale_set.location,
                             load_balancer_backend_pools=backend_pools,
+                            instance_ids=instance_ids,
                         )
                     )
             except Exception as error:
@@ -247,6 +252,46 @@ class VirtualMachines(AzureService):
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return vm_scale_sets
+
+    def _get_vmss_instance_ids(
+        self, subscription_name: str, scale_set_id: str
+    ) -> list[str]:
+        """
+        Given a subscription and scale set ID, return the list of VM instance IDs in the scale set.
+
+        Args:
+            subscription_name: The name of the subscription.
+            scale_set_id: The ID of the scale set.
+
+        Returns:
+            A list of VM instance IDs that compose the scale set.
+        """
+        logger.info(
+            f"VirtualMachines - Getting VM scale set instance IDs for {scale_set_id} in {subscription_name}..."
+        )
+        vm_instance_ids = []
+        client = self.clients.get(subscription_name, None)
+        try:
+            resource_id_parts = scale_set_id.split("/")
+            resource_group = ""
+            scale_set_name = ""
+            for i, part in enumerate(resource_id_parts):
+                if part.lower() == "resourcegroups" and i + 1 < len(resource_id_parts):
+                    resource_group = resource_id_parts[i + 1]
+                if part.lower() == "virtualmachinescalesets" and i + 1 < len(
+                    resource_id_parts
+                ):
+                    scale_set_name = resource_id_parts[i + 1]
+            if resource_group and scale_set_name:
+                instances = client.virtual_machine_scale_set_vms.list(
+                    resource_group, scale_set_name
+                )
+                vm_instance_ids = [instance.instance_id for instance in instances]
+        except Exception as e:
+            logger.error(
+                f"Failed to list instances for scale set {scale_set_name} in {resource_group}: {e}"
+            )
+        return vm_instance_ids
 
 
 @dataclass
@@ -320,3 +365,4 @@ class VirtualMachineScaleSet(BaseModel):
     resource_name: str
     location: str
     load_balancer_backend_pools: list[str]
+    instance_ids: list[str]
