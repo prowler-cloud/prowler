@@ -168,14 +168,19 @@ class AdminCenter(M365Service):
             domains_list = await self.client.domains.get()
             domains.update({})
             for domain in domains_list.value:
-                domains.update(
-                    {
-                        domain.id: Domain(
-                            id=domain.id,
-                            password_validity_period=domain.password_validity_period_in_days,
-                        )
-                    }
-                )
+                if domain:
+                    password_validity_period = domain.password_validity_period_in_days
+                    if password_validity_period is None:
+                        password_validity_period = 0
+
+                    domains.update(
+                        {
+                            domain.id: Domain(
+                                id=domain.id,
+                                password_validity_period=password_validity_period,
+                            )
+                        }
+                    )
 
         except Exception as error:
             logger.error(
