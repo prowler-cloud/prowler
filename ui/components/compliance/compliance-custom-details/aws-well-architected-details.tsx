@@ -1,3 +1,4 @@
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { SeverityBadge } from "@/components/ui/table";
 import { Requirement } from "@/types/compliance";
 
@@ -7,7 +8,6 @@ import {
   ComplianceDetailContainer,
   ComplianceDetailSection,
   ComplianceDetailText,
-  ComplianceLink,
 } from "./shared-components";
 
 export const AWSWellArchitectedCustomDetails = ({
@@ -75,11 +75,9 @@ export const AWSWellArchitectedCustomDetails = ({
 
       {requirement.implementation_guidance_url && (
         <ComplianceDetailSection title="Implementation Guidance">
-          <ComplianceLink
-            href={requirement.implementation_guidance_url as string}
-          >
+          <CustomLink href={requirement.implementation_guidance_url as string}>
             {requirement.implementation_guidance_url as string}
-          </ComplianceLink>
+          </CustomLink>
         </ComplianceDetailSection>
       )}
     </ComplianceDetailContainer>

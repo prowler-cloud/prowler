@@ -90,6 +90,7 @@ class TestAzureProvider:
                     "Standard_DS3_v2",
                     "Standard_D4s_v3",
                 ],
+                "defender_attack_path_minimal_risk_level": "High",
             }
 
     def test_azure_provider_not_auth_methods(self):

@@ -312,6 +312,51 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     prowler azure --az-cli-auth
     ```
 
+### Prowler App Update
+
+You have two options to upgrade your Prowler App installation:
+
+#### Option 1: Change env file with the following values
+
+Edit your `.env` file and change the version values:
+
+```env
+PROWLER_UI_VERSION="5.9.0"
+PROWLER_API_VERSION="5.9.0"
+```
+
+#### Option 2: Run the following command
+
+```bash
+docker compose pull --policy always
+```
+
+The `--policy always` flag ensures that Docker pulls the latest images even if they already exist locally.
+
+
+???+ note "What Gets Preserved During Upgrade"
+
+    Everything is preserved, nothing will be deleted after the update.
+
+#### Troubleshooting
+
+If containers don't start, check logs for errors:
+
+```bash
+# Check logs for errors
+docker compose logs
+
+# Verify image versions
+docker images | grep prowler
+```
+
+If you encounter issues, you can rollback to the previous version by changing the `.env` file back to your previous version and running:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
 ## Prowler container versions
 
 The available versions of Prowler CLI are the following:
@@ -614,11 +659,22 @@ prowler github --github-app-id app_id --github-app-key app_key
 
 #### Infrastructure as Code (IaC)
 
-Prowler's Infrastructure as Code (IaC) provider enables you to scan local infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks, allowing you to assess your code before deployment.
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks, allowing you to assess your code before deployment.
 
 ```console
 # Scan a directory for IaC files
 prowler iac --scan-path ./my-iac-directory
+
+# Scan a remote GitHub repository (public or private)
+prowler iac --scan-repository-url https://github.com/user/repo.git
+
+# Authenticate to a private repo with GitHub username and PAT
+prowler iac --scan-repository-url https://github.com/user/repo.git \
+  --github-username <username> --personal-access-token <token>
+
+# Authenticate to a private repo with OAuth App Token
+prowler iac --scan-repository-url https://github.com/user/repo.git \
+  --oauth-app-token <oauth_token>
 
 # Specify frameworks to scan (default: all)
 prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
@@ -628,8 +684,10 @@ prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/tes
 ```
 
 ???+ note
-    - The IaC provider does not require cloud authentication
-    - It is ideal for CI/CD pipelines and local development environments
+    - `--scan-path` and `--scan-repository-url` are mutually exclusive; only one can be specified at a time.
+    - For remote repository scans, authentication can be provided via CLI flags or environment variables (`GITHUB_OAUTH_APP_TOKEN`, `GITHUB_USERNAME`, `GITHUB_PERSONAL_ACCESS_TOKEN`). CLI flags take precedence.
+    - The IaC provider does not require cloud authentication for local scans.
+    - It is ideal for CI/CD pipelines and local development environments.
     - For more details on supported frameworks and rules, see the [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html)
 
 See more details about IaC scanning in the [IaC Tutorial](tutorials/iac/getting-started-iac.md) section.

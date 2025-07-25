@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from prowler.providers.azure.services.vm.vm_service import (
     Disk,
+    LinuxConfiguration,
     ManagedDiskParameters,
     OperatingSystemType,
     OSDisk,
@@ -41,6 +42,7 @@ def mock_vm_get_virtual_machines(_):
                     data_disks=[],
                 ),
                 vm_size="Standard_A8_v2",
+                linux_configuration=None,
             )
         }
     }
@@ -57,6 +59,7 @@ def mock_vm_get_virtual_machines_with_none(_):
                 extensions=[],
                 storage_profile=None,
                 vm_size=None,
+                linux_configuration=None,
             ),
             "vm_id-2": VirtualMachine(
                 resource_id="/subscriptions/resource_id2",
@@ -69,6 +72,7 @@ def mock_vm_get_virtual_machines_with_none(_):
                     data_disks=[],
                 ),
                 vm_size="Standard_B1s",
+                linux_configuration=None,
             ),
         }
     }
@@ -83,6 +87,24 @@ def mock_vm_get_disks(_):
                 resource_name="DiskTest",
                 vms_attached=["managed_by"],
                 encryption_type="EncryptionAtRestWithPlatformKey",
+            )
+        }
+    }
+
+
+def mock_vm_get_virtual_machines_with_linux(_):
+    return {
+        AZURE_SUBSCRIPTION_ID: {
+            "vm_id-linux": VirtualMachine(
+                resource_id="/subscriptions/resource_id_linux",
+                resource_name="LinuxVM",
+                location="location",
+                security_profile=None,
+                extensions=[],
+                storage_profile=None,
+                linux_configuration=LinuxConfiguration(
+                    disable_password_authentication=True
+                ),
             )
         }
     }
@@ -193,3 +215,14 @@ class Test_VirtualMachines_NoneCases:
         assert vm_2.storage_profile.os_disk is None
         assert vm_2.storage_profile.data_disks == []
         assert vm_2.resource_name == "VMWithPartialNone"
+
+
+@patch(
+    "prowler.providers.azure.services.vm.vm_service.VirtualMachines._get_virtual_machines",
+    new=mock_vm_get_virtual_machines_with_linux,
+)
+def test_virtual_machine_with_linux_configuration():
+    virtual_machines = VirtualMachines(set_mocked_azure_provider())
+    vm = virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID]["vm_id-linux"]
+    assert vm.linux_configuration is not None
+    assert vm.linux_configuration.disable_password_authentication is True

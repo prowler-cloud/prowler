@@ -326,6 +326,7 @@ config_azure = {
         "Standard_DS3_v2",
         "Standard_D4s_v3",
     ],
+    "defender_attack_path_minimal_risk_level": "High",
 }
 
 config_gcp = {"shodan_api_key": None, "max_unused_account_days": 30}

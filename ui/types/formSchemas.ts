@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { ProviderType } from "./providers";
 
@@ -33,7 +34,10 @@ export const editScanFormSchema = (currentName: string) =>
     scanName: z
       .string()
       .refine((val) => val === "" || val.length >= 3, {
-        message: "The alias must be empty or have at least 3 characters.",
+        message: "Must be empty or have at least 3 characters.",
+      })
+      .refine((val) => val === "" || val.length <= 32, {
+        message: "Must not exceed 32 characters.",
       })
       .refine((val) => val !== currentName, {
         message: "The new name must be different from the current one.",
@@ -319,4 +323,30 @@ export const samlConfigFormSchema = z.object({
     .string()
     .trim()
     .min(1, { message: "Metadata XML is required" }),
+});
+
+export const mutedFindingsConfigFormSchema = z.object({
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { message: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+        return;
+      }
+
+      const mutelistValidation = validateMutelistYaml(val);
+      if (!mutelistValidation.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid mutelist structure: ${mutelistValidation.error}`,
+        });
+      }
+    }),
+  id: z.string().optional(),
 });

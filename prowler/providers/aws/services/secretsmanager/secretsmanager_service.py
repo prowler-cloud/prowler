@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
+from botocore.client import ClientError
 from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
@@ -67,6 +68,21 @@ class SecretsManager(AWSService):
             )
             if secret_policy.get("ResourcePolicy"):
                 secret.policy = json.loads(secret_policy["ResourcePolicy"])
+        except ClientError as error:
+            if error.response["Error"]["Code"] in [
+                "ResourceNotFoundException",
+            ]:
+                logger.warning(
+                    f"{self.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} --"

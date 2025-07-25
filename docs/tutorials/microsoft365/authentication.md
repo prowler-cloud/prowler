@@ -12,7 +12,7 @@ This allows Prowler to authenticate against Microsoft 365 using the following me
 To launch the tool first you need to specify which method is used through the following flags:
 
 ```console
-# To use service principal (app) authentication and Microsoft user credentials (to use PowerShell)
+# To use service principal (app) authentication and Microsoft user credentials
 prowler m365 --env-auth
 
 # To use service principal authentication
@@ -25,4 +25,4 @@ prowler m365 --az-cli-auth
 prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 ```
 
-To use Prowler you need to set up also the permissions required to access your resources in your Microsoft 365 account, to more details refer to [Requirements](../../getting-started/requirements.md#microsoft-365)
+To use Prowler you need to set up also the permissions required to access your resources in your Microsoft 365 account, to more details refer to [Requirements](../../getting-started/requirements.md#needed-permissions-2)

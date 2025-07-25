@@ -3,7 +3,7 @@
   "CheckID": "controllermanager_rotate_kubelet_server_cert",
   "CheckTitle": "Ensure that the RotateKubeletServerCertificate argument is set to true",
   "CheckType": [],
-  "ServiceName": "controller-manager",
+  "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

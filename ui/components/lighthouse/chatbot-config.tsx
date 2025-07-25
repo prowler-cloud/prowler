@@ -69,7 +69,7 @@ export const ChatbotConfig = ({
         setConfigExists(true);
         toast({
           title: "Success",
-          description: `Lighthouse configuration ${
+          description: `Lighthouse AI configuration ${
             configExists ? "updated" : "created"
           } successfully`,
         });
@@ -80,7 +80,7 @@ export const ChatbotConfig = ({
       toast({
         title: "Error",
         description:
-          "Failed to save lighthouse configuration: " + String(error),
+          "Failed to save Lighthouse AI configuration: " + String(error),
         variant: "destructive",
       });
     } finally {
