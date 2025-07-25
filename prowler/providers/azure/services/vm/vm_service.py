@@ -293,6 +293,7 @@ class VirtualMachines(AzureService):
             )
         return vm_instance_ids
 
+
 @dataclass
 class UefiSettings:
     secure_boot_enabled: bool
