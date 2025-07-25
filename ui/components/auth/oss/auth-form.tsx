@@ -232,7 +232,6 @@ export const AuthForm = ({
               <CustomInput
                 control={form.control}
                 name="email"
-                type="email"
                 label="Email"
                 placeholder="Enter your email"
                 isInvalid={!!form.formState.errors.email}
@@ -321,7 +320,9 @@ export const AuthForm = ({
               {type === "sign-in" && form.formState.errors?.email && (
                 <div className="flex flex-row items-center text-system-error">
                   <NotificationIcon size={16} />
-                  <p className="text-small">Invalid email or password</p>
+                  <p className="text-small">
+                    {isSamlMode ? "Invalid email" : "Invalid email or password"}
+                  </p>
                 </div>
               )}
               <CustomButton
