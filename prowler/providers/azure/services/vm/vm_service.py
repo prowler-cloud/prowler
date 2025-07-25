@@ -75,6 +75,30 @@ class VirtualMachines(AzureService):
                                 )
                             )
 
+                    # Convert Azure SDK SecurityProfile to custom SecurityProfile dataclass
+                    azure_security_profile = getattr(vm, "security_profile", None)
+                    security_profile = None
+                    if azure_security_profile:
+                        uefi_settings = None
+                        azure_uefi_settings = getattr(
+                            azure_security_profile, "uefi_settings", None
+                        )
+                        if azure_uefi_settings:
+                            uefi_settings = UefiSettings(
+                                secure_boot_enabled=getattr(
+                                    azure_uefi_settings, "secure_boot_enabled", False
+                                ),
+                                v_tpm_enabled=getattr(
+                                    azure_uefi_settings, "v_tpm_enabled", False
+                                ),
+                            )
+                        security_profile = SecurityProfile(
+                            security_type=getattr(
+                                azure_security_profile, "security_type", None
+                            ),
+                            uefi_settings=uefi_settings,
+                        )
+
                     virtual_machines[subscription_name].update(
                         {
                             vm.id: VirtualMachine(
@@ -103,7 +127,7 @@ class VirtualMachines(AzureService):
                                     else None
                                 ),
                                 location=vm.location,
-                                security_profile=getattr(vm, "security_profile", None),
+                                security_profile=security_profile,
                                 extensions=extensions,
                                 vm_size=getattr(
                                     getattr(vm, "hardware_profile", None),
