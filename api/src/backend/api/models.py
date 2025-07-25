@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
@@ -10,6 +10,7 @@ from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
@@ -20,6 +21,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from psqlextra.manager import PostgresManager
@@ -154,6 +156,163 @@ class User(AbstractBaseUser):
 
     class JSONAPIMeta:
         resource_name = "users"
+
+
+class APIKeyUser:
+    """
+    A user-like object specifically for API key authentication.
+
+    This class provides a proper user identity for API key requests instead of using
+    AnonymousUser, which improves security and clarity in the authentication system.
+    """
+
+    def __init__(self, api_key_id, api_key_name, tenant_id, role=None):
+        self.api_key_id = api_key_id
+        self.api_key_name = api_key_name
+        self.tenant_id = tenant_id
+        self.role = role  # Store the role for RBAC
+        # Set a synthetic ID for consistency with User interface
+        self.id = f"api_key_{api_key_id}"
+        self.pk = self.id
+
+    @property
+    def is_authenticated(self):
+        """API key users are always considered authenticated."""
+        return True
+
+    @property
+    def is_anonymous(self):
+        """API key users are not anonymous."""
+        return False
+
+    @property
+    def is_active(self):
+        """API key users are considered active by default."""
+        return True
+
+    def __str__(self):
+        return f"APIKeyUser({self.api_key_name})"
+
+    def __repr__(self):
+        return f"APIKeyUser(api_key_id={self.api_key_id}, api_key_name={self.api_key_name}, tenant_id={self.tenant_id}, role={self.role})"
+
+
+class APIKey(RowLevelSecurityProtectedModel):
+    """
+    Model for API Keys that can be used for programmatic access to the API.
+    Keys are hashed and never stored in plaintext.
+    """
+
+    # Define both default and RLS-bypassing managers
+    objects = models.Manager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(
+        max_length=255,
+        validators=[MinLengthValidator(3)],
+        help_text="Human-readable name to identify the API key",
+    )
+    key_hash = models.CharField(
+        max_length=255, unique=True, help_text="Django password hash of the API key"
+    )
+    prefix = models.CharField(
+        max_length=10, help_text="Prefix of the API key for identification"
+    )
+    role = models.ForeignKey(
+        "Role",
+        on_delete=models.CASCADE,
+        related_name="api_keys",
+        help_text="Role that defines the permissions for this API key",
+    )
+    expires_at = models.DateTimeField(
+        null=True, blank=True, help_text="Expiration time. Null means no expiration."
+    )
+    last_used_at = models.DateTimeField(
+        null=True, blank=True, help_text="Last time this API key was used"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    revoked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Time when the key was revoked. Null means active.",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "api_keys"
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "prefix"], name="api_keys_tenant_prefix_idx"
+            ),
+        ]
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "api-keys"
+
+    def is_valid(self):
+        """Check if the API key is still valid (not expired or revoked)."""
+
+        if self.revoked_at:
+            return False
+        if self.expires_at and self.expires_at < timezone.now():
+            return False
+        return True
+
+    def revoke(self):
+        """Revoke the API key."""
+        self.revoked_at = timezone.now()
+        self.save()
+
+    @classmethod
+    def generate_key(cls):
+        """Generate a new API key with a unique prefix."""
+        # Generate a unique prefix to avoid collisions
+        # Use 8 characters for good uniqueness (62^8 = ~218 trillion combinations)
+        prefix = generate_random_token(8)
+        random_part = generate_random_token(32)
+        return f"pk_{prefix}.{random_part}"
+
+    @classmethod
+    def extract_prefix(cls, key):
+        """Extract prefix from API key for database lookup."""
+        try:
+            # Key format is: pk_XXXXXXXX.YYYYYYYY...
+            # We want just the XXXXXXXX part (without pk_)
+            parts = key.split(".")
+            if len(parts) != 2 or not parts[0].startswith("pk_"):
+                raise ValueError("Invalid API key format")
+            return parts[0][3:]  # Remove 'pk_' prefix
+        except (IndexError, AttributeError):
+            raise ValueError("Invalid API key format")
+
+    @classmethod
+    def hash_key(cls, key):
+        """Hash an API key using Django's secure password hashing."""
+
+        return make_password(key)
+
+    @classmethod
+    def verify_key(cls, key, key_hash):
+        """Verify an API key against its hash using Django's password verification."""
+        return check_password(key, key_hash)
+
+    def __str__(self):
+        """Return string representation of the API key."""
+        return f"API Key: {self.name}"
+
+    def save(self, *args, **kwargs):
+        # The prefix should already be set during creation
+        # If not set, this is an error in the creation process
+        if not self.prefix:
+            raise ValueError("API key prefix must be set before saving")
+        super().save(*args, **kwargs)
 
 
 class Membership(models.Model):

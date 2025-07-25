@@ -1,10 +1,12 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.conf import settings
+from django.utils import timezone
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from rest_framework.validators import UniqueTogetherValidator
@@ -39,6 +41,7 @@ from api.models import (
     Task,
     User,
     UserRoleRelationship,
+    APIKey,
 )
 from api.rls import Tenant
 from api.v1.serializer_utils.integrations import (
@@ -329,6 +332,158 @@ class UserUpdateSerializer(BaseWriteSerializer):
             validate_password(password, user=instance)
             instance.set_password(password)
         return super().update(instance, validated_data)
+
+
+# API Keys
+
+
+class APIKeySerializer(BaseSerializerV1):
+    """
+    Serializer for listing API Keys.
+    """
+
+    role = serializers.ResourceRelatedField(
+        read_only=True, help_text="Role associated with this API key"
+    )
+
+    class Meta:
+        model = APIKey
+        fields = [
+            "id",
+            "name",
+            "prefix",
+            "role",
+            "expires_at",
+            "last_used_at",
+            "created_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "prefix": {"read_only": True},
+            "last_used_at": {"read_only": True},
+            "created_at": {"read_only": True},
+        }
+
+
+class APIKeyCreateSerializer(BaseWriteSerializer):
+    """
+    Serializer for creating API Keys.
+    """
+
+    expires_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text="Expiration time. If not provided, the key never expires.",
+    )
+
+    role = serializers.ResourceRelatedField(
+        queryset=Role.objects.all(),
+        required=True,
+        help_text="Role that defines the permissions for this API key",
+    )
+
+    # This field will only be included in the response
+    key = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = APIKey
+        fields = ["id", "name", "expires_at", "role", "key", "prefix", "created_at"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "prefix": {"read_only": True},
+            "created_at": {"read_only": True},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter roles by tenant context
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["role"].queryset = Role.objects.filter(tenant_id=tenant_id)
+
+    def validate_expires_at(self, value):
+        if value and value <= timezone.now():
+            raise serializers.ValidationError("Expiration date must be in the future.")
+        return value
+
+    def validate_role(self, value):
+        """Validate that the role belongs to the current tenant."""
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id and value.tenant_id != tenant_id:
+            raise serializers.ValidationError("Role must belong to the current tenant.")
+        return value
+
+    def create(self, validated_data):
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        # Get tenant from context
+        tenant_id = self.context["request"].tenant_id
+        logger.debug(f"Creating API key for tenant: {tenant_id}")
+
+        # Retry logic for prefix collisions (very unlikely but possible)
+        max_retries = 5
+        for attempt in range(max_retries):
+            # Generate the actual API key
+            raw_key = APIKey.generate_key()
+            key_hash = APIKey.hash_key(raw_key)
+
+            # Extract prefix from the raw key using the model method
+            prefix = APIKey.extract_prefix(raw_key)
+
+            logger.debug(f"Attempt {attempt + 1}: Generated key with prefix: {prefix}")
+
+            try:
+                # Create the API key instance using regular objects manager with RLS context
+                api_key = APIKey.objects.create(
+                    tenant_id=tenant_id,
+                    key_hash=key_hash,
+                    prefix=prefix,
+                    **validated_data,
+                )
+
+                logger.info(f"Successfully created API key with ID: {api_key.id}")
+
+                # Store the raw key temporarily for the response
+                api_key._raw_key = raw_key
+
+                return api_key
+
+            except IntegrityError as e:
+                logger.warning(f"IntegrityError on attempt {attempt + 1}: {e}")
+                # Prefix collision occurred, try again
+                if attempt == max_retries - 1:
+                    raise serializers.ValidationError(
+                        "Unable to generate unique API key. Please try again."
+                    )
+                continue
+            except Exception as e:
+                logger.error(
+                    f"Unexpected error during API key creation: {type(e).__name__}: {e}"
+                )
+                raise
+
+        # This should never be reached due to the exception above
+        raise serializers.ValidationError(
+            "Failed to create API key after multiple attempts."
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Include the raw key only if it was just created
+        if hasattr(instance, "_raw_key"):
+            data["key"] = instance._raw_key
+        return data
+
+
+class APIKeyRevokeSerializer(serializers.Serializer):
+    """
+    Serializer for revoking an API Key.
+    """
+
+    class Meta:
+        fields = []
 
 
 class RoleResourceIdentifierSerializer(serializers.Serializer):
@@ -1460,7 +1615,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
         return value
 
     def validate_expires_at(self, value):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(dt_timezone.utc)
         if value and value < now + timedelta(hours=24):
             raise ValidationError(
                 "Expiry date must be at least 24 hours in the future."

@@ -149,3 +149,52 @@ export interface TenantDetailData {
     };
   };
 }
+
+// API Key types
+export interface APIKey {
+  id: string;
+  type: "api-keys";
+  attributes: {
+    name: string;
+    prefix: string;
+    expires_at: string | null;
+    last_used_at: string | null;
+    created_at: string;
+  };
+  relationships?: {
+    role?: {
+      data: {
+        type: "roles";
+        id: string;
+      };
+    };
+  };
+}
+
+export interface APIKeyCreateData {
+  name: string;
+  expires_at?: string | null;
+  role: string; // Role ID is required for API key creation
+}
+
+export interface APIKeyCreateResponse {
+  data: {
+    id: string;
+    type: "api-keys";
+    attributes: {
+      name: string;
+      prefix: string;
+      expires_at: string | null;
+      created_at: string;
+      key: string; // Only returned on creation
+    };
+    relationships?: {
+      role?: {
+        data: {
+          type: "roles";
+          id: string;
+        };
+      };
+    };
+  };
+}
