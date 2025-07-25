@@ -82,6 +82,8 @@ class GithubProvider(Provider):
         _audit_config (dict): The audit configuration for the provider.
         _fixer_config (dict): The fixer configuration for the provider.
         _mutelist (Mutelist): The mutelist for the provider.
+        _repositories (list): List of repository names to scan in 'owner/repo-name' format.
+        _organizations (list): List of organization or user names to scan repositories for.
         audit_metadata (Audit_Metadata): The audit metadata for the provider.
     """
 
@@ -91,6 +93,8 @@ class GithubProvider(Provider):
     _identity: GithubIdentityInfo
     _audit_config: dict
     _mutelist: Mutelist
+    _repositories: list
+    _organizations: list
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -107,6 +111,8 @@ class GithubProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = None,
+        repositories: list = None,
+        organizations: list = None,
     ):
         """
         GitHub Provider constructor
@@ -122,8 +128,14 @@ class GithubProvider(Provider):
             fixer_config (dict): Fixer configuration content.
             mutelist_path (str): Path to the mutelist file.
             mutelist_content (dict): Mutelist content.
+            repositories (list): List of repository names to scan in 'owner/repo-name' format.
+            organizations (list): List of organization or user names to scan repositories for.
         """
         logger.info("Instantiating GitHub Provider...")
+
+        # Set repositories and organizations for scoping
+        self._repositories = repositories or []
+        self._organizations = organizations or []
 
         self._session = GithubProvider.setup_session(
             personal_access_token,
@@ -213,6 +225,20 @@ class GithubProvider(Provider):
         """
         return self._mutelist
 
+    @property
+    def repositories(self) -> list:
+        """
+        repositories method returns the provider's repository list for scoping.
+        """
+        return self._repositories
+
+    @property
+    def organizations(self) -> list:
+        """
+        organizations method returns the provider's organization list for scoping.
+        """
+        return self._organizations
+
     @staticmethod
     def setup_session(
         personal_access_token: str = None,
@@ -295,7 +321,7 @@ class GithubProvider(Provider):
 
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise GithubSetUpSessionError(
                 original_exception=error,
@@ -344,7 +370,7 @@ class GithubProvider(Provider):
 
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise GithubSetUpIdentityError(
                 original_exception=error,

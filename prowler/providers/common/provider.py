@@ -242,6 +242,8 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
+                        repositories=arguments.repository,
+                        organizations=arguments.organization,
                     )
                 elif "iac" in provider_class_name.lower():
                     provider_class(
