@@ -12,6 +12,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
 )
+from botocore.exceptions import ClientError
 
 test_queue = "test-queue"
 test_key = str(uuid4())
@@ -114,3 +115,39 @@ class Test_SQS_Service:
         assert sqs.queues[0].region == AWS_REGION_EU_WEST_1
         assert sqs.queues[0].policy
         assert sqs.queues[0].kms_key_id == test_key
+
+    @mock_aws
+    def test_get_queue_attributes_nonexistent_queue(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sqs_service = SQS(aws_provider)
+
+        queue_url = f"https://sqs.{AWS_REGION_EU_WEST_1}.amazonaws.com/{AWS_ACCOUNT_NUMBER}/{test_queue}"
+        sqs_service.queues = [
+            type("Queue", (), {
+                "id": queue_url,
+                "name": test_queue,
+                "arn": test_queue_arn,
+                "region": AWS_REGION_EU_WEST_1
+            })()
+        ]
+
+        def mock_get_queue_attributes(**kwargs):
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "AWS.SimpleQueueService.NonExistentQueue",
+                        "Message": "The specified queue does not exist."
+                    }
+                },
+                "GetQueueAttributes"
+            )
+
+        with patch.object(
+            sqs_service.regional_clients[AWS_REGION_EU_WEST_1],
+            "get_queue_attributes",
+            side_effect=mock_get_queue_attributes,
+        ):
+            sqs_service._get_queue_attributes()
+
+        assert sqs_service.queues == []
+
