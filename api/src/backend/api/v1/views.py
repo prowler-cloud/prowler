@@ -129,6 +129,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     get_findings_metadata_no_aggregations,
+    initialize_prowler_provider,
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
@@ -183,6 +184,7 @@ from api.v1.serializers import (
     ScanSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
+    SecurityHubRegionsSerializer,
     TaskSerializer,
     TenantSerializer,
     TokenRefreshSerializer,
@@ -194,6 +196,7 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -3992,3 +3995,81 @@ class ProcessorViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProcessorUpdateSerializer
         return super().get_serializer_class()
+
+
+@extend_schema(
+    tags=["Integration"],
+    summary="Get SecurityHub regions for provider",
+    description="Retrieve the active SecurityHub regions for a specific provider",
+)
+class SecurityHubRegionsView(BaseRLSViewSet):
+    """
+    API endpoint to get SecurityHub regions for a specific provider.
+
+    TODO: We need to save this and probably create a new task when a provider is added and connection tested
+    Actually this endpoint takes around 26 to respond, this is because the way we have to get the enabled regions
+
+    So we can create a new task that runs for every aws provider added and launch it before a success test_connection
+
+    PENDING
+    """
+
+    serializer_class = SecurityHubRegionsSerializer
+
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    def get_queryset(self):
+        queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
+        return queryset
+
+    def active_security_hub_regions(self, request, provider_id):
+        """
+        Get active SecurityHub regions for a given provider.
+        """
+        try:
+            provider = get_object_or_404(
+                Provider, id=provider_id, tenant_id=self.request.tenant_id
+            )
+
+            if provider.provider != Provider.ProviderChoices.AWS:
+                return Response(
+                    {
+                        "detail": "The provider must be AWS type for the Security Hub integration."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            prowler_provider = initialize_prowler_provider(provider)
+
+            security_hub_regions = (
+                prowler_provider.get_available_aws_service_regions(
+                    "securityhub",
+                    prowler_provider.identity.partition,
+                    prowler_provider.identity.audited_regions,
+                )
+                if not prowler_provider.identity.audited_regions
+                else prowler_provider.identity.audited_regions
+            )
+
+            security_hub = SecurityHub(
+                aws_account_id=prowler_provider.identity.account,
+                aws_partition=prowler_provider.identity.partition,
+                aws_session=prowler_provider.session.current_session,
+                findings=[],
+                send_only_fails=False,
+                aws_security_hub_available_regions=security_hub_regions,
+            )
+
+            result = {"regions": list(security_hub._enabled_regions.keys())}
+
+            serializer = self.get_serializer(data=result)
+            serializer.is_valid(raise_exception=True)
+
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to get SecurityHub regions: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
