@@ -11,9 +11,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Changed
 - Handle some AWS errors as warnings instead of errors [(#8347)](https://github.com/prowler-cloud/prowler/pull/8347)
+- Updated policy mapping in ISMS-P compliance file for improved alignment [(#8367)](https://github.com/prowler-cloud/prowler/pull/8367)
 
 ### Fixed
 - False positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
+- Fixed typographical errors in compliance-related files [(#8367)](https://github.com/prowler-cloud/prowler/pull/8367)
 
 ---
 
