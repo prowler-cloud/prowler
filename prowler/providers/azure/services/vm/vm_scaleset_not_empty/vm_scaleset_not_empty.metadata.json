@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_scaleset_not_empty",
+  "CheckTitle": "Check for Empty Virtual Machine Scale Sets",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "scaleset",
+  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}",
+  "Severity": "low",
+  "ResourceType": "Microsoft.Compute/virtualMachineScaleSets",
+  "Description": "Identify and remove empty virtual machine scale sets from your Azure cloud account.",
+  "Risk": "Empty virtual machine scale sets may incur unnecessary costs and complicate cloud resource management, impacting cost optimization and compliance.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "az vmss delete --name <scale-set-name> --resource-group <resource-group>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/empty-vm-scale-sets.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove empty Azure virtual machine scale sets to optimize costs and simplify management.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/empty-vm-scale-sets.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

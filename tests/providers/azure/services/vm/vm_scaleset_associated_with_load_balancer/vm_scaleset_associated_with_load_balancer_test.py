@@ -59,6 +59,7 @@ class Test_vm_scaleset_associated_with_load_balancer:
                     resource_name="compliant-vmss",
                     location="eastus",
                     load_balancer_backend_pools=[backend_pool_id],
+                    instance_ids=[],
                 )
             }
         }
@@ -98,6 +99,7 @@ class Test_vm_scaleset_associated_with_load_balancer:
                     resource_name="noncompliant-vmss",
                     location="westeurope",
                     load_balancer_backend_pools=[],
+                    instance_ids=[],
                 )
             }
         }
@@ -139,12 +141,14 @@ class Test_vm_scaleset_associated_with_load_balancer:
                     resource_name="compliant-vmss",
                     location="eastus",
                     load_balancer_backend_pools=[backend_pool_id],
+                    instance_ids=[],
                 ),
                 noncompliant_id: VirtualMachineScaleSet(
                     resource_id=noncompliant_id,
                     resource_name="noncompliant-vmss",
                     location="westeurope",
                     load_balancer_backend_pools=[],
+                    instance_ids=[],
                 ),
             }
         }
@@ -191,6 +195,7 @@ class Test_vm_scaleset_associated_with_load_balancer:
                     resource_name="",
                     location="",
                     load_balancer_backend_pools=[],
+                    instance_ids=[],
                 )
             }
         }
