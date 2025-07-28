@@ -6,6 +6,7 @@ from prowler.providers.aws.aws_provider import (
     get_aws_region_for_sts,
     parse_iam_credentials_arn,
 )
+from prowler.providers.aws.config import ROLE_SESSION_NAME
 from prowler.providers.aws.models import (
     AWSAssumeRoleConfiguration,
     AWSAssumeRoleInfo,
@@ -31,9 +32,9 @@ class AwsSetUpSession:
     def __init__(
         self,
         role_arn: str = None,
-        session_duration: int = None,
+        session_duration: int = 3600,
         external_id: str = None,
-        role_session_name: str = None,
+        role_session_name: str = ROLE_SESSION_NAME,
         mfa: bool = None,
         profile: str = None,
         aws_access_key_id: str = None,
