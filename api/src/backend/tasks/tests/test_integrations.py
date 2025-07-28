@@ -208,6 +208,105 @@ class TestS3IntegrationUploads:
             "S3 connection failed for integration i-1: failed"
         )
 
+    def test_s3_integration_validates_and_normalizes_output_directory(self):
+        """Test that S3 integration validation normalizes output_directory paths."""
+        from api.models import Integration
+        from api.v1.serializers import BaseWriteIntegrationSerializer
+
+        integration_type = Integration.IntegrationChoices.AMAZON_S3
+        providers = []
+        configuration = {
+            "bucket_name": "test-bucket",
+            "output_directory": "///////test",  # This should be normalized
+        }
+        credentials = {
+            "aws_access_key_id": "AKIATEST",
+            "aws_secret_access_key": "secret123",
+        }
+
+        # Should not raise an exception and should normalize the path
+        BaseWriteIntegrationSerializer.validate_integration_data(
+            integration_type, providers, configuration, credentials
+        )
+
+        # Verify that the path was normalized
+        assert configuration["output_directory"] == "test"
+
+    def test_s3_integration_rejects_invalid_output_directory_characters(self):
+        """Test that S3 integration validation rejects invalid characters."""
+        from rest_framework.exceptions import ValidationError
+
+        from api.models import Integration
+        from api.v1.serializers import BaseWriteIntegrationSerializer
+
+        integration_type = Integration.IntegrationChoices.AMAZON_S3
+        providers = []
+        configuration = {
+            "bucket_name": "test-bucket",
+            "output_directory": "test<invalid",  # Contains invalid character
+        }
+        credentials = {
+            "aws_access_key_id": "AKIATEST",
+            "aws_secret_access_key": "secret123",
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            BaseWriteIntegrationSerializer.validate_integration_data(
+                integration_type, providers, configuration, credentials
+            )
+
+        # Should contain validation error about invalid characters
+        assert "Output directory contains invalid characters" in str(exc_info.value)
+
+    def test_s3_integration_rejects_empty_output_directory(self):
+        """Test that S3 integration validation rejects empty directories."""
+        from rest_framework.exceptions import ValidationError
+
+        from api.models import Integration
+        from api.v1.serializers import BaseWriteIntegrationSerializer
+
+        integration_type = Integration.IntegrationChoices.AMAZON_S3
+        providers = []
+        configuration = {
+            "bucket_name": "test-bucket",
+            "output_directory": "/////",  # This becomes empty after normalization
+        }
+        credentials = {
+            "aws_access_key_id": "AKIATEST",
+            "aws_secret_access_key": "secret123",
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            BaseWriteIntegrationSerializer.validate_integration_data(
+                integration_type, providers, configuration, credentials
+            )
+
+        # Should contain validation error about empty directory
+        assert "Output directory cannot be empty" in str(exc_info.value)
+
+    def test_s3_integration_normalizes_complex_paths(self):
+        """Test that S3 integration validation handles complex path normalization."""
+        from api.models import Integration
+        from api.v1.serializers import BaseWriteIntegrationSerializer
+
+        integration_type = Integration.IntegrationChoices.AMAZON_S3
+        providers = []
+        configuration = {
+            "bucket_name": "test-bucket",
+            "output_directory": "//test//folder///subfolder//",
+        }
+        credentials = {
+            "aws_access_key_id": "AKIATEST",
+            "aws_secret_access_key": "secret123",
+        }
+
+        BaseWriteIntegrationSerializer.validate_integration_data(
+            integration_type, providers, configuration, credentials
+        )
+
+        # Verify complex path normalization
+        assert configuration["output_directory"] == "test/folder/subfolder"
+
 
 @pytest.mark.django_db
 class TestProwlerIntegrationConnectionTest:

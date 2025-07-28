@@ -1985,7 +1985,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 }
             )
 
-        config_serializer(data=configuration).is_valid(raise_exception=True)
+        serializer_instance = config_serializer(data=configuration)
+        serializer_instance.is_valid(raise_exception=True)
+
+        # Apply the validated (and potentially transformed) data back to configuration
+        configuration.update(serializer_instance.validated_data)
 
         for cred_serializer in credentials_serializers:
             try:
