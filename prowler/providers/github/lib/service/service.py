@@ -66,8 +66,8 @@ class GithubService:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_organization_or_user(self, client, name: str):
-        """Try to get entity as organization, fallback to user if needed"""
+    def _get_repositories_from_owner(self, client, name: str):
+        """Get repositories from organization or user entity"""
         try:
             org = client.get_organization(name)
             return org.get_repos(), "organization"

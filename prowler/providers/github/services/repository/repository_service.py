@@ -99,8 +99,8 @@ class Repository(GithubService):
                         )
                         for org_name in self.provider.organizations:
                             try:
-                                repos_list, entity_type = (
-                                    self._get_organization_or_user(client, org_name)
+                                repos_list, _ = self._get_repositories_from_owner(
+                                    client, org_name
                                 )
                                 for repo in repos_list:
                                     self._process_repository(repo, repos)
