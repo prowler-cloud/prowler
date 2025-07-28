@@ -4,6 +4,7 @@ from config.env import env
 IGNORED_EXCEPTIONS = [
     # Provider is not connected due to credentials errors
     "is not connected",
+    "ProviderConnectionError",
     # Authentication Errors from AWS
     "InvalidToken",
     "AccessDeniedException",
@@ -16,7 +17,7 @@ IGNORED_EXCEPTIONS = [
     "InternalServerErrorException",
     "AccessDenied",
     "No Shodan API Key",  # Shodan Check
-    "RequestLimitExceeded",  # For now we don't want to log the RequestLimitExceeded errors
+    "RequestLimitExceeded",  # For now, we don't want to log the RequestLimitExceeded errors
     "ThrottlingException",
     "Rate exceeded",
     "SubscriptionRequiredException",
@@ -42,7 +43,9 @@ IGNORED_EXCEPTIONS = [
     "AWSAccessKeyIDInvalidError",
     "AWSSessionTokenExpiredError",
     "EndpointConnectionError",  # AWS Service is not available in a region
-    "Pool is closed",  # The following comes from urllib3: eu-west-1 -- HTTPClientError[126]: An HTTP Client raised an unhandled exception: AWSHTTPSConnectionPool(host='hostname.s3.eu-west-1.amazonaws.com', port=443): Pool is closed.
+    # The following comes from urllib3: eu-west-1 -- HTTPClientError[126]: An HTTP Client raised an
+    # unhandled exception: AWSHTTPSConnectionPool(host='hostname.s3.eu-west-1.amazonaws.com', port=443): Pool is closed.
+    "Pool is closed",
     # Authentication Errors from GCP
     "ClientAuthenticationError",
     "AuthorizationFailed",
@@ -71,7 +74,7 @@ IGNORED_EXCEPTIONS = [
 
 def before_send(event, hint):
     """
-    before_send handles the Sentry events in order to sent them or not
+    before_send handles the Sentry events in order to send them or not
     """
     # Ignore logs with the ignored_exceptions
     # https://docs.python.org/3/library/logging.html#logrecord-objects
@@ -79,9 +82,16 @@ def before_send(event, hint):
         log_msg = hint["log_record"].msg
         log_lvl = hint["log_record"].levelno
 
-        # Handle Error events and discard the rest
-        if log_lvl == 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
-            return
+        # Handle Error and Critical events and discard the rest
+        if log_lvl <= 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
+            return None  # Explicitly return None to drop the event
+
+    # Ignore exceptions with the ignored_exceptions
+    if "exc_info" in hint and hint["exc_info"]:
+        exc_value = str(hint["exc_info"][1])
+        if any(ignored in exc_value for ignored in IGNORED_EXCEPTIONS):
+            return None  # Explicitly return None to drop the event
+
     return event
 
 

@@ -73,9 +73,11 @@ export interface FindingsByStatusData {
     attributes: {
       fail: number;
       pass: number;
+      muted: number;
       total: number;
       fail_new: number;
       pass_new: number;
+      muted_new: number;
       [key: string]: number;
     };
   };
@@ -211,16 +213,16 @@ export type M365Credentials = {
   [ProviderCredentialFields.CLIENT_ID]: string;
   [ProviderCredentialFields.CLIENT_SECRET]: string;
   [ProviderCredentialFields.TENANT_ID]: string;
-  [ProviderCredentialFields.USER]: string;
-  [ProviderCredentialFields.PASSWORD]: string;
-  providerId: string;
+  [ProviderCredentialFields.USER]?: string;
+  [ProviderCredentialFields.PASSWORD]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type GCPDefaultCredentials = {
   client_id: string;
   client_secret: string;
   refresh_token: string;
-  providerId: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type GCPServiceAccountKey = {
@@ -450,6 +452,7 @@ export interface FindingProps {
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
     muted: boolean;
+    muted_reason?: string;
     check_metadata: {
       risk: string;
       notes: string;

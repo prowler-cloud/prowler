@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { ProviderType } from "./providers";
 
@@ -33,7 +34,10 @@ export const editScanFormSchema = (currentName: string) =>
     scanName: z
       .string()
       .refine((val) => val === "" || val.length >= 3, {
-        message: "The alias must be empty or have at least 3 characters.",
+        message: "Must be empty or have at least 3 characters.",
+      })
+      .refine((val) => val === "" || val.length <= 32, {
+        message: "Must not exceed 32 characters.",
       })
       .refine((val) => val !== currentName, {
         message: "The new name must be different from the current one.",
@@ -88,7 +92,6 @@ export const addProviderFormSchema = z
         providerType: z.literal("m365"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
-        awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("gcp"),
@@ -106,32 +109,21 @@ export const addProviderFormSchema = z
   );
 
 export const addCredentialsFormSchema = (providerType: string) =>
-  z.object({
-    [ProviderCredentialFields.PROVIDER_ID]: z.string(),
-    [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
-    ...(providerType === "aws"
-      ? {
-          [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z
-            .string()
-            .nonempty("AWS Access Key ID is required"),
-          [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
-            .string()
-            .nonempty("AWS Secret Access Key is required"),
-          [ProviderCredentialFields.AWS_SESSION_TOKEN]: z.string().optional(),
-        }
-      : providerType === "azure"
+  z
+    .object({
+      [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+      [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+      ...(providerType === "aws"
         ? {
-            [ProviderCredentialFields.CLIENT_ID]: z
+            [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z
               .string()
-              .nonempty("Client ID is required"),
-            [ProviderCredentialFields.CLIENT_SECRET]: z
+              .nonempty("AWS Access Key ID is required"),
+            [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
               .string()
-              .nonempty("Client Secret is required"),
-            [ProviderCredentialFields.TENANT_ID]: z
-              .string()
-              .nonempty("Tenant ID is required"),
+              .nonempty("AWS Secret Access Key is required"),
+            [ProviderCredentialFields.AWS_SESSION_TOKEN]: z.string().optional(),
           }
-        : providerType === "gcp"
+        : providerType === "azure"
           ? {
               [ProviderCredentialFields.CLIENT_ID]: z
                 .string()
@@ -139,36 +131,66 @@ export const addCredentialsFormSchema = (providerType: string) =>
               [ProviderCredentialFields.CLIENT_SECRET]: z
                 .string()
                 .nonempty("Client Secret is required"),
-              [ProviderCredentialFields.REFRESH_TOKEN]: z
+              [ProviderCredentialFields.TENANT_ID]: z
                 .string()
-                .nonempty("Refresh Token is required"),
+                .nonempty("Tenant ID is required"),
             }
-          : providerType === "kubernetes"
+          : providerType === "gcp"
             ? {
-                [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
+                [ProviderCredentialFields.CLIENT_ID]: z
                   .string()
-                  .nonempty("Kubeconfig Content is required"),
+                  .nonempty("Client ID is required"),
+                [ProviderCredentialFields.CLIENT_SECRET]: z
+                  .string()
+                  .nonempty("Client Secret is required"),
+                [ProviderCredentialFields.REFRESH_TOKEN]: z
+                  .string()
+                  .nonempty("Refresh Token is required"),
               }
-            : providerType === "m365"
+            : providerType === "kubernetes"
               ? {
-                  [ProviderCredentialFields.CLIENT_ID]: z
+                  [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .nonempty("Client ID is required"),
-                  [ProviderCredentialFields.CLIENT_SECRET]: z
-                    .string()
-                    .nonempty("Client Secret is required"),
-                  [ProviderCredentialFields.TENANT_ID]: z
-                    .string()
-                    .nonempty("Tenant ID is required"),
-                  [ProviderCredentialFields.USER]: z
-                    .string()
-                    .nonempty("User is required"),
-                  [ProviderCredentialFields.PASSWORD]: z
-                    .string()
-                    .nonempty("Password is required"),
+                    .nonempty("Kubeconfig Content is required"),
                 }
-              : {}),
-  });
+              : providerType === "m365"
+                ? {
+                    [ProviderCredentialFields.CLIENT_ID]: z
+                      .string()
+                      .nonempty("Client ID is required"),
+                    [ProviderCredentialFields.CLIENT_SECRET]: z
+                      .string()
+                      .nonempty("Client Secret is required"),
+                    [ProviderCredentialFields.TENANT_ID]: z
+                      .string()
+                      .nonempty("Tenant ID is required"),
+                    [ProviderCredentialFields.USER]: z.string().optional(),
+                    [ProviderCredentialFields.PASSWORD]: z.string().optional(),
+                  }
+                : {}),
+    })
+    .superRefine((data: Record<string, any>, ctx) => {
+      if (providerType === "m365") {
+        const hasUser = !!data[ProviderCredentialFields.USER];
+        const hasPassword = !!data[ProviderCredentialFields.PASSWORD];
+
+        if (hasUser && !hasPassword) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "If you provide a user, you must also provide a password",
+            path: [ProviderCredentialFields.PASSWORD],
+          });
+        }
+
+        if (hasPassword && !hasUser) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "If you provide a password, you must also provide a user",
+            path: [ProviderCredentialFields.USER],
+          });
+        }
+      }
+    });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
   providerType === "aws"
@@ -291,3 +313,40 @@ export const editUserFormSchema = () =>
     userId: z.string(),
     role: z.string().optional(),
   });
+
+export const samlConfigFormSchema = z.object({
+  email_domain: z
+    .string()
+    .trim()
+    .min(1, { message: "Email domain is required" }),
+  metadata_xml: z
+    .string()
+    .trim()
+    .min(1, { message: "Metadata XML is required" }),
+});
+
+export const mutedFindingsConfigFormSchema = z.object({
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { message: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+        return;
+      }
+
+      const mutelistValidation = validateMutelistYaml(val);
+      if (!mutelistValidation.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid mutelist structure: ${mutelistValidation.error}`,
+        });
+      }
+    }),
+  id: z.string().optional(),
+});

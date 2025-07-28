@@ -6,12 +6,11 @@ export const dynamic = "force-dynamic";
 
 export default async function ChatbotConfigPage() {
   const response = await getLighthouseConfig();
-
-  const initialValues = response?.data?.attributes
+  const initialValues = response?.attributes
     ? {
-        model: response.data.attributes.model,
-        apiKey: response.data.attributes.api_key || "",
-        businessContext: response.data.attributes.business_context || "",
+        model: response.attributes.model,
+        apiKey: response.attributes.api_key || "",
+        businessContext: response.attributes.business_context || "",
       }
     : {
         model: "gpt-4o",
@@ -22,7 +21,7 @@ export default async function ChatbotConfigPage() {
   const configExists = !!response;
 
   return (
-    <ContentLayout title="Configure Lighthouse" icon="lucide:settings">
+    <ContentLayout title="Configure Lighthouse AI" icon="lucide:settings">
       <ChatbotConfig
         initialValues={initialValues}
         configExists={configExists}

@@ -1,6 +1,7 @@
 from unittest.mock import ANY, Mock, patch
 
 import pytest
+from conftest import TODAY
 from django.urls import reverse
 from rest_framework import status
 
@@ -60,7 +61,7 @@ class TestUserViewSet:
     def test_create_user_with_all_permissions(self, authenticated_client_rbac):
         valid_user_payload = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": "new_user@test.com",
         }
         response = authenticated_client_rbac.post(
@@ -74,7 +75,7 @@ class TestUserViewSet:
     ):
         valid_user_payload = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": "new_user@test.com",
         }
         response = authenticated_client_no_permissions_rbac.post(
@@ -321,7 +322,7 @@ class TestProviderViewSet:
 @pytest.mark.django_db
 class TestLimitedVisibility:
     TEST_EMAIL = "rbac@rbac.com"
-    TEST_PASSWORD = "thisisapassword123"
+    TEST_PASSWORD = "Thisisapassword123@"
 
     @pytest.fixture
     def limited_admin_user(
@@ -409,3 +410,87 @@ class TestLimitedVisibility:
         assert (
             response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
         )
+
+    def test_overviews_providers(
+        self,
+        authenticated_client_rbac_limited,
+        scan_summaries_fixture,
+        providers_fixture,
+    ):
+        # By default, the associated provider is the one which has the overview data
+        response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > 0
+
+        # Changing the provider visibility, no data should be returned
+        # Only the associated provider to that group is changed
+        new_provider = providers_fixture[1]
+        ProviderGroupMembership.objects.all().update(provider=new_provider)
+
+        response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    @pytest.mark.parametrize(
+        "endpoint_name",
+        [
+            "findings",
+            "findings_severity",
+        ],
+    )
+    def test_overviews_findings(
+        self,
+        endpoint_name,
+        authenticated_client_rbac_limited,
+        scan_summaries_fixture,
+        providers_fixture,
+    ):
+        # By default, the associated provider is the one which has the overview data
+        response = authenticated_client_rbac_limited.get(
+            reverse(f"overview-{endpoint_name}")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        values = response.json()["data"]["attributes"].values()
+        assert any(value > 0 for value in values)
+
+        # Changing the provider visibility, no data should be returned
+        # Only the associated provider to that group is changed
+        new_provider = providers_fixture[1]
+        ProviderGroupMembership.objects.all().update(provider=new_provider)
+
+        response = authenticated_client_rbac_limited.get(
+            reverse(f"overview-{endpoint_name}")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]["attributes"].values()
+        assert all(value == 0 for value in data)
+
+    def test_overviews_services(
+        self,
+        authenticated_client_rbac_limited,
+        scan_summaries_fixture,
+        providers_fixture,
+    ):
+        # By default, the associated provider is the one which has the overview data
+        response = authenticated_client_rbac_limited.get(
+            reverse("overview-services"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > 0
+
+        # Changing the provider visibility, no data should be returned
+        # Only the associated provider to that group is changed
+        new_provider = providers_fixture[1]
+        ProviderGroupMembership.objects.all().update(provider=new_provider)
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("overview-services"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0

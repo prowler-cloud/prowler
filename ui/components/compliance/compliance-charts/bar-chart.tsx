@@ -44,7 +44,7 @@ interface FailedSectionsListProps {
 
 const title = (
   <h3 className="mb-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-    Failed Sections (Top 5)
+    Top Failed Sections
   </h3>
 );
 
@@ -54,13 +54,13 @@ export const BarChart = ({ sections }: FailedSectionsListProps) => {
   const getTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case "requisito":
-        return "#ff5356";
+        return "#FB718F";
       case "recomendacion":
         return "#FDC53A"; // Increased contrast from #FDDD8A
       case "refuerzo":
         return "#7FB5FF"; // Increased contrast from #B5D7FF
       default:
-        return "#ff5356";
+        return "#FB718F";
     }
   };
 

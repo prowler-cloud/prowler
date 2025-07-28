@@ -8,7 +8,7 @@ mock_metadata = CheckMetadata(
     CheckID="accessanalyzer_enabled",
     CheckTitle="Check 1",
     CheckType=["type1"],
-    ServiceName="service1",
+    ServiceName="accessanalyzer",
     SubServiceName="subservice1",
     ResourceIdTemplate="template1",
     Severity="high",
@@ -211,7 +211,7 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(
-            bulk_checks_metadata=bulk_metadata, service="service1"
+            bulk_checks_metadata=bulk_metadata, service="accessanalyzer"
         )
 
         # Assertions
@@ -304,13 +304,14 @@ class TestCheckMetada:
         # Assertions
         assert result == {"accessanalyzer_enabled"}
 
-    def test_list_by_compliance_empty(self):
+    @mock.patch("prowler.lib.check.models.CheckMetadata.get_bulk")
+    def test_list_by_compliance_empty(self, mock_get_bulk):
+        mock_get_bulk.return_value = {}
         bulk_compliance_frameworks = custom_compliance_metadata
         result = CheckMetadata.list(
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_azure",
         )
-
         # Assertions
         assert result == set()
 

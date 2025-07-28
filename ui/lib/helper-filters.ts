@@ -48,6 +48,32 @@ export const extractSortAndKey = (searchParams: Record<string, unknown>) => {
   return { searchParamsKey, rawSort, encodedSort };
 };
 
+/**
+ * Replaces a specific field name inside a filter-style key of an object.
+ * @param obj - The input object with filter-style keys (e.g., { 'filter[inserted_at]': '2025-05-21' }).
+ * @param oldField - The field name to be replaced (e.g., 'inserted_at').
+ * @param newField - The field name to replace with (e.g., 'updated_at').
+ * @returns A new object with the updated filter key if a match is found.
+ */
+export function replaceFieldKey(
+  obj: Record<string, string>,
+  oldField: string,
+  newField: string,
+): Record<string, string> {
+  const fieldObj: Record<string, string> = {};
+
+  for (const key in obj) {
+    const match = key.match(/^filter\[(.+)\]$/);
+    if (match && match[1] === oldField) {
+      const newKey = `filter[${newField}]`;
+      fieldObj[newKey] = obj[key];
+    } else {
+      fieldObj[key] = obj[key];
+    }
+  }
+
+  return fieldObj;
+}
 export const isScanEntity = (entity: ScanEntity) => {
   return entity && entity.providerInfo && entity.attributes;
 };
@@ -83,6 +109,7 @@ export const createScanDetailsMapping = (
 
     return {
       [scan.id]: {
+        id: scan.id,
         providerInfo: {
           provider: providerInfo?.provider || "aws",
           alias: providerInfo?.alias,

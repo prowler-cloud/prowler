@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
@@ -13,38 +13,28 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 def is_service_role(role):
     try:
-        if "Statement" in role["AssumeRolePolicyDocument"]:
-            if isinstance(role["AssumeRolePolicyDocument"]["Statement"], list):
-                for statement in role["AssumeRolePolicyDocument"]["Statement"]:
-                    if (
-                        statement["Effect"] == "Allow"
-                        and (
-                            "sts:AssumeRole" in statement["Action"]
-                            or "sts:*" in statement["Action"]
-                            or "*" in statement["Action"]
-                        )
-                        # This is what defines a service role
-                        and "Service" in statement["Principal"]
-                    ):
-                        return True
-            else:
-                statement = role["AssumeRolePolicyDocument"]["Statement"]
-                if (
-                    statement["Effect"] == "Allow"
-                    and (
-                        "sts:AssumeRole" in statement["Action"]
-                        or "sts:*" in statement["Action"]
-                        or "*" in statement["Action"]
-                    )
-                    # This is what defines a service role
-                    and "Service" in statement["Principal"]
-                ):
-                    return True
+        statements = role.get("AssumeRolePolicyDocument", {}).get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+
+        for statement in statements:
+            if statement.get("Effect") != "Allow" or not any(
+                action in statement.get("Action", [])
+                for action in ("sts:AssumeRole", "sts:*", "*")
+            ):
+                return False
+
+            principal = statement.get("Principal", {})
+            if set(principal.keys()) != {"Service"}:
+                return False
+
+        return True
+
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-    return False
+        return False
 
 
 class IAM(AWSService):
@@ -87,13 +77,15 @@ class IAM(AWSService):
             cloudshell_admin_policy_arn
         )
         # List both Customer (attached and unattached) and AWS Managed (only attached) policies
-        self.policies = []
-        self.policies.extend(self._list_policies("AWS"))
-        self.policies.extend(self._list_policies("Local"))
+        self.policies = {}
+        self.policies.update(self._list_policies("AWS"))
+        self.policies.update(self._list_policies("Local"))
         self._list_policies_version(self.policies)
         self._list_inline_user_policies()
         self._list_inline_group_policies()
         self._list_inline_role_policies()
+        self.service_specific_credentials = []
+        self._list_service_specific_credentials()
         self.saml_providers = self._list_saml_providers()
         self.server_certificates = self._list_server_certificates()
         self.access_keys_metadata = {}
@@ -109,7 +101,7 @@ class IAM(AWSService):
         self.__threading_call__(self._list_tags, self.roles)
         self.__threading_call__(
             self._list_tags,
-            [policy for policy in self.policies if policy.type == "Custom"],
+            [policy for policy in self.policies.values() if policy.type == "Custom"],
         )
         self.__threading_call__(self._list_tags, self.server_certificates)
         if self.saml_providers is not None:
@@ -524,16 +516,15 @@ class IAM(AWSService):
                                 UserName=user.name, PolicyName=policy
                             )
                             inline_user_policy_doc = inline_policy["PolicyDocument"]
-                            self.policies.append(
-                                Policy(
-                                    name=policy,
-                                    arn=user.arn,
-                                    entity=user.name,
-                                    type="Inline",
-                                    attached=True,
-                                    version_id="v1",
-                                    document=inline_user_policy_doc,
-                                )
+                            inline_user_policy_arn = f"{user.arn}:policy/{policy}"
+                            self.policies[inline_user_policy_arn] = Policy(
+                                name=policy,
+                                arn=user.arn,
+                                entity=user.name,
+                                type="Inline",
+                                attached=True,
+                                version_id="v1",
+                                document=inline_user_policy_doc,
                             )
                         except ClientError as error:
                             if error.response["Error"]["Code"] == "NoSuchEntity":
@@ -582,16 +573,15 @@ class IAM(AWSService):
                                 GroupName=group.name, PolicyName=policy
                             )
                             inline_group_policy_doc = inline_policy["PolicyDocument"]
-                            self.policies.append(
-                                Policy(
-                                    name=policy,
-                                    arn=group.arn,
-                                    entity=group.name,
-                                    type="Inline",
-                                    attached=True,
-                                    version_id="v1",
-                                    document=inline_group_policy_doc,
-                                )
+                            inline_group_policy_arn = f"{group.arn}:policy/{policy}"
+                            self.policies[inline_group_policy_arn] = Policy(
+                                name=policy,
+                                arn=group.arn,
+                                entity=group.name,
+                                type="Inline",
+                                attached=True,
+                                version_id="v1",
+                                document=inline_group_policy_doc,
                             )
                         except ClientError as error:
                             if error.response["Error"]["Code"] == "NoSuchEntity":
@@ -643,16 +633,15 @@ class IAM(AWSService):
                                     RoleName=role.name, PolicyName=policy
                                 )
                                 inline_role_policy_doc = inline_policy["PolicyDocument"]
-                                self.policies.append(
-                                    Policy(
-                                        name=policy,
-                                        arn=role.arn,
-                                        entity=role.name,
-                                        type="Inline",
-                                        attached=True,
-                                        version_id="v1",
-                                        document=inline_role_policy_doc,
-                                    )
+                                inline_role_policy_arn = f"{role.arn}:policy/{policy}"
+                                self.policies[inline_role_policy_arn] = Policy(
+                                    name=policy,
+                                    arn=role.arn,
+                                    entity=role.name,
+                                    type="Inline",
+                                    attached=True,
+                                    version_id="v1",
+                                    document=inline_role_policy_doc,
                                 )
                             except ClientError as error:
                                 if error.response["Error"]["Code"] == "NoSuchEntity":
@@ -752,7 +741,7 @@ class IAM(AWSService):
     def _list_policies(self, scope):
         logger.info("IAM - List Policies...")
         try:
-            policies = []
+            policies = {}
             list_policies_paginator = self.client.get_paginator("list_policies")
             for page in list_policies_paginator.paginate(
                 Scope=scope, OnlyAttached=False if scope == "Local" else True
@@ -761,17 +750,13 @@ class IAM(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(policy["Arn"], self.audit_resources)
                     ):
-                        policies.append(
-                            Policy(
-                                name=policy["PolicyName"],
-                                arn=policy["Arn"],
-                                entity=policy["PolicyId"],
-                                version_id=policy["DefaultVersionId"],
-                                type="Custom" if scope == "Local" else "AWS",
-                                attached=(
-                                    True if policy["AttachmentCount"] > 0 else False
-                                ),
-                            )
+                        policies[policy["Arn"]] = Policy(
+                            name=policy["PolicyName"],
+                            arn=policy["Arn"],
+                            entity=policy["PolicyId"],
+                            version_id=policy["DefaultVersionId"],
+                            type="Custom" if scope == "Local" else "AWS",
+                            attached=(True if policy["AttachmentCount"] > 0 else False),
                         )
         except Exception as error:
             logger.error(
@@ -783,7 +768,7 @@ class IAM(AWSService):
     def _list_policies_version(self, policies):
         logger.info("IAM - List Policies Version...")
         try:
-            for policy in policies:
+            for policy in policies.values():
                 try:
                     policy_version = self.client.get_policy_version(
                         PolicyArn=policy.arn, VersionId=policy.version_id
@@ -880,7 +865,10 @@ class IAM(AWSService):
                     SAMLProviderArn=resource.arn
                 ).get("Tags", [])
         except Exception as error:
-            if error.response["Error"]["Code"] == "NoSuchEntityException":
+            if error.response["Error"]["Code"] in [
+                "NoSuchEntity",
+                "NoSuchEntityException",
+            ]:
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -1029,6 +1017,43 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_service_specific_credentials(self):
+        logger.info("IAM - List Service Specific Credentials...")
+        try:
+            for user in self.users:
+                service_specific_credentials = (
+                    self.client.list_service_specific_credentials(UserName=user.name)
+                )
+                for credential in service_specific_credentials.get(
+                    "ServiceSpecificCredentials", []
+                ):
+                    credential["Arn"] = (
+                        f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:user/{user.name}/credential/{credential['ServiceSpecificCredentialId']}"
+                    )
+                    if not self.audit_resources or (
+                        is_resource_filtered(credential["Arn"], self.audit_resources)
+                    ):
+                        self.service_specific_credentials.append(
+                            ServiceSpecificCredential(
+                                arn=credential["Arn"],
+                                user=user,
+                                status=credential["Status"],
+                                create_date=credential["CreateDate"],
+                                service_user_name=credential.get("ServiceUserName"),
+                                service_credential_alias=credential.get(
+                                    "ServiceCredentialAlias"
+                                ),
+                                expiration_date=credential.get("ExpirationDate"),
+                                id=credential.get("ServiceSpecificCredentialId"),
+                                service_name=credential.get("ServiceName"),
+                                region=self.region,
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class MFADevice(BaseModel):
     serial_number: str
@@ -1054,6 +1079,19 @@ class Role(BaseModel):
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
     tags: Optional[list]
+
+
+class ServiceSpecificCredential(BaseModel):
+    arn: str
+    user: User
+    status: str
+    create_date: datetime
+    service_user_name: Optional[str]
+    service_credential_alias: Optional[str]
+    expiration_date: Optional[datetime]
+    id: str
+    service_name: str
+    region: str
 
 
 class Group(BaseModel):

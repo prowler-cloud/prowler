@@ -11,7 +11,7 @@ import {
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { getComplianceMapper } from "@/lib/compliance/commons";
+import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
 
@@ -160,9 +160,7 @@ export const ClientAccordionContent = ({
 
           <DataTable
             // Remove the updated_at column as compliance is for the last scan
-            columns={ColumnFindings.filter(
-              (_, index) => index !== 4 && index !== 7,
-            )}
+            columns={ColumnFindings.filter((_, index) => index !== 7)}
             data={expandedFindings || []}
             metadata={findings?.meta}
             disableScroll={true}

@@ -3,7 +3,7 @@
   "CheckID": "rbac_minimize_node_proxy_subresource_access",
   "CheckTitle": "Minimize access to the proxy sub-resource of nodes",
   "CheckType": [],
-  "ServiceName": "RBAC",
+  "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

@@ -1,8 +1,7 @@
 import { Spacer } from "@nextui-org/react";
-import { format, subDays } from "date-fns";
 import { Suspense } from "react";
 
-import { getFindings } from "@/actions/findings/findings";
+import { getLatestFindings } from "@/actions/findings/findings";
 import {
   getFindingsBySeverity,
   getFindingsByStatus,
@@ -33,37 +32,35 @@ export default function Home({
   const searchParamsKey = JSON.stringify(searchParams || {});
   return (
     <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
-      <Spacer y={4} />
-      <FilterControls providers />
-      <div className="mx-auto space-y-8 px-0 py-6">
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-4">
-            <Suspense fallback={<SkeletonProvidersOverview />}>
-              <SSRProvidersOverview />
-            </Suspense>
-          </div>
+      <FilterControls providers mutedFindings showClearButton={false} />
 
-          <div className="col-span-12 lg:col-span-4">
-            <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
-              <SSRFindingsBySeverity searchParams={searchParams} />
-            </Suspense>
-          </div>
+      <div className="grid grid-cols-12 gap-12 lg:gap-6">
+        <div className="col-span-12 lg:col-span-4">
+          <Suspense fallback={<SkeletonProvidersOverview />}>
+            <SSRProvidersOverview />
+          </Suspense>
+        </div>
 
-          <div className="col-span-12 lg:col-span-4">
-            <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-              <SSRFindingsByStatus searchParams={searchParams} />
-            </Suspense>
-          </div>
+        <div className="col-span-12 lg:col-span-4">
+          <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
+            <SSRFindingsBySeverity searchParams={searchParams} />
+          </Suspense>
+        </div>
 
-          <div className="col-span-12">
-            <Spacer y={16} />
-            <Suspense
-              key={searchParamsKey}
-              fallback={<SkeletonTableNewFindings />}
-            >
-              <SSRDataNewFindingsTable />
-            </Suspense>
-          </div>
+        <div className="col-span-12 lg:col-span-4">
+          <Suspense fallback={<SkeletonFindingsByStatusChart />}>
+            <SSRFindingsByStatus searchParams={searchParams} />
+          </Suspense>
+        </div>
+
+        <div className="col-span-12">
+          <Spacer y={16} />
+          <Suspense
+            key={searchParamsKey}
+            fallback={<SkeletonTableNewFindings />}
+          >
+            <SSRDataNewFindingsTable searchParams={searchParams} />
+          </Suspense>
         </div>
       </div>
     </ContentLayout>
@@ -127,23 +124,34 @@ const SSRFindingsBySeverity = async ({
   );
 };
 
-const SSRDataNewFindingsTable = async () => {
+const SSRDataNewFindingsTable = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps | undefined | null;
+}) => {
   const page = 1;
   const sort = "severity,-inserted_at";
 
-  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
-
   const defaultFilters = {
-    "filter[status__in]": "FAIL",
-    "filter[delta__in]": "new",
-    "filter[inserted_at__gte]": twoDaysAgo,
+    "filter[status]": "FAIL",
+    "filter[delta]": "new",
   };
 
-  const findingsData = await getFindings({
+  const filters = searchParams
+    ? Object.fromEntries(
+        Object.entries(searchParams).filter(([key]) =>
+          key.startsWith("filter["),
+        ),
+      )
+    : {};
+
+  const combinedFilters = { ...defaultFilters, ...filters };
+
+  const findingsData = await getLatestFindings({
     query: undefined,
     page,
     sort,
-    filters: defaultFilters,
+    filters: combinedFilters,
   });
 
   // Create dictionaries for resources, scans, and providers
@@ -180,8 +188,7 @@ const SSRDataNewFindingsTable = async () => {
             Latest new failing findings
           </h3>
           <p className="text-xs text-gray-500">
-            Showing the latest 10 new failing findings by severity from the last
-            2 days.
+            Showing the latest 10 new failing findings by severity.
           </p>
         </div>
         <div className="absolute -top-6 right-0">

@@ -49,6 +49,7 @@ export interface ScanProps {
 }
 
 export interface ScanEntity {
+  id: string;
   providerInfo: {
     provider: ProviderType;
     alias?: string;
@@ -57,5 +58,36 @@ export interface ScanEntity {
   attributes: {
     name?: string;
     completed_at: string;
+  };
+}
+export interface ExpandedScanData extends ScanProps {
+  providerInfo: {
+    provider: ProviderType;
+    uid: string;
+    alias: string;
+  };
+}
+
+export interface ScansApiResponse {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: ScanProps[];
+  included?: Array<{
+    type: string;
+    id: string;
+    attributes: any;
+    relationships?: any;
+  }>;
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
   };
 }

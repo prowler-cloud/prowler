@@ -54,6 +54,8 @@ nav:
           - Role-Based Access Control: tutorials/prowler-app-rbac.md
           - Social Login: tutorials/prowler-app-social-login.md
           - SSO with SAML: tutorials/prowler-app-sso.md
+          - Mute findings: tutorials/prowler-app-mute-findings.md
+          - Lighthouse: tutorials/prowler-app-lighthouse.md
       - CLI:
           - Miscellaneous: tutorials/misc.md
           - Reporting: tutorials/reporting.md
@@ -106,19 +108,35 @@ nav:
           - Getting Started: tutorials/microsoft365/getting-started-m365.md
           - Authentication: tutorials/microsoft365/authentication.md
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
+      - GitHub:
+          - Authentication: tutorials/github/authentication.md
+          - Getting Started: tutorials/github/getting-started-github.md
+      - IaC:
+          - Getting Started: tutorials/iac/getting-started-iac.md
   - Developer Guide:
-      - Introduction: developer-guide/introduction.md
-      - Provider: developer-guide/provider.md
-      - Services: developer-guide/services.md
-      - Checks: developer-guide/checks.md
-      - Documentation: developer-guide/documentation.md
-      - Compliance: developer-guide/security-compliance-framework.md
-      - Outputs: developer-guide/outputs.md
-      - Integrations: developer-guide/integrations.md
-      - Testing:
+      - General Concepts:
+        - Introduction: developer-guide/introduction.md
+        - Providers: developer-guide/provider.md
+        - Services: developer-guide/services.md
+        - Checks: developer-guide/checks.md
+        - Outputs: developer-guide/outputs.md
+        - Integrations: developer-guide/integrations.md
+        - Compliance: developer-guide/security-compliance-framework.md
+        - Lighthouse: developer-guide/lighthouse.md
+      - Provider Specific Details:
+        - AWS: developer-guide/aws-details.md
+        - Azure: developer-guide/azure-details.md
+        - Google Cloud: developer-guide/gcp-details.md
+        - Kubernetes: developer-guide/kubernetes-details.md
+        - Microsoft 365: developer-guide/m365-details.md
+        - GitHub: developer-guide/github-details.md
+      - Miscellaneous:
+        - Documentation: developer-guide/documentation.md
+        - Testing:
           - Unit Tests: developer-guide/unit-testing.md
           - Integration Tests: developer-guide/integration-testing.md
-      - Debugging: developer-guide/debugging.md
+        - Debugging: developer-guide/debugging.md
+        - Configurable Checks: developer-guide/configurable-checks.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md

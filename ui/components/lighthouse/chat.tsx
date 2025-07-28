@@ -1,12 +1,12 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
 import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 
 interface SuggestedAction {
@@ -16,14 +16,15 @@ interface SuggestedAction {
 }
 
 interface ChatProps {
-  hasApiKey: boolean;
+  hasConfig: boolean;
+  isActive: boolean;
 }
 
 interface ChatFormData {
   message: string;
 }
 
-export const Chat = ({ hasApiKey }: ChatProps) => {
+export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const { messages, handleSubmit, handleInputChange, append, status } = useChat(
     {
       api: "/api/lighthouse/analyst",
@@ -119,24 +120,32 @@ export const Chat = ({ hasApiKey }: ChatProps) => {
     },
   ];
 
+  // Determine if chat should be disabled
+  const shouldDisableChat = !hasConfig || !isActive;
+
   return (
     <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
-      {!hasApiKey && (
+      {shouldDisableChat && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
-              OpenAI API Key Required
+              {!hasConfig
+                ? "OpenAI API Key Required"
+                : "OpenAI API Key Invalid"}
             </h3>
             <p className="text-muted-foreground mb-4">
-              Please configure your OpenAI API key to use the Lighthouse Cloud
-              Security Analyst.
+              {!hasConfig
+                ? "Please configure your OpenAI API key to use Lighthouse AI."
+                : "OpenAI API key is invalid. Please update your key to use Lighthouse AI."}
             </p>
-            <Link
+            <CustomLink
               href="/lighthouse/config"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              target="_self"
+              size="sm"
             >
               Configure API Key
-            </Link>
+            </CustomLink>
           </div>
         </div>
       )}

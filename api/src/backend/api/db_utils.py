@@ -175,6 +175,29 @@ def create_objects_in_batches(
             model.objects.bulk_create(chunk, batch_size)
 
 
+def update_objects_in_batches(
+    tenant_id: str, model, objects: list, fields: list, batch_size: int = 500
+):
+    """
+    Bulk-update model instances in repeated, per-tenant RLS transactions.
+
+    All chunks execute in their own transaction, so no single transaction
+    grows too large.
+
+    Args:
+        tenant_id (str): UUID string of the tenant under which to set RLS.
+        model: Django model class whose `.objects.bulk_update()` will be called.
+        objects (list): List of model instances (saved) to bulk-update.
+        fields (list): List of field names to update.
+        batch_size (int): Maximum number of objects per bulk_update call.
+    """
+    total = len(objects)
+    for start in range(0, total, batch_size):
+        chunk = objects[start : start + batch_size]
+        with rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
+            model.objects.bulk_update(chunk, fields, batch_size)
+
+
 # Postgres Enums
 
 
@@ -529,3 +552,15 @@ class IntegrationTypeEnum(EnumType):
 class IntegrationTypeEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("integration_type", *args, **kwargs)
+
+
+# Postgres enum definition for Processor type
+
+
+class ProcessorTypeEnum(EnumType):
+    enum_type_name = "processor_type"
+
+
+class ProcessorTypeEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("processor_type", *args, **kwargs)

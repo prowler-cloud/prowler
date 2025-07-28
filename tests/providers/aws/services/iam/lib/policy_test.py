@@ -1,13 +1,20 @@
+import pytest
+
 from prowler.providers.aws.services.iam.lib.policy import (
+    _get_patterns_from_standard_value,
     check_admin_access,
     check_full_service_access,
+    get_effective_actions,
+    has_codebuild_trusted_principal,
+    has_public_principal,
+    has_restrictive_source_arn_condition,
+    is_codebuild_using_allowed_github_org,
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
     is_condition_restricting_from_private_ip,
     is_policy_public,
 )
-import pytest
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "111222333444"
@@ -19,6 +26,115 @@ ALL_ORGS = "*"
 
 
 class Test_Policy:
+    def test_get_patterns_from_standard_value_string(self):
+        """Test _get_patterns_from_standard_value with a string input"""
+        result = _get_patterns_from_standard_value("s3:GetObject")
+        assert result == {"s3:GetObject"}
+
+        result = _get_patterns_from_standard_value("")
+        assert result == {""}
+
+    def test_get_patterns_from_standard_value_list(self):
+        """Test _get_patterns_from_standard_value with a list input"""
+        result = _get_patterns_from_standard_value(["s3:GetObject", "s3:PutObject"])
+        assert result == {"s3:GetObject", "s3:PutObject"}
+
+        result = _get_patterns_from_standard_value([])
+        assert result == set()
+
+        result = _get_patterns_from_standard_value(["s3:GetObject", 123, None])
+        assert result == {"s3:GetObject"}
+
+    def test_get_patterns_from_standard_value_invalid_input(self):
+        """Test _get_patterns_from_standard_value with invalid inputs"""
+        result = _get_patterns_from_standard_value(None)
+        assert result == set()
+
+        result = _get_patterns_from_standard_value(123)
+        assert result == set()
+
+    def test_get_effective_actions_empty_policy(self):
+        """Test get_effective_actions with an empty policy"""
+        result = get_effective_actions({})
+        assert result == set()
+
+        result = get_effective_actions({"Version": "2012-10-17"})
+        assert result == set()
+
+    def test_get_effective_actions_simple_allow(self):
+        """Test get_effective_actions with a simple Allow statement"""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": {"Effect": "Allow", "Action": "s3:GetObject"},
+        }
+        result = get_effective_actions(policy)
+        assert result == {"s3:GetObject"}
+
+    def test_get_effective_actions_simple_deny(self):
+        """Test get_effective_actions with a simple Deny statement"""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": {"Effect": "Deny", "Action": "s3:GetObject"},
+        }
+        result = get_effective_actions(policy)
+        assert result == set()
+
+    def test_get_effective_actions_allow_and_deny(self):
+        """Test get_effective_actions with both Allow and Deny statements"""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject"]},
+                {"Effect": "Deny", "Action": "s3:GetObject"},
+            ],
+        }
+        result = get_effective_actions(policy)
+        assert result == {"s3:PutObject"}
+
+    def test_get_effective_actions_with_not_action(self):
+        """Test get_effective_actions with NotAction statements"""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": {"Effect": "Allow", "NotAction": "s3:GetObject"},
+        }
+        result = get_effective_actions(policy)
+        assert "s3:GetObject" not in result
+        assert "s3:PutObject" in result
+
+    def test_get_effective_actions_with_wildcards(self):
+        """Test get_effective_actions with wildcard actions"""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": {"Effect": "Allow", "Action": "s3:*"},
+        }
+        result = get_effective_actions(policy)
+        assert "s3:GetObject" in result
+        assert "s3:PutObject" in result
+        assert "s3:ListBucket" in result
+
+    def test_get_effective_actions_with_invalid_effect(self):
+        """Test get_effective_actions with invalid Effect value"""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": {"Effect": "Invalid", "Action": "s3:GetObject"},
+        }
+        result = get_effective_actions(policy)
+        assert result == set()
+
+    def test_get_effective_actions_with_multiple_statements(self):
+        """Test get_effective_actions with multiple statements"""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject"]},
+                {"Effect": "Allow", "Action": "s3:ListBucket"},
+                {"Effect": "Deny", "Action": "s3:PutObject"},
+            ],
+        }
+        result = get_effective_actions(policy)
+        assert result == {"s3:GetObject", "s3:ListBucket"}
+        assert "s3:PutObject" not in result
+
     # Test lowercase context key name --> aws
     def test_condition_parser_string_equals_aws_SourceAccount_list(self):
         condition_statement = {
@@ -1618,6 +1734,38 @@ class Test_Policy:
             "s3", policy_allow_wildcard_action_and_resource
         )
 
+    def test_policy_allows_full_service_access_with_wildcard_action_and_resource_using_unicode(
+        self,
+    ):
+        policy_allow_wildcard_action_and_resource = {
+            "Statement": [
+                {
+                    "Effect": "\u0041llow",
+                    "Action": "\u00733:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert check_full_service_access(
+            "s3", policy_allow_wildcard_action_and_resource
+        )
+
+    def test_policy_allows_full_service_access_with_wildcard_action_and_resource_using_double_start(
+        self,
+    ):
+        policy_allow_wildcard_action_and_resource = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:**",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert check_full_service_access(
+            "s3", policy_allow_wildcard_action_and_resource
+        )
+
     def test_policy_does_not_allow_full_service_access_with_specific_get_action(self):
         policy_allow_specific_get_action = {
             "Statement": [
@@ -1664,6 +1812,22 @@ class Test_Policy:
                 {
                     "Effect": "Allow",
                     "NotAction": "ec2:*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert check_full_service_access(
+            "s3", policy_allow_not_action_excluding_other_service
+        )
+
+    def test_policy_allows_full_service_access_with_invalid_service_as_not_action(
+        self,
+    ):
+        policy_allow_not_action_excluding_other_service = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "prowler:check",
                     "Resource": "*",
                 }
             ]
@@ -2108,3 +2272,447 @@ class Test_Policy:
             ],
         }
         assert check_admin_access(policy)
+
+
+def test_is_codebuild_using_allowed_github_org_allows():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_is_codebuild_using_allowed_github_org_denies():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/not-allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is False
+    assert org_name == "not-allowed-org"
+
+
+def test_is_codebuild_using_allowed_github_org_no_codebuild_principal():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "lambda.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is False
+    assert org_name is None
+
+
+def test_is_codebuild_using_allowed_github_org_invalid_url():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com//test"  # Malformed, no org
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is False
+    assert org_name is None
+
+
+def test_has_codebuild_trusted_principal_true():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "codebuild.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True
+
+
+def test_has_codebuild_trusted_principal_false():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Service": "lambda.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is False
+
+
+def test_has_codebuild_trusted_principal_empty():
+    trust_policy = {}
+    assert has_codebuild_trusted_principal(trust_policy) is False
+
+
+def test_is_codebuild_using_allowed_github_org_principal_string():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "codebuild.amazonaws.com",
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_is_codebuild_using_allowed_github_org_principal_list():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": ["codebuild.amazonaws.com", "lambda.amazonaws.com"],
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    github_repo_url = "https://github.com/allowed-org/repo"
+    allowed_organizations = ["allowed-org"]
+    is_allowed, org_name = is_codebuild_using_allowed_github_org(
+        trust_policy, github_repo_url, allowed_organizations
+    )
+    assert is_allowed is True
+    assert org_name == "allowed-org"
+
+
+def test_has_codebuild_trusted_principal_string():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "codebuild.amazonaws.com",
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True
+
+
+def test_has_codebuild_trusted_principal_list():
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": ["codebuild.amazonaws.com", "lambda.amazonaws.com"],
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+    assert has_codebuild_trusted_principal(trust_policy) is True
+
+
+class Test_has_public_principal:
+    """Tests for the has_public_principal function"""
+
+    def test_has_public_principal_wildcard_string(self):
+        """Test public principal detection with wildcard string"""
+        statement = {"Principal": "*"}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_root_arn_string(self):
+        """Test public principal detection with root ARN string"""
+        statement = {"Principal": "arn:aws:iam::*:root"}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_dict_wildcard(self):
+        """Test public principal detection with AWS dict containing wildcard"""
+        statement = {"Principal": {"AWS": "*"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_dict_root_arn(self):
+        """Test public principal detection with AWS dict containing root ARN"""
+        statement = {"Principal": {"AWS": "arn:aws:iam::*:root"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_list_wildcard(self):
+        """Test public principal detection with AWS list containing wildcard"""
+        statement = {"Principal": {"AWS": ["arn:aws:iam::123456789012:user/test", "*"]}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_list_root_arn(self):
+        """Test public principal detection with AWS list containing root ARN"""
+        statement = {
+            "Principal": {
+                "AWS": ["arn:aws:iam::123456789012:user/test", "arn:aws:iam::*:root"]
+            }
+        }
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_canonical_user_wildcard(self):
+        """Test public principal detection with CanonicalUser wildcard"""
+        statement = {"Principal": {"CanonicalUser": "*"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_canonical_user_root_arn(self):
+        """Test public principal detection with CanonicalUser root ARN"""
+        statement = {"Principal": {"CanonicalUser": "arn:aws:iam::*:root"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_no_principal(self):
+        """Test with statement that has no Principal field"""
+        statement = {"Effect": "Allow", "Action": "s3:GetObject"}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_empty_principal(self):
+        """Test with empty principal"""
+        statement = {"Principal": ""}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_specific_account(self):
+        """Test with specific account principal (not public)"""
+        statement = {"Principal": {"AWS": "arn:aws:iam::123456789012:root"}}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_service_principal(self):
+        """Test with service principal (not public)"""
+        statement = {"Principal": {"Service": "lambda.amazonaws.com"}}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_mixed_principals(self):
+        """Test with mixed principals including public one"""
+        statement = {
+            "Principal": {
+                "AWS": ["arn:aws:iam::123456789012:user/test"],
+                "Service": "lambda.amazonaws.com",
+                "CanonicalUser": "*",
+            }
+        }
+        assert has_public_principal(statement) is True
+
+
+class Test_has_restrictive_source_arn_condition:
+    """Tests for the has_restrictive_source_arn_condition function"""
+
+    def test_no_condition_block(self):
+        """Test statement without Condition block"""
+        statement = {"Effect": "Allow", "Principal": "*", "Action": "s3:GetObject"}
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_no_source_arn_condition(self):
+        """Test with condition block but no aws:SourceArn"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Condition": {"StringEquals": {"aws:SourceAccount": "123456789012"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_restrictive_source_arn_s3_bucket(self):
+        """Test restrictive SourceArn condition with S3 bucket"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::my-bucket"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_restrictive_source_arn_lambda_function(self):
+        """Test restrictive SourceArn condition with Lambda function"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnEquals": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_non_restrictive_global_wildcard(self):
+        """Test non-restrictive SourceArn with global wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "*"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_non_restrictive_service_wildcard(self):
+        """Test non-restrictive SourceArn with service wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::*"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_non_restrictive_multi_wildcard(self):
+        """Test non-restrictive SourceArn with multiple wildcards"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:*:*:*:*"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_non_restrictive_resource_wildcard(self):
+        """Test non-restrictive SourceArn with resource wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {"aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:*"}
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_source_arn_list_with_valid_arn(self):
+        """Test SourceArn condition with list containing valid ARN"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": ["arn:aws:s3:::bucket1", "arn:aws:s3:::bucket2"]
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_source_arn_list_with_wildcard(self):
+        """Test SourceArn condition with list containing wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": ["arn:aws:s3:::bucket1", "*"]}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_source_arn_with_account_validation_match(self):
+        """Test SourceArn with account validation - matching account"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "123456789012") is True
+
+    def test_source_arn_with_account_validation_mismatch(self):
+        """Test SourceArn with account validation - non-matching account"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "987654321098") is False
+
+    def test_source_arn_with_account_wildcard(self):
+        """Test SourceArn with account wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:*:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "123456789012") is False
+
+    def test_source_arn_s3_bucket_no_account_field(self):
+        """Test SourceArn with S3 bucket (no account field) - should be restrictive"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::my-bucket"}},
+        }
+        assert has_restrictive_source_arn_condition(statement, "123456789012") is True
+
+    def test_source_arn_case_insensitive(self):
+        """Test SourceArn condition key is case insensitive"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"AWS:SourceArn": "arn:aws:s3:::my-bucket"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_source_arn_mixed_operators(self):
+        """Test SourceArn with multiple condition operators"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {"aws:SourceArn": "arn:aws:s3:::my-bucket"},
+                "StringEquals": {"aws:SourceAccount": "123456789012"},
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is True

@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
-from py_ocsf_models.events.findings.detection_finding import DetectionFinding
 from py_ocsf_models.events.findings.detection_finding import (
-    TypeID as DetectionFindingTypeID,
+    DetectionFinding,
+    DetectionFindingTypeID,
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
@@ -40,7 +40,7 @@ class OCSF(Output):
         - get_finding_status_id(muted: bool) -> StatusID: Returns the StatusID based on the muted value.
 
     References:
-        - OCSF: https://schema.ocsf.io/1.2.0/classes/detection_finding
+        - OCSF: https://schema.ocsf.io/classes/detection_finding
         - PY-OCSF-Model: https://github.com/prowler-cloud/py-ocsf-models
     """
 
