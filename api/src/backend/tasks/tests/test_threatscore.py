@@ -88,13 +88,20 @@ class TestGenerateThreatscoreReport:
     def test_generate_threatscore_report_fails_upload(self):
         with (
             patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get"),
+            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
             patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
             patch("tasks.jobs.report.generate_threatscore_report"),
             patch("tasks.jobs.report._upload_to_s3", return_value=None),
             patch("tasks.jobs.report.Scan.all_objects.filter") as mock_scan_update,
         ):
             mock_filter.return_value.exists.return_value = True
+
+            # Mock provider
+            mock_provider = MagicMock()
+            mock_provider.uid = "aws-provider-uid"
+            mock_provider.provider = "aws"
+            mock_provider_get.return_value = mock_provider
+
             mock_gen_dir.return_value = (
                 "/tmp/output",
                 "/tmp/compressed",
@@ -113,7 +120,7 @@ class TestGenerateThreatscoreReport:
     def test_generate_threatscore_report_logs_rmtree_exception(self, caplog):
         with (
             patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get"),
+            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
             patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
             patch("tasks.jobs.report.generate_threatscore_report"),
             patch(
@@ -125,6 +132,13 @@ class TestGenerateThreatscoreReport:
             ),
         ):
             mock_filter.return_value.exists.return_value = True
+
+            # Mock provider
+            mock_provider = MagicMock()
+            mock_provider.uid = "aws-provider-uid"
+            mock_provider.provider = "aws"
+            mock_provider_get.return_value = mock_provider
+
             mock_gen_dir.return_value = (
                 "/tmp/output",
                 "/tmp/compressed",
@@ -202,10 +216,12 @@ class TestGenerateThreatscoreReportFunction:
     @patch("tasks.jobs.report.Table")
     @patch("tasks.jobs.report.TableStyle")
     @patch("tasks.jobs.report.plt.subplots")
+    @patch("tasks.jobs.report.plt.savefig")
     @patch("tasks.jobs.report.io.BytesIO")
     def test_generate_threatscore_report_success(
         self,
         mock_bytesio,
+        mock_savefig,
         mock_subplots,
         mock_table_style,
         mock_table,
