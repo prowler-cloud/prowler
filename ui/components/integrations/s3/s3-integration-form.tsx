@@ -1,16 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider, Switch } from "@nextui-org/react";
+import { Divider } from "@nextui-org/react";
 import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Control, useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
 import { ProviderSelector } from "@/components/providers/provider-selector";
+import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { filterEmptyValues } from "@/lib";
+import { AWSCredentialsRole } from "@/types";
 import {
   editS3IntegrationFormSchema,
   IntegrationProps,
@@ -33,10 +36,10 @@ export const S3IntegrationForm = ({
 }: S3IntegrationFormProps) => {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(0);
   const isEditing = !!integration;
-  const hasIamRole =
-    !!integration?.attributes.configuration.credentials?.role_arn;
 
+  // Create the form with updated schema and default values
   const form = useForm({
     resolver: zodResolver(
       isEditing ? editS3IntegrationFormSchema : s3IntegrationFormSchema,
@@ -48,10 +51,10 @@ export const S3IntegrationForm = ({
         integration?.attributes.configuration.output_directory || "",
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
+      credentials_type: "aws-sdk-default" as const,
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
-      use_iam_role: hasIamRole,
       role_arn:
         integration?.attributes.configuration.credentials?.role_arn || "",
       external_id:
@@ -68,7 +71,25 @@ export const S3IntegrationForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
-  const useIamRole = form.watch("use_iam_role");
+
+  const handleNext = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form submission
+
+    // Validate current step fields
+    const stepFields =
+      currentStep === 0
+        ? (["bucket_name", "output_directory", "providers"] as const)
+        : (["role_arn", "external_id"] as const);
+
+    const isValid = await form.trigger(stepFields);
+    if (isValid) {
+      setCurrentStep(1);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(0);
+  };
 
   const onSubmit = async (values: any) => {
     const formData = new FormData();
@@ -78,24 +99,24 @@ export const S3IntegrationForm = ({
       output_directory: values.output_directory,
     };
 
-    const credentials: any = filterEmptyValues({
-      aws_access_key_id: values.aws_access_key_id,
-      aws_secret_access_key: values.aws_secret_access_key,
-      aws_session_token: values.aws_session_token,
-    });
+    // Build credentials object based on credentials_type
+    const baseCredentials = {
+      role_arn: values.role_arn,
+      external_id: values.external_id,
+      role_session_name: values.role_session_name,
+      session_duration: parseInt(values.session_duration, 10) || 3600,
+    };
 
-    // Add IAM role credentials only if the toggle is enabled
-    if (values.use_iam_role) {
-      Object.assign(
-        credentials,
-        filterEmptyValues({
-          role_arn: values.role_arn,
-          external_id: values.external_id,
-          role_session_name: values.role_session_name,
-          session_duration: parseInt(values.session_duration, 10) || 3600,
-        }),
-      );
-    }
+    // Add static credentials only if using access-secret-key type
+    const credentials: any =
+      values.credentials_type === "access-secret-key"
+        ? filterEmptyValues({
+            ...baseCredentials,
+            aws_access_key_id: values.aws_access_key_id,
+            aws_secret_access_key: values.aws_secret_access_key,
+            aws_session_token: values.aws_session_token,
+          })
+        : filterEmptyValues(baseCredentials);
 
     formData.append("integration_type", values.integration_type);
     formData.append("configuration", JSON.stringify(configuration));
@@ -159,222 +180,74 @@ export const S3IntegrationForm = ({
     }
   };
 
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col space-y-4"
-      >
-        <div className="flex flex-col">
-          <div className="text-md font-bold leading-9 text-default-foreground">
-            {isEditing ? "Update" : "Configure"} Amazon S3 Integration
-          </div>
-          <div className="text-sm text-default-500">
-            Export your security findings to Amazon S3 buckets automatically.
-          </div>
-        </div>
-
-        <Divider />
-
-        {/* Provider Selection */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Provider Selection</h3>
-          <p className="text-sm text-default-500">
-            Select the cloud providers that this integration will export
-            findings for.
-          </p>
-
-          <ProviderSelector
-            control={form.control}
-            name="providers"
-            providers={providers}
-            label="Providers"
-            placeholder="Select providers to integrate with"
-            isInvalid={!!form.formState.errors.providers}
-          />
-        </div>
-
-        <Divider />
-
-        {/* S3 Configuration */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">S3 Configuration</h3>
-
-          <CustomInput
-            control={form.control}
-            name="bucket_name"
-            type="text"
-            label="S3 Bucket Name"
-            labelPlacement="inside"
-            placeholder="my-security-findings-bucket"
-            variant="bordered"
-            isRequired
-            isInvalid={!!form.formState.errors.bucket_name}
-          />
-
-          <CustomInput
-            control={form.control}
-            name="output_directory"
-            type="text"
-            label="Output Directory"
-            labelPlacement="inside"
-            placeholder="/prowler-findings/"
-            variant="bordered"
-            isRequired
-            isInvalid={!!form.formState.errors.output_directory}
-          />
-        </div>
-
-        <Divider />
-
-        {/* AWS Static Credentials - Always visible */}
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">AWS Static Credentials</h3>
-            <p className="text-sm text-default-500">
-              {isEditing
-                ? "Update AWS access credentials for the integration. Leave empty to keep current credentials."
-                : "Provide AWS access credentials for the integration."}
-            </p>
+  const renderStepContent = () => {
+    if (currentStep === 0) {
+      return (
+        <>
+          {/* Provider Selection */}
+          <div className="space-y-4">
+            <ProviderSelector
+              control={form.control}
+              name="providers"
+              providers={providers}
+              label="Cloud Providers"
+              placeholder="Select providers to integrate with"
+              isInvalid={!!form.formState.errors.providers}
+            />
           </div>
 
-          <CustomInput
-            control={form.control}
-            name="aws_access_key_id"
-            type="password"
-            label="AWS Access Key ID"
-            labelPlacement="inside"
-            placeholder={
-              isEditing
-                ? "Leave empty to keep current credentials"
-                : "Enter the AWS Access Key ID"
-            }
-            variant="bordered"
-            isRequired={!isEditing}
-            isInvalid={!!form.formState.errors.aws_access_key_id}
-          />
+          <Divider />
 
-          <CustomInput
-            control={form.control}
-            name="aws_secret_access_key"
-            type="password"
-            label="AWS Secret Access Key"
-            labelPlacement="inside"
-            placeholder={
-              isEditing
-                ? "Leave empty to keep current credentials"
-                : "Enter the AWS Secret Access Key"
-            }
-            variant="bordered"
-            isRequired={!isEditing}
-            isInvalid={!!form.formState.errors.aws_secret_access_key}
-          />
+          {/* S3 Configuration */}
+          <div className="space-y-4">
+            <CustomInput
+              control={form.control}
+              name="bucket_name"
+              type="text"
+              label="Bucket name"
+              labelPlacement="inside"
+              placeholder="my-security-findings-bucket"
+              variant="bordered"
+              isRequired
+              isInvalid={!!form.formState.errors.bucket_name}
+            />
 
-          <CustomInput
-            control={form.control}
-            name="aws_session_token"
-            type="password"
-            label="AWS Session Token (optional)"
-            labelPlacement="inside"
-            placeholder="Enter the AWS Session Token"
-            variant="bordered"
-            isRequired={false}
-            isInvalid={!!form.formState.errors.aws_session_token}
-          />
-        </div>
-
-        <Divider />
-
-        {/* IAM Role Toggle */}
-        <div className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">IAM Role Configuration</h3>
-              <p className="text-sm text-default-500">
-                Optionally configure IAM role for cross-account access.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-default-600">Use IAM Role</span>
-              <Switch
-                isSelected={useIamRole}
-                onValueChange={(value) => form.setValue("use_iam_role", value)}
-                color="primary"
-                size="sm"
-              />
-            </div>
+            <CustomInput
+              control={form.control}
+              name="output_directory"
+              type="text"
+              label="Output directory"
+              labelPlacement="inside"
+              placeholder="/prowler-findings/"
+              variant="bordered"
+              isRequired
+              isInvalid={!!form.formState.errors.output_directory}
+            />
           </div>
+        </>
+      );
+    }
 
-          {/* IAM Role Fields - Conditional rendering */}
-          {useIamRole && (
-            <div className="space-y-4">
-              <CustomInput
-                control={form.control}
-                name="role_arn"
-                type="text"
-                label="Role ARN"
-                labelPlacement="inside"
-                placeholder={
-                  isEditing
-                    ? "Leave empty to keep current value"
-                    : "arn:aws:iam::123456789012:role/ProwlerRole"
-                }
-                variant="bordered"
-                isRequired={!isEditing}
-                isInvalid={!!form.formState.errors.role_arn}
-              />
+    // Step 2: AWS Credentials using AWSRoleCredentialsForm
+    return (
+      <AWSRoleCredentialsForm
+        control={form.control as unknown as Control<AWSCredentialsRole>}
+        setValue={form.setValue as any}
+        externalId={session?.tenantId || ""}
+      />
+    );
+  };
 
-              <CustomInput
-                control={form.control}
-                name="external_id"
-                type="text"
-                label="External ID"
-                labelPlacement="inside"
-                placeholder={
-                  isEditing
-                    ? "Leave empty to keep current value"
-                    : "Enter the External ID"
-                }
-                variant="bordered"
-                isRequired={!isEditing}
-                isInvalid={!!form.formState.errors.external_id}
-              />
-
-              <CustomInput
-                control={form.control}
-                name="role_session_name"
-                type="text"
-                label="Role Session Name (optional)"
-                labelPlacement="inside"
-                placeholder="ProwlerSession"
-                variant="bordered"
-                isRequired={false}
-                isInvalid={!!form.formState.errors.role_session_name}
-              />
-
-              <CustomInput
-                control={form.control}
-                name="session_duration"
-                type="number"
-                label="Session Duration (seconds)"
-                labelPlacement="inside"
-                placeholder="3600"
-                variant="bordered"
-                isRequired={false}
-                isInvalid={!!form.formState.errors.session_duration}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex w-full justify-end sm:space-x-6">
+  const renderStepButtons = () => {
+    if (currentStep === 0) {
+      return (
+        <div className="flex w-full justify-end space-x-4">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
             className="w-1/2 bg-transparent"
             variant="faded"
             size="lg"
-            radius="lg"
             onPress={onCancel}
             isDisabled={isLoading}
           >
@@ -382,22 +255,67 @@ export const S3IntegrationForm = ({
           </CustomButton>
           <CustomButton
             type="submit"
-            ariaLabel={`${isEditing ? "Update" : "Save"} S3 Integration`}
+            ariaLabel="Next"
             className="w-1/2"
             variant="solid"
             color="action"
             size="lg"
-            isLoading={isLoading}
+            isDisabled={isLoading}
           >
-            {isLoading ? (
-              <>{isEditing ? "Updating..." : "Creating..."}</>
-            ) : (
-              <span>
-                {isEditing ? "Update Integration" : "Create Integration"}
-              </span>
-            )}
+            Next
           </CustomButton>
         </div>
+      );
+    }
+
+    // Step 2 buttons
+    return (
+      <div className="flex w-full justify-between space-x-4">
+        <CustomButton
+          type="button"
+          ariaLabel="Back"
+          className="w-1/2 bg-transparent"
+          variant="faded"
+          size="lg"
+          onPress={handleBack}
+          isDisabled={isLoading}
+        >
+          Back
+        </CustomButton>
+        <CustomButton
+          type="submit"
+          ariaLabel={`${isEditing ? "Update" : "Create"} S3 Integration`}
+          className="w-1/2"
+          variant="solid"
+          color="action"
+          size="lg"
+          isLoading={isLoading}
+        >
+          {isLoading ? (
+            <>{isEditing ? "Updating..." : "Creating..."}</>
+          ) : (
+            <span>
+              {isEditing ? "Update Integration" : "Create Integration"}
+            </span>
+          )}
+        </CustomButton>
+      </div>
+    );
+  };
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={currentStep === 0 ? handleNext : form.handleSubmit(onSubmit)}
+        className="flex flex-col space-y-6"
+      >
+        <Divider />
+
+        {/* Step Content */}
+        <div className="space-y-6">{renderStepContent()}</div>
+
+        {/* Step Buttons */}
+        {renderStepButtons()}
       </form>
     </Form>
   );

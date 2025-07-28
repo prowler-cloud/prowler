@@ -33,17 +33,8 @@ export interface IntegrationProps {
     };
     url?: string;
   };
-  relationships?: {
-    providers?: {
-      data: {
-        type: "providers";
-        id: string;
-      }[];
-    };
-  };
-  links: {
-    self: string;
-  };
+  relationships?: { providers?: { data: { type: "providers"; id: string }[] } };
+  links: { self: string };
 }
 
 export interface IntegrationsApiResponse {
@@ -61,11 +52,7 @@ export interface IntegrationsApiResponse {
     relationships?: any;
   }>;
   meta: {
-    pagination: {
-      page: number;
-      pages: number;
-      count: number;
-    };
+    pagination: { page: number; pages: number; count: number };
     version: string;
   };
 }
@@ -93,36 +80,55 @@ export const s3IntegrationFormSchema = z
     providers: z
       .array(z.string())
       .min(1, "At least one provider must be selected"),
-    // Static credentials are always required
-    aws_access_key_id: z.string().min(1, "AWS Access Key ID is required"),
-    aws_secret_access_key: z
-      .string()
-      .min(1, "AWS Secret Access Key is required"),
+    // AWS Credentials fields compatible with AWSCredentialsRole
+    credentials_type: z
+      .enum(["aws-sdk-default", "access-secret-key"])
+      .default("aws-sdk-default"),
+    aws_access_key_id: z.string().optional(),
+    aws_secret_access_key: z.string().optional(),
     aws_session_token: z.string().optional(),
     // IAM Role fields
-    use_iam_role: z.boolean().optional(), // Flag to indicate if IAM role should be used
     role_arn: z.string().optional(),
     external_id: z.string().optional(),
     role_session_name: z.string().optional(),
     session_duration: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    // If IAM role is enabled, require role_arn and external_id
-    if (data.use_iam_role) {
-      if (!data.role_arn) {
+    // If using access-secret-key, require AWS credentials
+    if (data.credentials_type === "access-secret-key") {
+      if (!data.aws_access_key_id) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Role ARN is required when using IAM Role",
-          path: ["role_arn"],
+          message:
+            "AWS Access Key ID is required when using access and secret key",
+          path: ["aws_access_key_id"],
         });
       }
-      if (!data.external_id) {
+      if (!data.aws_secret_access_key) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "External ID is required when using IAM Role",
-          path: ["external_id"],
+          message:
+            "AWS Secret Access Key is required when using access and secret key",
+          path: ["aws_secret_access_key"],
         });
       }
+    }
+
+    // Role ARN is always required for S3 integrations (for cross-account access)
+    if (!data.role_arn) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Role ARN is required for S3 integrations",
+        path: ["role_arn"],
+      });
+    }
+
+    if (!data.external_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "External ID is required for S3 integrations",
+        path: ["external_id"],
+      });
     }
   });
 
@@ -138,30 +144,38 @@ export const editS3IntegrationFormSchema = z
       .array(z.string())
       .min(1, "At least one provider must be selected")
       .optional(),
+    credentials_type: z
+      .enum(["aws-sdk-default", "access-secret-key"])
+      .optional(),
     aws_access_key_id: z.string().optional(),
     aws_secret_access_key: z.string().optional(),
     aws_session_token: z.string().optional(),
-    use_iam_role: z.boolean().optional(),
     role_arn: z.string().optional(),
     external_id: z.string().optional(),
     role_session_name: z.string().optional(),
     session_duration: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    // If IAM role is enabled, require role_arn and external_id
-    if (data.use_iam_role) {
-      if (!data.role_arn) {
+    // If using access-secret-key, and credentials are provided, require both
+    if (data.credentials_type === "access-secret-key") {
+      const hasAccessKey = !!data.aws_access_key_id;
+      const hasSecretKey = !!data.aws_secret_access_key;
+
+      if (hasAccessKey && !hasSecretKey) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Role ARN is required when using IAM Role",
-          path: ["role_arn"],
+          message:
+            "AWS Secret Access Key is required when providing Access Key ID",
+          path: ["aws_secret_access_key"],
         });
       }
-      if (!data.external_id) {
+
+      if (hasSecretKey && !hasAccessKey) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "External ID is required when using IAM Role",
-          path: ["external_id"],
+          message:
+            "AWS Access Key ID is required when providing Secret Access Key",
+          path: ["aws_access_key_id"],
         });
       }
     }
