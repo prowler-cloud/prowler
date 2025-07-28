@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0042_scan_scans_prov_ins_desc_idx"),
+        ("api", "0043_github_provider"),
     ]
 
     operations = [
