@@ -15,7 +15,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - False positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
-- Fixed typographical errors in ISMS-P compliance-related files [(#8367)](https://github.com/prowler-cloud/prowler/pull/8367)
 
 ---
 
