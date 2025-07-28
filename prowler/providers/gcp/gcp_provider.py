@@ -644,6 +644,9 @@ class GcpProvider(Provider):
                                 if asset["resource"]["data"].get("name")
                                 else project_id
                             )
+                            # Handle empty or null project names
+                            if not project_name or project_name.strip() == "":
+                                project_name = "GCP Project"
                             gcp_project = GCPProject(
                                 number=project_number,
                                 id=project_id,
@@ -699,6 +702,9 @@ class GcpProvider(Provider):
                                 if project.get("name")
                                 else project_id
                             )
+                            # Handle empty or null project names
+                            if not project_name or project_name.strip() == "":
+                                project_name = "GCP Project"
                             project_id = project["projectId"]
                             gcp_project = GCPProject(
                                 number=project_number,
@@ -739,9 +745,15 @@ class GcpProvider(Provider):
                 # If no projects were able to be accessed via API, add them manually if provided by the user in arguments
                 if project_ids:
                     for input_project in project_ids:
+                        # Handle empty or null project names
+                        project_name = (
+                            input_project
+                            if input_project and input_project.strip() != ""
+                            else "GCP Project"
+                        )
                         projects[input_project] = GCPProject(
                             id=input_project,
-                            name=input_project,
+                            name=project_name,
                             number=0,
                             labels={},
                             lifecycle_state="ACTIVE",
@@ -750,9 +762,15 @@ class GcpProvider(Provider):
                 elif credentials_file:
                     with open(credentials_file, "r", encoding="utf-8") as file:
                         project_id = json.load(file)["project_id"]
+                        # Handle empty or null project names
+                        project_name = (
+                            project_id
+                            if project_id and project_id.strip() != ""
+                            else "GCP Project"
+                        )
                         projects[project_id] = GCPProject(
                             id=project_id,
-                            name=project_id,
+                            name=project_name,
                             number=0,
                             labels={},
                             lifecycle_state="ACTIVE",
