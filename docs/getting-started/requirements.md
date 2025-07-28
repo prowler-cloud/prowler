@@ -304,6 +304,7 @@ When using service principal with user credentials authentication, you need **bo
 - You **won't need** the External API permissions listed above.
 
 **2. User-Level Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
+
 - `Global Reader` (recommended): this allows you to read all roles needed.
 - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (since only read access is needed, Global Reader is recommended).
 
@@ -318,8 +319,8 @@ When using browser authentication, permissions are delegated to the user, so the
 ### Assigning Permissions and Roles
 
 For guidance on assigning the necessary permissions and roles, follow these instructions:
-- [Grant API Permissions](../tutorials/microsoft365/getting-started-m365.md#grant-required-api-permissions)
-- [Assign Required Roles](../tutorials/microsoft365/getting-started-m365.md#assign-required-roles-to-your-user)
+- [Grant API Permissions](../tutorials/microsoft365/getting-started-m365.md#grant-required-graph-api-permissions)
+- [Assign Required Roles](../tutorials/microsoft365/getting-started-m365.md#if-using-user-authentication)
 
 ### Supported PowerShell Versions
 
