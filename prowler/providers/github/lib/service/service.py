@@ -54,9 +54,9 @@ class GithubService:
                 raise
         elif isinstance(error, github.GithubException):
             if "404" in str(error):
-                logger.warning(f"'{item_name}' not found or not accessible")
+                logger.error(f"'{item_name}' not found or not accessible")
             elif "403" in str(error):
-                logger.warning(
+                logger.error(
                     f"Access denied to '{item_name}' - insufficient permissions"
                 )
             else:

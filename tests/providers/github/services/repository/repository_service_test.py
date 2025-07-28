@@ -429,13 +429,9 @@ class Test_Repository_ErrorHandling:
                 # Should be empty due to API error
                 assert len(repos) == 0
                 # Should log specific error message
-                mock_logger.warning.assert_called()
-                # Check if Access denied message was logged (could be in warning or error calls)
-                log_messages = [
-                    str(call)
-                    for call in mock_logger.warning.call_args_list
-                    + mock_logger.error.call_args_list
-                ]
+                mock_logger.error.assert_called()
+                # Check if Access denied message was logged
+                log_messages = [str(call) for call in mock_logger.error.call_args_list]
                 assert any("Access denied" in msg for msg in log_messages)
 
     def test_rate_limit_error_handling(self):
