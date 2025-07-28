@@ -32,19 +32,19 @@ export default async function S3Integrations() {
             </h3>
             <ul className="grid grid-cols-1 gap-2 text-sm text-gray-600 dark:text-gray-300 md:grid-cols-2">
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                 Automated finding exports
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                 Multiple bucket support
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                 Configurable export paths
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                 IAM role and static credentials
               </li>
             </ul>

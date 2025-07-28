@@ -38,15 +38,17 @@ export const S3IntegrationCard = ({
   }
 
   return (
-    <Card className="dark:bg-prowler-blue-400">
+    <Card className="dark:bg-gray-800">
       <CardHeader className="gap-2">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-3">
             <AmazonS3Icon size={40} />
             <div className="flex flex-col gap-1">
-              <h4 className="text-lg font-bold">Amazon S3</h4>
+              <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                Amazon S3
+              </h4>
               <div className="flex items-center gap-2">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-300">
                   Export security findings to Amazon S3 buckets.
                 </p>
                 {/* Todo: add real DOCS, use CustomLink when available */}
@@ -107,14 +109,14 @@ export const S3IntegrationCard = ({
                 {s3Integrations.map((integration) => (
                   <div
                     key={integration.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
                   >
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">
                         {integration.attributes.configuration.bucket_name ||
                           "Unknown Bucket"}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-300">
                         Output Directory:{" "}
                         {integration.attributes.configuration
                           .output_directory ||

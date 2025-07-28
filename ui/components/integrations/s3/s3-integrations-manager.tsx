@@ -142,7 +142,7 @@ export const S3IntegrationsManager = ({
             <h3 className="text-lg font-semibold">
               Configured S3 Integrations
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-300">
               {integrations.length === 0
                 ? "Not configured yet"
                 : `${integrations.length} integration${integrations.length !== 1 ? "s" : ""} configured.`}
@@ -167,7 +167,7 @@ export const S3IntegrationsManager = ({
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">
             {integrations.map((integration) => (
-              <Card key={integration.id} className="dark:bg-prowler-blue-400">
+              <Card key={integration.id} className="dark:bg-gray-800">
                 <CardHeader className="pb-2">
                   <div className="flex w-full items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -177,7 +177,7 @@ export const S3IntegrationsManager = ({
                           {integration.attributes.configuration.bucket_name ||
                             "Unknown Bucket"}
                         </h4>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-300">
                           Output Directory:{" "}
                           {integration.attributes.configuration
                             .output_directory ||
@@ -201,7 +201,7 @@ export const S3IntegrationsManager = ({
                 </CardHeader>
                 <CardBody className="pt-0">
                   <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-300">
                       <p>
                         <span className="font-medium">Auth:</span>{" "}
                         {integration.attributes.configuration.credentials

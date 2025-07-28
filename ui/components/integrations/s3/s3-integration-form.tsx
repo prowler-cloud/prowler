@@ -12,6 +12,7 @@ import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { filterEmptyValues } from "@/lib";
 import {
+  editS3IntegrationFormSchema,
   IntegrationProps,
   s3IntegrationFormSchema,
 } from "@/types/integrations";
@@ -37,7 +38,9 @@ export const S3IntegrationForm = ({
     !!integration?.attributes.configuration.credentials?.role_arn;
 
   const form = useForm({
-    resolver: zodResolver(s3IntegrationFormSchema),
+    resolver: zodResolver(
+      isEditing ? editS3IntegrationFormSchema : s3IntegrationFormSchema,
+    ),
     defaultValues: {
       integration_type: "amazon_s3" as const,
       bucket_name: integration?.attributes.configuration.bucket_name || "",
@@ -187,7 +190,6 @@ export const S3IntegrationForm = ({
             providers={providers}
             label="Providers"
             placeholder="Select providers to integrate with"
-            isRequired
             isInvalid={!!form.formState.errors.providers}
           />
         </div>
@@ -230,7 +232,9 @@ export const S3IntegrationForm = ({
           <div>
             <h3 className="text-lg font-semibold">AWS Static Credentials</h3>
             <p className="text-sm text-default-500">
-              Provide AWS access credentials for the integration.
+              {isEditing
+                ? "Update AWS access credentials for the integration. Leave empty to keep current credentials."
+                : "Provide AWS access credentials for the integration."}
             </p>
           </div>
 
@@ -240,9 +244,13 @@ export const S3IntegrationForm = ({
             type="password"
             label="AWS Access Key ID"
             labelPlacement="inside"
-            placeholder="Enter the AWS Access Key ID"
+            placeholder={
+              isEditing
+                ? "Leave empty to keep current credentials"
+                : "Enter the AWS Access Key ID"
+            }
             variant="bordered"
-            isRequired
+            isRequired={!isEditing}
             isInvalid={!!form.formState.errors.aws_access_key_id}
           />
 
@@ -252,9 +260,13 @@ export const S3IntegrationForm = ({
             type="password"
             label="AWS Secret Access Key"
             labelPlacement="inside"
-            placeholder="Enter the AWS Secret Access Key"
+            placeholder={
+              isEditing
+                ? "Leave empty to keep current credentials"
+                : "Enter the AWS Secret Access Key"
+            }
             variant="bordered"
-            isRequired
+            isRequired={!isEditing}
             isInvalid={!!form.formState.errors.aws_secret_access_key}
           />
 
@@ -302,9 +314,13 @@ export const S3IntegrationForm = ({
                 type="text"
                 label="Role ARN"
                 labelPlacement="inside"
-                placeholder="arn:aws:iam::123456789012:role/ProwlerRole"
+                placeholder={
+                  isEditing
+                    ? "Leave empty to keep current value"
+                    : "arn:aws:iam::123456789012:role/ProwlerRole"
+                }
                 variant="bordered"
-                isRequired
+                isRequired={!isEditing}
                 isInvalid={!!form.formState.errors.role_arn}
               />
 
@@ -314,9 +330,13 @@ export const S3IntegrationForm = ({
                 type="text"
                 label="External ID"
                 labelPlacement="inside"
-                placeholder="Enter the External ID"
+                placeholder={
+                  isEditing
+                    ? "Leave empty to keep current value"
+                    : "Enter the External ID"
+                }
                 variant="bordered"
-                isRequired
+                isRequired={!isEditing}
                 isInvalid={!!form.formState.errors.external_id}
               />
 

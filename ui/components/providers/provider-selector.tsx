@@ -2,9 +2,9 @@
 
 import { Button, Select, SelectItem } from "@nextui-org/react";
 import { CheckSquare, Square } from "lucide-react";
-import React from "react";
-import { Control, Controller } from "react-hook-form";
+import { Control } from "react-hook-form";
 
+import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { ProviderProps, ProviderType } from "@/types/providers";
 
 const providerTypeLabels: Record<ProviderType, string> = {
@@ -21,19 +21,19 @@ interface ProviderSelectorProps {
   providers: ProviderProps[];
   label?: string;
   placeholder?: string;
-  isRequired?: boolean;
   isInvalid?: boolean;
+  showFormMessage?: boolean;
 }
 
-export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
+export const ProviderSelector = ({
   control,
   name,
   providers,
   label = "Providers",
   placeholder = "Select providers",
-  isRequired = false,
   isInvalid = false,
-}) => {
+  showFormMessage = true,
+}: ProviderSelectorProps) => {
   // Sort providers by type and then by name for better organization
   const sortedProviders = [...providers].sort((a, b) => {
     const typeComparison = a.attributes.provider.localeCompare(
@@ -47,7 +47,7 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   });
 
   return (
-    <Controller
+    <FormField
       control={control}
       name={name}
       render={({ field: { onChange, value, onBlur } }) => {
@@ -66,120 +66,133 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
         };
 
         return (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-default-700">
-                {label}
-              </span>
-              {sortedProviders.length > 1 && (
-                <Button
-                  size="sm"
-                  variant="light"
-                  onPress={handleSelectAll}
-                  startContent={
-                    isAllSelected ? (
-                      <CheckSquare size={16} />
-                    ) : (
-                      <Square size={16} />
-                    )
-                  }
-                  className="h-7 text-xs"
-                >
-                  {isAllSelected ? "Deselect All" : "Select All"}
-                </Button>
-              )}
-            </div>
-            <Select
-              label={label}
-              placeholder={placeholder}
-              selectionMode="multiple"
-              selectedKeys={new Set(value || [])}
-              onSelectionChange={(keys) => {
-                const selectedArray = Array.from(keys);
-                onChange(selectedArray);
-              }}
-              onBlur={onBlur}
-              variant="bordered"
-              labelPlacement="inside"
-              isRequired={isRequired}
-              isInvalid={isInvalid}
-              classNames={{
-                trigger: "min-h-12",
-                listboxWrapper: "max-h-[300px]",
-                listbox: "gap-0",
-              }}
-              renderValue={(items) => {
-                if (items.length === 0) {
-                  return (
-                    <span className="text-default-500">{placeholder}</span>
-                  );
-                }
+          <>
+            <FormControl>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-default-700">
+                    {label}
+                  </span>
+                  {sortedProviders.length > 1 && (
+                    <Button
+                      size="sm"
+                      variant="light"
+                      onPress={handleSelectAll}
+                      startContent={
+                        isAllSelected ? (
+                          <CheckSquare size={16} />
+                        ) : (
+                          <Square size={16} />
+                        )
+                      }
+                      className="h-7 text-xs"
+                    >
+                      {isAllSelected ? "Deselect All" : "Select All"}
+                    </Button>
+                  )}
+                </div>
+                <Select
+                  label={label}
+                  placeholder={placeholder}
+                  selectionMode="multiple"
+                  selectedKeys={new Set(value || [])}
+                  onSelectionChange={(keys) => {
+                    const selectedArray = Array.from(keys);
+                    onChange(selectedArray);
+                  }}
+                  onBlur={onBlur}
+                  variant="bordered"
+                  labelPlacement="inside"
+                  isRequired={false}
+                  isInvalid={isInvalid}
+                  classNames={{
+                    trigger: "min-h-12",
+                    popoverContent: "dark:bg-gray-800",
+                    listboxWrapper: "max-h-[300px] dark:bg-gray-800",
+                    listbox: "gap-0",
+                    label:
+                      "tracking-tight font-light !text-default-500 text-xs !z-0",
+                    value: "text-default-500 text-small dark:text-gray-300",
+                  }}
+                  renderValue={(items) => {
+                    if (items.length === 0) {
+                      return (
+                        <span className="text-default-500">{placeholder}</span>
+                      );
+                    }
 
-                if (items.length === 1) {
-                  const provider = providers.find((p) => p.id === items[0].key);
-                  if (provider) {
-                    const displayName =
-                      provider.attributes.alias || provider.attributes.uid;
+                    if (items.length === 1) {
+                      const provider = providers.find(
+                        (p) => p.id === items[0].key,
+                      );
+                      if (provider) {
+                        const displayName =
+                          provider.attributes.alias || provider.attributes.uid;
+
+                        return (
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{displayName}</span>
+                          </div>
+                        );
+                      }
+                    }
 
                     return (
-                      <div className="flex items-center gap-2">
-                        <span className="truncate">{displayName}</span>
-                      </div>
+                      <span className="text-small">
+                        {items.length} provider{items.length !== 1 ? "s" : ""}{" "}
+                        selected
+                      </span>
                     );
-                  }
-                }
+                  }}
+                >
+                  {sortedProviders.map((provider) => {
+                    const providerType = provider.attributes.provider;
+                    const displayName =
+                      provider.attributes.alias || provider.attributes.uid;
+                    const typeLabel = providerTypeLabels[providerType];
 
-                return (
-                  <span className="text-small">
-                    {items.length} provider{items.length !== 1 ? "s" : ""}{" "}
-                    selected
-                  </span>
-                );
-              }}
-            >
-              {sortedProviders.map((provider) => {
-                const providerType = provider.attributes.provider;
-                const displayName =
-                  provider.attributes.alias || provider.attributes.uid;
-                const typeLabel = providerTypeLabels[providerType];
-
-                return (
-                  <SelectItem
-                    key={provider.id}
-                    textValue={`${displayName} ${typeLabel}`}
-                    className="py-2"
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-small font-medium">
-                            {displayName}
+                    return (
+                      <SelectItem
+                        key={provider.id}
+                        textValue={`${displayName} ${typeLabel}`}
+                        className="py-2"
+                      >
+                        <div className="flex w-full items-center justify-between">
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-small font-medium">
+                                {displayName}
+                              </div>
+                              <div className="truncate text-tiny text-default-500">
+                                {typeLabel}
+                              </div>
+                            </div>
                           </div>
-                          <div className="truncate text-tiny text-default-500">
-                            {typeLabel}
+                          <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+                            <div
+                              className={`h-2 w-2 rounded-full ${
+                                provider.attributes.connection.connected
+                                  ? "bg-success"
+                                  : "bg-danger"
+                              }`}
+                              title={
+                                provider.attributes.connection.connected
+                                  ? "Connected"
+                                  : "Disconnected"
+                              }
+                            />
                           </div>
                         </div>
-                      </div>
-                      <div className="ml-2 flex flex-shrink-0 items-center gap-2">
-                        <div
-                          className={`h-2 w-2 rounded-full ${
-                            provider.attributes.connection.connected
-                              ? "bg-success"
-                              : "bg-danger"
-                          }`}
-                          title={
-                            provider.attributes.connection.connected
-                              ? "Connected"
-                              : "Disconnected"
-                          }
-                        />
-                      </div>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </Select>
-          </div>
+                      </SelectItem>
+                    );
+                  })}
+                </Select>
+              </div>
+            </FormControl>
+            {showFormMessage && (
+              <FormMessage className="max-w-full text-xs text-system-error dark:text-system-error" />
+            )}
+          </>
         );
       }}
     />

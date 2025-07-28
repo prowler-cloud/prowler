@@ -126,24 +126,43 @@ export const s3IntegrationFormSchema = z
     }
   });
 
-export const editIntegrationFormSchema = z.object({
-  id: z.string(),
-  integration_type: z.enum(["amazon_s3", "aws_security_hub", "jira", "slack"]),
-  bucket_name: z.string().min(1, "Bucket name is required").optional(),
-  output_directory: z
-    .string()
-    .min(1, "Output directory is required")
-    .optional(), // Made required if provided
-  providers: z
-    .array(z.string())
-    .min(1, "At least one provider must be selected")
-    .optional(),
-  aws_access_key_id: z.string().optional(),
-  aws_secret_access_key: z.string().optional(),
-  aws_session_token: z.string().optional(),
-  use_iam_role: z.boolean().optional(),
-  role_arn: z.string().optional(),
-  external_id: z.string().optional(),
-  role_session_name: z.string().optional(),
-  session_duration: z.string().optional(),
-});
+export const editS3IntegrationFormSchema = z
+  .object({
+    integration_type: z.literal("amazon_s3"),
+    bucket_name: z.string().min(1, "Bucket name is required").optional(),
+    output_directory: z
+      .string()
+      .min(1, "Output directory is required")
+      .optional(),
+    providers: z
+      .array(z.string())
+      .min(1, "At least one provider must be selected")
+      .optional(),
+    aws_access_key_id: z.string().optional(),
+    aws_secret_access_key: z.string().optional(),
+    aws_session_token: z.string().optional(),
+    use_iam_role: z.boolean().optional(),
+    role_arn: z.string().optional(),
+    external_id: z.string().optional(),
+    role_session_name: z.string().optional(),
+    session_duration: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // If IAM role is enabled, require role_arn and external_id
+    if (data.use_iam_role) {
+      if (!data.role_arn) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Role ARN is required when using IAM Role",
+          path: ["role_arn"],
+        });
+      }
+      if (!data.external_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "External ID is required when using IAM Role",
+          path: ["external_id"],
+        });
+      }
+    }
+  });
