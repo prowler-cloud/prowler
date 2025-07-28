@@ -78,6 +78,9 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                 )
                 from prowler.providers.azure.services.storage.storage_service import (
                     Account,
+                    BlobProperties,
+                    DeleteRetentionPolicy,
+                    NetworkRuleSet,
                 )
 
                 monitor_client.diagnostics_settings = {
@@ -125,20 +128,25 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                             name="storageaccountname1",
                             resouce_group_name="rg",
                             enable_https_traffic_only=True,
-                            infrastructure_encryption="Enabled",
+                            infrastructure_encryption=True,  # bool
                             allow_blob_public_access=True,
-                            network_rule_set="AllowAll",
+                            network_rule_set=NetworkRuleSet(
+                                bypass="AzureServices", default_action="Allow"
+                            ),
                             encryption_type="Microsoft.CustomerManagedKeyVault",
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
-                            key_expiration_period_in_days=365,
+                            key_expiration_period_in_days="365",  # str
                             location="euwest",
-                            blob_properties=mock.MagicMock(
+                            blob_properties=BlobProperties(
                                 id="id",
                                 name="name",
                                 type="type",
                                 default_service_version="default_service_version",
-                                container_delete_retention_policy="container_delete_retention_policy",
+                                container_delete_retention_policy=DeleteRetentionPolicy(
+                                    enabled=True, days=7
+                                ),
+                                versioning_enabled=True,
                             ),
                         ),
                         Account(
@@ -146,20 +154,25 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                             name="storageaccountname2",
                             resouce_group_name="rg",
                             enable_https_traffic_only=False,
-                            infrastructure_encryption="Enabled",
+                            infrastructure_encryption=True,  # bool
                             allow_blob_public_access=False,
-                            network_rule_set="AllowAll",
+                            network_rule_set=NetworkRuleSet(
+                                bypass="AzureServices", default_action="Allow"
+                            ),
                             encryption_type="Microsoft.Storage",
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
-                            key_expiration_period_in_days=365,
+                            key_expiration_period_in_days="365",  # str
                             location="euwest",
-                            blob_properties=mock.MagicMock(
+                            blob_properties=BlobProperties(
                                 id="id",
                                 name="name",
                                 type="type",
                                 default_service_version="default_service_version",
-                                container_delete_retention_policy="container_delete_retention_policy",
+                                container_delete_retention_policy=DeleteRetentionPolicy(
+                                    enabled=True, days=7
+                                ),
+                                versioning_enabled=False,
                             ),
                         ),
                     ]

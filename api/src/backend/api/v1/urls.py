@@ -1,9 +1,11 @@
+from allauth.socialaccount.providers.saml.views import ACSView, MetadataView, SLSView
 from django.urls import include, path
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
 from api.v1.views import (
     ComplianceOverviewViewSet,
+    CustomSAMLLoginView,
     CustomTokenObtainView,
     CustomTokenRefreshView,
     CustomTokenSwitchTenantView,
@@ -16,6 +18,7 @@ from api.v1.views import (
     LighthouseConfigViewSet,
     MembershipViewSet,
     OverviewViewSet,
+    ProcessorViewSet,
     ProviderGroupProvidersRelationshipView,
     ProviderGroupViewSet,
     ProviderSecretViewSet,
@@ -25,6 +28,7 @@ from api.v1.views import (
     RoleViewSet,
     SAMLConfigurationViewSet,
     SAMLInitiateAPIView,
+    SAMLTokenValidateView,
     ScanViewSet,
     ScheduleViewSet,
     SchemaView,
@@ -53,6 +57,7 @@ router.register(
 router.register(r"overviews", OverviewViewSet, basename="overview")
 router.register(r"schedules", ScheduleViewSet, basename="schedule")
 router.register(r"integrations", IntegrationViewSet, basename="integration")
+router.register(r"processors", ProcessorViewSet, basename="processor")
 router.register(r"saml-config", SAMLConfigurationViewSet, basename="saml-config")
 router.register(
     r"lighthouse-configurations",
@@ -126,13 +131,32 @@ urlpatterns = [
     path(
         "auth/saml/initiate/", SAMLInitiateAPIView.as_view(), name="api_saml_initiate"
     ),
-    # Allauth SAML endpoints for tenants
-    path("accounts/", include("allauth.urls")),
     path(
-        "api/v1/accounts/saml/<organization_slug>/acs/finish/",
+        "accounts/saml/<organization_slug>/login/",
+        CustomSAMLLoginView.as_view(),
+        name="saml_login",
+    ),
+    path(
+        "accounts/saml/<organization_slug>/acs/",
+        ACSView.as_view(),
+        name="saml_acs",
+    ),
+    path(
+        "accounts/saml/<organization_slug>/acs/finish/",
         TenantFinishACSView.as_view(),
         name="saml_finish_acs",
     ),
+    path(
+        "accounts/saml/<organization_slug>/sls/",
+        SLSView.as_view(),
+        name="saml_sls",
+    ),
+    path(
+        "accounts/saml/<organization_slug>/metadata/",
+        MetadataView.as_view(),
+        name="saml_metadata",
+    ),
+    path("tokens/saml", SAMLTokenValidateView.as_view(), name="token-saml"),
     path("tokens/google", GoogleSocialLoginView.as_view(), name="token-google"),
     path("tokens/github", GithubSocialLoginView.as_view(), name="token-github"),
     path("", include(router.urls)),

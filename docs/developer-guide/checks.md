@@ -210,34 +210,9 @@ Each check **must** populate the report with an unique identifier for the audite
     - Resource Name — `report.resource_name`.
         - The name of the Github resource. In the case of a repository, this is just the repository name. For full repository names use the resource `full_name`.
 
-### Using the Audit Configuration
+### Configurable Checks in Prowler
 
-Prowler has a [configuration file](../tutorials/configuration_file.md) which is used to pass certain configuration values to the checks. For example:
-
-```python title="ec2_securitygroup_with_many_ingress_egress_rules.py"
-class ec2_securitygroup_with_many_ingress_egress_rules(Check):
-    def execute(self):
-        findings = []
-
-        max_security_group_rules = ec2_client.audit_config.get(
-            "max_security_group_rules", 50
-        )
-        for security_group_arn, security_group in ec2_client.security_groups.items():
-```
-
-We use the `audit_config` object to retrieve the value of `max_security_group_rules`, which is the default value of 50 if the configuration value is not present.
-
-The configuration file is located at [`prowler/config/config.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml) and is used to pass certain configuration values to the checks. For example:
-
-```yaml title="config.yaml"
-  aws:
-    max_security_group_rules: 50
-```
-
-This `audit_config` object is a Python dictionary that stores values read from the configuration file. It can be accessed by the check using the `audit_config` attribute of the service client.
-
-???+ note
-    Always use the `dictionary.get(value, default)` syntax to ensure a default value is set when the configuration value is not present.
+See [Configurable Checks](./configurable-checks.md) for detailed information on making checks configurable using the `audit_config` object and configuration file.
 
 ## Metadata Structure for Prowler Checks
 

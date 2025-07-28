@@ -127,8 +127,8 @@ You operate in an agent loop, iterating through these steps:
 - Fetches information related to:
  - All findings data across providers. Supports filtering by severity, status, etc.
  - Unique metadata values from findings
- - Remediation for checks
- - Check IDs supported by different provider types
+ - Available checks for a specific provider (aws, gcp, azure, kubernetes, etc)
+ - Details of a specific check including details about severity, risk, remediation, compliances that are associated with the check, etc
 
 ### roles_agent
 

@@ -143,7 +143,7 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
 };
 
 export const getUserByMe = async (accessToken: string) => {
-  const url = new URL(`${apiBaseUrl}/users/me`);
+  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -171,11 +171,26 @@ export const getUserByMe = async (accessToken: string) => {
       }
     }
 
+    const userRole = parsedResponse.included?.find(
+      (item: any) => item.type === "roles",
+    );
+
+    const permissions = {
+      manage_users: userRole.attributes.manage_users || false,
+      manage_account: userRole.attributes.manage_account || false,
+      manage_providers: userRole.attributes.manage_providers || false,
+      manage_scans: userRole.attributes.manage_scans || false,
+      manage_integrations: userRole.attributes.manage_integrations || false,
+      manage_billing: userRole.attributes.manage_billing || false,
+      unlimited_visibility: userRole.attributes.unlimited_visibility || false,
+    };
+
     return {
       name: parsedResponse.data.attributes.name,
       email: parsedResponse.data.attributes.email,
       company: parsedResponse.data.attributes.company_name,
       dateJoined: parsedResponse.data.attributes.date_joined,
+      permissions,
     };
   } catch (error: any) {
     throw new Error(error.message || "Network error or server unreachable");

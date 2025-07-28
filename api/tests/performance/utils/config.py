@@ -13,6 +13,23 @@ FINDINGS_RESOURCE_METADATA = {
     "resource_types": "resource_type",
     "services": "service",
 }
+RESOURCE_METADATA = {
+    "regions": "region",
+    "types": "type",
+    "services": "service",
+}
+
+RESOURCES_UI_FIELDS = [
+    "name",
+    "failed_findings_count",
+    "region",
+    "service",
+    "type",
+    "provider",
+    "inserted_at",
+    "updated_at",
+    "uid",
+]
 
 S_PROVIDER_NAME = "provider-50k"
 M_PROVIDER_NAME = "provider-250k"

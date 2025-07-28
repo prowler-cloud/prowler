@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
+    NetworkRuleSet,
     ReplicationSettings,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -43,16 +44,18 @@ class Test_storage_geo_redundant_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=False,
-                    network_rule_set=None,
-                    encryption_type=None,
-                    minimum_tls_version=None,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
+                    encryption_type="None",
+                    minimum_tls_version="TLS1_2",
+                    private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
                     replication_settings=ReplicationSettings.STANDARD_GRS,
                 )
             ]
@@ -94,16 +97,18 @@ class Test_storage_geo_redundant_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=False,
-                    network_rule_set=None,
-                    encryption_type=None,
-                    minimum_tls_version=None,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
+                    encryption_type="None",
+                    minimum_tls_version="TLS1_2",
+                    private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
                     replication_settings=ReplicationSettings.STANDARD_LRS,
                 )
             ]

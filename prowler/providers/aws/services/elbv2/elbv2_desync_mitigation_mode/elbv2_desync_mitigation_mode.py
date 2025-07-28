@@ -12,7 +12,7 @@ class elbv2_desync_mitigation_mode(Check):
                 report.status_extended = f"ELBv2 ALB {lb.name} is configured with correct desync mitigation mode."
                 if (
                     lb.desync_mitigation_mode != "strictest"
-                    or lb.desync_mitigation_mode != "defensive"
+                    and lb.desync_mitigation_mode != "defensive"
                 ):
                     if lb.drop_invalid_header_fields == "false":
                         report.status = "FAIL"

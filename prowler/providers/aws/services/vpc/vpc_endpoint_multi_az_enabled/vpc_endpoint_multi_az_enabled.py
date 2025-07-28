@@ -9,10 +9,10 @@ class vpc_endpoint_multi_az_enabled(Check):
             if endpoint.vpc_id in vpc_client.vpcs and endpoint.type == "Interface":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=endpoint)
                 report.status = "FAIL"
-                report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has subnets in different AZs."
+                report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} does not have subnets in different AZs."
                 if len(endpoint.subnet_ids) > 1:
                     report.status = "PASS"
-                    report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} does not have subnets in different AZs."
+                    report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has subnets in different AZs."
 
                 findings.append(report)
 
