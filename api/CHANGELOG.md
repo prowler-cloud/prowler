@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [v1.11.0] (Prowler v5.10.0)
+
+### Added
+- PDF reporting for Prowler TheatScore [(#8018)](https://github.com/prowler-cloud/prowler/pull/8018)
+
+---
+
 ## [v1.10.1] (Prowler v5.9.1)
 
 ### Fixed
