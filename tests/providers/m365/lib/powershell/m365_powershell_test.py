@@ -5,6 +5,7 @@ import pytest
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
     M365GraphConnectionError,
+    M365UserCredentialsError,
     M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.lib.powershell.m365_powershell import M365PowerShell
@@ -111,15 +112,9 @@ class Testm365PowerShell:
         session.close()
 
     @patch("subprocess.Popen")
-    @patch("msal.ConfidentialClientApplication")
-    def test_test_credentials(self, mock_msal, mock_popen):
+    def test_test_credentials(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        mock_msal_instance = MagicMock()
-        mock_msal.return_value = mock_msal_instance
-        mock_msal_instance.acquire_token_by_username_password.return_value = {
-            "access_token": "test_token"
-        }
 
         credentials = M365Credentials(
             user="test@contoso.onmicrosoft.com",
@@ -141,7 +136,9 @@ class Testm365PowerShell:
 
         # Mock encrypt_password to return a known value
         session.encrypt_password = MagicMock(return_value="encrypted_password")
-        session.execute = MagicMock()
+
+        # Mock execute to simulate successful Connect-ExchangeOnline
+        session.execute = MagicMock(return_value="Connected successfully")
 
         # Execute the test
         result = session.test_credentials(credentials)
@@ -154,18 +151,10 @@ class Testm365PowerShell:
         session.execute.assert_any_call(
             f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
         )
+        session.execute.assert_any_call(
+            "Connect-ExchangeOnline -Credential $credential"
+        )
 
-        # Verify MSAL was called with the correct parameters
-        mock_msal.assert_called_once_with(
-            client_id="test_client_id",
-            client_credential="test_client_secret",
-            authority="https://login.microsoftonline.com/test_tenant_id",
-        )
-        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
-            username="test@contoso.onmicrosoft.com",
-            password="test_password",  # Original password, not encrypted
-            scopes=["https://graph.microsoft.com/.default"],
-        )
         session.close()
 
     @patch("subprocess.Popen")
@@ -253,13 +242,9 @@ class Testm365PowerShell:
         session.close()
 
     @patch("subprocess.Popen")
-    @patch("msal.ConfidentialClientApplication")
-    def test_test_credentials_auth_failure(self, mock_msal, mock_popen):
+    def test_test_credentials_auth_failure_aadsts_error(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        mock_msal_instance = MagicMock()
-        mock_msal.return_value = mock_msal_instance
-        mock_msal_instance.acquire_token_by_username_password.return_value = None
 
         credentials = M365Credentials(
             user="test@contoso.onmicrosoft.com",
@@ -279,46 +264,37 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock the execute method to return the decrypted password
-        def mock_execute(command, *args, **kwargs):
-            if "Write-Output" in command:
-                return "decrypted_password"
-            return None
+        # Mock encrypt_password and execute to simulate AADSTS error
+        session.encrypt_password = MagicMock(return_value="encrypted_password")
+        session.execute = MagicMock(
+            return_value="AADSTS50126: Error validating credentials due to invalid username or password"
+        )
 
-        session.execute = MagicMock(side_effect=mock_execute)
-        session.process.stdin.write = MagicMock()
-        session.read_output = MagicMock(return_value="decrypted_password")
-
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(M365UserCredentialsError) as exc_info:
             session.test_credentials(credentials)
+
         assert (
-            "Unexpected error: Acquiring token in behalf of user did not return a result."
+            "AADSTS50126: Error validating credentials due to invalid username or password"
             in str(exc_info.value)
         )
 
-        mock_msal.assert_called_once_with(
-            client_id="test_client_id",
-            client_credential="test_client_secret",
-            authority="https://login.microsoftonline.com/test_tenant_id",
+        # Verify execute was called with the correct commands
+        session.execute.assert_any_call(
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
         )
-        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
-            username="test@contoso.onmicrosoft.com",
-            password="test_password",
-            scopes=["https://graph.microsoft.com/.default"],
+        session.execute.assert_any_call(
+            f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
+        )
+        session.execute.assert_any_call(
+            "Connect-ExchangeOnline -Credential $credential"
         )
 
         session.close()
 
     @patch("subprocess.Popen")
-    @patch("msal.ConfidentialClientApplication")
-    def test_test_credentials_auth_failure_no_access_token(self, mock_msal, mock_popen):
+    def test_test_credentials_auth_failure_no_access_token(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        mock_msal_instance = MagicMock()
-        mock_msal.return_value = mock_msal_instance
-        mock_msal_instance.acquire_token_by_username_password.return_value = {
-            "error_description": "invalid_grant: authentication failed"
-        }
 
         credentials = M365Credentials(
             user="test@contoso.onmicrosoft.com",
@@ -338,31 +314,29 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock the execute method to return the decrypted password
-        def mock_execute(command, *args, **kwargs):
-            if "Write-Output" in command:
-                return "decrypted_password"
-            return None
+        # Mock encrypt_password and execute to simulate AADSTS invalid grant error
+        session.encrypt_password = MagicMock(return_value="encrypted_password")
+        session.execute = MagicMock(
+            return_value="AADSTS70002: The request body must contain the following parameter: 'client_secret' or 'client_assertion'."
+        )
 
-        session.execute = MagicMock(side_effect=mock_execute)
-        session.process.stdin.write = MagicMock()
-        session.read_output = MagicMock(return_value="decrypted_password")
-
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(M365UserCredentialsError) as exc_info:
             session.test_credentials(credentials)
-        assert "MsGraph Error invalid_grant: authentication failed" in str(
-            exc_info.value
+
+        assert (
+            "AADSTS70002: The request body must contain the following parameter: 'client_secret' or 'client_assertion'."
+            in str(exc_info.value)
         )
 
-        mock_msal.assert_called_once_with(
-            client_id="test_client_id",
-            client_credential="test_client_secret",
-            authority="https://login.microsoftonline.com/test_tenant_id",
+        # Verify execute was called with the correct commands
+        session.execute.assert_any_call(
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
         )
-        mock_msal_instance.acquire_token_by_username_password.assert_called_once_with(
-            username="test@contoso.onmicrosoft.com",
-            password="test_password",
-            scopes=["https://graph.microsoft.com/.default"],
+        session.execute.assert_any_call(
+            f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
+        )
+        session.execute.assert_any_call(
+            "Connect-ExchangeOnline -Credential $credential"
         )
 
         session.close()
