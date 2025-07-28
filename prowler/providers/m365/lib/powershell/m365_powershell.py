@@ -1,12 +1,11 @@
 import os
 import platform
 
-import msal
-
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
     M365GraphConnectionError,
+    M365UserCredentialsError,
     M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.lib.jwt.jwt_decoder import decode_jwt, decode_msal_token
@@ -161,26 +160,13 @@ class M365PowerShell(PowerShellSession):
                     message=f"The user domain {user_domain} does not match any of the tenant domains: {', '.join(self.tenant_identity.tenant_domains)}",
                 )
 
-            app = msal.ConfidentialClientApplication(
-                client_id=credentials.client_id,
-                client_credential=credentials.client_secret,
-                authority=f"https://login.microsoftonline.com/{credentials.tenant_id}",
-            )
-
             # Validate credentials
-            result = app.acquire_token_by_username_password(
-                username=credentials.user,
-                password=credentials.passwd,
-                scopes=["https://graph.microsoft.com/.default"],
-            )
-
-            if result is None:
-                raise Exception(
-                    "Unexpected error: Acquiring token in behalf of user did not return a result."
+            result = self.execute("Connect-ExchangeOnline -Credential $credential")
+            if "AADSTS" in result:
+                raise M365UserCredentialsError(
+                    file=os.path.basename(__file__),
+                    message=result,
                 )
-
-            if "access_token" not in result:
-                raise Exception(f"MsGraph Error {result.get('error_description')}")
 
             return True
 
