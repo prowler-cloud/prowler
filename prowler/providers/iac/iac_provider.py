@@ -337,6 +337,9 @@ class IacProvider(Provider):
             return reports
 
         except Exception as error:
+            if "No such file or directory: 'checkov'" in str(error):
+                logger.critical("Please, install checkov using 'pip install checkov'")
+                sys.exit(1)
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
