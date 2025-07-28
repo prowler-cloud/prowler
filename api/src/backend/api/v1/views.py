@@ -22,7 +22,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, Prefetch, Q, Sum
+from django.db.models import Count, F, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -2054,6 +2054,21 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             )
         )
 
+    def _should_prefetch_findings(self) -> bool:
+        fields_param = self.request.query_params.get("fields[resources]", "")
+        include_param = self.request.query_params.get("include", "")
+        return (
+            fields_param == ""
+            or "findings" in fields_param.split(",")
+            or "findings" in include_param.split(",")
+        )
+
+    def _get_findings_prefetch(self):
+        findings_queryset = Finding.all_objects.defer("scan", "resources").filter(
+            tenant_id=self.request.tenant_id
+        )
+        return [Prefetch("findings", queryset=findings_queryset)]
+
     def get_serializer_class(self):
         if self.action in ["metadata", "metadata_latest"]:
             return ResourceMetadataSerializer
@@ -2077,7 +2092,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             filtered_queryset,
             manager=Resource.all_objects,
             select_related=["provider"],
-            prefetch_related=["findings"],
+            prefetch_related=(
+                self._get_findings_prefetch()
+                if self._should_prefetch_findings()
+                else []
+            ),
         )
 
     def retrieve(self, request, *args, **kwargs):
@@ -2102,14 +2121,18 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+        latest_scans = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id,
+                state=StateChoices.COMPLETED,
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
-            .values_list("id", flat=True)
+            .values("provider_id")
         )
+
         filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, provider__scan__in=latest_scan_ids
+            provider_id__in=Subquery(latest_scans)
         )
 
         return self.paginate_by_pk(
@@ -2117,7 +2140,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             filtered_queryset,
             manager=Resource.all_objects,
             select_related=["provider"],
-            prefetch_related=["findings"],
+            prefetch_related=(
+                self._get_findings_prefetch()
+                if self._should_prefetch_findings()
+                else []
+            ),
         )
 
     @action(detail=False, methods=["get"], url_name="metadata")

@@ -2,10 +2,18 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [v1.11.0] (Prowler v5.10.0)
+## [1.11.0] (Prowler UNRELEASED)
 
 ### Added
+- Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - PDF reporting for Prowler TheatScore [(#8018)](https://github.com/prowler-cloud/prowler/pull/8018)
+
+---
+
+## [1.10.2] (Prowler v5.9.2)
+
+### Changed
+- Optimized queries for resources views [(#8336)](https://github.com/prowler-cloud/prowler/pull/8336)
 
 ---
 

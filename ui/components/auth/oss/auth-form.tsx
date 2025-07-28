@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Link, Tooltip } from "@nextui-org/react";
+import { Button, Checkbox, Divider, Tooltip } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -15,6 +15,7 @@ import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import {
   Form,
   FormControl,
@@ -301,13 +302,12 @@ export const AuthForm = ({
                               onChange={(e) => field.onChange(e.target.checked)}
                             >
                               I agree with the&nbsp;
-                              <Link
+                              <CustomLink
                                 href="https://prowler.com/terms-of-service/"
                                 size="sm"
-                                target="_blank"
                               >
                                 Terms of Service
-                              </Link>
+                              </CustomLink>
                               &nbsp;of Prowler
                             </Checkbox>
                           </FormControl>
@@ -359,13 +359,9 @@ export const AuthForm = ({
                       content={
                         <div className="flex-inline text-small">
                           Social Login with Google is not enabled.{" "}
-                          <Link
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-medium text-primary"
-                          >
+                          <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration">
                             Read the docs
-                          </Link>
+                          </CustomLink>
                         </div>
                       }
                       placement="right-start"
@@ -392,13 +388,9 @@ export const AuthForm = ({
                       content={
                         <div className="flex-inline text-small">
                           Social Login with Github is not enabled.{" "}
-                          <Link
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-medium text-primary"
-                          >
+                          <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration">
                             Read the docs
-                          </Link>
+                          </CustomLink>
                         </div>
                       }
                       placement="right-start"
@@ -451,12 +443,16 @@ export const AuthForm = ({
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;
-              <Link href="/sign-up">Sign up</Link>
+              <CustomLink size="base" href="/sign-up" target="_self">
+                Sign up
+              </CustomLink>
             </p>
           ) : (
             <p className="text-center text-small">
               Already have an account?&nbsp;
-              <Link href="/sign-in">Log in</Link>
+              <CustomLink size="base" href="/sign-in" target="_self">
+                Log in
+              </CustomLink>
             </p>
           )}
         </div>
