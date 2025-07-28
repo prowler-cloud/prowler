@@ -1,6 +1,7 @@
 name: UI - E2E Tests
 
 on:
+  push:
   pull_request:
     branches:
       - master
@@ -23,6 +24,10 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Start API services
         run: |
+          # Override docker-compose image tag to use latest instead of stable
+          # This overrides any PROWLER_API_VERSION set in .env file
+          export PROWLER_API_VERSION=latest
+          echo "Using PROWLER_API_VERSION=${PROWLER_API_VERSION}"
           docker compose up -d api worker worker-beat
       - name: Wait for API to be ready
         run: |
@@ -40,19 +45,6 @@ jobs:
           done
           echo "Timeout waiting for prowler-api to start"
           exit 1
-      - name: Run database migrations
-        run: |
-          echo "Running Django migrations..."
-          docker compose exec -T api sh -c '
-            poetry run python manage.py migrate --database admin
-          '
-          echo "Database migrations completed!"
-      # TODO: Delete this step once API image is built with new fixtures (Prowler 5.10.0)
-      - name: Copy local fixtures into API container
-        run: |
-          # Get the actual container name dynamically
-          CONTAINER_NAME=$(docker compose ps -q api)
-          docker cp ./api/src/backend/api/fixtures/dev/. ${CONTAINER_NAME}:/home/prowler/backend/api/fixtures/dev
       - name: Load database fixtures for E2E tests
         run: |
           docker compose exec -T api sh -c '
