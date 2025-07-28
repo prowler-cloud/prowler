@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Set
 
+from checkov.common.output.record import Record
 from pydantic.v1 import BaseModel, ValidationError, validator
 
 from prowler.config.config import Provider
@@ -147,6 +148,36 @@ class CheckMetadata(BaseModel):
         if not resource_type or not isinstance(resource_type, str):
             raise ValueError("ResourceType must be a non-empty string")
         return resource_type
+
+    @validator("ServiceName", pre=True, always=True)
+    def validate_service_name(cls, service_name, values):
+        if not service_name:
+            raise ValueError("ServiceName must be a non-empty string")
+
+        check_id = values.get("CheckID")
+        if check_id:
+            service_from_check_id = check_id.split("_")[0]
+            if service_name != service_from_check_id:
+                raise ValueError(
+                    f"ServiceName {service_name} does not belong to CheckID {check_id}"
+                )
+            if not service_name.islower():
+                raise ValueError(f"ServiceName {service_name} must be in lowercase")
+
+        return service_name
+
+    @validator("CheckID", pre=True, always=True)
+    def valid_check_id(cls, check_id):
+        if not check_id:
+            raise ValueError("CheckID must be a non-empty string")
+
+        if check_id:
+            if "-" in check_id:
+                raise ValueError(
+                    f"CheckID {check_id} contains a hyphen, which is not allowed"
+                )
+
+        return check_id
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
@@ -441,6 +472,8 @@ class Check_Report:
             self.resource = resource.to_dict()
         elif is_dataclass(resource):
             self.resource = asdict(resource)
+        elif hasattr(resource, "__dict__"):
+            self.resource = resource.__dict__
         else:
             logger.error(
                 f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"
@@ -519,7 +552,11 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "name", None)
             or ""
         )
-        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_name = (
+            resource_name
+            or getattr(resource, "name", "")
+            or getattr(resource, "id", "")
+        )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (
             location
@@ -622,7 +659,7 @@ class CheckReportIAC(Check_Report):
     resource_path: str
     resource_line_range: str
 
-    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+    def __init__(self, metadata: dict = {}, resource: Record = None) -> None:
         """
         Initialize the IAC Check's finding information from a Checkov failed_check dict.
 
@@ -630,11 +667,10 @@ class CheckReportIAC(Check_Report):
             metadata (Dict): Optional check metadata (can be None).
             failed_check (dict): A single failed_check result from Checkov's JSON output.
         """
-        super().__init__(metadata, finding)
-
-        self.resource_name = getattr(finding, "resource", "")
-        self.resource_path = getattr(finding, "file_path", "")
-        self.resource_line_range = getattr(finding, "file_line_range", "")
+        super().__init__(metadata, resource)
+        self.resource_name = resource.resource
+        self.resource_path = resource.file_path
+        self.resource_line_range = resource.file_line_range
 
 
 @dataclass

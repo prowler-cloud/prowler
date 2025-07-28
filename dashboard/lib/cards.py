@@ -4,7 +4,10 @@ from dash import html
 
 
 def create_provider_card(
-    provider: str, provider_logo: str, account_type: str, filtered_data
+    provider: str,
+    provider_logo: str,
+    account_type: str,
+    filtered_data,
 ) -> List[html.Div]:
     """
     Card to display the provider's name and icon.

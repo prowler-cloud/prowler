@@ -9,8 +9,12 @@ prowler gcp --organization-id organization-id
 ```
 
 ???+ warning
+<<<<<<< HEAD
     Ensure the credentials used have one of the following roles at the organization level:
     Cloud Asset Viewer (`roles/cloudasset.viewer`), or Cloud Asset Owner (`roles/cloudasset.owner`).
+=======
+    Make sure that the used credentials have a role with the `cloudasset.assets.listResource` permission on the organization level like `roles/cloudasset.viewer` (Cloud Asset Viewer) or `roles/cloudasset.owner` (Cloud Asset Owner).
+>>>>>>> master
 
 ???+ note
     With this option, Prowler retrieves all projects under the specified Google Cloud organization, including those organized within folders and nested subfolders. This ensures full visibility across the entire organization’s hierarchy.

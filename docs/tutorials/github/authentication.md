@@ -29,11 +29,10 @@ prowler github --oauth-app-token oauth_token
 ```
 
 ### GitHub App Credentials
-
-Use GitHub App credentials by specifying the App ID and the private key.
+Use GitHub App credentials by specifying the App ID and the private key path.
 
 ```console
-prowler github --github-app-id app_id --github-app-key app_key
+prowler github --github-app-id app_id --github-app-key-path app_key_path
 ```
 
 ### Automatic Login Method Detection
@@ -41,8 +40,8 @@ prowler github --github-app-id app_id --github-app-key app_key
 If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
 
 1. `GITHUB_PERSONAL_ACCESS_TOKEN`
-2. `OAUTH_APP_TOKEN`
-3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
+2. `GITHUB_OAUTH_APP_TOKEN`
+3. `GITHUB_APP_ID` and `GITHUB_APP_KEY` (where the key is the content of the private key file)
 
 ???+ note
   Ensure the corresponding environment variables are set up before running Prowler for automatic detection if you don't plan to specify the login method.
