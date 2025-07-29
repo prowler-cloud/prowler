@@ -18,7 +18,9 @@ export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
 export AWS_SESSION_TOKEN="XXXXXXXXX"
 ```
 
-These credentials must be associated with a user or role with the necessary permissions to perform security checks. Assign Required AWS Permissions
+These credentials must be associated with a user or role with the necessary permissions to perform security checks. 
+
+## Assign Required AWS Permissions
 To ensure full functionality, attach the following AWS managed policies to the designated user or role:
 
 - `arn:aws:iam::aws:policy/SecurityAudit`

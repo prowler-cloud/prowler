@@ -11,11 +11,11 @@ By default Prowler is able to scan the following AWS partitions:
 
 ## Scanning AWS China and GovCloud Partitions in Prowler
 
-When scanning the China (`aws-cn`) or GovCloud (`aws-us-gov`) , ensure one of the following:
+When scanning the China (`aws-cn`) or GovCloud (`aws-us-gov`), ensure one of the following:
 
-Your AWS credentials include a valid region within the desired partition.
+- Your AWS credentials include a valid region within the desired partition.
 
-Specify the regions to audit within that partition using the `-f/--region` flag.
+- Specify the regions to audit within that partition using the `-f/--region` flag.
 
 ???+ note
     Refer to: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials for more information about the AWS credential configuration.

@@ -1,6 +1,6 @@
 # Installing Prowler in AWS CloudShell
 
-## Following the migration of AWS CloudShell from
+## Following the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023
 
 AWS CloudShell has migrated from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html). With this transition, Python 3.9 is now included by default in AL2023, eliminating the need for manual compilation.
 
@@ -25,7 +25,9 @@ To download results from AWS CloudShell:
 
 ## Cloning Prowler from GitHub
 
-Due to the limited storage in AWS CloudShell's home directory, installing Poetry dependencies for running Prowler from GitHub can be problematic. The following workaround ensures successful installation: The following is a workaround to solve this issue:
+Due to the limited storage in AWS CloudShell's home directory, installing Poetry dependencies for running Prowler from GitHub can be problematic. 
+
+The following workaround ensures successful installation: 
 
 ```shell
 sudo bash

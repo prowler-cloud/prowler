@@ -1,4 +1,4 @@
-# Resource ARN-based Scannnig
+# Resource ARN-based Scanning
 
 Prowler enables scanning of resources based on specific AWS Resource ARNs.
 
