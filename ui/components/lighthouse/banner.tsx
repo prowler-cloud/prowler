@@ -14,14 +14,12 @@ const renderBanner = ({ message, href, gradient }: BannerConfig) => (
     <div
       className={`w-full rounded-lg ${gradient} shadow-lg transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-opacity-50`}
     >
-      <div className="p-6">
+      <div className="px-4 py-3">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
             <Bot size={24} className="text-white" />
           </div>
-          <div className="text-left">
-            <p className="text-xl font-semibold text-white">{message}</p>
-          </div>
+          <p className="text-md font-medium text-white">{message}</p>
         </div>
       </div>
     </div>
