@@ -72,11 +72,9 @@ export const BaseCredentialsForm = ({
 
   const currentVia = searchParamsObj.get("via");
 
-  // Determinar si se debe mostrar el botón de retroceso
   const shouldShowBackButton =
     showBackButton && VIA_VALUES_WITH_BACK_BUTTON.includes(currentVia as any);
 
-  // Función para renderizar el formulario de credenciales apropiado
   const renderCredentialsForm = () => {
     switch (providerType) {
       case "aws":
