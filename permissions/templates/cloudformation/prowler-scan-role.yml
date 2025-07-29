@@ -12,6 +12,8 @@ Description: |
   all read-only permissions to scan your account for security issues.
   Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
   It sets the trust policy on that IAM Role to permit Prowler to assume that role.
+  This template is designed to be used in Prowler Cloud, but can also be used in other Prowler deployments.
+  If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId, IAMPrincipal and ExternalId parameters.
 Parameters:
   ExternalId:
     Description: |

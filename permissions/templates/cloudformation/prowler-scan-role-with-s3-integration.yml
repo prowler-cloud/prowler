@@ -12,8 +12,14 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   This template creates the ProwlerScan IAM Role in this account with
   all read-only permissions to scan your account for security issues.
-  Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
+  Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and inline policies.
   It sets the trust policy on that IAM Role to permit Prowler to assume that role.
+  Additionally, this template includes S3 integration permissions that allow Prowler
+  to store scan reports in your specified S3 bucket with appropriate security controls.
+  This template can also be used to update an existing ProwlerScan role deployment
+  since it only adds S3 permissions.
+  This template is designed to be used in Prowler Cloud, but can also be used in other Prowler deployments.
+  If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId, IAMPrincipal and ExternalId parameters.
 Parameters:
   ExternalId:
     Description: |
