@@ -20,8 +20,3 @@ output "s3_integration_enabled" {
   description = "Whether S3 integration is enabled"
   value       = var.enable_s3_integration
 }
-
-output "s3_integration_policy_name" {
-  description = "Name of the S3 integration policy (if enabled)"
-  value       = var.enable_s3_integration ? module.s3_integration[0].policy_name : null
-}
