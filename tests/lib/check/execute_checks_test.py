@@ -32,12 +32,7 @@ class TestExecuteChecks(unittest.TestCase):
         self.mock_config_file = "mock_config.yaml"
 
     @patch("prowler.lib.check.check.import_check")
-    @patch("prowler.lib.check.check.execute")
-    @patch("prowler.lib.check.check.report")
-    @patch("prowler.lib.check.check.update_audit_metadata")
     @patch("prowler.lib.check.check.alive_bar")
-    @patch("prowler.lib.check.check.print_boxes")
-    @patch("prowler.lib.check.check.print")
     def test_execute_checks_applies_severity_patch(
         self,
         mock_alive_bar,
@@ -69,12 +64,7 @@ class TestExecuteChecks(unittest.TestCase):
         self.assertEqual(mock_check_instance.Severity, Severity.critical)
 
     @patch("prowler.lib.check.check.import_check")
-    @patch("prowler.lib.check.check.execute")
-    @patch("prowler.lib.check.check.report")
-    @patch("prowler.lib.check.check.update_audit_metadata")
     @patch("prowler.lib.check.check.alive_bar")
-    @patch("prowler.lib.check.check.print_boxes")
-    @patch("prowler.lib.check.check.print")
     def test_execute_checks_no_severity_patch(
         self,
         mock_alive_bar,
