@@ -1,11 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-# You can invoke CloudFormation and pass the principal ARN from a command line like this:
+# You can invoke CloudFormation and pass the parameters from a command line like this:
 # aws cloudformation create-stack \
 #  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
-#  --template-body "file://prowler-pro-saas-scan-role.yaml" \
-#  --stack-name "ProwlerProSaaSScanRole" \
-#  --parameters "ParameterKey=ExternalId,ParameterValue=ProvidedExternalID"
+#  --template-body "file://prowler-scan-role-with-s3-integration.yml" \
+#  --stack-name "ProwlerScanRoleWithS3Integration" \
+#  --parameters "ParameterKey=ExternalId,ParameterValue=your-external-id-here" \
+#               "ParameterKey=S3IntegrationBucketName,ParameterValue=your-bucket-name" \
+#               "ParameterKey=S3IntegrationBucketAccount,ParameterValue=123456789012"
 
 Description: |
   This template creates the ProwlerScan IAM Role in this account with
@@ -34,14 +36,18 @@ Parameters:
       The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
     Type: String
     Default: role/prowler*
-  S3BucketName:
+  S3IntegrationBucketName:
     Description: |
       The S3 bucket name where Prowler will store scan reports for your cloud providers.
     Type: String
-  S3BucketAccount:
+  S3IntegrationBucketAccount:
     Description: |
       The AWS Account ID owner of the S3 Bucket.
     Type: String
+    MinLength: 12
+    MaxLength: 12
+    AllowedPattern: "[0-9]{12}"
+    ConstraintDescription: "S3IntegrationBucketAccount must be a valid 12-digit AWS Account ID."
 
 Resources:
   ProwlerScan:
@@ -132,26 +138,26 @@ Resources:
                 Action:
                   - "s3:PutObject"
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::${S3BucketName}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*"
                 Condition:
                   StringEquals:
-                    "s3:ResourceAccount": !Sub ${S3BucketAccount}
+                    "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
               - Effect: Allow
                 Action:
                   - "s3:GetBucketLocation"
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::${S3BucketName}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}"
                 Condition:
                   StringEquals:
-                    "s3:ResourceAccount": !Sub ${S3BucketAccount}
+                    "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
               - Effect: Allow
                 Action:
                   - "s3:DeleteObject"
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::${S3BucketName}/*test-prowler-connection.txt"
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*test-prowler-connection.txt"
                 Condition:
                   StringEquals:
-                    "s3:ResourceAccount": !Sub ${S3BucketAccount}
+                    "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
       Tags:
         - Key: "Service"
           Value: "https://prowler.com"

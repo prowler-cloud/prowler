@@ -3,8 +3,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 # You can invoke CloudFormation and pass the principal ARN from a command line like this:
 # aws cloudformation create-stack \
 #  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
-#  --template-body "file://prowler-pro-saas-scan-role.yaml" \
-#  --stack-name "ProwlerProSaaSScanRole" \
+#  --template-body "file://prowler-scan-role.yaml" \
+#  --stack-name "ProwlerScanRole" \
 #  --parameters "ParameterKey=ExternalId,ParameterValue=ProvidedExternalID"
 
 Description: |
