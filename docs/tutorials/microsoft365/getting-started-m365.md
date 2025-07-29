@@ -257,7 +257,7 @@ This method is not recommended because it requires a user with MFA enabled and M
     - `AZURE_CLIENT_SECRET` from earlier
 
     If you are using user authentication, also add:
-    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
+    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication)
     - `M365_PASSWORD` the password of the user
 
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
