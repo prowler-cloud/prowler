@@ -1,0 +1,31 @@
+# Prowler Configuration File Example with Severity Patches
+# This file shows how to configure severity patches for Prowler checks
+
+# AWS Provider Configuration
+aws:
+  # AWS Regions Configuration
+  # If no regions are specified, all enabled regions will be used
+  regions:
+    - us-east-1
+    - eu-west-1
+  
+  # Severity Patches Configuration
+  # This allows overriding the default severity for specific checks
+  # Format: check_id: new_severity
+  # Valid severities: critical, high, medium, low, informational
+  severity_patches:
+    ec2_ami_public: high            # Change from critical to high
+    cloudtrail_logs_s3_validation: critical  # Change from medium to critical
+    iam_user_mfa_enabled_console_access: medium  # Change from high to medium
+
+# Azure Provider Configuration
+azure:
+  # Severity Patches Configuration for Azure
+  severity_patches:
+    defender_ensure_defender_for_app_services_is_on: low  # Change from medium to low
+
+# GCP Provider Configuration
+gcp:
+  # Severity Patches Configuration for GCP
+  severity_patches:
+    gcp_iam_no_service_account_keys: high  # Change from medium to high

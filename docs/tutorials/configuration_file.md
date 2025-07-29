@@ -126,6 +126,41 @@ The following list includes all the GitHub checks with configurable variables th
 ???+ note
     This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
 
+## Severity Patches
+
+Prowler allows you to override the default severity of checks using the `severity_patches` configuration in the config file. This is useful when you want to adjust the severity of specific findings to better match your organization's risk assessment or compliance requirements.
+
+The severity patches are defined per provider and allow you to map check IDs to new severity values. The valid severity values are:
+
+- `critical`
+- `high`
+- `medium`
+- `low`
+- `informational`
+
+### Example Severity Patches Configuration
+
+```yaml
+# AWS Provider Configuration
+aws:
+  # Other AWS configurations...
+  
+  # Severity Patches Configuration
+  severity_patches:
+    ec2_ami_public: high            # Change from critical to high
+    cloudtrail_logs_s3_validation: critical  # Change from medium to critical
+
+# Azure Provider Configuration
+azure:
+  # Other Azure configurations...
+  
+  # Severity Patches for Azure
+  severity_patches:
+    defender_ensure_defender_for_app_services_is_on: low  # Change from medium to low
+```
+
+When you run Prowler with this configuration, it will use the patched severity values instead of the default ones defined in the check's metadata file. The patched severities will be reflected in all output formats (CLI, CSV, JSON, etc.).
+
 ```yaml title="config.yaml"
 # AWS Configuration
 aws:
