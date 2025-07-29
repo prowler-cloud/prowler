@@ -178,7 +178,7 @@ export const MutedFindingsConfigForm = ({
             </li>
             <li>
               Learn more about configuring the Mutelist{" "}
-              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/">
+              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-mute-findings/#mutelist-config-file">
                 here
               </CustomLink>
               .
