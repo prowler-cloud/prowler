@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Divider } from "@nextui-org/react";
+import { ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
@@ -10,10 +11,10 @@ import { createIntegration, updateIntegration } from "@/actions/integrations";
 import { ProviderSelector } from "@/components/providers/provider-selector";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
-import { FormSubmitButton } from "@/components/ui/form/form-buttons";
+import { FormButtons } from "@/components/ui/form/form-buttons";
 import { getAWSCredentialsTemplateBucketLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
 import {
@@ -338,74 +339,42 @@ export const S3IntegrationForm = ({
         : "Updating Credentials...";
 
       return (
-        <div className="flex w-full justify-end space-x-4">
-          <CustomButton
-            type="button"
-            ariaLabel="Cancel"
-            className="w-1/2 bg-transparent"
-            variant="faded"
-            size="lg"
-            onPress={onCancel}
-            isDisabled={isLoading}
-          >
-            Cancel
-          </CustomButton>
-          <div className="w-1/2">
-            <FormSubmitButton loadingText={loadingText} isDisabled={isLoading}>
-              {updateText}
-            </FormSubmitButton>
-          </div>
-        </div>
+        <FormButtons
+          setIsOpen={() => {}}
+          onCancel={onCancel}
+          submitText={updateText}
+          cancelText="Cancel"
+          loadingText={loadingText}
+          isDisabled={isLoading}
+        />
       );
     }
 
     // Creation flow - step 0
     if (currentStep === 0) {
       return (
-        <div className="flex w-full justify-end space-x-4">
-          <CustomButton
-            type="button"
-            ariaLabel="Cancel"
-            className="w-1/2 bg-transparent"
-            variant="faded"
-            size="lg"
-            onPress={onCancel}
-            isDisabled={isLoading}
-          >
-            Cancel
-          </CustomButton>
-          <div className="w-1/2">
-            <FormSubmitButton
-              loadingText="Processing..."
-              isDisabled={isLoading}
-            >
-              Next
-            </FormSubmitButton>
-          </div>
-        </div>
+        <FormButtons
+          setIsOpen={() => {}}
+          onCancel={onCancel}
+          submitText="Next"
+          cancelText="Cancel"
+          loadingText="Processing..."
+          isDisabled={isLoading}
+          rightIcon={<ArrowRightIcon size={24} />}
+        />
       );
     }
 
     // Creation flow - step 1 (final step)
     return (
-      <div className="flex w-full justify-between space-x-4">
-        <CustomButton
-          type="button"
-          ariaLabel="Back"
-          className="w-1/2 bg-transparent"
-          variant="faded"
-          size="lg"
-          onPress={handleBack}
-          isDisabled={isLoading}
-        >
-          Back
-        </CustomButton>
-        <div className="w-1/2">
-          <FormSubmitButton loadingText="Creating..." isDisabled={isLoading}>
-            Create Integration
-          </FormSubmitButton>
-        </div>
-      </div>
+      <FormButtons
+        setIsOpen={() => {}}
+        onCancel={handleBack}
+        submitText="Create Integration"
+        cancelText="Back"
+        loadingText="Creating..."
+        isDisabled={isLoading}
+      />
     );
   };
 
