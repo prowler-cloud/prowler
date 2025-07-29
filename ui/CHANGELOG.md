@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.9.3] (Prowler v5.9.3)
+
+### 🚀 Added
+
+- Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+
 ## [v1.9.0] (Prowler v5.9.0)
 
 ### 🚀 Added
