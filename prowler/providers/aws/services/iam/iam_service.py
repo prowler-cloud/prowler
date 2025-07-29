@@ -865,7 +865,10 @@ class IAM(AWSService):
                     SAMLProviderArn=resource.arn
                 ).get("Tags", [])
         except Exception as error:
-            if error.response["Error"]["Code"] == "NoSuchEntityException":
+            if error.response["Error"]["Code"] in [
+                "NoSuchEntity",
+                "NoSuchEntityException",
+            ]:
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )

@@ -141,7 +141,7 @@ The permissions you need to grant depends on whether you are using user credenti
 
 #### If using application(service principal) authentication (Recommended)
 
-To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration.
+To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration. All of this assignments are done through Entra ID.
 
 ???+ warning "Warning"
     You need to have a license that allows you to use the APIs.
@@ -156,19 +156,21 @@ To grant the permissions for the PowerShell modules via application authenticati
 
     ![Exchange.ManageAsApp Permission](./img/exchange-permission.png)
 
-    You also need to assign the `Exchange Administrator` role to the app. For that go to `Roles and administrators` and in the `Administrative roles` section click `here` to go to the directory level assignment:
+    You also need to assign the `Global Reader` role to the app. For that go to `Roles and administrators` and in the `Administrative roles` section click `here` to go to the directory level assignment:
 
     ![Roles and administrators](./img/here.png)
 
-    Once in the directory level assignment, search for `Exchange Administrator` and click on it to open the assginments page of that role.
+    Once in the directory level assignment, search for `Global Reader` and click on it to open the assginments page of that role.
 
-    ![Exchange Administrator Role](./img/exchange-administrator-role.png)
+    ![Global Reader Role](./img/global-reader-role.png)
 
     Click on `Add assignments`, search for your app and click on `Assign`.
 
     You have to select it as `Active` and click on `Assign` to assign the role to the app.
 
-    ![Assign Exchange Administrator Role](./img/assign-exchange-administrator-role.png)
+    ![Assign Global Reader Role](./img/assign-global-reader-role.png)
+
+    For more information about the need of adding this role, see [Microsoft documentation](https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps#step-5-assign-microsoft-entra-roles-to-the-application). You can select any other role of the specified.
 
 2. Add Teams API:
 
@@ -255,7 +257,7 @@ This method is not recommended because it requires a user with MFA enabled and M
     - `AZURE_CLIENT_SECRET` from earlier
 
     If you are using user authentication, also add:
-    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication-recommended)
+    - `M365_USER` the user using the correct assigned domain, more info [here](../../getting-started/requirements.md#service-principal-and-user-credentials-authentication)
     - `M365_PASSWORD` the password of the user
 
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
