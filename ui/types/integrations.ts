@@ -115,7 +115,7 @@ export const s3IntegrationFormSchema = z
     }
 
     // Role ARN is always required for S3 integrations (for cross-account access)
-    if (!data.role_arn) {
+    if (!data.role_arn || data.role_arn.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Role ARN is required for S3 integrations",
@@ -123,7 +123,8 @@ export const s3IntegrationFormSchema = z
       });
     }
 
-    if (!data.external_id) {
+    // External ID is required but should be provided automatically by tenant ID
+    if (!data.external_id || data.external_id.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "External ID is required for S3 integrations",

@@ -117,7 +117,7 @@ export const S3IntegrationCard = ({
                           "Unknown Bucket"}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-300">
-                        Output Directory:{" "}
+                        Output directory:{" "}
                         {integration.attributes.configuration
                           .output_directory ||
                           integration.attributes.configuration.path ||

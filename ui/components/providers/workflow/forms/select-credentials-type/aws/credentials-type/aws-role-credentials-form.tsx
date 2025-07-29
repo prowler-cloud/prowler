@@ -10,10 +10,16 @@ export const AWSRoleCredentialsForm = ({
   control,
   setValue,
   externalId,
+  templateLinks,
 }: {
   control: Control<AWSCredentialsRole>;
   setValue: UseFormSetValue<AWSCredentialsRole>;
   externalId: string;
+  templateLinks: {
+    cloudformation: string;
+    cloudformationQuickLink: string;
+    terraform: string;
+  };
 }) => {
   const credentialsType = useWatch({
     control,
@@ -103,7 +109,10 @@ export const AWSRoleCredentialsForm = ({
       )}
       <Divider />
       <span className="text-xs font-bold text-default-500">Assume Role</span>
-      <CredentialsRoleHelper />
+      <CredentialsRoleHelper
+        externalId={externalId}
+        templateLinks={templateLinks}
+      />
 
       <Spacer y={2} />
 
@@ -142,9 +151,9 @@ export const AWSRoleCredentialsForm = ({
           control={control}
           name={ProviderCredentialFields.ROLE_SESSION_NAME}
           type="text"
-          label="Role Session Name"
+          label="Role session name"
           labelPlacement="inside"
-          placeholder="Enter the Role Session Name"
+          placeholder="Enter the role session name"
           variant="bordered"
           isRequired={false}
           isInvalid={
@@ -157,9 +166,9 @@ export const AWSRoleCredentialsForm = ({
           control={control}
           name={ProviderCredentialFields.SESSION_DURATION}
           type="number"
-          label="Session Duration (seconds)"
+          label="Session duration (seconds)"
           labelPlacement="inside"
-          placeholder="Enter the session duration (default: 3600)"
+          placeholder="Enter the session duration (default: 3600 seconds)"
           variant="bordered"
           isRequired={false}
           isInvalid={

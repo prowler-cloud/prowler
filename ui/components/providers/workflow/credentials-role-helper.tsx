@@ -1,14 +1,22 @@
 "use client";
 
 import { Snippet } from "@nextui-org/react";
-import { useSession } from "next-auth/react";
 
 import { CustomButton } from "@/components/ui/custom";
-import { getAWSCredentialsTemplateLinks } from "@/lib";
 
-export const CredentialsRoleHelper = () => {
-  const { data: session } = useSession();
+interface CredentialsRoleHelperProps {
+  externalId: string;
+  templateLinks: {
+    cloudformation: string;
+    cloudformationQuickLink: string;
+    terraform: string;
+  };
+}
 
+export const CredentialsRoleHelper = ({
+  externalId,
+  templateLinks,
+}: CredentialsRoleHelperProps) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-4">
@@ -20,7 +28,7 @@ export const CredentialsRoleHelper = () => {
           ariaLabel="Use the following AWS CloudFormation Quick Link to deploy the IAM Role"
           color="transparent"
           className="h-auto w-fit min-w-0 p-0 text-blue-500"
-          asLink={`${getAWSCredentialsTemplateLinks().cloudformationQuickLink}${session?.tenantId}`}
+          asLink={templateLinks.cloudformationQuickLink}
           target="_blank"
         >
           Use the following AWS CloudFormation Quick Link to deploy the IAM Role
@@ -33,6 +41,7 @@ export const CredentialsRoleHelper = () => {
           </span>
           <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
         </div>
+
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Use one of the following templates to create the IAM role:
         </p>
@@ -42,7 +51,7 @@ export const CredentialsRoleHelper = () => {
             ariaLabel="CloudFormation Template"
             color="transparent"
             className="h-auto w-fit min-w-0 p-0 text-blue-500"
-            asLink={getAWSCredentialsTemplateLinks().cloudformation}
+            asLink={templateLinks.cloudformation}
             target="_blank"
           >
             CloudFormation Template
@@ -51,7 +60,7 @@ export const CredentialsRoleHelper = () => {
             ariaLabel="Terraform Code"
             color="transparent"
             className="h-auto w-fit min-w-0 p-0 text-blue-500"
-            asLink={getAWSCredentialsTemplateLinks().terraform}
+            asLink={templateLinks.terraform}
             target="_blank"
           >
             Terraform Code
@@ -66,9 +75,7 @@ export const CredentialsRoleHelper = () => {
           color="warning"
           hideSymbol
         >
-          <p className="whitespace-pre-line text-xs font-bold">
-            {session?.tenantId}
-          </p>
+          <p className="whitespace-pre-line text-xs font-bold">{externalId}</p>
         </Snippet>
       </div>
     </div>

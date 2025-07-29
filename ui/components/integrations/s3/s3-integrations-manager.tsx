@@ -29,6 +29,9 @@ export const S3IntegrationsManager = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIntegration, setEditingIntegration] =
     useState<IntegrationProps | null>(null);
+  const [editMode, setEditMode] = useState<
+    "configuration" | "credentials" | null
+  >(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isOperationLoading, setIsOperationLoading] = useState(false);
@@ -36,11 +39,19 @@ export const S3IntegrationsManager = ({
 
   const handleAddIntegration = () => {
     setEditingIntegration(null);
+    setEditMode(null); // Creation mode
     setIsModalOpen(true);
   };
 
-  const handleEditIntegration = (integration: IntegrationProps) => {
+  const handleEditConfiguration = (integration: IntegrationProps) => {
     setEditingIntegration(integration);
+    setEditMode("configuration");
+    setIsModalOpen(true);
+  };
+
+  const handleEditCredentials = (integration: IntegrationProps) => {
+    setEditingIntegration(integration);
+    setEditMode("credentials");
     setIsModalOpen(true);
   };
 
@@ -106,11 +117,13 @@ export const S3IntegrationsManager = ({
   const handleModalClose = () => {
     setIsModalOpen(false);
     setEditingIntegration(null);
+    setEditMode(null);
   };
 
   const handleFormSuccess = () => {
     setIsModalOpen(false);
     setEditingIntegration(null);
+    setEditMode(null);
     setIsOperationLoading(true);
     // Reset loading state after a short delay to show the skeleton briefly
     setTimeout(() => {
@@ -124,7 +137,13 @@ export const S3IntegrationsManager = ({
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
         title={
-          editingIntegration ? "Edit S3 Integration" : "Add S3 Integration"
+          editMode === "configuration"
+            ? "Edit Configuration"
+            : editMode === "credentials"
+              ? "Edit Credentials"
+              : editingIntegration
+                ? "Edit S3 Integration"
+                : "Add S3 Integration"
         }
       >
         <S3IntegrationForm
@@ -132,6 +151,7 @@ export const S3IntegrationsManager = ({
           providers={providers}
           onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
+          editMode={editMode}
         />
       </CustomAlertModal>
 
@@ -178,7 +198,7 @@ export const S3IntegrationsManager = ({
                             "Unknown Bucket"}
                         </h4>
                         <p className="text-xs text-gray-500 dark:text-gray-300">
-                          Output Directory:{" "}
+                          Output directory:{" "}
                           {integration.attributes.configuration
                             .output_directory ||
                             integration.attributes.configuration.path ||
@@ -233,10 +253,19 @@ export const S3IntegrationsManager = ({
                         size="sm"
                         variant="bordered"
                         startContent={<SettingsIcon size={14} />}
-                        onPress={() => handleEditIntegration(integration)}
-                        ariaLabel="Edit integration"
+                        onPress={() => handleEditConfiguration(integration)}
+                        ariaLabel="Edit configuration"
                       >
-                        Edit
+                        Config
+                      </CustomButton>
+                      <CustomButton
+                        size="sm"
+                        variant="bordered"
+                        startContent={<SettingsIcon size={14} />}
+                        onPress={() => handleEditCredentials(integration)}
+                        ariaLabel="Edit credentials"
+                      >
+                        Credentials
                       </CustomButton>
                       <CustomButton
                         size="sm"

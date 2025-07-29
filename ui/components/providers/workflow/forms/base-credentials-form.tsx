@@ -7,6 +7,7 @@ import { Control } from "react-hook-form";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
+import { getAWSCredentialsTemplateScanLinks } from "@/lib";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
   AWSCredentials,
@@ -59,6 +60,8 @@ export const BaseCredentialsForm = ({
     successNavigationUrl,
   });
 
+  const templateLinks = getAWSCredentialsTemplateScanLinks(externalId);
+
   return (
     <Form {...form}>
       <form
@@ -85,6 +88,7 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<AWSCredentialsRole>}
             setValue={form.setValue as any}
             externalId={externalId}
+            templateLinks={templateLinks}
           />
         )}
         {providerType === "aws" && searchParamsObj.get("via") !== "role" && (

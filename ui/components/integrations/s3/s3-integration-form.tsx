@@ -12,7 +12,7 @@ import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/se
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { filterEmptyValues } from "@/lib";
+import { getAWSCredentialsTemplateBucketLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
 import {
   editS3IntegrationFormSchema,
@@ -26,6 +26,7 @@ interface S3IntegrationFormProps {
   providers: ProviderProps[];
   onSuccess: () => void;
   onCancel: () => void;
+  editMode?: "configuration" | "credentials" | null; // null means creating new
 }
 
 export const S3IntegrationForm = ({
@@ -33,40 +34,54 @@ export const S3IntegrationForm = ({
   providers,
   onSuccess,
   onCancel,
+  editMode = null,
 }: S3IntegrationFormProps) => {
   const { data: session } = useSession();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(
+    editMode === "credentials" ? 1 : 0,
+  );
   const isEditing = !!integration;
+  const isCreating = !isEditing;
+  const isEditingConfig = editMode === "configuration";
+  const isEditingCredentials = editMode === "credentials";
 
   // Create the form with updated schema and default values
   const form = useForm({
     resolver: zodResolver(
-      isEditing ? editS3IntegrationFormSchema : s3IntegrationFormSchema,
+      // For credentials editing, use creation schema (all fields required)
+      // For config editing, use edit schema (partial updates allowed)
+      // For creation, use creation schema
+      isEditingCredentials || isCreating
+        ? s3IntegrationFormSchema
+        : editS3IntegrationFormSchema,
     ),
     defaultValues: {
       integration_type: "amazon_s3" as const,
-      bucket_name: integration?.attributes.configuration.bucket_name || "",
-      output_directory:
-        integration?.attributes.configuration.output_directory || "",
+      // For configuration editing, don't prefill to allow partial updates
+      bucket_name: isEditingConfig
+        ? ""
+        : integration?.attributes.configuration.bucket_name || "",
+      output_directory: isEditingConfig
+        ? ""
+        : integration?.attributes.configuration.output_directory || "",
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
       credentials_type: "aws-sdk-default" as const,
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
-      role_arn:
-        integration?.attributes.configuration.credentials?.role_arn || "",
+      // For credentials editing, show current values as placeholders but require new input
+      role_arn: isEditingCredentials
+        ? ""
+        : integration?.attributes.configuration.credentials?.role_arn || "",
+      // External ID always defaults to tenantId, even when editing credentials
       external_id:
         integration?.attributes.configuration.credentials?.external_id ||
         session?.tenantId ||
         "",
-      role_session_name:
-        integration?.attributes.configuration.credentials?.role_session_name ||
-        "",
-      session_duration:
-        integration?.attributes.configuration.credentials?.session_duration?.toString() ||
-        "3600",
+      role_session_name: "",
+      session_duration: isEditingCredentials ? "" : "3600",
     },
   });
 
@@ -75,7 +90,12 @@ export const S3IntegrationForm = ({
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent form submission
 
-    // Validate current step fields
+    // If we're in single-step edit mode, don't advance
+    if (isEditingConfig || isEditingCredentials) {
+      return;
+    }
+
+    // Validate current step fields for creation flow
     const stepFields =
       currentStep === 0
         ? (["bucket_name", "output_directory", "providers"] as const)
@@ -94,34 +114,75 @@ export const S3IntegrationForm = ({
   const onSubmit = async (values: any) => {
     const formData = new FormData();
 
-    const configuration = {
-      bucket_name: values.bucket_name,
-      output_directory: values.output_directory,
-    };
-
-    // Build credentials object based on credentials_type
-    const baseCredentials = {
-      role_arn: values.role_arn,
-      external_id: values.external_id,
-      role_session_name: values.role_session_name,
-      session_duration: parseInt(values.session_duration, 10) || 3600,
-    };
-
-    // Add static credentials only if using access-secret-key type
-    const credentials: any =
-      values.credentials_type === "access-secret-key"
-        ? filterEmptyValues({
-            ...baseCredentials,
-            aws_access_key_id: values.aws_access_key_id,
-            aws_secret_access_key: values.aws_secret_access_key,
-            aws_session_token: values.aws_session_token,
-          })
-        : filterEmptyValues(baseCredentials);
-
     formData.append("integration_type", values.integration_type);
-    formData.append("configuration", JSON.stringify(configuration));
-    formData.append("credentials", JSON.stringify(credentials));
-    formData.append("providers", JSON.stringify(values.providers));
+
+    // Handle different edit modes
+    if (isEditingConfig) {
+      // Only send configuration changes
+      const configuration: any = {};
+      if (values.bucket_name) configuration.bucket_name = values.bucket_name;
+      if (values.output_directory)
+        configuration.output_directory = values.output_directory;
+
+      if (Object.keys(configuration).length > 0) {
+        formData.append("configuration", JSON.stringify(configuration));
+      }
+
+      if (values.providers && values.providers.length > 0) {
+        formData.append("providers", JSON.stringify(values.providers));
+      }
+    } else if (isEditingCredentials) {
+      // For credentials editing, require all credential fields like creation
+      const credentials: any = {
+        role_arn: values.role_arn,
+        external_id: values.external_id,
+      };
+
+      // Optional fields
+      if (values.role_session_name)
+        credentials.role_session_name = values.role_session_name;
+      if (values.session_duration)
+        credentials.session_duration =
+          parseInt(values.session_duration, 10) || 3600;
+
+      // Add static credentials if using access-secret-key type
+      if (values.credentials_type === "access-secret-key") {
+        credentials.aws_access_key_id = values.aws_access_key_id;
+        credentials.aws_secret_access_key = values.aws_secret_access_key;
+        if (values.aws_session_token)
+          credentials.aws_session_token = values.aws_session_token;
+      }
+
+      formData.append("credentials", JSON.stringify(credentials));
+    } else {
+      // Creation mode - send everything
+      const configuration = {
+        bucket_name: values.bucket_name,
+        output_directory: values.output_directory,
+      };
+
+      const credentials: any = {
+        role_arn: values.role_arn,
+        external_id: values.external_id,
+      };
+
+      if (values.role_session_name)
+        credentials.role_session_name = values.role_session_name;
+      if (values.session_duration)
+        credentials.session_duration =
+          parseInt(values.session_duration, 10) || 3600;
+
+      if (values.credentials_type === "access-secret-key") {
+        credentials.aws_access_key_id = values.aws_access_key_id;
+        credentials.aws_secret_access_key = values.aws_secret_access_key;
+        if (values.aws_session_token)
+          credentials.aws_session_token = values.aws_session_token;
+      }
+
+      formData.append("configuration", JSON.stringify(configuration));
+      formData.append("credentials", JSON.stringify(credentials));
+      formData.append("providers", JSON.stringify(values.providers));
+    }
 
     try {
       let result;
@@ -181,7 +242,28 @@ export const S3IntegrationForm = ({
   };
 
   const renderStepContent = () => {
-    if (currentStep === 0) {
+    // If editing credentials, show only credentials form
+    if (isEditingCredentials || currentStep === 1) {
+      const bucketName = form.getValues("bucket_name") || "";
+      const externalId =
+        form.getValues("external_id") || session?.tenantId || "";
+      const templateLinks = getAWSCredentialsTemplateBucketLinks(
+        bucketName,
+        externalId,
+      );
+
+      return (
+        <AWSRoleCredentialsForm
+          control={form.control as unknown as Control<AWSCredentialsRole>}
+          setValue={form.setValue as any}
+          externalId={externalId}
+          templateLinks={templateLinks}
+        />
+      );
+    }
+
+    // Show configuration step (step 0 or editing configuration)
+    if (isEditingConfig || currentStep === 0) {
       return (
         <>
           {/* Provider Selection */}
@@ -228,17 +310,49 @@ export const S3IntegrationForm = ({
       );
     }
 
-    // Step 2: AWS Credentials using AWSRoleCredentialsForm
-    return (
-      <AWSRoleCredentialsForm
-        control={form.control as unknown as Control<AWSCredentialsRole>}
-        setValue={form.setValue as any}
-        externalId={session?.tenantId || ""}
-      />
-    );
+    // Fallback (shouldn't reach here)
+    return null;
   };
 
   const renderStepButtons = () => {
+    // Single edit mode (configuration or credentials)
+    if (isEditingConfig || isEditingCredentials) {
+      const updateText = isEditingConfig
+        ? "Update Configuration"
+        : "Update Credentials";
+      const loadingText = isEditingConfig
+        ? "Updating Configuration..."
+        : "Updating Credentials...";
+
+      return (
+        <div className="flex w-full justify-end space-x-4">
+          <CustomButton
+            type="button"
+            ariaLabel="Cancel"
+            className="w-1/2 bg-transparent"
+            variant="faded"
+            size="lg"
+            onPress={onCancel}
+            isDisabled={isLoading}
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            type="submit"
+            ariaLabel={updateText}
+            className="w-1/2"
+            variant="solid"
+            color="action"
+            size="lg"
+            isLoading={isLoading}
+          >
+            {isLoading ? loadingText : updateText}
+          </CustomButton>
+        </div>
+      );
+    }
+
+    // Creation flow - step 0
     if (currentStep === 0) {
       return (
         <div className="flex w-full justify-end space-x-4">
@@ -268,7 +382,7 @@ export const S3IntegrationForm = ({
       );
     }
 
-    // Step 2 buttons
+    // Creation flow - step 1 (final step)
     return (
       <div className="flex w-full justify-between space-x-4">
         <CustomButton
@@ -284,20 +398,14 @@ export const S3IntegrationForm = ({
         </CustomButton>
         <CustomButton
           type="submit"
-          ariaLabel={`${isEditing ? "Update" : "Create"} S3 Integration`}
+          ariaLabel="Create S3 Integration"
           className="w-1/2"
           variant="solid"
           color="action"
           size="lg"
           isLoading={isLoading}
         >
-          {isLoading ? (
-            <>{isEditing ? "Updating..." : "Creating..."}</>
-          ) : (
-            <span>
-              {isEditing ? "Update Integration" : "Create Integration"}
-            </span>
-          )}
+          {isLoading ? "Creating..." : "Create Integration"}
         </CustomButton>
       </div>
     );
@@ -306,10 +414,19 @@ export const S3IntegrationForm = ({
   return (
     <Form {...form}>
       <form
-        onSubmit={currentStep === 0 ? handleNext : form.handleSubmit(onSubmit)}
+        onSubmit={
+          // For edit modes, always submit
+          isEditingConfig || isEditingCredentials
+            ? form.handleSubmit(onSubmit)
+            : // For creation flow, handle step logic
+              currentStep === 0
+              ? handleNext
+              : form.handleSubmit(onSubmit)
+        }
         className="flex flex-col space-y-6"
       >
-        <Divider />
+        {/* Only show divider if not in single edit mode */}
+        {!isEditingConfig && !isEditingCredentials && <Divider />}
 
         {/* Step Content */}
         <div className="space-y-6">{renderStepContent()}</div>

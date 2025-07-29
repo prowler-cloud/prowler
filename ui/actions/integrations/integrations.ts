@@ -20,10 +20,7 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
   }
 
   try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers,
-    });
+    const response = await fetch(url.toString(), { method: "GET", headers });
 
     if (response.ok) {
       const data = await response.json();
@@ -43,10 +40,7 @@ export const getIntegration = async (id: string) => {
   const url = new URL(`${apiBaseUrl}/integrations/${id}`);
 
   try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers,
-    });
+    const response = await fetch(url.toString(), { method: "GET", headers });
 
     if (response.ok) {
       const data = await response.json();
@@ -76,11 +70,7 @@ export const createIntegration = async (
     const integrationData = {
       data: {
         type: "integrations",
-        attributes: {
-          integration_type,
-          configuration,
-          credentials,
-        },
+        attributes: { integration_type, configuration, credentials },
         relationships: {
           providers: {
             data: providers.map((providerId: string) => ({
@@ -138,10 +128,7 @@ export const updateIntegration = async (id: string, formData: FormData) => {
       data: {
         type: "integrations",
         id,
-        attributes: {
-          integration_type,
-          configuration,
-        },
+        attributes: { integration_type, configuration },
       },
     };
 
@@ -191,10 +178,7 @@ export const deleteIntegration = async (id: string) => {
   const url = new URL(`${apiBaseUrl}/integrations/${id}`);
 
   try {
-    const response = await fetch(url.toString(), {
-      method: "DELETE",
-      headers,
-    });
+    const response = await fetch(url.toString(), { method: "DELETE", headers });
 
     if (response.ok) {
       revalidatePath("/integrations/s3");
@@ -216,10 +200,7 @@ export const testIntegrationConnection = async (id: string) => {
   const url = new URL(`${apiBaseUrl}/integrations/${id}/connection`);
 
   try {
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers,
-    });
+    const response = await fetch(url.toString(), { method: "POST", headers });
 
     if (response.ok) {
       const data = await response.json();
