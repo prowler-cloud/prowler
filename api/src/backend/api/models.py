@@ -205,6 +205,7 @@ class Provider(RowLevelSecurityProtectedModel):
         GCP = "gcp", _("GCP")
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
+        GITHUB = "github", _("GitHub")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -262,6 +263,16 @@ class Provider(RowLevelSecurityProtectedModel):
                 "starting and ending with a lowercase letter or number, containing only "
                 "lowercase alphanumeric characters and hyphens) or a valid AWS EKS Cluster ARN, GCP GKE Context Name or Azure AKS Cluster Name.",
                 code="kubernetes-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_github_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$", value):
+            raise ModelValidationError(
+                detail="GitHub provider ID must be a valid GitHub username or organization name (1-39 characters, "
+                "starting with alphanumeric, containing only alphanumeric characters and hyphens).",
+                code="github-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -476,6 +487,13 @@ class Scan(RowLevelSecurityProtectedModel):
                 condition=Q(state=StateChoices.COMPLETED),
                 name="scans_prov_state_ins_desc_idx",
             ),
+            # TODO This might replace `scans_prov_state_ins_desc_idx` completely. Review usage
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                condition=Q(state=StateChoices.COMPLETED),
+                include=["id"],
+                name="scans_prov_ins_desc_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -561,6 +579,8 @@ class Resource(RowLevelSecurityProtectedModel):
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
 
+    failed_findings_count = models.IntegerField(default=0)
+
     # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
@@ -606,6 +626,10 @@ class Resource(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider_id"],
                 name="resources_tenant_provider_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "-failed_findings_count", "id"],
+                name="resources_failed_findings_idx",
             ),
         ]
 
@@ -849,6 +873,16 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
         #   - tenant_id
         #   - id
 
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "finding_id"],
+                name="rfm_tenant_finding_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "resource_id"],
+                name="rfm_tenant_resource_idx",
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "resource_id", "finding_id"),

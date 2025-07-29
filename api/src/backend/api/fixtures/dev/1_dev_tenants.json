@@ -46,5 +46,24 @@
       "role": "member",
       "date_joined": "2024-09-19T11:03:59.712Z"
     }
+  },
+  {
+    "model": "api.tenant",
+    "pk": "7c8f94a3-e2d1-4b3a-9f87-2c4d5e6f1a2b",
+    "fields": {
+      "inserted_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "name": "E2E Test Tenant"
+    }
+  },
+  {
+    "model": "api.membership",
+    "pk": "9b1a2c3d-4e5f-6789-abc1-23456789def0",
+    "fields": {
+      "user": "6d4f8a91-3c2e-4b5a-8f7d-1e9c5b2a4d6f",
+      "tenant": "7c8f94a3-e2d1-4b3a-9f87-2c4d5e6f1a2b",
+      "role": "owner",
+      "date_joined": "2024-01-01T00:00:00.000Z"
+    }
   }
 ]

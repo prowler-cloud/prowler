@@ -20,11 +20,11 @@ from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 def mock_check_metadata(provider):
     return CheckMetadata(
         Provider=provider,
-        CheckID="mock_check_id",
+        CheckID="service_check_id",
         CheckTitle="mock_check_title",
         CheckType=[],
         CheckAliases=[],
-        ServiceName="mock_service_name",
+        ServiceName="service",
         SubServiceName="",
         ResourceIdTemplate="",
         Severity="high",
@@ -201,11 +201,11 @@ class TestFinding:
 
         # Metadata
         assert finding_output.metadata.Provider == "aws"
-        assert finding_output.metadata.CheckID == "mock_check_id"
+        assert finding_output.metadata.CheckID == "service_check_id"
         assert finding_output.metadata.CheckTitle == "mock_check_title"
         assert finding_output.metadata.CheckType == []
         assert finding_output.metadata.CheckAliases == []
-        assert finding_output.metadata.ServiceName == "mock_service_name"
+        assert finding_output.metadata.ServiceName == "service"
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
@@ -227,11 +227,11 @@ class TestFinding:
 
         # Properties
         assert finding_output.provider == "aws"
-        assert finding_output.check_id == "mock_check_id"
+        assert finding_output.check_id == "service_check_id"
         assert finding_output.severity == Severity.high.value
         assert finding_output.status == Status.PASS.value
         assert finding_output.resource_type == "mock_resource_type"
-        assert finding_output.service_name == "mock_service_name"
+        assert finding_output.service_name == "service"
         assert finding_output.raw == {}
 
     def test_generate_output_azure(self):
@@ -302,11 +302,11 @@ class TestFinding:
 
         # Metadata
         assert finding_output.metadata.Provider == "azure"
-        assert finding_output.metadata.CheckID == "mock_check_id"
+        assert finding_output.metadata.CheckID == "service_check_id"
         assert finding_output.metadata.CheckTitle == "mock_check_title"
         assert finding_output.metadata.CheckType == []
         assert finding_output.metadata.CheckAliases == []
-        assert finding_output.metadata.ServiceName == "mock_service_name"
+        assert finding_output.metadata.ServiceName == "service"
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
@@ -397,11 +397,11 @@ class TestFinding:
 
         # Metadata
         assert finding_output.metadata.Provider == "gcp"
-        assert finding_output.metadata.CheckID == "mock_check_id"
+        assert finding_output.metadata.CheckID == "service_check_id"
         assert finding_output.metadata.CheckTitle == "mock_check_title"
         assert finding_output.metadata.CheckType == []
         assert finding_output.metadata.CheckAliases == []
-        assert finding_output.metadata.ServiceName == "mock_service_name"
+        assert finding_output.metadata.ServiceName == "service"
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
@@ -482,11 +482,11 @@ class TestFinding:
 
         # Metadata
         assert finding_output.metadata.Provider == "kubernetes"
-        assert finding_output.metadata.CheckID == "mock_check_id"
+        assert finding_output.metadata.CheckID == "service_check_id"
         assert finding_output.metadata.CheckTitle == "mock_check_title"
         assert finding_output.metadata.CheckType == []
         assert finding_output.metadata.CheckAliases == []
-        assert finding_output.metadata.ServiceName == "mock_service_name"
+        assert finding_output.metadata.ServiceName == "service"
         assert finding_output.metadata.SubServiceName == ""
         assert finding_output.metadata.ResourceIdTemplate == ""
         assert finding_output.metadata.Severity == Severity.high
@@ -505,6 +505,57 @@ class TestFinding:
         assert finding_output.metadata.RelatedTo == ["check1", "check2"]
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
+
+    def test_generate_output_iac_remote(self):
+        # Mock provider
+        provider = MagicMock()
+        provider.type = "iac"
+        provider.scan_repository_url = "https://github.com/user/repo"
+        provider.auth_method = "No auth"
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.file_path = "/path/to/iac/file.tf"
+        check_output.resource_name = "aws_s3_bucket.example"
+        check_output.resource_path = "/path/to/iac/file.tf"
+        check_output.file_line_range = [1, 5]
+        check_output.resource = {
+            "resource": "aws_s3_bucket.example",
+            "value": {},
+        }
+        check_output.resource_details = "test_resource_details"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="iac")
+        check_output.compliance = {}
+
+        # Mock output options
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        # Generate the finding
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        # Finding
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "No auth"
+        assert finding_output.resource_name == "aws_s3_bucket.example"
+        assert finding_output.resource_uid == "aws_s3_bucket.example"
+        assert finding_output.region == "/path/to/iac/file.tf"
+        assert finding_output.status == Status.PASS
+        assert finding_output.status_extended == "mock_status_extended"
+        assert finding_output.muted is False
+
+        # Metadata
+        assert finding_output.metadata.Provider == "iac"
+        assert finding_output.metadata.CheckID == "service_check_id"
+        assert finding_output.metadata.CheckTitle == "mock_check_title"
+        assert finding_output.metadata.CheckType == []
+        assert finding_output.metadata.CheckAliases == []
+        assert finding_output.metadata.ServiceName == "service"
+        assert finding_output.metadata.SubServiceName == ""
+        assert finding_output.metadata.ResourceIdTemplate == ""
 
     def assert_keys_lowercase(self, d):
         for k, v in d.items():
@@ -599,10 +650,10 @@ class TestFinding:
         # Create a dummy check_metadata dict with all required fields
         check_metadata = {
             "provider": "test_provider",
-            "checkid": "check-001",
+            "checkid": "service_check_001",
             "checktitle": "Test Check",
             "checktype": ["type1"],
-            "servicename": "TestService",
+            "servicename": "service",
             "subservicename": "SubService",
             "severity": "high",
             "resourcetype": "TestResource",
@@ -642,10 +693,10 @@ class TestFinding:
         # Check that metadata was built correctly
         meta = finding_obj.metadata
         assert meta.Provider == "test_provider"
-        assert meta.CheckID == "check-001"
+        assert meta.CheckID == "service_check_001"
         assert meta.CheckTitle == "Test Check"
         assert meta.CheckType == ["type1"]
-        assert meta.ServiceName == "TestService"
+        assert meta.ServiceName == "service"
         assert meta.SubServiceName == "SubService"
         assert meta.Severity == "high"
         assert meta.ResourceType == "TestResource"
@@ -667,7 +718,7 @@ class TestFinding:
         # Check other Finding fields
         assert (
             finding_obj.uid
-            == "prowler-aws-check-001-123456789012-us-east-1-ResourceName1"
+            == "prowler-aws-service_check_001-123456789012-us-east-1-ResourceName1"
         )
         assert finding_obj.status == Status("FAIL")
         assert finding_obj.status_extended == "extended"
@@ -838,10 +889,10 @@ class TestFinding:
         dummy_finding.status_extended = "GCP check extended"
         check_metadata = {
             "provider": "gcp",
-            "checkid": "gcp-check-001",
+            "checkid": "service_gcp_check_001",
             "checktitle": "Test GCP Check",
             "checktype": [],
-            "servicename": "TestGCPService",
+            "servicename": "service",
             "subservicename": "",
             "severity": "medium",
             "resourcetype": "GCPResourceType",
@@ -918,10 +969,10 @@ class TestFinding:
         api_finding.status_extended = "K8s check extended"
         check_metadata = {
             "provider": "kubernetes",
-            "checkid": "k8s-check-001",
+            "checkid": "service_k8s_check_001",
             "checktitle": "Test K8s Check",
             "checktype": [],
-            "servicename": "TestK8sService",
+            "servicename": "service",
             "subservicename": "",
             "severity": "low",
             "resourcetype": "K8sResourceType",
@@ -984,10 +1035,10 @@ class TestFinding:
         dummy_finding.status_extended = "M365 check extended"
         check_metadata = {
             "provider": "m365",
-            "checkid": "m365-check-001",
+            "checkid": "service_m365_check_001",
             "checktitle": "Test M365 Check",
             "checktype": [],
-            "servicename": "TestM365Service",
+            "servicename": "service",
             "subservicename": "",
             "severity": "high",
             "resourcetype": "M365ResourceType",

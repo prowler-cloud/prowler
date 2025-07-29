@@ -3,7 +3,7 @@
   "CheckID": "controllermanager_garbage_collection",
   "CheckTitle": "Ensure that the --terminated-pod-gc-threshold argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "controller-manager",
+  "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

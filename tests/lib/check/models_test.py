@@ -8,7 +8,7 @@ mock_metadata = CheckMetadata(
     CheckID="accessanalyzer_enabled",
     CheckTitle="Check 1",
     CheckType=["type1"],
-    ServiceName="service1",
+    ServiceName="accessanalyzer",
     SubServiceName="subservice1",
     ResourceIdTemplate="template1",
     Severity="high",
@@ -211,7 +211,7 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(
-            bulk_checks_metadata=bulk_metadata, service="service1"
+            bulk_checks_metadata=bulk_metadata, service="accessanalyzer"
         )
 
         # Assertions

@@ -31,8 +31,27 @@ def init_parser(self):
     )
     github_auth_subparser.add_argument(
         "--github-app-key",
+        "--github-app-key-path",
         nargs="?",
         help="GitHub App Key Path to log in against GitHub",
         default=None,
         metavar="GITHUB_APP_KEY",
+    )
+
+    github_scoping_subparser = github_parser.add_argument_group("Scan Scoping")
+    github_scoping_subparser.add_argument(
+        "--repository",
+        "--repositories",
+        nargs="*",
+        help="Repository name(s) to scan in 'owner/repo-name' format",
+        default=None,
+        metavar="REPOSITORY",
+    )
+    github_scoping_subparser.add_argument(
+        "--organization",
+        "--organizations",
+        nargs="*",
+        help="Organization or user name(s) to scan repositories for",
+        default=None,
+        metavar="ORGANIZATION",
     )

@@ -5,12 +5,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
+import { TableLink } from "@/components/ui/custom";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ProviderType, ScanProps } from "@/types";
 
-import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
 import { TriggerIcon } from "../../trigger-icon";
 import { DataTableDownloadDetails } from "./data-table-download-details";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -106,9 +106,25 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const { id } = getScanData(row);
       const scanState = row.original.attributes?.state;
       return (
-        <LinkToFindingsFromScan
-          scanId={id}
+        <TableLink
+          href={`/findings?filter[scan__in]=${id}&filter[status__in]=FAIL`}
           isDisabled={!["completed", "executing"].includes(scanState)}
+          label="See Findings"
+        />
+      );
+    },
+  },
+  {
+    accessorKey: "compliance",
+    header: "Compliance",
+    cell: ({ row }) => {
+      const { id } = getScanData(row);
+      const scanState = row.original.attributes?.state;
+      return (
+        <TableLink
+          href={`/compliance?scanId=${id}`}
+          isDisabled={!["completed", "executing"].includes(scanState)}
+          label="See Compliance"
         />
       );
     },
@@ -120,7 +136,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         <p className="w-fit text-xs">Download</p>
         <Tooltip
           className="text-xs"
-          content="Download a ZIP file containing the JSON (OCSF), CSV, and HTML reports."
+          content="Download a ZIP file that includes the JSON (OCSF), CSV, and HTML scan reports, along with the compliance report."
         >
           <div className="flex items-center gap-2">
             <InfoIcon className="mb-1 text-primary" size={12} />

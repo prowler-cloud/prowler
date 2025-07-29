@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
@@ -10,6 +11,7 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
+from config.custom_logging import BackendLogger
 from config.env import env
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
@@ -20,7 +22,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
+from django.db.models import Count, F, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -76,6 +78,7 @@ from api.filters import (
     IntegrationFilter,
     InvitationFilter,
     LatestFindingFilter,
+    LatestResourceFilter,
     MembershipFilter,
     ProcessorFilter,
     ProviderFilter,
@@ -91,7 +94,6 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
-    ComplianceOverview,
     ComplianceRequirementOverview,
     Finding,
     Integration,
@@ -106,6 +108,7 @@ from api.models import (
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
+    ResourceTag,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -165,6 +168,7 @@ from api.v1.serializers import (
     ProviderSecretUpdateSerializer,
     ProviderSerializer,
     ProviderUpdateSerializer,
+    ResourceMetadataSerializer,
     ResourceSerializer,
     RoleCreateSerializer,
     RoleProviderGroupRelationshipSerializer,
@@ -189,6 +193,8 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+
+logger = logging.getLogger(BackendLogger.API)
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -286,7 +292,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.9.0"
+        spectacular_settings.VERSION = "1.10.2"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -559,10 +565,25 @@ class SAMLConfigurationViewSet(BaseRLSViewSet):
 
 
 class TenantFinishACSView(FinishACSView):
+    def _rollback_saml_user(self, request):
+        """Helper function to rollback SAML user if it was just created and validation fails"""
+        saml_user_id = request.session.get("saml_user_created")
+        if saml_user_id:
+            User.objects.using(MainRouter.admin_db).filter(id=saml_user_id).delete()
+            request.session.pop("saml_user_created", None)
+
     def dispatch(self, request, organization_slug):
-        super().dispatch(request, organization_slug)
+        try:
+            super().dispatch(request, organization_slug)
+        except Exception as e:
+            logger.error(f"SAML dispatch failed: {e}")
+            self._rollback_saml_user(request)
+            callback_url = env.str("AUTH_URL")
+            return redirect(f"{callback_url}?sso_saml_failed=true")
+
         user = getattr(request, "user", None)
         if not user or not user.is_authenticated:
+            self._rollback_saml_user(request)
             callback_url = env.str("AUTH_URL")
             return redirect(f"{callback_url}?sso_saml_failed=true")
 
@@ -585,7 +606,9 @@ class TenantFinishACSView(FinishACSView):
             SocialApp.DoesNotExist,
             SocialAccount.DoesNotExist,
             User.DoesNotExist,
-        ):
+        ) as e:
+            logger.error(f"SAML user is not authenticated: {e}")
+            self._rollback_saml_user(request)
             callback_url = env.str("AUTH_URL")
             return redirect(f"{callback_url}?sso_saml_failed=true")
 
@@ -659,6 +682,7 @@ class TenantFinishACSView(FinishACSView):
         )
         callback_url = env.str("SAML_SSO_CALLBACK_URL")
         redirect_url = f"{callback_url}?id={saml_token.id}"
+        request.session.pop("saml_user_created", None)
 
         return redirect(redirect_url)
 
@@ -1861,6 +1885,14 @@ class TaskViewSet(BaseRLSViewSet):
         summary="List all resources",
         description="Retrieve a list of all resources with options for filtering by various criteria. Resources are "
         "objects that are discovered by Prowler. They can be anything from a single host to a whole VPC.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[updated_at]",
+                description="At least one of the variations of the `filter[updated_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
     ),
     retrieve=extend_schema(
         tags=["Resource"],
@@ -1868,15 +1900,43 @@ class TaskViewSet(BaseRLSViewSet):
         description="Fetch detailed information about a specific resource by their ID. A Resource is an object that "
         "is discovered by Prowler. It can be anything from a single host to a whole VPC.",
     ),
+    metadata=extend_schema(
+        tags=["Resource"],
+        summary="Retrieve metadata values from resources",
+        description="Fetch unique metadata values from a set of resources. This is useful for dynamic filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[updated_at]",
+                description="At least one of the variations of the `filter[updated_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
+        filters=True,
+    ),
+    latest=extend_schema(
+        tags=["Resource"],
+        summary="List the latest resources",
+        description="Retrieve a list of the latest resources from the latest scans for each provider with options for "
+        "filtering by various criteria.",
+        filters=True,
+    ),
+    metadata_latest=extend_schema(
+        tags=["Resource"],
+        summary="Retrieve metadata values from the latest resources",
+        description="Fetch unique metadata values from a set of resources from the latest scans for each provider. "
+        "This is useful for dynamic filtering.",
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ResourceViewSet(BaseRLSViewSet):
-    queryset = Resource.objects.all()
+class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
+    queryset = Resource.all_objects.all()
     serializer_class = ResourceSerializer
     http_method_names = ["get"]
     filterset_class = ResourceFilter
-    ordering = ["-inserted_at"]
+    ordering = ["-failed_findings_count", "-updated_at"]
     ordering_fields = [
         "provider_uid",
         "uid",
@@ -1887,6 +1947,14 @@ class ResourceViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    prefetch_for_includes = {
+        "__all__": [],
+        "provider": [
+            Prefetch(
+                "provider", queryset=Provider.all_objects.select_related("resources")
+            )
+        ],
+    }
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -1895,40 +1963,283 @@ class ResourceViewSet(BaseRLSViewSet):
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
-            queryset = Resource.objects.filter(tenant_id=self.request.tenant_id)
+            queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Resource.objects.filter(
+            queryset = Resource.all_objects.filter(
                 tenant_id=self.request.tenant_id, provider__in=get_providers(user_roles)
             )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
-            # Django's ORM will build a LEFT JOIN and OUTER JOIN on the "through" table, resulting in duplicates
-            # The duplicates then require a `distinct` query
             search_query = SearchQuery(
                 search_value, config="simple", search_type="plain"
             )
             queryset = queryset.filter(
-                Q(tags__key=search_value)
-                | Q(tags__value=search_value)
-                | Q(tags__text_search=search_query)
-                | Q(tags__key__contains=search_value)
-                | Q(tags__value__contains=search_value)
-                | Q(uid=search_value)
-                | Q(name=search_value)
-                | Q(region=search_value)
-                | Q(service=search_value)
-                | Q(type=search_value)
-                | Q(text_search=search_query)
-                | Q(uid__contains=search_value)
-                | Q(name__contains=search_value)
-                | Q(region__contains=search_value)
-                | Q(service__contains=search_value)
-                | Q(type__contains=search_value)
+                Q(text_search=search_query) | Q(tags__text_search=search_query)
             ).distinct()
 
         return queryset
+
+    def _optimize_tags_loading(self, queryset):
+        """Optimize tags loading with prefetch_related to avoid N+1 queries"""
+        # Use prefetch_related to load all tags in a single query
+        return queryset.prefetch_related(
+            Prefetch(
+                "tags",
+                queryset=ResourceTag.objects.filter(
+                    tenant_id=self.request.tenant_id
+                ).select_related(),
+                to_attr="prefetched_tags",
+            )
+        )
+
+    def _should_prefetch_findings(self) -> bool:
+        fields_param = self.request.query_params.get("fields[resources]", "")
+        include_param = self.request.query_params.get("include", "")
+        return (
+            fields_param == ""
+            or "findings" in fields_param.split(",")
+            or "findings" in include_param.split(",")
+        )
+
+    def _get_findings_prefetch(self):
+        findings_queryset = Finding.all_objects.defer("scan", "resources").filter(
+            tenant_id=self.request.tenant_id
+        )
+        return [Prefetch("findings", queryset=findings_queryset)]
+
+    def get_serializer_class(self):
+        if self.action in ["metadata", "metadata_latest"]:
+            return ResourceMetadataSerializer
+        return super().get_serializer_class()
+
+    def get_filterset_class(self):
+        if self.action in ["latest", "metadata_latest"]:
+            return LatestResourceFilter
+        return ResourceFilter
+
+    def filter_queryset(self, queryset):
+        # Do not apply filters when retrieving specific resource
+        if self.action == "retrieve":
+            return queryset
+        return super().filter_queryset(queryset)
+
+    def list(self, request, *args, **kwargs):
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+        return self.paginate_by_pk(
+            request,
+            filtered_queryset,
+            manager=Resource.all_objects,
+            select_related=["provider"],
+            prefetch_related=(
+                self._get_findings_prefetch()
+                if self._should_prefetch_findings()
+                else []
+            ),
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        queryset = self._optimize_tags_loading(self.get_queryset())
+        instance = get_object_or_404(queryset, pk=kwargs.get("pk"))
+        mapping_ids = list(
+            ResourceFindingMapping.objects.filter(
+                resource=instance, tenant_id=request.tenant_id
+            ).values_list("finding_id", flat=True)
+        )
+        latest_findings = (
+            Finding.all_objects.filter(id__in=mapping_ids, tenant_id=request.tenant_id)
+            .order_by("uid", "-inserted_at")
+            .distinct("uid")
+        )
+        setattr(instance, "latest_findings", latest_findings)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="latest")
+    def latest(self, request):
+        tenant_id = request.tenant_id
+        filtered_queryset = self.filter_queryset(self.get_queryset())
+
+        latest_scans = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id,
+                state=StateChoices.COMPLETED,
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values("provider_id")
+        )
+
+        filtered_queryset = filtered_queryset.filter(
+            provider_id__in=Subquery(latest_scans)
+        )
+
+        return self.paginate_by_pk(
+            request,
+            filtered_queryset,
+            manager=Resource.all_objects,
+            select_related=["provider"],
+            prefetch_related=(
+                self._get_findings_prefetch()
+                if self._should_prefetch_findings()
+                else []
+            ),
+        )
+
+    @action(detail=False, methods=["get"], url_name="metadata")
+    def metadata(self, request):
+        # Force filter validation
+        self.filter_queryset(self.get_queryset())
+
+        tenant_id = request.tenant_id
+        query_params = request.query_params
+
+        queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+
+        if scans := query_params.get("filter[scan__in]") or query_params.get(
+            "filter[scan]"
+        ):
+            queryset = queryset.filter(scan_id__in=scans.split(","))
+        else:
+            exact = query_params.get("filter[inserted_at]")
+            gte = query_params.get("filter[inserted_at__gte]")
+            lte = query_params.get("filter[inserted_at__lte]")
+
+            date_filters = {}
+            if exact:
+                date = parse_date(exact)
+                datetime_start = datetime.combine(
+                    date, datetime.min.time(), tzinfo=timezone.utc
+                )
+                datetime_end = datetime_start + timedelta(days=1)
+                date_filters["scan_id__gte"] = uuid7_start(
+                    datetime_to_uuid7(datetime_start)
+                )
+                date_filters["scan_id__lt"] = uuid7_start(
+                    datetime_to_uuid7(datetime_end)
+                )
+            else:
+                if gte:
+                    date_start = parse_date(gte)
+                    datetime_start = datetime.combine(
+                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                    )
+                    date_filters["scan_id__gte"] = uuid7_start(
+                        datetime_to_uuid7(datetime_start)
+                    )
+                if lte:
+                    date_end = parse_date(lte)
+                    datetime_end = datetime.combine(
+                        date_end + timedelta(days=1),
+                        datetime.min.time(),
+                        tzinfo=timezone.utc,
+                    )
+                    date_filters["scan_id__lt"] = uuid7_start(
+                        datetime_to_uuid7(datetime_end)
+                    )
+
+            if date_filters:
+                queryset = queryset.filter(**date_filters)
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get("filter[type]") or query_params.get(
+            "filter[type__in]"
+        ):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
+            )
+
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
+        )
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
+            .distinct()
+            .order_by("resource_type")
+        )
+
+        result = {
+            "services": services,
+            "regions": regions,
+            "types": resource_types,
+        }
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="metadata_latest",
+        url_path="metadata/latest",
+    )
+    def metadata_latest(self, request):
+        tenant_id = request.tenant_id
+        query_params = request.query_params
+
+        latest_scans_queryset = (
+            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+        )
+
+        queryset = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id,
+            scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+        )
+
+        if service_filter := query_params.get("filter[service]") or query_params.get(
+            "filter[service__in]"
+        ):
+            queryset = queryset.filter(service__in=service_filter.split(","))
+        if region_filter := query_params.get("filter[region]") or query_params.get(
+            "filter[region__in]"
+        ):
+            queryset = queryset.filter(region__in=region_filter.split(","))
+        if resource_type_filter := query_params.get("filter[type]") or query_params.get(
+            "filter[type__in]"
+        ):
+            queryset = queryset.filter(
+                resource_type__in=resource_type_filter.split(",")
+            )
+
+        services = list(
+            queryset.values_list("service", flat=True).distinct().order_by("service")
+        )
+        regions = list(
+            queryset.values_list("region", flat=True).distinct().order_by("region")
+        )
+        resource_types = list(
+            queryset.values_list("resource_type", flat=True)
+            .exclude(resource_type__isnull=True)
+            .exclude(resource_type__exact="")
+            .distinct()
+            .order_by("resource_type")
+        )
+
+        result = {
+            "services": services,
+            "regions": regions,
+            "types": resource_types,
+        }
+
+        serializer = self.get_serializer(data=result)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
 
 
 @extend_schema_view(
@@ -2048,17 +2359,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 search_value, config="simple", search_type="plain"
             )
 
-            resource_match = Resource.all_objects.filter(
-                text_search=search_query,
-                id__in=ResourceFindingMapping.objects.filter(
-                    resource_id=OuterRef("pk"),
-                    tenant_id=tenant_id,
-                ).values("resource_id"),
-            )
-
-            queryset = queryset.filter(
-                Q(text_search=search_query) | Q(Exists(resource_match))
-            )
+            queryset = queryset.filter(text_search=search_query)
 
         return queryset
 
@@ -3194,7 +3495,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
-    queryset = ComplianceOverview.objects.all()
+    queryset = ScanSummary.objects.all()
     http_method_names = ["get"]
     ordering = ["-inserted_at"]
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
@@ -3205,19 +3506,10 @@ class OverviewViewSet(BaseRLSViewSet):
         role = get_role(self.request.user)
         providers = get_providers(role)
 
-        def _get_filtered_queryset(model):
-            if role.unlimited_visibility:
-                return model.all_objects.filter(tenant_id=self.request.tenant_id)
-            return model.all_objects.filter(
-                tenant_id=self.request.tenant_id, scan__provider__in=providers
-            )
+        if not role.unlimited_visibility:
+            self.allowed_providers = providers
 
-        if self.action == "providers":
-            return _get_filtered_queryset(Finding)
-        elif self.action in ("findings", "findings_severity", "services"):
-            return _get_filtered_queryset(ScanSummary)
-        else:
-            return super().get_queryset()
+        return ScanSummary.all_objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "providers":
@@ -3250,18 +3542,24 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
         tenant_id = self.request.tenant_id
+        queryset = self.get_queryset()
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
 
         findings_aggregated = (
-            ScanSummary.all_objects.filter(
-                tenant_id=tenant_id, scan_id__in=latest_scan_ids
-            )
+            queryset.filter(scan_id__in=latest_scan_ids)
             .values(
                 "scan__provider_id",
                 provider=F("scan__provider__provider"),
@@ -3297,7 +3595,7 @@ class OverviewViewSet(BaseRLSViewSet):
             )
 
         return Response(
-            OverviewProviderSerializer(overview, many=True).data,
+            self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,
         )
 
@@ -3306,9 +3604,16 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
@@ -3345,9 +3650,16 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
@@ -3367,7 +3679,7 @@ class OverviewViewSet(BaseRLSViewSet):
         for item in severity_counts:
             severity_data[item["severity"]] = item["count"]
 
-        serializer = OverviewSeveritySerializer(severity_data)
+        serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="services")
@@ -3375,9 +3687,16 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
@@ -3395,7 +3714,7 @@ class OverviewViewSet(BaseRLSViewSet):
             .order_by("service")
         )
 
-        serializer = OverviewServiceSerializer(services_data, many=True)
+        serializer = self.get_serializer(services_data, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

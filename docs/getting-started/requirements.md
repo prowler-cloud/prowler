@@ -109,13 +109,12 @@ Prowler will follow the same credentials search as [Google authentication librar
 
 Prowler for Google Cloud needs the following permissions to be set:
 
-- **Viewer (`roles/viewer`) IAM role**: granted at the project / folder / org level in order to scan the target projects
+- **Reader (`roles/reader`) IAM role**: granted at the project / folder / org level in order to scan the target projects
 
 - **Project level settings**: you need to have at least one project with the below settings:
     - Identity and Access Management (IAM) API (`iam.googleapis.com`) enabled by either using the
     [Google Cloud API UI](https://console.cloud.google.com/apis/api/iam.googleapis.com/metrics) or
     by using the gcloud CLI `gcloud services enable iam.googleapis.com --project <your-project-id>` command
-    - Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`) IAM role
     - Set the quota project to be this project by either running `gcloud auth application-default set-quota-project <project-id>` or by setting an environment variable:
     `export GOOGLE_CLOUD_QUOTA_PROJECT=<project-id>`
 
@@ -491,11 +490,15 @@ The provided credentials must have the appropriate permissions to perform all th
 
 ## Infrastructure as Code (IaC)
 
-Prowler's Infrastructure as Code (IaC) provider enables you to scan local infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication.
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication for local scans.
 
 ### Authentication
 
-The IaC provider does not require any authentication or credentials since it scans local files directly. This makes it ideal for CI/CD pipelines and local development environments.
+- For local scans, no authentication is required.
+- For remote repository scans, authentication can be provided via:
+    - [**GitHub Username and Personal Access Token (PAT)**](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+    - [**GitHub OAuth App Token**](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+    - [**Git URL**](https://git-scm.com/docs/git-clone#_git_urls)
 
 ### Supported Frameworks
 
@@ -515,27 +518,3 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 - Kustomize
 - OpenAPI
 - SAST, SCA (Software Composition Analysis)
-
-### Usage
-
-To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
-
-#### Basic Example
-
-```console
-prowler iac --scan-path ./my-iac-directory
-```
-
-#### Specify Frameworks
-
-Scan only Terraform and Kubernetes files:
-
-```console
-prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
-```
-
-#### Exclude Paths
-
-```console
-prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
-```
