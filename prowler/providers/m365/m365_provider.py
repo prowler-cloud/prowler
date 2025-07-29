@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import os
 from argparse import ArgumentTypeError
 from os import getenv
@@ -6,6 +7,7 @@ from uuid import UUID
 
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import (
+    CertificateCredential,
     ClientSecretCredential,
     CredentialUnavailableError,
     DefaultAzureCredential,
@@ -111,11 +113,13 @@ class M365Provider(Provider):
         env_auth: bool = False,
         az_cli_auth: bool = False,
         browser_auth: bool = False,
+        certificate_auth: bool = False,
         tenant_id: str = None,
         client_id: str = None,
         client_secret: str = None,
         user: str = None,
         password: str = None,
+        certificate_content: str = None,
         init_modules: bool = False,
         region: str = "M365Global",
         config_content: dict = None,
@@ -158,11 +162,13 @@ class M365Provider(Provider):
             sp_env_auth,
             env_auth,
             browser_auth,
+            certificate_auth,
             tenant_id,
             client_id,
             client_secret,
             user,
             password,
+            certificate_content,
         )
 
         logger.info("Checking if region is different than default one")
@@ -185,6 +191,7 @@ class M365Provider(Provider):
             sp_env_auth,
             env_auth,
             browser_auth,
+            certificate_auth,
             tenant_id,
             m365_credentials,
             self._region_config,
@@ -196,6 +203,7 @@ class M365Provider(Provider):
             env_auth,
             browser_auth,
             az_cli_auth,
+            certificate_auth,
             self._session,
         )
 
@@ -279,11 +287,13 @@ class M365Provider(Provider):
         sp_env_auth: bool,
         env_auth: bool,
         browser_auth: bool,
+        certificate_auth: bool,
         tenant_id: str,
         client_id: str,
         client_secret: str,
         user: str,
         password: str,
+        certificate_content: str,
     ):
         """
         Validates the authentication arguments for the M365 provider.
@@ -293,6 +303,7 @@ class M365Provider(Provider):
             sp_env_auth (bool): Flag indicating whether application authentication with environment variables is enabled.
             env_auth: (bool): Flag indicating whether to use application and PowerShell authentication with environment variables.
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
+            certificate_auth (bool): Flag indicating whether certificate authentication is enabled.
             tenant_id (str): The M365 Tenant ID.
             client_id (str): The M365 Client ID.
             client_secret (str): The M365 Client Secret.
@@ -314,21 +325,16 @@ class M365Provider(Provider):
                 and not sp_env_auth
                 and not browser_auth
                 and not env_auth
+                and not certificate_auth
             ):
                 raise M365NoAuthenticationMethodError(
                     file=os.path.basename(__file__),
-                    message="M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth]",
+                    message="M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth | --certificate-auth]",
                 )
             elif browser_auth and not tenant_id:
                 raise M365BrowserAuthNoTenantIDError(
                     file=os.path.basename(__file__),
                     message="M365 Tenant ID (--tenant-id) is required for browser authentication mode",
-                )
-        elif env_auth:
-            if not user or not password or not tenant_id:
-                raise M365MissingEnvironmentCredentialsError(
-                    file=os.path.basename(__file__),
-                    message="M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_PASSWORD environment variables to be set when using --env-auth",
                 )
         else:
             if not tenant_id:
@@ -491,6 +497,7 @@ class M365Provider(Provider):
         sp_env_auth: bool,
         env_auth: bool,
         browser_auth: bool,
+        certificate_auth: bool,
         tenant_id: str,
         m365_credentials: dict,
         region_config: M365RegionConfig,
@@ -510,6 +517,7 @@ class M365Provider(Provider):
                 - client_secret: The M365 client secret
                 - user: The M365 user email
                 - password: The M365 user password
+                - certificate_content: The M365 certificate content
                 - provider_id: The M365 provider ID (in this case the Tenant ID).
             region_config (M365RegionConfig): The region configuration object.
 
@@ -530,6 +538,14 @@ class M365Provider(Provider):
                         f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
                     )
                     raise environment_credentials_error
+            elif certificate_auth:
+                try:
+                    M365Provider.check_certificate_creds_env_vars()
+                except M365EnvironmentVariableError as environment_variable_error:
+                    logger.critical(
+                        f"{environment_variable_error.__class__.__name__}[{environment_variable_error.__traceback__.tb_lineno}] -- {environment_variable_error}"
+                    )
+                    raise environment_variable_error
             try:
                 if m365_credentials:
                     try:
@@ -539,6 +555,7 @@ class M365Provider(Provider):
                             client_secret=m365_credentials["client_secret"],
                             user=m365_credentials["user"],
                             password=m365_credentials["password"],
+                            certificate_content=m365_credentials["certificate_content"],
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -562,13 +579,29 @@ class M365Provider(Provider):
                         raise M365ConfigCredentialsError(
                             file=os.path.basename(__file__), original_exception=error
                         )
+                elif certificate_auth:
+                    try:
+                        credentials = CertificateCredential(
+                            tenant_id=getenv("AZURE_TENANT_ID"),
+                            client_id=getenv("AZURE_CLIENT_ID"),
+                            certificate_data=base64.b64decode(
+                                getenv("M365_CERTIFICATE_CONTENT")
+                            ),
+                        )
+                    except ClientAuthenticationError as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+                        raise M365ClientAuthenticationError(
+                            file=os.path.basename(__file__), original_exception=error
+                        )
                 else:
                     # Since the authentication method to be used will come as True, we have to negate it since
                     # DefaultAzureCredential sets just one authentication method, excluding the others
                     try:
                         credentials = DefaultAzureCredential(
                             exclude_environment_credential=not (
-                                sp_env_auth or env_auth
+                                sp_env_auth or env_auth or certificate_auth
                             ),
                             exclude_cli_credential=not az_cli_auth,
                             # M365 Auth using Managed Identity is not supported
@@ -890,11 +923,41 @@ class M365Provider(Provider):
                 )
 
     @staticmethod
+    def check_certificate_creds_env_vars():
+        """
+        Checks the presence of required environment variables for service principal authentication against Azure.
+
+        This method checks for the presence of the following environment variables:
+        - AZURE_CLIENT_ID: Azure client ID
+        - AZURE_TENANT_ID: Azure tenant ID
+        - M365_CERTIFICATE_CONTENT: Azure certificate content
+
+        If any of the environment variables is missing, it logs a critical error and exits the program.
+        """
+        logger.info(
+            "M365 provider: checking service principal environment variables  ..."
+        )
+        for env_var in [
+            "AZURE_CLIENT_ID",
+            "AZURE_TENANT_ID",
+            "M365_CERTIFICATE_CONTENT",
+        ]:
+            if not getenv(env_var):
+                logger.critical(
+                    f"M365 provider: Missing environment variable {env_var} needed to authenticate against M365."
+                )
+                raise M365EnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message=f"Missing environment variable {env_var} required to authenticate.",
+                )
+
+    @staticmethod
     def setup_identity(
         sp_env_auth,
         env_auth,
         browser_auth,
         az_cli_auth,
+        certificate_auth,
         session,
     ):
         """
@@ -964,6 +1027,13 @@ class M365Provider(Provider):
                 )
             elif env_auth:
                 identity.identity_type = "Service Principal and User Credentials"
+                identity.identity_id = (
+                    getenv("AZURE_CLIENT_ID")
+                    or session.credentials[0]._credential.client_id
+                    or "Unknown user id (Missing AAD permissions)"
+                )
+            elif certificate_auth:
+                identity.identity_type = "Service Principal with Certificate"
                 identity.identity_id = (
                     getenv("AZURE_CLIENT_ID")
                     or session.credentials[0]._credential.client_id

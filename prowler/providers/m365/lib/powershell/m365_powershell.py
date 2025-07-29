@@ -57,19 +57,37 @@ class M365PowerShell(PowerShellSession):
         """
         Initialize PowerShell credential object for Microsoft 365 authentication.
 
-        Sanitizes the username and password, then creates a PSCredential object
-        in the PowerShell session for use with Microsoft 365 cmdlets.
+        Supports three authentication methods:
+        1. User authentication (username/password) - Will be deprecated in September 2025
+        2. Application authentication (client_id/client_secret)
+        3. Certificate authentication (certificate_content in base64/application_id)
 
         Args:
             credentials (M365Credentials): The credentials object containing
-                username and password.
+                authentication information.
 
         Note:
             The credentials are sanitized to prevent command injection and
             stored securely in the PowerShell session.
         """
+        # Certificate Auth
+        if credentials.certificate_content and credentials.application_id:
+            sanitized_cert_content = self.sanitize(credentials.certificate_content)
+            sanitized_app_id = self.sanitize(credentials.application_id)
+            sanitized_tenant_id = self.sanitize(credentials.tenant_id)
+
+            # Create certificate from base64 content
+            self.execute(
+                f'$certBytes = [Convert]::FromBase64String("{sanitized_cert_content}")'
+            )
+            self.execute(
+                "$certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certBytes)"
+            )
+            self.execute(f'$applicationID = "{sanitized_app_id}"')
+            self.execute(f'$tenantID = "{sanitized_tenant_id}"')
+
         # User Auth (Will be deprecated in September 2025)
-        if credentials.user and credentials.passwd:
+        elif credentials.user and credentials.passwd:
             credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
 
             # Sanitize user and password
@@ -137,14 +155,47 @@ class M365PowerShell(PowerShellSession):
         """
         Test Microsoft 365 credentials by attempting to authenticate against Entra ID.
 
+        Supports testing three authentication methods:
+        1. User authentication (username/password)
+        2. Application authentication (client_id/client_secret)
+        3. Certificate authentication (certificate_content in base64/application_id)
+
         Args:
             credentials (M365Credentials): The credentials object containing
-                username and password to test.
+                authentication information to test.
 
         Returns:
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
-        if credentials.user and credentials.passwd:
+        # Test Certificate Auth
+        if credentials.certificate_content and credentials.application_id:
+            try:
+                logger.info("Testing certificate authentication...")
+
+                # Test Microsoft Graph connection using certificate
+                logger.info("Testing Microsoft Graph connection with certificate...")
+                self.test_graph_connection()
+                logger.info("Microsoft Graph connection successful")
+
+                # Test Microsoft Teams connection using certificate
+                logger.info("Testing Microsoft Teams connection with certificate...")
+                self.test_teams_connection()
+                logger.info("Microsoft Teams connection successful")
+
+                # Test Exchange Online connection using certificate
+                logger.info("Testing Exchange Online connection with certificate...")
+                self.test_exchange_connection()
+                logger.info("Exchange Online connection successful")
+
+                logger.info("Certificate authentication successful")
+                return True
+
+            except Exception as e:
+                logger.error(f"Certificate authentication failed: {e}")
+                raise Exception(f"Certificate authentication failed: {str(e)}")
+
+        # Test User Auth
+        elif credentials.user and credentials.passwd:
             self.execute(
                 f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
             )
@@ -295,6 +346,10 @@ class M365PowerShell(PowerShellSession):
         Connect to Microsoft Teams Module PowerShell Module.
 
         Establishes a connection to Microsoft Teams using the initialized credentials.
+        Supports three authentication methods:
+        1. User authentication (username/password)
+        2. Application authentication (client_id/client_secret)
+        3. Certificate authentication (certificate_content in base64/application_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -302,7 +357,13 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
-        if self.execute("Write-Output $credential") != "":  # User Auth
+        # Check for Certificate Auth
+        if self.execute("Write-Output $certificate") != "":  # Certificate Auth
+            return self.execute(
+                "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $applicationID -TenantId $tenantID"
+            )
+        # Check for User Auth
+        elif self.execute("Write-Output $credential") != "":  # User Auth
             return self.execute("Connect-MicrosoftTeams -Credential $credential")
         else:  # Application Auth
             self.execute(
@@ -400,6 +461,10 @@ class M365PowerShell(PowerShellSession):
         Connect to Exchange Online PowerShell Module.
 
         Establishes a connection to Exchange Online using the initialized credentials.
+        Supports three authentication methods:
+        1. User authentication (username/password)
+        2. Application authentication (client_id/client_secret)
+        3. Certificate authentication (certificate_content in base64/application_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -407,7 +472,13 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Exchange Online PowerShell module to be installed.
         """
-        if self.execute("Write-Output $credential") != "":  # User Auth
+        # Check for Certificate Auth
+        if self.execute("Write-Output $certificate") != "":  # Certificate Auth
+            return self.execute(
+                "Connect-ExchangeOnline -Certificate $certificate -AppId $applicationID -Organization $tenantID"
+            )
+        # Check for User Auth
+        elif self.execute("Write-Output $credential") != "":  # User Auth
             return self.execute("Connect-ExchangeOnline -Credential $credential")
         else:  # Application Auth
             self.execute(
