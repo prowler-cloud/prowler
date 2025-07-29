@@ -8,7 +8,7 @@ from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import backfill_resource_scan_summaries
-from tasks.jobs.connection import check_provider_connection
+from tasks.jobs.connection import check_lighthouse_connection, check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
     COMPLIANCE_CLASS_MAP,
@@ -17,7 +17,11 @@ from tasks.jobs.export import (
     _generate_output_directory,
     _upload_to_s3,
 )
-from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
+from tasks.jobs.scan import (
+    aggregate_findings,
+    create_compliance_requirements,
+    perform_prowler_scan,
+)
 from tasks.utils import batched, get_next_execution_datetime
 
 from api.compliance import get_compliance_frameworks
@@ -31,6 +35,26 @@ from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
+
+
+def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Helper function to perform tasks after a scan is completed.
+
+    Args:
+        tenant_id (str): The tenant ID under which the scan was performed.
+        scan_id (str): The ID of the scan that was performed.
+        provider_id (str): The primary key of the Provider instance that was scanned.
+    """
+    create_compliance_requirements_task.apply_async(
+        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    )
+    chain(
+        perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+        generate_outputs_task.si(
+            scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+        ),
+    ).apply_async()
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -99,12 +123,7 @@ def perform_scan_task(
         checks_to_execute=checks_to_execute,
     )
 
-    chain(
-        perform_scan_summary_task.si(tenant_id, scan_id),
-        generate_outputs.si(
-            scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
-        ),
-    ).apply_async()
+    _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
 
     return result
 
@@ -209,17 +228,12 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
                 scheduler_task_id=periodic_task_instance.id,
             )
 
-    chain(
-        perform_scan_summary_task.si(tenant_id, scan_instance.id),
-        generate_outputs.si(
-            scan_id=str(scan_instance.id), provider_id=provider_id, tenant_id=tenant_id
-        ),
-    ).apply_async()
+    _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
 
     return result
 
 
-@shared_task(name="scan-summary")
+@shared_task(name="scan-summary", queue="overview")
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
@@ -235,7 +249,7 @@ def delete_tenant_task(tenant_id: str):
     queue="scan-reports",
 )
 @set_tenant(keep_tenant=True)
-def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
+def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     """
     Process findings in batches and generate output files in multiple formats.
 
@@ -371,3 +385,38 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
         scan_id (str): The scan identifier.
     """
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="overview")
+def create_compliance_requirements_task(tenant_id: str, scan_id: str):
+    """
+    Creates detailed compliance requirement records for a scan.
+
+    This task processes the compliance data collected during a scan and creates
+    individual records for each compliance requirement in each region. These detailed
+    records provide a granular view of compliance status.
+
+    Args:
+        tenant_id (str): The tenant ID for which to create records.
+        scan_id (str): The ID of the scan for which to create records.
+    """
+    return create_compliance_requirements(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-connection-check")
+@set_tenant
+def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str = None):
+    """
+    Task to check the connection status of a Lighthouse configuration.
+
+    Args:
+        lighthouse_config_id (str): The primary key of the LighthouseConfiguration instance to check.
+        tenant_id (str): The tenant ID for the task.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'connected' (bool): Indicates whether the connection is successful.
+            - 'error' (str or None): The error message if the connection failed, otherwise `None`.
+            - 'available_models' (list): List of available models if connection is successful.
+    """
+    return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)

@@ -242,6 +242,20 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
+                        repositories=arguments.repository,
+                        organizations=arguments.organization,
+                    )
+                elif "iac" in provider_class_name.lower():
+                    provider_class(
+                        scan_path=arguments.scan_path,
+                        scan_repository_url=arguments.scan_repository_url,
+                        frameworks=arguments.frameworks,
+                        exclude_path=arguments.exclude_path,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                        github_username=arguments.github_username,
+                        personal_access_token=arguments.personal_access_token,
+                        oauth_app_token=arguments.oauth_app_token,
                     )
 
         except TypeError as error:

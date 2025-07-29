@@ -1,17 +1,21 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+import { Muted } from "@/components/findings/muted";
 import { DataTableRowDetails } from "@/components/findings/table";
 import { DeltaIndicator } from "@/components/findings/table/delta-indicator";
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import {
+  DateWithTime,
+  EntityInfoShort,
+  SnippetChip,
+} from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { FindingProps, ProviderType } from "@/types";
-
-import { Muted } from "../../../findings/muted";
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -75,23 +79,40 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
       const {
-        attributes: { muted },
+        attributes: { muted, muted_reason },
       } = getFindingsData(row);
       const { delta } = row.original.attributes;
       return (
         <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
           <div className="flex flex-row items-center gap-4">
-            {(delta === "new" || delta === "changed") && (
+            {delta === "new" || delta === "changed" ? (
               <DeltaIndicator delta={delta} />
+            ) : (
+              <div className="w-2" />
             )}
             <p className="mr-7 whitespace-normal break-words text-sm">
               {checktitle}
             </p>
           </div>
           <span className="absolute -right-2 top-1/2 -translate-y-1/2">
-            <Muted isMuted={muted} />
+            <Muted isMuted={muted} mutedReason={muted_reason || ""} />
           </span>
         </div>
+      );
+    },
+  },
+  {
+    accessorKey: "resourceName",
+    header: "Resource name",
+    cell: ({ row }) => {
+      const resourceName = getResourceData(row, "name");
+
+      return (
+        <SnippetChip
+          value={resourceName as string}
+          formatter={(value) => `...${value.slice(-10)}`}
+          icon={<Database size={16} />}
+        />
       );
     },
   },

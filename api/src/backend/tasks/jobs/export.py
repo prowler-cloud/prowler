@@ -1,4 +1,5 @@
 import os
+import re
 import zipfile
 
 import boto3
@@ -19,6 +20,7 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
@@ -30,6 +32,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
     KubernetesISO27001,
 )
+from prowler.lib.outputs.compliance.iso27001.iso27001_m365 import M365ISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
@@ -44,6 +47,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 )
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
+    ProwlerThreatScoreM365,
 )
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
@@ -85,6 +91,11 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
+        (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
+        (lambda name: name.startswith("iso27001_"), M365ISO27001),
+    ],
+    "github": [
+        (lambda name: name.startswith("cis_"), GithubCIS),
     ],
 }
 
@@ -234,15 +245,18 @@ def _generate_output_directory(
         '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
         '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
     """
+    # Sanitize the prowler provider name to ensure it is a valid directory name
+    prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
+
     path = (
         f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
-        f"{prowler_provider}-{output_file_timestamp}"
+        f"{prowler_provider_sanitized}-{output_file_timestamp}"
     )
     os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
 
     compliance_path = (
         f"{output_directory}/{tenant_id}/{scan_id}/compliance/prowler-output-"
-        f"{prowler_provider}-{output_file_timestamp}"
+        f"{prowler_provider_sanitized}-{output_file_timestamp}"
     )
     os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
 

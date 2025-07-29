@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -143,8 +143,8 @@ class CriptoKey(BaseModel):
     id: str
     name: str
     location: str
-    rotation_period: Optional[str]
-    next_rotation_time: Optional[str]
+    rotation_period: Optional[str] = None
+    next_rotation_time: Optional[str] = None
     key_ring: str
     members: list = []
     project_id: str

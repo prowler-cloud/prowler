@@ -2,6 +2,7 @@ import os
 from typing import Union
 
 from colorama import Fore, Style
+from kubernetes.client import ApiClient, Configuration
 from kubernetes.client.exceptions import ApiException
 from kubernetes.config.config_exception import ConfigException
 from requests.exceptions import Timeout
@@ -261,6 +262,12 @@ class KubernetesProvider(Provider):
                             context = context_item
                 else:
                     context = config_data.get("contexts", [])[0]
+
+                return KubernetesSession(
+                    api_client=ApiClient(KubernetesProvider.set_proxy_settings()),
+                    context=context,
+                )
+
             else:
                 logger.info(f"Using kubeconfig file: {kubeconfig_file}...")
                 kubeconfig_file = (
@@ -286,9 +293,12 @@ class KubernetesProvider(Provider):
                             "user": "service-account-name",
                         },
                     }
+
                     return KubernetesSession(
-                        api_client=client.ApiClient(), context=context
+                        api_client=ApiClient(KubernetesProvider.set_proxy_settings()),
+                        context=context,
                     )
+
                 if context:
                     contexts = config.list_kube_config_contexts(
                         config_file=kubeconfig_file
@@ -302,7 +312,19 @@ class KubernetesProvider(Provider):
                     context = config.list_kube_config_contexts(
                         config_file=kubeconfig_file
                     )[1]
-            return KubernetesSession(api_client=client.ApiClient(), context=context)
+                # Ensure proxy settings are respected
+                configuration = Configuration.get_default_copy()
+                proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+                if proxy:
+                    configuration.proxy = proxy
+
+                # Prevent SSL verification issues with internal proxies
+                if os.environ.get("K8S_SKIP_TLS_VERIFY", "false").lower() == "true":
+                    configuration.verify_ssl = False
+
+                return KubernetesSession(
+                    api_client=ApiClient(configuration), context=context
+                )
 
         except parser.ParserError as parser_error:
             logger.critical(
@@ -619,3 +641,18 @@ class KubernetesProvider(Provider):
             f"{Style.BRIGHT}Using the Kubernetes credentials below:{Style.RESET_ALL}"
         )
         print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def set_proxy_settings() -> Configuration:
+        """
+        Returns the proxy settings respecting client's configuration from HTTPS_PROXY or K8S_SKIP_TLS_VERIFY.
+        """
+        configuration = Configuration.get_default_copy()
+        proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+        if proxy:
+            configuration.proxy = proxy
+        # Prevent SSL verification issues with internal proxies
+        if os.environ.get("K8S_SKIP_TLS_VERIFY", "false").lower() == "true":
+            configuration.verify_ssl = False
+
+        return configuration

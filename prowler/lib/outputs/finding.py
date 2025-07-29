@@ -3,7 +3,7 @@ from datetime import datetime
 from types import SimpleNamespace
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic.v1 import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import (
@@ -38,7 +38,7 @@ class Finding(BaseModel):
     account_organization_uid: Optional[str] = None
     account_organization_name: Optional[str] = None
     metadata: CheckMetadata
-    account_tags: dict = {}
+    account_tags: dict = Field(default_factory=dict)
     uid: str
     status: Status
     status_extended: str
@@ -50,7 +50,7 @@ class Finding(BaseModel):
     resource_tags: dict = Field(default_factory=dict)
     partition: Optional[str] = None
     region: str
-    compliance: dict
+    compliance: dict = Field(default_factory=dict)
     prowler_version: str = prowler_version
     raw: dict = Field(default_factory=dict)
 
@@ -251,7 +251,7 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["account_name"] = provider.identity.account_name
                 output_data["account_uid"] = provider.identity.account_id
-                output_data["region"] = check_output.repository
+                output_data["region"] = check_output.owner
 
             elif provider.type == "m365":
                 output_data["auth_method"] = (
@@ -281,6 +281,16 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
+
+            elif provider.type == "iac":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "iac"
+                output_data["account_name"] = "iac"
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_name
+                output_data["region"] = check_output.resource_path
+                output_data["resource_line_range"] = check_output.resource_line_range
+                output_data["framework"] = check_output.check_metadata.ServiceName
 
             # check_output Unique ID
             # TODO: move this to a function
@@ -343,6 +353,8 @@ class Finding(BaseModel):
         finding.region = resource.region
         # Azure, GCP specified field
         finding.location = resource.region
+        # GitHub specified field
+        finding.owner = resource.region
         # K8s specified field
         if provider.type == "kubernetes":
             finding.namespace = resource.region.removeprefix("namespace: ")

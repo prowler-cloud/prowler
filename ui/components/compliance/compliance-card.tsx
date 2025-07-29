@@ -2,11 +2,12 @@
 
 import { Card, CardBody, Progress } from "@nextui-org/react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
-import React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState } from "react";
 
 import { DownloadIconButton, toast } from "@/components/ui";
 import { downloadComplianceCsv } from "@/lib/helper";
+import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
 
@@ -19,6 +20,8 @@ interface ComplianceCardProps {
   prevTotalRequirements: number;
   scanId: string;
   complianceId: string;
+  id: string;
+  selectedScan?: ScanEntity;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -28,9 +31,13 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   totalRequirements,
   scanId,
   complianceId,
+  id,
+  selectedScan,
 }) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const hasRegionFilter = searchParams.has("filter[region__in]");
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const formatTitle = (title: string) => {
     return title.split("-").join(" ");
@@ -67,8 +74,45 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     return "success";
   };
 
+  const navigateToDetail = () => {
+    const formattedTitleForUrl = encodeURIComponent(title);
+    const path = `/compliance/${formattedTitleForUrl}`;
+    const params = new URLSearchParams();
+
+    params.set("complianceId", id);
+    params.set("version", version);
+    params.set("scanId", scanId);
+
+    if (selectedScan) {
+      params.set(
+        "scanData",
+        JSON.stringify({
+          id: selectedScan.id,
+          providerInfo: selectedScan.providerInfo,
+          attributes: selectedScan.attributes,
+        }),
+      );
+    }
+
+    router.push(`${path}?${params.toString()}`);
+  };
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadComplianceCsv(scanId, complianceId, toast);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
-    <Card fullWidth isHoverable shadow="sm">
+    <Card
+      fullWidth
+      isHoverable
+      shadow="sm"
+      isPressable
+      onPress={navigateToDetail}
+    >
       <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
         <div className="flex w-full items-center space-x-4">
           <Image
@@ -104,11 +148,10 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
               <DownloadIconButton
                 paramId={complianceId}
-                onDownload={() =>
-                  downloadComplianceCsv(scanId, complianceId, toast)
-                }
+                onDownload={handleDownload}
                 textTooltip="Download compliance CSV report"
                 isDisabled={hasRegionFilter}
+                isDownloading={isDownloading}
               />
               {/* <small>{getScanChange()}</small> */}
             </div>

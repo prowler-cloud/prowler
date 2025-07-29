@@ -1,35 +1,36 @@
-import { Icon } from "@iconify/react";
+"use client";
+
+import { ReactNode } from "react";
 
 import { FeedsServer } from "@/components/feeds";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
-import { UserProfileProps } from "@/types";
+import { BreadcrumbNavigation } from "@/components/ui";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";
+
 interface NavbarProps {
   title: string;
-  icon: string;
-  user: UserProfileProps;
+  icon: string | ReactNode;
 }
 
-export function Navbar({ title, icon, user }: NavbarProps) {
+export function Navbar({ title, icon }: NavbarProps) {
   return (
     <header className="sticky top-0 z-10 w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-primary">
       <div className="mx-4 flex h-14 items-center sm:mx-8">
         <div className="flex items-center space-x-2">
           <SheetMenu />
-          <Icon
-            className="text-default-500"
-            height={24}
+          <BreadcrumbNavigation
+            mode="auto"
+            title={title}
             icon={icon}
-            width={24}
+            paramToPreserve="scanId"
           />
-          <h1 className="text-sm font-bold text-default-700">{title}</h1>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
           {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && <FeedsServer />}
           <ThemeSwitch />
-          <UserNav user={user} />
+          <UserNav />
         </div>
       </div>
     </header>

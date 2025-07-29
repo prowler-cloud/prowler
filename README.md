@@ -3,7 +3,7 @@
   <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler Open Source</b> is as dynamic and adaptable as the environment it secures. It is trusted by the industry leaders to uphold the highest standards in security.
+  <b><i>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
@@ -86,21 +86,27 @@ prowler dashboard
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 564 | 82 | 33 | 10 |
-| GCP | 79 | 13 | 7 | 3 |
-| Azure | 140 | 18 | 8 | 3 |
-| Kubernetes | 83 | 7 | 4 | 7 |
-| GitHub | 1 | 1 | 1 | 0 |
-| M365 | 44 | 2 | 2 | 0 |
+| AWS | 567 | 82 | 36 | 10 |
+| GCP | 79 | 13 | 10 | 3 |
+| Azure | 142 | 18 | 11 | 3 |
+| Kubernetes | 83 | 7 | 5 | 7 |
+| GitHub | 16 | 2 | 1 | 0 |
+| M365 | 69 | 7 | 3 | 2 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
+> [!Note]
+> The numbers in the table are updated periodically.
+
+> [!Tip]
+> For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
+
+> [!Note]
 > Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
 # 💻 Installation
 
 ## Prowler App
 
-Installing Prowler App
 Prowler App offers flexible installation methods tailored to various environments:
 
 > For detailed instructions on using Prowler App, refer to the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).
@@ -129,6 +135,14 @@ If your workstation's architecture is incompatible, you can resolve this by:
 - **Using the following flag in your Docker command**: `--platform linux/amd64`
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
+
+### Common Issues with Docker Pull Installation
+
+> [!Note]
+  If you want to use AWS role assumption (e.g., with the "Connect assuming IAM Role" option), you may need to mount your local `.aws` directory into the container as a volume (e.g., `- "${HOME}/.aws:/home/prowler/.aws:ro"`). There are several ways to configure credentials for Docker containers. See the [Troubleshooting](./docs/troubleshooting.md) section for more details and examples.
+
+You can find more information in the [Troubleshooting](./docs/troubleshooting.md) section.
+
 
 ### From GitHub
 

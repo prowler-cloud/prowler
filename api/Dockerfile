@@ -6,7 +6,19 @@ ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends wget libicu72 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    libicu72 \
+    gcc \
+    g++ \
+    make \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libxmlsec1-openssl \
+    pkg-config \
+    libtool \
+    libxslt1-dev \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -37,17 +49,16 @@ COPY pyproject.toml ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry
 
-COPY src/backend/ ./backend/
-
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
 # Add `--no-root` to avoid installing the current project as a package
 RUN poetry install --no-root && \
     rm -rf ~/.cache/pip
 
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
-
 RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
+
+COPY src/backend/ ./backend/
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
 WORKDIR /home/prowler/backend
 

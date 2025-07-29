@@ -119,9 +119,9 @@ from rest_framework_json_api import serializers
                         "type": "email",
                         "description": "User microsoft email address.",
                     },
-                    "encrypted_password": {
+                    "password": {
                         "type": "string",
-                        "description": "User encrypted password.",
+                        "description": "User password.",
                     },
                 },
                 "required": [
@@ -129,7 +129,7 @@ from rest_framework_json_api import serializers
                     "client_secret",
                     "tenant_id",
                     "user",
-                    "encrypted_password",
+                    "password",
                 ],
             },
             {
@@ -156,6 +156,17 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
+                "title": "GCP Service Account Key",
+                "properties": {
+                    "service_account_key": {
+                        "type": "object",
+                        "description": "The service account key for GCP.",
+                    }
+                },
+                "required": ["service_account_key"],
+            },
+            {
+                "type": "object",
                 "title": "Kubernetes Static Credentials",
                 "properties": {
                     "kubeconfig_content": {
@@ -164,6 +175,43 @@ from rest_framework_json_api import serializers
                     }
                 },
                 "required": ["kubeconfig_content"],
+            },
+            {
+                "type": "object",
+                "title": "GitHub Personal Access Token",
+                "properties": {
+                    "personal_access_token": {
+                        "type": "string",
+                        "description": "GitHub personal access token for authentication.",
+                    }
+                },
+                "required": ["personal_access_token"],
+            },
+            {
+                "type": "object",
+                "title": "GitHub OAuth App Token",
+                "properties": {
+                    "oauth_app_token": {
+                        "type": "string",
+                        "description": "GitHub OAuth App token for authentication.",
+                    }
+                },
+                "required": ["oauth_app_token"],
+            },
+            {
+                "type": "object",
+                "title": "GitHub App Credentials",
+                "properties": {
+                    "github_app_id": {
+                        "type": "integer",
+                        "description": "GitHub App ID for authentication.",
+                    },
+                    "github_app_key": {
+                        "type": "string",
+                        "description": "Path to the GitHub App private key file.",
+                    },
+                },
+                "required": ["github_app_id", "github_app_key"],
             },
         ]
     }

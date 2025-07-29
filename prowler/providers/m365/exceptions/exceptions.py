@@ -106,13 +106,25 @@ class M365BaseException(ProwlerException):
             "message": "The provided User is not valid.",
             "remediation": "Check the User and ensure it is a valid user.",
         },
-        (6025, "M365NotValidEncryptedPasswordError"): {
-            "message": "The provided Encrypted Password is not valid.",
-            "remediation": "Check the Encrypted Password and ensure it is a valid password.",
+        (6025, "M365NotValidPasswordError"): {
+            "message": "The provided Password is not valid.",
+            "remediation": "Check the Password and ensure it is a valid password.",
         },
         (6026, "M365UserNotBelongingToTenantError"): {
             "message": "The provided User does not belong to the specified tenant.",
             "remediation": "Check the User email domain and ensure it belongs to the specified tenant.",
+        },
+        (6027, "M365GraphConnectionError"): {
+            "message": "Failed to establish connection to Microsoft Graph API.",
+            "remediation": "Check your Microsoft Application credentials and ensure the app has proper permissions.",
+        },
+        (6028, "M365TeamsConnectionError"): {
+            "message": "Failed to establish connection to Microsoft Teams API.",
+            "remediation": "Ensure the application has proper permission granted to access Microsoft Teams.",
+        },
+        (6029, "M365ExchangeConnectionError"): {
+            "message": "Failed to establish connection to Exchange Online API.",
+            "remediation": "Ensure the application has proper permission granted to access Exchange Online.",
         },
     }
 
@@ -312,7 +324,7 @@ class M365NotValidUserError(M365CredentialsError):
         )
 
 
-class M365NotValidEncryptedPasswordError(M365CredentialsError):
+class M365NotValidPasswordError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6025, file=file, original_exception=original_exception, message=message
@@ -323,4 +335,25 @@ class M365UserNotBelongingToTenantError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6026, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365GraphConnectionError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6027, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365TeamsConnectionError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6028, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365ExchangeConnectionError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6029, file=file, original_exception=original_exception, message=message
         )

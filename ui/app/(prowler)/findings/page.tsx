@@ -1,68 +1,54 @@
 import { Spacer } from "@nextui-org/react";
-import { format, subDays } from "date-fns";
 import React, { Suspense } from "react";
 
-import { getFindings, getMetadataInfo } from "@/actions/findings";
+import {
+  getFindings,
+  getLatestFindings,
+  getLatestMetadataInfo,
+  getMetadataInfo,
+} from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { filterFindings } from "@/components/filters/data-filters";
-import { FilterControls } from "@/components/filters/filter-controls";
+import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   ColumnFindings,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
-import { createDict } from "@/lib";
-import { ProviderProps } from "@/types";
-import { FindingProps, ScanProps, SearchParamsProps } from "@/types/components";
+import { DataTable } from "@/components/ui/table";
+import {
+  createDict,
+  createScanDetailsMapping,
+  extractFiltersAndQuery,
+  extractSortAndKey,
+  hasDateOrScanFilter,
+} from "@/lib";
+import {
+  createProviderDetailsMapping,
+  extractProviderUIDs,
+} from "@/lib/provider-helpers";
+import { FilterEntity, ScanEntity, ScanProps } from "@/types";
+import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
-  const sort = searchParams.sort?.toString();
-
-  // Make sure the sort is correctly encoded
-  const encodedSort = sort?.replace(/^\+/, "");
-
-  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
+  const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
+  const { filters, query } = extractFiltersAndQuery(searchParams);
 
   // Check if the searchParams contain any date or scan filter
-  const hasDateOrScanFilter = Object.keys(searchParams).some(
-    (key) => key.includes("inserted_at") || key.includes("scan__in"),
-  );
-
-  // Default filters for getMetadataInfo
-  const defaultFilters: Record<string, string> = hasDateOrScanFilter
-    ? {} // Do not apply default filters if there are date or scan filters
-    : { "filter[inserted_at__gte]": twoDaysAgo };
-
-  // Extract all filter parameters and combine with default filters
-  const filters: Record<string, string> = {
-    ...defaultFilters,
-    ...Object.fromEntries(
-      Object.entries(searchParams)
-        .filter(([key]) => key.startsWith("filter["))
-        .map(([key, value]) => [
-          key,
-          Array.isArray(value) ? value.join(",") : value?.toString() || "",
-        ]),
-    ),
-  };
-
-  const query = filters["filter[search]"] || "";
+  const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
   const [metadataInfoData, providersData, scansData] = await Promise.all([
-    getMetadataInfo({
+    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
       query,
       sort: encodedSort,
       filters,
     }),
-    getProviders({}),
-    getScans({}),
+    getProviders({ pageSize: 50 }),
+    getScans({ pageSize: 50 }),
   ]);
 
   // Extract unique regions and services from the new endpoint
@@ -70,66 +56,41 @@ export default async function Findings({
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
-  // Get findings data
 
-  // Extract provider UIDs
-  const providerUIDs = Array.from(
-    new Set(
-      providersData?.data
-        ?.map((provider: ProviderProps) => provider.attributes.uid)
-        .filter(Boolean),
-    ),
-  );
+  // Extract provider UIDs and details using helper functions
+  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
+  const providerDetails = providersData
+    ? (createProviderDetailsMapping(providerUIDs, providersData) as {
+        [uid: string]: FilterEntity;
+      }[])
+    : [];
 
   // Extract scan UUIDs with "completed" state and more than one resource
-  const completedScans = scansData?.data
-    ?.filter(
-      (scan: ScanProps) =>
-        scan.attributes.state === "completed" &&
-        scan.attributes.unique_resource_count > 1,
-    )
-    .map((scan: ScanProps) => ({
-      id: scan.id,
-      name: scan.attributes.name,
-    }));
+  const completedScans = scansData?.data?.filter(
+    (scan: ScanProps) =>
+      scan.attributes.state === "completed" &&
+      scan.attributes.unique_resource_count > 1,
+  );
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
+  const scanDetails = createScanDetailsMapping(
+    completedScans,
+    providersData,
+  ) as { [uid: string]: ScanEntity }[];
+
   return (
     <ContentLayout title="Findings" icon="carbon:data-view-alt">
-      <FilterControls search date />
-      <Spacer y={8} />
-      <DataTableFilterCustom
-        filters={[
-          ...filterFindings,
-          {
-            key: "region__in",
-            labelCheckboxGroup: "Regions",
-            values: uniqueRegions,
-          },
-          {
-            key: "service__in",
-            labelCheckboxGroup: "Services",
-            values: uniqueServices,
-          },
-          {
-            key: "resource_type__in",
-            labelCheckboxGroup: "Resource Type",
-            values: uniqueResourceTypes,
-          },
-          {
-            key: "provider_uid__in",
-            labelCheckboxGroup: "Provider UID",
-            values: providerUIDs,
-          },
-          {
-            key: "scan__in",
-            labelCheckboxGroup: "Scan ID",
-            values: completedScanIds,
-          },
-        ]}
-        defaultOpen={true}
+      <FindingsFilters
+        providerUIDs={providerUIDs}
+        providerDetails={providerDetails}
+        completedScans={completedScans || []}
+        completedScanIds={completedScanIds}
+        scanDetails={scanDetails}
+        uniqueRegions={uniqueRegions}
+        uniqueServices={uniqueServices}
+        uniqueResourceTypes={uniqueResourceTypes}
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
@@ -147,38 +108,19 @@ const SSRDataTable = async ({
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
   const defaultSort = "severity,status,-inserted_at";
-  const sort = searchParams.sort?.toString() || defaultSort;
 
-  // Make sure the sort is correctly encoded
-  const encodedSort = sort.replace(/^\+/, "");
+  const { encodedSort } = extractSortAndKey({
+    ...searchParams,
+    sort: searchParams.sort ?? defaultSort,
+  });
 
-  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
-
+  const { filters, query } = extractFiltersAndQuery(searchParams);
   // Check if the searchParams contain any date or scan filter
-  const hasDateOrScanFilter = Object.keys(searchParams).some(
-    (key) => key.includes("inserted_at") || key.includes("scan__in"),
-  );
+  const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
-  // Default filters for getFindings
-  const defaultFilters: Record<string, string> = hasDateOrScanFilter
-    ? {} // Do not apply default filters if there are date or scan filters
-    : { "filter[inserted_at__gte]": twoDaysAgo };
+  const fetchFindings = hasDateOrScan ? getFindings : getLatestFindings;
 
-  const filters: Record<string, string> = {
-    ...defaultFilters,
-    ...Object.fromEntries(
-      Object.entries(searchParams)
-        .filter(([key]) => key.startsWith("filter["))
-        .map(([key, value]) => [
-          key,
-          Array.isArray(value) ? value.join(",") : value?.toString() || "",
-        ]),
-    ),
-  };
-
-  const query = filters["filter[search]"] || "";
-
-  const findingsData = await getFindings({
+  const findingsData = await fetchFindings({
     query,
     page,
     sort: encodedSort,

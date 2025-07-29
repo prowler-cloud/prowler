@@ -68,7 +68,10 @@ async def mock_entra_get_conditional_access_policies(_):
                 ),
             ),
             grant_controls=GrantControls(
-                built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                built_in_controls=[
+                    ConditionalAccessGrantControl.BLOCK,
+                    ConditionalAccessGrantControl.COMPLIANT_DEVICE,
+                ],
                 operator=GrantControlOperator.OR,
                 authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
             ),
@@ -121,18 +124,21 @@ async def mock_entra_get_users(_):
             name="User 1",
             directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
             on_premises_sync_enabled=True,
+            is_mfa_capable=True,
         ),
         "user-2": User(
             id="user-2",
             name="User 2",
             directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
             on_premises_sync_enabled=False,
+            is_mfa_capable=False,
         ),
         "user-3": User(
             id="user-3",
             name="User 3",
             directory_roles_ids=[AdminRoles.GLOBAL_ADMINISTRATOR.value],
             on_premises_sync_enabled=True,
+            is_mfa_capable=False,
         ),
     }
 
@@ -208,7 +214,10 @@ class Test_Entra_Service:
                     ),
                 ),
                 grant_controls=GrantControls(
-                    built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                    built_in_controls=[
+                        ConditionalAccessGrantControl.BLOCK,
+                        ConditionalAccessGrantControl.COMPLIANT_DEVICE,
+                    ],
                     operator=GrantControlOperator.OR,
                     authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
                 ),
@@ -278,12 +287,14 @@ class Test_Entra_Service:
         assert entra_client.users["user-1"].directory_roles_ids == [
             AdminRoles.GLOBAL_ADMINISTRATOR.value
         ]
+        assert entra_client.users["user-1"].is_mfa_capable
         assert entra_client.users["user-1"].on_premises_sync_enabled
         assert entra_client.users["user-2"].id == "user-2"
         assert entra_client.users["user-2"].name == "User 2"
         assert entra_client.users["user-2"].directory_roles_ids == [
             AdminRoles.GLOBAL_ADMINISTRATOR.value
         ]
+        assert not entra_client.users["user-2"].is_mfa_capable
         assert not entra_client.users["user-2"].on_premises_sync_enabled
         assert entra_client.users["user-3"].id == "user-3"
         assert entra_client.users["user-3"].name == "User 3"
@@ -291,3 +302,4 @@ class Test_Entra_Service:
             AdminRoles.GLOBAL_ADMINISTRATOR.value
         ]
         assert entra_client.users["user-3"].on_premises_sync_enabled
+        assert not entra_client.users["user-3"].is_mfa_capable

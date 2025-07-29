@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class ProwlerThreatScoreAWSModel(BaseModel):
@@ -17,10 +17,11 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -43,10 +44,11 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -69,10 +71,11 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -95,10 +98,11 @@ class ProwlerThreatScoreM365Model(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
     Status: str
     StatusExtended: str
     ResourceId: str

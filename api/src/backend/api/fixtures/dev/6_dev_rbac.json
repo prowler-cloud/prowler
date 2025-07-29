@@ -149,5 +149,32 @@
       "user": "8b38e2eb-6689-4f1e-a4ba-95b275130200",
       "inserted_at": "2024-11-20T15:36:14.302Z"
     }
+  },
+  {
+    "model": "api.role",
+    "pk": "a5b6c7d8-9e0f-1234-5678-90abcdef1234",
+    "fields": {
+      "tenant": "7c8f94a3-e2d1-4b3a-9f87-2c4d5e6f1a2b",
+      "name": "e2e_admin",
+      "manage_users": true,
+      "manage_account": true,
+      "manage_billing": true,
+      "manage_providers": true,
+      "manage_integrations": true,
+      "manage_scans": true,
+      "unlimited_visibility": true,
+      "inserted_at": "2024-01-01T00:00:00.000Z",
+      "updated_at": "2024-01-01T00:00:00.000Z"
+    }
+  },
+  {
+    "model": "api.userrolerelationship",
+    "pk": "f1e2d3c4-b5a6-9876-5432-10fedcba9876",
+    "fields": {
+      "tenant": "7c8f94a3-e2d1-4b3a-9f87-2c4d5e6f1a2b",
+      "role": "a5b6c7d8-9e0f-1234-5678-90abcdef1234",
+      "user": "6d4f8a91-3c2e-4b5a-8f7d-1e9c5b2a4d6f",
+      "inserted_at": "2024-01-01T00:00:00.000Z"
+    }
   }
 ]

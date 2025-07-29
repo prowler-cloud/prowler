@@ -3,7 +3,7 @@ from asyncio import gather, get_event_loop
 from typing import List, Optional
 
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -13,6 +13,9 @@ from prowler.providers.m365.m365_provider import M365Provider
 class SharePoint(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+        if self.powershell:
+            self.powershell.close()
+
         loop = get_event_loop()
         self.tenant_domain = provider.identity.tenant_domain
         attributes = loop.run_until_complete(

@@ -31,6 +31,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
 | `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
+| `codebuild_github_allowed_organizations`                      | `github_allowed_organizations`                   | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
 | `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                       | Boolean         |
@@ -77,6 +78,8 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
+| `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
+| `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
 
 
 ## GCP
@@ -108,6 +111,15 @@ The following list includes all the Microsoft 365 checks with configurable varia
 | `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
 | `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
 
+
+## GitHub
+
+### Configurable Checks
+The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                 | Value                                       | Type    |
+|--------------------------------------------|---------------------------------------------|---------|
+| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
 
 ## Config YAML File Structure
 
@@ -470,6 +482,16 @@ azure:
       "1.3"
     ]
 
+  # Azure Virtual Machines
+  # azure.vm_desired_sku_size
+  # List of desired VM SKU sizes that are allowed in the organization
+  desired_vm_sku_sizes:
+    [
+      "Standard_A8_v2",
+      "Standard_DS3_v2",
+      "Standard_D4s_v3",
+    ]
+
 # GCP Configuration
 gcp:
   # GCP Compute Configuration
@@ -524,6 +546,11 @@ m365:
   # Exchange Organization Settings
   # m365.exchange_organization_mailtips_enabled
   recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived
+  inactive_not_archived_days_threshold: 180
 
 
 ```

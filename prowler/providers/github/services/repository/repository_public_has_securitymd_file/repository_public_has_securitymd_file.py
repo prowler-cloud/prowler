@@ -22,10 +22,8 @@ class repository_public_has_securitymd_file(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            if not repo.private:
-                report = CheckReportGithub(
-                    metadata=self.metadata(), resource=repo, repository=repo.name
-                )
+            if not repo.private and repo.securitymd is not None:
+                report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "PASS"
                 report.status_extended = (
                     f"Repository {repo.name} does have a SECURITY.md file."

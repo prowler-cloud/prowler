@@ -50,6 +50,7 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
@@ -63,6 +64,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
     KubernetesISO27001,
 )
+from prowler.lib.outputs.compliance.iso27001.iso27001_m365 import M365ISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_nhn import NHNISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
@@ -97,6 +99,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
+from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
@@ -174,11 +177,13 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    bulk_compliance_frameworks = Compliance.get_bulk(provider)
-    # Complete checks metadata with the compliance framework specification
-    bulk_checks_metadata = update_checks_metadata_with_compliance(
-        bulk_compliance_frameworks, bulk_checks_metadata
-    )
+    # Skip compliance frameworks for IAC provider
+    if provider != "iac":
+        bulk_compliance_frameworks = Compliance.get_bulk(provider)
+        # Complete checks metadata with the compliance framework specification
+        bulk_checks_metadata = update_checks_metadata_with_compliance(
+            bulk_compliance_frameworks, bulk_checks_metadata
+        )
 
     # Update checks metadata if the --custom-checks-metadata-file is present
     custom_checks_metadata = None
@@ -230,39 +235,45 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Import custom checks from folder
-    if checks_folder:
-        custom_checks = parse_checks_from_folder(global_provider, checks_folder)
-        # Workaround to be able to execute custom checks alongside all checks if nothing is explicitly set
-        if (
-            not checks_file
-            and not checks
-            and not services
-            and not severities
-            and not compliance_framework
-            and not categories
-        ):
-            checks_to_execute.update(custom_checks)
+    # Skip service and check loading for IAC provider
+    if provider != "iac":
+        # Import custom checks from folder
+        if checks_folder:
+            custom_checks = parse_checks_from_folder(global_provider, checks_folder)
+            # Workaround to be able to execute custom checks alongside all checks if nothing is explicitly set
+            if (
+                not checks_file
+                and not checks
+                and not services
+                and not severities
+                and not compliance_framework
+                and not categories
+            ):
+                checks_to_execute.update(custom_checks)
 
-    # Exclude checks if -e/--excluded-checks
-    if excluded_checks:
-        checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
+        # Exclude checks if -e/--excluded-checks
+        if excluded_checks:
+            checks_to_execute = exclude_checks_to_run(
+                checks_to_execute, excluded_checks
+            )
 
-    # Exclude services if --excluded-services
-    if excluded_services:
-        checks_to_execute = exclude_services_to_run(
-            checks_to_execute, excluded_services, provider
+        # Exclude services if --excluded-services
+        if excluded_services:
+            checks_to_execute = exclude_services_to_run(
+                checks_to_execute, excluded_services, provider
+            )
+
+        # Once the provider is set and we have the eventual checks based on the resource identifier,
+        # it is time to check what Prowler's checks are going to be executed
+        checks_from_resources = (
+            global_provider.get_checks_to_execute_by_audit_resources()
         )
+        # Intersect checks from resources with checks to execute so we only run the checks that apply to the resources with the specified ARNs or tags
+        if getattr(args, "resource_arn", None) or getattr(args, "resource_tag", None):
+            checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
-    # Once the provider is set and we have the eventual checks based on the resource identifier,
-    # it is time to check what Prowler's checks are going to be executed
-    checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
-    # Intersect checks from resources with checks to execute so we only run the checks that apply to the resources with the specified ARNs or tags
-    if getattr(args, "resource_arn", None) or getattr(args, "resource_tag", None):
-        checks_to_execute = checks_to_execute.intersection(checks_from_resources)
-
-    # Sort final check list
-    checks_to_execute = sorted(checks_to_execute)
+        # Sort final check list
+        checks_to_execute = sorted(checks_to_execute)
 
     # Setup Output Options
     if provider == "aws":
@@ -293,6 +304,8 @@ def prowler():
         output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "iac":
+        output_options = IACOutputOptions(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -302,7 +315,10 @@ def prowler():
     # Execute checks
     findings = []
 
-    if len(checks_to_execute):
+    if provider == "iac":
+        # For IAC provider, run the scan directly
+        findings = global_provider.run()
+    elif len(checks_to_execute):
         findings = execute_checks(
             checks_to_execute,
             global_provider,
@@ -746,6 +762,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = M365ISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -782,6 +811,35 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "github":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = GithubCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)

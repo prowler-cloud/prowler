@@ -98,7 +98,6 @@ class Mutelist(ABC):
         mutelist_file_path: Property that returns the mutelist file path.
         is_finding_muted: Abstract method to check if a finding is muted.
         get_mutelist_file_from_local_file: Retrieves the mutelist file from a local file.
-        validate_mutelist: Validates the mutelist against a schema.
         is_muted: Checks if a finding is muted for the audited account, check, region, resource, and tags.
         is_muted_in_check: Checks if a check is muted.
         is_excepted: Checks if the account, region, resource, and tags are excepted based on the exceptions.
@@ -119,7 +118,7 @@ class Mutelist(ABC):
             self._mutelist = mutelist_content
 
         if self._mutelist:
-            self.validate_mutelist()
+            self._mutelist = Mutelist.validate_mutelist(self._mutelist)
 
     @property
     def mutelist(self) -> dict:
@@ -141,17 +140,6 @@ class Mutelist(ABC):
             logger.error(
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
-
-    def validate_mutelist(self) -> bool:
-        try:
-            validate(self._mutelist, schema=mutelist_schema)
-            return True
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
-            )
-            self._mutelist = {}
-            return False
 
     def is_muted(
         self,
@@ -449,3 +437,27 @@ class Mutelist(ABC):
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
             return False
+
+    @staticmethod
+    def validate_mutelist(mutelist: dict, raise_on_exception: bool = False) -> dict:
+        """
+        Validate the mutelist against the schema.
+
+        Args:
+            mutelist (dict): The mutelist to be validated.
+            raise_on_exception (bool): Whether to raise an exception if the mutelist is invalid.
+
+        Returns:
+            dict: The mutelist itself.
+        """
+        try:
+            validate(mutelist, schema=mutelist_schema)
+            return mutelist
+        except Exception as error:
+            if raise_on_exception:
+                raise error
+            else:
+                logger.error(
+                    f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+                )
+            return {}

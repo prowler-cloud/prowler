@@ -1,5 +1,12 @@
+import warnings
+
 from celery import Celery, Task
 from config.env import env
+
+# Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="dj_rest_auth.registration.serializers"
+)
 
 BROKER_VISIBILITY_TIMEOUT = env.int("DJANGO_BROKER_VISIBILITY_TIMEOUT", default=86400)
 
