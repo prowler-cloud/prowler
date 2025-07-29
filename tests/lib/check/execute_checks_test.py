@@ -40,12 +40,7 @@ class TestExecuteChecks(unittest.TestCase):
     @patch("prowler.lib.check.check.print")
     def test_execute_checks_applies_severity_patch(
         self,
-        mock_print,
-        mock_print_boxes,
         mock_alive_bar,
-        mock_update_audit_metadata,
-        mock_report,
-        mock_execute,
         mock_import_check,
     ):
         """Test that execute_checks correctly applies severity patches"""
@@ -82,12 +77,7 @@ class TestExecuteChecks(unittest.TestCase):
     @patch("prowler.lib.check.check.print")
     def test_execute_checks_no_severity_patch(
         self,
-        mock_print,
-        mock_print_boxes,
         mock_alive_bar,
-        mock_update_audit_metadata,
-        mock_report,
-        mock_execute,
         mock_import_check,
     ):
         """Test that execute_checks doesn't change severity when no patch is defined"""
