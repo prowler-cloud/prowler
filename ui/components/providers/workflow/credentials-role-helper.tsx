@@ -1,8 +1,8 @@
 "use client";
 
-import { Snippet } from "@nextui-org/react";
-
+import { IdIcon } from "@/components/icons";
 import { CustomButton } from "@/components/ui/custom";
+import { SnippetChip } from "@/components/ui/entities";
 
 interface CredentialsRoleHelperProps {
   externalId: string;
@@ -11,17 +11,20 @@ interface CredentialsRoleHelperProps {
     cloudformationQuickLink: string;
     terraform: string;
   };
+  type?: "providers" | "s3-integration";
 }
 
 export const CredentialsRoleHelper = ({
   externalId,
   templateLinks,
+  type = "providers",
 }: CredentialsRoleHelperProps) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          A <strong>new read-only IAM role</strong> must be manually created.
+          A <strong>read-only IAM role</strong> must be manually created
+          {type === "s3-integration" ? " or updated" : ""}.
         </p>
 
         <CustomButton
@@ -31,7 +34,7 @@ export const CredentialsRoleHelper = ({
           asLink={templateLinks.cloudformationQuickLink}
           target="_blank"
         >
-          Use the following AWS CloudFormation Quick Link to deploy the IAM Role
+          Use the following AWS CloudFormation Quick Link to create the IAM Role
         </CustomButton>
 
         <div className="flex items-center gap-2">
@@ -43,7 +46,9 @@ export const CredentialsRoleHelper = ({
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Use one of the following templates to create the IAM role:
+          {type === "providers"
+            ? "Use one of the following templates to create the IAM role"
+            : "Refer to the documentation"}
         </p>
 
         <div className="flex w-fit flex-col gap-2">
@@ -54,7 +59,7 @@ export const CredentialsRoleHelper = ({
             asLink={templateLinks.cloudformation}
             target="_blank"
           >
-            CloudFormation Template
+            CloudFormation {type === "providers" ? "Template" : ""}
           </CustomButton>
           <CustomButton
             ariaLabel="Terraform Code"
@@ -63,20 +68,16 @@ export const CredentialsRoleHelper = ({
             asLink={templateLinks.terraform}
             target="_blank"
           >
-            Terraform Code
+            Terraform {type === "providers" ? "Code" : ""}
           </CustomButton>
         </div>
 
-        <p className="text-xs font-bold text-gray-600 dark:text-gray-400">
-          The External ID will also be required:
-        </p>
-        <Snippet
-          className="max-w-full bg-gray-50 py-1 dark:bg-slate-800"
-          color="warning"
-          hideSymbol
-        >
-          <p className="whitespace-pre-line text-xs font-bold">{externalId}</p>
-        </Snippet>
+        <div className="flex items-center gap-2">
+          <span className="block text-xs font-medium text-default-500">
+            External ID:
+          </span>
+          <SnippetChip value={externalId} icon={<IdIcon size={16} />} />
+        </div>
       </div>
     </div>
   );

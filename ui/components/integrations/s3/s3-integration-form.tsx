@@ -11,7 +11,9 @@ import { ProviderSelector } from "@/components/providers/provider-selector";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
+import { FormSubmitButton } from "@/components/ui/form/form-buttons";
 import { getAWSCredentialsTemplateBucketLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
 import {
@@ -99,9 +101,11 @@ export const S3IntegrationForm = ({
     const stepFields =
       currentStep === 0
         ? (["bucket_name", "output_directory", "providers"] as const)
-        : (["role_arn", "external_id"] as const);
+        : // Step 1: No required fields since role_arn and external_id are optional
+          // We'll let the form submission handle any validation
+          [];
 
-    const isValid = await form.trigger(stepFields);
+    const isValid = stepFields.length === 0 || (await form.trigger(stepFields));
     if (isValid) {
       setCurrentStep(1);
     }
@@ -132,18 +136,21 @@ export const S3IntegrationForm = ({
         formData.append("providers", JSON.stringify(values.providers));
       }
     } else if (isEditingCredentials) {
-      // For credentials editing, require all credential fields like creation
-      const credentials: any = {
-        role_arn: values.role_arn,
-        external_id: values.external_id,
-      };
+      // For credentials editing, only include role fields if role_arn is provided
+      const credentials: any = {};
 
-      // Optional fields
-      if (values.role_session_name)
-        credentials.role_session_name = values.role_session_name;
-      if (values.session_duration)
-        credentials.session_duration =
-          parseInt(values.session_duration, 10) || 3600;
+      // Only include role-related fields if role_arn is provided
+      if (values.role_arn && values.role_arn.trim() !== "") {
+        credentials.role_arn = values.role_arn;
+        credentials.external_id = values.external_id;
+
+        // Optional role fields
+        if (values.role_session_name)
+          credentials.role_session_name = values.role_session_name;
+        if (values.session_duration)
+          credentials.session_duration =
+            parseInt(values.session_duration, 10) || 3600;
+      }
 
       // Add static credentials if using access-secret-key type
       if (values.credentials_type === "access-secret-key") {
@@ -161,17 +168,22 @@ export const S3IntegrationForm = ({
         output_directory: values.output_directory,
       };
 
-      const credentials: any = {
-        role_arn: values.role_arn,
-        external_id: values.external_id,
-      };
+      const credentials: any = {};
 
-      if (values.role_session_name)
-        credentials.role_session_name = values.role_session_name;
-      if (values.session_duration)
-        credentials.session_duration =
-          parseInt(values.session_duration, 10) || 3600;
+      // Only include role-related fields if role_arn is provided
+      if (values.role_arn && values.role_arn.trim() !== "") {
+        credentials.role_arn = values.role_arn;
+        credentials.external_id = values.external_id;
 
+        // Optional role fields
+        if (values.role_session_name)
+          credentials.role_session_name = values.role_session_name;
+        if (values.session_duration)
+          credentials.session_duration =
+            parseInt(values.session_duration, 10) || 3600;
+      }
+
+      // Add static credentials if using access-secret-key type
       if (values.credentials_type === "access-secret-key") {
         credentials.aws_access_key_id = values.aws_access_key_id;
         credentials.aws_secret_access_key = values.aws_secret_access_key;
@@ -258,6 +270,7 @@ export const S3IntegrationForm = ({
           setValue={form.setValue as any}
           externalId={externalId}
           templateLinks={templateLinks}
+          type="s3-integration"
         />
       );
     }
@@ -337,17 +350,11 @@ export const S3IntegrationForm = ({
           >
             Cancel
           </CustomButton>
-          <CustomButton
-            type="submit"
-            ariaLabel={updateText}
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-          >
-            {isLoading ? loadingText : updateText}
-          </CustomButton>
+          <div className="w-1/2">
+            <FormSubmitButton loadingText={loadingText} isDisabled={isLoading}>
+              {updateText}
+            </FormSubmitButton>
+          </div>
         </div>
       );
     }
@@ -367,17 +374,14 @@ export const S3IntegrationForm = ({
           >
             Cancel
           </CustomButton>
-          <CustomButton
-            type="submit"
-            ariaLabel="Next"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="lg"
-            isDisabled={isLoading}
-          >
-            Next
-          </CustomButton>
+          <div className="w-1/2">
+            <FormSubmitButton
+              loadingText="Processing..."
+              isDisabled={isLoading}
+            >
+              Next
+            </FormSubmitButton>
+          </div>
         </div>
       );
     }
@@ -396,17 +400,11 @@ export const S3IntegrationForm = ({
         >
           Back
         </CustomButton>
-        <CustomButton
-          type="submit"
-          ariaLabel="Create S3 Integration"
-          className="w-1/2"
-          variant="solid"
-          color="action"
-          size="lg"
-          isLoading={isLoading}
-        >
-          {isLoading ? "Creating..." : "Create Integration"}
-        </CustomButton>
+        <div className="w-1/2">
+          <FormSubmitButton loadingText="Creating..." isDisabled={isLoading}>
+            Create Integration
+          </FormSubmitButton>
+        </div>
       </div>
     );
   };
@@ -425,13 +423,19 @@ export const S3IntegrationForm = ({
         }
         className="flex flex-col space-y-6"
       >
-        {/* Only show divider if not in single edit mode */}
-        {!isEditingConfig && !isEditingCredentials && <Divider />}
-
-        {/* Step Content */}
-        <div className="space-y-6">{renderStepContent()}</div>
-
-        {/* Step Buttons */}
+        <div className="flex flex-col space-y-4">
+          <p className="flex items-center gap-2 text-sm text-default-500">
+            Need help connecting your AWS account?
+            <CustomLink
+              href="https://goto.prowler.com/provider-aws"
+              target="_blank"
+              size="sm"
+            >
+              Read the docs
+            </CustomLink>
+          </p>
+          {renderStepContent()}
+        </div>
         {renderStepButtons()}
       </form>
     </Form>
