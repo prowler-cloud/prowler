@@ -427,7 +427,7 @@ class TestIacProvider:
             "json",
             "-f",
             "all",
-            "-e",
+            "--skip-path",
             ",".join(exclude_paths),
         ]
         mock_subprocess.assert_called_once_with(
