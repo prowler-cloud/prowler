@@ -36,10 +36,10 @@ terraform apply \
 #### Using terraform.tfvars file:
 Create a `terraform.tfvars` file:
 ```hcl
-external_id           = "your-external-id-here"
-enable_s3_integration = true
-s3_integration_bucket_name        = "your-s3-bucket-name"
-s3_integration_bucket_account     = "123456789012"
+external_id                   = "your-external-id-here"
+enable_s3_integration         = true
+s3_integration_bucket_name    = "your-s3-bucket-name"
+s3_integration_bucket_account = "123456789012"
 ```
 
 Then run: `terraform apply`

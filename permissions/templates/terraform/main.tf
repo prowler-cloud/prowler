@@ -10,7 +10,7 @@ locals {
 # Validation check using check block (Terraform 1.5+)
 check "s3_integration_requirements" {
   assert {
-    condition = !var.enable_s3_integration || (var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account != "")
+    condition     = !var.enable_s3_integration || (var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account != "")
     error_message = "When enable_s3_integration is true, both s3_integration_bucket_name and s3_integration_bucket_account must be provided and non-empty."
   }
 }
