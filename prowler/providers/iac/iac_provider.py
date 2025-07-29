@@ -284,7 +284,7 @@ class IacProvider(Provider):
                 ",".join(frameworks),
             ]
             if exclude_path:
-                checkov_command.extend(["-e", ",".join(exclude_path)])
+                checkov_command.extend(["--skip-path", ",".join(exclude_path)])
             # Run Checkov with JSON output
             process = subprocess.run(
                 checkov_command,
