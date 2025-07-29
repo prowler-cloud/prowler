@@ -286,8 +286,8 @@ class Finding(BaseModel):
                 output_data["auth_method"] = provider.auth_method
                 output_data["account_uid"] = "iac"
                 output_data["account_name"] = "iac"
-                output_data["resource_name"] = check_output.resource_name
-                output_data["resource_uid"] = check_output.resource_name
+                output_data["resource_name"] = check_output.resource["resource"]
+                output_data["resource_uid"] = check_output.resource["resource"]
                 output_data["region"] = check_output.resource_path
                 output_data["resource_line_range"] = check_output.resource_line_range
                 output_data["framework"] = check_output.check_metadata.ServiceName

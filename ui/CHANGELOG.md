@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.9.3] (Prowler v5.9.3)
+
+### 🚀 Added
+
+- Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+
 ## [v1.9.0] (Prowler v5.9.0)
 
 ### 🚀 Added
@@ -22,6 +28,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
 - Improved active step highlighting and updated step titles and descriptions in the Cloud Provider credentials update flow [(#8303)](https://github.com/prowler-cloud/prowler/pull/8303)
+- Refactored all existing links across the app to use new custom-link component for consistent styling [(#8341)](https://github.com/prowler-cloud/prowler/pull/8341)
 
 ### 🐞 Fixed
 

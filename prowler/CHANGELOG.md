@@ -5,11 +5,22 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.10.0] (Prowler UNRELEASED)
 
 ### Added
-- Add `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
+- `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
 - Support App Key Content in GitHub provider [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
+- CIS 4.0 for the Azure provider [(#7782)](https://github.com/prowler-cloud/prowler/pull/7782)
+- `vm_desired_sku_size` check for Azure provider [(#8191)](https://github.com/prowler-cloud/prowler/pull/8191)
+- `vm_scaleset_not_empty` check for Azure provider [(#8192)](https://github.com/prowler-cloud/prowler/pull/8192)
+- GitHub repository and organization scoping support with `--repository/respositories` and `--organization/organizations` flags [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
+
+### Changed
+- Handle some AWS errors as warnings instead of errors [(#8347)](https://github.com/prowler-cloud/prowler/pull/8347)
+- Revert import of `checkov` python library [(#8385)](https://github.com/prowler-cloud/prowler/pull/8385)
+- Updated policy mapping in ISMS-P compliance file for improved alignment [(#8367)](https://github.com/prowler-cloud/prowler/pull/8367)
 
 ### Fixed
 - False positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
+- Add protocol validation check in security group checks to ensure proper protocol matching [(#8374)](https://github.com/prowler-cloud/prowler/pull/8374)
+- Add missing audit evidence for controls 1.1.4 and 2.5.5 for ISMS-P compliance. [(#8386)](https://github.com/prowler-cloud/prowler/pull/8386)
 
 ---
 
@@ -17,6 +28,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
+- `sns_topics_not_publicly_accessible` false positive with `aws:SourceArn` conditions [(#8326)](https://github.com/prowler-cloud/prowler/issues/8326)
+- Remove typo from description req 1.2.3 - Prowler ThreatScore m365 [(#8384)](https://github.com/prowler-cloud/prowler/pull/8384)
+- Way of counting FAILED/PASS reqs from `kisa_isms_p_2023_aws` table [(#8382)](https://github.com/prowler-cloud/prowler/pull/8382)
 
 ---
 
