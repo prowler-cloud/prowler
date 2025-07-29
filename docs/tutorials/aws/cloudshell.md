@@ -25,9 +25,9 @@ To download results from AWS CloudShell:
 
 ## Cloning Prowler from GitHub
 
-Due to the limited storage in AWS CloudShell's home directory, installing Poetry dependencies for running Prowler from GitHub can be problematic. 
+Due to the limited storage in AWS CloudShell's home directory, installing Poetry dependencies for running Prowler from GitHub can be problematic.
 
-The following workaround ensures successful installation: 
+The following workaround ensures successful installation:
 
 ```shell
 sudo bash
@@ -43,7 +43,7 @@ poetry install
 python prowler-cli.py -v
 ```
 
-> [!IMPORTANT]
-> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
->
-> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment. For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
+???+ important
+    Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+
+    If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment. For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
