@@ -165,16 +165,16 @@ export const S3IntegrationsManager = ({
             <p className="text-sm text-gray-500 dark:text-gray-300">
               {integrations.length === 0
                 ? "Not configured yet"
-                : `${integrations.length} integration${integrations.length !== 1 ? "s" : ""} configured.`}
+                : `${integrations.length} integration${integrations.length !== 1 ? "s" : ""} configured`}
             </p>
           </div>
           <CustomButton
             color="action"
             startContent={<PlusIcon size={16} />}
             onPress={handleAddIntegration}
-            ariaLabel="Add new S3 integration"
+            ariaLabel="Add integration"
           >
-            Add S3 Integration
+            Add Integration
           </CustomButton>
         </div>
 
