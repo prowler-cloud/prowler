@@ -162,11 +162,27 @@ class M365PowerShell(PowerShellSession):
 
             # Validate credentials
             result = self.execute("Connect-ExchangeOnline -Credential $credential")
-            if "AADSTS" in result:
-                raise M365UserCredentialsError(
-                    file=os.path.basename(__file__),
-                    message=result,
-                )
+            if "https://aka.ms/exov3-module" not in result:
+                if "AADSTS" in result:  # Entra Security Token Service Error
+                    raise M365UserCredentialsError(
+                        file=os.path.basename(__file__),
+                        message=result,
+                    )
+                else:  # Could not connect to Exchange Online, try Microsoft Teams
+                    result = self.execute(
+                        "Connect-MicrosoftTeams -Credential $credential"
+                    )
+                    if self.tenant_identity.tenant_id not in result:
+                        if "AADSTS" in result:  # Entra Security Token Service Error
+                            raise M365UserCredentialsError(
+                                file=os.path.basename(__file__),
+                                message=result,
+                            )
+                        else:  # Unknown error, could be a permission issue or modules not installed
+                            raise Exception(
+                                file=os.path.basename(__file__),
+                                message=f"Error connecting to PowerShell modules: {result}",
+                            )
 
             return True
 

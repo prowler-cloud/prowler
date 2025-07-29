@@ -138,7 +138,9 @@ class Testm365PowerShell:
         session.encrypt_password = MagicMock(return_value="encrypted_password")
 
         # Mock execute to simulate successful Connect-ExchangeOnline
-        session.execute = MagicMock(return_value="Connected successfully")
+        session.execute = MagicMock(
+            return_value="Connected successfully https://aka.ms/exov3-module"
+        )
 
         # Execute the test
         result = session.test_credentials(credentials)
