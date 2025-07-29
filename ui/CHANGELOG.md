@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [v1.10.0] (Prowler v5.10.0)
+
+### 🚀 Added
+
+- PDF reporting for Prowler ThreatScore inside compliance detailed view [(#8018)](https://github.com/prowler-cloud/prowler/pull/8018)
+
+---
+
 ## [v1.9.0] (Prowler v5.9.0)
 
 ### 🚀 Added

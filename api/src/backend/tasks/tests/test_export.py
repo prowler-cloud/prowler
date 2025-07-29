@@ -136,15 +136,17 @@ class TestOutputs:
         scan_id = "s1"
         provider = "aws"
 
-        path, compliance = _generate_output_directory(
+        path, compliance, threatscore = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
 
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
+        assert os.path.isdir(os.path.dirname(threatscore))
 
         assert path.endswith(f"{provider}-{output_file_timestamp}")
         assert compliance.endswith(f"{provider}-{output_file_timestamp}")
+        assert threatscore.endswith(f"{provider}-{output_file_timestamp}")
 
     def test_generate_output_directory_invalid_character(self, tmpdir):
         from prowler.config.config import output_file_timestamp
@@ -155,12 +157,14 @@ class TestOutputs:
         scan_id = "s1"
         provider = "aws/test@check"
 
-        path, compliance = _generate_output_directory(
+        path, compliance, threatscore = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
 
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
+        assert os.path.isdir(os.path.dirname(threatscore))
 
         assert path.endswith(f"aws-test-check-{output_file_timestamp}")
         assert compliance.endswith(f"aws-test-check-{output_file_timestamp}")
+        assert threatscore.endswith(f"aws-test-check-{output_file_timestamp}")

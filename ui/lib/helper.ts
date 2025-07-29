@@ -1,4 +1,8 @@
-import { getComplianceCsv, getExportsZip } from "@/actions/scans";
+import {
+  getComplianceCsv,
+  getExportsZip,
+  getThreatscoreReport,
+} from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
@@ -173,6 +177,69 @@ export const downloadComplianceCsv = async (
       toast({
         title: "Download Complete",
         description: "The compliance report has been downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "An error occurred while processing the file.",
+      });
+    }
+    return;
+  }
+
+  if (result?.error) {
+    toast({
+      variant: "destructive",
+      title: "Download Failed",
+      description: result.error,
+    });
+    return;
+  }
+
+  // Unexpected case
+  toast({
+    variant: "destructive",
+    title: "Download Failed",
+    description: "Unexpected response. Please try again later.",
+  });
+};
+
+export const downloadThreatscoreReport = async (
+  scanId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  const result = await getThreatscoreReport(scanId);
+
+  if (result?.pending) {
+    toast({
+      title: "The report is still being generated",
+      description: "Please try again in a few minutes.",
+    });
+    return;
+  }
+
+  if (result?.success && result.data) {
+    try {
+      const binaryString = window.atob(result.data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = result.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download Complete",
+        description: "The threatscore report has been downloaded successfully.",
       });
     } catch (error) {
       toast({

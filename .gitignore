@@ -75,3 +75,6 @@ node_modules
 
 # Persistent data
 _data/
+
+# Compliance report
+*.pdf
