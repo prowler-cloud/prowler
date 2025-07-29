@@ -1028,3 +1028,181 @@ class TestSecurityHubIntegrationUploads:
         result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
 
         assert result is False
+
+    @patch("tasks.jobs.integrations.ASFF")
+    @patch("tasks.jobs.integrations.FindingOutput")
+    @patch("tasks.jobs.integrations.batched")
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_send_only_fails_filters_findings(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+        mock_batched,
+        mock_finding_output,
+        mock_asff,
+    ):
+        """Test that send_only_fails=True filters findings to only include FAILED status."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock integration with send_only_fails=True
+        integration = MagicMock()
+        integration.id = "integration-1"
+        integration.configuration = {
+            "send_only_fails": True,
+            "skip_archive_previous": False,
+        }
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        # Mock provider
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock findings
+        mock_findings = [MagicMock(), MagicMock()]
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            mock_findings
+        )
+
+        # Mock batched to return findings in one batch
+        mock_batched.return_value = [(mock_findings, None)]
+
+        # Mock transformed findings
+        transformed_findings = [MagicMock(), MagicMock()]
+        mock_finding_output.transform_api_finding.side_effect = transformed_findings
+
+        # Mock ASFF transformer with mixed findings (FAILED and PASSED)
+        mock_asff_instance = MagicMock()
+        mock_asff_instance.data = [
+            {"Compliance": {"Status": "FAILED"}, "asff": "failed_finding"},
+            {"Compliance": {"Status": "PASSED"}, "asff": "passed_finding"},
+        ]
+        mock_asff_instance._data = MagicMock()
+        mock_asff.return_value = mock_asff_instance
+
+        # Mock SecurityHub client
+        mock_security_hub = MagicMock()
+        mock_security_hub.batch_send_to_security_hub.return_value = (
+            1  # Only 1 finding sent (FAILED)
+        )
+        mock_security_hub.archive_previous_findings.return_value = 2
+        mock_get_security_hub.return_value = (True, mock_security_hub)
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is True
+
+        # Verify SecurityHub client was created with only FAILED findings
+        # The filtered_asff_findings should only contain the FAILED finding
+        mock_get_security_hub.assert_called_once()
+        call_args = mock_get_security_hub.call_args[0]
+        filtered_findings = call_args[2]  # Third argument is the findings list
+
+        # Should only contain FAILED findings
+        assert len(filtered_findings) == 1
+        assert filtered_findings[0]["Compliance"]["Status"] == "FAILED"
+
+        mock_security_hub.batch_send_to_security_hub.assert_called_once()
+        mock_security_hub.archive_previous_findings.assert_called_once()
+
+    @patch("tasks.jobs.integrations.ASFF")
+    @patch("tasks.jobs.integrations.FindingOutput")
+    @patch("tasks.jobs.integrations.batched")
+    @patch("tasks.jobs.integrations.get_security_hub_client_from_integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_provider")
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.Provider")
+    @patch("tasks.jobs.integrations.Finding")
+    def test_upload_security_hub_integration_send_only_fails_false_sends_all(
+        self,
+        mock_finding_model,
+        mock_provider_model,
+        mock_integration_model,
+        mock_rls,
+        mock_initialize_provider,
+        mock_get_security_hub,
+        mock_batched,
+        mock_finding_output,
+        mock_asff,
+    ):
+        """Test that send_only_fails=False sends all findings."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        scan_id = "scan-123"
+
+        # Mock integration with send_only_fails=False
+        integration = MagicMock()
+        integration.id = "integration-1"
+        integration.configuration = {
+            "send_only_fails": False,
+            "skip_archive_previous": False,
+        }
+        mock_integration_model.objects.filter.return_value = [integration]
+
+        # Mock provider
+        provider = MagicMock()
+        mock_provider_model.objects.get.return_value = provider
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock findings
+        mock_findings = [MagicMock(), MagicMock()]
+        mock_finding_model.all_objects.filter.return_value.order_by.return_value.iterator.return_value = iter(
+            mock_findings
+        )
+
+        # Mock batched to return findings in one batch
+        mock_batched.return_value = [(mock_findings, None)]
+
+        # Mock transformed findings
+        transformed_findings = [MagicMock(), MagicMock()]
+        mock_finding_output.transform_api_finding.side_effect = transformed_findings
+
+        # Mock ASFF transformer with mixed findings (FAILED and PASSED)
+        mock_asff_instance = MagicMock()
+        mock_asff_instance.data = [
+            {"Compliance": {"Status": "FAILED"}, "asff": "failed_finding"},
+            {"Compliance": {"Status": "PASSED"}, "asff": "passed_finding"},
+        ]
+        mock_asff_instance._data = MagicMock()
+        mock_asff.return_value = mock_asff_instance
+
+        # Mock SecurityHub client
+        mock_security_hub = MagicMock()
+        mock_security_hub.batch_send_to_security_hub.return_value = (
+            2  # Both findings sent
+        )
+        mock_security_hub.archive_previous_findings.return_value = 2
+        mock_get_security_hub.return_value = (True, mock_security_hub)
+
+        result = upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+        assert result is True
+
+        # Verify SecurityHub client was created with all findings
+        mock_get_security_hub.assert_called_once()
+        call_args = mock_get_security_hub.call_args[0]
+        filtered_findings = call_args[2]  # Third argument is the findings list
+
+        # Should contain all findings
+        assert len(filtered_findings) == 2
+
+        mock_security_hub.batch_send_to_security_hub.assert_called_once()
+        mock_security_hub.archive_previous_findings.assert_called_once()

@@ -52,6 +52,7 @@ class S3ConfigSerializer(BaseValidateSerializer):
 
 class SecurityHubConfigSerializer(BaseValidateSerializer):
     send_only_fails = serializers.BooleanField(default=False)
+    skip_archive_previous = serializers.BooleanField(default=False)
 
     class Meta:
         resource_name = "integrations"
@@ -149,6 +150,22 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                 },
                 "required": ["bucket_name", "output_directory"],
+            },
+            {
+                "type": "object",
+                "title": "AWS Security Hub",
+                "properties": {
+                    "send_only_fails": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, only findings with status 'FAILED' will be sent to Security Hub.",
+                    },
+                    "skip_archive_previous": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, skips archiving previous findings in Security Hub.",
+                    },
+                },
             },
         ]
     }

@@ -294,9 +294,27 @@ def upload_security_hub_integration(
         integration_executions = 0
         for integration in integrations:
             try:
+                # Filter findings based on send_only_fails configuration for this integration
+                send_only_fails = integration.configuration.get(
+                    "send_only_fails", False
+                )
+
+                if send_only_fails:
+                    logger.info(
+                        f"Filtering to only send FAILED findings for integration {integration.id}"
+                    )
+                    # Filter the already transformed ASFF findings to only include FAILED status
+                    filtered_asff_findings = [
+                        finding
+                        for finding in asff_findings
+                        if finding.get("Compliance", {}).get("Status") == "FAILED"
+                    ]
+                else:
+                    filtered_asff_findings = asff_findings
+
                 # Create Security Hub client with integration credentials
                 connected, security_hub = get_security_hub_client_from_integration(
-                    integration, provider, asff_findings
+                    integration, provider, filtered_asff_findings
                 )
 
                 if not connected:
@@ -311,7 +329,7 @@ def upload_security_hub_integration(
 
                 # Send findings to Security Hub
                 logger.info(
-                    f"Sending {len(asff_findings)} findings to Security Hub via integration {integration.id}"
+                    f"Sending {len(filtered_asff_findings)} findings to Security Hub via integration {integration.id}"
                 )
                 findings_sent = security_hub.batch_send_to_security_hub()
 

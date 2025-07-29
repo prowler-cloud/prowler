@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Optional
 
@@ -179,6 +180,69 @@ class SecurityHub:
         return findings_per_region
 
     @staticmethod
+    def _check_region_security_hub(
+        region: str,
+        session: Session,
+        aws_account_id: str,
+        aws_partition: str,
+    ) -> tuple[str, Session | None]:
+        """
+        Check if Security Hub is enabled in a specific region and if Prowler integration is active.
+
+        Args:
+            region (str): AWS region to check.
+            session (Session): AWS session object.
+            aws_account_id (str): AWS account ID.
+            aws_partition (str): AWS partition.
+
+        Returns:
+            tuple: (region, client or None) - Returns client if enabled, None otherwise.
+        """
+        try:
+            logger.info(
+                f"Checking if the {SECURITY_HUB_INTEGRATION_NAME} is enabled in the {region} region."
+            )
+            # Check if security hub is enabled in current region
+            security_hub_client = session.client("securityhub", region_name=region)
+            security_hub_client.describe_hub()
+
+            # Check if Prowler integration is enabled in Security Hub
+            security_hub_prowler_integration_arn = f"arn:{aws_partition}:securityhub:{region}:{aws_account_id}:product-subscription/{SECURITY_HUB_INTEGRATION_NAME}"
+            if security_hub_prowler_integration_arn not in str(
+                security_hub_client.list_enabled_products_for_import()
+            ):
+                logger.warning(
+                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
+                )
+                return region, None
+            else:
+                return region, session.client("securityhub", region_name=region)
+
+        # Handle all the permissions / configuration errors
+        except ClientError as client_error:
+            # Check if Account is subscribed to Security Hub
+            error_code = client_error.response["Error"]["Code"]
+            error_message = client_error.response["Error"]["Message"]
+            if (
+                error_code == "InvalidAccessException"
+                and f"Account {aws_account_id} is not subscribed to AWS Security Hub"
+                in error_message
+            ):
+                logger.warning(
+                    f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
+                )
+            else:
+                logger.error(
+                    f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
+                )
+            return region, None
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return region, None
+
+    @staticmethod
     def verify_enabled_per_region(
         aws_security_hub_available_regions: list[str],
         session: Session,
@@ -195,49 +259,34 @@ class SecurityHub:
             dict: A dictionary containing enabled regions with SecurityHub clients.
         """
         enabled_regions = {}
-        for region in aws_security_hub_available_regions:
-            try:
-                logger.info(
-                    f"Checking if the {SECURITY_HUB_INTEGRATION_NAME} is enabled in the {region} region."
-                )
-                # Check if security hub is enabled in current region
-                security_hub_client = session.client("securityhub", region_name=region)
-                security_hub_client.describe_hub()
 
-                # Check if Prowler integration is enabled in Security Hub
-                security_hub_prowler_integration_arn = f"arn:{aws_partition}:securityhub:{region}:{aws_account_id}:product-subscription/{SECURITY_HUB_INTEGRATION_NAME}"
-                if security_hub_prowler_integration_arn not in str(
-                    security_hub_client.list_enabled_products_for_import()
-                ):
-                    logger.warning(
-                        f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
-                    )
-                else:
-                    enabled_regions[region] = session.client(
-                        "securityhub", region_name=region
-                    )
+        # Use ThreadPoolExecutor to check regions in parallel
+        with ThreadPoolExecutor(
+            max_workers=min(len(aws_security_hub_available_regions), 20)
+        ) as executor:
+            # Submit all region checks
+            future_to_region = {
+                executor.submit(
+                    SecurityHub._check_region_security_hub,
+                    region,
+                    session,
+                    aws_account_id,
+                    aws_partition,
+                ): region
+                for region in aws_security_hub_available_regions
+            }
 
-            # Handle all the permissions / configuration errors
-            except ClientError as client_error:
-                # Check if Account is subscribed to Security Hub
-                error_code = client_error.response["Error"]["Code"]
-                error_message = client_error.response["Error"]["Message"]
-                if (
-                    error_code == "InvalidAccessException"
-                    and f"Account {aws_account_id} is not subscribed to AWS Security Hub"
-                    in error_message
-                ):
-                    logger.warning(
-                        f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
-                    )
-                else:
+            # Collect results as they complete
+            for future in as_completed(future_to_region):
+                try:
+                    region, client = future.result()
+                    if client is not None:
+                        enabled_regions[region] = client
+                except Exception as error:
                     logger.error(
-                        f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
+                        f"Error checking region {future_to_region[future]}: {error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
                     )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
-                )
+
         return enabled_regions
 
     def batch_send_to_security_hub(
