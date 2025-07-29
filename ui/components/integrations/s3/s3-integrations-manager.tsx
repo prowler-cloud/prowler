@@ -2,12 +2,13 @@
 
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { PlusIcon, SettingsIcon, TestTube, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   deleteIntegration,
   testIntegrationConnection,
 } from "@/actions/integrations";
+import { getTask } from "@/actions/task/tasks";
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
@@ -36,6 +37,130 @@ export const S3IntegrationsManager = ({
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isOperationLoading, setIsOperationLoading] = useState(false);
   const { toast } = useToast();
+
+  // Store polling intervals to clean them up
+  const pollingIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Cleanup intervals on unmount
+  useEffect(() => {
+    const intervals = pollingIntervalsRef.current;
+    return () => {
+      intervals.forEach((interval) => {
+        clearInterval(interval);
+      });
+      intervals.clear();
+    };
+  }, []);
+
+  const pollTaskStatus = async (taskId: string, _integrationId: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const taskResponse = await getTask(taskId);
+
+        if (taskResponse.error) {
+          clearInterval(pollInterval);
+          pollingIntervalsRef.current.delete(taskId);
+          setIsTesting(null);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: taskResponse.error,
+          });
+          return;
+        }
+
+        const task = taskResponse.data;
+        const taskState = task?.attributes?.state;
+
+        // Continue polling while task is executing
+        if (
+          taskState === "executing" ||
+          taskState === "scheduled" ||
+          taskState === "available"
+        ) {
+          return;
+        }
+
+        // Task has finished, stop polling
+        clearInterval(pollInterval);
+        pollingIntervalsRef.current.delete(taskId);
+        setIsTesting(null);
+
+        // Show result based on final state
+        if (taskState === "completed") {
+          const result = task?.attributes?.result;
+          const isSuccessful =
+            result?.success === true || result?.status === "success";
+
+          if (isSuccessful) {
+            toast({
+              title: "Connection Test Successful!",
+              description:
+                result?.message || "Connection test completed successfully.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Connection Test Failed",
+              description:
+                result?.message || result?.error || "Connection test failed.",
+            });
+          }
+        } else if (taskState === "failed") {
+          const result = task?.attributes?.result;
+          toast({
+            variant: "destructive",
+            title: "Connection Test Failed",
+            description:
+              result?.message || result?.error || "Task failed to complete.",
+          });
+        } else if (taskState === "cancelled") {
+          const result = task?.attributes?.result;
+          toast({
+            variant: "destructive",
+            title: "Connection Test Cancelled",
+            description:
+              result?.message || "The connection test was cancelled.",
+          });
+        } else {
+          // Unknown state
+          const result = task?.attributes?.result;
+          toast({
+            variant: "destructive",
+            title: "Connection Test Completed",
+            description:
+              result?.message || `Task completed with state: ${taskState}`,
+          });
+        }
+      } catch (error) {
+        clearInterval(pollInterval);
+        pollingIntervalsRef.current.delete(taskId);
+        setIsTesting(null);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to monitor connection test. Please try again.",
+        });
+      }
+    }, 2000); // Poll every 2 seconds
+
+    // Store the interval for cleanup
+    pollingIntervalsRef.current.set(taskId, pollInterval);
+
+    // Set a maximum timeout to avoid infinite polling (5 minutes)
+    setTimeout(() => {
+      if (pollingIntervalsRef.current.has(taskId)) {
+        clearInterval(pollInterval);
+        pollingIntervalsRef.current.delete(taskId);
+        setIsTesting(null);
+        toast({
+          variant: "destructive",
+          title: "Connection Test Timeout",
+          description: "Connection test took too long to complete.",
+        });
+      }
+    }, 300000); // 5 minutes timeout
+  };
 
   const handleAddIntegration = () => {
     setEditingIntegration(null);
@@ -89,12 +214,28 @@ export const S3IntegrationsManager = ({
       const result = await testIntegrationConnection(id);
 
       if (result.success) {
-        toast({
-          title: "Success!",
-          description:
-            "Connection test started. It may take some time to complete.",
-        });
+        const taskId = result.data?.data?.id;
+
+        if (taskId) {
+          // Start polling the task status
+          await pollTaskStatus(taskId, id);
+
+          toast({
+            title: "Connection Test Started",
+            description:
+              "Connection test is running. You'll be notified when it completes.",
+          });
+        } else {
+          setIsTesting(null);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description:
+              "Failed to start connection test. No task ID received.",
+          });
+        }
       } else if (result.error) {
+        setIsTesting(null);
         toast({
           variant: "destructive",
           title: "Connection Test Failed",
@@ -102,15 +243,12 @@ export const S3IntegrationsManager = ({
         });
       }
     } catch (error) {
+      setIsTesting(null);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to test connection. Please try again.",
       });
-    } finally {
-      setTimeout(() => {
-        setIsTesting(null);
-      }, 5000);
     }
   };
 
@@ -222,13 +360,6 @@ export const S3IntegrationsManager = ({
                 <CardBody className="pt-0">
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-gray-500 dark:text-gray-300">
-                      <p>
-                        <span className="font-medium">Auth:</span>{" "}
-                        {integration.attributes.configuration.credentials
-                          ?.role_arn
-                          ? "IAM Role + Static Credentials"
-                          : "Static Credentials"}
-                      </p>
                       {integration.attributes.connection_last_checked_at && (
                         <p>
                           <span className="font-medium">Last checked:</span>{" "}
