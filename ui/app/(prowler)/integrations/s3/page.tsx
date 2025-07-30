@@ -17,7 +17,7 @@ export default async function S3Integrations() {
   const availableProviders = providers?.data || [];
 
   return (
-    <ContentLayout title="Amazon S3 Integrations">
+    <ContentLayout title="Amazon S3">
       <div className="space-y-6">
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">

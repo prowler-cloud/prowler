@@ -210,14 +210,14 @@ export const S3IntegrationForm = ({
         if ("testConnection" in result) {
           if (result.testConnection.success) {
             toast({
-              title: "Connection Test Started!",
+              title: "Connection test started!",
               description:
                 "Connection test started. It may take some time to complete.",
             });
           } else if (result.testConnection.error) {
             toast({
               variant: "destructive",
-              title: "Connection Test Failed",
+              title: "Connection test failed",
               description: result.testConnection.error,
             });
           }

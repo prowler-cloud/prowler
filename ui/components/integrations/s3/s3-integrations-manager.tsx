@@ -100,14 +100,14 @@ export const S3IntegrationsManager = ({
 
       if (result.success) {
         toast({
-          title: "Connection Test Successful!",
+          title: "Connection test successful!",
           description:
             result.message || "Connection test completed successfully.",
         });
       } else if (result.error) {
         toast({
           variant: "destructive",
-          title: "Connection Test Failed",
+          title: "Connection test failed",
           description: result.error,
         });
       }
