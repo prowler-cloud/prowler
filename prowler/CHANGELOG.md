@@ -24,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add missing audit evidence for controls 1.1.4 and 2.5.5 for ISMS-P compliance. [(#8386)](https://github.com/prowler-cloud/prowler/pull/8386)
 - Use the correct @staticmethod decorator for `set_identity` and `set_session_config` methods in AwsProvider [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 - Use the correct default value for `role_session_name` and `session_duration` in AwsSetUpSession [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+- Increment the performance of the AWS Security Hub regions check [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 
 ---
 
