@@ -11,6 +11,7 @@ class M365IdentityInfo(BaseModel):
     identity_type: str = ""
     tenant_id: str = ""
     tenant_domain: str = "Unknown tenant domain (missing Entra permissions)"
+    certificate_thumbprint: str = ""
     tenant_domains: list[str] = []
     location: str = ""
     user: str = None
@@ -31,6 +32,7 @@ class M365Credentials(BaseModel):
     client_secret: str = ""
     tenant_id: str = ""
     tenant_domains: list[str] = []
+    certificate_content: Optional[str] = None
 
 
 class M365OutputOptions(ProviderOutputOptions):

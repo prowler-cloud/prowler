@@ -71,19 +71,17 @@ class M365PowerShell(PowerShellSession):
             stored securely in the PowerShell session.
         """
         # Certificate Auth
-        if credentials.certificate_content and credentials.application_id:
-            sanitized_cert_content = self.sanitize(credentials.certificate_content)
-            sanitized_app_id = self.sanitize(credentials.application_id)
+        if credentials.certificate_content and credentials.client_id:
+            cert_content = credentials.certificate_content
+            sanitized_app_id = self.sanitize(credentials.client_id)
             sanitized_tenant_id = self.sanitize(credentials.tenant_id)
 
             # Create certificate from base64 content
-            self.execute(
-                f'$certBytes = [Convert]::FromBase64String("{sanitized_cert_content}")'
-            )
+            self.execute(f'$certBytes = [Convert]::FromBase64String("{cert_content}")')
             self.execute(
                 "$certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certBytes)"
             )
-            self.execute(f'$applicationID = "{sanitized_app_id}"')
+            self.execute(f'$clientID = "{sanitized_app_id}"')
             self.execute(f'$tenantID = "{sanitized_tenant_id}"')
 
         # User Auth (Will be deprecated in September 2025)
@@ -168,31 +166,13 @@ class M365PowerShell(PowerShellSession):
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
         # Test Certificate Auth
-        if credentials.certificate_content and credentials.application_id:
+        if credentials.certificate_content and credentials.client_id:
             try:
-                logger.info("Testing certificate authentication...")
-
-                # Test Microsoft Graph connection using certificate
-                logger.info("Testing Microsoft Graph connection with certificate...")
-                self.test_graph_connection()
-                logger.info("Microsoft Graph connection successful")
-
-                # Test Microsoft Teams connection using certificate
-                logger.info("Testing Microsoft Teams connection with certificate...")
-                self.test_teams_connection()
-                logger.info("Microsoft Teams connection successful")
-
-                # Test Exchange Online connection using certificate
-                logger.info("Testing Exchange Online connection with certificate...")
-                self.test_exchange_connection()
-                logger.info("Exchange Online connection successful")
-
-                logger.info("Certificate authentication successful")
+                self.test_exchange_certificate_connection()
+                self.test_teams_certificate_connection()
                 return True
-
             except Exception as e:
-                logger.error(f"Certificate authentication failed: {e}")
-                raise Exception(f"Certificate authentication failed: {str(e)}")
+                logger.error(f"Exchange Online Certificate connection failed: {e}")
 
         # Test User Auth
         elif credentials.user and credentials.passwd:
@@ -318,6 +298,11 @@ class M365PowerShell(PowerShellSession):
                 message=f"Failed to connect to Microsoft Teams API: {str(e)}",
             )
 
+    def test_teams_certificate_connection(self) -> bool:
+        """Test Microsoft Teams API connection using certificate and raise exception if it fails."""
+        connection = self.connect_microsoft_teams()
+        return connection
+
     def test_exchange_connection(self) -> bool:
         """Test Exchange Online API connection and raise exception if it fails."""
         try:
@@ -341,6 +326,11 @@ class M365PowerShell(PowerShellSession):
                 message=f"Failed to connect to Exchange Online API: {str(e)}",
             )
 
+    def test_exchange_certificate_connection(self) -> bool:
+        """Test Exchange Online API connection using certificate and raise exception if it fails."""
+        connection = self.connect_exchange_online()
+        return connection
+
     def connect_microsoft_teams(self) -> dict:
         """
         Connect to Microsoft Teams Module PowerShell Module.
@@ -360,7 +350,7 @@ class M365PowerShell(PowerShellSession):
         # Check for Certificate Auth
         if self.execute("Write-Output $certificate") != "":  # Certificate Auth
             return self.execute(
-                "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $applicationID -TenantId $tenantID"
+                "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
             )
         # Check for User Auth
         elif self.execute("Write-Output $credential") != "":  # User Auth
@@ -475,7 +465,7 @@ class M365PowerShell(PowerShellSession):
         # Check for Certificate Auth
         if self.execute("Write-Output $certificate") != "":  # Certificate Auth
             return self.execute(
-                "Connect-ExchangeOnline -Certificate $certificate -AppId $applicationID -Organization $tenantID"
+                "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantID"
             )
         # Check for User Auth
         elif self.execute("Write-Output $credential") != "":  # User Auth

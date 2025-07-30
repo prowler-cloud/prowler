@@ -211,6 +211,7 @@ class M365Provider(Provider):
         self._credentials = self.setup_powershell(
             env_auth=env_auth,
             sp_env_auth=sp_env_auth,
+            certificate_auth=certificate_auth,
             m365_credentials=m365_credentials,
             identity=self.identity,
             init_modules=init_modules,
@@ -384,6 +385,7 @@ class M365Provider(Provider):
     def setup_powershell(
         env_auth: bool = False,
         sp_env_auth: bool = False,
+        certificate_auth: bool = False,
         m365_credentials: dict = {},
         identity: M365IdentityInfo = None,
         init_modules: bool = False,
@@ -408,6 +410,7 @@ class M365Provider(Provider):
                 client_id=m365_credentials.get("client_id", ""),
                 client_secret=m365_credentials.get("client_secret", ""),
                 tenant_id=m365_credentials.get("tenant_id", ""),
+                certificate_content=m365_credentials.get("certificate_content", None),
                 tenant_domains=identity.tenant_domains,
             )
         elif env_auth:
@@ -446,10 +449,23 @@ class M365Provider(Provider):
                 tenant_domains=identity.tenant_domains,
             )
 
+        elif certificate_auth:
+            client_id = getenv("AZURE_CLIENT_ID")
+            tenant_id = getenv("AZURE_TENANT_ID")
+            certificate_content = getenv("M365_CERTIFICATE_CONTENT")
+            credentials = M365Credentials(
+                client_id=client_id,
+                tenant_id=tenant_id,
+                certificate_content=certificate_content,
+                tenant_domains=identity.tenant_domains,
+            )
+
         if credentials:
             if identity and credentials.user:
                 identity.user = credentials.user
                 identity.identity_type = "Service Principal and User Credentials"
+            if identity and credentials.certificate_content:
+                identity.identity_type = "Service Principal with Certificate"
             test_session = M365PowerShell(credentials, identity)
             try:
                 if init_modules:
@@ -483,6 +499,10 @@ class M365Provider(Provider):
         if self.credentials and self.credentials.user:
             report_lines.append(
                 f"M365 User: {Fore.YELLOW}{self.credentials.user}{Style.RESET_ALL}"
+            )
+        elif self.credentials and self.credentials.certificate_content:
+            report_lines.append(
+                f"M365 Certificate Thumbprint: {Fore.YELLOW}{self._identity.certificate_thumbprint}{Style.RESET_ALL}"
             )
         report_title = (
             f"{Style.BRIGHT}Using the M365 credentials below:{Style.RESET_ALL}"
@@ -1039,6 +1059,9 @@ class M365Provider(Provider):
                     or session.credentials[0]._credential.client_id
                     or "Unknown user id (Missing AAD permissions)"
                 )
+                identity.certificate_thumbprint = session._client_credential.get(
+                    "thumbprint", "Unknown certificate thumbprint"
+                )
             elif browser_auth or az_cli_auth:
                 identity.identity_type = "User"
                 try:
@@ -1058,8 +1081,14 @@ class M365Provider(Provider):
                     )
             else:
                 # Static Credentials
-                identity.identity_type = "Service Principal"
                 identity.identity_id = session._client_id
+                if isinstance(session, CertificateCredential):
+                    identity.identity_type = "Service Principal with Certificate"
+                    identity.certificate_thumbprint = session._client_credential.get(
+                        "thumbprint", "Unknown certificate thumbprint"
+                    )
+                else:
+                    identity.identity_type = "Service Principal"
 
             # Retrieve tenant id from the client
             client = GraphServiceClient(credentials=session)
