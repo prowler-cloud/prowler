@@ -35,6 +35,9 @@ export const S3IntegrationsManager = ({
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isOperationLoading, setIsOperationLoading] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [integrationToDelete, setIntegrationToDelete] =
+    useState<IntegrationProps | null>(null);
   const { toast } = useToast();
 
   const handleAddIntegration = () => {
@@ -53,6 +56,11 @@ export const S3IntegrationsManager = ({
     setEditingIntegration(integration);
     setEditMode("credentials");
     setIsModalOpen(true);
+  };
+
+  const handleOpenDeleteModal = (integration: IntegrationProps) => {
+    setIntegrationToDelete(integration);
+    setIsDeleteOpen(true);
   };
 
   const handleDeleteIntegration = async (id: string) => {
@@ -80,6 +88,8 @@ export const S3IntegrationsManager = ({
       });
     } finally {
       setIsDeleting(null);
+      setIsDeleteOpen(false);
+      setIntegrationToDelete(null);
     }
   };
 
@@ -131,6 +141,47 @@ export const S3IntegrationsManager = ({
 
   return (
     <>
+      <CustomAlertModal
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        title="Delete S3 Integration"
+        description="This action cannot be undone. This will permanently delete your S3 integration."
+      >
+        <div className="flex w-full justify-center space-x-6">
+          <CustomButton
+            type="button"
+            ariaLabel="Cancel"
+            className="w-full bg-transparent"
+            variant="faded"
+            size="lg"
+            onPress={() => {
+              setIsDeleteOpen(false);
+              setIntegrationToDelete(null);
+            }}
+            isDisabled={isDeleting !== null}
+          >
+            <span>Cancel</span>
+          </CustomButton>
+
+          <CustomButton
+            type="button"
+            ariaLabel="Delete"
+            className="w-full"
+            variant="solid"
+            color="danger"
+            size="lg"
+            isLoading={isDeleting !== null}
+            startContent={!isDeleting && <Trash2Icon size={24} />}
+            onPress={() =>
+              integrationToDelete &&
+              handleDeleteIntegration(integrationToDelete.id)
+            }
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </CustomButton>
+        </div>
+      </CustomAlertModal>
+
       <CustomAlertModal
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -266,8 +317,7 @@ export const S3IntegrationsManager = ({
                         color="danger"
                         variant="bordered"
                         startContent={<Trash2Icon size={14} />}
-                        onPress={() => handleDeleteIntegration(integration.id)}
-                        isLoading={isDeleting === integration.id}
+                        onPress={() => handleOpenDeleteModal(integration)}
                         ariaLabel="Delete integration"
                         className="w-full sm:w-auto"
                       >
