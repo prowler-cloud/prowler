@@ -128,9 +128,13 @@ export const updateIntegration = async (id: string, formData: FormData) => {
       data: {
         type: "integrations",
         id,
-        attributes: { integration_type, configuration },
+        attributes: { integration_type },
       },
     };
+
+    if (configuration) {
+      integrationData.data.attributes.configuration = configuration;
+    }
 
     if (credentials) {
       integrationData.data.attributes.credentials = credentials;
@@ -154,7 +158,6 @@ export const updateIntegration = async (id: string, formData: FormData) => {
     });
 
     if (response.ok) {
-      // Automatically test the connection after updating
       const testResult = await testIntegrationConnection(id);
 
       return {

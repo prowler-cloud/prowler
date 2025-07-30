@@ -37,11 +37,9 @@ export const S3IntegrationsManager = ({
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isOperationLoading, setIsOperationLoading] = useState(false);
   const { toast } = useToast();
-
   // Store polling intervals to clean them up
   const pollingIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  // Cleanup intervals on unmount
   useEffect(() => {
     const intervals = pollingIntervalsRef.current;
     return () => {
@@ -73,11 +71,7 @@ export const S3IntegrationsManager = ({
         const taskState = task?.attributes?.state;
 
         // Continue polling while task is executing
-        if (
-          taskState === "executing" ||
-          taskState === "scheduled" ||
-          taskState === "available"
-        ) {
+        if (taskState === "executing") {
           return;
         }
 
@@ -86,50 +80,14 @@ export const S3IntegrationsManager = ({
         pollingIntervalsRef.current.delete(taskId);
         setIsTesting(null);
 
-        // Show result based on final state
-        if (taskState === "completed") {
-          const result = task?.attributes?.result;
-          const isSuccessful =
-            result?.success === true || result?.status === "success";
+        const result = task?.attributes?.result;
+        const message = result?.message || result?.error;
 
-          if (isSuccessful) {
-            toast({
-              title: "Connection Test Successful!",
-              description:
-                result?.message || "Connection test completed successfully.",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Connection Test Failed",
-              description:
-                result?.message || result?.error || "Connection test failed.",
-            });
-          }
-        } else if (taskState === "failed") {
-          const result = task?.attributes?.result;
+        if (message) {
           toast({
             variant: "destructive",
-            title: "Connection Test Failed",
-            description:
-              result?.message || result?.error || "Task failed to complete.",
-          });
-        } else if (taskState === "cancelled") {
-          const result = task?.attributes?.result;
-          toast({
-            variant: "destructive",
-            title: "Connection Test Cancelled",
-            description:
-              result?.message || "The connection test was cancelled.",
-          });
-        } else {
-          // Unknown state
-          const result = task?.attributes?.result;
-          toast({
-            variant: "destructive",
-            title: "Connection Test Completed",
-            description:
-              result?.message || `Task completed with state: ${taskState}`,
+            title: "Connection Test Result",
+            description: message,
           });
         }
       } catch (error) {
@@ -142,7 +100,7 @@ export const S3IntegrationsManager = ({
           description: "Failed to monitor connection test. Please try again.",
         });
       }
-    }, 2000); // Poll every 2 seconds
+    }, 2000);
 
     // Store the interval for cleanup
     pollingIntervalsRef.current.set(taskId, pollInterval);
@@ -217,7 +175,6 @@ export const S3IntegrationsManager = ({
         const taskId = result.data?.data?.id;
 
         if (taskId) {
-          // Start polling the task status
           await pollTaskStatus(taskId, id);
 
           toast({
