@@ -21,7 +21,11 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
-import { initializeSession, trackUserLogin, trackUserRegistration } from "@/lib/analytics";
+import {
+  initializeSession,
+  trackUserLogin,
+  trackUserRegistration,
+} from "@/lib/analytics";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({

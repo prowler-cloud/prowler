@@ -101,7 +101,10 @@ export const trackCloudConnectionSuccess = ({
 };
 
 // Generic event tracking function for custom events
-export const trackEvent = (eventName: string, properties?: Record<string, any>): void => {
+export const trackEvent = (
+  eventName: string,
+  properties?: Record<string, any>,
+): void => {
   try {
     posthog.capture(eventName, {
       ...properties,
@@ -113,7 +116,10 @@ export const trackEvent = (eventName: string, properties?: Record<string, any>):
 };
 
 // Track page view
-export const trackPageView = (pageName: string, properties?: Record<string, any>): void => {
+export const trackPageView = (
+  pageName: string,
+  properties?: Record<string, any>,
+): void => {
   try {
     posthog.capture("$pageview", {
       $current_url: window.location.href,
@@ -137,7 +143,9 @@ export const setUserProperties = (properties: Record<string, any>): void => {
 // Check if PostHog is initialized and ready
 export const isAnalyticsReady = (): boolean => {
   try {
-    return typeof posthog !== "undefined" && posthog._isIdentified !== undefined;
+    return (
+      typeof posthog !== "undefined" && posthog._isIdentified !== undefined
+    );
   } catch {
     return false;
   }
