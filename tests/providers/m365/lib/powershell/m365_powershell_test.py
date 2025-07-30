@@ -131,16 +131,22 @@ class Testm365PowerShell:
             tenant_domain="contoso.onmicrosoft.com",
             tenant_domains=["contoso.onmicrosoft.com"],
             location="test_location",
+            user="test@contoso.onmicrosoft.com",
         )
         session = M365PowerShell(credentials, identity)
 
         # Mock encrypt_password to return a known value
         session.encrypt_password = MagicMock(return_value="encrypted_password")
 
-        # Mock execute to simulate successful Connect-ExchangeOnline
-        session.execute = MagicMock(
-            return_value="Connected successfully https://aka.ms/exov3-module"
-        )
+        # Mock execute to simulate successful connections for both Exchange and Teams
+        def mock_execute_side_effect(command):
+            if "Connect-ExchangeOnline" in command:
+                return "Connected successfully https://aka.ms/exov3-module"
+            elif "Connect-MicrosoftTeams" in command:
+                return "Connected successfully test@contoso.onmicrosoft.com"
+            return ""
+
+        session.execute = MagicMock(side_effect=mock_execute_side_effect)
 
         # Execute the test
         result = session.test_credentials(credentials)
@@ -153,8 +159,12 @@ class Testm365PowerShell:
         session.execute.assert_any_call(
             f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
         )
+        # New logic tests both Exchange and Teams connections
         session.execute.assert_any_call(
             "Connect-ExchangeOnline -Credential $credential"
+        )
+        session.execute.assert_any_call(
+            "Connect-MicrosoftTeams -Credential $credential"
         )
 
         session.close()
@@ -163,32 +173,29 @@ class Testm365PowerShell:
     def test_test_credentials_application_auth(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
-        with patch(
-            "prowler.providers.m365.lib.powershell.m365_powershell.M365Credentials",
-            autospec=True,
-        ) as mock_creds:
-            credentials = mock_creds.return_value
-            credentials.user = ""
-            credentials.passwd = ""
-            credentials.encrypted_passwd = ""
-            credentials.client_id = "test_client_id"
-            credentials.client_secret = "test_client_secret"
-            credentials.tenant_id = "test_tenant_id"
-            identity = M365IdentityInfo(
-                identity_id="test_id",
-                identity_type="Application",
-                tenant_id="test_tenant",
-                tenant_domain="contoso.onmicrosoft.com",
-                tenant_domains=["contoso.onmicrosoft.com"],
-                location="test_location",
-            )
-            session = M365PowerShell(credentials, identity)
-            session.execute = MagicMock(return_value="sometoken")
+        credentials = M365Credentials(
+            user="",
+            passwd="",
+            encrypted_passwd="",
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+        )
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="Application",
+            tenant_id="test_tenant",
+            tenant_domain="contoso.onmicrosoft.com",
+            tenant_domains=["contoso.onmicrosoft.com"],
+            location="test_location",
+        )
+        session = M365PowerShell(credentials, identity)
+        session.execute = MagicMock(return_value="sometoken")
 
-            result = session.test_credentials(credentials)
-            assert result is True
-            session.execute.assert_any_call("Write-Output $graphToken")
-            session.close()
+        result = session.test_credentials(credentials)
+        assert result is True
+        session.execute.assert_any_call("Write-Output $graphToken")
+        session.close()
 
     @patch("subprocess.Popen")
     @patch("msal.ConfidentialClientApplication")
@@ -748,7 +755,8 @@ class Testm365PowerShell:
 
         assert result is True
         # Verify all expected PowerShell commands were called
-        assert session.execute.call_count == 3
+        # 4 calls: teamstokenBody, teamsToken, Write-Output $teamsToken, Connect-MicrosoftTeams
+        assert session.execute.call_count == 4
         mock_decode_jwt.assert_called_once_with("valid_teams_token")
         session.close()
 
@@ -849,7 +857,8 @@ class Testm365PowerShell:
 
         assert result is True
         # Verify all expected PowerShell commands were called
-        assert session.execute.call_count == 3
+        # 4 calls: SecureSecret, exchangeToken, Write-Output $exchangeToken, Connect-ExchangeOnline
+        assert session.execute.call_count == 4
         mock_decode_msal_token.assert_called_once_with("valid_exchange_token")
         session.close()
 
