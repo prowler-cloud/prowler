@@ -191,7 +191,7 @@ Mutelist:
   Accounts:
     "*":
       Checks:
-        "gcp_*":
+        "*":
           Regions:
             - "*"
           Resources:
@@ -269,7 +269,7 @@ Mutelist:
   Accounts:
     "*":
       Checks:
-        "m365_*":
+        "*":
           Regions:
             - "*"
           Resources:
@@ -289,7 +289,7 @@ Mutelist:
     # AWS Account
     "123456789012":
       Checks:
-        "aws_s3_bucket_public_access":
+        "s3_bucket_public_access":
           Regions:
             - "us-east-1"
           Resources:
