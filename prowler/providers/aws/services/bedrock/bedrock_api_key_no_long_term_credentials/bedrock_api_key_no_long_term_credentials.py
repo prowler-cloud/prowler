@@ -14,6 +14,15 @@ class bedrock_api_key_no_long_term_credentials(Check):
     """
 
     def execute(self):
+        """
+        Execute the Bedrock API key no long-term credentials check.
+
+        Iterate over all the Bedrock API keys and check if they are expired or will be expired.
+
+        Returns:
+            List[Check_Report_AWS]: A list of report objects with the results of the check.
+        """
+
         findings = []
         for api_key in iam_client.service_specific_credentials:
             if api_key.service_name != "bedrock.amazonaws.com":
