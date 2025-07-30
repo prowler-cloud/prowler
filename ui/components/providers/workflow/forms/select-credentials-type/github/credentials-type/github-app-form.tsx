@@ -5,11 +5,7 @@ import { Control } from "react-hook-form";
 import { CustomInput, CustomTextarea } from "@/components/ui/custom";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
-export const GitHubAppForm = ({
-  control,
-}: {
-  control: Control<any>;
-}) => {
+export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
   return (
     <>
       <div className="flex flex-col">
@@ -30,9 +26,7 @@ export const GitHubAppForm = ({
         variant="bordered"
         isRequired
         isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.GITHUB_APP_ID
-          ]
+          !!control._formState.errors[ProviderCredentialFields.GITHUB_APP_ID]
         }
       />
       <CustomTextarea
@@ -45,9 +39,7 @@ export const GitHubAppForm = ({
         isRequired
         minRows={4}
         isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.GITHUB_APP_KEY
-          ]
+          !!control._formState.errors[ProviderCredentialFields.GITHUB_APP_KEY]
         }
       />
     </>

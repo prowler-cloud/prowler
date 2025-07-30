@@ -5,11 +5,7 @@ import { Control } from "react-hook-form";
 import { CustomInput } from "@/components/ui/custom";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
-export const GitHubOAuthAppForm = ({
-  control,
-}: {
-  control: Control<any>;
-}) => {
+export const GitHubOAuthAppForm = ({ control }: { control: Control<any> }) => {
   return (
     <>
       <div className="flex flex-col">
@@ -30,9 +26,7 @@ export const GitHubOAuthAppForm = ({
         variant="bordered"
         isRequired
         isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.OAUTH_APP_TOKEN
-          ]
+          !!control._formState.errors[ProviderCredentialFields.OAUTH_APP_TOKEN]
         }
       />
     </>

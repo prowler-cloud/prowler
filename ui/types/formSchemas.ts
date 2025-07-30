@@ -113,7 +113,10 @@ export const addProviderFormSchema = z
     ]),
   );
 
-export const addCredentialsFormSchema = (providerType: ProviderType, via?: string | null) =>
+export const addCredentialsFormSchema = (
+  providerType: ProviderType,
+  via?: string | null,
+) =>
   z
     .object({
       [ProviderCredentialFields.PROVIDER_ID]: z.string(),

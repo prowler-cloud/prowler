@@ -24,17 +24,19 @@ export default function UpdateCredentialsPage({ searchParams }: Props) {
 
   switch (formType) {
     case "selector":
-      return <CredentialsUpdateInfo providerType={providerType} initialVia={via} />;
-    
+      return (
+        <CredentialsUpdateInfo providerType={providerType} initialVia={via} />
+      );
+
     case "credentials":
       return <UpdateViaCredentialsForm searchParams={searchParams} />;
-    
+
     case "role":
       return <UpdateViaRoleForm searchParams={searchParams} />;
-    
+
     case "service-account":
       return <UpdateViaServiceAccountForm searchParams={searchParams} />;
-    
+
     default:
       return null;
   }

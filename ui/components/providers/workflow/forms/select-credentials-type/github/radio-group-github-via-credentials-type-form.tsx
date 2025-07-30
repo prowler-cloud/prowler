@@ -50,10 +50,8 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
                   <span className="ml-2">Personal Access Token</span>
                 </div>
               </CustomRadio>
-              
-              <span className="text-sm text-default-500">
-                OAuth App
-              </span>
+
+              <span className="text-sm text-default-500">OAuth App</span>
               <CustomRadio
                 description="Use OAuth App token for authentication"
                 value="oauth_app"
@@ -62,10 +60,8 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
                   <span className="ml-2">OAuth App Token</span>
                 </div>
               </CustomRadio>
-              
-              <span className="text-sm text-default-500">
-                GitHub App
-              </span>
+
+              <span className="text-sm text-default-500">GitHub App</span>
               <CustomRadio
                 description="Use GitHub App ID and private key for authentication"
                 value="github_app"

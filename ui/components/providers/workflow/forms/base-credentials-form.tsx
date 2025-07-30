@@ -7,8 +7,8 @@ import { Control } from "react-hook-form";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
-import { requiresBackButton } from "@/lib/provider-helpers";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { requiresBackButton } from "@/lib/provider-helpers";
 import {
   AWSCredentials,
   AWSCredentialsRole,
@@ -26,9 +26,9 @@ import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credential
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
+import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
-import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;

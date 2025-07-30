@@ -149,11 +149,14 @@ export const buildKubernetesSecret = (formData: FormData) => {
 
 export const buildGitHubSecret = (formData: FormData) => {
   // Check which authentication method is being used
-  const hasPersonalToken = formData.get(ProviderCredentialFields.PERSONAL_ACCESS_TOKEN) !== null && 
+  const hasPersonalToken =
+    formData.get(ProviderCredentialFields.PERSONAL_ACCESS_TOKEN) !== null &&
     formData.get(ProviderCredentialFields.PERSONAL_ACCESS_TOKEN) !== "";
-  const hasOAuthToken = formData.get(ProviderCredentialFields.OAUTH_APP_TOKEN) !== null && 
+  const hasOAuthToken =
+    formData.get(ProviderCredentialFields.OAUTH_APP_TOKEN) !== null &&
     formData.get(ProviderCredentialFields.OAUTH_APP_TOKEN) !== "";
-  const hasGitHubApp = formData.get(ProviderCredentialFields.GITHUB_APP_ID) !== null && 
+  const hasGitHubApp =
+    formData.get(ProviderCredentialFields.GITHUB_APP_ID) !== null &&
     formData.get(ProviderCredentialFields.GITHUB_APP_ID) !== "";
 
   if (hasPersonalToken) {

@@ -3,9 +3,9 @@
 import { Control } from "react-hook-form";
 
 import {
-  GitHubPersonalAccessTokenForm,
-  GitHubOAuthAppForm,
   GitHubAppForm,
+  GitHubOAuthAppForm,
+  GitHubPersonalAccessTokenForm,
 } from "../select-credentials-type/github";
 
 interface GitHubCredentialsFormProps {

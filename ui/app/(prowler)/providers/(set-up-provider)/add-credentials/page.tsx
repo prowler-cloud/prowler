@@ -25,18 +25,19 @@ export default function AddCredentialsPage({ searchParams }: Props) {
     case "selector":
       if (providerType === "aws") return <SelectViaAWS initialVia={via} />;
       if (providerType === "gcp") return <SelectViaGCP initialVia={via} />;
-      if (providerType === "github") return <SelectViaGitHub initialVia={via} />;
+      if (providerType === "github")
+        return <SelectViaGitHub initialVia={via} />;
       return null;
-    
+
     case "credentials":
       return <AddViaCredentialsForm searchParams={searchParams} />;
-    
+
     case "role":
       return <AddViaRoleForm searchParams={searchParams} />;
-    
+
     case "service-account":
       return <AddViaServiceAccountForm searchParams={searchParams} />;
-    
+
     default:
       return null;
   }
