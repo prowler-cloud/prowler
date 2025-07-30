@@ -1,5 +1,24 @@
 import posthog from "posthog-js";
 
+// Initialize PostHog
+export const initializePostHog = (): void => {
+  if (typeof window === "undefined") return; // Don't initialize on server side
+
+  try {
+    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      ui_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      autocapture: false,
+      defaults: "2025-05-24",
+      capture_exceptions: true,
+      capture_pageview: false,
+      capture_pageleave: false,
+    });
+  } catch (error) {
+    console.error("Failed to initialize PostHog:", error);
+  }
+};
+
 // Type definitions for tracking payloads
 export interface UserLoginPayload {
   email: string;
@@ -144,7 +163,9 @@ export const setUserProperties = (properties: Record<string, any>): void => {
 export const isAnalyticsReady = (): boolean => {
   try {
     return (
-      typeof posthog !== "undefined" && posthog._isIdentified !== undefined
+      typeof window !== "undefined" &&
+      typeof posthog !== "undefined" &&
+      posthog.__loaded === true
     );
   } catch {
     return false;
