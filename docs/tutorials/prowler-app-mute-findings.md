@@ -58,11 +58,11 @@ If the YAML configuration is invalid, an error message will be displayed
 ???+ note
     The Mutelist configuration takes effect on the next scans.
 
-## Mutelist Config File
+## Mutelist Ready To Use Examples
 
-The Mutelist configuration uses YAML format to define which findings should be muted. Below are examples for different cloud providers supported by Prowler App.
+Below are examples for different cloud providers supported by Prowler App. Check how the mutelist works [here](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/#how-the-mutelist-works).
 
-### AWS Provider Examples
+### AWS Provider
 
 #### Basic AWS Mutelist
 ```yaml
@@ -116,7 +116,7 @@ Mutelist:
           Description: "Mute all findings for resources tagged with environment=dev or project=test"
 ```
 
-### Azure Provider Examples
+### Azure Provider
 
 ???+ note
     For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
@@ -159,7 +159,7 @@ Mutelist:
           Description: "Mute all findings for development resource groups"
 ```
 
-### GCP Provider Examples
+### GCP Provider
 
 ???+ note
     For GCP provider, the Account ID is the Project ID and the Region is the Zone.
@@ -200,7 +200,7 @@ Mutelist:
             - "environment=staging"
           Description: "Mute all GCP findings for staging environment"
 ```
-### Kubernetes Provider Examples
+### Kubernetes Provider
 
 ???+ note
     For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
@@ -241,7 +241,7 @@ Mutelist:
           Description: "Mute all findings for monitoring and logging namespaces"
 ```
 
-### Microsoft 365 Provider Examples
+### Microsoft 365 Provider
 
 #### Basic Microsoft 365 Mutelist
 ```yaml
@@ -279,7 +279,7 @@ Mutelist:
           Description: "Mute all M365 findings for IT department resources"
 ```
 
-### Multi-Cloud Mutelist Example
+### Multi-Cloud Mutelist
 
 You can combine multiple providers in a single mutelist configuration:
 

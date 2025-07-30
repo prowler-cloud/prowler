@@ -8,10 +8,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
 
-### 🔄 Changed
-
-- Mutelist link inside Mutelist config banner [(#8397)](https://github.com/prowler-cloud/prowler/pull/8397)
-
 ## [v1.9.0] (Prowler v5.9.0)
 
 ### 🚀 Added
