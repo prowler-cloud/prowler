@@ -1,6 +1,7 @@
 import { LangChainAdapter, Message } from "ai";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import { getErrorMessage } from "@/lib/helper";
 import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import {
   convertLangChainMessageToVercelMessage,
@@ -73,22 +74,38 @@ export async function POST(req: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        for await (const { event, data, tags } of agentStream) {
-          if (event === "on_chat_model_stream") {
-            if (data.chunk.content && !!tags && tags.includes("supervisor")) {
-              const chunk = data.chunk;
-              const aiMessage = convertLangChainMessageToVercelMessage(chunk);
-              controller.enqueue(aiMessage);
+        try {
+          for await (const { event, data, tags } of agentStream) {
+            if (event === "on_chat_model_stream") {
+              if (data.chunk.content && !!tags && tags.includes("supervisor")) {
+                const chunk = data.chunk;
+                const aiMessage = convertLangChainMessageToVercelMessage(chunk);
+                controller.enqueue(aiMessage);
+              }
             }
           }
+          controller.close();
+        } catch (error) {
+          const errorName =
+            error instanceof Error ? error.constructor.name : "UnknownError";
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          controller.enqueue({
+            id: "error-" + Date.now(),
+            role: "assistant",
+            content: `[LIGHTHOUSE_ANALYST_ERROR]: ${errorName}: ${errorMessage}`,
+          });
+          controller.close();
         }
-        controller.close();
       },
     });
 
     return LangChainAdapter.toDataStreamResponse(stream);
   } catch (error) {
     console.error("Error in POST request:", error);
-    return Response.json({ error: "An error occurred" }, { status: 500 });
+    return Response.json(
+      { error: await getErrorMessage(error) },
+      { status: 500 },
+    );
   }
 }

@@ -1,10 +1,12 @@
 # Configuration File
+
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
+
 ```
 prowler/config/config.yaml
 ```
 
-Also you can input a custom configuration file using the `--config-file` argument.
+Additionally, you can input a custom configuration file using the `--config-file` argument.
 
 ## AWS
 

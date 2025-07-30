@@ -348,7 +348,7 @@
     },
     {
       "Id": "1.2.3",
-      "Description": "entra_managed_device_required_for_mfa_registration",
+      "Description": "Ensure the admin consent workflow is enabled.",
       "Checks": [
         "entra_admin_consent_workflow_enabled"
       ],
