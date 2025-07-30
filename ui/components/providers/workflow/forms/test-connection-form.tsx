@@ -5,7 +5,6 @@ import { Icon } from "@iconify/react";
 import { Checkbox } from "@nextui-org/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,6 +17,7 @@ import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
+import { trackCloudConnectionSuccess } from "@/lib/analytics";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
@@ -146,12 +146,11 @@ export const TestConnectionForm = ({
               });
             } else {
               setIsRedirecting(true);
-              // Capture PostHog event for successful cloud connection
-              posthog.capture("cloud_connection_success", {
-                provider_type: providerType,
-                provider_alias: providerData.data.attributes.alias,
-                scan_type: form.watch("runOnce") ? "single" : "scheduled",
-                timestamp: Date.now(),
+              // Track cloud connection success event
+              trackCloudConnectionSuccess({
+                providerType: providerType,
+                providerAlias: providerData.data.attributes.alias,
+                scanType: form.watch("runOnce") ? "single" : "scheduled",
               });
               router.push("/scans");
             }
