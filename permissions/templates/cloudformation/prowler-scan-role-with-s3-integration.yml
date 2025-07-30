@@ -173,3 +173,10 @@ Resources:
           Value: "true"
         - Key: "Name"
           Value: "ProwlerScan"
+
+Outputs:
+  ProwlerScanRoleArn:
+    Description: "ARN of the ProwlerScan IAM Role"
+    Value: !GetAtt ProwlerScan.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"
