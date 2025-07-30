@@ -1,12 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-<<<<<<< HEAD
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-=======
 import { useEffect, useRef, useState } from "react";
->>>>>>> 0a449c7e1 (fix(lighthouse): Display errors in Lighthouse & allow resending message (#8358))
 import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
