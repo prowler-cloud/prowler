@@ -307,7 +307,7 @@ def upload_security_hub_integration(
                     filtered_asff_findings = [
                         finding
                         for finding in asff_findings
-                        if finding.get("Compliance", {}).get("Status") == "FAILED"
+                        if finding.Compliance.Status == "FAILED"
                     ]
                 else:
                     filtered_asff_findings = asff_findings
