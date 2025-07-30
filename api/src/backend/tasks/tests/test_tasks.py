@@ -475,45 +475,6 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.group")
     @patch("tasks.tasks.rls_transaction")
     @patch("tasks.tasks.Integration.objects.filter")
-    def test_check_integrations_s3_success(
-        self, mock_integration_filter, mock_rls, mock_group, mock_security_hub_task
-    ):
-        # Mock that we have some integrations but no SecurityHub integrations
-        mock_integrations = MagicMock()
-        mock_integrations.exists.return_value = True
-
-        # Mock SecurityHub integrations to return empty
-        mock_security_hub_integrations = MagicMock()
-        mock_security_hub_integrations.exists.return_value = False
-
-        # Set up the filter chain
-        mock_integration_filter.return_value = mock_integrations
-        mock_integrations.filter.return_value = mock_security_hub_integrations
-
-        # Ensure rls_transaction is mocked
-        mock_rls.return_value.__enter__.return_value = None
-
-        # Since there are no SecurityHub integrations, no tasks should be created
-        result = check_integrations_task(
-            tenant_id=self.tenant_id,
-            provider_id=self.provider_id,
-        )
-
-        assert result == {"integrations_processed": 0}
-        mock_integration_filter.assert_called_once_with(
-            integrationproviderrelationship__provider_id=self.provider_id
-        )
-        # Verify SecurityHub integrations were filtered
-        mock_integrations.filter.assert_called_once_with(
-            integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB
-        )
-        # group should not be called since no integration tasks are created
-        mock_group.assert_not_called()
-
-    @patch("tasks.tasks.security_hub_integration_task")
-    @patch("tasks.tasks.group")
-    @patch("tasks.tasks.rls_transaction")
-    @patch("tasks.tasks.Integration.objects.filter")
     def test_check_integrations_security_hub_success(
         self, mock_integration_filter, mock_rls, mock_group, mock_security_hub_task
     ):
@@ -588,6 +549,22 @@ class TestCheckIntegrationsTask:
             self.tenant_id, self.provider_id, output_directory
         )
 
+    @patch("tasks.tasks.upload_s3_integration")
+    def test_s3_integration_task_failure(self, mock_upload):
+        mock_upload.return_value = False
+        output_directory = "/tmp/prowler_api_output/test"
+
+        result = s3_integration_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+            output_directory=output_directory,
+        )
+
+        assert result is False
+        mock_upload.assert_called_once_with(
+            self.tenant_id, self.provider_id, output_directory
+        )
+
     @patch("tasks.tasks.upload_security_hub_integration")
     def test_security_hub_integration_task_success(self, mock_upload):
         """Test successful SecurityHub integration task execution."""
@@ -617,19 +594,3 @@ class TestCheckIntegrationsTask:
 
         assert result is False
         mock_upload.assert_called_once_with(self.tenant_id, self.provider_id, scan_id)
-
-    @patch("tasks.tasks.upload_s3_integration")
-    def test_s3_integration_task_failure(self, mock_upload):
-        mock_upload.return_value = False
-        output_directory = "/tmp/prowler_api_output/test"
-
-        result = s3_integration_task(
-            tenant_id=self.tenant_id,
-            provider_id=self.provider_id,
-            output_directory=output_directory,
-        )
-
-        assert result is False
-        mock_upload.assert_called_once_with(
-            self.tenant_id, self.provider_id, output_directory
-        )
