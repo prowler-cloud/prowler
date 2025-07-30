@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 
-import { FeedsServer } from "@/components/feeds";
+import { FeedsDetail } from "@/components/feeds";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { BreadcrumbNavigation } from "@/components/ui";
 
@@ -28,7 +28,7 @@ export function Navbar({ title, icon }: NavbarProps) {
           />
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
-          {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && <FeedsServer />}
+          {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && <FeedsDetail />}
           <ThemeSwitch />
           <UserNav />
         </div>

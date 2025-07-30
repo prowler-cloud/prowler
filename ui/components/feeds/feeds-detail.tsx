@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { fetchFeeds } from "@/actions/feeds";
 import { BellIcon as Icon } from "@/components/icons";
 import {
   DropdownMenu,
@@ -21,15 +22,18 @@ interface Feed {
   lastBuildDate: string;
 }
 
-interface FeedsClientProps {
-  initialFeeds?: Feed[];
-}
+export const FeedsDetail = () => {
+  // TODO: Need to update with actual interface when actual RSS data finialized
+  const [feed, setFeed] = useState<Feed[]>([]);
 
-// TODO: Need to update FeedsClientProps with actual interface when actual RSS data finialized
-export const FeedsClient: React.FC<FeedsClientProps> = ({
-  initialFeeds = [],
-}) => {
-  const [feed] = useState(initialFeeds);
+  useEffect(() => {
+    const fetchFeedDetails = async () => {
+      const feeds = await fetchFeeds();
+      setFeed(feeds);
+    };
+
+    fetchFeedDetails();
+  }, []);
 
   return (
     <>
