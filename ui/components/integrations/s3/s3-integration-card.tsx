@@ -94,17 +94,6 @@ export const S3IntegrationCard = ({
         <div className="flex flex-col gap-4">
           {isConfigured ? (
             <>
-              {/* <div className="text-sm">
-                <span className="font-medium">Status: </span>
-                <span
-                  className={
-                    connectedCount > 0 ? "text-prowler-green" : "text-warning"
-                  }
-                >
-                  {connectedCount > 0 ? "Active" : "Configuration required"}
-                </span>
-              </div> */}
-
               <div className="space-y-2">
                 {s3Integrations.map((integration) => (
                   <div

@@ -14,7 +14,7 @@ export default async function Integrations() {
           <h2 className="text-xl font-semibold">Available Integrations</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Connect external services to enhance your security workflow and
-            automatically export your security findings.
+            automatically export your scan results.
           </p>
         </div>
 
