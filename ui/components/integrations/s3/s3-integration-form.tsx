@@ -84,14 +84,14 @@ export const S3IntegrationForm = ({
         session?.tenantId ||
         "",
       role_session_name: "",
-      session_duration: isEditingCredentials ? "" : "3600",
+      session_duration: "",
     },
   });
 
   const isLoading = form.formState.isSubmitting;
 
   const handleNext = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
 
     // If we're in single-step edit mode, don't advance
     if (isEditingConfig || isEditingCredentials) {
@@ -103,10 +103,10 @@ export const S3IntegrationForm = ({
       currentStep === 0
         ? (["bucket_name", "output_directory", "providers"] as const)
         : // Step 1: No required fields since role_arn and external_id are optional
-          // We'll let the form submission handle any validation
           [];
 
     const isValid = stepFields.length === 0 || (await form.trigger(stepFields));
+
     if (isValid) {
       setCurrentStep(1);
     }
@@ -116,86 +116,82 @@ export const S3IntegrationForm = ({
     setCurrentStep(0);
   };
 
-  const onSubmit = async (values: any) => {
-    const formData = new FormData();
+  // Helper function to build credentials object
+  const buildCredentials = (values: any) => {
+    const credentials: any = {};
 
+    // Only include role-related fields if role_arn is provided
+    if (values.role_arn && values.role_arn.trim() !== "") {
+      credentials.role_arn = values.role_arn;
+      credentials.external_id = values.external_id;
+
+      // Optional role fields
+      if (values.role_session_name)
+        credentials.role_session_name = values.role_session_name;
+      if (values.session_duration)
+        credentials.session_duration =
+          parseInt(values.session_duration, 10) || 3600;
+    }
+
+    // Add static credentials if using access-secret-key type
+    if (values.credentials_type === "access-secret-key") {
+      credentials.aws_access_key_id = values.aws_access_key_id;
+      credentials.aws_secret_access_key = values.aws_secret_access_key;
+      if (values.aws_session_token)
+        credentials.aws_session_token = values.aws_session_token;
+    }
+
+    return credentials;
+  };
+
+  // Helper function to build configuration object
+  const buildConfiguration = (values: any, isPartial = false) => {
+    const configuration: any = {};
+
+    if (values.bucket_name) configuration.bucket_name = values.bucket_name;
+    if (values.output_directory)
+      configuration.output_directory = values.output_directory;
+
+    // For creation mode, ensure all required fields are present
+    if (!isPartial) {
+      configuration.bucket_name = values.bucket_name;
+      configuration.output_directory = values.output_directory;
+    }
+
+    return configuration;
+  };
+
+  // Helper function to build FormData based on edit mode
+  const buildFormData = (values: any) => {
+    const formData = new FormData();
     formData.append("integration_type", values.integration_type);
 
-    // Handle different edit modes
     if (isEditingConfig) {
-      // Only send configuration changes
-      const configuration: any = {};
-      if (values.bucket_name) configuration.bucket_name = values.bucket_name;
-      if (values.output_directory)
-        configuration.output_directory = values.output_directory;
-
+      const configuration = buildConfiguration(values, true);
       if (Object.keys(configuration).length > 0) {
         formData.append("configuration", JSON.stringify(configuration));
       }
-
       if (values.providers && values.providers.length > 0) {
         formData.append("providers", JSON.stringify(values.providers));
       }
     } else if (isEditingCredentials) {
-      // For credentials editing, only include role fields if role_arn is provided
-      const credentials: any = {};
-
-      // Only include role-related fields if role_arn is provided
-      if (values.role_arn && values.role_arn.trim() !== "") {
-        credentials.role_arn = values.role_arn;
-        credentials.external_id = values.external_id;
-
-        // Optional role fields
-        if (values.role_session_name)
-          credentials.role_session_name = values.role_session_name;
-        if (values.session_duration)
-          credentials.session_duration =
-            parseInt(values.session_duration, 10) || 3600;
-      }
-
-      // Add static credentials if using access-secret-key type
-      if (values.credentials_type === "access-secret-key") {
-        credentials.aws_access_key_id = values.aws_access_key_id;
-        credentials.aws_secret_access_key = values.aws_secret_access_key;
-        if (values.aws_session_token)
-          credentials.aws_session_token = values.aws_session_token;
-      }
-
+      const credentials = buildCredentials(values);
       formData.append("credentials", JSON.stringify(credentials));
     } else {
       // Creation mode - send everything
-      const configuration = {
-        bucket_name: values.bucket_name,
-        output_directory: values.output_directory,
-      };
-
-      const credentials: any = {};
-
-      // Only include role-related fields if role_arn is provided
-      if (values.role_arn && values.role_arn.trim() !== "") {
-        credentials.role_arn = values.role_arn;
-        credentials.external_id = values.external_id;
-
-        // Optional role fields
-        if (values.role_session_name)
-          credentials.role_session_name = values.role_session_name;
-        if (values.session_duration)
-          credentials.session_duration =
-            parseInt(values.session_duration, 10) || 3600;
-      }
-
-      // Add static credentials if using access-secret-key type
-      if (values.credentials_type === "access-secret-key") {
-        credentials.aws_access_key_id = values.aws_access_key_id;
-        credentials.aws_secret_access_key = values.aws_secret_access_key;
-        if (values.aws_session_token)
-          credentials.aws_session_token = values.aws_session_token;
-      }
+      const configuration = buildConfiguration(values);
+      const credentials = buildCredentials(values);
 
       formData.append("configuration", JSON.stringify(configuration));
       formData.append("credentials", JSON.stringify(credentials));
       formData.append("providers", JSON.stringify(values.providers));
     }
+
+    return formData;
+  };
+
+  const onSubmit = async (values: any) => {
+    const formData = buildFormData(values);
 
     try {
       let result;
@@ -238,11 +234,6 @@ export const S3IntegrationForm = ({
         });
       }
     } catch (error) {
-      console.error(
-        `Error ${isEditing ? "updating" : "creating"} S3 integration:`,
-        error,
-      );
-
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
 
@@ -324,7 +315,6 @@ export const S3IntegrationForm = ({
       );
     }
 
-    // Fallback (shouldn't reach here)
     return null;
   };
 

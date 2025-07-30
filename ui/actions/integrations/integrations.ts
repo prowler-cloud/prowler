@@ -9,6 +9,8 @@ import {
   parseStringify,
 } from "@/lib";
 
+import { getTask } from "../task";
+
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/integrations`);
@@ -198,6 +200,55 @@ export const deleteIntegration = async (id: string) => {
   }
 };
 
+const pollTaskUntilComplete = async (taskId: string): Promise<any> => {
+  const maxAttempts = 10;
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    try {
+      const taskResponse = await getTask(taskId);
+
+      if (taskResponse.error) {
+        return { error: taskResponse.error };
+      }
+
+      const task = taskResponse.data;
+      const taskState = task?.attributes?.state;
+
+      // Continue polling while task is executing
+      if (taskState === "executing") {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        attempts++;
+        continue;
+      }
+
+      const result = task?.attributes?.result;
+      const isSuccessful =
+        taskState === "completed" &&
+        result?.connected === true &&
+        result?.error === null;
+
+      let message;
+      if (isSuccessful) {
+        message = "Connection test completed successfully.";
+      } else {
+        message = result?.error || "Connection test failed.";
+      }
+
+      return {
+        success: isSuccessful,
+        message,
+        taskState,
+        result,
+      };
+    } catch (error) {
+      return { error: "Failed to monitor connection test." };
+    }
+  }
+
+  return { error: "Connection test timeout. Test took too long to complete." };
+};
+
 export const testIntegrationConnection = async (id: string) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}/connection`);
@@ -207,12 +258,34 @@ export const testIntegrationConnection = async (id: string) => {
 
     if (response.ok) {
       const data = await response.json();
-      revalidatePath("/integrations/s3");
+      const taskId = data?.data?.id;
 
-      return {
-        success: "Connection test started successfully!",
-        data: parseStringify(data),
-      };
+      if (taskId) {
+        // Poll the task until completion
+        const pollResult = await pollTaskUntilComplete(taskId);
+
+        revalidatePath("/integrations/s3");
+
+        if (pollResult.error) {
+          return { error: pollResult.error };
+        }
+
+        if (pollResult.success) {
+          return {
+            success: "Connection test completed successfully!",
+            message: pollResult.message,
+            data: parseStringify(data),
+          };
+        } else {
+          return {
+            error: pollResult.message || "Connection test failed.",
+          };
+        }
+      } else {
+        return {
+          error: "Failed to start connection test. No task ID received.",
+        };
+      }
     }
 
     const errorData = await response.json().catch(() => ({}));

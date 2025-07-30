@@ -2,13 +2,12 @@
 
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { PlusIcon, SettingsIcon, TestTube, Trash2Icon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   deleteIntegration,
   testIntegrationConnection,
 } from "@/actions/integrations";
-import { getTask } from "@/actions/task/tasks";
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
@@ -37,88 +36,6 @@ export const S3IntegrationsManager = ({
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isOperationLoading, setIsOperationLoading] = useState(false);
   const { toast } = useToast();
-  // Store polling intervals to clean them up
-  const pollingIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
-
-  useEffect(() => {
-    const intervals = pollingIntervalsRef.current;
-    return () => {
-      intervals.forEach((interval) => {
-        clearInterval(interval);
-      });
-      intervals.clear();
-    };
-  }, []);
-
-  const pollTaskStatus = async (taskId: string, _integrationId: string) => {
-    const pollInterval = setInterval(async () => {
-      try {
-        const taskResponse = await getTask(taskId);
-
-        if (taskResponse.error) {
-          clearInterval(pollInterval);
-          pollingIntervalsRef.current.delete(taskId);
-          setIsTesting(null);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: taskResponse.error,
-          });
-          return;
-        }
-
-        const task = taskResponse.data;
-        const taskState = task?.attributes?.state;
-
-        // Continue polling while task is executing
-        if (taskState === "executing") {
-          return;
-        }
-
-        // Task has finished, stop polling
-        clearInterval(pollInterval);
-        pollingIntervalsRef.current.delete(taskId);
-        setIsTesting(null);
-
-        const result = task?.attributes?.result;
-        const message = result?.message || result?.error;
-
-        if (message) {
-          toast({
-            variant: "destructive",
-            title: "Connection Test Result",
-            description: message,
-          });
-        }
-      } catch (error) {
-        clearInterval(pollInterval);
-        pollingIntervalsRef.current.delete(taskId);
-        setIsTesting(null);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to monitor connection test. Please try again.",
-        });
-      }
-    }, 2000);
-
-    // Store the interval for cleanup
-    pollingIntervalsRef.current.set(taskId, pollInterval);
-
-    // Set a maximum timeout to avoid infinite polling (5 minutes)
-    setTimeout(() => {
-      if (pollingIntervalsRef.current.has(taskId)) {
-        clearInterval(pollInterval);
-        pollingIntervalsRef.current.delete(taskId);
-        setIsTesting(null);
-        toast({
-          variant: "destructive",
-          title: "Connection Test Timeout",
-          description: "Connection test took too long to complete.",
-        });
-      }
-    }, 300000); // 5 minutes timeout
-  };
 
   const handleAddIntegration = () => {
     setEditingIntegration(null);
@@ -172,27 +89,12 @@ export const S3IntegrationsManager = ({
       const result = await testIntegrationConnection(id);
 
       if (result.success) {
-        const taskId = result.data?.data?.id;
-
-        if (taskId) {
-          await pollTaskStatus(taskId, id);
-
-          toast({
-            title: "Connection Test Started",
-            description:
-              "Connection test is running. You'll be notified when it completes.",
-          });
-        } else {
-          setIsTesting(null);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description:
-              "Failed to start connection test. No task ID received.",
-          });
-        }
+        toast({
+          title: "Connection Test Successful!",
+          description:
+            result.message || "Connection test completed successfully.",
+        });
       } else if (result.error) {
-        setIsTesting(null);
         toast({
           variant: "destructive",
           title: "Connection Test Failed",
@@ -200,12 +102,13 @@ export const S3IntegrationsManager = ({
         });
       }
     } catch (error) {
-      setIsTesting(null);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to test connection. Please try again.",
       });
+    } finally {
+      setIsTesting(null);
     }
   };
 
@@ -315,7 +218,7 @@ export const S3IntegrationsManager = ({
                   </div>
                 </CardHeader>
                 <CardBody className="pt-0">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-gray-500 dark:text-gray-300">
                       {integration.attributes.connection_last_checked_at && (
                         <p>
@@ -326,7 +229,7 @@ export const S3IntegrationsManager = ({
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <CustomButton
                         size="sm"
                         variant="bordered"
@@ -334,6 +237,7 @@ export const S3IntegrationsManager = ({
                         onPress={() => handleTestConnection(integration.id)}
                         isLoading={isTesting === integration.id}
                         ariaLabel="Test connection"
+                        className="w-full sm:w-auto"
                       >
                         Test
                       </CustomButton>
@@ -343,6 +247,7 @@ export const S3IntegrationsManager = ({
                         startContent={<SettingsIcon size={14} />}
                         onPress={() => handleEditConfiguration(integration)}
                         ariaLabel="Edit configuration"
+                        className="w-full sm:w-auto"
                       >
                         Config
                       </CustomButton>
@@ -352,6 +257,7 @@ export const S3IntegrationsManager = ({
                         startContent={<SettingsIcon size={14} />}
                         onPress={() => handleEditCredentials(integration)}
                         ariaLabel="Edit credentials"
+                        className="w-full sm:w-auto"
                       >
                         Credentials
                       </CustomButton>
@@ -363,6 +269,7 @@ export const S3IntegrationsManager = ({
                         onPress={() => handleDeleteIntegration(integration.id)}
                         isLoading={isDeleting === integration.id}
                         ariaLabel="Delete integration"
+                        className="w-full sm:w-auto"
                       >
                         Delete
                       </CustomButton>
