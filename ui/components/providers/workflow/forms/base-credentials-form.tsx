@@ -7,6 +7,7 @@ import { Control } from "react-hook-form";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
+import { requiresBackButton } from "@/lib/provider-helpers";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
   AWSCredentials,
@@ -27,6 +28,7 @@ import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credenti
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
+import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
@@ -121,26 +123,29 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<KubernetesCredentials>}
           />
         )}
+        {providerType === "github" && (
+          <GitHubCredentialsForm
+            control={form.control}
+            credentialsType={searchParamsObj.get("via") || undefined}
+          />
+        )}
 
         <div className="flex w-full justify-end sm:space-x-6">
-          {showBackButton &&
-            (searchParamsObj.get("via") === "credentials" ||
-              searchParamsObj.get("via") === "role" ||
-              searchParamsObj.get("via") === "service-account") && (
-              <CustomButton
-                type="button"
-                ariaLabel="Back"
-                className="w-1/2 bg-transparent"
-                variant="faded"
-                size="lg"
-                radius="lg"
-                onPress={handleBackStep}
-                startContent={!isLoading && <ChevronLeftIcon size={24} />}
-                isDisabled={isLoading}
-              >
-                <span>Back</span>
-              </CustomButton>
-            )}
+          {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (
+            <CustomButton
+              type="button"
+              ariaLabel="Back"
+              className="w-1/2 bg-transparent"
+              variant="faded"
+              size="lg"
+              radius="lg"
+              onPress={handleBackStep}
+              startContent={!isLoading && <ChevronLeftIcon size={24} />}
+              isDisabled={isLoading}
+            >
+              <span>Back</span>
+            </CustomButton>
+          )}
           <CustomButton
             type="submit"
             ariaLabel="Save"

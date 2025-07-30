@@ -9,6 +9,8 @@ import {
   AddViaServiceAccountForm,
   SelectViaGCP,
 } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
+import { getProviderFormType } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
@@ -16,30 +18,26 @@ interface Props {
 }
 
 export default function AddCredentialsPage({ searchParams }: Props) {
-  return (
-    <>
-      {searchParams.type === "aws" && !searchParams.via && (
-        <SelectViaAWS initialVia={searchParams.via} />
-      )}
+  const { type: providerType, via } = searchParams;
+  const formType = getProviderFormType(providerType, via);
 
-      {searchParams.type === "gcp" && !searchParams.via && (
-        <SelectViaGCP initialVia={searchParams.via} />
-      )}
-
-      {((searchParams.type === "aws" && searchParams.via === "credentials") ||
-        (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
-        <AddViaCredentialsForm searchParams={searchParams} />
-      )}
-
-      {searchParams.type === "aws" && searchParams.via === "role" && (
-        <AddViaRoleForm searchParams={searchParams} />
-      )}
-
-      {searchParams.type === "gcp" &&
-        searchParams.via === "service-account" && (
-          <AddViaServiceAccountForm searchParams={searchParams} />
-        )}
-    </>
-  );
+  switch (formType) {
+    case "selector":
+      if (providerType === "aws") return <SelectViaAWS initialVia={via} />;
+      if (providerType === "gcp") return <SelectViaGCP initialVia={via} />;
+      if (providerType === "github") return <SelectViaGitHub initialVia={via} />;
+      return null;
+    
+    case "credentials":
+      return <AddViaCredentialsForm searchParams={searchParams} />;
+    
+    case "role":
+      return <AddViaRoleForm searchParams={searchParams} />;
+    
+    case "service-account":
+      return <AddViaServiceAccountForm searchParams={searchParams} />;
+    
+    default:
+      return null;
+  }
 }

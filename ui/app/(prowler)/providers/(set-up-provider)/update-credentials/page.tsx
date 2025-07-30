@@ -6,6 +6,7 @@ import {
   UpdateViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { UpdateViaServiceAccountForm } from "@/components/providers/workflow/forms/update-via-service-account-key-form";
+import { getProviderFormType } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
@@ -18,30 +19,23 @@ interface Props {
 }
 
 export default function UpdateCredentialsPage({ searchParams }: Props) {
-  return (
-    <>
-      {(searchParams.type === "aws" || searchParams.type === "gcp") &&
-        !searchParams.via && (
-          <CredentialsUpdateInfo
-            providerType={searchParams.type}
-            initialVia={searchParams.via}
-          />
-        )}
+  const { type: providerType, via } = searchParams;
+  const formType = getProviderFormType(providerType, via);
 
-      {((searchParams.type === "aws" && searchParams.via === "credentials") ||
-        (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
-        <UpdateViaCredentialsForm searchParams={searchParams} />
-      )}
-
-      {searchParams.type === "aws" && searchParams.via === "role" && (
-        <UpdateViaRoleForm searchParams={searchParams} />
-      )}
-
-      {searchParams.type === "gcp" &&
-        searchParams.via === "service-account" && (
-          <UpdateViaServiceAccountForm searchParams={searchParams} />
-        )}
-    </>
-  );
+  switch (formType) {
+    case "selector":
+      return <CredentialsUpdateInfo providerType={providerType} initialVia={via} />;
+    
+    case "credentials":
+      return <UpdateViaCredentialsForm searchParams={searchParams} />;
+    
+    case "role":
+      return <UpdateViaRoleForm searchParams={searchParams} />;
+    
+    case "service-account":
+      return <UpdateViaServiceAccountForm searchParams={searchParams} />;
+    
+    default:
+      return null;
+  }
 }
