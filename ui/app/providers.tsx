@@ -8,6 +8,7 @@ import { ThemeProviderProps } from "next-themes/dist/types";
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import * as React from "react";
+
 import { initializePostHog } from "@/lib/analytics";
 
 export interface ProvidersProps {
