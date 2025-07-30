@@ -1,17 +1,23 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-# You can invoke CloudFormation and pass the principal ARN from a command line like this:
+# You can invoke CloudFormation and pass the parameters from a command line like this:
 # aws cloudformation create-stack \
 #  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
-#  --template-body "file://prowler-scan-role.yaml" \
-#  --stack-name "ProwlerScanRole" \
-#  --parameters "ParameterKey=ExternalId,ParameterValue=ProvidedExternalID"
+#  --template-body "file://prowler-scan-role-with-s3-integration.yml" \
+#  --stack-name "ProwlerScanRoleWithS3Integration" \
+#  --parameters "ParameterKey=ExternalId,ParameterValue=your-external-id-here" \
+#               "ParameterKey=S3IntegrationBucketName,ParameterValue=your-bucket-name" \
+#               "ParameterKey=S3IntegrationBucketAccount,ParameterValue=123456789012"
 
 Description: |
   This template creates the ProwlerScan IAM Role in this account with
   all read-only permissions to scan your account for security issues.
-  Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
+  Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and inline policies.
   It sets the trust policy on that IAM Role to permit Prowler to assume that role.
+  Additionally, this template includes S3 integration permissions that allow Prowler
+  to store scan reports in your specified S3 bucket with appropriate security controls.
+  This template can also be used to update an existing ProwlerScan role deployment
+  since it only adds S3 permissions.
   This template is designed to be used in Prowler Cloud, but can also be used in other Prowler deployments.
   If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId, IAMPrincipal and ExternalId parameters.
 Parameters:
@@ -36,6 +42,18 @@ Parameters:
       The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
     Type: String
     Default: role/prowler*
+  S3IntegrationBucketName:
+    Description: |
+      The S3 bucket name where Prowler will store scan reports for your cloud providers.
+    Type: String
+  S3IntegrationBucketAccount:
+    Description: |
+      The AWS Account ID owner of the S3 Bucket.
+    Type: String
+    MinLength: 12
+    MaxLength: 12
+    AllowedPattern: "[0-9]{12}"
+    ConstraintDescription: "S3IntegrationBucketAccount must be a valid 12-digit AWS Account ID."
 
 Resources:
   ProwlerScan:
@@ -118,6 +136,34 @@ Resources:
                 Resource:
                   - "arn:*:apigateway:*::/restapis/*"
                   - "arn:*:apigateway:*::/apis/*"
+        - PolicyName: ProwlerS3Integration
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*"
+                Condition:
+                  StringEquals:
+                    "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+              - Effect: Allow
+                Action:
+                  - "s3:GetBucketLocation"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}"
+                Condition:
+                  StringEquals:
+                    "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+              - Effect: Allow
+                Action:
+                  - "s3:DeleteObject"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*test-prowler-connection.txt"
+                Condition:
+                  StringEquals:
+                    "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
       Tags:
         - Key: "Service"
           Value: "https://prowler.com"
