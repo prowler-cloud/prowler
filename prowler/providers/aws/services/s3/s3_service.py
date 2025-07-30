@@ -237,9 +237,10 @@ class S3(AWSService):
         logger.info("S3 - Get buckets acl...")
         try:
             regional_client = self.regional_clients[bucket.region]
+            acl = regional_client.get_bucket_acl(Bucket=bucket.name)
+            bucket.owner_id = acl["Owner"]["ID"]
             grantees = []
-            acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
-            for grant in acl_grants:
+            for grant in acl["Grants"]:
                 grantee = ACL_Grantee(type=grant["Grantee"]["Type"])
                 if "DisplayName" in grant["Grantee"]:
                     grantee.display_name = grant["Grantee"]["DisplayName"]
@@ -683,6 +684,8 @@ class ReplicationRule(BaseModel):
 class Bucket(BaseModel):
     arn: str
     name: str
+    owner_id: Optional[str]
+    owner: Optional[str]
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
