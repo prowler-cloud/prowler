@@ -4,6 +4,7 @@ import platform
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
+    M365CertificateCreationError,
     M365GraphConnectionError,
     M365UserCredentialsError,
     M365UserNotBelongingToTenantError,
@@ -51,6 +52,26 @@ class M365PowerShell(PowerShellSession):
         self.tenant_identity = identity
         self.init_credential(credentials)
 
+    def clean_certificate_content(self, cert_content: str) -> str:
+        """
+        Clean certificate content for PowerShell consumption.
+
+        Removes newlines, carriage returns, and extra spaces from base64 content
+        to ensure proper parsing in PowerShell.
+
+        Args:
+            cert_content (str): Base64 encoded certificate content
+
+        Returns:
+            str: Cleaned base64 certificate content
+        """
+        # Clean base64 content - remove any newlines or whitespace
+        clean_content = (
+            cert_content.strip().replace("\n", "").replace("\r", "").replace(" ", "")
+        )
+        logger.info(f"Cleaned certificate content length: {len(clean_content)}")
+        return clean_content
+
     def init_credential(self, credentials: M365Credentials) -> None:
         """
         Initialize PowerShell credential object for Microsoft 365 authentication.
@@ -70,17 +91,29 @@ class M365PowerShell(PowerShellSession):
         """
         # Certificate Auth
         if credentials.certificate_content and credentials.client_id:
-            cert_content = credentials.certificate_content
-            sanitized_app_id = self.sanitize(credentials.client_id)
+            # Clean certificate content for PowerShell consumption
+            clean_cert_content = self.clean_certificate_content(
+                credentials.certificate_content
+            )
+
+            # Sanitize credentials
+            sanitized_client_id = self.sanitize(credentials.client_id)
             sanitized_tenant_id = self.sanitize(credentials.tenant_id)
 
-            # Create certificate from base64 content
-            self.execute(f'$certBytes = [Convert]::FromBase64String("{cert_content}")')
             self.execute(
-                "$certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certBytes)"
+                f'$certBytes = [Convert]::FromBase64String("{clean_cert_content}")'
             )
-            self.execute(f'$clientID = "{sanitized_app_id}"')
+            error = self.execute(
+                "$certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$certBytes)"
+            )
+            if error:
+                raise M365CertificateCreationError(
+                    f"[{os.path.basename(__file__)}] Error creating certificate: {error}"
+                )
+
+            self.execute(f'$clientID = "{sanitized_client_id}"')
             self.execute(f'$tenantID = "{sanitized_tenant_id}"')
+            self.execute(f'$tenantDomain = "{credentials.tenant_domains[0]}"')
 
         # User Auth (Will be deprecated in September 2025)
         elif credentials.user and credentials.passwd:
@@ -166,8 +199,8 @@ class M365PowerShell(PowerShellSession):
         # Test Certificate Auth
         if credentials.certificate_content and credentials.client_id:
             try:
-                self.test_exchange_certificate_connection()
                 self.test_teams_certificate_connection()
+                self.test_exchange_certificate_connection()
                 return True
             except Exception as e:
                 logger.error(f"Exchange Online Certificate connection failed: {e}")
@@ -192,6 +225,7 @@ class M365PowerShell(PowerShellSession):
                 )
 
             # Validate credentials
+            # Test Exchange Online connection
             result = self.execute("Connect-ExchangeOnline -Credential $credential")
             if "https://aka.ms/exov3-module" not in result:
                 if "AADSTS" in result:  # Entra Security Token Service Error
@@ -199,21 +233,19 @@ class M365PowerShell(PowerShellSession):
                         file=os.path.basename(__file__),
                         message=result,
                     )
-                else:  # Could not connect to Exchange Online, try Microsoft Teams
-                    result = self.execute(
-                        "Connect-MicrosoftTeams -Credential $credential"
+            # Test Microsoft Teams connection
+            result = self.execute("Connect-MicrosoftTeams -Credential $credential")
+            if self.tenant_identity.user not in result:
+                if "AADSTS" in result:  # Entra Security Token Service Error
+                    raise M365UserCredentialsError(
+                        file=os.path.basename(__file__),
+                        message=result,
                     )
-                    if self.tenant_identity.tenant_id not in result:
-                        if "AADSTS" in result:  # Entra Security Token Service Error
-                            raise M365UserCredentialsError(
-                                file=os.path.basename(__file__),
-                                message=result,
-                            )
-                        else:  # Unknown error, could be a permission issue or modules not installed
-                            raise Exception(
-                                file=os.path.basename(__file__),
-                                message=f"Error connecting to PowerShell modules: {result}",
-                            )
+                else:  # Unknown error, could be a permission issue or modules not installed
+                    raise M365UserCredentialsError(
+                        file=os.path.basename(__file__),
+                        message=f"Error connecting to PowerShell modules: {result}",
+                    )
 
             return True
 
@@ -266,6 +298,9 @@ class M365PowerShell(PowerShellSession):
                     "Microsoft Teams connection failed: Please check your permissions and try again."
                 )
                 return False
+            self.execute(
+                'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+            )
             return True
         except Exception as e:
             logger.error(
@@ -275,8 +310,21 @@ class M365PowerShell(PowerShellSession):
 
     def test_teams_certificate_connection(self) -> bool:
         """Test Microsoft Teams API connection using certificate and raise exception if it fails."""
-        connection = self.connect_microsoft_teams()
-        return connection
+        result = self.execute(
+            "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
+        )
+        if self.tenant_identity.identity_id not in result:
+            logger.error(f"Microsoft Teams Certificate connection failed: {result}")
+            return False
+        return True
+
+    def test_teams_user_connection(self) -> bool:
+        """Test Microsoft Teams API connection using user authentication and raise exception if it fails."""
+        result = self.execute("Connect-MicrosoftTeams -Credential $credential")
+        if self.tenant_identity.user not in result:
+            logger.error(f"Microsoft Teams User connection failed: {result}")
+            return False
+        return True
 
     def test_exchange_connection(self) -> bool:
         """Test Exchange Online API connection and raise exception if it fails."""
@@ -294,6 +342,9 @@ class M365PowerShell(PowerShellSession):
                     "Exchange Online connection failed: Please check your permissions and try again."
                 )
                 return False
+            self.execute(
+                'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
+            )
             return True
         except Exception as e:
             logger.error(
@@ -303,8 +354,21 @@ class M365PowerShell(PowerShellSession):
 
     def test_exchange_certificate_connection(self) -> bool:
         """Test Exchange Online API connection using certificate and raise exception if it fails."""
-        connection = self.connect_exchange_online()
-        return connection
+        result = self.execute(
+            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
+        )
+        if "https://aka.ms/exov3-module" not in result:
+            logger.error(f"Exchange Online Certificate connection failed: {result}")
+            return False
+        return True
+
+    def test_exchange_user_connection(self) -> bool:
+        """Test Exchange Online API connection using user authentication and raise exception if it fails."""
+        result = self.execute("Connect-ExchangeOnline -Credential $credential")
+        if "https://aka.ms/exov3-module" not in result:
+            logger.error(f"Exchange Online User connection failed: {result}")
+            return False
+        return True
 
     def connect_microsoft_teams(self) -> dict:
         """
@@ -323,30 +387,14 @@ class M365PowerShell(PowerShellSession):
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
         # Certificate Auth
-        if self.execute("Write-Output $certificate") != "":  # Certificate Auth
-            return self.execute(
-                "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
-            )
+        if self.execute("Write-Output $certificate") != "":
+            return self.test_teams_certificate_connection()
         # User Auth
         if self.execute("Write-Output $credential") != "":
-            self.execute("Connect-MicrosoftTeams -Credential $credential")
-            # Test connection with a simple call
-            connection = self.execute("Get-CsTeamsClientConfiguration")
-            if connection:
-                return True
-            else:
-                logger.error(
-                    "Microsoft Teams connection failed: Please check your permissions and try again."
-                )
-            return connection
+            return self.test_teams_user_connection()
         # Application Auth
         else:
-            connection = self.test_teams_connection()
-            if connection:
-                self.execute(
-                    'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
-                )
-            return connection
+            return self.test_teams_connection()
 
     def get_teams_settings(self) -> dict:
         """
@@ -445,29 +493,14 @@ class M365PowerShell(PowerShellSession):
             This method requires the Exchange Online PowerShell module to be installed.
         """
         # Certificate Auth
-        if self.execute("Write-Output $certificate") != "":  # Certificate Auth
-            return self.execute(
-                "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantID"
-            )
+        if self.execute("Write-Output $certificate") != "":
+            return self.test_exchange_certificate_connection()
         # User Auth
         if self.execute("Write-Output $credential") != "":
-            self.execute("Connect-ExchangeOnline -Credential $credential")
-            connection = self.execute("Get-OrganizationConfig")
-            if connection:
-                return True
-            else:
-                logger.error(
-                    "Exchange Online connection failed: Please check your permissions and try again."
-                )
-                return False
+            return self.test_exchange_user_connection()
         # Application Auth
         else:
-            connection = self.test_exchange_connection()
-            if connection:
-                self.execute(
-                    'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
-                )
-            return connection
+            return self.test_exchange_connection()
 
     def get_audit_log_config(self) -> dict:
         """
