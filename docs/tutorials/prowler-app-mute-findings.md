@@ -407,6 +407,7 @@ Mutelist:
 ### Validation
 
 Prowler App validates your mutelist configuration and will display errors for:
+
 - Invalid YAML syntax
 - Missing required fields
 - Invalid regular expressions
