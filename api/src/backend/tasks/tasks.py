@@ -387,6 +387,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         s3_integrations = Integration.objects.filter(
             integrationproviderrelationship__provider_id=provider_id,
             integration_type=Integration.IntegrationChoices.AMAZON_S3,
+            enabled=True,
         )
 
     if s3_integrations:
