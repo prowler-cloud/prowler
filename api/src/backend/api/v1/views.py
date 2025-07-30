@@ -4004,14 +4004,10 @@ class ProcessorViewSet(BaseRLSViewSet):
 )
 class SecurityHubRegionsView(BaseRLSViewSet):
     """
-    API endpoint to get SecurityHub regions for a specific provider.
+    API endpoint for retrieving active AWS SecurityHub regions.
 
-    TODO: We need to save this and probably create a new task when a provider is added and connection tested
-    Actually this endpoint takes around 26 to respond, this is because the way we have to get the enabled regions
-
-    So we can create a new task that runs for every aws provider added and launch it before a success test_connection
-
-    PENDING
+    Provides functionality to get the enabled SecurityHub regions
+    for AWS providers within the current tenant.
     """
 
     serializer_class = SecurityHubRegionsSerializer
