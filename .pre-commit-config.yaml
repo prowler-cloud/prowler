@@ -115,7 +115,8 @@ repos:
       - id: safety
         name: safety
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353'
+        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
+        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745'
         language: system
 
       - id: vulture
