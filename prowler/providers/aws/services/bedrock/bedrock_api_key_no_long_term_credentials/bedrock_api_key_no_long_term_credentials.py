@@ -5,6 +5,14 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
 class bedrock_api_key_no_long_term_credentials(Check):
+    """
+    Bedrock API keys should be short-lived to reduce the risk of unauthorized access.
+    This check verifies if there are any long-term Bedrock API keys.
+    If there are, it checks if they are expired or will be expired.
+    If they are expired, it will be marked as PASS.
+    If they are not expired, it will be marked as FAIL and the severity will be critical if the key will never expire.
+    """
+
     def execute(self):
         findings = []
         for api_key in iam_client.service_specific_credentials:
