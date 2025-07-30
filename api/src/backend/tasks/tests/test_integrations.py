@@ -695,7 +695,11 @@ class TestSecurityHubIntegrationUploads:
 
         # Mock ASFF transformer
         mock_asff_instance = MagicMock()
-        mock_asff_instance.data = [{"asff": "finding1"}, {"asff": "finding2"}]
+        finding1 = MagicMock()
+        finding1.Compliance.Status = "FAILED"
+        finding2 = MagicMock()
+        finding2.Compliance.Status = "FAILED"
+        mock_asff_instance.data = [finding1, finding2]
         mock_asff_instance._data = MagicMock()
         mock_asff.return_value = mock_asff_instance
 
@@ -844,7 +848,9 @@ class TestSecurityHubIntegrationUploads:
                     )
 
                     mock_asff_instance = MagicMock()
-                    mock_asff_instance.data = [{"asff": "finding1"}]
+                    finding1 = MagicMock()
+                    finding1.Compliance.Status = "FAILED"
+                    mock_asff_instance.data = [finding1]
                     mock_asff_instance._data = MagicMock()
                     mock_asff.return_value = mock_asff_instance
 
@@ -913,7 +919,9 @@ class TestSecurityHubIntegrationUploads:
 
         # Mock ASFF transformer
         mock_asff_instance = MagicMock()
-        mock_asff_instance.data = [{"asff": "finding1"}]
+        finding1 = MagicMock()
+        finding1.Compliance.Status = "FAILED"
+        mock_asff_instance.data = [finding1]
         mock_asff_instance._data = MagicMock()
         mock_asff.return_value = mock_asff_instance
 
@@ -986,7 +994,9 @@ class TestSecurityHubIntegrationUploads:
 
         # Mock ASFF transformer
         mock_asff_instance = MagicMock()
-        mock_asff_instance.data = [{"asff": "finding1"}]
+        finding1 = MagicMock()
+        finding1.Compliance.Status = "FAILED"
+        mock_asff_instance.data = [finding1]
         mock_asff_instance._data = MagicMock()
         mock_asff.return_value = mock_asff_instance
 
@@ -1087,10 +1097,11 @@ class TestSecurityHubIntegrationUploads:
 
         # Mock ASFF transformer with mixed findings (FAILED and PASSED)
         mock_asff_instance = MagicMock()
-        mock_asff_instance.data = [
-            {"Compliance": {"Status": "FAILED"}, "asff": "failed_finding"},
-            {"Compliance": {"Status": "PASSED"}, "asff": "passed_finding"},
-        ]
+        failed_finding = MagicMock()
+        failed_finding.Compliance.Status = "FAILED"
+        passed_finding = MagicMock()
+        passed_finding.Compliance.Status = "PASSED"
+        mock_asff_instance.data = [failed_finding, passed_finding]
         mock_asff_instance._data = MagicMock()
         mock_asff.return_value = mock_asff_instance
 
@@ -1114,7 +1125,7 @@ class TestSecurityHubIntegrationUploads:
 
         # Should only contain FAILED findings
         assert len(filtered_findings) == 1
-        assert filtered_findings[0]["Compliance"]["Status"] == "FAILED"
+        assert filtered_findings[0].Compliance.Status == "FAILED"
 
         mock_security_hub.batch_send_to_security_hub.assert_called_once()
         mock_security_hub.archive_previous_findings.assert_called_once()

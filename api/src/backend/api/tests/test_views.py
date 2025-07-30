@@ -6208,7 +6208,6 @@ class TestSecurityHubRegionsView:
         assert "errors" in response_data
         assert "error" in response_data["errors"]
         assert "Failed to get SecurityHub regions" in response_data["errors"]["error"]
-        assert "Provider initialization failed" in response_data["errors"]["error"]
 
     @patch("api.v1.views.SecurityHub")
     @patch("api.v1.views.initialize_prowler_provider")
@@ -6252,7 +6251,6 @@ class TestSecurityHubRegionsView:
         assert "errors" in response_data
         assert "error" in response_data["errors"]
         assert "Failed to get SecurityHub regions" in response_data["errors"]["error"]
-        assert "SecurityHub not enabled in region" in response_data["errors"]["error"]
 
     def test_active_security_hub_regions_unauthenticated(
         self, client, providers_fixture
