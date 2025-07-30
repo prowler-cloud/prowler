@@ -1,4 +1,4 @@
-import { Divider, Select, SelectItem, Spacer } from "@nextui-org/react";
+import { Divider, Select, SelectItem } from "@nextui-org/react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
@@ -10,10 +10,18 @@ export const AWSRoleCredentialsForm = ({
   control,
   setValue,
   externalId,
+  templateLinks,
+  type = "providers",
 }: {
   control: Control<AWSCredentialsRole>;
   setValue: UseFormSetValue<AWSCredentialsRole>;
   externalId: string;
+  templateLinks: {
+    cloudformation: string;
+    cloudformationQuickLink: string;
+    terraform: string;
+  };
+  type?: "providers" | "s3-integration";
 }) => {
   const credentialsType = useWatch({
     control,
@@ -24,15 +32,16 @@ export const AWSRoleCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
-          Connect assuming IAM Role
-        </div>
-        <div className="text-sm text-default-500">
-          Please provide the information for your AWS credentials.
-        </div>
+        {type === "providers" && (
+          <div className="text-md font-bold leading-9 text-default-foreground">
+            Connect assuming IAM Role
+          </div>
+        )}
       </div>
 
-      <span className="text-xs font-bold text-default-500">Authentication</span>
+      <span className="text-xs font-bold text-default-500">
+        Specify which AWS credentials to use
+      </span>
 
       <Select
         name={ProviderCredentialFields.CREDENTIALS_TYPE}
@@ -49,7 +58,7 @@ export const AWSRoleCredentialsForm = ({
         }
       >
         <SelectItem key="aws-sdk-default">AWS SDK default</SelectItem>
-        <SelectItem key="access-secret-key">Access & secret key</SelectItem>
+        <SelectItem key="access-secret-key">Access & Secret Key</SelectItem>
       </Select>
 
       {credentialsType === "access-secret-key" && (
@@ -101,11 +110,19 @@ export const AWSRoleCredentialsForm = ({
           />
         </>
       )}
-      <Divider />
-      <span className="text-xs font-bold text-default-500">Assume Role</span>
-      <CredentialsRoleHelper />
+      <Divider className="" />
+      <span className="text-xs font-bold text-default-500">
+        {type === "providers"
+          ? "Assume Role"
+          : "Optionally, assume a role is possible"}
+      </span>
+      <CredentialsRoleHelper
+        externalId={externalId}
+        templateLinks={templateLinks}
+        type={type}
+      />
 
-      <Spacer y={2} />
+      <Divider />
 
       <CustomInput
         control={control}
@@ -115,7 +132,7 @@ export const AWSRoleCredentialsForm = ({
         labelPlacement="inside"
         placeholder="Enter the Role ARN"
         variant="bordered"
-        isRequired
+        isRequired={type === "providers"}
         isInvalid={
           !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
         }
@@ -142,9 +159,9 @@ export const AWSRoleCredentialsForm = ({
           control={control}
           name={ProviderCredentialFields.ROLE_SESSION_NAME}
           type="text"
-          label="Role Session Name"
+          label="Role session name"
           labelPlacement="inside"
-          placeholder="Enter the Role Session Name"
+          placeholder="Enter the role session name"
           variant="bordered"
           isRequired={false}
           isInvalid={
@@ -157,9 +174,9 @@ export const AWSRoleCredentialsForm = ({
           control={control}
           name={ProviderCredentialFields.SESSION_DURATION}
           type="number"
-          label="Session Duration (seconds)"
+          label="Session duration (seconds)"
           labelPlacement="inside"
-          placeholder="Enter the session duration (default: 3600)"
+          placeholder="Enter the session duration (default: 3600 seconds)"
           variant="bordered"
           isRequired={false}
           isInvalid={

@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+- S3 integration [(#8391)](https://github.com/prowler-cloud/prowler/pull/8391)
 
 ## [v1.9.0] (Prowler v5.9.0)
 

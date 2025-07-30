@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
-import { SamlConfigForm } from "./forms";
+import { SamlConfigForm } from "./saml-config-form";
 
 export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
   const [isSamlModalOpen, setIsSamlModalOpen] = useState(false);

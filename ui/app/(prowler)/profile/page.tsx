@@ -4,7 +4,7 @@ import { getSamlConfig } from "@/actions/integrations/saml";
 import { getAllTenants } from "@/actions/users/tenants";
 import { getUserInfo } from "@/actions/users/users";
 import { getUserMemberships } from "@/actions/users/users";
-import { SamlIntegrationCard } from "@/components/integrations/saml-integration-card";
+import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
 import { ContentLayout } from "@/components/ui";
 import { UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
