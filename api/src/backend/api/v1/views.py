@@ -4068,8 +4068,8 @@ class SecurityHubRegionsView(BaseRLSViewSet):
 
             return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except Exception:
             return Response(
-                {"error": f"Failed to get SecurityHub regions: {str(e)}"},
+                {"error": "Failed to get SecurityHub regions"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
