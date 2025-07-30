@@ -1,12 +1,19 @@
 "use client";
 
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
-import { PlusIcon, SettingsIcon, TestTube, Trash2Icon } from "lucide-react";
+import {
+  PlusIcon,
+  Power,
+  SettingsIcon,
+  TestTube,
+  Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 
 import {
   deleteIntegration,
   testIntegrationConnection,
+  updateIntegration,
 } from "@/actions/integrations";
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { useToast } from "@/components/ui";
@@ -119,6 +126,39 @@ export const S3IntegrationsManager = ({
       });
     } finally {
       setIsTesting(null);
+    }
+  };
+
+  const handleToggleEnabled = async (integration: IntegrationProps) => {
+    try {
+      const newEnabledState = !integration.attributes.enabled;
+      const formData = new FormData();
+      formData.append(
+        "integration_type",
+        integration.attributes.integration_type,
+      );
+      formData.append("enabled", JSON.stringify(newEnabledState));
+
+      const result = await updateIntegration(integration.id, formData);
+
+      if (result && "success" in result) {
+        toast({
+          title: "Success!",
+          description: `Integration ${newEnabledState ? "enabled" : "disabled"} successfully.`,
+        });
+      } else if (result && "error" in result) {
+        toast({
+          variant: "destructive",
+          title: "Toggle Failed",
+          description: result.error,
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to toggle integration. Please try again.",
+      });
     }
   };
 
@@ -311,6 +351,23 @@ export const S3IntegrationsManager = ({
                         className="w-full sm:w-auto"
                       >
                         Credentials
+                      </CustomButton>
+                      <CustomButton
+                        size="sm"
+                        variant="bordered"
+                        color={
+                          integration.attributes.enabled ? "warning" : "primary"
+                        }
+                        startContent={<Power size={14} />}
+                        onPress={() => handleToggleEnabled(integration)}
+                        ariaLabel={
+                          integration.attributes.enabled
+                            ? "Disable integration"
+                            : "Enable integration"
+                        }
+                        className="w-full sm:w-auto"
+                      >
+                        {integration.attributes.enabled ? "Disable" : "Enable"}
                       </CustomButton>
                       <CustomButton
                         size="sm"

@@ -36,9 +36,7 @@ const baseS3IntegrationSchema = z.object({
   integration_type: z.literal("amazon_s3"),
   bucket_name: z.string().min(1, "Bucket name is required"),
   output_directory: z.string().min(1, "Output directory is required"),
-  providers: z
-    .array(z.string())
-    .min(1, "At least one provider must be selected"),
+  providers: z.array(z.string()).optional(),
   // AWS Credentials fields compatible with AWSCredentialsRole
   credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]),
   aws_access_key_id: z.string().optional(),
@@ -136,10 +134,7 @@ export const editS3IntegrationFormSchema = baseS3IntegrationSchema
       .string()
       .min(1, "Output directory is required")
       .optional(),
-    providers: z
-      .array(z.string())
-      .min(1, "At least one provider must be selected")
-      .optional(),
+    providers: z.array(z.string()).optional(),
     credentials_type: z
       .enum(["aws-sdk-default", "access-secret-key"])
       .optional(),

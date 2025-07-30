@@ -118,12 +118,17 @@ export const updateIntegration = async (id: string, formData: FormData) => {
 
   try {
     const integration_type = formData.get("integration_type") as string;
-    const configuration = JSON.parse(formData.get("configuration") as string);
+    const configuration = formData.get("configuration")
+      ? JSON.parse(formData.get("configuration") as string)
+      : undefined;
     const credentials = formData.get("credentials")
       ? JSON.parse(formData.get("credentials") as string)
       : undefined;
     const providers = formData.get("providers")
       ? JSON.parse(formData.get("providers") as string)
+      : undefined;
+    const enabled = formData.get("enabled")
+      ? JSON.parse(formData.get("enabled") as string)
       : undefined;
 
     const integrationData: any = {
@@ -140,6 +145,10 @@ export const updateIntegration = async (id: string, formData: FormData) => {
 
     if (credentials) {
       integrationData.data.attributes.credentials = credentials;
+    }
+
+    if (enabled !== undefined) {
+      integrationData.data.attributes.enabled = enabled;
     }
 
     if (providers) {
@@ -160,12 +169,20 @@ export const updateIntegration = async (id: string, formData: FormData) => {
     });
 
     if (response.ok) {
-      const testResult = await testIntegrationConnection(id);
+      revalidatePath("/integrations/s3");
 
-      return {
-        success: "Integration updated successfully!",
-        testConnection: testResult,
-      };
+      // Only test connection if credentials or configuration were updated
+      if (credentials || configuration) {
+        const testResult = await testIntegrationConnection(id);
+        return {
+          success: "Integration updated successfully!",
+          testConnection: testResult,
+        };
+      } else {
+        return {
+          success: "Integration updated successfully!",
+        };
+      }
     }
 
     const errorData = await response.json().catch(() => ({}));

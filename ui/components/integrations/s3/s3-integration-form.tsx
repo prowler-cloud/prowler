@@ -61,13 +61,9 @@ export const S3IntegrationForm = ({
     ),
     defaultValues: {
       integration_type: "amazon_s3" as const,
-      // For configuration editing, don't prefill to allow partial updates
-      bucket_name: isEditingConfig
-        ? ""
-        : integration?.attributes.configuration.bucket_name || "",
-      output_directory: isEditingConfig
-        ? ""
-        : integration?.attributes.configuration.output_directory || "",
+      bucket_name: integration?.attributes.configuration.bucket_name || "",
+      output_directory:
+        integration?.attributes.configuration.output_directory || "",
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
       credentials_type: "aws-sdk-default" as const,
@@ -171,9 +167,8 @@ export const S3IntegrationForm = ({
       if (Object.keys(configuration).length > 0) {
         formData.append("configuration", JSON.stringify(configuration));
       }
-      if (values.providers && values.providers.length > 0) {
-        formData.append("providers", JSON.stringify(values.providers));
-      }
+      // Always send providers array, even if empty, to update relationships
+      formData.append("providers", JSON.stringify(values.providers || []));
     } else if (isEditingCredentials) {
       const credentials = buildCredentials(values);
       formData.append("credentials", JSON.stringify(credentials));
