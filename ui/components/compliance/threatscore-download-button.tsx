@@ -3,8 +3,9 @@
 import { useState } from "react";
 
 import { useToast } from "@/components/ui";
-import { DownloadThreatscoreButton } from "./download-threatscore-button";
 import { downloadThreatscoreReport } from "@/lib/helper";
+
+import { DownloadThreatscoreButton } from "./download-threatscore-button";
 
 interface ThreatscoreDownloadButtonProps {
   scanId: string;

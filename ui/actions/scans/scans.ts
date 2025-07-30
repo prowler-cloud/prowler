@@ -321,14 +321,10 @@ export const getComplianceCsv = async (
   }
 };
 
-export const getThreatscoreReport = async (
-  scanId: string,
-) => {
+export const getThreatscoreReport = async (scanId: string) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(
-    `${apiBaseUrl}/scans/${scanId}/threatscore`,
-  );
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/threatscore`);
 
   try {
     const response = await fetch(url.toString(), { headers });

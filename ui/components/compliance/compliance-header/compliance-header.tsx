@@ -2,9 +2,9 @@
 
 import { Spacer } from "@nextui-org/react";
 
+import { ThreatscoreDownloadButton } from "@/components/compliance/threatscore-download-button";
 import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
-import { ThreatscoreDownloadButton } from "@/components/compliance/threatscore-download-button";
 
 import { DataCompliance } from "./data-compliance";
 import { SelectScanComplianceDataProps } from "./scan-selector";
