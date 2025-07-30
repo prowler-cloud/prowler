@@ -1,6 +1,6 @@
 # Integrations
 
-## Slack
+## Integration with Slack
 
 Prowler can be integrated with [Slack](https://slack.com/) to send a summary of the execution having configured a Slack APP in your channel with the following command:
 
@@ -11,9 +11,9 @@ prowler <provider> --slack
 ![Prowler Slack Message](img/slack-prowler-message.png)
 
 ???+ note
-    Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables.
+    Slack integration needs `SLACK_API_TOKEN` and `SLACK_CHANNEL_NAME` environment variables.
 
-### Configuration
+### Configuration of the Integration with Slack
 
 To configure the Slack Integration, follow the next steps:
 

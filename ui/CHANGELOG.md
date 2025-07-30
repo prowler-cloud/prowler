@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.10.0] (Prowler v5.10.0 - UNRELEASED)
+
+### Added
+
+- Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+- Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+  
+___
+
 ## [v1.9.3] (Prowler v5.9.3)
 
 ### 🐞 Fixed
