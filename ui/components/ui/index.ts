@@ -7,7 +7,6 @@ export * from "./chart/Chart";
 export * from "./content-layout/content-layout";
 export * from "./dialog/dialog";
 export * from "./download-icon-button/download-icon-button";
-export * from "./download-threatscore-button/download-threascore-button";
 export * from "./dropdown/Dropdown";
 export * from "./feedback-banner/feedback-banner";
 export * from "./headers/navigation-header";

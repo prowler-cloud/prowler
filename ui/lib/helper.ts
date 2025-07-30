@@ -141,13 +141,20 @@ export const downloadScanZip = async (
   }
 };
 
-export const downloadComplianceCsv = async (
-  scanId: string,
-  complianceId: string,
+/**
+ * Generic download helper function
+ * @param result - The result of the download
+ * @param toast - The toast to display
+ * @param mimeType - The mime type of the file
+ * @param successMessage - The success message to display
+ * @returns void
+ */
+const handleDownloadResponse = async (
+  result: any,
   toast: ReturnType<typeof useToast>["toast"],
+  mimeType: string,
+  successMessage: string,
 ): Promise<void> => {
-  const result = await getComplianceCsv(scanId, complianceId);
-
   if (result?.pending) {
     toast({
       title: "The report is still being generated",
@@ -164,7 +171,7 @@ export const downloadComplianceCsv = async (
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const blob = new Blob([bytes], { type: "text/csv" });
+      const blob = new Blob([bytes], { type: mimeType });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -176,7 +183,7 @@ export const downloadComplianceCsv = async (
 
       toast({
         title: "Download Complete",
-        description: "The compliance report has been downloaded successfully.",
+        description: successMessage,
       });
     } catch (error) {
       toast({
@@ -205,67 +212,31 @@ export const downloadComplianceCsv = async (
   });
 };
 
+export const downloadComplianceCsv = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  const result = await getComplianceCsv(scanId, complianceId);
+  await handleDownloadResponse(
+    result,
+    toast,
+    "text/csv",
+    "The compliance report has been downloaded successfully.",
+  );
+};
+
 export const downloadThreatscoreReport = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
   const result = await getThreatscoreReport(scanId);
-
-  if (result?.pending) {
-    toast({
-      title: "The report is still being generated",
-      description: "Please try again in a few minutes.",
-    });
-    return;
-  }
-
-  if (result?.success && result.data) {
-    try {
-      const binaryString = window.atob(result.data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      const blob = new Blob([bytes], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = result.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Download Complete",
-        description: "The threatscore report has been downloaded successfully.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: "An error occurred while processing the file.",
-      });
-    }
-    return;
-  }
-
-  if (result?.error) {
-    toast({
-      variant: "destructive",
-      title: "Download Failed",
-      description: result.error,
-    });
-    return;
-  }
-
-  // Unexpected case
-  toast({
-    variant: "destructive",
-    title: "Download Failed",
-    description: "Unexpected response. Please try again later.",
-  });
+  await handleDownloadResponse(
+    result,
+    toast,
+    "application/pdf",
+    "The threatscore report has been downloaded successfully.",
+  );
 };
 
 export const isGoogleOAuthEnabled =

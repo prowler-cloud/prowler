@@ -3,7 +3,7 @@
 import { Tooltip } from "@nextui-org/react";
 import { DownloadIcon } from "lucide-react";
 
-import { CustomButton } from "../custom/custom-button";
+import { CustomButton } from "@/components/ui/custom/custom-button";
 
 interface DownloadThreatscoreButtonProps {
   paramId: string;
