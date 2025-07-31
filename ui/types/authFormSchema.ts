@@ -99,6 +99,8 @@ export const authFormSchema = (type: string) =>
       email: z.string().email(),
       password: type === "sign-in" ? z.string() : validatePassword(),
       isSamlMode: z.boolean().optional(),
+      // Add a virtual field for global errors
+      credentials: z.string().optional(),
     })
     .refine(
       (data) => {

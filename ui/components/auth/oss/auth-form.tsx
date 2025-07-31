@@ -110,7 +110,7 @@ export const AuthForm = ({
       if (result?.message === "Success") {
         router.push("/");
       } else if (result?.errors && "credentials" in result.errors) {
-        form.setError("email", {
+        form.setError("credentials", {
           type: "server",
           message: result.errors.credentials ?? "Incorrect email or password",
         });
@@ -235,7 +235,6 @@ export const AuthForm = ({
                 label="Email"
                 placeholder="Enter your email"
                 isInvalid={!!form.formState.errors.email}
-                showFormMessage={type !== "sign-in"}
               />
               {!isSamlMode && (
                 <>
@@ -243,10 +242,7 @@ export const AuthForm = ({
                     control={form.control}
                     name="password"
                     password
-                    isInvalid={
-                      !!form.formState.errors.password ||
-                      !!form.formState.errors.email
-                    }
+                    isInvalid={!!form.formState.errors.password}
                   />
                   {type === "sign-up" && (
                     <PasswordRequirementsMessage
@@ -317,7 +313,7 @@ export const AuthForm = ({
                   )}
                 </>
               )}
-              {type === "sign-in" && form.formState.errors?.email && (
+              {type === "sign-in" && form.formState.errors?.credentials && (
                 <div className="flex flex-row items-center text-system-error">
                   <NotificationIcon size={16} />
                   <p className="text-small">
