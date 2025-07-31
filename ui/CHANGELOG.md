@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
 - Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
+- API Key Management UI with complete interface for managing API keys in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 
 ### 🔄 Changed
 

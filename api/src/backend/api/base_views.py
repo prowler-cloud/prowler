@@ -1,23 +1,23 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter
 from rest_framework_json_api import filters
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from api.authentication import APIKeyAuthentication
 from api.db_router import MainRouter
 from api.db_utils import POSTGRES_USER_VAR, rls_transaction
 from api.filters import CustomDjangoFilterBackend
 from api.models import Role, Tenant
-from api.rbac.permissions import HasPermissions
+from api.rbac.permissions import HasPermissions, IsAuthenticated
 
 
 class BaseViewSet(ModelViewSet):
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, APIKeyAuthentication]
     required_permissions = []
-    permission_classes = [permissions.IsAuthenticated, HasPermissions]
+    permission_classes = [IsAuthenticated, HasPermissions]
     filter_backends = [
         filters.QueryParameterValidationFilter,
         filters.OrderingFilter,
@@ -61,7 +61,7 @@ class BaseRLSViewSet(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        with rls_transaction(tenant_id):
+        with rls_transaction(str(tenant_id)):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
