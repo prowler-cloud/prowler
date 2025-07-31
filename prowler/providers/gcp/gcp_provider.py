@@ -70,6 +70,7 @@ class GcpProvider(Provider):
 
     def __init__(
         self,
+        retries_max_attempts: int = None,
         organization_id: str = None,
         project_ids: list = None,
         excluded_project_ids: list = None,
@@ -90,6 +91,7 @@ class GcpProvider(Provider):
         GCP Provider constructor
 
         Args:
+            retries_max_attempts: int -> The maximum number of retries for the Google Cloud SDK retry config (Default: 3)
             organization_id: str
             project_ids: list
             excluded_project_ids: list
@@ -136,6 +138,10 @@ class GcpProvider(Provider):
                             >>> GcpProvider(
                             ...     credentials_file="credentials_file"
                             ... )
+                        - Using custom retry configuration:
+                            >>> GcpProvider(
+                            ...     retries_max_attempts=5
+                            ... )
                 - Impersonating a service account: If you want to impersonate a GCP service account, you can use the impersonate_service_account parameter. For this method user must be authenticated:
                     >>> GcpProvider(
                     ...     impersonate_service_account="service_account"
@@ -160,6 +166,14 @@ class GcpProvider(Provider):
                 ... )
         """
         logger.info("Instantiating GCP Provider ...")
+
+        # Update retry configuration if provided
+        if retries_max_attempts is not None:
+            import prowler.providers.gcp.config as gcp_config
+
+            gcp_config.DEFAULT_RETRY_ATTEMPTS = retries_max_attempts
+            logger.info(f"GCP retry attempts set to {retries_max_attempts}")
+
         self._impersonated_service_account = impersonate_service_account
         # Set the GCP credentials using the provided client_id, client_secret and refresh_token
         gcp_credentials = None
