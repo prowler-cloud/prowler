@@ -233,19 +233,19 @@ class M365PowerShell(PowerShellSession):
                         file=os.path.basename(__file__),
                         message=result,
                     )
-            # Test Microsoft Teams connection
-            result = self.execute("Connect-MicrosoftTeams -Credential $credential")
-            if self.tenant_identity.user not in result:
-                if "AADSTS" in result:  # Entra Security Token Service Error
-                    raise M365UserCredentialsError(
-                        file=os.path.basename(__file__),
-                        message=result,
-                    )
-                else:  # Unknown error, could be a permission issue or modules not installed
-                    raise M365UserCredentialsError(
-                        file=os.path.basename(__file__),
-                        message=f"Error connecting to PowerShell modules: {result}",
-                    )
+                # Test Microsoft Teams connection
+                result = self.execute("Connect-MicrosoftTeams -Credential $credential")
+                if self.tenant_identity.user not in result:
+                    if "AADSTS" in result:  # Entra Security Token Service Error
+                        raise M365UserCredentialsError(
+                            file=os.path.basename(__file__),
+                            message=result,
+                        )
+                    else:  # Unknown error, could be a permission issue or modules not installed
+                        raise M365UserCredentialsError(
+                            file=os.path.basename(__file__),
+                            message=f"Error connecting to PowerShell modules: {result if result else 'Unknown error'}",
+                        )
 
             return True
 
