@@ -11,10 +11,26 @@ import {
   RoleDetail,
 } from "@/types/users";
 
+// UUID validation regex pattern
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Validates if a string is a valid UUID
+ */
+function isValidUUID(uuid: string): boolean {
+  return UUID_REGEX.test(uuid);
+}
+
 export async function getAPIKeys(): Promise<{ data: APIKey[] }> {
   const session = await auth();
   if (!session?.tenantId) {
     throw new Error("No tenant ID found in session");
+  }
+
+  // Validate tenantId format to prevent SSRF attacks
+  if (!isValidUUID(session.tenantId)) {
+    throw new Error("Invalid tenant ID format");
   }
 
   const headers = await getAuthHeaders({ contentType: false });
@@ -61,6 +77,16 @@ export async function createAPIKey(
     throw new Error("No tenant ID found in session");
   }
 
+  // Validate tenantId format to prevent SSRF attacks
+  if (!isValidUUID(session.tenantId)) {
+    throw new Error("Invalid tenant ID format");
+  }
+
+  // Validate role ID if provided
+  if (data.role && !isValidUUID(data.role)) {
+    throw new Error("Invalid role ID format");
+  }
+
   const headers = await getAuthHeaders({ contentType: true });
   const body = {
     data: {
@@ -99,9 +125,19 @@ export async function revokeAPIKey(apiKeyId: string): Promise<{
   uuid: string;
   prefix: string;
 }> {
+  // Validate apiKeyId to prevent SSRF attacks
+  if (!isValidUUID(apiKeyId)) {
+    throw new Error("Invalid API key ID format");
+  }
+
   const session = await auth();
   if (!session?.tenantId) {
     throw new Error("No tenant ID found in session");
+  }
+
+  // Validate tenantId as well for consistency
+  if (!isValidUUID(session.tenantId)) {
+    throw new Error("Invalid tenant ID format");
   }
 
   const headers = await getAuthHeaders({ contentType: false });
