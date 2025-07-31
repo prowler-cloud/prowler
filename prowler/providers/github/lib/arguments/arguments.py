@@ -30,12 +30,18 @@ def init_parser(self):
         metavar="GITHUB_APP_ID",
     )
     github_auth_subparser.add_argument(
-        "--github-app-key",
         "--github-app-key-path",
         nargs="?",
-        help="GitHub App Key Path to log in against GitHub",
+        help="Path to GitHub App private key file",
         default=None,
-        metavar="GITHUB_APP_KEY",
+        metavar="GITHUB_APP_KEY_PATH",
+    )
+    github_auth_subparser.add_argument(
+        "--github-app-key",
+        nargs="?",
+        help="GitHub App private key content",
+        default=None,
+        metavar="GITHUB_APP_KEY_CONTENT",
     )
 
     github_scoping_subparser = github_parser.add_argument_group("Scan Scoping")
