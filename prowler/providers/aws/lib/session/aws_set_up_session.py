@@ -189,7 +189,7 @@ def validate_arguments(
     if role_arn:
         if not session_duration or not external_id or not role_session_name:
             raise ValueError(
-                f"If a role ARN is provided, a session duration, an external ID, and a role session name are required. Session duration: {session_duration}, external ID: {external_id}, role session name: {role_session_name}"
+                "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
             )
     else:
         if external_id:
