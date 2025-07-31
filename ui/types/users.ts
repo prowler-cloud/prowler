@@ -157,9 +157,9 @@ export interface APIKey {
   attributes: {
     name: string;
     prefix: string;
-    expires_at: string | null;
+    expiry_date: string | null;
     last_used_at: string | null;
-    created_at: string;
+    created: string;
   };
   relationships?: {
     role?: {
@@ -173,7 +173,7 @@ export interface APIKey {
 
 export interface APIKeyCreateData {
   name: string;
-  expires_at?: string | null;
+  expiry_date?: string | null;
   role: string; // Role ID is required for API key creation
 }
 
@@ -184,8 +184,8 @@ export interface APIKeyCreateResponse {
     attributes: {
       name: string;
       prefix: string;
-      expires_at: string | null;
-      created_at: string;
+      expiry_date: string | null;
+      created: string;
       key: string; // Only returned on creation
     };
     relationships?: {

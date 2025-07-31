@@ -10,7 +10,6 @@ from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
-from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
@@ -28,6 +27,10 @@ from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
+from django.utils.crypto import get_random_string
+import secrets
+from rest_framework_api_key.crypto import make_password, Sha512ApiKeyHasher
+from rest_framework_api_key.models import APIKeyManager
 
 from api.db_router import MainRouter
 from api.db_utils import (
@@ -55,6 +58,7 @@ from api.rls import (
     Tenant,
 )
 from prowler.lib.check.models import Severity
+from rest_framework_api_key.models import AbstractAPIKey
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -197,45 +201,111 @@ class APIKeyUser:
         return f"APIKeyUser(api_key_id={self.api_key_id}, api_key_name={self.api_key_name}, tenant_id={self.tenant_id}, role={self.role})"
 
 
-class APIKey(RowLevelSecurityProtectedModel):
+class APIKeyManager(APIKeyManager):
     """
-    Model for API Keys that can be used for programmatic access to the API.
-    Keys are hashed and never stored in plaintext.
+    Custom manager for APIKey that handles Row Level Security and tenant context.
     """
 
-    # Define both default and RLS-bypassing managers
-    objects = models.Manager()
-    all_objects = models.Manager()
+    def get_queryset(self):
+        """Override to ensure RLS is properly applied."""
+        return super().get_queryset()
 
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    name = models.CharField(
-        max_length=255,
-        validators=[MinLengthValidator(3)],
-        help_text="Human-readable name to identify the API key",
-    )
-    key_hash = models.CharField(
-        max_length=255, unique=True, help_text="Django password hash of the API key"
-    )
-    prefix = models.CharField(
-        max_length=10, help_text="Prefix of the API key for identification"
-    )
+    def get_usable_keys(self, tenant_id=None):
+        """
+        Get all usable (non-revoked, non-expired) API keys.
+        If tenant_id is provided, filter by tenant.
+        """
+        queryset = self.filter(revoked=False)
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+        return queryset
+
+    def get_from_key(self, key: str, tenant_id=None):
+        """
+        Get API key from the raw key string.
+        Uses the prefix for efficient lookup while respecting tenant boundaries.
+        """
+        try:
+            prefix, _, _ = key.partition(".")
+            if not prefix:
+                raise self.model.DoesNotExist("Invalid key format")
+
+            queryset = self.get_usable_keys(tenant_id)
+            api_key = queryset.get(prefix=prefix)
+
+            if not api_key.is_valid(key):
+                raise self.model.DoesNotExist("Key is not valid.")
+
+            return api_key
+        except self.model.DoesNotExist:
+            raise  # Re-raise for explicit handling
+
+    def is_valid_key(self, key: str, tenant_id=None) -> bool:
+        """
+        Check if a key is valid without raising exceptions.
+        """
+        try:
+            api_key = self.get_from_key(key, tenant_id)
+            return not api_key.has_expired
+        except self.model.DoesNotExist:
+            return False
+
+    def create_key(self, tenant_id, role, name, **kwargs):
+        """
+        Create a new API key for a specific tenant and role.
+        Returns tuple of (api_key_instance, raw_key_string).
+        """
+        # Remove fields that shouldn't be passed to create
+        kwargs.pop("id", None)
+        kwargs.pop("prefix", None)
+        kwargs.pop("hashed_key", None)
+
+        # Create the instance
+        obj = self.model(tenant_id=tenant_id, role=role, name=name, **kwargs)
+
+        # Generate a custom key with "pk_" prefix (total 11 chars)
+        prefix = "pk_" + get_random_string(
+            length=8, allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789"
+        )
+        secret = secrets.token_urlsafe(32)
+        key = f"{prefix}.{secret}"
+
+        # Use the parent manager's assign_key method but override the prefix
+        super().assign_key(obj)  # This sets obj.prefix and obj.hashed_key
+
+        # Override with our custom prefix and key
+        obj.prefix = prefix
+        obj.hashed_key = make_password(key, hasher=Sha512ApiKeyHasher())
+        obj.save()
+
+        return obj, key
+
+    def using_admin_db(self):
+        """
+        Return a manager that uses the admin database to bypass RLS.
+        Useful for authentication where we don't have tenant context yet.
+        """
+        return self.using(MainRouter.admin_db)
+
+
+class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
+    """
+    API Key model extending djangorestframework-api-key's AbstractAPIKey
+    while maintaining multi-tenancy support with Row Level Security and RBAC.
+    """
+
+    objects = APIKeyManager()
+    all_objects = APIKeyManager()
+
     role = models.ForeignKey(
         "Role",
         on_delete=models.CASCADE,
         related_name="api_keys",
         help_text="Role that defines the permissions for this API key",
     )
-    expires_at = models.DateTimeField(
-        null=True, blank=True, help_text="Expiration time. Null means no expiration."
-    )
+
     last_used_at = models.DateTimeField(
         null=True, blank=True, help_text="Last time this API key was used"
-    )
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    revoked_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Time when the key was revoked. Null means active.",
     )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -256,63 +326,23 @@ class APIKey(RowLevelSecurityProtectedModel):
     class JSONAPIMeta:
         resource_name = "api-keys"
 
-    def is_valid(self):
-        """Check if the API key is still valid (not expired or revoked)."""
-
-        if self.revoked_at:
-            return False
-        if self.expires_at and self.expires_at < timezone.now():
-            return False
-        return True
-
     def revoke(self):
         """Revoke the API key."""
-        self.revoked_at = timezone.now()
+        self.revoked = True
         self.save()
 
-    @classmethod
-    def generate_key(cls):
-        """Generate a new API key with a unique prefix."""
-        # Generate a unique prefix to avoid collisions
-        # Use 8 characters for good uniqueness (62^8 = ~218 trillion combinations)
-        prefix = generate_random_token(8)
-        random_part = generate_random_token(32)
-        return f"pk_{prefix}.{random_part}"
+    def is_active(self):
+        """Check if the API key is active (not revoked and not expired)."""
+        return not self.revoked and not self.has_expired
 
-    @classmethod
-    def extract_prefix(cls, key):
-        """Extract prefix from API key for database lookup."""
-        try:
-            # Key format is: pk_XXXXXXXX.YYYYYYYY...
-            # We want just the XXXXXXXX part (without pk_)
-            parts = key.split(".")
-            if len(parts) != 2 or not parts[0].startswith("pk_"):
-                raise ValueError("Invalid API key format")
-            return parts[0][3:]  # Remove 'pk_' prefix
-        except (IndexError, AttributeError):
-            raise ValueError("Invalid API key format")
-
-    @classmethod
-    def hash_key(cls, key):
-        """Hash an API key using Django's secure password hashing."""
-
-        return make_password(key)
-
-    @classmethod
-    def verify_key(cls, key, key_hash):
-        """Verify an API key against its hash using Django's password verification."""
-        return check_password(key, key_hash)
+    def update_last_used(self):
+        """Update the last_used_at timestamp."""
+        self.last_used_at = timezone.now()
+        self.save(update_fields=["last_used_at"])
 
     def __str__(self):
         """Return string representation of the API key."""
         return f"API Key: {self.name}"
-
-    def save(self, *args, **kwargs):
-        # The prefix should already be set during creation
-        # If not set, this is an error in the creation process
-        if not self.prefix:
-            raise ValueError("API key prefix must be set before saving")
-        super().save(*args, **kwargs)
 
 
 class Membership(models.Model):

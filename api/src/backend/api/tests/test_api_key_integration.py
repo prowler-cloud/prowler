@@ -88,7 +88,7 @@ class TestAPIKeyIntegrationWorkflows:
         create_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Integration Test Key", "expires_at": None},
+                "attributes": {"name": "Integration Test Key", "expiry_date": None},
             }
         }
 
@@ -156,7 +156,7 @@ class TestAPIKeyIntegrationWorkflows:
                 "type": "api-keys",
                 "attributes": {
                     "name": "Expiring Test Key",
-                    "expires_at": future_time.isoformat(),
+                    "expiry_date": future_time.isoformat(),
                 },
             }
         }
@@ -279,7 +279,7 @@ class TestAPIKeyIntegrationWorkflows:
         create_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Activity Test Key", "expires_at": None},
+                "attributes": {"name": "Activity Test Key", "expiry_date": None},
             }
         }
 
@@ -352,7 +352,7 @@ class TestAPIKeyIntegrationWorkflows:
         create_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Security Test Key", "expires_at": None},
+                "attributes": {"name": "Security Test Key", "expiry_date": None},
             }
         }
 
@@ -395,7 +395,7 @@ class TestAPIKeyIntegrationWorkflows:
         create_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Permission Test Key", "expires_at": None},
+                "attributes": {"name": "Permission Test Key", "expiry_date": None},
             }
         }
 
@@ -449,7 +449,7 @@ class TestAPIKeyIntegrationWorkflows:
             create_data = {
                 "data": {
                     "type": "api-keys",
-                    "attributes": {"name": f"Multi Key Test {i}", "expires_at": None},
+                    "attributes": {"name": f"Multi Key Test {i}", "expiry_date": None},
                 }
             }
 
@@ -499,7 +499,7 @@ class TestAPIKeyIntegrationWorkflows:
         create_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Usage Tracking Key", "expires_at": None},
+                "attributes": {"name": "Usage Tracking Key", "expiry_date": None},
             }
         }
 
@@ -564,7 +564,7 @@ class TestAPIKeyIntegrationWorkflows:
         valid_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "JSON API Test Key", "expires_at": None},
+                "attributes": {"name": "JSON API Test Key", "expiry_date": None},
             }
         }
 
@@ -579,7 +579,7 @@ class TestAPIKeyIntegrationWorkflows:
         # Test invalid JSON:API format (missing data wrapper)
         invalid_data = {
             "type": "api-keys",
-            "attributes": {"name": "Invalid Format Key", "expires_at": None},
+            "attributes": {"name": "Invalid Format Key", "expiry_date": None},
         }
 
         invalid_response = authenticated_jwt_client.post(
@@ -601,7 +601,7 @@ class TestAPIKeyIntegrationWorkflows:
         create_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Real Data Test Key", "expires_at": None},
+                "attributes": {"name": "Real Data Test Key", "expiry_date": None},
             }
         }
 
@@ -710,7 +710,7 @@ class TestAPIKeyTestingGuideWorkflow:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "My Test API Key", "expires_at": None},
+                "attributes": {"name": "My Test API Key", "expiry_date": None},
             }
         }
 
@@ -852,7 +852,7 @@ class TestAPIKeyTestingGuideWorkflow:
                 "type": "api-keys",
                 "attributes": {
                     "name": "Short-lived Test Key",
-                    "expires_at": expire_time.isoformat(),
+                    "expiry_date": expire_time.isoformat(),
                 },
             }
         }
@@ -926,7 +926,7 @@ class TestAPIKeyTestingGuideWorkflow:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Revocation Test Key", "expires_at": None},
+                "attributes": {"name": "Revocation Test Key", "expiry_date": None},
             }
         }
 
@@ -1007,7 +1007,7 @@ class TestAPIKeyTestingGuideWorkflow:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Concurrent Test Key", "expires_at": None},
+                "attributes": {"name": "Concurrent Test Key", "expiry_date": None},
             }
         }
 

@@ -697,24 +697,24 @@ class UserFilter(FilterSet):
 
 
 class APIKeyFilter(FilterSet):
-    created_at = DateFilter(field_name="created_at", lookup_expr="date")
-    expires_at = DateFilter(field_name="expires_at", lookup_expr="date")
+    created = DateFilter(field_name="created", lookup_expr="date")
+    expiry_date = DateFilter(field_name="expiry_date", lookup_expr="date")
     is_active = BooleanFilter(method="filter_active")
 
     def filter_active(self, queryset, name, value):
         if value is True:
-            return queryset.filter(revoked_at__isnull=True)
+            return queryset.filter(revoked=False)
         elif value is False:
-            return queryset.filter(revoked_at__isnull=False)
+            return queryset.filter(revoked=True)
         return queryset
 
     class Meta:
         model = APIKey
         fields = {
             "name": ["exact", "icontains"],
-            "created_at": ["date", "gte", "lte"],
-            "expires_at": ["date", "gte", "lte", "isnull"],
-            "revoked_at": ["isnull"],
+            "created": ["date", "gte", "lte"],
+            "expiry_date": ["date", "gte", "lte", "isnull"],
+            "revoked": ["exact"],
         }
 
 

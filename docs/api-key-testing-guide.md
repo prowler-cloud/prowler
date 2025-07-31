@@ -127,7 +127,7 @@ API_KEY_PAYLOAD="{
     \"type\": \"api-keys\",
     \"attributes\": {
       \"name\": \"My Test API Key\",
-      \"expires_at\": null,
+      \"expiry_date\": null,
       \"role\": {
         \"type\": \"roles\",
         \"id\": \"$ADMIN_ROLE_ID\"
@@ -230,7 +230,7 @@ EXPIRED_KEY_RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/tenants/$TEN
       \"type\": \"api-keys\",
       \"attributes\": {
         \"name\": \"Short-lived Test Key\",
-        \"expires_at\": \"$EXPIRE_TIME\",
+        \"expiry_date\": \"$EXPIRE_TIME\",
         \"role\": {
           \"type\": \"roles\",
           \"id\": \"$ADMIN_ROLE_ID\"
@@ -292,7 +292,7 @@ curl -X GET http://localhost:8080/api/v1/providers \
 ### Common Issues
 
 1. **401 Unauthorized**
-   - Check API key format: `ApiKey pk_XXXXXXXX.YYYYYYYY...`
+   - Check API key format: `ApiKey pk_xxxxxxxx.YYYYYYYY...`
    - Verify key hasn't expired or been revoked
    - Ensure correct Authorization header format
 

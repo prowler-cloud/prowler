@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "psqlextra",
     "api",
     "rest_framework",
+    "rest_framework_api_key",
     "corsheaders",
     "drf_spectacular",
     "drf_spectacular_jsonapi",

@@ -44,8 +44,8 @@ class TestAPIKeyAuthentication:
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
-            expires_at=None,
-            revoked_at=None,
+            expiry_date=None,
+            revoked=False,
         )
 
         # Store the raw key for testing
@@ -117,7 +117,7 @@ class TestAPIKeyAuthentication:
         request = request_factory.get("/api/v1/test")
 
         # Set key to be expired
-        valid_api_key.expires_at = timezone.now() - timedelta(days=1)
+        valid_api_key.expiry_date = timezone.now() - timedelta(days=1)
         valid_api_key.save()
 
         with pytest.raises(exceptions.AuthenticationFailed) as exc_info:

@@ -3850,7 +3850,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": "any_email@prowler.com",
-                    "expires_at": self.TOMORROW_ISO,
+                    "expiry_date": self.TOMORROW_ISO,
                 },
                 "relationships": {
                     "roles": {
@@ -3870,9 +3870,9 @@ class TestInvitationViewSet:
             response.json()["data"]["attributes"]["email"]
             == data["data"]["attributes"]["email"]
         )
-        assert response.json()["data"]["attributes"]["expires_at"] == data["data"][
+        assert response.json()["data"]["attributes"]["expiry_date"] == data["data"][
             "attributes"
-        ]["expires_at"].replace("+00:00", "Z")
+        ]["expiry_date"].replace("+00:00", "Z")
         assert (
             response.json()["data"]["attributes"]["state"]
             == Invitation.State.PENDING.value
@@ -3900,7 +3900,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": email,
-                    "expires_at": self.TOMORROW_ISO,
+                    "expiry_date": self.TOMORROW_ISO,
                 },
             }
         }
@@ -3921,7 +3921,7 @@ class TestInvitationViewSet:
             == "/data/relationships/roles"
         )
 
-    def test_invitations_create_invalid_expires_at(
+    def test_invitations_create_invalid_expiry_date(
         self, authenticated_client, invitations_fixture
     ):
         data = {
@@ -3929,7 +3929,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": "thisisarandomemail@prowler.com",
-                    "expires_at": (
+                    "expiry_date": (
                         datetime.now(timezone.utc) + timedelta(hours=23)
                     ).isoformat(),
                 },
@@ -3944,7 +3944,7 @@ class TestInvitationViewSet:
         assert response.json()["errors"][0]["code"] == "invalid"
         assert (
             response.json()["errors"][0]["source"]["pointer"]
-            == "/data/attributes/expires_at"
+            == "/data/attributes/expiry_date"
         )
         assert response.json()["errors"][1]["code"] == "required"
         assert (
@@ -3958,15 +3958,15 @@ class TestInvitationViewSet:
         invitation, *_ = invitations_fixture
         role1, role2, *_ = roles_fixture
         new_email = "new_email@prowler.com"
-        new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-        new_expires_at_iso = new_expires_at.isoformat()
+        new_expiry_date = datetime.now(timezone.utc) + timedelta(days=7)
+        new_expiry_date_iso = new_expiry_date.isoformat()
         data = {
             "data": {
                 "id": str(invitation.id),
                 "type": "invitations",
                 "attributes": {
                     "email": new_email,
-                    "expires_at": new_expires_at_iso,
+                    "expiry_date": new_expiry_date_iso,
                 },
                 "relationships": {
                     "roles": {
@@ -3979,7 +3979,7 @@ class TestInvitationViewSet:
             }
         }
         assert invitation.email != new_email
-        assert invitation.expires_at != new_expires_at
+        assert invitation.expiry_date != new_expiry_date
 
         response = authenticated_client.patch(
             reverse(
@@ -3993,7 +3993,7 @@ class TestInvitationViewSet:
         invitation.refresh_from_db()
 
         assert invitation.email == new_email
-        assert invitation.expires_at == new_expires_at
+        assert invitation.expiry_date == new_expiry_date
         assert invitation.roles.count() == 2
 
     @pytest.mark.parametrize(
@@ -4017,7 +4017,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": email,
-                    "expires_at": self.TOMORROW_ISO,
+                    "expiry_date": self.TOMORROW_ISO,
                 },
             }
         }
@@ -4036,7 +4036,7 @@ class TestInvitationViewSet:
             == "/data/attributes/email"
         )
 
-    def test_invitations_partial_update_invalid_expires_at(
+    def test_invitations_partial_update_invalid_expiry_date(
         self, authenticated_client, invitations_fixture
     ):
         invitation, *_ = invitations_fixture
@@ -4045,7 +4045,7 @@ class TestInvitationViewSet:
                 "id": str(invitation.id),
                 "type": "invitations",
                 "attributes": {
-                    "expires_at": (
+                    "expiry_date": (
                         datetime.now(timezone.utc) + timedelta(hours=23)
                     ).isoformat(),
                 },
@@ -4063,7 +4063,7 @@ class TestInvitationViewSet:
         assert response.json()["errors"][0]["code"] == "invalid"
         assert (
             response.json()["errors"][0]["source"]["pointer"]
-            == "/data/attributes/expires_at"
+            == "/data/attributes/expiry_date"
         )
 
     def test_invitations_partial_update_invalid_content_type(
@@ -4183,7 +4183,7 @@ class TestInvitationViewSet:
             tenant=tenant,
             email=TEST_USER,
             inviter=user,
-            expires_at=self.TOMORROW,
+            expiry_date=self.TOMORROW,
         )
 
         data = {
@@ -4220,7 +4220,7 @@ class TestInvitationViewSet:
         self, authenticated_client, invitations_fixture
     ):
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expiry_date = datetime.now(timezone.utc) - timedelta(days=1)
         invitation.email = TEST_USER
         invitation.save()
 
@@ -4239,7 +4239,7 @@ class TestInvitationViewSet:
     ):
         new_email = "new_email@prowler.com"
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expiry_date = datetime.now(timezone.utc) - timedelta(days=1)
         invitation.email = new_email
         invitation.save()
 
@@ -4311,9 +4311,9 @@ class TestInvitationViewSet:
                 ("inserted_at.lte", "2024-01-01", 0),
                 ("updated_at.gte", "2024-01-01", 2),
                 ("updated_at.lte", "2024-01-01", 0),
-                ("expires_at.gte", TODAY, 1),
-                ("expires_at.lte", TODAY, 1),
-                ("expires_at", TODAY, 0),
+                ("expiry_date.gte", TODAY, 1),
+                ("expiry_date.lte", TODAY, 1),
+                ("expiry_date", TODAY, 0),
                 ("email", "testing@prowler.com", 2),
                 ("email.icontains", "testing", 2),
                 ("inviter", "", 2),
@@ -4354,7 +4354,7 @@ class TestInvitationViewSet:
         [
             "inserted_at",
             "updated_at",
-            "expires_at",
+            "expiry_date",
             "state",
             "inviter",
         ],
@@ -6012,7 +6012,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=valid_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expiry_date=datetime.now(timezone.utc) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -6038,7 +6038,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=expired_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+            expiry_date=datetime.now(timezone.utc) - timedelta(seconds=1),
         )
 
         url = reverse("token-saml")
@@ -6057,7 +6057,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expiry_date=datetime.now(timezone.utc) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -6907,22 +6907,19 @@ class TestAPIKeyCRUDEndpoints:
         return {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Test API Key", "expires_at": None},
+                "attributes": {"name": "Test API Key", "expiry_date": None},
             }
         }
 
     @pytest.fixture
     def api_key_data_with_expiry(self):
         """Sample data for creating API keys with expiration."""
-        from django.utils import timezone
-
-        future_time = timezone.now() + timedelta(days=30)
         return {
             "data": {
                 "type": "api-keys",
                 "attributes": {
                     "name": "Expiring API Key",
-                    "expires_at": future_time.isoformat(),
+                    "expiry_date": timezone.now() + timedelta(days=30),
                 },
             }
         }
@@ -6940,8 +6937,8 @@ class TestAPIKeyCRUDEndpoints:
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
-            expires_at=None,
-            revoked_at=None,
+            expiry_date=None,
+            revoked=False,
         )
 
         api_key._raw_key = raw_key
@@ -6950,21 +6947,18 @@ class TestAPIKeyCRUDEndpoints:
     @pytest.fixture
     def revoked_api_key(self, tenants_fixture):
         """Create a revoked API key for testing."""
-        from django.utils import timezone
-
         tenant = tenants_fixture[0]
         raw_key = APIKey.generate_key()
         prefix = APIKey.extract_prefix(raw_key)
         key_hash = APIKey.hash_key(raw_key)
-        past_time = timezone.now() - timedelta(minutes=30)
 
         api_key = APIKey.objects.create(
             name="Revoked API Key",
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
-            expires_at=None,
-            revoked_at=past_time,
+            expiry_date=None,
+            revoked=True,
         )
 
         api_key._raw_key = raw_key
@@ -7043,7 +7037,7 @@ class TestAPIKeyCRUDEndpoints:
             data["attributes"]["key"] is not None
         )  # Raw key should be present in create response
         assert data["attributes"]["key"].startswith("pk_")
-        assert data["attributes"]["expires_at"] is None
+        assert data["attributes"]["expiry_date"] is None
 
         # Verify key was created in database
         assert APIKey.objects.filter(name="Test API Key").exists()
@@ -7063,7 +7057,7 @@ class TestAPIKeyCRUDEndpoints:
         data = response.json()["data"]
 
         assert data["attributes"]["name"] == "Expiring API Key"
-        assert data["attributes"]["expires_at"] is not None
+        assert data["attributes"]["expiry_date"] is not None
 
     def test_create_api_key_invalid_name_too_short(
         self, authenticated_client, tenants_fixture
@@ -7075,7 +7069,7 @@ class TestAPIKeyCRUDEndpoints:
                 "type": "api-keys",
                 "attributes": {
                     "name": "AB",  # Too short (min 3 chars)
-                    "expires_at": None,
+                    "expiry_date": None,
                 },
             }
         }
@@ -7101,7 +7095,7 @@ class TestAPIKeyCRUDEndpoints:
                 "type": "api-keys",
                 "attributes": {
                     "name": "Invalid Expiry Key",
-                    "expires_at": past_time.isoformat(),
+                    "expiry_date": past_time.isoformat(),
                 },
             }
         }
@@ -7118,7 +7112,7 @@ class TestAPIKeyCRUDEndpoints:
         """Test API key creation without required name field."""
         tenant = tenants_fixture[0]
         invalid_data = {
-            "data": {"type": "api-keys", "attributes": {"expires_at": None}}
+            "data": {"type": "api-keys", "attributes": {"expiry_date": None}}
         }
 
         response = authenticated_client.post(
@@ -7134,7 +7128,7 @@ class TestAPIKeyCRUDEndpoints:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Test Key", "expires_at": None},
+                "attributes": {"name": "Test Key", "expiry_date": None},
             }
         }
 
@@ -7219,7 +7213,7 @@ class TestAPIKeyCRUDEndpoints:
         tenant = tenants_fixture[0]
 
         # Verify key is initially valid
-        assert existing_api_key.is_valid() is True
+        assert existing_api_key.is_active() is True
 
         response = authenticated_client.delete(
             reverse(
@@ -7232,8 +7226,8 @@ class TestAPIKeyCRUDEndpoints:
 
         # Verify key was revoked
         existing_api_key.refresh_from_db()
-        assert existing_api_key.is_valid() is False
-        assert existing_api_key.revoked_at is not None
+        assert existing_api_key.is_active() is False
+        assert existing_api_key.revoked is True
 
     def test_revoke_api_key_not_found(self, authenticated_client, tenants_fixture):
         """Test revoking non-existent API key."""
@@ -7430,7 +7424,7 @@ class TestAPIKeyCRUDEndpoints:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Test Collision Key", "expires_at": None},
+                "attributes": {"name": "Test Collision Key", "expiry_date": None},
             }
         }
 
@@ -7497,7 +7491,7 @@ class TestAPIKeyRBAC:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Test API Key", "expires_at": None},
+                "attributes": {"name": "Test API Key", "expiry_date": None},
                 "relationships": {
                     "role": {
                         "data": {
@@ -7531,7 +7525,7 @@ class TestAPIKeyRBAC:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Test API Key", "expires_at": None},
+                "attributes": {"name": "Test API Key", "expiry_date": None},
             }
         }
 
@@ -7623,7 +7617,7 @@ class TestAPIKeyRBAC:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Cross Tenant Key", "expires_at": None},
+                "attributes": {"name": "Cross Tenant Key", "expiry_date": None},
                 "relationships": {
                     "role": {
                         "data": {

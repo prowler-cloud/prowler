@@ -116,7 +116,7 @@ API Keys are long-lived credentials designed for programmatic access to the Prow
 
 ### Key Characteristics
 
-- **Format**: `pk_<8-char-prefix>.<32-char-random>` (e.g., `pk_a1b2c3d4.xyz789...`)
+- **Format**: `pk_<8-char-suffix>.<32-char-secret>` (e.g., `pk_a1b2c3d4.xyz789...`)
 - **Storage**: Hashed using Django's secure password hashing (never stored in plaintext)
 - **Lifetime**: Configurable expiration (1 day, 7 days, 30 days, 90 days, or never)
 - **Revocation**: Can be immediately revoked
@@ -174,7 +174,7 @@ curl -X POST https://api.prowler.com/api/v1/users/{user-id}/api-keys \
       "type": "api-keys",
       "attributes": {
         "name": "CI/CD Pipeline Key",
-        "expires_at": "2024-12-31T23:59:59Z"
+        "expiry_date": "2024-12-31T23:59:59Z"
       }
     }
   }'
@@ -216,7 +216,7 @@ curl -X POST https://api.prowler.com/api/v1/tenants/{tenant-id}/api-keys/create 
       "type": "api-keys",
       "attributes": {
         "name": "CI/CD Pipeline Key",
-        "expires_at": "2024-12-31T23:59:59Z"
+        "expiry_date": "2024-12-31T23:59:59Z"
       },
       "relationships": {
         "role": {

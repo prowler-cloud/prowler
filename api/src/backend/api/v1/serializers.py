@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
-from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from rest_framework.validators import UniqueTogetherValidator
@@ -353,15 +352,17 @@ class APIKeySerializer(BaseSerializerV1):
             "name",
             "prefix",
             "role",
-            "expires_at",
+            "expiry_date",
             "last_used_at",
-            "created_at",
+            "created",
+            "revoked",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "prefix": {"read_only": True},
             "last_used_at": {"read_only": True},
-            "created_at": {"read_only": True},
+            "created": {"read_only": True},
+            "revoked": {"read_only": True},
         }
 
 
@@ -370,7 +371,7 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
     Serializer for creating API Keys.
     """
 
-    expires_at = serializers.DateTimeField(
+    expiry_date = serializers.DateTimeField(
         required=False,
         allow_null=True,
         help_text="Expiration time. If not provided, the key never expires.",
@@ -387,11 +388,11 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
 
     class Meta:
         model = APIKey
-        fields = ["id", "name", "expires_at", "role", "key", "prefix", "created_at"]
+        fields = ["id", "name", "expiry_date", "role", "key", "prefix", "created"]
         extra_kwargs = {
             "id": {"read_only": True},
             "prefix": {"read_only": True},
-            "created_at": {"read_only": True},
+            "created": {"read_only": True},
         }
 
     def __init__(self, *args, **kwargs):
@@ -401,7 +402,7 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
         if tenant_id is not None:
             self.fields["role"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
-    def validate_expires_at(self, value):
+    def validate_expiry_date(self, value):
         if value and value <= timezone.now():
             raise serializers.ValidationError("Expiration date must be in the future.")
         return value
@@ -422,52 +423,23 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
         tenant_id = self.context["request"].tenant_id
         logger.debug(f"Creating API key for tenant: {tenant_id}")
 
-        # Retry logic for prefix collisions (very unlikely but possible)
-        max_retries = 5
-        for attempt in range(max_retries):
-            # Generate the actual API key
-            raw_key = APIKey.generate_key()
-            key_hash = APIKey.hash_key(raw_key)
+        try:
+            api_key, raw_key = APIKey.objects.create_key(
+                tenant_id=tenant_id, **validated_data
+            )
 
-            # Extract prefix from the raw key using the model method
-            prefix = APIKey.extract_prefix(raw_key)
+            logger.info(f"Successfully created API key with ID: {api_key.id}")
 
-            logger.debug(f"Attempt {attempt + 1}: Generated key with prefix: {prefix}")
+            # Store the raw key temporarily for the response
+            api_key._raw_key = raw_key
 
-            try:
-                # Create the API key instance using regular objects manager with RLS context
-                api_key = APIKey.objects.create(
-                    tenant_id=tenant_id,
-                    key_hash=key_hash,
-                    prefix=prefix,
-                    **validated_data,
-                )
+            return api_key
 
-                logger.info(f"Successfully created API key with ID: {api_key.id}")
-
-                # Store the raw key temporarily for the response
-                api_key._raw_key = raw_key
-
-                return api_key
-
-            except IntegrityError as e:
-                logger.warning(f"IntegrityError on attempt {attempt + 1}: {e}")
-                # Prefix collision occurred, try again
-                if attempt == max_retries - 1:
-                    raise serializers.ValidationError(
-                        "Unable to generate unique API key. Please try again."
-                    )
-                continue
-            except Exception as e:
-                logger.error(
-                    f"Unexpected error during API key creation: {type(e).__name__}: {e}"
-                )
-                raise
-
-        # This should never be reached due to the exception above
-        raise serializers.ValidationError(
-            "Failed to create API key after multiple attempts."
-        )
+        except Exception as e:
+            logger.error(
+                f"Unexpected error during API key creation: {type(e).__name__}: {e}"
+            )
+            raise serializers.ValidationError(f"Failed to create API key: {str(e)}")
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

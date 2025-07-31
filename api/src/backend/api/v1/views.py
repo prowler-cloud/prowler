@@ -73,7 +73,6 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
-    APIKeyFilter,
     ComplianceOverviewFilter,
     FindingFilter,
     IntegrationFilter,
@@ -1116,12 +1115,10 @@ class TenantViewSet(BaseTenantViewset):
 
         def _list_api_keys():
             api_keys = APIKey.objects.filter(
-                tenant_id=tenant.id, revoked_at__isnull=True
-            ).order_by("-created_at")
+                tenant_id=tenant.id, revoked=False
+            ).order_by("-created")
 
-            # Apply filtering using APIKeyFilter
-            filterset = APIKeyFilter(request.GET, queryset=api_keys, request=request)
-            filtered_queryset = filterset.qs
+            filtered_queryset = api_keys
 
             page = self.paginate_queryset(filtered_queryset)
             if page is not None:
@@ -1275,7 +1272,7 @@ class TenantViewSet(BaseTenantViewset):
         with rls_transaction(str(tenant.id)):
             try:
                 api_key = APIKey.objects.get(
-                    id=api_key_id, tenant_id=tenant.id, revoked_at__isnull=True
+                    id=api_key_id, tenant_id=tenant.id, revoked=False
                 )
             except APIKey.DoesNotExist:
                 raise NotFound("API key not found or has been revoked.")
@@ -1298,7 +1295,7 @@ class TenantViewSet(BaseTenantViewset):
         with rls_transaction(str(tenant.id)):
             try:
                 api_key = APIKey.objects.get(
-                    id=api_key_id, tenant_id=tenant.id, revoked_at__isnull=True
+                    id=api_key_id, tenant_id=tenant.id, revoked=False
                 )
             except APIKey.DoesNotExist:
                 raise NotFound("API key not found or has been revoked.")

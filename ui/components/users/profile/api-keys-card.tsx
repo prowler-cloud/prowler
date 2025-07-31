@@ -99,7 +99,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
 
     setIsCreating(true);
     try {
-      let expires_at = null;
+      let expiry_date = null;
       if (expirationOption !== 1) {
         // Not "Never"
         const date = new Date();
@@ -117,12 +117,12 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
             date.setDate(date.getDate() + 90);
             break;
         }
-        expires_at = date.toISOString();
+        expiry_date = date.toISOString();
       }
 
       const response = await createAPIKey({
         name: keyName,
-        expires_at,
+        expiry_date,
         role: selectedRole,
       });
       setNewKey(response.data.attributes.key);
@@ -336,7 +336,7 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                     </TableCell>
                     <TableCell>
                       {format(
-                        new Date(apiKey.attributes.created_at),
+                        new Date(apiKey.attributes.created),
                         "MMM d, yyyy",
                       )}
                     </TableCell>
@@ -349,9 +349,9 @@ export function APIKeysCard({ apiKeys }: APIKeysCardProps) {
                         : "Never"}
                     </TableCell>
                     <TableCell>
-                      {apiKey.attributes.expires_at
+                      {apiKey.attributes.expiry_date
                         ? format(
-                            new Date(apiKey.attributes.expires_at),
+                            new Date(apiKey.attributes.expiry_date),
                             "MMM d, yyyy",
                           )
                         : "Never"}

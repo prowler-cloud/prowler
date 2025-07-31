@@ -43,8 +43,8 @@ class TestAPIKeySecurityScenarios:
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
-            expires_at=None,
-            revoked_at=None,
+            expiry_date=None,
+            revoked=False,
         )
 
         api_key._raw_key = raw_key
@@ -56,15 +56,14 @@ class TestAPIKeySecurityScenarios:
         raw_key = APIKey.generate_key()
         prefix = APIKey.extract_prefix(raw_key)
         key_hash = APIKey.hash_key(raw_key)
-        past_time = timezone.now() - timedelta(hours=1)
 
         api_key = APIKey.objects.create(
             name="Expired Security Key",
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
-            expires_at=past_time,
-            revoked_at=None,
+            expiry_date=timezone.now() - timedelta(hours=1),
+            revoked=False,
         )
 
         api_key._raw_key = raw_key
@@ -76,15 +75,14 @@ class TestAPIKeySecurityScenarios:
         raw_key = APIKey.generate_key()
         prefix = APIKey.extract_prefix(raw_key)
         key_hash = APIKey.hash_key(raw_key)
-        past_time = timezone.now() - timedelta(minutes=30)
 
         api_key = APIKey.objects.create(
             name="Revoked Security Key",
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
-            expires_at=None,
-            revoked_at=past_time,
+            expiry_date=None,
+            revoked=True,
         )
 
         api_key._raw_key = raw_key
@@ -197,17 +195,17 @@ class TestAPIKeySecurityScenarios:
             tenant_id=tenant.id,
             key_hash=key_hash,
             prefix=prefix,
-            expires_at=future_time,
-            revoked_at=None,
+            expiry_date=future_time,
+            revoked=False,
         )
 
         # Should be valid initially
-        assert api_key.is_valid() is True
+        assert api_key.is_active() is True
 
         # Mock time to be past expiry
         with patch("django.utils.timezone.now") as mock_now:
             mock_now.return_value = future_time + timedelta(seconds=1)
-            assert api_key.is_valid() is False
+            assert api_key.is_active() is False
 
     def test_concurrent_key_revocation_safety(self, valid_api_key):
         """Test that concurrent revocation operations are safe."""
@@ -216,19 +214,19 @@ class TestAPIKeySecurityScenarios:
         api_key2 = APIKey.objects.get(id=valid_api_key.id)  # Second reference
 
         # Both should be valid initially
-        assert api_key1.is_valid() is True
-        assert api_key2.is_valid() is True
+        assert api_key1.is_active() is True
+        assert api_key2.is_active() is True
 
         # Revoke through first reference
         api_key1.revoke()
 
         # Refresh second reference and verify it sees the revocation
         api_key2.refresh_from_db()
-        assert api_key2.is_valid() is False
+        assert api_key2.is_active() is False
 
         # Revoking again should be safe (idempotent)
         api_key2.revoke()
-        assert api_key2.is_valid() is False
+        assert api_key2.is_active() is False
 
     def test_api_key_activity_logging_security_data(self, valid_api_key):
         """Test that security-relevant data is logged in structured application logs."""

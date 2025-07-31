@@ -448,11 +448,11 @@ class TestAPIKeyModel:
             tenant_id=tenant.id,
             key_hash="dummy_hash",
             prefix="testkey1",
-            expires_at=None,  # No expiration
-            revoked_at=None,  # Not revoked
+            expiry_date=None,  # No expiration
+            revoked=False,  # Not revoked
         )
 
-        assert api_key.is_valid() is True
+        assert api_key.is_active() is True
 
     def test_is_valid_expired_key(self, tenant):
         """Test that an expired key is invalid."""
@@ -462,11 +462,11 @@ class TestAPIKeyModel:
             tenant_id=tenant.id,
             key_hash="dummy_hash",
             prefix="testkey2",
-            expires_at=past_time,
-            revoked_at=None,
+            expiry_date=past_time,
+            revoked=False,
         )
 
-        assert api_key.is_valid() is False
+        assert api_key.is_active() is False
 
     def test_is_valid_future_expiry_key(self, tenant):
         """Test that a key with future expiry is valid."""
@@ -476,25 +476,24 @@ class TestAPIKeyModel:
             tenant_id=tenant.id,
             key_hash="dummy_hash",
             prefix="testkey3",
-            expires_at=future_time,
-            revoked_at=None,
+            expiry_date=future_time,
+            revoked=False,
         )
 
-        assert api_key.is_valid() is True
+        assert api_key.is_active() is True
 
     def test_is_valid_revoked_key(self, tenant):
         """Test that a revoked key is invalid."""
-        past_time = timezone.now() - timedelta(minutes=30)
         api_key = APIKey.objects.create(
             name="Revoked Key",
             tenant_id=tenant.id,
             key_hash="dummy_hash",
             prefix="testkey4",
-            expires_at=None,
-            revoked_at=past_time,
+            expiry_date=None,
+            revoked=True,
         )
 
-        assert api_key.is_valid() is False
+        assert api_key.is_active() is False
 
     def test_is_valid_revoked_and_expired_key(self, tenant):
         """Test that a key that is both revoked and expired is invalid."""
@@ -504,11 +503,11 @@ class TestAPIKeyModel:
             tenant_id=tenant.id,
             key_hash="dummy_hash",
             prefix="testkey5",
-            expires_at=past_time,
-            revoked_at=past_time,
+            expiry_date=past_time,
+            revoked=True,
         )
 
-        assert api_key.is_valid() is False
+        assert api_key.is_active() is False
 
     def test_revoke_key(self, tenant):
         """Test revoking an API key."""
@@ -517,21 +516,20 @@ class TestAPIKeyModel:
             tenant_id=tenant.id,
             key_hash="dummy_hash",
             prefix="testkey6",
-            expires_at=None,
-            revoked_at=None,
+            expiry_date=None,
+            revoked=False,
         )
 
-        # Initially valid
-        assert api_key.is_valid() is True
-        assert api_key.revoked_at is None
+        # Initially active
+        assert api_key.is_active() is True
+        assert api_key.revoked is False
 
         # Revoke the key
         api_key.revoke()
 
-        # Should now be invalid and have revoked_at timestamp
-        assert api_key.is_valid() is False
-        assert api_key.revoked_at is not None
-        assert api_key.revoked_at <= timezone.now()
+        # Should now be inactive and revoked
+        assert api_key.is_active() is False
+        assert api_key.revoked is True
 
     def test_revoke_key_idempotent(self, tenant):
         """Test that revoking an already revoked key is safe."""
@@ -540,20 +538,21 @@ class TestAPIKeyModel:
             tenant_id=tenant.id,
             key_hash="dummy_hash",
             prefix="testkey7",
-            expires_at=None,
-            revoked_at=None,
+            expiry_date=None,
+            revoked=False,
         )
 
         # Revoke twice
         api_key.revoke()
-        first_revoked_at = api_key.revoked_at
+        first_revoked_status = api_key.revoked
 
         api_key.revoke()
-        second_revoked_at = api_key.revoked_at
+        second_revoked_status = api_key.revoked
 
-        # Should still be invalid and revoked_at should be updated
-        assert api_key.is_valid() is False
-        assert second_revoked_at >= first_revoked_at
+        # Should still be inactive and revoked
+        assert api_key.is_active() is False
+        assert first_revoked_status is True
+        assert second_revoked_status is True
 
     def test_save_requires_prefix(self, tenant):
         """Test that saving an API key requires a prefix."""
@@ -622,7 +621,7 @@ class TestAPIKeyModel:
 
         # Verify the key works
         assert APIKey.verify_key(raw_key, api_key.key_hash) is True
-        assert api_key.is_valid() is True
+        assert api_key.is_active() is True
 
         # Verify prefix extraction matches
         assert APIKey.extract_prefix(raw_key) == api_key.prefix

@@ -57,13 +57,13 @@ for candidate in candidate_keys:
             print(f"✓ Found matching API key: {candidate.id}")
 
             # Test 4: Check if key is valid (not expired/revoked)
-            if candidate.is_valid():
+            if candidate.is_active():
                 print("✓ API key is valid (not expired/revoked)")
             else:
-                if candidate.revoked_at:
-                    print(f"✗ API key is revoked: {candidate.revoked_at}")
+                if candidate.revoked:
+                    print("✗ API key is revoked")
                 else:
-                    print(f"✗ API key is expired: {candidate.expires_at}")
+                    print(f"✗ API key is expired: {candidate.expiry_date}")
         else:
             print(f"✗ Key verification failed for {candidate.id}")
 
