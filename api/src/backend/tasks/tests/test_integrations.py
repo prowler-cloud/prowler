@@ -208,6 +208,30 @@ class TestS3IntegrationUploads:
             "S3 connection failed for integration i-1: failed"
         )
 
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration.objects.filter")
+    def test_upload_s3_integration_filters_enabled_only(
+        self, mock_integration_filter, mock_rls
+    ):
+        """Test that upload_s3_integration only processes enabled integrations."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        output_directory = "/tmp/prowler_output/scan123"
+
+        # Mock that no enabled integrations are found
+        mock_integration_filter.return_value = []
+        mock_rls.return_value.__enter__.return_value = None
+
+        result = upload_s3_integration(tenant_id, provider_id, output_directory)
+
+        assert result is False
+        # Verify the filter includes the correct parameters including enabled=True
+        mock_integration_filter.assert_called_once_with(
+            integrationproviderrelationship__provider_id=provider_id,
+            integration_type=Integration.IntegrationChoices.AMAZON_S3,
+            enabled=True,
+        )
+
     def test_s3_integration_validates_and_normalizes_output_directory(self):
         """Test that S3 integration validation normalizes output_directory paths."""
         from api.models import Integration

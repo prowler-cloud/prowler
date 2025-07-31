@@ -95,7 +95,7 @@ def check_integration_connection(integration_id: str):
     Args:
         integration_id (str): The primary key of the Integration instance to check.
     """
-    integration = Integration.objects.get(pk=integration_id)
+    integration = Integration.objects.get(pk=integration_id, enabled=True)
     try:
         result = prowler_integration_connection_test(integration)
     except Exception as e:

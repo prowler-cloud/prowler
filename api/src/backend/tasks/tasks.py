@@ -487,7 +487,8 @@ def check_integrations_task(tenant_id: str, provider_id: str):
     try:
         with rls_transaction(tenant_id):
             integrations = Integration.objects.filter(
-                integrationproviderrelationship__provider_id=provider_id
+                integrationproviderrelationship__provider_id=provider_id,
+                enabled=True,
             )
 
             if not integrations.exists():
