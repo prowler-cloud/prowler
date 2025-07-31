@@ -34,6 +34,7 @@ from rest_framework.response import Response
 
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.models import (
     APIKey,
     APIKeyUser,
@@ -7429,6 +7430,7 @@ class TestAPIKeyCRUDEndpoints:
         assert mock_generate_key.call_count == 2
 
 
+@pytest.mark.django_db
 class TestAPIKeyRBAC:
     """Test API Key RBAC functionality."""
 
@@ -7471,24 +7473,21 @@ class TestAPIKeyRBAC:
         tenant = tenants_fixture[0]
 
         # Create a role first
-        role = Role.objects.create(
-            name="Test Role",
-            tenant_id=tenant.id,
-            manage_providers=True,
-            manage_scans=True,
-        )
+        with rls_transaction(str(tenant.id)):
+            role = Role.objects.create(
+                name="Test Role",
+                tenant_id=tenant.id,
+                manage_providers=True,
+                manage_scans=True,
+            )
 
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Test API Key", "expiry_date": None},
-                "relationships": {
-                    "role": {
-                        "data": {
-                            "type": "roles",
-                            "id": str(role.id),
-                        }
-                    }
+                "attributes": {
+                    "name": "Test API Key",
+                    "expiry_date": None,
+                    "role": {"type": "roles", "id": str(role.id)},
                 },
             }
         }
@@ -7500,11 +7499,12 @@ class TestAPIKeyRBAC:
         )
 
         assert response.status_code == status.HTTP_201_CREATED
-        data = response.json()["data"]
 
         # Verify the API key was created with the role
-        created_api_key = APIKey.objects.get(id=data["id"])
-        assert created_api_key.role.id == role.id
+        with rls_transaction(str(tenant.id)):
+            created_api_key = APIKey.objects.filter(name="Test API Key").first()
+            assert created_api_key is not None
+            assert created_api_key.role.id == role.id
 
     def test_api_key_creation_without_role_fails(
         self, authenticated_client, tenants_fixture
@@ -7529,7 +7529,7 @@ class TestAPIKeyRBAC:
 
     @patch("api.authentication.APIKeyAuthentication.authenticate_credentials")
     def test_api_key_respects_role_permissions(
-        self, mock_auth, api_client, api_key_with_role
+        self, mock_auth, authenticated_client, api_key_with_role
     ):
         """Test that API key authentication respects role permissions."""
         # Mock the authentication to return our API key user
@@ -7545,7 +7545,7 @@ class TestAPIKeyRBAC:
         )
 
         # Test accessing an endpoint that requires MANAGE_USERS permission (which the role doesn't have)
-        response = api_client.get(
+        response = authenticated_client.get(
             reverse("user-list"),
             HTTP_AUTHORIZATION=f"ApiKey {api_key_with_role._raw_key}",
         )
@@ -7555,7 +7555,7 @@ class TestAPIKeyRBAC:
 
     @patch("api.authentication.APIKeyAuthentication.authenticate_credentials")
     def test_api_key_allows_permitted_actions(
-        self, mock_auth, api_client, api_key_with_role
+        self, mock_auth, authenticated_client, api_key_with_role
     ):
         """Test that API key allows actions permitted by its role."""
         # Mock the authentication to return our API key user
@@ -7571,7 +7571,7 @@ class TestAPIKeyRBAC:
         )
 
         # Test accessing an endpoint that requires MANAGE_PROVIDERS permission (which the role has)
-        response = api_client.get(
+        response = authenticated_client.get(
             reverse("provider-list"),
             HTTP_AUTHORIZATION=f"ApiKey {api_key_with_role._raw_key}",
         )
@@ -7603,14 +7603,10 @@ class TestAPIKeyRBAC:
         api_key_data = {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Cross Tenant Key", "expiry_date": None},
-                "relationships": {
-                    "role": {
-                        "data": {
-                            "type": "roles",
-                            "id": str(role_tenant2.id),
-                        }
-                    }
+                "attributes": {
+                    "name": "Cross Tenant Key",
+                    "expiry_date": None,
+                    "role": {"type": "roles", "id": str(role_tenant2.id)},
                 },
             }
         }
