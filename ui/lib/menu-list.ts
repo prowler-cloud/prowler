@@ -174,7 +174,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       menus: [
         {
           href: "",
-          label: "Organizations",
+          label: "Organization",
           icon: Users,
           submenus: [
             { href: "/users", label: "Users", icon: User },
