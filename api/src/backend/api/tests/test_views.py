@@ -6,6 +6,8 @@ import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from django.utils import timezone as django_timezone
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlparse
@@ -6904,24 +6906,31 @@ class TestAPIKeyCRUDEndpoints:
     """Test API Key CRUD endpoints in TenantViewSet."""
 
     @pytest.fixture
-    def api_key_data(self):
+    def api_key_data(self, roles_fixture):
         """Sample data for creating API keys."""
+        role = roles_fixture[0]
         return {
             "data": {
                 "type": "api-keys",
-                "attributes": {"name": "Test API Key", "expiry_date": None},
+                "attributes": {
+                    "name": "Test API Key",
+                    "expiry_date": None,
+                    "role": {"type": "roles", "id": str(role.id)},
+                },
             }
         }
 
     @pytest.fixture
-    def api_key_data_with_expiry(self):
+    def api_key_data_with_expiry(self, roles_fixture):
         """Sample data for creating API keys with expiration."""
+        role = roles_fixture[0]
         return {
             "data": {
                 "type": "api-keys",
                 "attributes": {
                     "name": "Expiring API Key",
-                    "expiry_date": timezone.now() + timedelta(days=30),
+                    "expiry_date": django_timezone.now() + timedelta(days=30),
+                    "role": {"type": "roles", "id": str(role.id)},
                 },
             }
         }
@@ -7083,7 +7092,7 @@ class TestAPIKeyCRUDEndpoints:
     ):
         """Test API key creation with expiration in the past."""
         tenant = tenants_fixture[0]
-        past_time = timezone.now() - timedelta(hours=1)
+        past_time = django_timezone.now() - timedelta(hours=1)
         invalid_data = {
             "data": {
                 "type": "api-keys",
@@ -7142,7 +7151,7 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.get(
             reverse(
                 "tenant-api-keys-retrieve",
-                kwargs={"pk": tenant.id, "api_key_id": existing_api_key.id},
+                kwargs={"pk": tenant.id, "api_key_id": existing_api_key.uuid},
             )
         )
 
@@ -7176,7 +7185,7 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.get(
             reverse(
                 "tenant-api-keys-retrieve",
-                kwargs={"pk": tenant.id, "api_key_id": revoked_api_key.id},
+                kwargs={"pk": tenant.id, "api_key_id": revoked_api_key.uuid},
             )
         )
 
@@ -7192,7 +7201,7 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.get(
             reverse(
                 "tenant-api-keys-retrieve",
-                kwargs={"pk": wrong_tenant.id, "api_key_id": existing_api_key.id},
+                kwargs={"pk": wrong_tenant.id, "api_key_id": existing_api_key.uuid},
             )
         )
 
@@ -7210,11 +7219,11 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.delete(
             reverse(
                 "tenant-api-keys-destroy",
-                kwargs={"pk": tenant.id, "api_key_id": existing_api_key.id},
+                kwargs={"pk": tenant.id, "api_key_id": existing_api_key.uuid},
             )
         )
 
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_200_OK
 
         # Verify key was revoked
         existing_api_key.refresh_from_db()
@@ -7244,7 +7253,7 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.delete(
             reverse(
                 "tenant-api-keys-destroy",
-                kwargs={"pk": tenant.id, "api_key_id": revoked_api_key.id},
+                kwargs={"pk": tenant.id, "api_key_id": revoked_api_key.uuid},
             )
         )
 
@@ -7260,7 +7269,7 @@ class TestAPIKeyCRUDEndpoints:
         response = authenticated_client.delete(
             reverse(
                 "tenant-api-keys-destroy",
-                kwargs={"pk": wrong_tenant.id, "api_key_id": existing_api_key.id},
+                kwargs={"pk": wrong_tenant.id, "api_key_id": existing_api_key.uuid},
             )
         )
 
@@ -7316,7 +7325,7 @@ class TestAPIKeyCRUDEndpoints:
             name="Date Test Key",
         )
 
-        today = timezone.now().date().isoformat()
+        today = django_timezone.now().date().isoformat()
 
         response = authenticated_client.get(
             reverse("tenant-api-keys", kwargs={"pk": tenant.id}),

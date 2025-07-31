@@ -1231,6 +1231,7 @@ class TenantViewSet(BaseTenantViewset):
             # Use RLS transaction to properly set tenant context for INSERT operation
             with rls_transaction(str(tenant.id)):
                 context = self.get_serializer_context()
+                context["tenant_id"] = tenant.id
                 logger.debug("Got serializer context")
 
                 serializer = APIKeyCreateSerializer(data=request_data, context=context)
