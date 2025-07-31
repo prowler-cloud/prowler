@@ -937,3 +937,43 @@ class TestGCPProvider:
                 )
 
             assert e.type == GCPInvalidProviderIdError
+
+    def test_discovery_build_with_retry(self):
+        """Test that discovery.build includes num_retries parameter"""
+        from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
+        from prowler.providers.gcp.lib.service.service import GCPService
+
+        with patch("googleapiclient.discovery.build") as mock_build:
+            mock_build.return_value = MagicMock()
+
+            # Create a mock provider with required attributes
+            mock_provider = MagicMock()
+            mock_provider.project_ids = ["test-project"]
+            mock_provider.session = MagicMock()
+            mock_provider.projects = {}
+            mock_provider.default_project_id = "test-project"
+            mock_provider.audit_config = {}
+            mock_provider.fixer_config = {}
+
+            # This should call discovery.build with num_retries=DEFAULT_RETRY_ATTEMPTS
+            GCPService("testservice", mock_provider)
+
+            # Verify that discovery.build was called with num_retries=DEFAULT_RETRY_ATTEMPTS
+            mock_build.assert_called()
+            found_retry_param = False
+            for call in mock_build.call_args_list:
+                if (
+                    "num_retries" in call[1]
+                    and call[1]["num_retries"] == DEFAULT_RETRY_ATTEMPTS
+                ):
+                    found_retry_param = True
+                    break
+            assert (
+                found_retry_param
+            ), "discovery.build was not called with num_retries parameter"
+
+    def test_config_import(self):
+        """Test that config values can be imported correctly"""
+        from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
+
+        assert DEFAULT_RETRY_ATTEMPTS == 3

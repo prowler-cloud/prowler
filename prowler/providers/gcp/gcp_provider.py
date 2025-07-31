@@ -19,6 +19,7 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.exceptions.exceptions import (
     GCPInvalidProviderIdError,
     GCPLoadADCFromDictError,
@@ -676,12 +677,15 @@ class GcpProvider(Provider):
                 try:
                     # Initialize Cloud Resource Manager API for simple project listing
                     service = discovery.build(
-                        "cloudresourcemanager", "v1", credentials=credentials
+                        "cloudresourcemanager",
+                        "v1",
+                        credentials=credentials,
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
                     )
                     request = service.projects().list()
 
                     while request is not None:
-                        response = request.execute()
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                         for project in response.get("projects", []):
                             # Extract labels and other project details
@@ -776,7 +780,10 @@ class GcpProvider(Provider):
         """
         try:
             service = discovery.build(
-                "cloudresourcemanager", "v1", credentials=self._session
+                "cloudresourcemanager",
+                "v1",
+                credentials=self._session,
+                num_retries=DEFAULT_RETRY_ATTEMPTS,
             )
             # TODO: this call requires more permissions to get that data
             # resourcemanager.organizations.get --> add to the docs
@@ -787,7 +794,7 @@ class GcpProvider(Provider):
                     )
 
                     while request is not None:
-                        response = request.execute()
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                         project.organization.display_name = response.get("displayName")
                         request = service.projects().list_next(
                             previous_request=request, previous_response=response
