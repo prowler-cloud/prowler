@@ -2,21 +2,22 @@ import { Card, CardBody, CardHeader, Skeleton } from "@nextui-org/react";
 
 export const SkeletonFindingsByStatusChart = () => {
   return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-1/4 rounded-lg">
-          <div className="h-6 bg-default-200"></div>
+    <div className="flex h-full flex-col">
+      <div className="mb-4">
+        <Skeleton className="h-4 w-1/4 rounded-lg">
+          <div className="h-4 bg-default-200"></div>
         </Skeleton>
-      </CardHeader>
-      <CardBody>
-        <div className="flex items-center gap-6">
+      </div>
+      <Card className="flex-1 h-full">
+      <CardBody className="flex h-full flex-col items-center justify-between p-6">
+        <div className="flex h-full flex-col items-center justify-between">
           {/* Circle Chart Skeleton */}
-          <Skeleton className="aspect-square h-[150px] w-[150px] rounded-full">
-            <div className="h-[150px] w-[150px] bg-default-200"></div>
+          <Skeleton className="aspect-square h-[200px] w-[200px] rounded-full flex-shrink-0">
+            <div className="h-[200px] w-[200px] bg-default-200"></div>
           </Skeleton>
 
           {/* Text Details Skeleton */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-1 flex-col justify-center gap-3 pt-4">
             {/* Pass Findings */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
@@ -50,5 +51,6 @@ export const SkeletonFindingsByStatusChart = () => {
         </div>
       </CardBody>
     </Card>
+    </div>
   );
 };
