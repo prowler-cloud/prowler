@@ -188,14 +188,13 @@ def validate_arguments(
 
     if role_arn:
         if not session_duration or not external_id or not role_session_name:
+            print(session_duration, external_id, role_session_name)
             raise ValueError(
                 "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
             )
     else:
-        if session_duration or external_id or role_session_name:
-            raise ValueError(
-                "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
-            )
+        if external_id:
+            raise ValueError("If an external ID is provided, a role ARN is required.")
         if not profile and not aws_access_key_id and not aws_secret_access_key:
             raise ValueError(
                 "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
