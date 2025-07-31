@@ -4,14 +4,15 @@ export const SkeletonProvidersOverview = () => {
   const rows = 4;
 
   return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-1/3 rounded-lg">
-          <div className="h-6 bg-default-200"></div>
+    <div className="flex h-full flex-col">
+      <div className="mb-4">
+        <Skeleton className="h-4 w-1/3 rounded-lg">
+          <div className="h-4 bg-default-200"></div>
         </Skeleton>
-      </CardHeader>
-      <CardBody>
-        <div className="grid grid-cols-1 gap-4">
+      </div>
+      <Card className="flex-1 h-full">
+      <CardBody className="flex h-full flex-col justify-between p-6">
+        <div className="flex-1 grid grid-cols-1 gap-4">
           {/* Header Skeleton */}
           <div className="grid grid-cols-4 border-b pb-2 text-sm font-semibold">
             <Skeleton className="h-5 w-full rounded-lg">
@@ -60,5 +61,6 @@ export const SkeletonProvidersOverview = () => {
         </div>
       </CardBody>
     </Card>
+    </div>
   );
 };

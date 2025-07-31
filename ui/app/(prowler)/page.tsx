@@ -36,19 +36,19 @@ export default function Home({
       <FilterControls providers mutedFindings showClearButton={false} />
 
       <div className="grid grid-cols-12 gap-12 lg:gap-6">
-        <div className="col-span-12 lg:col-span-4">
+        <div className="col-span-12 lg:col-span-4 min-h-[400px]">
           <Suspense fallback={<SkeletonProvidersOverview />}>
             <SSRProvidersOverview />
           </Suspense>
         </div>
 
-        <div className="col-span-12 lg:col-span-4">
+        <div className="col-span-12 lg:col-span-4 min-h-[400px]">
           <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
             <SSRFindingsBySeverity searchParams={searchParams} />
           </Suspense>
         </div>
 
-        <div className="col-span-12 lg:col-span-4">
+        <div className="col-span-12 lg:col-span-4 min-h-[400px]">
           <Suspense fallback={<SkeletonFindingsByStatusChart />}>
             <SSRFindingsByStatus searchParams={searchParams} />
           </Suspense>
@@ -72,10 +72,12 @@ const SSRProvidersOverview = async () => {
   const providersOverview = await getProvidersOverview({});
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       <h3 className="mb-4 text-sm font-bold uppercase">Providers Overview</h3>
-      <ProvidersOverview providersOverview={providersOverview} />
-    </>
+      <div className="flex-1">
+        <ProvidersOverview providersOverview={providersOverview} />
+      </div>
+    </div>
   );
 };
 
@@ -95,10 +97,12 @@ const SSRFindingsByStatus = async ({
   const findingsByStatus = await getFindingsByStatus({ filters });
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       <h3 className="mb-4 text-sm font-bold uppercase">Findings by Status</h3>
-      <FindingsByStatusChart findingsByStatus={findingsByStatus} />
-    </>
+      <div className="flex-1">
+        <FindingsByStatusChart findingsByStatus={findingsByStatus} />
+      </div>
+    </div>
   );
 };
 
@@ -118,10 +122,12 @@ const SSRFindingsBySeverity = async ({
   const findingsBySeverity = await getFindingsBySeverity({ filters });
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       <h3 className="mb-4 text-sm font-bold uppercase">Findings by Severity</h3>
-      <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
-    </>
+      <div className="flex-1">
+        <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
+      </div>
+    </div>
   );
 };
 

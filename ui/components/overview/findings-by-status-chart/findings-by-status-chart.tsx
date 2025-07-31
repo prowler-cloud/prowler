@@ -120,11 +120,11 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
 
   return (
     <Card className="h-full dark:bg-prowler-blue-400">
-      <CardBody>
+      <CardBody className="flex h-full flex-col items-center justify-between p-6">
         <div className="flex h-full flex-col items-center justify-between">
           <ChartContainer
             config={chartConfig}
-            className="aspect-square w-[250px] min-w-[250px]"
+            className="aspect-square w-[200px] min-w-[200px] flex-shrink-0"
           >
             <PieChart>
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
@@ -170,7 +170,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
             </PieChart>
           </ChartContainer>
 
-          <div className="flex min-h-[156px] flex-col justify-start gap-4">
+          <div className="flex flex-1 flex-col justify-center gap-3 pt-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
                 <Link

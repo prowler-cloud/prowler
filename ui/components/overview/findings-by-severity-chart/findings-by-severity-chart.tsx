@@ -71,59 +71,57 @@ export const FindingsBySeverityChart = ({
 
   return (
     <Card className="h-full dark:bg-prowler-blue-400">
-      <CardBody>
-        <div className="my-auto">
-          <ChartContainer config={chartConfig}>
-            <BarChart
-              accessibilityLayer
-              data={chartData}
+      <CardBody className="flex h-full items-center justify-center p-6">
+        <ChartContainer config={chartConfig} className="h-full w-full">
+          <BarChart
+            accessibilityLayer
+            data={chartData}
+            layout="vertical"
+            barGap={2}
+            height={250}
+            margin={{ left: 50 }}
+            width={500}
+          >
+            <YAxis
+              dataKey="severity"
+              type="category"
+              tickLine={false}
+              tickMargin={20}
+              axisLine={false}
+              tickFormatter={(value) =>
+                chartConfig[value as keyof typeof chartConfig]?.label
+              }
+            />
+            <XAxis dataKey="findings" type="number" hide>
+              <LabelList position="insideTop" offset={1} fontSize={12} />
+            </XAxis>
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent indicator="line" />}
+            />
+            <Bar
+              dataKey="findings"
               layout="vertical"
-              barGap={2}
-              height={200}
-              margin={{ left: 50 }}
-              width={500}
-            >
-              <YAxis
-                dataKey="severity"
-                type="category"
-                tickLine={false}
-                tickMargin={20}
-                axisLine={false}
-                tickFormatter={(value) =>
-                  chartConfig[value as keyof typeof chartConfig]?.label
+              radius={12}
+              barSize={20}
+              onClick={(data) => {
+                const severity = data.severity as keyof typeof chartConfig;
+                const link = chartConfig[severity]?.link;
+                if (link) {
+                  window.location.href = link;
                 }
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <LabelList
+                position="insideRight"
+                offset={5}
+                className="fill-foreground font-bold"
+                fontSize={11}
               />
-              <XAxis dataKey="findings" type="number" hide>
-                <LabelList position="insideTop" offset={1} fontSize={12} />
-              </XAxis>
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="line" />}
-              />
-              <Bar
-                dataKey="findings"
-                layout="vertical"
-                radius={12}
-                barSize={20}
-                onClick={(data) => {
-                  const severity = data.severity as keyof typeof chartConfig;
-                  const link = chartConfig[severity]?.link;
-                  if (link) {
-                    window.location.href = link;
-                  }
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <LabelList
-                  position="insideRight"
-                  offset={5}
-                  className="fill-foreground font-bold"
-                  fontSize={11}
-                />
-              </Bar>
-            </BarChart>
-          </ChartContainer>
-        </div>
+            </Bar>
+          </BarChart>
+        </ChartContainer>
       </CardBody>
     </Card>
   );
