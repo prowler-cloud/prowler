@@ -268,7 +268,7 @@ class AwsProvider(Provider):
 
             # Store a new current session using the assumed IAM Role
             self._session.current_session = self.setup_assumed_session(
-                assumed_role_configuration.credentials
+                self._identity, assumed_role_configuration.credentials
             )
             logger.info("Audit session is the new session created assuming an IAM Role")
 
@@ -317,7 +317,7 @@ class AwsProvider(Provider):
             )
             # Get a new session using the AWS Organizations IAM Role assumed
             aws_organizations_session = self.setup_assumed_session(
-                organizations_assumed_role_configuration.credentials
+                self._identity, organizations_assumed_role_configuration.credentials
             )
             logger.info(
                 "Generated new session for to get the AWS Organizations metadata"
@@ -576,8 +576,9 @@ class AwsProvider(Provider):
                 file=pathlib.Path(__file__).name,
             )
 
+    @staticmethod
     def setup_assumed_session(
-        self,
+        identity: AWSIdentityInfo,
         assumed_role_credentials: AWSCredentials,
     ) -> Session:
         """
@@ -588,6 +589,7 @@ class AwsProvider(Provider):
         refreshing of the assumed role credentials.
 
         Args:
+            identity (AWSIdentityInfo): The identity information.
             assumed_role_credentials (AWSCredentials): The assumed role credentials.
 
         Returns:
@@ -611,16 +613,16 @@ class AwsProvider(Provider):
                 secret_key=assumed_role_credentials.aws_secret_access_key,
                 token=assumed_role_credentials.aws_session_token,
                 expiry_time=assumed_role_credentials.expiration,
-                refresh_using=self.refresh_credentials,
+                refresh_using=AwsProvider.refresh_credentials,
                 method="sts-assume-role",
             )
 
             # Here we need the botocore session since it needs to use refreshable credentials
             assumed_session = BotocoreSession()
             assumed_session._credentials = assumed_refreshable_credentials
-            assumed_session.set_config_variable("region", self._identity.profile_region)
+            assumed_session.set_config_variable("region", identity.profile_region)
             return Session(
-                profile_name=self._identity.profile,
+                profile_name=identity.profile,
                 botocore_session=assumed_session,
             )
         except Exception as error:
