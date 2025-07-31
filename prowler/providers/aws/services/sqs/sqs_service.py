@@ -51,7 +51,7 @@ class SQS(AWSService):
     def _get_queue_attributes(self):
         try:
             logger.info("SQS - describing queue attributes...")
-            valid_queues = []
+            non_existing_queues = []
             for queue in self.queues:
                 try:
                     regional_client = self.regional_clients[queue.region]
@@ -73,7 +73,6 @@ class SQS(AWSService):
                                 == "true"
                             ):
                                 queue.kms_key_id = "SqsManagedSseEnabled"
-                    valid_queues.append(queue)
                 except ClientError as error:
                     if (
                         error.response["Error"]["Code"]
@@ -82,17 +81,16 @@ class SQS(AWSService):
                         logger.warning(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
+                        non_existing_queues.append(queue)
                     else:
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                        valid_queues.append(queue)
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    valid_queues.append(queue)
-            self.queues = valid_queues
+            self.queues = [q for q in self.queues if q not in non_existing_queues]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

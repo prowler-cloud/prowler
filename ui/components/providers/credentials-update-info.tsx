@@ -2,6 +2,7 @@
 
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
 import { ProviderType } from "@/types/providers";
 
 interface UpdateCredentialsInfoProps {
@@ -19,6 +20,9 @@ export const CredentialsUpdateInfo = ({
     }
     if (providerType === "gcp") {
       return <SelectViaGCP initialVia={initialVia} />;
+    }
+    if (providerType === "github") {
+      return <SelectViaGitHub initialVia={initialVia} />;
     }
     return null;
   };

@@ -25,6 +25,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your Kubernetes cluster?",
         link: "https://goto.prowler.com/provider-k8s",
       };
+    case "github":
+      return {
+        text: "Need help connecting your GitHub account?",
+        link: "https://goto.prowler.com/provider-github",
+      };
     default:
       return {
         text: "How to setup a provider?",

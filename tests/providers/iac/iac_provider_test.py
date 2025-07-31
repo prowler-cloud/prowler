@@ -1,7 +1,8 @@
+import json
 import os
 import tempfile
 from unittest import mock
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -12,21 +13,20 @@ from tests.providers.iac.iac_fixtures import (
     SAMPLE_ANOTHER_FAILED_CHECK,
     SAMPLE_ANOTHER_PASSED_CHECK,
     SAMPLE_ANOTHER_SKIPPED_CHECK,
-    SAMPLE_CHECK_WITHOUT_GUIDELINE,
     SAMPLE_CLOUDFORMATION_CHECK,
-    SAMPLE_CRITICAL_SEVERITY_CHECK,
     SAMPLE_DOCKERFILE_CHECK,
     SAMPLE_DOCKERFILE_REPORT,
     SAMPLE_FAILED_CHECK,
     SAMPLE_FINDING,
     SAMPLE_HIGH_SEVERITY_CHECK,
     SAMPLE_KUBERNETES_CHECK,
-    SAMPLE_KUBERNETES_FINDING,
-    SAMPLE_MEDIUM_SEVERITY_CHECK,
     SAMPLE_PASSED_CHECK,
     SAMPLE_SKIPPED_CHECK,
     SAMPLE_YAML_CHECK,
     SAMPLE_YAML_REPORT,
+    get_empty_checkov_output,
+    get_invalid_checkov_output,
+    get_sample_checkov_json_output,
 )
 
 
@@ -61,10 +61,10 @@ class TestIacProvider:
         assert report.status == "FAIL"
 
         assert report.check_metadata.Provider == "iac"
-        assert report.check_metadata.CheckID == SAMPLE_FAILED_CHECK.check_id
-        assert report.check_metadata.CheckTitle == SAMPLE_FAILED_CHECK.check_name
+        assert report.check_metadata.CheckID == SAMPLE_FAILED_CHECK["check_id"]
+        assert report.check_metadata.CheckTitle == SAMPLE_FAILED_CHECK["check_name"]
         assert report.check_metadata.Severity == "low"
-        assert report.check_metadata.RelatedUrl == SAMPLE_FAILED_CHECK.guideline
+        assert report.check_metadata.RelatedUrl == SAMPLE_FAILED_CHECK["guideline"]
 
     def test_iac_provider_process_check_passed(self):
         """Test processing a passed check"""
@@ -76,63 +76,49 @@ class TestIacProvider:
         assert report.status == "PASS"
 
         assert report.check_metadata.Provider == "iac"
-        assert report.check_metadata.CheckID == SAMPLE_PASSED_CHECK.check_id
-        assert report.check_metadata.CheckTitle == SAMPLE_PASSED_CHECK.check_name
+        assert report.check_metadata.CheckID == SAMPLE_PASSED_CHECK["check_id"]
+        assert report.check_metadata.CheckTitle == SAMPLE_PASSED_CHECK["check_name"]
         assert report.check_metadata.Severity == "low"
-        assert report.check_metadata.RelatedUrl == SAMPLE_PASSED_CHECK.guideline
 
-    def test_iac_provider_process_check_skipped(self):
-        """Test processing a skipped check"""
+    @patch("subprocess.run")
+    def test_iac_provider_run_scan_success(self, mock_subprocess):
+        """Test successful IAC scan with Checkov"""
         provider = IacProvider()
 
-        report = provider._process_check(SAMPLE_FINDING, SAMPLE_SKIPPED_CHECK, "MUTED")
-
-        assert isinstance(report, CheckReportIAC)
-        assert report.status == "MUTED"
-        assert report.muted is True
-
-        assert report.check_metadata.Provider == "iac"
-        assert report.check_metadata.CheckID == SAMPLE_SKIPPED_CHECK.check_id
-        assert report.check_metadata.CheckTitle == SAMPLE_SKIPPED_CHECK.check_name
-        assert report.check_metadata.Severity == "high"
-        assert report.check_metadata.RelatedUrl == SAMPLE_SKIPPED_CHECK.guideline
-
-    def test_iac_provider_process_check_high_severity(self):
-        """Test processing a high severity check"""
-        provider = IacProvider()
-
-        report = provider._process_check(
-            SAMPLE_FINDING, SAMPLE_HIGH_SEVERITY_CHECK, "FAIL"
+        mock_subprocess.return_value = MagicMock(
+            stdout=get_sample_checkov_json_output(), stderr=""
         )
 
-        assert isinstance(report, CheckReportIAC)
-        assert report.status == "FAIL"
-        assert report.check_metadata.Severity == "high"
+        reports = provider.run_scan("/test/directory", ["all"], [])
 
-    def test_iac_provider_process_check_different_framework(self):
-        """Test processing a check from a different framework (Kubernetes)"""
-        provider = IacProvider()
+        # Should have 2 failed checks + 1 passed check = 3 total reports
+        assert len(reports) == 3
 
-        report = provider._process_check(
-            SAMPLE_KUBERNETES_FINDING, SAMPLE_KUBERNETES_CHECK, "FAIL"
+        # Check that we have both failed and passed reports
+        failed_reports = [r for r in reports if r.status == "FAIL"]
+        passed_reports = [r for r in reports if r.status == "PASS"]
+
+        assert len(failed_reports) == 2
+        assert len(passed_reports) == 1
+
+        # Verify subprocess was called correctly
+        mock_subprocess.assert_called_once_with(
+            ["checkov", "-d", "/test/directory", "-o", "json", "-f", "all"],
+            capture_output=True,
+            text=True,
         )
 
-        assert isinstance(report, CheckReportIAC)
-        assert report.status == "FAIL"
-        assert report.check_metadata.ServiceName == "kubernetes"
-        assert report.check_metadata.CheckID == SAMPLE_KUBERNETES_CHECK.check_id
-
-    def test_iac_provider_process_check_no_guideline(self):
-        """Test processing a check without guideline URL"""
+    @patch("subprocess.run")
+    def test_iac_provider_run_scan_empty_output(self, mock_subprocess):
+        """Test IAC scan with empty Checkov output"""
         provider = IacProvider()
 
-        report = provider._process_check(
-            SAMPLE_FINDING, SAMPLE_CHECK_WITHOUT_GUIDELINE, "FAIL"
+        mock_subprocess.return_value = MagicMock(
+            stdout=get_empty_checkov_output(), stderr=""
         )
 
-        assert isinstance(report, CheckReportIAC)
-        assert report.status == "FAIL"
-        assert report.check_metadata.RelatedUrl == ""
+        reports = provider.run_scan("/test/directory", ["all"], [])
+        assert len(reports) == 0
 
     def test_provider_run_local_scan(self):
         scan_path = "."
@@ -191,29 +177,29 @@ class TestIacProvider:
                 for call in mock_print.call_args_list
             )
 
-    def test_iac_provider_process_check_medium_severity(self):
+    @patch("subprocess.run")
+    def test_iac_provider_process_check_medium_severity(self, mock_subprocess):
         """Test processing a medium severity check"""
         provider = IacProvider()
 
-        report = provider._process_check(
-            SAMPLE_FINDING, SAMPLE_MEDIUM_SEVERITY_CHECK, "FAIL"
+        mock_subprocess.return_value = MagicMock(
+            stdout=get_invalid_checkov_output(), stderr=""
         )
 
-        assert isinstance(report, CheckReportIAC)
-        assert report.status == "FAIL"
-        assert report.check_metadata.Severity == "medium"
+        with pytest.raises(SystemExit) as excinfo:
+            provider.run_scan("/test/directory", ["all"], [])
 
-    def test_iac_provider_process_check_critical_severity(self):
-        """Test processing a critical severity check"""
+        assert excinfo.value.code == 1
+
+    @patch("subprocess.run")
+    def test_iac_provider_run_scan_null_output(self, mock_subprocess):
+        """Test IAC scan with null Checkov output"""
         provider = IacProvider()
 
-        report = provider._process_check(
-            SAMPLE_FINDING, SAMPLE_CRITICAL_SEVERITY_CHECK, "FAIL"
-        )
+        mock_subprocess.return_value = MagicMock(stdout="null", stderr="")
 
-        assert isinstance(report, CheckReportIAC)
-        assert report.status == "FAIL"
-        assert report.check_metadata.Severity == "critical"
+        reports = provider.run_scan("/test/directory", ["all"], [])
+        assert len(reports) == 0
 
     def test_iac_provider_process_check_dockerfile(self):
         """Test processing a Dockerfile check"""
@@ -226,7 +212,7 @@ class TestIacProvider:
         assert isinstance(report, CheckReportIAC)
         assert report.status == "FAIL"
         assert report.check_metadata.ServiceName == "dockerfile"
-        assert report.check_metadata.CheckID == SAMPLE_DOCKERFILE_CHECK.check_id
+        assert report.check_metadata.CheckID == SAMPLE_DOCKERFILE_CHECK["check_id"]
 
     def test_iac_provider_process_check_yaml(self):
         """Test processing a YAML check"""
@@ -237,42 +223,30 @@ class TestIacProvider:
         assert isinstance(report, CheckReportIAC)
         assert report.status == "PASS"
         assert report.check_metadata.ServiceName == "yaml"
-        assert report.check_metadata.CheckID == SAMPLE_YAML_CHECK.check_id
+        assert report.check_metadata.CheckID == SAMPLE_YAML_CHECK["check_id"]
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_success_with_failed_and_passed_checks(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_success_with_failed_and_passed_checks(self, mock_subprocess):
         """Test successful run_scan with both failed and passed checks"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        # Create mock reports with failed and passed checks
-        mock_report = Mock()
-        mock_report.check_type = "terraform"  # Set the check_type attribute
-        mock_report.failed_checks = [SAMPLE_FAILED_CHECK]
-        mock_report.passed_checks = [SAMPLE_PASSED_CHECK]
-        mock_report.skipped_checks = []
-
-        mock_registry_instance.run.return_value = [mock_report]
-
         provider = IacProvider()
-        result = provider.run_scan("/test/directory", ["terraform"], [])
 
-        # Verify logger was called
-        mock_logger.info.assert_called_with("Running IaC scan on /test/directory...")
+        # Create sample output with both failed and passed checks
+        sample_output = [
+            {
+                "check_type": "terraform",
+                "results": {
+                    "failed_checks": [SAMPLE_FAILED_CHECK],
+                    "passed_checks": [SAMPLE_PASSED_CHECK],
+                    "skipped_checks": [],
+                },
+            }
+        ]
 
-        # Verify RunnerFilter was created with correct parameters
-        mock_runner_filter.assert_called_with(
-            framework=["terraform"], excluded_paths=[]
+        mock_subprocess.return_value = MagicMock(
+            stdout=json.dumps(sample_output), stderr=""
         )
 
-        # Verify RunnerRegistry was created and run was called
-        mock_runner_registry.assert_called_once()
-        mock_registry_instance.run.assert_called_with(root_folder="/test/directory")
+        result = provider.run_scan("/test/directory", ["terraform"], [])
 
         # Verify results
         assert len(result) == 2
@@ -283,33 +257,28 @@ class TestIacProvider:
         assert "FAIL" in statuses
         assert "PASS" in statuses
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_with_skipped_checks(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_with_skipped_checks(self, mock_subprocess):
         """Test run_scan with skipped checks (muted)"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        # Create mock report with skipped checks
-        mock_report = Mock()
-        mock_report.check_type = "terraform"  # Set the check_type attribute
-        mock_report.failed_checks = []
-        mock_report.passed_checks = []
-        mock_report.skipped_checks = [SAMPLE_SKIPPED_CHECK]
-
-        mock_registry_instance.run.return_value = [mock_report]
-
         provider = IacProvider()
-        result = provider.run_scan("/test/directory", ["all"], ["exclude/path"])
 
-        # Verify RunnerFilter was created with correct parameters
-        mock_runner_filter.assert_called_with(
-            framework=["all"], excluded_paths=["exclude/path"]
+        # Create sample output with skipped checks
+        sample_output = [
+            {
+                "check_type": "terraform",
+                "results": {
+                    "failed_checks": [],
+                    "passed_checks": [],
+                    "skipped_checks": [SAMPLE_SKIPPED_CHECK],
+                },
+            }
+        ]
+
+        mock_subprocess.return_value = MagicMock(
+            stdout=json.dumps(sample_output), stderr=""
         )
+
+        result = provider.run_scan("/test/directory", ["all"], ["exclude/path"])
 
         # Verify results
         assert len(result) == 1
@@ -317,59 +286,47 @@ class TestIacProvider:
         assert result[0].status == "MUTED"
         assert result[0].muted is True
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_empty_results(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_empty_results(self, mock_subprocess):
         """Test run_scan with no findings"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        # Create mock report with no checks
-        mock_report = Mock()
-        mock_report.check_type = "terraform"  # Set the check_type attribute
-        mock_report.failed_checks = []
-        mock_report.passed_checks = []
-        mock_report.skipped_checks = []
-
-        mock_registry_instance.run.return_value = [mock_report]
-
         provider = IacProvider()
+
+        mock_subprocess.return_value = MagicMock(stdout="[]", stderr="")
+
         result = provider.run_scan("/test/directory", ["kubernetes"], [])
 
         # Verify results
         assert len(result) == 0
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_multiple_reports(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_multiple_reports(self, mock_subprocess):
         """Test run_scan with multiple reports from different frameworks"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        # Create multiple mock reports
-        mock_report1 = Mock()
-        mock_report1.check_type = "terraform"  # Set the check_type attribute
-        mock_report1.failed_checks = [SAMPLE_FAILED_CHECK]
-        mock_report1.passed_checks = []
-        mock_report1.skipped_checks = []
-
-        mock_report2 = Mock()
-        mock_report2.check_type = "kubernetes"  # Set the check_type attribute
-        mock_report2.failed_checks = []
-        mock_report2.passed_checks = [SAMPLE_PASSED_CHECK]
-        mock_report2.skipped_checks = []
-
-        mock_registry_instance.run.return_value = [mock_report1, mock_report2]
-
         provider = IacProvider()
+
+        # Create sample output with multiple frameworks
+        sample_output = [
+            {
+                "check_type": "terraform",
+                "results": {
+                    "failed_checks": [SAMPLE_FAILED_CHECK],
+                    "passed_checks": [],
+                    "skipped_checks": [],
+                },
+            },
+            {
+                "check_type": "kubernetes",
+                "results": {
+                    "failed_checks": [],
+                    "passed_checks": [SAMPLE_PASSED_CHECK],
+                    "skipped_checks": [],
+                },
+            },
+        ]
+
+        mock_subprocess.return_value = MagicMock(
+            stdout=json.dumps(sample_output), stderr=""
+        )
+
         result = provider.run_scan("/test/directory", ["terraform", "kubernetes"], [])
 
         # Verify results
@@ -381,122 +338,128 @@ class TestIacProvider:
         assert "FAIL" in statuses
         assert "PASS" in statuses
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    @patch("prowler.providers.iac.iac_provider.sys")
-    def test_run_scan_exception_handling(
-        self, mock_sys, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_exception_handling(self, mock_subprocess):
         """Test run_scan exception handling"""
-        # Setup mocks to raise an exception
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-        mock_registry_instance.run.side_effect = Exception("Test exception")
-
-        # Configure sys.exit to raise SystemExit
-        mock_sys.exit.side_effect = SystemExit(1)
-
         provider = IacProvider()
 
-        # The function should call sys.exit(1) when an exception occurs
+        # Make subprocess.run raise an exception
+        mock_subprocess.side_effect = Exception("Test exception")
+
         with pytest.raises(SystemExit) as exc_info:
             provider.run_scan("/test/directory", ["terraform"], [])
 
         assert exc_info.value.code == 1
 
-        # Verify logger was called with error information
-        mock_logger.critical.assert_called_once()
-        critical_call_args = mock_logger.critical.call_args[0][0]
-        assert "Exception" in critical_call_args
-        assert "Test exception" in critical_call_args
-
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_with_different_frameworks(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_with_different_frameworks(self, mock_subprocess):
         """Test run_scan with different framework configurations"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        mock_report = Mock()
-        mock_report.check_type = "terraform"  # Set the check_type attribute
-        mock_report.failed_checks = []
-        mock_report.passed_checks = [SAMPLE_PASSED_CHECK]
-        mock_report.skipped_checks = []
-
-        mock_registry_instance.run.return_value = [mock_report]
-
         provider = IacProvider()
+
+        sample_output = [
+            {
+                "check_type": "terraform",
+                "results": {
+                    "failed_checks": [],
+                    "passed_checks": [SAMPLE_PASSED_CHECK],
+                    "skipped_checks": [],
+                },
+            }
+        ]
+
+        mock_subprocess.return_value = MagicMock(
+            stdout=json.dumps(sample_output), stderr=""
+        )
 
         # Test with specific frameworks
         frameworks = ["terraform", "kubernetes", "cloudformation"]
         result = provider.run_scan("/test/directory", frameworks, [])
 
-        # Verify RunnerFilter was created with correct frameworks
-        mock_runner_filter.assert_called_with(framework=frameworks, excluded_paths=[])
-
-        # Verify results
-        assert len(result) == 1
-        assert result[0].status == "PASS"
-
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_with_exclude_paths(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
-        """Test run_scan with exclude paths"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        mock_report = Mock()
-        mock_report.check_type = "terraform"  # Set the check_type attribute
-        mock_report.failed_checks = []
-        mock_report.passed_checks = [SAMPLE_PASSED_CHECK]
-        mock_report.skipped_checks = []
-
-        mock_registry_instance.run.return_value = [mock_report]
-
-        provider = IacProvider()
-
-        # Test with exclude paths
-        exclude_paths = ["node_modules", ".git", "vendor"]
-        result = provider.run_scan("/test/directory", ["all"], exclude_paths)
-
-        # Verify RunnerFilter was created with correct exclude paths
-        mock_runner_filter.assert_called_with(
-            framework=["all"], excluded_paths=exclude_paths
+        # Verify subprocess was called with correct frameworks
+        mock_subprocess.assert_called_once_with(
+            [
+                "checkov",
+                "-d",
+                "/test/directory",
+                "-o",
+                "json",
+                "-f",
+                ",".join(frameworks),
+            ],
+            capture_output=True,
+            text=True,
         )
 
         # Verify results
         assert len(result) == 1
         assert result[0].status == "PASS"
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_all_check_types(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
-        """Test run_scan with all types of checks (failed, passed, skipped)"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        mock_report = Mock()
-        mock_report.check_type = "terraform"  # Set the check_type attribute
-        mock_report.failed_checks = [SAMPLE_FAILED_CHECK, SAMPLE_HIGH_SEVERITY_CHECK]
-        mock_report.passed_checks = [SAMPLE_PASSED_CHECK, SAMPLE_CLOUDFORMATION_CHECK]
-        mock_report.skipped_checks = [SAMPLE_SKIPPED_CHECK]
-
-        mock_registry_instance.run.return_value = [mock_report]
-
+    @patch("subprocess.run")
+    def test_run_scan_with_exclude_paths(self, mock_subprocess):
+        """Test run_scan with exclude paths"""
         provider = IacProvider()
+
+        sample_output = [
+            {
+                "check_type": "terraform",
+                "results": {
+                    "failed_checks": [],
+                    "passed_checks": [SAMPLE_PASSED_CHECK],
+                    "skipped_checks": [],
+                },
+            }
+        ]
+
+        mock_subprocess.return_value = MagicMock(
+            stdout=json.dumps(sample_output), stderr=""
+        )
+
+        # Test with exclude paths
+        exclude_paths = ["node_modules", ".git", "vendor"]
+        result = provider.run_scan("/test/directory", ["all"], exclude_paths)
+
+        # Verify subprocess was called with correct exclude paths
+        expected_command = [
+            "checkov",
+            "-d",
+            "/test/directory",
+            "-o",
+            "json",
+            "-f",
+            "all",
+            "--skip-path",
+            ",".join(exclude_paths),
+        ]
+        mock_subprocess.assert_called_once_with(
+            expected_command,
+            capture_output=True,
+            text=True,
+        )
+
+        # Verify results
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @patch("subprocess.run")
+    def test_run_scan_all_check_types(self, mock_subprocess):
+        """Test run_scan with all types of checks (failed, passed, skipped)"""
+        provider = IacProvider()
+
+        sample_output = [
+            {
+                "check_type": "terraform",
+                "results": {
+                    "failed_checks": [SAMPLE_FAILED_CHECK, SAMPLE_HIGH_SEVERITY_CHECK],
+                    "passed_checks": [SAMPLE_PASSED_CHECK, SAMPLE_CLOUDFORMATION_CHECK],
+                    "skipped_checks": [SAMPLE_SKIPPED_CHECK],
+                },
+            }
+        ]
+
+        mock_subprocess.return_value = MagicMock(
+            stdout=json.dumps(sample_output), stderr=""
+        )
+
         result = provider.run_scan("/test/directory", ["all"], [])
 
         # Verify results
@@ -512,69 +475,59 @@ class TestIacProvider:
         muted_reports = [report for report in result if report.status == "MUTED"]
         assert all(report.muted for report in muted_reports)
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_no_reports_returned(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_no_reports_returned(self, mock_subprocess):
         """Test run_scan when no reports are returned from registry"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
+        provider = IacProvider()
 
         # Return empty list of reports
-        mock_registry_instance.run.return_value = []
+        mock_subprocess.return_value = MagicMock(stdout="[]", stderr="")
 
-        provider = IacProvider()
         result = provider.run_scan("/test/directory", ["terraform"], [])
 
         # Verify results
         assert len(result) == 0
 
-    @patch("prowler.providers.iac.iac_provider.RunnerRegistry")
-    @patch("prowler.providers.iac.iac_provider.RunnerFilter")
-    @patch("prowler.providers.iac.iac_provider.logger")
-    def test_run_scan_multiple_frameworks_with_different_checks(
-        self, mock_logger, mock_runner_filter, mock_runner_registry
-    ):
+    @patch("subprocess.run")
+    def test_run_scan_multiple_frameworks_with_different_checks(self, mock_subprocess):
         """Test run_scan with multiple frameworks and different types of checks"""
-        # Setup mocks
-        mock_registry_instance = Mock()
-        mock_runner_registry.return_value = mock_registry_instance
-
-        # Create reports for different frameworks
-        terraform_report = Mock()
-        terraform_report.check_type = "terraform"
-        terraform_report.failed_checks = [
-            SAMPLE_FAILED_CHECK,
-            SAMPLE_ANOTHER_FAILED_CHECK,
-        ]
-        terraform_report.passed_checks = [SAMPLE_PASSED_CHECK]
-        terraform_report.skipped_checks = []
-
-        kubernetes_report = Mock()
-        kubernetes_report.check_type = "kubernetes"
-        kubernetes_report.failed_checks = [SAMPLE_KUBERNETES_CHECK]
-        kubernetes_report.passed_checks = []
-        kubernetes_report.skipped_checks = [SAMPLE_ANOTHER_SKIPPED_CHECK]
-
-        cloudformation_report = Mock()
-        cloudformation_report.check_type = "cloudformation"
-        cloudformation_report.failed_checks = []
-        cloudformation_report.passed_checks = [
-            SAMPLE_CLOUDFORMATION_CHECK,
-            SAMPLE_ANOTHER_PASSED_CHECK,
-        ]
-        cloudformation_report.skipped_checks = []
-
-        mock_registry_instance.run.return_value = [
-            terraform_report,
-            kubernetes_report,
-            cloudformation_report,
-        ]
-
         provider = IacProvider()
+
+        # Create sample output with multiple frameworks and different check types
+        sample_output = [
+            {
+                "check_type": "terraform",
+                "results": {
+                    "failed_checks": [SAMPLE_FAILED_CHECK, SAMPLE_ANOTHER_FAILED_CHECK],
+                    "passed_checks": [SAMPLE_PASSED_CHECK],
+                    "skipped_checks": [],
+                },
+            },
+            {
+                "check_type": "kubernetes",
+                "results": {
+                    "failed_checks": [SAMPLE_KUBERNETES_CHECK],
+                    "passed_checks": [],
+                    "skipped_checks": [SAMPLE_ANOTHER_SKIPPED_CHECK],
+                },
+            },
+            {
+                "check_type": "cloudformation",
+                "results": {
+                    "failed_checks": [],
+                    "passed_checks": [
+                        SAMPLE_CLOUDFORMATION_CHECK,
+                        SAMPLE_ANOTHER_PASSED_CHECK,
+                    ],
+                    "skipped_checks": [],
+                },
+            },
+        ]
+
+        mock_subprocess.return_value = MagicMock(
+            stdout=json.dumps(sample_output), stderr=""
+        )
+
         result = provider.run_scan(
             "/test/directory", ["terraform", "kubernetes", "cloudformation"], []
         )

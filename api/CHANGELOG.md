@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
+- Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 
 ---
 

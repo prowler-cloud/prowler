@@ -641,3 +641,63 @@ class TestGitHubProvider:
 
             with pytest.raises(GithubInvalidProviderIdError):
                 GithubProvider.validate_provider_id(mock_session, "invalid-org")
+
+
+class Test_GithubProvider_Scoping:
+    def setup_method(self):
+        """Setup mock session and identity for testing"""
+        self.mock_session = GithubSession(
+            token=PAT_TOKEN,
+            key="",
+            id=0,
+        )
+        self.mock_identity = GithubIdentityInfo(
+            account_id=ACCOUNT_ID,
+            account_name=ACCOUNT_NAME,
+            account_url=ACCOUNT_URL,
+        )
+
+    def test_provider_scoping_integration(self):
+        """Test that provider correctly handles scoping parameters and integrates with services"""
+        repositories = ["owner1/repo1", "owner2/repo2"]
+        organizations = ["org1", "org2"]
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=self.mock_session,
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=self.mock_identity,
+            ),
+        ):
+            # Test with both scoping parameters
+            provider = GithubProvider(
+                personal_access_token=PAT_TOKEN,
+                repositories=repositories,
+                organizations=organizations,
+            )
+
+            assert provider.repositories == repositories
+            assert provider.organizations == organizations
+            assert provider.type == "github"
+            assert provider.auth_method == "Personal Access Token"
+
+            # Test with no scoping (backward compatibility)
+            provider_no_scoping = GithubProvider(
+                personal_access_token=PAT_TOKEN,
+            )
+
+            assert provider_no_scoping.repositories == []
+            assert provider_no_scoping.organizations == []
+
+            # Test with None values (should convert to empty lists)
+            provider_none = GithubProvider(
+                personal_access_token=PAT_TOKEN,
+                repositories=None,
+                organizations=None,
+            )
+
+            assert provider_none.repositories == []
+            assert provider_none.organizations == []

@@ -1,8 +1,8 @@
-# Check mapping between Prowler v4/v3 and v2
+# Check Mapping Prowler v4/v3 to v2
 
-Prowler v3 and v4 comes with different identifiers but we maintained the same checks that were implemented in v2. The reason for this change is because in previous versions of Prowler, check names were mostly based on CIS Benchmark for AWS. In v4 and v3 all checks are independent from any security framework and they have its own name and ID.
+Prowler v3 and v4 introduce distinct identifiers while preserving the checks originally implemented in v2. This change was made because, in previous versions, check names were primarily derived from the CIS Benchmark for AWS. Starting with v3 and v4, all checks are independent of any security framework and have unique names and IDs.
 
-If you need more information about how new compliance implementation works in Prowler v4 and v3 see [Compliance](../compliance.md) section.
+For more details on the updated compliance implementation in Prowler v4 and v3, refer to the [Compliance](../compliance.md) section.
 
 ```
 checks_v4_v3_to_v2_mapping = {
@@ -17,7 +17,7 @@ checks_v4_v3_to_v2_mapping = {
     "apigateway_restapi_public": "extra745",
     "apigateway_restapi_logging_enabled": "extra722",
     "apigateway_restapi_waf_acl_attached": "extra744",
-    "apigatewayv2_api_access_logging_enabled": "extra7156",
+    “apigatewayv2_api_access_logging_enabled": "extra7156",
     "apigatewayv2_api_authorizers_enabled": "extra7157",
     "appstream_fleet_default_internet_access_disabled": "extra7193",
     "appstream_fleet_maximum_session_duration": "extra7190",

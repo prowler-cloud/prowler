@@ -99,6 +99,21 @@ class SSM(AWSService):
                         "AccountIds"
                     ]
 
+        except ClientError as error:
+            if error.response["Error"]["Code"] in [
+                "InvalidDocumentOperation",
+            ]:
+                logger.warning(
+                    f"{regional_client.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"
