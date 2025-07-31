@@ -16,6 +16,7 @@ class S3(AWSService):
         self.account_arn_template = f"arn:{self.audited_partition}:s3:{self.region}:{self.audited_account}:account"
         self.regions_with_buckets = []
         self.buckets = {}
+        self.audited_canonical_id = ""
         self._list_buckets(provider)
         self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
         self.__threading_call__(self._get_bucket_logging, self.buckets.values())
@@ -40,6 +41,7 @@ class S3(AWSService):
         logger.info("S3 - Listing buckets...")
         try:
             list_buckets = self.client.list_buckets()
+            self.audited_canonical_id = list_buckets["Owner"]["ID"]
             for bucket in list_buckets["Buckets"]:
                 try:
                     bucket_region = self.client.get_bucket_location(
