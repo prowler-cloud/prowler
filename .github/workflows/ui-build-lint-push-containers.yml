@@ -3,7 +3,7 @@ name: UI - Build and Push containers
 on:
   push:
     branches:
-      - "master"
+      - "PRWLR-7212-recommend"
     paths:
       - "ui/**"
       - ".github/workflows/ui-build-lint-push-containers.yml"
@@ -89,8 +89,7 @@ jobs:
           # Set push: false for testing
           push: true
           tags: |
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.SHORT_SHA }}
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:preview
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
