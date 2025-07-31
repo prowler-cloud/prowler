@@ -270,28 +270,29 @@ The unique identifier for the check inside the provider. This field **must** mat
 
 #### CheckTitle
 
-The `CheckTitle` field defines clearly and succinctly what best practice is being evaluated and which resource(s) each finding applies to. The title should be specific, concise (no more than 150 characters), and reference the relevant resource(s) involved.
+The `CheckTitle` field must clearly and succinctly define **the best practice being evaluated and which resource(s) each finding applies to**. The title should be specific, concise (no more than 150 characters), and reference the relevant resource(s) involved.
 
-For most checks, which produce one finding per resource, the `CheckTitle` should mention the individual resource. For example, if the check assesses whether multi-factor authentication (MFA) is enabled for each user, the title might be: *"User has multi-factor authentication enabled."*
+**Always write the `CheckTitle` to describe the PASS case**, the desired secure or compliant state of the resource(s). This helps ensure that findings are easy to interpret and that the title always reflects the best practice being met. For example, if the check assesses whether multi-factor authentication (MFA) is enabled for each user, the title should be: *"User has multi-factor authentication enabled."* (PASS case), rather than focusing on the absence of the control.
 
-If a finding covers multiple resources at once, the `CheckTitle` should indicate this scope, such as: *"All users do not have multi-factor authentication enabled."*
+For most checks, which produce one finding per resource, the `CheckTitle` should mention the individual resource and the secure state. If a finding covers multiple resources at once, the `CheckTitle` should indicate this scope and the exact set of resources involved, such as: *"All users have multi-factor authentication enabled."* or *"No S3 buckets are publicly accessible."* This ensures clarity about the number or group of resources being evaluated in a single finding.
 
-Always write the `CheckTitle` to state the best practice being assessed and to clearly identify the affected resource(s). Avoid generic or action-oriented phrases like "Check" or "Ensure." Instead, use a descriptive format that states the resource and the best practice.
+Avoid generic or action-oriented phrases like "Check" or "Ensure." Instead, use a descriptive format that states the resource and the best practice in the PASS case, while also making clear whether the finding applies to a single resource or a group.
 
-**Good Examples:**
+**Good Examples (PASS case, clear resource scope):**
 
-- `"EC2 AMI is not public"` - Clear, specific, states the resource and best practice.
-- `"Security group does not allow ingress from 0.0.0.0/0 to SSH port 22"` - Specific about the resource and security requirement.
-- `"IAM user has multi-factor authentication enabled"` - States the resource and security best practice.
-- `"EBS volume is encrypted"` - Concise, clear about the resource and requirement.
-- `"Kubernetes pod does not run as root user"` - Specific about the resource and security best practice.
+- `"EC2 AMI is not public"` – Clear, specific, states the resource and best practice in the secure state.
+- `"Security group does not allow ingress from 0.0.0.0/0 to SSH port 22"` – Specific about the resource and security requirement.
+- `"IAM user has multi-factor authentication enabled"` – States the resource and security best practice.
+- `"EBS volume is encrypted"` – Concise, clear about the resource and requirement.
+- `"Kubernetes pod does not run as root user"` – Specific about the resource and security best practice.
 
 **Examples to Avoid:**
 
-- `"Check if EC2 instances are encrypted"` - Uses "Check" action verb, totally unnecessary because we already know the check is checking.
-- `"Ensure security groups are properly configured"` - Too generic, doesn't specify what "properly" means.
-- `"Verify encryption settings"` - Too vague, doesn't identify specific resources.
-- `"Monitor access controls"` - Generic, doesn't specify what to monitor.
+- `"Check if EC2 instances are encrypted"` – Uses "Check" action verb, totally unnecessary because we already know the check is checking.
+- `"Ensure security groups are properly configured"` – Too generic, doesn't specify what "properly" means.
+- `"Verify encryption settings"` – Too vague, doesn't identify specific resources.
+- `"Monitor access controls"` – Generic, doesn't specify what to monitor.
+- `"All users do not have multi-factor authentication enabled"` – Focuses on the FAIL case; instead, phrase in terms of the PASS case.
 
 #### CheckType
 
