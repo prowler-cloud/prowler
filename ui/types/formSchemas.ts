@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
-import { ProviderType } from "./providers";
+import { PROVIDER_TYPES, ProviderType } from "./providers";
 
 export const addRoleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -34,7 +34,10 @@ export const editScanFormSchema = (currentName: string) =>
     scanName: z
       .string()
       .refine((val) => val === "" || val.length >= 3, {
-        message: "The alias must be empty or have at least 3 characters.",
+        message: "Must be empty or have at least 3 characters.",
+      })
+      .refine((val) => val === "" || val.length <= 32, {
+        message: "Must not exceed 32 characters.",
       })
       .refine((val) => val !== currentName, {
         message: "The new name must be different from the current one.",
@@ -68,7 +71,7 @@ export const awsCredentialsTypeSchema = z.object({
 
 export const addProviderFormSchema = z
   .object({
-    providerType: z.enum(["aws", "azure", "gcp", "kubernetes", "m365"], {
+    providerType: z.enum(PROVIDER_TYPES, {
       required_error: "Please select a provider type",
     }),
   })
@@ -102,10 +105,18 @@ export const addProviderFormSchema = z
         providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
       }),
+      z.object({
+        providerType: z.literal("github"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
     ]),
   );
 
-export const addCredentialsFormSchema = (providerType: string) =>
+export const addCredentialsFormSchema = (
+  providerType: ProviderType,
+  via?: string | null,
+) =>
   z
     .object({
       [ProviderCredentialFields.PROVIDER_ID]: z.string(),
@@ -164,7 +175,22 @@ export const addCredentialsFormSchema = (providerType: string) =>
                     [ProviderCredentialFields.USER]: z.string().optional(),
                     [ProviderCredentialFields.PASSWORD]: z.string().optional(),
                   }
-                : {}),
+                : providerType === "github"
+                  ? {
+                      [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]: z
+                        .string()
+                        .optional(),
+                      [ProviderCredentialFields.OAUTH_APP_TOKEN]: z
+                        .string()
+                        .optional(),
+                      [ProviderCredentialFields.GITHUB_APP_ID]: z
+                        .string()
+                        .optional(),
+                      [ProviderCredentialFields.GITHUB_APP_KEY]: z
+                        .string()
+                        .optional(),
+                    }
+                  : {}),
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {
@@ -185,6 +211,42 @@ export const addCredentialsFormSchema = (providerType: string) =>
             message: "If you provide a password, you must also provide a user",
             path: [ProviderCredentialFields.USER],
           });
+        }
+      }
+
+      if (providerType === "github") {
+        // For GitHub, validation depends on the 'via' parameter
+        if (via === "personal_access_token") {
+          if (!data[ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Personal Access Token is required",
+              path: [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN],
+            });
+          }
+        } else if (via === "oauth_app") {
+          if (!data[ProviderCredentialFields.OAUTH_APP_TOKEN]) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "OAuth App Token is required",
+              path: [ProviderCredentialFields.OAUTH_APP_TOKEN],
+            });
+          }
+        } else if (via === "github_app") {
+          if (!data[ProviderCredentialFields.GITHUB_APP_ID]) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "GitHub App ID is required",
+              path: [ProviderCredentialFields.GITHUB_APP_ID],
+            });
+          }
+          if (!data[ProviderCredentialFields.GITHUB_APP_KEY]) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "GitHub App Private Key is required",
+              path: [ProviderCredentialFields.GITHUB_APP_KEY],
+            });
+          }
         }
       }
     });

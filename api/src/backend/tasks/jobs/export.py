@@ -20,6 +20,7 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
+from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
@@ -92,6 +93,9 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("cis_"), M365CIS),
         (lambda name: name == "prowler_threatscore_m365", ProwlerThreatScoreM365),
         (lambda name: name.startswith("iso27001_"), M365ISO27001),
+    ],
+    "github": [
+        (lambda name: name.startswith("cis_"), GithubCIS),
     ],
 }
 
@@ -167,7 +171,7 @@ def get_s3_client():
     return s3_client
 
 
-def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
+def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
     """
     Upload the specified ZIP file to an S3 bucket.
     If the S3 bucket environment variables are not configured,
@@ -184,7 +188,7 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     """
     bucket = base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET
     if not bucket:
-        return None
+        return
 
     try:
         s3 = get_s3_client()

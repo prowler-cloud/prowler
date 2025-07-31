@@ -3,12 +3,12 @@
 import {
   AlertCircle,
   Bookmark,
-  Bot,
   CloudCog,
   Cog,
   Group,
   LayoutGrid,
   Mail,
+  Package,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -18,6 +18,7 @@ import {
   User,
   UserCog,
   Users,
+  Warehouse,
 } from "lucide-react";
 
 import {
@@ -28,6 +29,7 @@ import {
   DocIcon,
   GCPIcon,
   KubernetesIcon,
+  LighthouseIcon,
   M365Icon,
   SupportIcon,
 } from "@/components/icons/Icons";
@@ -60,13 +62,22 @@ export const getMenuList = (pathname: string): GroupProps[] => {
         },
       ],
     },
-
     {
-      groupLabel: "Issues",
+      groupLabel: "",
+      menus: [
+        {
+          href: "/lighthouse",
+          label: "Lighthouse AI",
+          icon: LighthouseIcon,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
       menus: [
         {
           href: "",
-          label: "Top failed issues",
+          label: "Top failed findings",
           icon: Bookmark,
           submenus: [
             {
@@ -122,9 +133,26 @@ export const getMenuList = (pathname: string): GroupProps[] => {
         },
       ],
     },
-
     {
-      groupLabel: "Settings",
+      groupLabel: "",
+      menus: [
+        {
+          href: "",
+          label: "Resources",
+          icon: Warehouse,
+          submenus: [
+            {
+              href: "/resources",
+              label: "Browse all resources",
+              icon: Package,
+            },
+          ],
+          defaultOpen: true,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
       menus: [
         {
           href: "",
@@ -135,34 +163,24 @@ export const getMenuList = (pathname: string): GroupProps[] => {
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/roles", label: "Roles", icon: UserCog },
-            { href: "/lighthouse/config", label: "Lighthouse", icon: Cog },
+            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
         },
       ],
     },
     {
-      groupLabel: "Workspace",
+      groupLabel: "",
       menus: [
         {
           href: "",
-          label: "Memberships",
+          label: "Organization",
           icon: Users,
           submenus: [
             { href: "/users", label: "Users", icon: User },
             { href: "/invitations", label: "Invitations", icon: Mail },
           ],
           defaultOpen: false,
-        },
-      ],
-    },
-    {
-      groupLabel: "Prowler Lighthouse",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse",
-          icon: Bot,
         },
       ],
     },

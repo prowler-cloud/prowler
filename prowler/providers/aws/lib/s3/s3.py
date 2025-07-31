@@ -125,7 +125,10 @@ class S3:
                 retries_max_attempts=retries_max_attempts,
                 regions=regions,
             )
-            self._session = aws_setup_session._session
+            self._session = aws_setup_session._session.current_session.client(
+                __class__.__name__.lower(),
+                config=aws_setup_session._session.session_config,
+            )
 
         self._bucket_name = bucket_name
         self._output_directory = output_directory
@@ -487,4 +490,4 @@ class S3:
         except Exception as error:
             if raise_on_exception:
                 raise S3TestConnectionError(original_exception=error)
-            return Connection(error=error)
+            return Connection(is_connected=False, error=error)

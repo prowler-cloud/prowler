@@ -167,7 +167,7 @@ class TestOCSF:
             {
                 "message": "status extended",
                 "metadata": {
-                    "event_code": "test-check-id",
+                    "event_code": "service_test_check_id",
                     "product": {
                         "name": "Prowler",
                         "uid": "prowler",
@@ -198,7 +198,7 @@ class TestOCSF:
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
-                    "title": "test-check-id",
+                    "title": "service_test_check_id",
                     "uid": "test-unique-finding",
                     "types": ["test-type"],
                 },
@@ -210,7 +210,7 @@ class TestOCSF:
                             "details": "resource_details",
                             "metadata": {},
                         },
-                        "group": {"name": "test-service"},
+                        "group": {"name": "service"},
                         "labels": [],
                         "name": "resource_name",
                         "type": "test-resource",

@@ -205,6 +205,7 @@ class Provider(RowLevelSecurityProtectedModel):
         GCP = "gcp", _("GCP")
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
+        GITHUB = "github", _("GitHub")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -262,6 +263,16 @@ class Provider(RowLevelSecurityProtectedModel):
                 "starting and ending with a lowercase letter or number, containing only "
                 "lowercase alphanumeric characters and hyphens) or a valid AWS EKS Cluster ARN, GCP GKE Context Name or Azure AKS Cluster Name.",
                 code="kubernetes-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_github_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$", value):
+            raise ModelValidationError(
+                detail="GitHub provider ID must be a valid GitHub username or organization name (1-39 characters, "
+                "starting with alphanumeric, containing only alphanumeric characters and hyphens).",
+                code="github-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -427,7 +438,7 @@ class Scan(RowLevelSecurityProtectedModel):
     scheduler_task = models.ForeignKey(
         PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
-    output_location = models.CharField(blank=True, null=True, max_length=200)
+    output_location = models.CharField(blank=True, null=True, max_length=4096)
     provider = models.ForeignKey(
         Provider,
         on_delete=models.CASCADE,
@@ -475,6 +486,13 @@ class Scan(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "provider_id", "state", "-inserted_at"],
                 condition=Q(state=StateChoices.COMPLETED),
                 name="scans_prov_state_ins_desc_idx",
+            ),
+            # TODO This might replace `scans_prov_state_ins_desc_idx` completely. Review usage
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                condition=Q(state=StateChoices.COMPLETED),
+                include=["id"],
+                name="scans_prov_ins_desc_idx",
             ),
         ]
 
@@ -859,6 +877,10 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
             models.Index(
                 fields=["tenant_id", "finding_id"],
                 name="rfm_tenant_finding_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "resource_id"],
+                name="rfm_tenant_resource_idx",
             ),
         ]
         constraints = [
@@ -1324,7 +1346,7 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
-        S3 = "amazon_s3", _("Amazon S3")
+        AMAZON_S3 = "amazon_s3", _("Amazon S3")
         AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
         JIRA = "jira", _("JIRA")
         SLACK = "slack", _("Slack")
@@ -1350,6 +1372,10 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
+            models.UniqueConstraint(
+                fields=("configuration", "tenant"),
+                name="unique_configuration_per_tenant",
+            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",

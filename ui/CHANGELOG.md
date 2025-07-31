@@ -2,15 +2,35 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [v1.9.0] (Prowler v5.9.0) – UNRELEASED
+## [1.10.0] (Prowler v5.10.0 - UNRELEASED)
+
+### Added
+
+- Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+- Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
+
+### 🔄 Changed
+
+- Rename `Memberships` to `Organization` in the sidebar [(#8415)](https://github.com/prowler-cloud/prowler/pull/8415)
+___
+
+## [v1.9.3] (Prowler v5.9.3)
+
+### 🐞 Fixed
+
+- Display error messages and allow editing last message in Lighthouse [(#8358)](https://github.com/prowler-cloud/prowler/pull/8358)
+
+## [v1.9.0] (Prowler v5.9.0)
 
 ### 🚀 Added
 
 - Mutelist configuration form [(#8190)](https://github.com/prowler-cloud/prowler/pull/8190)
 - SAML login integration [(#8203)](https://github.com/prowler-cloud/prowler/pull/8203)
+- Resource view [(#7760)](https://github.com/prowler-cloud/prowler/pull/7760)
 - Navigation link in Scans view to access Compliance Overview [(#8251)](https://github.com/prowler-cloud/prowler/pull/8251)
 - Status column for findings table in the Compliance Detail view [(#8244)](https://github.com/prowler-cloud/prowler/pull/8244)
 - Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
+- Max character limit validation for Scan label [(#8319)](https://github.com/prowler-cloud/prowler/pull/8319)
 
 ### Security
 
@@ -19,10 +39,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Upgrade to Next.js 14.2.30 and lock TypeScript to 5.5.4 for ESLint compatibility [(#8189)](https://github.com/prowler-cloud/prowler/pull/8189)
+- Improved active step highlighting and updated step titles and descriptions in the Cloud Provider credentials update flow [(#8303)](https://github.com/prowler-cloud/prowler/pull/8303)
+- Refactored all existing links across the app to use new custom-link component for consistent styling [(#8341)](https://github.com/prowler-cloud/prowler/pull/8341)
 
 ### 🐞 Fixed
 
 - Error message when launching a scan if user has no permissions [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
+- Include compliance in the download button tooltip [(#8307)](https://github.com/prowler-cloud/prowler/pull/8307)
 
 ### Removed
 
