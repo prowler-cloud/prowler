@@ -199,8 +199,7 @@ class M365PowerShell(PowerShellSession):
         # Test Certificate Auth
         if credentials.certificate_content and credentials.client_id:
             try:
-                self.test_teams_certificate_connection()
-                self.test_exchange_certificate_connection()
+                self.test_teams_certificate_connection() or self.test_exchange_certificate_connection()
                 return True
             except Exception as e:
                 logger.error(f"Exchange Online Certificate connection failed: {e}")
