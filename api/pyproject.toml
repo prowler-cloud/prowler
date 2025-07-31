@@ -25,7 +25,7 @@ dependencies = [
   "djangorestframework-api-key==3.1.0",
   "gunicorn==23.0.0",
   "lxml==5.3.2",
-  "prowler @ /Users/martin/git/prowler",
+  "prowler @ git+https://github.com/prowler-cloud/prowler.git@master",
   "psycopg2-binary==2.9.9",
   "pytest-celery[redis] (>=1.0.1,<2.0.0)",
   "sentry-sdk[django] (>=2.20.0,<3.0.0)",
