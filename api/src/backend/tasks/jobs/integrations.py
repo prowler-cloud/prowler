@@ -71,6 +71,7 @@ def upload_s3_integration(
                 Integration.objects.filter(
                     integrationproviderrelationship__provider_id=provider_id,
                     integration_type=Integration.IntegrationChoices.AMAZON_S3,
+                    enabled=True,
                 )
             )
 
