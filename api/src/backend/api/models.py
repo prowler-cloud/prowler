@@ -27,9 +27,10 @@ from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
-from django.utils.crypto import get_random_string
 import secrets
+from django.utils.crypto import get_random_string
 from rest_framework_api_key.crypto import make_password, Sha512ApiKeyHasher
+from django.contrib.auth.hashers import check_password
 from rest_framework_api_key.models import APIKeyManager
 
 from api.db_router import MainRouter
@@ -230,7 +231,10 @@ class APIKeyManager(APIKeyManager):
             if not prefix:
                 raise self.model.DoesNotExist("Invalid key format")
 
-            queryset = self.get_usable_keys(tenant_id)
+            # Use all keys, not just usable ones, so we can give proper error messages for revoked/expired keys
+            queryset = self.all()
+            if tenant_id:
+                queryset = queryset.filter(tenant_id=tenant_id)
             api_key = queryset.get(prefix=prefix)
 
             if not api_key.is_valid(key):
@@ -351,6 +355,87 @@ class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
     def __str__(self):
         """Return string representation of the API key."""
         return f"API Key: {self.name}"
+
+    @classmethod
+    def generate_key(cls):
+        """
+        Generate a new API key with format pk_XXXXXXXX.YYYYYYYY
+        where XXXXXXXX is an 8-character prefix and YYYYYYYY is a 32-character secret.
+        """
+
+        # Generate prefix: 8 characters, lowercase + digits
+        prefix = get_random_string(
+            length=8, allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789"
+        )
+        # Generate secret: 32 characters, URL-safe base64
+        secret = secrets.token_urlsafe(32)[:32]  # Ensure exactly 32 chars
+
+        return f"pk_{prefix}.{secret}"
+
+    @classmethod
+    def extract_prefix(cls, key):
+        """
+        Extract the prefix from an API key.
+        Validates the key format and returns the 8-character prefix.
+
+        Args:
+            key: API key string in format pk_XXXXXXXX.YYYYYYYY
+
+        Returns:
+            str: The 8-character prefix
+
+        Raises:
+            ValueError: If the key format is invalid
+        """
+        if not key or not isinstance(key, str):
+            raise ValueError("Invalid API key format")
+
+        parts = key.split(".")
+        if len(parts) != 2:
+            raise ValueError("Invalid API key format")
+
+        prefix_part, secret_part = parts
+
+        if not prefix_part.startswith("pk_"):
+            raise ValueError("Invalid API key format")
+
+        prefix = prefix_part[3:]  # Remove "pk_" prefix
+
+        if len(prefix) != 8:
+            raise ValueError("Invalid API key format")
+
+        if len(secret_part) == 0:
+            raise ValueError("Invalid API key format")
+
+        return prefix
+
+    @classmethod
+    def hash_key(cls, key):
+        """
+        Hash an API key using Django's password hashing with salt.
+
+        Args:
+            key: The raw API key string
+
+        Returns:
+            str: The hashed key
+        """
+        # Use Django's default password hashing which includes salt
+        return make_password(key)
+
+    @classmethod
+    def verify_key(cls, key, key_hash):
+        """
+        Verify an API key against its hash.
+
+        Args:
+            key: The raw API key string
+            key_hash: The hashed key to verify against
+
+        Returns:
+            bool: True if the key matches the hash, False otherwise
+        """
+        return check_password(key, key_hash)
 
 
 class Membership(models.Model):

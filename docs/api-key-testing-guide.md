@@ -1,7 +1,5 @@
 # API Key Testing Guide for Local Docker Deployment
 
-> **✅ Issue Resolved**: The API key authentication bug that was causing "Invalid API key" errors has been fixed. API keys now work correctly for all endpoints.
-
 This guide walks you through setting up and testing API keys on your local Prowler Docker deployment.
 
 ## Prerequisites
@@ -11,7 +9,7 @@ This guide walks you through setting up and testing API keys on your local Prowl
 
 ## Important: API Key Role Requirement
 
-**As of the latest version, all API keys must be associated with a role.** When creating an API key, you must specify a role that defines the permissions for that key. 
+When creating an API key, you must specify a role that defines the permissions for that key.
 
 ### ⚠️ Important Format Note
 
@@ -189,7 +187,7 @@ You should see structured log entries showing:
 - Response status and timing
 - Authentication method confirmation
 
-## 7. Testing Security Features
+## Testing Security Features
 
 ### Test Invalid API Key
 
@@ -245,7 +243,7 @@ echo "Created expiring key: $EXPIRING_API_KEY"
 echo "Wait 1 minute, then test with: curl -X GET http://localhost:8080/api/v1/providers -H \"Authorization: ApiKey $EXPIRING_API_KEY\""
 ```
 
-## 8. Advanced Testing Scenarios
+## Advanced Testing Scenarios
 
 ### Test Concurrent API Key Usage
 
@@ -287,7 +285,7 @@ curl -X GET http://localhost:8080/api/v1/providers \
   -H "Authorization: ApiKey $API_KEY"
 ```
 
-## 10. Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 

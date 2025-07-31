@@ -6935,7 +6935,7 @@ class TestAPIKeyCRUDEndpoints:
         api_key = APIKey.objects.create(
             name="Existing API Key",
             tenant_id=tenant.id,
-            key_hash=key_hash,
+            hashed_key=key_hash,
             prefix=prefix,
             expiry_date=None,
             revoked=False,
@@ -6955,7 +6955,7 @@ class TestAPIKeyCRUDEndpoints:
         api_key = APIKey.objects.create(
             name="Revoked API Key",
             tenant_id=tenant.id,
-            key_hash=key_hash,
+            hashed_key=key_hash,
             prefix=prefix,
             expiry_date=None,
             revoked=True,
@@ -7287,7 +7287,7 @@ class TestAPIKeyCRUDEndpoints:
             key_hash = APIKey.hash_key(raw_key)
 
             APIKey.objects.create(
-                name=name, tenant_id=tenant.id, key_hash=key_hash, prefix=prefix
+                name=name, tenant_id=tenant.id, hashed_key=key_hash, prefix=prefix
             )
 
         # Test exact name filter
@@ -7325,7 +7325,10 @@ class TestAPIKeyCRUDEndpoints:
         key_hash = APIKey.hash_key(raw_key)
 
         APIKey.objects.create(
-            name="Date Test Key", tenant_id=tenant.id, key_hash=key_hash, prefix=prefix
+            name="Date Test Key",
+            tenant_id=tenant.id,
+            hashed_key=key_hash,
+            prefix=prefix,
         )
 
         today = timezone.now().date().isoformat()
@@ -7352,7 +7355,7 @@ class TestAPIKeyCRUDEndpoints:
             key_hash = APIKey.hash_key(raw_key)
 
             APIKey.objects.create(
-                name=name, tenant_id=tenant.id, key_hash=key_hash, prefix=prefix
+                name=name, tenant_id=tenant.id, hashed_key=key_hash, prefix=prefix
             )
             time.sleep(0.01)  # Small delay to ensure different timestamps
 
@@ -7381,7 +7384,7 @@ class TestAPIKeyCRUDEndpoints:
             APIKey.objects.create(
                 name=f"Key {i:02d}",
                 tenant_id=tenant.id,
-                key_hash=key_hash,
+                hashed_key=key_hash,
                 prefix=prefix,
             )
 
@@ -7412,7 +7415,7 @@ class TestAPIKeyCRUDEndpoints:
         APIKey.objects.create(
             name="Existing Key",
             tenant_id=tenant.id,
-            key_hash=existing_hash,
+            hashed_key=existing_hash,
             prefix=existing_prefix,
         )
 
@@ -7467,7 +7470,7 @@ class TestAPIKeyRBAC:
         api_key = APIKey.objects.create(
             name="Test RBAC Key",
             tenant_id=tenant.id,
-            key_hash=key_hash,
+            hashed_key=key_hash,
             prefix=prefix,
             role=limited_role,
         )

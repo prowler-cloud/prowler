@@ -10,7 +10,7 @@ from datetime import timedelta
 from rest_framework import exceptions
 
 from api.authentication import APIKeyAuthentication
-from api.models import APIKey, APIKeyUser, Tenant
+from api.models import APIKey, APIKeyUser, Tenant, Role
 
 
 @pytest.mark.django_db
@@ -33,17 +33,22 @@ class TestAPIKeyAuthentication:
         return Tenant.objects.create(name="Test Tenant")
 
     @pytest.fixture
-    def valid_api_key(self, tenant):
-        """Create a valid API key for testing."""
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
+    def role(self, tenant):
+        """Create a test role."""
+        return Role.objects.create(
+            name="Test Role",
+            tenant_id=tenant.id,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
 
-        api_key = APIKey.objects.create(
+    @pytest.fixture
+    def valid_api_key(self, tenant, role):
+        """Create a valid API key for testing."""
+        api_key, raw_key = APIKey.objects.create_key(
             name="Test API Key",
             tenant_id=tenant.id,
-            key_hash=key_hash,
-            prefix=prefix,
+            role=role,
             expiry_date=None,
             revoked=False,
         )
@@ -218,8 +223,10 @@ class TestAPIKeyAuthentication:
         """Test that failed last_used_at update doesn't prevent authentication."""
         request = request_factory.get("/api/v1/test")
 
-        # Mock save to raise an exception
-        with patch.object(valid_api_key, "save", side_effect=Exception("DB Error")):
+        # Mock update_last_used to raise an exception
+        with patch.object(
+            APIKey, "update_last_used", side_effect=Exception("DB Error")
+        ):
             # Authentication should still succeed
             user, auth_info = auth_instance.authenticate_credentials(
                 valid_api_key._raw_key, request

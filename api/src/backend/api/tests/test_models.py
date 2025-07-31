@@ -446,7 +446,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Test Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey1",
             expiry_date=None,  # No expiration
             revoked=False,  # Not revoked
@@ -460,7 +460,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Expired Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey2",
             expiry_date=past_time,
             revoked=False,
@@ -474,7 +474,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Future Expiry Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey3",
             expiry_date=future_time,
             revoked=False,
@@ -487,7 +487,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Revoked Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey4",
             expiry_date=None,
             revoked=True,
@@ -501,7 +501,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Revoked and Expired Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey5",
             expiry_date=past_time,
             revoked=True,
@@ -514,7 +514,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Key to Revoke",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey6",
             expiry_date=None,
             revoked=False,
@@ -536,7 +536,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Key to Double Revoke",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey7",
             expiry_date=None,
             revoked=False,
@@ -559,7 +559,7 @@ class TestAPIKeyModel:
         api_key = APIKey(
             name="Key without prefix",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="",  # Empty prefix should cause error
         )
 
@@ -573,7 +573,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Test API Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash",
+            hashed_key="dummy_hash",
             prefix="testkey8",
         )
 
@@ -586,7 +586,7 @@ class TestAPIKeyModel:
         APIKey.objects.create(
             name="First Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash1",
+            hashed_key="dummy_hash1",
             prefix="testkey9",
         )
 
@@ -595,7 +595,7 @@ class TestAPIKeyModel:
         APIKey.objects.create(
             name="Second Key",
             tenant_id=tenant.id,
-            key_hash="dummy_hash2",
+            hashed_key="dummy_hash2",
             prefix="testkey9",
         )
 
@@ -615,7 +615,7 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Generated Key Test",
             tenant_id=tenant.id,
-            key_hash=key_hash,
+            hashed_key=key_hash,
             prefix=prefix,
         )
 

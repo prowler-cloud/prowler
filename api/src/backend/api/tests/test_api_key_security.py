@@ -16,7 +16,7 @@ from django.test import RequestFactory
 from django.utils import timezone
 from datetime import timedelta
 
-from api.models import APIKey, Tenant
+from api.models import APIKey, Tenant, Role
 from api.authentication import APIKeyAuthentication
 from api.middleware import APILoggingMiddleware
 from rest_framework import exceptions
@@ -32,58 +32,50 @@ class TestAPIKeySecurityScenarios:
         return Tenant.objects.create(name="Security Test Tenant")
 
     @pytest.fixture
-    def valid_api_key(self, tenant):
+    def role(self, tenant):
+        """Create a test role."""
+        return Role.objects.create(
+            name="Test Role",
+            tenant_id=tenant.id,
+        )
+
+    @pytest.fixture
+    def valid_api_key(self, tenant, role):
         """Create a valid API key for security testing."""
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
-
-        api_key = APIKey.objects.create(
+        api_key, raw_key = APIKey.objects.create_key(
+            tenant_id=tenant.id,
+            role=role,
             name="Security Test Key",
-            tenant_id=tenant.id,
-            key_hash=key_hash,
-            prefix=prefix,
-            expiry_date=None,
-            revoked=False,
         )
 
         api_key._raw_key = raw_key
         return api_key
 
     @pytest.fixture
-    def expired_api_key(self, tenant):
+    def expired_api_key(self, tenant, role):
         """Create an expired API key."""
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
-
-        api_key = APIKey.objects.create(
-            name="Expired Security Key",
+        api_key, raw_key = APIKey.objects.create_key(
             tenant_id=tenant.id,
-            key_hash=key_hash,
-            prefix=prefix,
+            role=role,
+            name="Expired Security Key",
             expiry_date=timezone.now() - timedelta(hours=1),
-            revoked=False,
         )
 
         api_key._raw_key = raw_key
         return api_key
 
     @pytest.fixture
-    def revoked_api_key(self, tenant):
+    def revoked_api_key(self, tenant, role):
         """Create a revoked API key."""
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
-
-        api_key = APIKey.objects.create(
-            name="Revoked Security Key",
+        api_key, raw_key = APIKey.objects.create_key(
             tenant_id=tenant.id,
-            key_hash=key_hash,
-            prefix=prefix,
-            expiry_date=None,
-            revoked=True,
+            role=role,
+            name="Revoked Security Key",
         )
+
+        # Revoke the key after creation
+        api_key.revoked = True
+        api_key.save()
 
         api_key._raw_key = raw_key
         return api_key
@@ -146,43 +138,46 @@ class TestAPIKeySecurityScenarios:
             ):
                 auth.authenticate_credentials(invalid_key, request)
 
-    def test_prefix_collision_security_isolation(self, tenant):
-        """Test that prefix collisions don't allow cross-key authentication."""
-        # Create two keys with same prefix but different random parts
-        prefix = "samepref"
-
-        # First key
-        key1 = f"pk_{prefix}.abcdef123456789012345678901234"
-        hash1 = APIKey.hash_key(key1)
-        api_key1 = APIKey.objects.create(
-            name="Key 1", tenant_id=tenant.id, key_hash=hash1, prefix=prefix
+    def test_prefix_collision_security_isolation(self, tenant, role):
+        """Test that similar prefixes don't allow cross-key authentication."""
+        # Create two keys with different prefixes
+        api_key1, raw_key1 = APIKey.objects.create_key(
+            tenant_id=tenant.id, role=role, name="Key 1"
         )
 
-        # Second key with same prefix
-        key2 = f"pk_{prefix}.different123456789012345678901"
-        hash2 = APIKey.hash_key(key2)
-        api_key2 = APIKey.objects.create(
-            name="Key 2", tenant_id=tenant.id, key_hash=hash2, prefix=prefix
+        api_key2, raw_key2 = APIKey.objects.create_key(
+            tenant_id=tenant.id, role=role, name="Key 2"
         )
 
         auth = APIKeyAuthentication()
         factory = RequestFactory()
         request = factory.get("/api/v1/test")
 
-        # Key 1 should only authenticate with its own hash
-        user, auth_info = auth.authenticate_credentials(key1, request)
+        # Key 1 should only authenticate with its own secret
+        user, auth_info = auth.authenticate_credentials(raw_key1, request)
         assert auth_info["api_key_id"] == str(api_key1.id)
 
-        # Key 2 should only authenticate with its own hash
-        user, auth_info = auth.authenticate_credentials(key2, request)
+        # Key 2 should only authenticate with its own secret
+        user, auth_info = auth.authenticate_credentials(raw_key2, request)
         assert auth_info["api_key_id"] == str(api_key2.id)
 
-        # Wrong key should fail
-        wrong_key = f"pk_{prefix}.wrongkey123456789012345678901"
-        with pytest.raises(exceptions.AuthenticationFailed, match="Invalid API key"):
-            auth.authenticate_credentials(wrong_key, request)
+        # Test that mixing prefixes and secrets fails
+        prefix1 = APIKey.extract_prefix(raw_key1)
+        prefix2 = APIKey.extract_prefix(raw_key2)
+        _, secret1 = raw_key1.split(".", 1)
+        _, secret2 = raw_key2.split(".", 1)
 
-    def test_key_expiry_edge_case_timing(self, tenant):
+        # Wrong combinations should fail
+        wrong_key1 = f"{prefix1}.{secret2}"  # Key 1's prefix with Key 2's secret
+        wrong_key2 = f"{prefix2}.{secret1}"  # Key 2's prefix with Key 1's secret
+
+        with pytest.raises(exceptions.AuthenticationFailed, match="Invalid API key"):
+            auth.authenticate_credentials(wrong_key1, request)
+
+        with pytest.raises(exceptions.AuthenticationFailed, match="Invalid API key"):
+            auth.authenticate_credentials(wrong_key2, request)
+
+    def test_key_expiry_edge_case_timing(self, tenant, role):
         """Test key expiry at exact boundary conditions."""
         # Create a key that expires in 1 second
         raw_key = APIKey.generate_key()
@@ -193,7 +188,8 @@ class TestAPIKeySecurityScenarios:
         api_key = APIKey.objects.create(
             name="Edge Case Key",
             tenant_id=tenant.id,
-            key_hash=key_hash,
+            role=role,
+            hashed_key=key_hash,
             prefix=prefix,
             expiry_date=future_time,
             revoked=False,
@@ -259,7 +255,7 @@ class TestAPIKeySecurityScenarios:
                 call_args = mock_logger.info.call_args
 
                 # Check the log message contains API key info
-                assert "API Key:" in call_args[0][0]
+                assert "[API Key:" in call_args[0][0]
 
                 # Check the extra data contains security-relevant information
                 extra_data = call_args[1]["extra"]
@@ -271,18 +267,11 @@ class TestAPIKeySecurityScenarios:
                 assert extra_data["path"] == "/api/v1/sensitive-endpoint"
                 assert extra_data["is_api_key_request"] is True
 
-    def test_api_key_brute_force_protection_simulation(self, tenant):
+    def test_api_key_brute_force_protection_simulation(self, tenant, role):
         """Test simulation of brute force attacks on API key validation."""
         # Create a valid key
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
-
-        api_key = APIKey.objects.create(
-            name="Brute Force Test Key",
-            tenant_id=tenant.id,
-            key_hash=key_hash,
-            prefix=prefix,
+        api_key, raw_key = APIKey.objects.create_key(
+            tenant_id=tenant.id, role=role, name="Brute Force Test Key"
         )
 
         auth = APIKeyAuthentication()
@@ -290,9 +279,10 @@ class TestAPIKeySecurityScenarios:
         request = factory.get("/api/v1/test")
 
         # Simulate multiple failed attempts with wrong keys
+        prefix = APIKey.extract_prefix(raw_key)
         failed_attempts = 0
         for i in range(10):
-            wrong_key = f"pk_{prefix}.wrong{i:026d}"  # Same prefix, wrong random part
+            wrong_key = f"{prefix}.wrong{i:026d}"  # Same prefix, wrong random part
             try:
                 auth.authenticate_credentials(wrong_key, request)
             except exceptions.AuthenticationFailed:
@@ -343,30 +333,25 @@ class TestAPIKeySecurityScenarios:
         # Most prefixes should be unique (allowing for very rare collisions)
         assert len(prefixes) >= 990  # 99% uniqueness threshold
 
-    def test_tenant_isolation_security(self, tenant):
+    def test_tenant_isolation_security(self, tenant, role):
         """Test that API keys are properly isolated between tenants."""
         # Create second tenant
         tenant2 = Tenant.objects.create(name="Second Tenant")
 
-        # Create API key for first tenant
-        raw_key1 = APIKey.generate_key()
-        prefix1 = APIKey.extract_prefix(raw_key1)
-        key_hash1 = APIKey.hash_key(raw_key1)
+        # Create role for second tenant
+        role2 = Role.objects.create(
+            name="Test Role 2",
+            tenant_id=tenant2.id,
+        )
 
-        api_key1 = APIKey.objects.create(
-            name="Tenant 1 Key", tenant_id=tenant.id, key_hash=key_hash1, prefix=prefix1
+        # Create API key for first tenant
+        api_key1, raw_key1 = APIKey.objects.create_key(
+            tenant_id=tenant.id, role=role, name="Tenant 1 Key"
         )
 
         # Create API key for second tenant
-        raw_key2 = APIKey.generate_key()
-        prefix2 = APIKey.extract_prefix(raw_key2)
-        key_hash2 = APIKey.hash_key(raw_key2)
-
-        api_key2 = APIKey.objects.create(
-            name="Tenant 2 Key",
-            tenant_id=tenant2.id,
-            key_hash=key_hash2,
-            prefix=prefix2,
+        api_key2, raw_key2 = APIKey.objects.create_key(
+            tenant_id=tenant2.id, role=role2, name="Tenant 2 Key"
         )
 
         # Keys should authenticate to their respective tenants
@@ -389,7 +374,7 @@ class TestAPIKeySecurityScenarios:
         assert api_key2 in tenant2_keys
         assert api_key2 not in tenant1_keys
 
-    def test_key_validation_performance_security(self, tenant):
+    def test_key_validation_performance_security(self, tenant, role):
         """Test that key validation doesn't have timing vulnerabilities."""
         # Create a valid key
         raw_key = APIKey.generate_key()
@@ -399,7 +384,8 @@ class TestAPIKeySecurityScenarios:
         APIKey.objects.create(
             name="Performance Test Key",
             tenant_id=tenant.id,
-            key_hash=key_hash,
+            role=role,
+            hashed_key=key_hash,
             prefix=prefix,
         )
 
@@ -444,15 +430,15 @@ class TestAPIKeySecurityScenarios:
         db_api_key = APIKey.objects.get(id=valid_api_key.id)
 
         # Check that no field contains the raw key
-        for field_name in ["name", "key_hash", "prefix"]:
+        for field_name in ["name", "hashed_key", "prefix"]:
             field_value = getattr(db_api_key, field_name)
             assert valid_api_key._raw_key not in str(field_value)
 
-        # The key_hash should be a hashed version, not the raw key
-        assert db_api_key.key_hash != valid_api_key._raw_key
-        assert len(db_api_key.key_hash) > len(valid_api_key._raw_key)
+        # The hashed_key should be a hashed version, not the raw key
+        assert db_api_key.hashed_key != valid_api_key._raw_key
+        assert len(db_api_key.hashed_key) > len(valid_api_key._raw_key)
 
         # Prefix should only contain the prefix part, not the full key
-        expected_prefix = APIKey.extract_prefix(valid_api_key._raw_key)
+        expected_prefix = f"pk_{APIKey.extract_prefix(valid_api_key._raw_key)}"
         assert db_api_key.prefix == expected_prefix
         assert valid_api_key._raw_key not in db_api_key.prefix

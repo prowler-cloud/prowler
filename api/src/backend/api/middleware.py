@@ -10,16 +10,19 @@ def extract_auth_info(request) -> Dict[str, Optional[str]]:
     user_id = None
     tenant_id = None
     api_key_id = None
+    api_key_name = None
 
     if hasattr(request, "auth") and request.auth:
         user_id = request.auth.get("user_id")
         tenant_id = request.auth.get("tenant_id")
         api_key_id = request.auth.get("api_key_id")
+        api_key_name = request.auth.get("api_key_name")
 
     return {
         "user_id": user_id,
         "tenant_id": tenant_id,
         "api_key_id": api_key_id,
+        "api_key_name": api_key_name,
     }
 
 

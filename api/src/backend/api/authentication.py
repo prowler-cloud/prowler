@@ -47,6 +47,13 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         """
         logger.debug(f"Authenticating API key: {key[:10]}...")
 
+        # First validate the API key format
+        try:
+            APIKey.extract_prefix(key)
+        except ValueError:
+            logger.info("API key format validation failed")
+            raise exceptions.AuthenticationFailed("Invalid API key format")
+
         try:
             # Use admin database to bypass RLS since we don't have tenant context yet
             # This is necessary because we need to authenticate the API key to GET the tenant context
