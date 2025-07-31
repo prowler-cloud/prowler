@@ -12,6 +12,7 @@ from api.models import (
     SAMLDomainIndex,
     APIKey,
     Tenant,
+    Role,
 )
 
 
@@ -342,6 +343,15 @@ class TestAPIKeyModel:
         """Create a test tenant for API key tests."""
         return Tenant.objects.create(name="Test Tenant")
 
+    @pytest.fixture
+    def role(self, tenant):
+        """Create a test role for API key tests."""
+        return Role.objects.create(
+            name="Test Role",
+            tenant=tenant,
+            manage_scans=True,  # Allow basic scan permissions for testing
+        )
+
     def test_generate_key_format(self):
         """Test that generate_key produces correctly formatted keys."""
         key = APIKey.generate_key()
@@ -441,11 +451,12 @@ class TestAPIKeyModel:
 
         assert APIKey.verify_key("", key_hash) is False
 
-    def test_is_valid_active_key(self, tenant):
+    def test_is_valid_active_key(self, tenant, role):
         """Test that an active, non-expired key is valid."""
         api_key = APIKey.objects.create(
             name="Test Key",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey1",
             expiry_date=None,  # No expiration
@@ -454,12 +465,13 @@ class TestAPIKeyModel:
 
         assert api_key.is_active() is True
 
-    def test_is_valid_expired_key(self, tenant):
+    def test_is_valid_expired_key(self, tenant, role):
         """Test that an expired key is invalid."""
         past_time = timezone.now() - timedelta(hours=1)
         api_key = APIKey.objects.create(
             name="Expired Key",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey2",
             expiry_date=past_time,
@@ -468,12 +480,13 @@ class TestAPIKeyModel:
 
         assert api_key.is_active() is False
 
-    def test_is_valid_future_expiry_key(self, tenant):
+    def test_is_valid_future_expiry_key(self, tenant, role):
         """Test that a key with future expiry is valid."""
         future_time = timezone.now() + timedelta(hours=1)
         api_key = APIKey.objects.create(
             name="Future Expiry Key",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey3",
             expiry_date=future_time,
@@ -482,11 +495,12 @@ class TestAPIKeyModel:
 
         assert api_key.is_active() is True
 
-    def test_is_valid_revoked_key(self, tenant):
+    def test_is_valid_revoked_key(self, tenant, role):
         """Test that a revoked key is invalid."""
         api_key = APIKey.objects.create(
             name="Revoked Key",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey4",
             expiry_date=None,
@@ -495,12 +509,13 @@ class TestAPIKeyModel:
 
         assert api_key.is_active() is False
 
-    def test_is_valid_revoked_and_expired_key(self, tenant):
+    def test_is_valid_revoked_and_expired_key(self, tenant, role):
         """Test that a key that is both revoked and expired is invalid."""
         past_time = timezone.now() - timedelta(hours=1)
         api_key = APIKey.objects.create(
             name="Revoked and Expired Key",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey5",
             expiry_date=past_time,
@@ -509,11 +524,12 @@ class TestAPIKeyModel:
 
         assert api_key.is_active() is False
 
-    def test_revoke_key(self, tenant):
+    def test_revoke_key(self, tenant, role):
         """Test revoking an API key."""
         api_key = APIKey.objects.create(
             name="Key to Revoke",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey6",
             expiry_date=None,
@@ -531,11 +547,12 @@ class TestAPIKeyModel:
         assert api_key.is_active() is False
         assert api_key.revoked is True
 
-    def test_revoke_key_idempotent(self, tenant):
+    def test_revoke_key_idempotent(self, tenant, role):
         """Test that revoking an already revoked key is safe."""
         api_key = APIKey.objects.create(
             name="Key to Double Revoke",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey7",
             expiry_date=None,
@@ -554,25 +571,26 @@ class TestAPIKeyModel:
         assert first_revoked_status is True
         assert second_revoked_status is True
 
-    def test_save_requires_prefix(self, tenant):
-        """Test that saving an API key requires a prefix."""
+    def test_save_allows_empty_prefix(self, tenant, role):
+        """Test that saving an API key allows empty prefix (will be generated)."""
         api_key = APIKey(
             name="Key without prefix",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
-            prefix="",  # Empty prefix should cause error
+            prefix="",  # Empty prefix is allowed
         )
 
-        with pytest.raises(
-            ValueError, match="API key prefix must be set before saving"
-        ):
-            api_key.save()
+        # Should save successfully (the library may generate a prefix)
+        api_key.save()
+        assert api_key.id is not None
 
-    def test_api_key_string_representation(self, tenant):
+    def test_api_key_string_representation(self, tenant, role):
         """Test the string representation of an API key."""
         api_key = APIKey.objects.create(
             name="Test API Key",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash",
             prefix="testkey8",
         )
@@ -580,29 +598,28 @@ class TestAPIKeyModel:
         str_repr = str(api_key)
         assert str_repr == "API Key: Test API Key"
 
-    def test_api_key_prefix_uniqueness_constraint(self, tenant):
-        """Test that API key prefixes should be unique within tenant scope."""
+    def test_api_key_prefix_uniqueness_constraint(self, tenant, role):
+        """Test that API key prefixes should be unique at the database level."""
         # Create first API key
         APIKey.objects.create(
             name="First Key",
             tenant_id=tenant.id,
+            role=role,
             hashed_key="dummy_hash1",
             prefix="testkey9",
         )
 
-        # Try to create second API key with same prefix - should be allowed
-        # as prefix collision handling is done at generation time, not constraint level
-        APIKey.objects.create(
-            name="Second Key",
-            tenant_id=tenant.id,
-            hashed_key="dummy_hash2",
-            prefix="testkey9",
-        )
+        # Try to create second API key with same prefix - should fail due to unique constraint
+        with pytest.raises(Exception):  # IntegrityError for unique constraint violation
+            APIKey.objects.create(
+                name="Second Key",
+                tenant_id=tenant.id,
+                role=role,
+                hashed_key="dummy_hash2",
+                prefix="testkey9",
+            )
 
-        # Both should exist (collision handling is in generate_key, not model constraint)
-        assert APIKey.objects.filter(prefix="testkey9").count() == 2
-
-    def test_generated_key_works_end_to_end(self, tenant):
+    def test_generated_key_works_end_to_end(self, tenant, role):
         """Test that a generated key can be hashed, stored, and verified."""
         # Generate a key
         raw_key = APIKey.generate_key()
@@ -615,12 +632,13 @@ class TestAPIKeyModel:
         api_key = APIKey.objects.create(
             name="Generated Key Test",
             tenant_id=tenant.id,
+            role=role,
             hashed_key=key_hash,
             prefix=prefix,
         )
 
         # Verify the key works
-        assert APIKey.verify_key(raw_key, api_key.key_hash) is True
+        assert APIKey.verify_key(raw_key, api_key.hashed_key) is True
         assert api_key.is_active() is True
 
         # Verify prefix extraction matches

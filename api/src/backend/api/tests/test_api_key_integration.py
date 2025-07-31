@@ -902,7 +902,7 @@ class TestAPIKeyTestingGuideWorkflow:
             if hasattr(api_key_response, "json"):
                 try:
                     print(f"Response JSON: {api_key_response.json()}")
-                except Exception:
+                except (ValueError, TypeError):
                     pass
         assert api_key_response.status_code == status.HTTP_201_CREATED
         api_key = api_key_response.json()["data"]["attributes"]["key"]

@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from uuid import UUID, uuid4
 
 from allauth.socialaccount.models import SocialApp
@@ -1719,11 +1719,11 @@ class SAMLToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
-            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+            self.expires_at = datetime.now(dt_timezone.utc) + timedelta(seconds=15)
         super().save(*args, **kwargs)
 
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) >= self.expires_at
+        return datetime.now(dt_timezone.utc) >= self.expires_at
 
 
 class SAMLDomainIndex(models.Model):

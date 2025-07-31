@@ -3850,7 +3850,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": "any_email@prowler.com",
-                    "expiry_date": self.TOMORROW_ISO,
+                    "expires_at": self.TOMORROW_ISO,
                 },
                 "relationships": {
                     "roles": {
@@ -3870,9 +3870,9 @@ class TestInvitationViewSet:
             response.json()["data"]["attributes"]["email"]
             == data["data"]["attributes"]["email"]
         )
-        assert response.json()["data"]["attributes"]["expiry_date"] == data["data"][
+        assert response.json()["data"]["attributes"]["expires_at"] == data["data"][
             "attributes"
-        ]["expiry_date"].replace("+00:00", "Z")
+        ]["expires_at"].replace("+00:00", "Z")
         assert (
             response.json()["data"]["attributes"]["state"]
             == Invitation.State.PENDING.value
@@ -3900,7 +3900,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": email,
-                    "expiry_date": self.TOMORROW_ISO,
+                    "expires_at": self.TOMORROW_ISO,
                 },
             }
         }
@@ -3921,7 +3921,7 @@ class TestInvitationViewSet:
             == "/data/relationships/roles"
         )
 
-    def test_invitations_create_invalid_expiry_date(
+    def test_invitations_create_invalid_expires_at(
         self, authenticated_client, invitations_fixture
     ):
         data = {
@@ -3929,7 +3929,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": "thisisarandomemail@prowler.com",
-                    "expiry_date": (
+                    "expires_at": (
                         datetime.now(timezone.utc) + timedelta(hours=23)
                     ).isoformat(),
                 },
@@ -3944,7 +3944,7 @@ class TestInvitationViewSet:
         assert response.json()["errors"][0]["code"] == "invalid"
         assert (
             response.json()["errors"][0]["source"]["pointer"]
-            == "/data/attributes/expiry_date"
+            == "/data/attributes/expires_at"
         )
         assert response.json()["errors"][1]["code"] == "required"
         assert (
@@ -3958,15 +3958,15 @@ class TestInvitationViewSet:
         invitation, *_ = invitations_fixture
         role1, role2, *_ = roles_fixture
         new_email = "new_email@prowler.com"
-        new_expiry_date = datetime.now(timezone.utc) + timedelta(days=7)
-        new_expiry_date_iso = new_expiry_date.isoformat()
+        new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        new_expires_at_iso = new_expires_at.isoformat()
         data = {
             "data": {
                 "id": str(invitation.id),
                 "type": "invitations",
                 "attributes": {
                     "email": new_email,
-                    "expiry_date": new_expiry_date_iso,
+                    "expires_at": new_expires_at_iso,
                 },
                 "relationships": {
                     "roles": {
@@ -3979,7 +3979,7 @@ class TestInvitationViewSet:
             }
         }
         assert invitation.email != new_email
-        assert invitation.expiry_date != new_expiry_date
+        assert invitation.expires_at != new_expires_at
 
         response = authenticated_client.patch(
             reverse(
@@ -3993,7 +3993,7 @@ class TestInvitationViewSet:
         invitation.refresh_from_db()
 
         assert invitation.email == new_email
-        assert invitation.expiry_date == new_expiry_date
+        assert invitation.expires_at == new_expires_at
         assert invitation.roles.count() == 2
 
     @pytest.mark.parametrize(
@@ -4017,7 +4017,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": email,
-                    "expiry_date": self.TOMORROW_ISO,
+                    "expires_at": self.TOMORROW_ISO,
                 },
             }
         }
@@ -4036,7 +4036,7 @@ class TestInvitationViewSet:
             == "/data/attributes/email"
         )
 
-    def test_invitations_partial_update_invalid_expiry_date(
+    def test_invitations_partial_update_invalid_expires_at(
         self, authenticated_client, invitations_fixture
     ):
         invitation, *_ = invitations_fixture
@@ -4045,7 +4045,7 @@ class TestInvitationViewSet:
                 "id": str(invitation.id),
                 "type": "invitations",
                 "attributes": {
-                    "expiry_date": (
+                    "expires_at": (
                         datetime.now(timezone.utc) + timedelta(hours=23)
                     ).isoformat(),
                 },
@@ -4063,7 +4063,7 @@ class TestInvitationViewSet:
         assert response.json()["errors"][0]["code"] == "invalid"
         assert (
             response.json()["errors"][0]["source"]["pointer"]
-            == "/data/attributes/expiry_date"
+            == "/data/attributes/expires_at"
         )
 
     def test_invitations_partial_update_invalid_content_type(
@@ -4183,7 +4183,7 @@ class TestInvitationViewSet:
             tenant=tenant,
             email=TEST_USER,
             inviter=user,
-            expiry_date=self.TOMORROW,
+            expires_at=self.TOMORROW,
         )
 
         data = {
@@ -4220,7 +4220,7 @@ class TestInvitationViewSet:
         self, authenticated_client, invitations_fixture
     ):
         invitation, *_ = invitations_fixture
-        invitation.expiry_date = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
         invitation.email = TEST_USER
         invitation.save()
 
@@ -4239,7 +4239,7 @@ class TestInvitationViewSet:
     ):
         new_email = "new_email@prowler.com"
         invitation, *_ = invitations_fixture
-        invitation.expiry_date = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
         invitation.email = new_email
         invitation.save()
 
@@ -4311,9 +4311,9 @@ class TestInvitationViewSet:
                 ("inserted_at.lte", "2024-01-01", 0),
                 ("updated_at.gte", "2024-01-01", 2),
                 ("updated_at.lte", "2024-01-01", 0),
-                ("expiry_date.gte", TODAY, 1),
-                ("expiry_date.lte", TODAY, 1),
-                ("expiry_date", TODAY, 0),
+                ("expires_at.gte", TODAY, 1),
+                ("expires_at.lte", TODAY, 1),
+                ("expires_at", TODAY, 0),
                 ("email", "testing@prowler.com", 2),
                 ("email.icontains", "testing", 2),
                 ("inviter", "", 2),
@@ -4354,7 +4354,7 @@ class TestInvitationViewSet:
         [
             "inserted_at",
             "updated_at",
-            "expiry_date",
+            "expires_at",
             "state",
             "inviter",
         ],
@@ -6012,7 +6012,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=valid_token_data,
             user=user,
-            expiry_date=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -6038,7 +6038,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=expired_token_data,
             user=user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(seconds=1),
+            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
         )
 
         url = reverse("token-saml")
@@ -6057,7 +6057,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=token_data,
             user=user,
-            expiry_date=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -6925,41 +6925,35 @@ class TestAPIKeyCRUDEndpoints:
         }
 
     @pytest.fixture
-    def existing_api_key(self, tenants_fixture):
+    def existing_api_key(self, tenants_fixture, roles_fixture):
         """Create an existing API key for testing."""
         tenant = tenants_fixture[0]
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
+        role = roles_fixture[0]
 
-        api_key = APIKey.objects.create(
-            name="Existing API Key",
+        api_key, raw_key = APIKey.objects.create_key(
             tenant_id=tenant.id,
-            hashed_key=key_hash,
-            prefix=prefix,
+            role=role,
+            name="Existing API Key",
             expiry_date=None,
-            revoked=False,
         )
 
         api_key._raw_key = raw_key
         return api_key
 
     @pytest.fixture
-    def revoked_api_key(self, tenants_fixture):
+    def revoked_api_key(self, tenants_fixture, roles_fixture):
         """Create a revoked API key for testing."""
         tenant = tenants_fixture[0]
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
+        role = roles_fixture[0]
 
-        api_key = APIKey.objects.create(
-            name="Revoked API Key",
+        api_key, raw_key = APIKey.objects.create_key(
             tenant_id=tenant.id,
-            hashed_key=key_hash,
-            prefix=prefix,
+            role=role,
+            name="Revoked API Key",
             expiry_date=None,
-            revoked=True,
         )
+        # Revoke the key after creation
+        api_key.revoke()
 
         api_key._raw_key = raw_key
         return api_key
@@ -7276,18 +7270,19 @@ class TestAPIKeyCRUDEndpoints:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def _test_api_key_filtering_by_name(self, authenticated_client, tenants_fixture):
+    def _test_api_key_filtering_by_name(
+        self, authenticated_client, tenants_fixture, roles_fixture
+    ):
         """Test filtering API keys by name."""
         tenant = tenants_fixture[0]
+        role = roles_fixture[0]
 
         # Create multiple API keys
         for i, name in enumerate(["Alpha Key", "Beta Key", "Alpha Test"]):
-            raw_key = APIKey.generate_key()
-            prefix = APIKey.extract_prefix(raw_key)
-            key_hash = APIKey.hash_key(raw_key)
-
-            APIKey.objects.create(
-                name=name, tenant_id=tenant.id, hashed_key=key_hash, prefix=prefix
+            APIKey.objects.create_key(
+                tenant_id=tenant.id,
+                role=role,
+                name=name,
             )
 
         # Test exact name filter
@@ -7312,23 +7307,19 @@ class TestAPIKeyCRUDEndpoints:
         assert len(data) == 2  # "Alpha Key" and "Alpha Test"
 
     def _test_api_key_filtering_by_creation_date(
-        self, authenticated_client, tenants_fixture
+        self, authenticated_client, tenants_fixture, roles_fixture
     ):
         """Test filtering API keys by creation date."""
         from django.utils import timezone
 
         tenant = tenants_fixture[0]
+        role = roles_fixture[0]
 
         # Create an API key
-        raw_key = APIKey.generate_key()
-        prefix = APIKey.extract_prefix(raw_key)
-        key_hash = APIKey.hash_key(raw_key)
-
-        APIKey.objects.create(
-            name="Date Test Key",
+        APIKey.objects.create_key(
             tenant_id=tenant.id,
-            hashed_key=key_hash,
-            prefix=prefix,
+            role=role,
+            name="Date Test Key",
         )
 
         today = timezone.now().date().isoformat()
@@ -7342,20 +7333,21 @@ class TestAPIKeyCRUDEndpoints:
         data = response.json()["data"]
         assert len(data) >= 1
 
-    def test_api_key_ordering(self, authenticated_client, tenants_fixture):
+    def test_api_key_ordering(
+        self, authenticated_client, tenants_fixture, roles_fixture
+    ):
         """Test ordering API keys by creation date."""
         tenant = tenants_fixture[0]
+        role = roles_fixture[0]
 
         # Create multiple API keys with slight time differences
         import time
 
         for i, name in enumerate(["First Key", "Second Key"]):
-            raw_key = APIKey.generate_key()
-            prefix = APIKey.extract_prefix(raw_key)
-            key_hash = APIKey.hash_key(raw_key)
-
-            APIKey.objects.create(
-                name=name, tenant_id=tenant.id, hashed_key=key_hash, prefix=prefix
+            APIKey.objects.create_key(
+                tenant_id=tenant.id,
+                role=role,
+                name=name,
             )
             time.sleep(0.01)  # Small delay to ensure different timestamps
 
@@ -7371,21 +7363,19 @@ class TestAPIKeyCRUDEndpoints:
         assert data[0]["attributes"]["name"] == "Second Key"
         assert data[1]["attributes"]["name"] == "First Key"
 
-    def test_api_key_pagination(self, authenticated_client, tenants_fixture):
+    def test_api_key_pagination(
+        self, authenticated_client, tenants_fixture, roles_fixture
+    ):
         """Test pagination of API keys list."""
         tenant = tenants_fixture[0]
+        role = roles_fixture[0]
 
         # Create multiple API keys
         for i in range(25):  # More than default page size
-            raw_key = APIKey.generate_key()
-            prefix = APIKey.extract_prefix(raw_key)
-            key_hash = APIKey.hash_key(raw_key)
-
-            APIKey.objects.create(
-                name=f"Key {i:02d}",
+            APIKey.objects.create_key(
                 tenant_id=tenant.id,
-                hashed_key=key_hash,
-                prefix=prefix,
+                role=role,
+                name=f"Key {i:02d}",
             )
 
         response = authenticated_client.get(
@@ -7402,21 +7392,17 @@ class TestAPIKeyCRUDEndpoints:
 
     @patch("api.v1.serializers.APIKey.generate_key")
     def _test_create_api_key_retry_on_prefix_collision(
-        self, mock_generate_key, authenticated_client, tenants_fixture
+        self, mock_generate_key, authenticated_client, tenants_fixture, roles_fixture
     ):
         """Test that API key creation retries on prefix collision."""
         tenant = tenants_fixture[0]
+        role = roles_fixture[0]
 
         # Create an existing API key with specific prefix
-        existing_key = "pk_collision.abcdef123456789012345678901234"
-        existing_prefix = APIKey.extract_prefix(existing_key)
-        existing_hash = APIKey.hash_key(existing_key)
-
-        APIKey.objects.create(
-            name="Existing Key",
+        APIKey.objects.create_key(
             tenant_id=tenant.id,
-            hashed_key=existing_hash,
-            prefix=existing_prefix,
+            role=role,
+            name="Existing Key",
         )
 
         # Mock generate_key to first return colliding key, then unique key
