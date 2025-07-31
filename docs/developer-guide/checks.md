@@ -225,68 +225,171 @@ Below is a generic example of a check metadata file. **Do not include comments i
 ```json
 {
   "Provider": "aws",
-  "CheckID": "example_check_id",
-  "CheckTitle": "Example Check Title",
-  "CheckType": ["Infrastructure Security"],
-  "ServiceName": "ec2",
-  "SubServiceName": "ami",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "critical",
+  "CheckID": "service_resource_security_setting",
+  "CheckTitle": "Service resource has security setting enabled",
+  "CheckType": [],
+  "ServiceName": "service",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Example description of the check.",
-  "Risk": "Example risk if the check fails.",
-  "RelatedUrl": "https://example.com",
+  "Description": "This check verifies that the service resource has the required **security setting** enabled to protect against potential vulnerabilities.\n\nIt ensures that the resource follows security best practices and maintains proper access controls. The check evaluates whether the security configuration is properly implemented and active.",
+  "Risk": "Without proper security settings, the resource may be vulnerable to:\n\n- **Unauthorized access** - Malicious actors could gain entry\n- **Data breaches** - Sensitive information could be compromised\n- **Security threats** - Various attack vectors could be exploited\n\nThis could result in compliance violations and potential financial or reputational damage.",
+  "RelatedUrl": [
+    "https://example.com/security-documentation",
+    "https://example.com/best-practices"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "example CLI command",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "provider-cli service enable-security-setting --resource-id resource-123",
+      "NativeIaC": "```yaml\nType: Provider::Service::Resource\nProperties:\n  SecuritySetting: enabled\n  ResourceId: resource-123\n```",
+      "Other": "1. Open the provider management console\n2. Navigate to the service section\n3. Select the resource\n4. Enable the security setting\n5. Save the configuration",
+      "Terraform": "```hcl\nresource \"provider_service_resource\" \"example\" {\n  resource_id      = \"resource-123\"\n  security_setting = true\n}\n```"
     },
     "Recommendation": {
-      "Text": "Example recommendation text.",
-      "Url": "https://example.com/remediation"
+      "Text": "Enable security settings on all service resources to ensure proper protection. Regularly review and update security configurations to align with current best practices.",
+      "Url": ""
     }
   },
-  "Categories": ["example-category"],
+  "Categories": ["internet-exposed", "secrets"],
   "DependsOn": [],
-  "RelatedTo": [],
-  "Notes": ""
+  "RelatedTo": ["service_resource_security_setting", "service_resource_security_setting_2"],
+  "Notes": "This is a generic example check that should be customized for specific provider and service requirements."
 }
 ```
 
 ### Metadata Fields and Their Purpose
 
-- **Provider** — The Prowler provider related to the check. The name **must** be lowercase and match the provider folder name. For supported providers refer to [Prowler Hub](https://hub.prowler.com/check) or directly to [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
-- **CheckID** — The unique identifier for the check inside the provider, this field **must** match the check's folder and python file and json metadata file name. For more information about the naming refer to the [Naming Format for Checks](#naming-format-for-checks) section.
-- **CheckTitle** — A concise, descriptive title for the check.
-- **CheckType** — *For now this field is only standardized for the AWS provider*.
-    - For AWS this field must follow the [AWS Security Hub Types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types) format. So the common pattern to follow is `namespace/category/classifier`, refer to the attached documentation for the valid values for this fields.
-- **ServiceName** — The name of the provider service being audited. This field **must** be in lowercase and match with the service folder name. For supported services refer to [Prowler Hub](https://hub.prowler.com/check) or directly to [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
-- **SubServiceName** — The subservice or resource within the service, if applicable. For more information refer to the [Naming Format for Checks](#naming-format-for-checks) section.
-- **ResourceIdTemplate** — A template for the unique resource identifier. For more information refer to the [Prowler's Resource Identification](#prowlers-resource-identification) section.
-- **Severity** — The severity of the finding if the check fails. Must be one of: `critical`, `high`, `medium`, `low`, or `informational`, this field **must** be in lowercase. To get more information about the severity levels refer to the [Prowler's Check Severity Levels](#prowlers-check-severity-levels) section.
-- **ResourceType** — The type of resource being audited. *For now this field is only standardized for the AWS provider*.
-    - For AWS use the [Security Hub resource types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html) or, if not available, the PascalCase version of the [CloudFormation type](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) (e.g., `AwsEc2Instance`). Use "Other" if no match exists.
-- **Description** — A short description of what the check does.
-- **Risk** — The risk or impact if the check fails, explaining why the finding matters.
-- **RelatedUrl** — A URL to official documentation or further reading about the check's purpose. If no official documentation is available, use the risk and recommendation text from trusted third-party sources.
-- **Remediation** — Guidance for fixing a failed check, including:
-    - **Code** — Remediation commands or code snippets for CLI, Terraform, native IaC, or other tools like the Web Console.
-    - **Recommendation** — A textual human readable recommendation. Here it is not necessary to include actual steps, but rather a general recommendation about what to do to fix the check.
-- **Categories** — One or more categories for grouping checks in execution (e.g., `internet-exposed`). For the current list of categories, refer to the [Prowler Hub](https://hub.prowler.com/check).
-- **DependsOn** — Currently not used.
-- **RelatedTo** — Currently not used.
-- **Notes** — Any additional information not covered by other fields.
+#### Provider
 
-### Remediation Code Guidelines
+The Prowler provider related to the check. The name **must** be lowercase and match the provider folder name. For supported providers refer to [Prowler Hub](https://hub.prowler.com/check) or directly to [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
 
-When providing remediation steps, reference the following sources:
+#### CheckID
 
-- Official provider documentation.
-- [Prowler Checks Remediation Index](https://docs.prowler.com/checks/checks-index)
-- [TrendMicro Cloud One Conformity](https://www.trendmicro.com/cloudoneconformity)
-- [CloudMatos Remediation Repository](https://github.com/cloudmatos/matos/tree/master/remediations)
+The unique identifier for the check inside the provider. This field **must** match the check's folder, Python file, and JSON metadata file name. For more information about naming, refer to the [Naming Format for Checks](#naming-format-for-checks) section.
+
+#### CheckTitle
+
+The `CheckTitle` field defines clearly and succinctly what best practice is being evaluated and which resource(s) each finding applies to. The title should be specific, concise (no more than 150 characters), and reference the relevant resource(s) involved.
+
+For most checks, which produce one finding per resource, the `CheckTitle` should mention the individual resource. For example, if the check assesses whether multi-factor authentication (MFA) is enabled for each user, the title might be: *"User has multi-factor authentication enabled."*
+
+If a finding covers multiple resources at once, the `CheckTitle` should indicate this scope, such as: *"All users do not have multi-factor authentication enabled."*
+
+Always write the `CheckTitle` to state the best practice being assessed and to clearly identify the affected resource(s). Avoid generic or action-oriented phrases like "Check" or "Ensure." Instead, use a descriptive format that states the resource and the best practice.
+
+**Good Examples:**
+
+- `"EC2 AMI is not public"` - Clear, specific, states the resource and best practice.
+- `"Security group does not allow ingress from 0.0.0.0/0 to SSH port 22"` - Specific about the resource and security requirement.
+- `"IAM user has multi-factor authentication enabled"` - States the resource and security best practice.
+- `"EBS volume is encrypted"` - Concise, clear about the resource and requirement.
+- `"Kubernetes pod does not run as root user"` - Specific about the resource and security best practice.
+
+**Examples to Avoid:**
+
+- `"Check if EC2 instances are encrypted"` - Uses "Check" action verb, totally unnecessary because we already know the check is checking.
+- `"Ensure security groups are properly configured"` - Too generic, doesn't specify what "properly" means.
+- `"Verify encryption settings"` - Too vague, doesn't identify specific resources.
+- `"Monitor access controls"` - Generic, doesn't specify what to monitor.
+
+#### CheckType
+
+???+ warning
+    This field is only applicable to the AWS provider.
+
+It follows the [AWS Security Hub Types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types) format using the pattern `namespace/category/classifier`.
+
+#### ServiceName
+
+The name of the provider service being audited. Must be lowercase and match the service folder name. For supported services refer to [Prowler Hub](https://hub.prowler.com/check) or the [Prowler Code](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+
+#### SubServiceName
+
+This field is in the process of being deprecated and should be **left empty**.
+
+#### ResourceIdTemplate
+
+This field is in the process of being deprecated and should be **left empty**.
+
+#### Severity
+
+Severity level if the check fails. Must be one of: `critical`, `high`, `medium`, `low`, or `informational`, and written in lowercase. See [Prowler's Check Severity Levels](#prowlers-check-severity-levels) for details.
+
+#### ResourceType
+
+The type of resource being audited. This field helps categorize and organize findings by resource type for better analysis and reporting. For each provider:
+
+- **AWS**: Use [Security Hub resource types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html) or PascalCase CloudFormation types removing the `::` separator used in CloudFormation templates (e.g., in CloudFormation template the type of an EC2 instance is `AWS::EC2::Instance` but in the check it should be `AwsEc2Instance`). Use `Other` if none apply.
+- **Azure**: Use types from [Azure Resource Graph](https://learn.microsoft.com/en-us/azure/governance/resource-graph/reference/supported-tables-resources), for example: `Microsoft.Storage/storageAccounts`.
+- **Google Cloud**: Use [Cloud Asset Inventory asset types](https://cloud.google.com/asset-inventory/docs/asset-types), for example: `compute.googleapis.com/Instance`.
+- **Kubernetes**: Use types shown under `KIND` from `kubectl api-resources`.
+- **M365 / GitHub**: Leave empty due to lack of standardized types in API responses.
+
+#### Description
+
+A concise, natural language explanation that **clearly describes what the finding means**, focusing on clarity and context rather than technical implementation details. Use simple paragraphs with line breaks if needed, but avoid sections, code blocks, or complex formatting. This field is limited to maximum 400 characters.
+
+#### Risk
+
+A clear, natural language explanation of **why this finding poses a cybersecurity risk**. Focus on how it may impact confidentiality, integrity, or availability. If those do not apply, describe any relevant operational or financial risks. Use simple paragraphs with line breaks if needed, but avoid sections, code blocks, or complex formatting. Limit your explanation to 400 characters.
+
+#### RelatedUrl
+
+A list of one or more official documentation URLs for further reading. These should be authoritative sources that provide additional context, best practices, or detailed information about the security control being checked. Prefer official provider documentation, security standards, or well-established security resources. Avoid third-party blogs or unofficial sources unless they are highly reputable and directly relevant.
+
+#### Remediation
+
+- **Code**
+    - **CLI**: Use Markdown format to provide multiple commands or code blocks where applicable.
+    - **NativeIaC / Terraform**: Provide actual code blocks when possible. Use line breaks for readability.
+    - **Other**: Natural language, step-by-step remediation in Markdown format using native web interfaces (e.g., AWS Console, Azure Portal) or other tool that is not any of the other options.
+- **Recommendation**
+    - **Text**: Explanation in natural language using Markdown format, explaining the best practice in general terms that is usually used to avoid the check to fail.
+      For example:
+        - *"Avoid exposing sensitive resources directly to the Internet; configure access controls to limit exposure."*
+        - *"Apply the principle of least privilege when assigning permissions to users and services."*
+        - *"Regularly review and update your security configurations to align with current best practices."*
+    - **Url**: *Deprecated*. Use `RelatedUrl` instead.
+
+#### Categories
+
+One or more functional groupings used for execution filtering (e.g., `internet-exposed`). You can define new categories just by adding to this field. Here are all the categories already defined in Prowler:
+
+| Category                | Definition                                                                                                                                                                                                                                 |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| encryption              | Ensure data is encrypted in transit and/or at rest, including key management practices.                                                                                                   |
+| internet-exposed        | Checks that limit or flag public access to services, APIs, or assets from the Internet.                                                                                                              |
+| logging                 | Ensures appropriate logging of events, activities, and system interactions for traceability.                                                                                                       |
+| secrets                 | Manages and protects credentials, API keys, tokens, and other sensitive information.                                                                                                               |
+| resilience              | Ensures systems can maintain availability and recover from disruptions, failures, or degradation. Includes redundancy, fault-tolerance, auto-scaling, backup, disaster recovery, and failover strategies. |
+| threat-detection        | Identifies suspicious activity or behaviors using IDS, malware scanning, or anomaly detection.                                                                                                      |
+| trust-boundaries        | Enforces isolation or segmentation between different trust levels (e.g., VPCs, tenants, network zones).                                                                                            |
+| vulnerabilities         | Detects or remediates known software, infrastructure, or config vulnerabilities (e.g., CVEs).                                                                                                      |
+| cluster-security        | Secures Kubernetes cluster components such as API server, etcd, and role-based access.                                                                                                             |
+| container-security      | Ensures container images and runtimes follow security best practices.                                                                                        |
+| node-security           | Secures nodes running containers or services.                                                                                                        |
+| gen-ai                  | Checks related to safe and secure use of generative AI services or models.                                                                                                                        |
+| ci-cd                   | Ensures secure configurations in CI/CD pipelines.                                                                                                         |
+| identity-access         | Governs user and service identities, including least privilege, MFA, and permission boundaries.                                                                                                    |
+| email-security          | Ensures detection and protection against phishing, spam, spoofing, etc.                                                                                                                            |
+| forensics-ready         | Ensures systems are instrumented to support post-incident investigations. Any digital trace or evidence (logs, volume snapshots, memory dumps, network captures, etc.) preserved immutably and accompanied by integrity guarantees, which can be used in a forensic analysis. |
+| software-supply-chain   | Detects or prevents tampering, unauthorized packages, or third-party risks in software supply chain.                                                                                               |
+| e3                      | M365-specific controls enabled by or dependent on an E3 license (e.g., baseline security policies, conditional access).                                                                            |
+| e5                      | M365-specific controls enabled by or dependent on an E5 license (e.g., advanced threat protection, audit, DLP, and eDiscovery).                                                                    |
+
+#### DependsOn
+
+Specifies checks that if they are PASS, this check will be a PASS too or it is not going to give any finding.
+
+#### RelatedTo
+
+Specifies checks that are conceptually related, even if they do not share a technical dependency.
+
+#### Notes
+
+Any additional information not covered in the above fields.
+
 
 ### Python Model Reference
 
