@@ -47,6 +47,7 @@ ___
 
 - Error message when launching a scan if user has no permissions [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
 - Include compliance in the download button tooltip [(#8307)](https://github.com/prowler-cloud/prowler/pull/8307)
+- Email input format validation and improved sign-in error messages (standard & SAML) [(#8364)](https://github.com/prowler-cloud/prowler/pull/8364)
 
 ### Removed
 
