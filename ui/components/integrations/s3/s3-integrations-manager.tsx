@@ -327,6 +327,7 @@ export const S3IntegrationsManager = ({
                         startContent={<TestTube size={14} />}
                         onPress={() => handleTestConnection(integration.id)}
                         isLoading={isTesting === integration.id}
+                        isDisabled={!integration.attributes.enabled}
                         ariaLabel="Test connection"
                         className="w-full sm:w-auto"
                       >

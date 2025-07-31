@@ -140,18 +140,32 @@ export const S3IntegrationForm = ({
     return credentials;
   };
 
-  // Helper function to build configuration object
   const buildConfiguration = (values: any, isPartial = false) => {
     const configuration: any = {};
 
-    if (values.bucket_name) configuration.bucket_name = values.bucket_name;
-    if (values.output_directory)
-      configuration.output_directory = values.output_directory;
-
-    // For creation mode, ensure all required fields are present
+    // For creation mode, include all fields
     if (!isPartial) {
       configuration.bucket_name = values.bucket_name;
       configuration.output_directory = values.output_directory;
+    } else {
+      // For edit mode, only include fields that have actually changed
+      const originalBucketName =
+        integration?.attributes.configuration.bucket_name || "";
+      const originalOutputDirectory =
+        integration?.attributes.configuration.output_directory || "";
+
+      // Only include bucket_name if it has changed
+      if (values.bucket_name && values.bucket_name !== originalBucketName) {
+        configuration.bucket_name = values.bucket_name;
+      }
+
+      // Only include output_directory if it has changed
+      if (
+        values.output_directory &&
+        values.output_directory !== originalOutputDirectory
+      ) {
+        configuration.output_directory = values.output_directory;
+      }
     }
 
     return configuration;
