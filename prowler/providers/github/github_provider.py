@@ -306,16 +306,13 @@ class GithubProvider(Provider):
                         env_key = environ.get("GITHUB_APP_KEY", "")
 
                         if app_id and env_key:
-                            # Smart detection: check if env_key is file path or key content
+                            # Check if env_key is file path or key content
                             if env_key.startswith("-----BEGIN"):
-                                # It's key content
                                 app_key = format_rsa_key(env_key)
                             elif os.path.isfile(env_key):
-                                # It's a file path
                                 with open(env_key, "r") as rsa_key:
                                     app_key = rsa_key.read()
                             else:
-                                # Invalid format
                                 raise GithubEnvironmentVariableError(
                                     file=os.path.basename(__file__),
                                     message="GITHUB_APP_KEY must contain either RSA key content (starting with -----BEGIN) or a valid file path.",
