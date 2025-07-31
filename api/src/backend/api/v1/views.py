@@ -1273,7 +1273,7 @@ class TenantViewSet(BaseTenantViewset):
         with rls_transaction(str(tenant.id)):
             try:
                 api_key = APIKey.objects.get(
-                    id=api_key_id, tenant_id=tenant.id, revoked=False
+                    uuid=api_key_id, tenant_id=tenant.id, revoked=False
                 )
             except APIKey.DoesNotExist:
                 raise NotFound("API key not found or has been revoked.")
@@ -1290,13 +1290,13 @@ class TenantViewSet(BaseTenantViewset):
         url_name="api-keys-destroy",
     )
     def api_keys_destroy(self, request, pk=None, api_key_id=None):
-        """Revoke an API key."""
+        """Revoke an API key using its UUID."""
         tenant = self.get_object()
 
         with rls_transaction(str(tenant.id)):
             try:
                 api_key = APIKey.objects.get(
-                    id=api_key_id, tenant_id=tenant.id, revoked=False
+                    uuid=api_key_id, tenant_id=tenant.id, revoked=False
                 )
             except APIKey.DoesNotExist:
                 raise NotFound("API key not found or has been revoked.")
@@ -1304,7 +1304,15 @@ class TenantViewSet(BaseTenantViewset):
             # Revoke the key
             api_key.revoke()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            # Return the UUID of the revoked key for confirmation
+            return Response(
+                {
+                    "message": "API key revoked successfully",
+                    "uuid": str(api_key.uuid),
+                    "prefix": api_key.prefix,
+                },
+                status=status.HTTP_200_OK,
+            )
 
 
 @extend_schema_view(

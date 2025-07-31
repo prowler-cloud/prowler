@@ -94,7 +94,11 @@ export async function createAPIKey(
   return response.json();
 }
 
-export async function revokeAPIKey(apiKeyId: string): Promise<void> {
+export async function revokeAPIKey(apiKeyId: string): Promise<{
+  message: string;
+  uuid: string;
+  prefix: string;
+}> {
   const session = await auth();
   if (!session?.tenantId) {
     throw new Error("No tenant ID found in session");
@@ -115,5 +119,9 @@ export async function revokeAPIKey(apiKeyId: string): Promise<void> {
     throw new Error(error.detail || "Failed to revoke API key");
   }
 
+  // Parse the response to get confirmation details
+  const result = await response.json();
+
   revalidatePath("/profile");
+  return result;
 }

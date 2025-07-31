@@ -297,6 +297,14 @@ class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
     objects = APIKeyManager()
     all_objects = APIKeyManager()
 
+    # Add UUID field for clean external references (keep library's id field intact)
+    uuid = models.UUIDField(
+        default=uuid4,
+        editable=False,
+        unique=True,
+        help_text="UUID for external API references",
+    )
+
     role = models.ForeignKey(
         "Role",
         on_delete=models.CASCADE,

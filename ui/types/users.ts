@@ -152,7 +152,7 @@ export interface TenantDetailData {
 
 // API Key types
 export interface APIKey {
-  id: string;
+  id: string; // This is the UUID in JSON API format
   type: "api-keys";
   attributes: {
     name: string;

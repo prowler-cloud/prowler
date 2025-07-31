@@ -341,6 +341,9 @@ class APIKeySerializer(BaseSerializerV1):
     Serializer for listing API Keys.
     """
 
+    # Override the JSON API id to use our UUID field instead of the internal pk
+    id = serializers.UUIDField(source="uuid", read_only=True)
+
     role = serializers.ResourceRelatedField(
         read_only=True, help_text="Role associated with this API key"
     )
@@ -348,7 +351,7 @@ class APIKeySerializer(BaseSerializerV1):
     class Meta:
         model = APIKey
         fields = [
-            "id",
+            "id",  # This will use our UUID field as the JSON API id
             "name",
             "prefix",
             "role",
@@ -370,6 +373,9 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
     """
     Serializer for creating API Keys.
     """
+
+    # Override the JSON API id to use our UUID field instead of the internal pk
+    id = serializers.UUIDField(source="uuid", read_only=True)
 
     expiry_date = serializers.DateTimeField(
         required=False,
@@ -428,7 +434,7 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
                 tenant_id=tenant_id, **validated_data
             )
 
-            logger.info(f"Successfully created API key with ID: {api_key.id}")
+            logger.info(f"Successfully created API key with UUID: {api_key.uuid}")
 
             # Store the raw key temporarily for the response
             api_key._raw_key = raw_key

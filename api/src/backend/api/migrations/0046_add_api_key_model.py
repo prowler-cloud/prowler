@@ -1,6 +1,8 @@
 # Generated manually for API Key model with multi-tenancy and RBAC support
 # This migration creates API keys with secure prefix-based lookup, tenant management, and role-based permissions
 
+import uuid
+
 import django.core.validators
 import django.db.models.deletion
 from django.db import migrations, models
@@ -10,7 +12,7 @@ from api.rls import RowLevelSecurityConstraint
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0045_add_api_key_model"),
+        ("api", "0045_alter_scan_output_location"),
     ]
 
     operations = [
@@ -25,6 +27,15 @@ class Migration(migrations.Migration):
                         primary_key=True,
                         serialize=False,
                         unique=True,
+                    ),
+                ),
+                (
+                    "uuid",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        unique=True,
+                        help_text="UUID for external API references",
                     ),
                 ),
                 (
