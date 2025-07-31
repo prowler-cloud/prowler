@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
 - Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
+- API Key Management UI with complete interface for managing API keys in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 
 ### 🔄 Changed
 
@@ -31,7 +32,6 @@ ___
 - Navigation link in Scans view to access Compliance Overview [(#8251)](https://github.com/prowler-cloud/prowler/pull/8251)
 - Status column for findings table in the Compliance Detail view [(#8244)](https://github.com/prowler-cloud/prowler/pull/8244)
 - Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
-- API Key Management UI with complete interface for managing API keys in user profile [(#8290)](https://github.com/prowler-cloud/prowler/pull/8290)
 - Max character limit validation for Scan label [(#8319)](https://github.com/prowler-cloud/prowler/pull/8319)
 
 ### Security

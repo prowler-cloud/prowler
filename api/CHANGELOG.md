@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+- API key authentication & activity logging system with secure prefix-based lookup, tenant management endpoints, and configurable expiration periods [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 
 ---
 
@@ -29,7 +30,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
 - `GET /resources/metadata`, `GET /resources/metadata/latest` and `GET /resources/latest` to expose resource metadata and latest scan results [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
-- API key authentication & activity logging system with secure prefix-based lookup, tenant management endpoints, and configurable expiration periods
 
 ### Changed
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
