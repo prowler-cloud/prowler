@@ -16,9 +16,22 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from django.utils import timezone
 from datetime import timedelta
-
-from api.models import APIKey, Tenant
+from django.test import Client
+from api.models import (
+    Role,
+    UserRoleRelationship,
+    User,
+    APIKey,
+    Tenant,
+    APIKeyUser,
+    Membership,
+)
+from api.v1.serializers import TokenSerializer
 from api.db_utils import rls_transaction
+from api.authentication import APIKeyAuthentication
+from django.test import RequestFactory
+import json
+import time
 
 
 @pytest.mark.django_db
@@ -33,13 +46,6 @@ class TestAPIKeyIntegrationWorkflows:
     @pytest.fixture
     def authenticated_jwt_client(self, tenant):
         """Create an authenticated client using JWT tokens like the working tests."""
-        from django.contrib.auth import get_user_model
-        from django.test import Client
-        from api.models import Membership, Role, UserRoleRelationship
-        from api.v1.serializers import TokenSerializer
-        from api.db_utils import rls_transaction
-
-        User = get_user_model()
 
         # Create a test user with password
         user = User.objects.create_user(
@@ -87,8 +93,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Step 0: Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="lifecycle-test-role",
                 tenant_id=tenant.id,
@@ -129,8 +133,6 @@ class TestAPIKeyIntegrationWorkflows:
         assert "." in raw_api_key  # Should have dot separator
 
         # Verify the API key can be extracted and has valid prefix
-        from api.models import APIKey
-
         prefix = APIKey.extract_prefix(raw_api_key)
         assert len(prefix) == 8  # Prefix should be 8 characters
 
@@ -167,8 +169,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="expiration-test-role",
                 tenant_id=tenant.id,
@@ -200,9 +200,6 @@ class TestAPIKeyIntegrationWorkflows:
         raw_api_key = create_data["attributes"]["key"]
 
         # Validate API key is tenant-bound and works correctly
-        from api.authentication import APIKeyAuthentication
-        from django.test import RequestFactory
-
         auth = APIKeyAuthentication()
         factory = RequestFactory()
         request = factory.get("/api/v1/test")
@@ -210,8 +207,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Test that API key authentication provides correct tenant context
         user, auth_info = auth.authenticate(request)
-        from api.models import APIKeyUser
-
         assert isinstance(user, APIKeyUser)
         assert user.tenant_id == str(tenant.id)  # Tenant-bound!
         assert "api_key_id" in auth_info
@@ -238,8 +233,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for tenant 1 first
         with rls_transaction(str(tenant1.id)):
-            from api.models import Role
-
             role1 = Role.objects.create(
                 name="tenant1-role",
                 tenant_id=tenant1.id,
@@ -282,9 +275,6 @@ class TestAPIKeyIntegrationWorkflows:
         client2.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {raw_key2}"
 
         # Test tenant isolation using direct authentication
-        from api.authentication import APIKeyAuthentication
-        from django.test import RequestFactory
-
         auth = APIKeyAuthentication()
         factory = RequestFactory()
 
@@ -299,8 +289,6 @@ class TestAPIKeyIntegrationWorkflows:
         user2, auth_info2 = auth.authenticate(request2)
 
         # Verify each API key is bound to its own tenant
-        from api.models import APIKeyUser
-
         assert isinstance(user1, APIKeyUser) and isinstance(
             user2, APIKeyUser
         )  # Both return APIKeyUser
@@ -318,8 +306,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="activity-test-role",
                 tenant_id=tenant.id,
@@ -406,8 +392,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="security-test-role",
                 tenant_id=tenant.id,
@@ -464,8 +448,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="permission-test-role",
                 tenant_id=tenant.id,
@@ -501,9 +483,6 @@ class TestAPIKeyIntegrationWorkflows:
         # The specific behavior depends on the RBAC system implementation
 
         # Test API key provides correct tenant context for permissions
-        from api.authentication import APIKeyAuthentication
-        from django.test import RequestFactory
-
         auth = APIKeyAuthentication()
         factory = RequestFactory()
         request = factory.get("/api/v1/test")
@@ -511,8 +490,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Authenticate and verify tenant-bound context
         user, auth_info = auth.authenticate(request)
-        from api.models import APIKeyUser
-
         assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
         assert user.tenant_id == str(
             tenant.id
@@ -529,8 +506,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API keys (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="filtering-test-role",
                 tenant_id=tenant.id,
@@ -566,9 +541,6 @@ class TestAPIKeyIntegrationWorkflows:
             raw_keys.append(api_data["attributes"]["key"])
 
         # Test that all API keys are tenant-bound to the same tenant
-        from api.authentication import APIKeyAuthentication
-        from django.test import RequestFactory
-
         auth = APIKeyAuthentication()
         factory = RequestFactory()
 
@@ -578,8 +550,6 @@ class TestAPIKeyIntegrationWorkflows:
             request.META["HTTP_AUTHORIZATION"] = f"ApiKey {raw_key}"
 
             user, auth_info = auth.authenticate(request)
-            from api.models import APIKeyUser
-
             assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
             assert user.tenant_id == str(tenant.id)  # All bound to same tenant!
             assert auth_info["api_key_name"] == f"Multi Key Test {i}"
@@ -598,8 +568,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="usage-tracking-role",
                 tenant_id=tenant.id,
@@ -644,9 +612,6 @@ class TestAPIKeyIntegrationWorkflows:
         api_client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {raw_api_key}"
 
         # Test API key is tenant-bound and tracks usage
-        from api.authentication import APIKeyAuthentication
-        from django.test import RequestFactory
-
         auth = APIKeyAuthentication()
         factory = RequestFactory()
         request = factory.get("/api/v1/test")
@@ -654,7 +619,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Authenticate using the API key - this should update last_used_at
         user, auth_info = auth.authenticate(request)
-        from api.models import APIKeyUser
 
         assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
         assert user.tenant_id == str(tenant.id)  # Tenant-bound!
@@ -670,8 +634,6 @@ class TestAPIKeyIntegrationWorkflows:
             first_used_time = updated_key.last_used_at
 
         # Small delay to ensure different timestamp
-        import time
-
         time.sleep(0.01)
 
         api_client.get(reverse("provider-list"))
@@ -686,8 +648,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="json-api-test-role",
                 tenant_id=tenant.id,
@@ -738,8 +698,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant.id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="real-data-test-role",
                 tenant_id=tenant.id,
@@ -772,9 +730,6 @@ class TestAPIKeyIntegrationWorkflows:
         api_client.defaults["HTTP_AUTHORIZATION"] = f"ApiKey {raw_api_key}"
 
         # Test API key provides tenant-bound context for data access
-        from api.authentication import APIKeyAuthentication
-        from django.test import RequestFactory
-
         auth = APIKeyAuthentication()
         factory = RequestFactory()
         request = factory.get("/api/v1/test")
@@ -782,7 +737,6 @@ class TestAPIKeyIntegrationWorkflows:
 
         # Verify API key is tenant-bound for real data access
         user, auth_info = auth.authenticate(request)
-        from api.models import APIKeyUser
 
         assert isinstance(user, APIKeyUser)  # API keys return APIKeyUser
         assert user.tenant_id == str(tenant.id)  # Tenant-bound for data access!
@@ -862,8 +816,6 @@ class TestAPIKeyTestingGuideWorkflow:
 
         # Step 4: Create a role for the API key (required)
         with rls_transaction(str(tenant_id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="api-test-role",
                 tenant_id=tenant_id,
@@ -885,8 +837,6 @@ class TestAPIKeyTestingGuideWorkflow:
                 },
             }
         }
-
-        import json
 
         api_key_response = jwt_client.post(
             reverse("tenant-api-keys-create", kwargs={"pk": tenant_id}),
@@ -1027,8 +977,6 @@ class TestAPIKeyTestingGuideWorkflow:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant_id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="expiration-guide-role",
                 tenant_id=tenant_id,
@@ -1037,9 +985,6 @@ class TestAPIKeyTestingGuideWorkflow:
             )
 
         # Create API key with short expiration (as shown in the guide)
-        from django.utils import timezone
-        from datetime import timedelta
-
         expire_time = timezone.now() + timedelta(minutes=1)
 
         api_key_data = {
@@ -1121,8 +1066,6 @@ class TestAPIKeyTestingGuideWorkflow:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant_id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="revocation-test-role",
                 tenant_id=tenant_id,
@@ -1217,8 +1160,6 @@ class TestAPIKeyTestingGuideWorkflow:
 
         # Create a role for the API key (required)
         with rls_transaction(str(tenant_id)):
-            from api.models import Role
-
             role = Role.objects.create(
                 name="concurrent-test-role",
                 tenant_id=tenant_id,

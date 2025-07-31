@@ -1,4 +1,6 @@
 import json
+import logging
+
 from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.conf import settings
@@ -421,8 +423,6 @@ class APIKeyCreateSerializer(BaseWriteSerializer):
         return value
 
     def create(self, validated_data):
-        import logging
-
         logger = logging.getLogger(__name__)
 
         # Get tenant from context

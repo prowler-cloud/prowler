@@ -3,6 +3,7 @@ import io
 import json
 import os
 import tempfile
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -32,6 +33,8 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    APIKey,
+    APIKeyUser,
     Integration,
     Invitation,
     Membership,
@@ -49,7 +52,6 @@ from api.models import (
     Task,
     User,
     UserRoleRelationship,
-    APIKey,
 )
 from api.rls import Tenant
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
@@ -7080,8 +7082,6 @@ class TestAPIKeyCRUDEndpoints:
         self, authenticated_client, tenants_fixture
     ):
         """Test API key creation with expiration in the past."""
-        from django.utils import timezone
-
         tenant = tenants_fixture[0]
         past_time = timezone.now() - timedelta(hours=1)
         invalid_data = {
@@ -7156,8 +7156,6 @@ class TestAPIKeyCRUDEndpoints:
     def test_retrieve_api_key_not_found(self, authenticated_client, tenants_fixture):
         """Test retrieving non-existent API key."""
         tenant = tenants_fixture[0]
-        from uuid import uuid4
-
         response = authenticated_client.get(
             reverse(
                 "tenant-api-keys-retrieve",
@@ -7226,8 +7224,6 @@ class TestAPIKeyCRUDEndpoints:
     def test_revoke_api_key_not_found(self, authenticated_client, tenants_fixture):
         """Test revoking non-existent API key."""
         tenant = tenants_fixture[0]
-        from uuid import uuid4
-
         response = authenticated_client.delete(
             reverse(
                 "tenant-api-keys-destroy",
@@ -7310,8 +7306,6 @@ class TestAPIKeyCRUDEndpoints:
         self, authenticated_client, tenants_fixture, roles_fixture
     ):
         """Test filtering API keys by creation date."""
-        from django.utils import timezone
-
         tenant = tenants_fixture[0]
         role = roles_fixture[0]
 
@@ -7341,8 +7335,6 @@ class TestAPIKeyCRUDEndpoints:
         role = roles_fixture[0]
 
         # Create multiple API keys with slight time differences
-        import time
-
         for i, name in enumerate(["First Key", "Second Key"]):
             APIKey.objects.create_key(
                 tenant_id=tenant.id,
@@ -7531,8 +7523,6 @@ class TestAPIKeyRBAC:
         self, mock_auth, api_client, api_key_with_role
     ):
         """Test that API key authentication respects role permissions."""
-        from api.models import APIKeyUser
-
         # Mock the authentication to return our API key user
         api_key_user = APIKeyUser(
             api_key_id=str(api_key_with_role.id),
@@ -7559,8 +7549,6 @@ class TestAPIKeyRBAC:
         self, mock_auth, api_client, api_key_with_role
     ):
         """Test that API key allows actions permitted by its role."""
-        from api.models import APIKeyUser
-
         # Mock the authentication to return our API key user
         api_key_user = APIKeyUser(
             api_key_id=str(api_key_with_role.id),

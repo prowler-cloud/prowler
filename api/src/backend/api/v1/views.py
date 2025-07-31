@@ -96,6 +96,7 @@ from api.filters import (
 )
 from api.models import (
     APIKey,
+    APIKeyUser,
     ComplianceRequirementOverview,
     Finding,
     Integration,
@@ -1011,8 +1012,6 @@ class TenantViewSet(BaseTenantViewset):
 
     def initial(self, request, *args, **kwargs):
         """Custom initial method to extract tenant_id from JWT or API key authentication."""
-        import logging
-        from api.models import APIKeyUser
 
         logger = logging.getLogger(__name__)
 
@@ -1043,8 +1042,6 @@ class TenantViewSet(BaseTenantViewset):
         super().initial(request, *args, **kwargs)
 
     def get_queryset(self):
-        from api.models import APIKeyUser
-
         # Handle API key authentication - return the tenant associated with the API key
         if isinstance(self.request.user, APIKeyUser):
             tenant_id = self.request.user.tenant_id
