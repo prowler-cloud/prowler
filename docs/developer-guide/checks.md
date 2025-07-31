@@ -39,7 +39,7 @@ Each check in Prowler follows a straightforward structure. Within the newly crea
 
 - `__init__.py` (empty file) – Ensures Python treats the check folder as a package.
 - `<check_name>.py` (code file) – Contains the check logic, following the prescribed format. Please refer to the [prowler's check code structure](./checks.md#prowlers-check-code-structure) for more information.
-- `<check_name>.metadata.json` (metadata file) – Defines the check's metadata for contextual information. Please refer to the [check metadata](./checks.md#) for more information.
+- `<check_name>.metadata.json` (metadata file) – Defines the check's metadata for contextual information. Please refer to the [check metadata](./checks.md#metadata-structure-for-prowler-checks) for more information.
 
 ## Prowler's Check Code Structure
 
