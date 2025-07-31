@@ -213,7 +213,7 @@ class Test_iam_role_kms_enforce_separation_of_duties:
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
-                assert r.resource_name == GCP_PROJECT_ID
+                assert r.resource_name == "GCP Project"
                 assert r.project_id == GCP_PROJECT_ID
                 assert r.location == cloudresourcemanager_client.region
 
@@ -277,6 +277,6 @@ class Test_iam_role_kms_enforce_separation_of_duties:
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
-                assert r.resource_name == GCP_PROJECT_ID
+                assert r.resource_name == "GCP Project"
                 assert r.project_id == GCP_PROJECT_ID
                 assert r.location == cloudresourcemanager_client.region

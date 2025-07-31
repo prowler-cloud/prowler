@@ -13,6 +13,11 @@ class iam_account_access_approval_enabled(Check):
                 resource=accessapproval_client.projects[project_id],
                 project_id=project_id,
                 location=accessapproval_client.region,
+                resource_name=(
+                    accessapproval_client.projects[project_id].name
+                    if accessapproval_client.projects[project_id].name
+                    else "GCP Project"
+                ),
             )
             report.status = "PASS"
             report.status_extended = (

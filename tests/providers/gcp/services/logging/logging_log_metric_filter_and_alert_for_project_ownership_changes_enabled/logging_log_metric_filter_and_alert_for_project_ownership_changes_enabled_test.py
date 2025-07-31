@@ -141,7 +141,7 @@ class Test_logging_log_metric_filter_and_alert_for_project_ownership_changes_ena
                 == f"There are no log metric filters or alerts associated in project {GCP_PROJECT_ID}."
             )
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == GCP_PROJECT_ID
+            assert result[0].resource_name == "GCP Project"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
 

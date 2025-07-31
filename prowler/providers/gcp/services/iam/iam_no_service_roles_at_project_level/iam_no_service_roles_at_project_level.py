@@ -13,7 +13,7 @@ class iam_no_service_roles_at_project_level(Check):
                 metadata=self.metadata(),
                 resource=binding,
                 resource_id=binding.role,
-                resource_name=binding.role,
+                resource_name=binding.role if binding.role else "Service Role",
                 location=cloudresourcemanager_client.region,
             )
             if binding.role in [
@@ -31,7 +31,11 @@ class iam_no_service_roles_at_project_level(Check):
                     metadata=self.metadata(),
                     resource=cloudresourcemanager_client.projects[project],
                     project_id=project,
-                    resource_name=project,
+                    resource_name=(
+                        cloudresourcemanager_client.projects[project].name
+                        if cloudresourcemanager_client.projects[project].name
+                        else "GCP Project"
+                    ),
                     location=cloudresourcemanager_client.region,
                 )
                 report.status = "PASS"

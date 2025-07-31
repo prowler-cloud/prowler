@@ -12,7 +12,13 @@ class defender_ensure_notify_emails_to_owners(Check):
         ) in defender_client.security_contact_configurations.items():
             for contact_configuration in security_contact_configurations.values():
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=contact_configuration
+                    metadata=self.metadata(),
+                    resource=contact_configuration,
+                )
+                report.resource_name = (
+                    contact_configuration.name
+                    if contact_configuration.name
+                    else "Security Contact"
                 )
                 report.subscription = subscription_name
                 if (
