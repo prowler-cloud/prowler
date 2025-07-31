@@ -10,7 +10,7 @@ from api.rls import RowLevelSecurityConstraint
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0043_github_provider"),
+        ("api", "0045_add_api_key_model"),
     ]
 
     operations = [
