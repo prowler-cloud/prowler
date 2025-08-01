@@ -13,7 +13,7 @@ interface ContentLayoutProps {
 export function ContentLayout({ title, icon, children }: ContentLayoutProps) {
   return (
     <>
-      <Navbar title={title} icon={icon || undefined} />
+      <Navbar title={title} icon={icon} />
       <div className="px-6 py-4 sm:px-8 xl:px-10">{children}</div>
     </>
   );
