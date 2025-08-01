@@ -136,12 +136,6 @@ jobs:
         run: |
           poetry check --lock
 
-      - name: Prevents known compatibility error between lxml and libxml2/libxmlsec versions - https://github.com/xmlsec/python-xmlsec/issues/320
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run pip install --force-reinstall --no-binary lxml lxml
-
       - name: Lint with ruff
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -170,8 +164,9 @@ jobs:
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
+        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
         run: |
-          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323
+          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
 
       - name: Vulture
         working-directory: ./api

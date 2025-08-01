@@ -210,8 +210,7 @@ export const initiateSamlAuth = async (email: string) => {
     if (response.status === 403) {
       return {
         success: false,
-        error:
-          "Domain is not authorized for SAML authentication or SAML certificates are missing.",
+        error: "Domain is not authorized for SAML authentication.",
       };
     }
 

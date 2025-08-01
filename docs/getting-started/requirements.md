@@ -1,13 +1,21 @@
-# Requirements
+# Prowler Requirements
 
-Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#), [Azure SDK](https://azure.github.io/azure-sdk-for-python/) and [GCP API Python Client](https://github.com/googleapis/google-api-python-client/).
+Prowler is built in Python and utilizes the following SDKs:
+
+- [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#)
+- [Azure SDK](https://azure.github.io/azure-sdk-for-python/)
+- [GCP API Python Client](https://github.com/googleapis/google-api-python-client/)
+- [Kubernetes SDK](https://github.com/kubernetes-client/python)
+- [M365 Graph SDK](https://github.com/microsoftgraph/msgraph-sdk-python)
+- [Github REST API SDK](https://github.com/PyGithub/PyGithub)
+
 ## AWS
 
-Since Prowler uses AWS Credentials under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence).
+Prowler requires AWS credentials to function properly. You can authenticate using any method outlined in the [AWS CLI configuration guide](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence).
 
-### Authentication
+### Authentication Steps
 
-Make sure you have properly configured your AWS-CLI with a valid Access Key and Region or declare AWS variables properly (or instance profile/role):
+Ensure your AWS CLI is correctly configured with valid credentials and region settings. You can achieve this via:
 
 ```console
 aws configure
@@ -21,36 +29,45 @@ export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
 export AWS_SESSION_TOKEN="XXXXXXXXX"
 ```
 
-Those credentials must be associated to a user or role with proper permissions to do all checks. To make sure, add the following AWS managed policies to the user or role being used:
+#### Required IAM Permissions
+
+The credentials used must be associated with a user or role that has appropriate permissions for security checks. Attach the following AWS managed policies to ensure access:
 
   - `arn:aws:iam::aws:policy/SecurityAudit`
   - `arn:aws:iam::aws:policy/job-function/ViewOnlyAccess`
 
-???+ note
-    Moreover, some read-only additional permissions are needed for several checks, make sure you attach also the custom policy [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json) to the role you are using. If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
+#### Additional Permissions
 
-### Multi-Factor Authentication
+For certain checks, additional read-only permissions are required. Attach the following custom policy to your role:
 
-If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to input the following values to get a new session:
+[prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json)
 
-- ARN of your MFA device
-- TOTP (Time-Based One-Time Password)
+If you intend to send findings to
+[AWS Security Hub](https://aws.amazon.com/security-hub), attach the following custom policy:
+
+[prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
+
+### Multi-Factor Authentication (MFA)
+
+If your IAM entity requires Multi-Factor Authentication (MFA), you can use the `--mfa` flag. Prowler will prompt you to enter the following values to initiate a new session:
+
+- **ARN of your MFA device**
+- **TOTP (Time-Based One-Time Password)**
 
 ## Azure
 
-Prowler for Azure supports the following authentication types. To use each one you need to pass the proper flag to the execution:
+Prowler for Azure supports multiple authentication types. To use a specific method, pass the appropriate flag during execution:
 
-- [Service Principal Application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
-- Current AZ CLI credentials stored.
-- Interactive browser authentication.
-- [Managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) authentication.
+- [**Service Principal Application**](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (**Recommended**)
+- Existing **AZ CLI credentials**
+- **Interactive browser authentication**
+- [**Managed Identity**](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) authentication
 
-???+ warning
-    For Prowler App only the Service Principal authentication method is supported.
+> ⚠️ **Important:** For Prowler App, only Service Principal authentication is supported.
 
-### Service Principal Application authentication
+### Service Principal Application Authentication
 
-To allow Prowler assume the service principal application identity to start the scan it is needed to configure the following environment variables:
+To allow Prowler to authenticate using a Service Principal Application, set up the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -58,39 +75,59 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 export AZURE_CLIENT_SECRET="XXXXXXX"
 ```
 
-If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
-Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md#how-to-create-prowler-service-principal-application) section to create a service principal.
+If you execute Prowler with the `--sp-env-auth` flag and these variables are not set or exported, execution will fail.
 
-### AZ CLI / Browser / Managed Identity authentication
+Refer to the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md#how-to-create-prowler-service-principal-application) guide for detailed setup instructions.
 
-The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options. To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `tenant-id` is required.
+### Azure Authentication Methods
 
-### Needed permissions
+Prowler for Azure supports the following authentication methods:
 
-Prowler for Azure needs two types of permission scopes to be set:
+- **AZ CLI Authentication (`--az-cli-auth`)** – Automated authentication using stored AZ CLI credentials.
+- **Managed Identity Authentication (`--managed-identity-auth`)** – Automated authentication via Azure Managed Identity.
+- **Browser Authentication (`--browser-auth`)** – Requires the user to authenticate using the default browser. The `tenant-id` parameter is mandatory for this method.
 
-- **Microsoft Entra ID permissions**: used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool). The permissions required by the tool are the following:
-    - `Directory.Read.All`
-    - `Policy.Read.All`
-    - `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
+### Required Permissions
+
+Prowler for Azure requires two types of permission scopes:
+
+#### Microsoft Entra ID Permissions
+
+These permissions allow Prowler to retrieve metadata from the assumed identity and perform specific Entra checks. While not mandatory for execution, they enhance functionality.
+
+Required permissions:
+
+- `Directory.Read.All`
+- `Policy.Read.All`
+- `UserAuthenticationMethod.Read.All` (used for Entra multifactor authentication checks)
 
     ???+ note
         You can replace `Directory.Read.All` with `Domain.Read.All` that is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
 
-- **Subscription scope permissions**: required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
-    - `Reader`
-    - `ProwlerRole` (custom role with minimal permissions defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json))
-    ???+ note
-        Please, notice that the field `assignableScopes` in the JSON custom role file must be changed to be the subscription or management group where the role is going to be assigned. The valid formats for the field are `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.
 
-To assign the permissions, follow the instructions in the [Microsoft Entra ID permissions](../tutorials/azure/create-prowler-service-principal.md#assigning-the-proper-permissions) section and the [Azure subscriptions permissions](../tutorials/azure/subscriptions.md#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler) section, respectively.
+#### Subscription Scope Permissions
+
+These permissions are required to perform security checks against Azure resources. The following **RBAC roles** must be assigned per subscription to the entity used by Prowler:
+
+- `Reader` – Grants read-only access to Azure resources.
+- `ProwlerRole` – A custom role with minimal permissions, defined in the [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json).
+
+???+ note
+    The `assignableScopes` field in the JSON custom role file must be updated to reflect the correct subscription or management group. Use one of the following formats: `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.
+
+### Assigning Permissions
+
+To properly configure permissions, follow these guides:
+
+- [Microsoft Entra ID permissions](../tutorials/azure/create-prowler-service-principal.md#assigning-the-proper-permissions)
+- [Azure subscription permissions](../tutorials/azure/subscriptions.md#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler)
 
 ???+ warning
-    Some permissions in `ProwlerRole` are considered **write** permissions, so if you have a `ReadOnly` lock attached to some resources you may get an error and will not get a finding for that check.
+     Some permissions in `ProwlerRole` involve **write access**. If a `ReadOnly` lock is attached to certain resources, you may encounter errors, and findings for those checks will not be available.
 
-#### Checks that require ProwlerRole
+#### Checks Requiring `ProwlerRole`
 
-The following checks require the `ProwlerRole` permissions to be executed, if you want to run them, make sure you have assigned the role to the identity that is going to be assumed by Prowler:
+The following security checks require the `ProwlerRole` permissions for execution. Ensure the role is assigned to the identity assumed by Prowler before running these checks:
 
 - `app_function_access_keys_configured`
 - `app_function_ftps_deployment_disabled`
@@ -99,51 +136,65 @@ The following checks require the `ProwlerRole` permissions to be executed, if yo
 
 ### Authentication
 
-Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
+Prowler follows the same credential discovery process as the [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
 
-1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
-2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
-3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+1. **Environment Variable Authentication** – Uses the [`GOOGLE_APPLICATION_CREDENTIALS` environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC).
+2. **Google Cloud CLI Credentials** – Uses credentials configured via the [Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal).
+3. **Service Account Authentication** – Retrieves the attached service account credentials from the metadata server. More details [here](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa).
 
-### Needed permissions
+### Required Permissions
 
-Prowler for Google Cloud needs the following permissions to be set:
+Prowler for Google Cloud requires the following permissions:
 
-- **Viewer (`roles/viewer`) IAM role**: granted at the project / folder / org level in order to scan the target projects
+#### IAM Roles
+- **Reader (`roles/reader`)** – Must be granted at the **project, folder, or organization** level to allow scanning of target projects.
 
-- **Project level settings**: you need to have at least one project with the below settings:
-    - Identity and Access Management (IAM) API (`iam.googleapis.com`) enabled by either using the
-    [Google Cloud API UI](https://console.cloud.google.com/apis/api/iam.googleapis.com/metrics) or
-    by using the gcloud CLI `gcloud services enable iam.googleapis.com --project <your-project-id>` command
-    - Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`) IAM role
-    - Set the quota project to be this project by either running `gcloud auth application-default set-quota-project <project-id>` or by setting an environment variable:
-    `export GOOGLE_CLOUD_QUOTA_PROJECT=<project-id>`
+#### Project-Level Settings
 
+At least one project must have the following configurations:
 
-The above settings must be associated to a user or service account.
+- **Identity and Access Management (IAM) API (`iam.googleapis.com`)** – Must be enabled via:
 
+    - The [Google Cloud API UI](https://console.cloud.google.com/apis/api/iam.googleapis.com/metrics), or
+    - The `gcloud` CLI:
+    ```sh
+    gcloud services enable iam.googleapis.com --project <your-project-id>
+    ```
 
-???+ note
-    By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
+- **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)** IAM Role – Required for resource scanning.
+
+- **Quota Project Setting** – Define a quota project using either:
+
+    - The `gcloud` CLI:
+    ```sh
+    gcloud auth application-default set-quota-project <project-id>
+    ```
+    - Setting an environment variable:
+    ```sh
+    export GOOGLE_CLOUD_QUOTA_PROJECT=<project-id>
+    ```
+
+### Default Project Scanning
+
+By default, Prowler scans **all accessible GCP projects**. To limit the scan to specific projects, use the `--project-ids` flag.
 
 ## Microsoft 365
 
-Prowler for M365 currently supports the following authentication types:
+Prowler for Microsoft 365 (M365) supports the following authentication methods:
 
-- [Service Principal Application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object).
-- Service Principal Application and Microsoft User Credentials (**recommended**).
-- Current AZ CLI credentials stored.
-- Interactive browser authentication.
-
+- [**Service Principal Application**](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (**Recommended**)
+- **Service Principal Application with Microsoft User Credentials**
+- **Stored AZ CLI credentials**
+- **Interactive browser authentication**
 
 ???+ warning
-    For Prowler App only the Service Principal with User Credentials authentication method is supported.
+    Prowler App supports the **Service Principal** authentication method and the **Service Principal with User Credentials** authentication method, but this last one will be deprecated in September once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
 
-### Service Principal authentication (recommended)
+### Service Principal Authentication (Recommended)
 
-Authentication flag: `--sp-env-auth`
+**Authentication flag:** `--sp-env-auth`
 
-To allow Prowler assume the service principal identity to start the scan it is needed to configure the following environment variables:
+To enable Prowler to authenticate as the **Service Principal Application**, configure the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -151,18 +202,23 @@ export AZURE_CLIENT_SECRET="XXXXXXXXX"
 export AZURE_TENANT_ID="XXXXXXXXX"
 ```
 
-If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
-Follow the instructions in the [Create Prowler Service Principal](../tutorials/microsoft365/getting-started-m365.md#create-the-service-principal-app) section to create a service principal.
+If these variables are not set or exported, execution using `--sp-env-auth` will fail.
 
-If you don't add the external API permissions described in the mentioned section above you will only be able to run the checks that work through MS Graph. This means that you won't run all the provider.
+Refer to the [Create Prowler Service Principal](../tutorials/microsoft365/getting-started-m365.md#create-the-service-principal-app) guide for setup instructions.
 
-If you want to scan all the checks from M365 you will need to use the recommended authentication method or add the external API permissions.
+If the external API permissions described in the mentioned section above are not added only checks that work through MS Graph will be executed. This means that the full provider will not be executed.
 
-### Service Principal and User Credentials authentication
+???+ note
+    In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [Needed permissions](/docs/tutorials/microsoft365/getting-started-m365.md#needed-permissions) section for more information.
+
+### Service Principal and User Credentials Authentication
 
 Authentication flag: `--env-auth`
 
-This authentication method follows the same approach as the service principal method but introduces two additional environment variables for user credentials:  `M365_USER` and `M365_PASSWORD`.
+???+ warning
+    This method is not recommended anymore, we recommend just use the **Service Principal Application** authentication method instead.
+
+This method builds upon the Service Principal authentication by adding User Credentials. Configure the following environment variables: `M365_USER` and `M365_PASSWORD`.
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -172,9 +228,12 @@ export M365_USER="your_email@example.com"
 export M365_PASSWORD="examplepassword"
 ```
 
-These two new environment variables are **required** to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
+These two new environment variables are **required** in this authentication method to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
 
 - `M365_USER` should be your Microsoft account email using the **assigned domain in the tenant**. This means it must look like `example@YourCompany.onmicrosoft.com` or `example@YourCompany.com`, but it must be the exact domain assigned to that user in the tenant.
+
+    ???+ warning
+        If the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
 
     ???+ warning
         If the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
@@ -195,56 +254,90 @@ These two new environment variables are **required** to execute the PowerShell m
         Before we asked for a encrypted password, but now we ask for the user password directly. Prowler will now handle the password encryption for you.
 
 
-### Interactive Browser authentication
 
-Authentication flag: `--browser-auth`
+### Interactive Browser Authentication
 
-This authentication method requires the user to authenticate against Azure using the default browser to start the scan, also `--tenant-id` flag is required.
+**Authentication flag:** `--browser-auth`
 
-With this credentials you will only be able to run the checks that work through MS Graph, this means that you won't run all the provider. If you want to scan all the checks from M365 you will need to use the recommended authentication method.
+This authentication method requires the user to authenticate against Azure using the default browser to start the scan. The `--tenant-id` flag is also required.
 
-Since this is a delegated permission authentication method, necessary permissions should be given to the user, not the app.
+With these credentials, you will only be able to run checks that rely on Microsoft Graph. This means you won't be able to run the entire provider. To perform a full M365 security scan, use the **recommended authentication method**.
 
+Since this is a **delegated permission** authentication method, necessary permissions should be assigned to the user rather than the application.
 
-### Needed permissions
+### Required Permissions
 
-Prowler for M365 requires two types of permission scopes to be set (if you want to run the full provider including PowerShell checks). Both must be configured using Microsoft Entra ID:
+To run the full Prowler provider, including PowerShell checks, two types of permission scopes must be set in **Microsoft Entra ID**.
 
-- **Service Principal Application Permissions**: These are set at the **application** level and are used to retrieve data from the identity being assessed:
-    - `AuditLog.Read.All`: Required for Entra service.
-    - `Directory.Read.All`: Required for all services.
-    - `Policy.Read.All`: Required for all services.
-    - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-    - `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
-    - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. You also need to assign the `Exchange Administrator` role to the app.
-    - `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
+#### For Service Principal Authentication (`--sp-env-auth`) - Recommended
 
-    ???+ note
-        You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+When using service principal authentication, you need to add the following **Application Permissions** configured to:
 
-        > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
+**Microsoft Graph API Permissions:**
 
+- `AuditLog.Read.All`: Required for Entra service.
+- `Directory.Read.All`: Required for all services.
+- `Policy.Read.All`: Required for all services.
+- `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+- `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
 
+**External API Permissions:**
 
-
-- **Powershell Modules Permissions** (if using user credentials): These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
-    - `Global Reader` (recommended): this allows you to read all roles needed.
-    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (since only read access is needed, Global Reader is recommended).
-
-In order to know how to assign those permissions and roles follow the instructions in the Microsoft Entra ID [permissions](../tutorials/microsoft365/getting-started-m365.md#grant-required-api-permissions) and [roles](../tutorials/microsoft365/getting-started-m365.md#assign-required-roles-to-your-user) section.
-
-
-### Supported PowerShell versions
-
-You must have PowerShell installed to run certain M365 checks.
-Currently, we support **PowerShell version 7.4 or higher** (7.5 is recommended).
-
-This requirement exists because **PowerShell 5.1** (the version that comes by default on some Windows systems) does not support several cmdlets needed to run the checks properly.
-Additionally, earlier [PowerShell Cross-Platform versions](https://learn.microsoft.com/en-us/powershell/scripting/install/powershell-support-lifecycle?view=powershell-7.5) are no longer under technical support, which may cause unexpected errors.
-
+- `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. You also need to assign the `Global Reader` role to the app.
+- `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
 
 ???+ note
-    Installing powershell will be only needed if you install prowler from pip or other sources, these means that the SDK and API containers contain PowerShell installed by default.
+    `Directory.Read.All` can be replaced with `Domain.Read.All` that is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+
+    > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
+
+???+ note
+    This is the **recommended authentication method** because it allows you to run the full M365 provider including PowerShell checks, providing complete coverage of all available security checks, same as the Service Principal Authentication + User Credentials Authentication but this last one will be deprecated in September once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
+
+
+#### For Service Principal + User Credentials Authentication (`--env-auth`)
+
+When using service principal with user credentials authentication, you need **both** sets of permissions:
+
+**1. Service Principal Application Permissions**:
+- You **will need** all the Microsoft Graph API permissions listed above.
+- You **won't need** the External API permissions listed above.
+
+**2. User-Level Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
+
+- `Global Reader` (recommended): this allows you to read all roles needed.
+- `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (since only read access is needed, Global Reader is recommended).
+
+
+#### For Browser Authentication (`--browser-auth`)
+
+When using browser authentication, permissions are delegated to the user, so the user must have the appropriate permissions rather than the application.
+
+???+ warning
+    With browser authentication, you will only be able to run checks that work through MS Graph API. PowerShell module checks will not be executed.
+
+### Assigning Permissions and Roles
+
+For guidance on assigning the necessary permissions and roles, follow these instructions:
+- [Grant API Permissions](../tutorials/microsoft365/getting-started-m365.md#grant-required-graph-api-permissions)
+- [Assign Required Roles](../tutorials/microsoft365/getting-started-m365.md#if-using-user-authentication)
+
+### Supported PowerShell Versions
+
+PowerShell is required to run certain M365 checks.
+
+**Supported versions:**
+- **PowerShell 7.4 or higher** (7.5 is recommended)
+
+#### Why Is PowerShell 7.4+ Required?
+
+- **PowerShell 5.1** (default on some Windows systems) does not support required cmdlets.
+- Older [cross-platform PowerShell versions](https://learn.microsoft.com/en-us/powershell/scripting/install/powershell-support-lifecycle?view=powershell-7.5) are **unsupported**, leading to potential errors.
+
+???+ note
+    Installing PowerShell is only necessary if you install Prowler via **pip or other sources**. **SDK and API containers include PowerShell by default.**
+
+### Installing PowerShell
 
 Installing PowerShell is different depending on your OS.
 
@@ -419,19 +512,21 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
     docker run -it mcr.microsoft.com/dotnet/sdk:9.0 pwsh
     ```
 
+### Required PowerShell Modules
 
-### Needed PowerShell modules
-
-To obtain the required data for this provider, we use several PowerShell cmdlets.
+Prowler relies on several PowerShell cmdlets to retrieve necessary data.
 These cmdlets come from different modules that must be installed.
 
-The installation of these modules will be performed automatically if you run Prowler with the flag `--init-modules`. This an example way of running Prowler and installing the modules:
+#### Automatic Installation
+
+The required modules are automatically installed when running Prowler with the `--init-modules` flag.
+
+Example command:
 
 ```console
 python3 prowler-cli.py m365 --verbose --log-level ERROR --env-auth --init-modules
 ```
-
-If you already have them installed, there is no problem even if you use the flag because it will automatically check if the needed modules are already installed.
+If the modules are already installed, running this command will not cause issues—it will simply verify that the necessary modules are available.
 
 ???+ note
     Prowler installs the modules using `-Scope CurrentUser`.
@@ -441,35 +536,40 @@ If you already have them installed, there is no problem even if you use the flag
     Install-Module -Name "ModuleName" -Scope AllUsers -Force
     ```
 
-The required modules are:
+#### Modules Version
 
-- [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0): Minimum version 3.6.0. Required for several checks across Exchange, Defender, and Purview.
-- [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0): Minimum version 6.6.0. Required for all Teams checks.
+- [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0) (Minimum version: 3.6.0) Required for checks across Exchange, Defender, and Purview.
+- [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0) (Minimum version: 6.6.0) Required for all Teams checks.
 - [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
 
-## GitHub
-### Authentication
+[MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
 
-Prowler supports multiple methods to [authenticate with GitHub](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api). These include:
+## GitHub
+
+Prowler supports multiple [authentication methods for GitHub](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api).
+
+### Supported Authentication Methods
 
 - **Personal Access Token (PAT)**
 - **OAuth App Token**
 - **GitHub App Credentials**
 
-This flexibility allows you to scan and analyze your GitHub account, including repositories, organizations, and applications, using the method that best suits your use case.
-
-The provided credentials must have the appropriate permissions to perform all the required checks.
+These options provide flexibility for scanning and analyzing your GitHub account, repositories, organizations, and applications. Choose the authentication method that best suits your security needs.
 
 ???+ note
     GitHub App Credentials support less checks than other authentication methods.
 
 ## Infrastructure as Code (IaC)
 
-Prowler's Infrastructure as Code (IaC) provider enables you to scan local infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication.
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication for local scans.
 
 ### Authentication
 
-The IaC provider does not require any authentication or credentials since it scans local files directly. This makes it ideal for CI/CD pipelines and local development environments.
+- For local scans, no authentication is required.
+- For remote repository scans, authentication can be provided via:
+    - [**GitHub Username and Personal Access Token (PAT)**](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+    - [**GitHub OAuth App Token**](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+    - [**Git URL**](https://git-scm.com/docs/git-clone#_git_urls)
 
 ### Supported Frameworks
 
@@ -489,27 +589,3 @@ The IaC provider leverages Checkov to support multiple frameworks, including:
 - Kustomize
 - OpenAPI
 - SAST, SCA (Software Composition Analysis)
-
-### Usage
-
-To run Prowler with the IaC provider, use the `iac` flag. You can specify the directory to scan, frameworks to include, and paths to exclude.
-
-#### Basic Example
-
-```console
-prowler iac --scan-path ./my-iac-directory
-```
-
-#### Specify Frameworks
-
-Scan only Terraform and Kubernetes files:
-
-```console
-prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
-```
-
-#### Exclude Paths
-
-```console
-prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/test,./my-iac-directory/examples
-```

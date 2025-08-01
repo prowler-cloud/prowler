@@ -413,5 +413,16 @@ class TestS3:
             )
         assert (
             str(e.value)
-            == "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
+            == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
         )
+
+    @mock_aws
+    def test_init_without_session_and_role_arn_but_profile(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                external_id="1234567890",
+            )
+        assert str(e.value) == "If an external ID is provided, a role ARN is required."

@@ -8,7 +8,7 @@ from prowler.providers.azure.services.defender.defender_service import (
     IoTSecuritySolution,
     JITPolicy,
     Pricing,
-    SecurityContacts,
+    SecurityContactConfiguration,
     Setting,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -56,18 +56,24 @@ def mock_defender_get_assessments(_):
     }
 
 
-def mock_defender_get_security_contacts(_):
+def mock_defender_get_security_contacts(*args, **kwargs):
+    from prowler.providers.azure.services.defender.defender_service import (
+        NotificationsByRole,
+    )
+
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "/subscriptions/resource_id": SecurityContacts(
-                resource_id="/subscriptions/resource_id",
+            "/subscriptions/resource_id": SecurityContactConfiguration(
+                id="/subscriptions/resource_id",
                 name="default",
-                emails="user@user.com, test@test.es",
+                enabled=True,
+                emails=["user@user.com", "test@test.es"],
                 phone="666666666",
-                alert_notifications_minimal_severity="High",
-                alert_notifications_state="On",
-                notified_roles=["Owner", "Contributor"],
-                notified_roles_state="On",
+                notifications_by_role=NotificationsByRole(
+                    state=True, roles=["Owner", "Contributor"]
+                ),
+                alert_minimal_severity="High",
+                attack_path_minimal_risk_level=None,
             )
         }
     }
@@ -234,52 +240,17 @@ class Test_Defender_Service:
 
     def test_get_security_contacts(self):
         defender = Defender(set_mocked_azure_provider())
-        assert len(defender.security_contacts) == 1
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "/subscriptions/resource_id"
-            ].resource_id
-            == "/subscriptions/resource_id"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "/subscriptions/resource_id"
-            ].name
-            == "default"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "/subscriptions/resource_id"
-            ].emails
-            == "user@user.com, test@test.es"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "/subscriptions/resource_id"
-            ].phone
-            == "666666666"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "/subscriptions/resource_id"
-            ].alert_notifications_minimal_severity
-            == "High"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "/subscriptions/resource_id"
-            ].alert_notifications_state
-            == "On"
-        )
-        assert defender.security_contacts[AZURE_SUBSCRIPTION_ID][
+        assert len(defender.security_contact_configurations) == 1
+        contact = defender.security_contact_configurations[AZURE_SUBSCRIPTION_ID][
             "/subscriptions/resource_id"
-        ].notified_roles == ["Owner", "Contributor"]
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "/subscriptions/resource_id"
-            ].notified_roles_state
-            == "On"
-        )
+        ]
+        assert contact.id == "/subscriptions/resource_id"
+        assert contact.name == "default"
+        assert contact.emails == ["user@user.com", "test@test.es"]
+        assert contact.phone == "666666666"
+        assert contact.alert_minimal_severity == "High"
+        assert contact.notifications_by_role.state is True
+        assert contact.notifications_by_role.roles == ["Owner", "Contributor"]
 
     def test_get_iot_security_solutions(self):
         defender = Defender(set_mocked_azure_provider())

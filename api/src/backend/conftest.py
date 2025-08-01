@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from allauth.socialaccount.models import SocialLogin
 from django.conf import settings
 from django.db import connection as django_connection
 from django.db import connections as django_connections
@@ -22,12 +23,16 @@ from api.models import (
     Invitation,
     LighthouseConfiguration,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderSecret,
     Resource,
     ResourceTag,
+    ResourceTagMapping,
     Role,
+    SAMLConfiguration,
+    SAMLDomainIndex,
     Scan,
     ScanSummary,
     StateChoices,
@@ -41,10 +46,17 @@ from api.v1.serializers import TokenSerializer
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 
+TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
 TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
+
+
+def today_after_n_days(n_days: int) -> str:
+    return datetime.strftime(
+        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -389,6 +401,19 @@ def providers_fixture(tenants_fixture):
 
 
 @pytest.fixture
+def processor_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+    processor = Processor.objects.create(
+        tenant_id=tenant.id,
+        processor_type="mutelist",
+        configuration="Mutelist:\n  Accounts:\n    *:\n      Checks:\n        iam_user_hardware_mfa_enabled:\n         "
+        " Regions:\n            - *\n          Resources:\n            - *",
+    )
+
+    return processor
+
+
+@pytest.fixture
 def provider_groups_fixture(tenants_fixture):
     tenant, *_ = tenants_fixture
     pgroup1 = ProviderGroup.objects.create(
@@ -637,6 +662,7 @@ def findings_fixture(scans_fixture, resources_fixture):
         check_metadata={
             "CheckId": "test_check_id",
             "Description": "test description apple sauce",
+            "servicename": "ec2",
         },
         first_seen_at="2024-01-02T00:00:00Z",
     )
@@ -663,6 +689,7 @@ def findings_fixture(scans_fixture, resources_fixture):
         check_metadata={
             "CheckId": "test_check_id",
             "Description": "test description orange juice",
+            "servicename": "s3",
         },
         first_seen_at="2024-01-02T00:00:00Z",
         muted=True,
@@ -1038,7 +1065,7 @@ def integrations_fixture(providers_fixture):
         enabled=True,
         connected=True,
         integration_type="amazon_s3",
-        configuration={"key": "value"},
+        configuration={"key": "value1"},
         credentials={"psswd": "1234"},
     )
     IntegrationProviderRelationship.objects.create(
@@ -1118,62 +1145,125 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
     return finding
 
 
-# @pytest.fixture
-# def saml_setup(tenants_fixture):
-#     tenant_id = tenants_fixture[0].id
-#     domain = "example.com"
+@pytest.fixture(scope="function")
+def latest_scan_resource(authenticated_client, providers_fixture):
+    provider = providers_fixture[0]
+    tenant_id = str(providers_fixture[0].tenant_id)
+    scan = Scan.objects.create(
+        name="latest completed scan for resource",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    resource = Resource.objects.create(
+        tenant_id=tenant_id,
+        provider=provider,
+        uid="latest_resource_uid",
+        name="Latest Resource",
+        region="us-east-1",
+        service="ec2",
+        type="instance",
+        metadata='{"test": "metadata"}',
+        details='{"test": "details"}',
+    )
 
-#     SAMLDomainIndex.objects.create(email_domain=domain, tenant_id=tenant_id)
+    resource_tag = ResourceTag.objects.create(
+        tenant_id=tenant_id,
+        key="environment",
+        value="test",
+    )
+    ResourceTagMapping.objects.create(
+        tenant_id=tenant_id,
+        resource=resource,
+        tag=resource_tag,
+    )
 
-#     metadata_xml = """<?xml version='1.0' encoding='UTF-8'?>
-#     <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
-#     <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
-#         <md:KeyDescriptor use='signing'>
-#         <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
-#             <ds:X509Data>
-#             <ds:X509Certificate>TEST</ds:X509Certificate>
-#             </ds:X509Data>
-#         </ds:KeyInfo>
-#         </md:KeyDescriptor>
-#         <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
-#         <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
-#         <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
-#     </md:IDPSSODescriptor>
-#     </md:EntityDescriptor>
-#     """
-#     SAMLConfiguration.objects.create(
-#         tenant_id=str(tenant_id),
-#         email_domain=domain,
-#         metadata_xml=metadata_xml,
-#     )
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid="test_finding_uid_latest",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status extended ",
+        impact=Severity.critical,
+        impact_extended="test impact extended",
+        severity=Severity.critical,
+        raw_result={
+            "status": Status.FAIL,
+            "impact": Severity.critical,
+            "severity": Severity.critical,
+        },
+        tags={"test": "latest"},
+        check_id="test_check_id_latest",
+        check_metadata={
+            "CheckId": "test_check_id_latest",
+            "Description": "test description latest",
+        },
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
 
-#     return {
-#         "email": f"user@{domain}",
-#         "domain": domain,
-#         "tenant_id": tenant_id,
-#     }
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    return resource
 
 
-# @pytest.fixture
-# def saml_sociallogin(users_fixture):
-#     user = users_fixture[0]
-#     user.email = "samlsso@acme.com"
-#     extra_data = {
-#         "firstName": ["Test"],
-#         "lastName": ["User"],
-#         "organization": ["Prowler"],
-#         "userType": ["member"],
-#     }
+@pytest.fixture
+def saml_setup(tenants_fixture):
+    tenant_id = tenants_fixture[0].id
+    domain = "prowler.com"
 
-#     account = MagicMock()
-#     account.provider = "saml"
-#     account.extra_data = extra_data
+    SAMLDomainIndex.objects.create(email_domain=domain, tenant_id=tenant_id)
 
-#     sociallogin = MagicMock(spec=SocialLogin)
-#     sociallogin.account = account
-#     sociallogin.user = user
+    metadata_xml = """<?xml version='1.0' encoding='UTF-8'?>
+    <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+    <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+        <md:KeyDescriptor use='signing'>
+        <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+            <ds:X509Data>
+            <ds:X509Certificate>TEST</ds:X509Certificate>
+            </ds:X509Data>
+        </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+        <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+        <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+    </md:IDPSSODescriptor>
+    </md:EntityDescriptor>
+    """
+    SAMLConfiguration.objects.create(
+        tenant_id=str(tenant_id),
+        email_domain=domain,
+        metadata_xml=metadata_xml,
+    )
 
-#     return sociallogin
+    return {
+        "email": f"user@{domain}",
+        "domain": domain,
+        "tenant_id": tenant_id,
+    }
+
+
+@pytest.fixture
+def saml_sociallogin(users_fixture):
+    user = users_fixture[0]
+    user.email = "samlsso@acme.com"
+    extra_data = {
+        "firstName": ["Test"],
+        "lastName": ["User"],
+        "organization": ["Prowler"],
+        "userType": ["member"],
+    }
+
+    account = MagicMock()
+    account.provider = "saml"
+    account.extra_data = extra_data
+
+    sociallogin = MagicMock(spec=SocialLogin)
+    sociallogin.account = account
+    sociallogin.user = user
+
+    return sociallogin
 
 
 def get_authorization_header(access_token: str) -> dict:

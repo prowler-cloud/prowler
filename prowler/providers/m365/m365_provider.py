@@ -443,6 +443,7 @@ class M365Provider(Provider):
         if credentials:
             if identity and credentials.user:
                 identity.user = credentials.user
+                identity.identity_type = "Service Principal and User Credentials"
             test_session = M365PowerShell(credentials, identity)
             try:
                 if init_modules:
@@ -927,11 +928,10 @@ class M365Provider(Provider):
                 client = GraphServiceClient(credentials=session)
 
                 domain_result = await client.domains.get()
-                if getattr(domain_result, "value"):
-                    if getattr(domain_result.value[0], "id"):
-                        identity.tenant_domain = domain_result.value[0].id
-                        for domain in domain_result.value:
-                            identity.tenant_domains.append(domain.id)
+                for domain in getattr(domain_result, "value", []):
+                    identity.tenant_domains.append(domain.id)
+                    if getattr(domain, "is_default", None):
+                        identity.tenant_domain = domain.id
 
             except HttpResponseError as error:
                 logger.error(
@@ -954,13 +954,20 @@ class M365Provider(Provider):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                 )
             # since that exception is not considered as critical, we keep filling another identity fields
-            identity.identity_id = (
-                getenv("AZURE_CLIENT_ID") or "Unknown user id (Missing AAD permissions)"
-            )
             if sp_env_auth:
                 identity.identity_type = "Service Principal"
+                identity.identity_id = (
+                    getenv("AZURE_CLIENT_ID")
+                    or session.credentials[0]._credential.client_id
+                    or "Unknown user id (Missing AAD permissions)"
+                )
             elif env_auth:
                 identity.identity_type = "Service Principal and User Credentials"
+                identity.identity_id = (
+                    getenv("AZURE_CLIENT_ID")
+                    or session.credentials[0]._credential.client_id
+                    or "Unknown user id (Missing AAD permissions)"
+                )
             elif browser_auth or az_cli_auth:
                 identity.identity_type = "User"
                 try:
@@ -978,6 +985,10 @@ class M365Provider(Provider):
                     logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
+            else:
+                # Static Credentials
+                identity.identity_type = "Service Principal"
+                identity.identity_id = session._client_id
 
             # Retrieve tenant id from the client
             client = GraphServiceClient(credentials=session)

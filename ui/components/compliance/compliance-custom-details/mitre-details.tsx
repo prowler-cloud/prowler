@@ -1,3 +1,4 @@
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Requirement } from "@/types/compliance";
 
 import {
@@ -7,7 +8,6 @@ import {
   ComplianceDetailContainer,
   ComplianceDetailSection,
   ComplianceDetailText,
-  ComplianceLink,
 } from "./shared-components";
 
 export const MITRECustomDetails = ({
@@ -63,9 +63,9 @@ export const MITRECustomDetails = ({
 
       {requirement.technique_url && (
         <ComplianceDetailSection title="MITRE ATT&CK Reference">
-          <ComplianceLink href={requirement.technique_url as string}>
+          <CustomLink href={requirement.technique_url as string}>
             {requirement.technique_url as string}
-          </ComplianceLink>
+          </CustomLink>
         </ComplianceDetailSection>
       )}
 
