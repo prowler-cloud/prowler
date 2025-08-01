@@ -596,6 +596,7 @@ class AwsProvider(Provider):
         Args:
             identity (AWSIdentityInfo): The identity information.
             assumed_role_credentials (AWSCredentials): The assumed role credentials.
+            session (AWSSession): The AWS provider session.
 
         Returns:
             Session: The assumed session.
