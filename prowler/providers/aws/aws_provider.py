@@ -254,7 +254,7 @@ class AwsProvider(Provider):
             )
             # Assume the IAM Role
             logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
-            assumed_role_credentials = self.assume_role(
+            assumed_role_credentials = AwsProvider.assume_role(
                 self._session.current_session,
                 assumed_role_information,
             )
@@ -267,7 +267,7 @@ class AwsProvider(Provider):
             self._assumed_role_configuration = assumed_role_configuration
 
             # Store a new current session using the assumed IAM Role
-            self._session.current_session = self.setup_assumed_session(
+            self._session.current_session = AwsProvider.setup_assumed_session(
                 self._identity,
                 assumed_role_configuration,
                 self._session,
@@ -318,7 +318,7 @@ class AwsProvider(Provider):
                 credentials=organizations_assumed_role_credentials,
             )
             # Get a new session using the AWS Organizations IAM Role assumed
-            aws_organizations_session = self.setup_assumed_session(
+            aws_organizations_session = AwsProvider.setup_assumed_session(
                 self._identity,
                 organizations_assumed_role_configuration,
                 self._session,
@@ -580,6 +580,7 @@ class AwsProvider(Provider):
                 file=pathlib.Path(__file__).name,
             )
 
+    @staticmethod
     def setup_assumed_session(
         identity: AWSIdentityInfo,
         assumed_role_configuration: AWSAssumeRoleConfiguration,
