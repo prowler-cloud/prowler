@@ -269,7 +269,6 @@ class AwsProvider(Provider):
             # Store a new current session using the assumed IAM Role
             self._session.current_session = self.setup_assumed_session(
                 self._identity,
-                assumed_role_configuration.credentials,
                 assumed_role_configuration,
                 self._session,
             )
@@ -321,7 +320,6 @@ class AwsProvider(Provider):
             # Get a new session using the AWS Organizations IAM Role assumed
             aws_organizations_session = self.setup_assumed_session(
                 self._identity,
-                organizations_assumed_role_configuration.credentials,
                 organizations_assumed_role_configuration,
                 self._session,
             )
@@ -582,10 +580,8 @@ class AwsProvider(Provider):
                 file=pathlib.Path(__file__).name,
             )
 
-    # TODO: Pass the assumed role configuration and session into a single argument
     def setup_assumed_session(
         identity: AWSIdentityInfo,
-        assumed_role_credentials: AWSCredentials,
         assumed_role_configuration: AWSAssumeRoleConfiguration,
         session: AWSSession,
     ) -> Session:
@@ -617,10 +613,10 @@ class AwsProvider(Provider):
             # that needs to be a method without arguments that retrieves a new set of fresh credentials
             # assuming the role again.
             assumed_refreshable_credentials = RefreshableCredentials(
-                access_key=assumed_role_credentials.aws_access_key_id,
-                secret_key=assumed_role_credentials.aws_secret_access_key,
-                token=assumed_role_credentials.aws_session_token,
-                expiry_time=assumed_role_credentials.expiration,
+                access_key=assumed_role_configuration.credentials.aws_access_key_id,
+                secret_key=assumed_role_configuration.credentials.aws_secret_access_key,
+                token=assumed_role_configuration.credentials.aws_session_token,
+                expiry_time=assumed_role_configuration.credentials.expiration,
                 refresh_using=lambda: AwsProvider.refresh_credentials(
                     assumed_role_configuration, session
                 ),
