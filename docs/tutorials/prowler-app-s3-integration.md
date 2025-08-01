@@ -64,7 +64,7 @@ To access S3 Integration:
 ![Credentials configuration](../tutorials/img/s3-integration-ui-5.png)
 2. For IAM role authentication, complete the required fields:
    - **Role ARN:** The Amazon Resource Name of the IAM role
-   - **External ID:** Unique identifier for additional security (defaults to tenant ID)
+   - **External ID:** Unique identifier for additional security (defaults to Tenant/Organization ID)
    - **Role Session Name:** Optional name for the assumed role session
    - **Session Duration:** Optional duration in seconds for the session
 2. Click "Create Integration" to complete the setup
