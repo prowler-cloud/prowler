@@ -14,7 +14,7 @@ from colorama import Fore, Style
 import prowler
 from prowler.config.config import orange_color
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
-from prowler.lib.check.models import Check
+from prowler.lib.check.models import Check, Severity
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
@@ -405,6 +405,11 @@ def execute_checks(
         audit_progress=0,
     )
 
+    # Get severity patches from config if available
+    severity_patches = {}
+    if hasattr(global_provider, "_audit_config") and global_provider._audit_config:
+        severity_patches = global_provider._audit_config.get("severity_patches", {})
+
     # Refactor(CLI): This needs to be moved somewhere in the CLI
     if os.name != "nt":
         try:
@@ -444,6 +449,14 @@ def execute_checks(
                     # Recover functions from check
                     check_to_execute = getattr(lib, check_name)
                     check = check_to_execute()
+
+                    # Apply severity patch if available
+                    if check.CheckID in severity_patches:
+                        logger.debug(
+                            f"Patching severity for {check.CheckID} from {check.Severity} to {severity_patches[check.CheckID]}"
+                        )
+                        check.Severity = Severity(severity_patches[check.CheckID])
+
                 except ModuleNotFoundError:
                     logger.error(
                         f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
@@ -489,6 +502,14 @@ def execute_checks(
             messages.append(
                 f"Scanning unused services and resources: {Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
             )
+
+        # Add severity patches info if available
+        if severity_patches:
+            patch_count = len(severity_patches)
+            messages.append(
+                f"Severity patches applied: {Fore.YELLOW}{patch_count}{Style.RESET_ALL}"
+            )
+
         report_title = (
             f"{Style.BRIGHT}Using the following configuration:{Style.RESET_ALL}"
         )
@@ -524,6 +545,14 @@ def execute_checks(
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)
                         check = check_to_execute()
+
+                        # Apply severity patch if available
+                        if check.CheckID in severity_patches:
+                            logger.debug(
+                                f"Patching severity for {check.CheckID} from {check.Severity} to {severity_patches[check.CheckID]}"
+                            )
+                            check.Severity = Severity(severity_patches[check.CheckID])
+
                     except ModuleNotFoundError:
                         logger.error(
                             f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
