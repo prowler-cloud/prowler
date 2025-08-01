@@ -31,7 +31,7 @@ Before configuring S3 Integration, ensure:
 To access S3 Integration:
 
 1. Log into Prowler App
-2. Navigate to the main menu and select "Integrations"
+2. Navigate to  "Integrations"
 ![Navigate to integrations](../tutorials/img/s3-integration-ui-1.png)
 3. The integrations page displays available integration options
 
