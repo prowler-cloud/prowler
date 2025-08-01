@@ -22,6 +22,11 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  initializeSession,
+  trackUserLogin,
+  trackUserRegistration,
+} from "@/lib/analytics";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
@@ -81,6 +86,8 @@ export const AuthForm = ({
   const isSamlMode = form.watch("isSamlMode");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    //getting an new posthog init
+    initializeSession();
     if (type === "sign-in") {
       if (data.isSamlMode) {
         const email = data.email.toLowerCase();
@@ -108,6 +115,7 @@ export const AuthForm = ({
         password: data.password,
       });
       if (result?.message === "Success") {
+        trackUserLogin({ email: data.email });
         router.push("/");
       } else if (result?.errors && "credentials" in result.errors) {
         form.setError("email", {
@@ -129,6 +137,11 @@ export const AuthForm = ({
       const newUser = await createNewUser(data);
 
       if (!newUser.errors) {
+        trackUserRegistration({
+          email: data.email,
+          fullName: data.name,
+          company: data.company,
+        });
         toast({
           title: "Success!",
           description: "The user was registered successfully.",
