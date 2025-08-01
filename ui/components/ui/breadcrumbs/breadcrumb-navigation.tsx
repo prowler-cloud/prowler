@@ -16,15 +16,10 @@ export interface CustomBreadcrumbItem {
 }
 
 interface BreadcrumbNavigationProps {
-  // For automatic breadcrumbs (like navbar)
   mode?: "auto" | "custom" | "hybrid";
   title?: string;
   icon?: string | ReactNode;
-
-  // For custom breadcrumbs (like resource-detail)
   customItems?: CustomBreadcrumbItem[];
-
-  // Common options
   className?: string;
   paramToPreserve?: string;
   showTitle?: boolean;
@@ -43,7 +38,6 @@ export function BreadcrumbNavigation({
   const searchParams = useSearchParams();
 
   const generateAutoBreadcrumbs = (): CustomBreadcrumbItem[] => {
-    // Mapeo de iconos por ruta
     const pathIconMapping: Record<string, string> = {
       "/integrations": "lucide:puzzle",
       "/providers": "lucide:cloud",
