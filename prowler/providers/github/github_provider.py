@@ -277,11 +277,8 @@ class GithubProvider(Provider):
                 if github_app_key_path:
                     with open(github_app_key_path, "r") as rsa_key:
                         app_key = rsa_key.read()
-                elif github_app_key_content:
-                    app_key = format_rsa_key(github_app_key_content)
                 else:
-                    # This shouldn't happen due to the condition above, but handle gracefully
-                    app_key = ""
+                    app_key = format_rsa_key(github_app_key_content)
 
             else:
                 # PAT
@@ -306,7 +303,6 @@ class GithubProvider(Provider):
                         env_key = environ.get("GITHUB_APP_KEY", "")
 
                         if app_id and env_key:
-                            # Check if env_key is file path or key content
                             if env_key.startswith("-----BEGIN"):
                                 app_key = format_rsa_key(env_key)
                             elif os.path.isfile(env_key):
