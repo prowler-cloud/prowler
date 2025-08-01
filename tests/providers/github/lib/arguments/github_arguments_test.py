@@ -61,11 +61,17 @@ class Test_GitHubArguments:
         arguments.init_parser(mock_github_args)
 
         # Verify authentication arguments were added
-        assert self.mock_auth_group.add_argument.call_count == 5
+        assert self.mock_auth_group.add_argument.call_count == 4
 
         # Check that all authentication arguments are present
         calls = self.mock_auth_group.add_argument.call_args_list
-        auth_args = [call[0][0] for call in calls]
+        auth_args = []
+        for call in calls:
+            # Handle both single arguments and aliases
+            if len(call[0]) > 1:
+                auth_args.extend(call[0])
+            else:
+                auth_args.append(call[0][0])
 
         assert "--personal-access-token" in auth_args
         assert "--oauth-app-token" in auth_args
