@@ -343,6 +343,15 @@ class M365Provider(Provider):
                     file=os.path.basename(__file__),
                     message="Tenant Id is required for M365 static credentials. Make sure you are using the correct credentials.",
                 )
+            if (
+                not certificate_content
+                and not (user and password)
+                and not client_secret
+            ):
+                raise M365ConfigCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="You must provide a valid set of credentials. Please check your credentials and try again.",
+                )
 
     @staticmethod
     def setup_region_config(region):
@@ -686,6 +695,7 @@ class M365Provider(Provider):
         sp_env_auth: bool = False,
         env_auth: bool = False,
         browser_auth: bool = False,
+        certificate_auth: bool = False,
         tenant_id: str = None,
         region: str = "M365Global",
         raise_on_exception: bool = True,
@@ -693,6 +703,7 @@ class M365Provider(Provider):
         client_secret: str = None,
         user: str = None,
         password: str = None,
+        certificate_content: str = None,
         provider_id: str = None,
     ) -> Connection:
         """Test connection to M365 tenant and PowerShell modules.
@@ -705,6 +716,7 @@ class M365Provider(Provider):
             sp_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
             env_auth: (bool): Flag indicating whether to use application and PowerShell authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            certificate_auth (bool): Flag indicating whether to use certificate authentication.
             tenant_id (str): The M365 Active Directory tenant ID.
             region (str): The M365 region.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
@@ -741,11 +753,13 @@ class M365Provider(Provider):
                 sp_env_auth,
                 env_auth,
                 browser_auth,
+                certificate_auth,
                 tenant_id,
                 client_id,
                 client_secret,
                 user,
                 password,
+                certificate_content,
             )
             region_config = M365Provider.setup_region_config(region)
 
@@ -775,6 +789,7 @@ class M365Provider(Provider):
                 sp_env_auth,
                 env_auth,
                 browser_auth,
+                certificate_auth,
                 tenant_id,
                 m365_credentials,
                 region_config,
@@ -790,6 +805,7 @@ class M365Provider(Provider):
                 env_auth,
                 browser_auth,
                 az_cli_auth,
+                certificate_auth,
                 session,
             )
 
@@ -811,6 +827,7 @@ class M365Provider(Provider):
             M365Provider.setup_powershell(
                 env_auth,
                 sp_env_auth,
+                certificate_auth,
                 m365_credentials,
                 identity,
             )

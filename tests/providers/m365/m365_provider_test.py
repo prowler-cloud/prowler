@@ -18,9 +18,9 @@ from prowler.config.config import (
 )
 from prowler.providers.common.models import Connection
 from prowler.providers.m365.exceptions.exceptions import (
+    M365ConfigCredentialsError,
     M365HTTPResponseError,
     M365InvalidProviderIdError,
-    M365MissingEnvironmentCredentialsError,
     M365NoAuthenticationMethodError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
@@ -297,6 +297,10 @@ class TestM365Provider:
                 "prowler.providers.m365.m365_provider.GraphServiceClient"
             ) as mock_graph_client,
             patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+            patch(
                 "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
                 return_value=M365IdentityInfo(
                     identity_id=IDENTITY_ID,
@@ -344,6 +348,10 @@ class TestM365Provider:
                 "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
             ) as mock_validate_static_credentials,
             patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+            patch(
                 "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
                 return_value=M365IdentityInfo(
                     identity_id=IDENTITY_ID,
@@ -378,9 +386,15 @@ class TestM365Provider:
     def test_test_connection_tenant_id_client_id_client_secret_no_user_password(
         self,
     ):
-        with patch(
-            "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
-        ) as mock_validate_static_credentials:
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+        ):
             mock_validate_static_credentials.side_effect = M365NotValidUserError(
                 file=os.path.basename(__file__),
                 message="The provided M365 User is not valid.",
@@ -403,9 +417,15 @@ class TestM365Provider:
     def test_test_connection_tenant_id_client_id_client_secret_user_no_password(
         self,
     ):
-        with patch(
-            "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
-        ) as mock_validate_static_credentials:
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+        ):
             mock_validate_static_credentials.side_effect = M365NotValidPasswordError(
                 file=os.path.basename(__file__),
                 message="The provided M365 Password is not valid.",
@@ -426,9 +446,15 @@ class TestM365Provider:
             assert "The provided M365 Password is not valid." in str(exception.value)
 
     def test_test_connection_with_httpresponseerror(self):
-        with patch(
-            "prowler.providers.m365.m365_provider.M365Provider.setup_session"
-        ) as mock_setup_session:
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+        ):
             mock_setup_session.side_effect = M365HTTPResponseError(
                 file="test_file", original_exception="Simulated HttpResponseError"
             )
@@ -446,9 +472,15 @@ class TestM365Provider:
             )
 
     def test_test_connection_with_exception(self):
-        with patch(
-            "prowler.providers.m365.m365_provider.M365Provider.setup_session"
-        ) as mock_setup_session:
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+        ):
             mock_setup_session.side_effect = Exception("Simulated Exception")
 
             with pytest.raises(Exception) as exception:
@@ -466,7 +498,7 @@ class TestM365Provider:
 
         assert exception.type == M365NoAuthenticationMethodError
         assert (
-            "M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth]"
+            "M365 provider requires at least one authentication method set: [--env-auth | --az-cli-auth | --sp-env-auth | --browser-auth | --certificate-auth]"
             in exception.value.args[0]
         )
 
@@ -503,9 +535,15 @@ class TestM365Provider:
     def test_test_connection_user_not_belonging_to_tenant(
         self,
     ):
-        with patch(
-            "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
-        ) as mock_validate_static_credentials:
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+        ):
             mock_validate_static_credentials.side_effect = M365UserNotBelongingToTenantError(
                 file=os.path.basename(__file__),
                 message="The provided M365 User does not belong to the specified tenant.",
@@ -562,21 +600,23 @@ class TestM365Provider:
         assert "The provided Client Secret is not valid." in str(exception.value)
 
     def test_validate_arguments_missing_env_credentials(self):
-        with pytest.raises(M365MissingEnvironmentCredentialsError) as exception:
+        with pytest.raises(M365ConfigCredentialsError) as exception:
             M365Provider.validate_arguments(
                 az_cli_auth=False,
                 sp_env_auth=False,
                 env_auth=True,
                 browser_auth=False,
-                tenant_id=None,
+                certificate_auth=False,
+                tenant_id="test_tenant_id",
                 client_id="test_client_id",
-                client_secret="test_secret",
+                client_secret=None,
                 user=None,
                 password=None,
+                certificate_content=None,
             )
 
         assert (
-            "M365 provider requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, M365_USER and M365_PASSWORD environment variables to be set when using --env-auth"
+            "You must provide a valid set of credentials. Please check your credentials and try again."
             in str(exception.value)
         )
 
@@ -588,6 +628,10 @@ class TestM365Provider:
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
             ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
                 return_value=M365IdentityInfo(
@@ -742,6 +786,10 @@ class TestM365Provider:
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials"
             ) as mock_validate_static_credentials,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
             patch(
                 "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
                 return_value=M365IdentityInfo(

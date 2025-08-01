@@ -112,7 +112,7 @@ class Testm365PowerShell:
         session.close()
 
     @patch("subprocess.Popen")
-    def test_test_credentials(self, mock_popen):
+    def test_test_credentials_exchange_success(self, mock_popen):
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
 
@@ -138,10 +138,75 @@ class Testm365PowerShell:
         # Mock encrypt_password to return a known value
         session.encrypt_password = MagicMock(return_value="encrypted_password")
 
-        # Mock execute to simulate successful connections for both Exchange and Teams
+        # Mock execute to simulate successful Exchange connection
         def mock_execute_side_effect(command):
             if "Connect-ExchangeOnline" in command:
                 return "Connected successfully https://aka.ms/exov3-module"
+            return ""
+
+        session.execute = MagicMock(side_effect=mock_execute_side_effect)
+
+        # Execute the test
+        result = session.test_credentials(credentials)
+        assert result is True
+
+        # Verify execute was called with the correct commands
+        session.execute.assert_any_call(
+            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'
+        )
+        session.execute.assert_any_call(
+            f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
+        )
+        # Exchange connection should be tested
+        session.execute.assert_any_call(
+            "Connect-ExchangeOnline -Credential $credential"
+        )
+
+        # Verify Teams connection was NOT called (since Exchange succeeded)
+        teams_calls = [
+            call
+            for call in session.execute.call_args_list
+            if "Connect-MicrosoftTeams" in str(call)
+        ]
+        assert (
+            len(teams_calls) == 0
+        ), "Teams connection should not be called when Exchange succeeds"
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_credentials_exchange_fail_teams_success(self, mock_popen):
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials(
+            user="test@contoso.onmicrosoft.com",
+            passwd="test_password",
+            encrypted_passwd="test_encrypted_password",
+            client_id="test_client_id",
+            client_secret="test_client_secret",
+            tenant_id="test_tenant_id",
+        )
+        identity = M365IdentityInfo(
+            identity_id="test_id",
+            identity_type="User",
+            tenant_id="test_tenant",
+            tenant_domain="contoso.onmicrosoft.com",
+            tenant_domains=["contoso.onmicrosoft.com"],
+            location="test_location",
+            user="test@contoso.onmicrosoft.com",
+        )
+        session = M365PowerShell(credentials, identity)
+
+        # Mock encrypt_password to return a known value
+        session.encrypt_password = MagicMock(return_value="encrypted_password")
+
+        # Mock execute to simulate Exchange fail and Teams success
+        def mock_execute_side_effect(command):
+            if "Connect-ExchangeOnline" in command:
+                return (
+                    "Connection failed"  # No "https://aka.ms/exov3-module" in response
+                )
             elif "Connect-MicrosoftTeams" in command:
                 return "Connected successfully test@contoso.onmicrosoft.com"
             return ""
@@ -159,7 +224,7 @@ class Testm365PowerShell:
         session.execute.assert_any_call(
             f'$credential = New-Object System.Management.Automation.PSCredential("{session.sanitize(credentials.user)}", $securePassword)'
         )
-        # New logic tests both Exchange and Teams connections
+        # Both Exchange and Teams connections should be tested
         session.execute.assert_any_call(
             "Connect-ExchangeOnline -Credential $credential"
         )
