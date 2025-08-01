@@ -11,20 +11,30 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 
 class BackupItem(BaseModel):
-    """Minimal BackupItem: only essential identifying and descriptive fields."""
+    """Model that represents a backup item."""
 
     id: str
     name: str
     workload_type: Optional[DataSourceType]
+    backup_policy_id: Optional[str] = None
+
+
+class BackupPolicy(BaseModel):
+    """Model that represents a backup policy."""
+
+    id: str
+    name: str
+    retention_days: Optional[int] = None
 
 
 class BackupVault(BaseModel):
-    """Minimal BackupVault: only essential identifying fields and its backup items."""
+    """Model that represents a backup vault."""
 
     id: str
     name: str
     location: str
     backup_protected_items: dict[str, BackupItem] = Field(default_factory=dict)
+    backup_policies: dict[str, BackupPolicy] = Field(default_factory=dict)
 
 
 class Recovery(AzureService):
@@ -71,6 +81,9 @@ class RecoveryBackup(AzureService):
                 vault.backup_protected_items = self._get_backup_protected_items(
                     subscription_name=subscription_name, vault=vault
                 )
+                vault.backup_policies = self._get_backup_policies(
+                    subscription_name=subscription_name, vault=vault
+                )
 
     def _get_backup_protected_items(
         self, subscription_name: str, vault: BackupVault
@@ -95,7 +108,54 @@ class RecoveryBackup(AzureService):
                     workload_type=(
                         item_properties.workload_type if item_properties else None
                     ),
+                    backup_policy_id=(
+                        item_properties.policy_id if item_properties else None
+                    ),
                 )
         except Exception as e:
             logger.error(f"Recovery - Error getting backup protected items: {e}")
         return backup_protected_items_dict
+
+    def _get_backup_policies(
+        self, subscription_name: str, vault: BackupVault
+    ) -> dict[str, BackupPolicy]:
+        """
+        Retrieve all backup policies for a given vault.
+        """
+        logger.info("Recovery - Getting backup policies...")
+        backup_policies_dict: dict[str, BackupPolicy] = {}
+        unique_backup_policies: set[str] = set()
+        try:
+            for item in vault.backup_protected_items.values():
+                if item.backup_policy_id:
+                    unique_backup_policies.add(item.backup_policy_id)
+            for policy_id in unique_backup_policies:
+                policy = self.clients[subscription_name].protection_policies.get(
+                    vault_name=vault.name,
+                    resource_group_name=vault.id.split("/")[4],
+                    policy_name=policy_id.split("/")[-1],
+                )
+                backup_policies_dict[policy_id] = BackupPolicy(
+                    id=policy.id,
+                    name=policy.name,
+                    retention_days=getattr(
+                        getattr(
+                            getattr(
+                                getattr(
+                                    getattr(policy, "properties", None),
+                                    "retention_policy",
+                                    None,
+                                ),
+                                "daily_schedule",
+                                None,
+                            ),
+                            "retention_duration",
+                            None,
+                        ),
+                        "count",
+                        None,
+                    ),
+                )
+        except Exception as e:
+            logger.error(f"Recovery - Error getting backup policies: {e}")
+        return backup_policies_dict
