@@ -41,6 +41,7 @@ def init_parser(self):
         nargs="?",
         help="GitHub App private key content",
         default=None,
+        dest="github_app_key_content",
         metavar="GITHUB_APP_KEY_CONTENT",
     )
 
