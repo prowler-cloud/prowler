@@ -671,6 +671,16 @@ prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription
     prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
     ```
 
+- **GCP Retry Configuration**
+
+    To configure the maximum number of retry attempts for Google Cloud SDK API calls, use the `--gcp-retries-max-attempts` flag:
+
+    ```console
+    prowler gcp --gcp-retries-max-attempts 5
+    ```
+
+    This is useful when experiencing quota exceeded errors (HTTP 429) to increase the number of automatic retry attempts.
+
 #### Kubernetes
 
 Prowler enables security scanning of Kubernetes clusters, supporting both **in-cluster** and **external** execution.
