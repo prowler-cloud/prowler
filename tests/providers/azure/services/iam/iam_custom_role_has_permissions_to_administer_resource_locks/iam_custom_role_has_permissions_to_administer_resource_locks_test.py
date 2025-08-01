@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import uuid4
 
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
@@ -39,9 +38,9 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         defender_client = mock.MagicMock
         role_name = "test-role"
         defender_client.custom_roles = {
-            AZURE_SUBSCRIPTION_ID: [
-                Role(
-                    id=str(uuid4()),
+            AZURE_SUBSCRIPTION_ID: {
+                "test-role-id": Role(
+                    id="test-role-id",
                     name=role_name,
                     type="CustomRole",
                     assignable_scopes=["/.*", "/test"],
@@ -54,7 +53,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
                         )
                     ],
                 )
-            ]
+            }
         }
 
         with (
@@ -82,7 +81,9 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert (
                 result[0].resource_id
-                == defender_client.custom_roles[AZURE_SUBSCRIPTION_ID][0].id
+                == defender_client.custom_roles[AZURE_SUBSCRIPTION_ID][
+                    "test-role-id"
+                ].id
             )
             assert result[0].resource_name == role_name
 
@@ -92,15 +93,15 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         defender_client = mock.MagicMock
         role_name = "test-role"
         defender_client.custom_roles = {
-            AZURE_SUBSCRIPTION_ID: [
-                Role(
-                    id=str(uuid4()),
+            AZURE_SUBSCRIPTION_ID: {
+                "test-role-id": Role(
+                    id="test-role-id",
                     name=role_name,
                     type="CustomRole",
                     assignable_scopes=["/*"],
                     permissions=[Permission(actions=["*"])],
                 )
-            ]
+            }
         }
 
         with (
@@ -128,7 +129,9 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert (
                 result[0].resource_id
-                == defender_client.custom_roles[AZURE_SUBSCRIPTION_ID][0].id
+                == defender_client.custom_roles[AZURE_SUBSCRIPTION_ID][
+                    "test-role-id"
+                ].id
             )
             assert result[0].resource_name == role_name
 
@@ -139,9 +142,9 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         role_name = "test-role"
         role_name2 = "test-role2"
         defender_client.custom_roles = {
-            AZURE_SUBSCRIPTION_ID: [
-                Role(
-                    id=str(uuid4()),
+            AZURE_SUBSCRIPTION_ID: {
+                "test-role-id": Role(
+                    id="test-role-id",
                     name=role_name,
                     type="CustomRole",
                     assignable_scopes=["/.*", "/test"],
@@ -154,8 +157,8 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
                         )
                     ],
                 ),
-                Role(
-                    id=str(uuid4()),
+                "test-role-id2": Role(
+                    id="test-role-id2",
                     name=role_name2,
                     type="CustomRole",
                     assignable_scopes=["/.*", "/test"],
@@ -168,7 +171,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
                         )
                     ],
                 ),
-            ]
+            }
         }
 
         with (
@@ -196,5 +199,29 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert (
                 result[0].resource_id
-                == defender_client.custom_roles[AZURE_SUBSCRIPTION_ID][0].id
+                == defender_client.custom_roles[AZURE_SUBSCRIPTION_ID][
+                    "test-role-id"
+                ].id
             )
+
+    def test_iam_custom_roles_empty_list_but_with_key(self):
+        defender_client = mock.MagicMock
+        defender_client.custom_roles = {AZURE_SUBSCRIPTION_ID: {}}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks import (
+                iam_custom_role_has_permissions_to_administer_resource_locks,
+            )
+
+            check = iam_custom_role_has_permissions_to_administer_resource_locks()
+            result = check.execute()
+            assert len(result) == 0

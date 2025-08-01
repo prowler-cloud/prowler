@@ -11,6 +11,7 @@ from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.lib.s3.exceptions.exceptions import S3InvalidBucketNameError
 from prowler.providers.aws.lib.s3.s3 import S3
+from prowler.providers.common.models import Connection
 from tests.lib.outputs.compliance.fixtures import ISO27001_2013_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1
@@ -93,7 +94,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
     @mock_aws
@@ -132,7 +133,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
         remove(f"{CURRENT_DIRECTORY}/{csv_file}")
@@ -171,7 +172,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "application/json"
         )
 
     @mock_aws
@@ -209,7 +210,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/html"
         )
 
     @mock_aws
@@ -290,7 +291,7 @@ class TestS3:
                 Bucket=S3_BUCKET_NAME,
                 Key=uploaded_object_name,
             )["ContentType"]
-            == "binary/octet-stream"
+            == "text/csv"
         )
 
     def test_get_get_object_path_with_prowler(self):
@@ -318,29 +319,99 @@ class TestS3:
 
     @mock_aws
     def test_test_connection_S3(self):
-        current_session = boto3.session.Session(region_name=AWS_REGION_US_EAST_1)
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+
+        # Create bucket
+        current_session = boto3.session.Session(
+            aws_access_key_id=access_key["AccessKeyId"],
+            aws_secret_access_key=access_key["SecretAccessKey"],
+            region_name=AWS_REGION_US_EAST_1,
+        )
         s3_client = current_session.client("s3")
         s3_client.create_bucket(Bucket=S3_BUCKET_NAME)
-        s3 = S3.test_connection(
-            session=current_session,
+
+        connection = S3.test_connection(
+            aws_region=AWS_REGION_US_EAST_1,
             bucket_name=S3_BUCKET_NAME,
+            aws_access_key_id=access_key["AccessKeyId"],
+            aws_secret_access_key=access_key["SecretAccessKey"],
         )
-        assert s3 is not None
-        assert s3.is_connected is True
-        assert s3.error is None
+        assert isinstance(connection, Connection)
+        assert connection.is_connected is True
+        assert connection.error is None
 
     @mock_aws
     def test_test_connection_S3_bucket_invalid_name(self):
-        current_session = boto3.session.Session(region_name=AWS_REGION_US_EAST_1)
-        s3_client = current_session.client("s3")
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
 
+        # Create bucket (with valid name)
+        current_session = boto3.session.Session(
+            aws_access_key_id=access_key["AccessKeyId"],
+            aws_secret_access_key=access_key["SecretAccessKey"],
+            region_name=AWS_REGION_US_EAST_1,
+        )
+        s3_client = current_session.client("s3")
         s3_client.create_bucket(Bucket=S3_BUCKET_NAME)
+
         with pytest.raises(S3InvalidBucketNameError):
-            s3 = S3.test_connection(
-                session=current_session,
+            S3.test_connection(
+                aws_region=AWS_REGION_US_EAST_1,
                 bucket_name="invalid_bucket",
+                aws_access_key_id=access_key["AccessKeyId"],
+                aws_secret_access_key=access_key["SecretAccessKey"],
             )
 
-            assert s3 is not None
-            assert s3.is_connected is False
-            assert s3.error is not None
+    @mock_aws
+    def test_init_without_session(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+            )
+
+        assert (
+            str(e.value)
+            == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
+        )
+
+    @mock_aws
+    def test_init_without_session_but_role_arn(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                role_arn="arn:aws:iam::123456789012:role/role_name",
+            )
+
+        assert (
+            str(e.value)
+            == "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
+        )
+
+    @mock_aws
+    def test_init_without_session_and_role_arn_but_session_duration(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                session_duration=3600,
+            )
+        assert (
+            str(e.value)
+            == "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
+        )

@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { getToken, getUserByMe } from "./actions/auth";
+import { apiBaseUrl } from "./lib";
 
 interface CustomJwtPayload extends JwtPayload {
   user_id: string;
@@ -11,8 +12,7 @@ interface CustomJwtPayload extends JwtPayload {
 }
 
 const refreshAccessToken = async (token: JwtPayload) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tokens/refresh`);
+  const url = new URL(`${apiBaseUrl}/tokens/refresh`);
 
   const bodyData = {
     data: {
@@ -90,6 +90,7 @@ export const authConfig = {
           email: userMeResponse.email,
           company: userMeResponse?.company,
           dateJoined: userMeResponse.dateJoined,
+          permissions: userMeResponse.permissions,
         };
 
         return {
@@ -99,13 +100,50 @@ export const authConfig = {
         };
       },
     }),
+    Credentials({
+      id: "social-oauth",
+      name: "social-oauth",
+      credentials: {
+        accessToken: { label: "Access Token", type: "text" },
+        refreshToken: { label: "Refresh Token", type: "text" },
+      },
+      async authorize(credentials) {
+        const accessToken = credentials?.accessToken;
+
+        if (!accessToken) {
+          return null;
+        }
+
+        try {
+          const userMeResponse = await getUserByMe(accessToken as string);
+
+          const user = {
+            name: userMeResponse.name,
+            email: userMeResponse.email,
+            company: userMeResponse?.company,
+            dateJoined: userMeResponse.dateJoined,
+
+            permissions: userMeResponse.permissions,
+          };
+
+          return {
+            ...user,
+            accessToken: credentials.accessToken,
+            refreshToken: credentials.refreshToken,
+          };
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("Error in authorize:", error);
+          return null;
+        }
+      },
+    }),
   ],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       const isSignUpPage = nextUrl.pathname === "/sign-up";
-      //CLOUD API CHANGES
 
       // Allow access to sign-up page
       if (isSignUpPage) return true;
@@ -136,6 +174,15 @@ export const authConfig = {
         companyName: user?.company,
         email: user?.email,
         dateJoined: user?.dateJoined,
+        permissions: user?.permissions || {
+          manage_users: false,
+          manage_account: false,
+          manage_providers: false,
+          manage_scans: false,
+          manage_integrations: false,
+          manage_billing: false,
+          unlimited_visibility: false,
+        },
       };
 
       if (account && user) {

@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.models import Check, Check_Report_AWS, Severity
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
@@ -9,14 +9,17 @@ class ec2_securitygroup_allow_ingress_from_internet_to_all_ports(Check):
         findings = []
         for security_group_arn, security_group in ec2_client.security_groups.items():
             # Check if ignoring flag is set and if the VPC and the SG is in use
-            if ec2_client.provider.scan_unused_services or (
+            sg_in_use = (
                 security_group.vpc_id in vpc_client.vpcs
                 and vpc_client.vpcs[security_group.vpc_id].in_use
                 and len(security_group.network_interfaces) > 0
-            ):
+            )
+            if ec2_client.provider.scan_unused_services or sg_in_use:
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource=security_group
                 )
+                if not sg_in_use:
+                    report.check_metadata.Severity = Severity.high
                 report.resource_details = security_group.name
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) does not have all ports open to the Internet."

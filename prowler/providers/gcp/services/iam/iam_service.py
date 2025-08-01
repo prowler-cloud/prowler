@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -35,6 +35,7 @@ class IAM(GCPService):
                                 email=account["email"],
                                 display_name=account.get("displayName", ""),
                                 project_id=project_id,
+                                uniqueId=account.get("uniqueId", ""),
                             )
                         )
 
@@ -99,6 +100,7 @@ class ServiceAccount(BaseModel):
     display_name: str
     keys: list[Key] = []
     project_id: str
+    uniqueId: str
 
 
 class AccessApproval(GCPService):

@@ -243,6 +243,27 @@ def mock_recover_checks_from_aws_provider_cognito_service(*_):
     return []
 
 
+def mock_recover_checks_from_aws_provider_eks_service(*_):
+    return [
+        (
+            "eks_cluster_not_publicly_accessible",
+            "/root_dir/fake_path/eks/eks_cluster_not_publicly_accessible",
+        ),
+        (
+            "eks_cluster_uses_a_supported_version",
+            "/root_dir/fake_path/eks/eks_cluster_uses_a_supported_version",
+        ),
+        (
+            "eks_cluster_network_policy_enabled",
+            "/root_dir/fake_path/eks/eks_cluster_network_policy_enabled",
+        ),
+        (
+            "eks_control_plane_logging_all_types_enabled",
+            "/root_dir/fake_path/eks/eks_control_plane_logging_all_types_enabled",
+        ),
+    ]
+
+
 class TestAWSProvider:
     @mock_aws
     def test_aws_provider_default(self):
@@ -821,7 +842,7 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 32
+        assert len(response.keys()) == 33
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
@@ -1607,6 +1628,27 @@ aws:
     @mock_aws
     @patch(
         "prowler.lib.check.utils.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_eks_service,
+    )
+    def test_get_checks_from_input_arn_eks(self):
+        expected_checks = [
+            "eks_cluster_not_publicly_accessible",
+            "eks_cluster_uses_a_supported_version",
+            "eks_cluster_network_policy_enabled",
+            "eks_control_plane_logging_all_types_enabled",
+        ]
+
+        aws_provider = AwsProvider()
+        aws_provider._audit_resources = [
+            f"arn:aws:eks:us-east-1:{AWS_ACCOUNT_NUMBER}:cluster/test-eks"
+        ]
+        recovered_checks = aws_provider.get_checks_from_input_arn()
+
+        assert set(recovered_checks) == set(expected_checks)
+
+    @mock_aws
+    @patch(
+        "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_cognito_service,
     )
     def test_get_checks_from_input_arn_cognito(self):
@@ -1712,13 +1754,13 @@ aws:
         assert not recovered_regions
 
     def test_get_regions_all_count(self):
-        assert len(AwsProvider.get_regions(partition=None)) == 36
+        assert len(AwsProvider.get_regions(partition=None)) == 37
 
     def test_get_regions_cn_count(self):
         assert len(AwsProvider.get_regions("aws-cn")) == 2
 
     def test_get_regions_aws_count(self):
-        assert len(AwsProvider.get_regions(partition="aws")) == 32
+        assert len(AwsProvider.get_regions(partition="aws")) == 33
 
     def test_get_all_regions(self):
         with patch(

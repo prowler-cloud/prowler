@@ -2,8 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 
 export const getProvidersOverview = async ({
   page = 1,
@@ -11,12 +10,11 @@ export const getProvidersOverview = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers-overview");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/overviews/providers`);
+  const url = new URL(`${apiBaseUrl}/overviews/providers`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -31,10 +29,7 @@ export const getProvidersOverview = async ({
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     const data = await response.json();
@@ -54,30 +49,26 @@ export const getFindingsByStatus = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/overviews/findings`);
+  const url = new URL(`${apiBaseUrl}/overviews/findings`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters
+  // Handle multiple filters, but exclude muted filter as overviews endpoint doesn't support it
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
+    if (key !== "filter[search]" && key !== "filter[muted]") {
       url.searchParams.append(key, String(value));
     }
   });
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -101,30 +92,26 @@ export const getFindingsBySeverity = async ({
   sort = "",
   filters = {},
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/overviews/findings_severity`);
+  const url = new URL(`${apiBaseUrl}/overviews/findings_severity`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters
+  // Handle multiple filters, but exclude muted filter as overviews endpoint doesn't support it
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
+    if (key !== "filter[search]" && key !== "filter[muted]") {
       url.searchParams.append(key, String(value));
     }
   });
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {

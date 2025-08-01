@@ -53,10 +53,13 @@ class KeyVault(AzureService):
                                 ),
                                 private_endpoint_connections=[
                                     PrivateEndpointConnection(id=conn.id)
-                                    for conn in getattr(
-                                        keyvault_properties,
-                                        "private_endpoint_connections",
-                                        [],
+                                    for conn in (
+                                        getattr(
+                                            keyvault_properties,
+                                            "private_endpoint_connections",
+                                            [],
+                                        )
+                                        or []
                                     )
                                 ],
                                 enable_soft_delete=getattr(
@@ -66,6 +69,14 @@ class KeyVault(AzureService):
                                     keyvault_properties,
                                     "enable_purge_protection",
                                     False,
+                                ),
+                                public_network_access_disabled=(
+                                    getattr(
+                                        keyvault_properties,
+                                        "public_network_access",
+                                        "Enabled",
+                                    )
+                                    == "Disabled"
                                 ),
                             ),
                             keys=keys,
@@ -244,6 +255,7 @@ class VaultProperties:
     private_endpoint_connections: List[PrivateEndpointConnection]
     enable_soft_delete: bool
     enable_purge_protection: bool
+    public_network_access_disabled: bool = False
 
 
 @dataclass

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from boto3 import Session
 from botocore.client import ClientError
@@ -11,6 +12,7 @@ from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
     SecurityHubInvalidRegionError,
     SecurityHubNoEnabledRegionsError,
 )
+from prowler.providers.aws.lib.session.aws_set_up_session import AwsSetUpSession
 from prowler.providers.common.models import Connection
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"
@@ -58,14 +60,63 @@ class SecurityHub:
 
     def __init__(
         self,
-        aws_session: Session,
         aws_account_id: str,
         aws_partition: str,
+        aws_session: Session = None,
         findings: list[AWSSecurityFindingFormat] = [],
         aws_security_hub_available_regions: list[str] = [],
         send_only_fails: bool = False,
+        role_arn: str = None,
+        session_duration: int = None,
+        external_id: str = None,
+        role_session_name: str = None,
+        mfa: bool = None,
+        profile: str = None,
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: Optional[str] = None,
+        retries_max_attempts: int = 3,
+        regions: set = set(),
     ) -> "SecurityHub":
-        self._session = aws_session
+        """
+        Initializes the SecurityHub object with the necessary attributes.
+
+        Args:
+        - aws_session (Session): AWS session object for authentication and communication with AWS services.
+        - aws_account_id (str): AWS account ID associated with the SecurityHub instance.
+        - aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
+        - findings (list[AWSSecurityFindingFormat]): List of findings to filter and send to Security Hub.
+        - aws_security_hub_available_regions (list[str]): List of regions where Security Hub is available.
+        - send_only_fails (bool): Flag indicating whether to send only findings with status 'FAILED'.
+        - role_arn: The ARN of the IAM role to assume.
+        - session_duration: The duration of the session in seconds, between 900 and 43200.
+        - external_id: The external ID to use when assuming the IAM role.
+        - role_session_name: The name of the session when assuming the IAM role.
+        - mfa: A boolean indicating whether MFA is enabled.
+        - profile: The name of the AWS CLI profile to use.
+        - aws_access_key_id: The AWS access key ID.
+        - aws_secret_access_key: The AWS secret access key.
+        - aws_session_token: The AWS session token, optional.
+        - retries_max_attempts: The maximum number of retries for the AWS client.
+        - regions: A set of regions to audit.
+        """
+        if aws_session:
+            self._session = aws_session
+        else:
+            aws_setup_session = AwsSetUpSession(
+                role_arn=role_arn,
+                session_duration=session_duration,
+                external_id=external_id,
+                role_session_name=role_session_name,
+                mfa=mfa,
+                profile=profile,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+                retries_max_attempts=retries_max_attempts,
+                regions=regions,
+            )
+            self._session = aws_setup_session._session
         self._aws_account_id = aws_account_id
         self._aws_partition = aws_partition
 

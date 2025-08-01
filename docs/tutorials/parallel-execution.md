@@ -76,9 +76,9 @@ prowler aws --list-services | ForEach-Object {
 
 Make any modifications for services you would like to skip scanning by modifying this file.
 
-Then create a new PowerShell script file `parallel-prowler.ps1` and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run prowler with.
+Then create a new PowerShell script file `parallel-prowler.ps1` and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run Prowler with.
 
-Change any parameters you would like when calling prowler in the `Start-Job -ScriptBlock` section. Note that you need to keep the `--only-logs` parameter, else some encoding issue occurs when trying to render the progress-bar and prowler won't successfully execute.
+Change any parameters you would like when calling Prowler in the `Start-Job -ScriptBlock` section. Note that you need to keep the `--only-logs` parameter, else some encoding issue occurs when trying to render the progress-bar and Prowler won't successfully execute.
 
 ```powershell
 $profile = "your_profile"

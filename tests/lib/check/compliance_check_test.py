@@ -94,6 +94,93 @@ custom_compliance_metadata = {
             )
         ],
     ),
+    "framework1_gcp": Compliance(
+        Framework="Framework1",
+        Provider="gcp",
+        Version="1.0",
+        Description="Framework 2 Description",
+        Requirements=[
+            Compliance_Requirement(
+                Id="1.1.1",
+                Description="description",
+                Attributes=[
+                    CIS_Requirement_Attribute(
+                        Section="1. Identity",
+                        Profile=CIS_Requirement_Attribute_Profile("Level 1"),
+                        AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
+                            "Manual"
+                        ),
+                        Description="Description",
+                        RationaleStatement="Rationale",
+                        ImpactStatement="Impact",
+                        RemediationProcedure="Remediation",
+                        AuditProcedure="Audit",
+                        AdditionalInformation="Additional",
+                        References="References",
+                    )
+                ],
+                Checks=[],
+            )
+        ],
+    ),
+    "framework1_k8s": Compliance(
+        Framework="Framework1",
+        Provider="Kubernetes",
+        Version="1.0",
+        Description="Framework 2 Description",
+        Requirements=[
+            Compliance_Requirement(
+                Id="1.1.1",
+                Description="description",
+                Attributes=[
+                    CIS_Requirement_Attribute(
+                        Section="1. Identity",
+                        Profile=CIS_Requirement_Attribute_Profile("Level 1"),
+                        AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
+                            "Manual"
+                        ),
+                        Description="Description",
+                        RationaleStatement="Rationale",
+                        ImpactStatement="Impact",
+                        RemediationProcedure="Remediation",
+                        AuditProcedure="Audit",
+                        AdditionalInformation="Additional",
+                        References="References",
+                    )
+                ],
+                Checks=[],
+            )
+        ],
+    ),
+    "framework1_m365": Compliance(
+        Framework="Framework1",
+        Provider="m365",
+        Version="1.0",
+        Description="Framework 2 Description",
+        Requirements=[
+            Compliance_Requirement(
+                Id="1.1.1",
+                Description="description",
+                Attributes=[
+                    CIS_Requirement_Attribute(
+                        Section="1. Identity",
+                        Profile=CIS_Requirement_Attribute_Profile("E3 Level 1"),
+                        AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
+                            "Manual"
+                        ),
+                        Description="Description",
+                        RationaleStatement="Rationale",
+                        ImpactStatement="Impact",
+                        RemediationProcedure="Remediation",
+                        AuditProcedure="Audit",
+                        AdditionalInformation="Additional",
+                        References="References",
+                    )
+                ],
+                Checks=[],
+            )
+        ],
+    ),
 }
 
 
@@ -106,7 +193,7 @@ class TestCompliance:
                 CheckID="accessanalyzer_enabled",
                 CheckTitle="Check 1",
                 CheckType=["type1"],
-                ServiceName="service1",
+                ServiceName="accessanalyzer",
                 SubServiceName="subservice1",
                 ResourceIdTemplate="template1",
                 Severity="high",
@@ -134,7 +221,7 @@ class TestCompliance:
                 CheckID="iam_user_mfa_enabled_console_access",
                 CheckTitle="Check 2",
                 CheckType=["type2"],
-                ServiceName="service2",
+                ServiceName="iam",
                 SubServiceName="subservice2",
                 ResourceIdTemplate="template2",
                 Severity="medium",
@@ -209,9 +296,12 @@ class TestCompliance:
 
         list_compliance = Compliance.list(bulk_compliance_frameworks)
 
-        assert len(list_compliance) == 2
+        assert len(list_compliance) == 5
         assert list_compliance[0] == "framework1_aws"
         assert list_compliance[1] == "framework1_azure"
+        assert list_compliance[2] == "framework1_gcp"
+        assert list_compliance[3] == "framework1_k8s"
+        assert list_compliance[4] == "framework1_m365"
 
     def test_list_with_provider_aws(self):
         bulk_compliance_frameworks = custom_compliance_metadata
@@ -228,6 +318,30 @@ class TestCompliance:
 
         assert len(list_compliance) == 1
         assert list_compliance[0] == "framework1_azure"
+
+    def test_list_with_provider_gcp(self):
+        bulk_compliance_frameworks = custom_compliance_metadata
+
+        list_compliance = Compliance.list(bulk_compliance_frameworks, provider="gcp")
+
+        assert len(list_compliance) == 1
+        assert list_compliance[0] == "framework1_gcp"
+
+    def test_list_with_provider_k8s(self):
+        bulk_compliance_frameworks = custom_compliance_metadata
+
+        list_compliance = Compliance.list(bulk_compliance_frameworks, provider="k8s")
+
+        assert len(list_compliance) == 1
+        assert list_compliance[0] == "framework1_k8s"
+
+    def test_list_with_provider_m365(self):
+        bulk_compliance_frameworks = custom_compliance_metadata
+
+        list_compliance = Compliance.list(bulk_compliance_frameworks, provider="m365")
+
+        assert len(list_compliance) == 1
+        assert list_compliance[0] == "framework1_m365"
 
     def test_get_compliance_frameworks(self):
         bulk_compliance_frameworks = custom_compliance_metadata
@@ -251,6 +365,76 @@ class TestCompliance:
         assert compliance_framework.Version == "1.0"
         assert compliance_framework.Description == "Framework 2 Description"
         assert len(compliance_framework.Requirements) == 1
+
+        compliance_framework = Compliance.get(
+            bulk_compliance_frameworks, compliance_framework_name="framework1_gcp"
+        )
+
+        assert compliance_framework.Framework == "Framework1"
+        assert compliance_framework.Provider == "gcp"
+        assert compliance_framework.Version == "1.0"
+        assert compliance_framework.Description == "Framework 2 Description"
+        assert len(compliance_framework.Requirements) == 1
+
+        compliance_framework = Compliance.get(
+            bulk_compliance_frameworks, compliance_framework_name="framework1_k8s"
+        )
+
+        assert compliance_framework.Framework == "Framework1"
+        assert compliance_framework.Provider == "Kubernetes"
+        assert compliance_framework.Version == "1.0"
+        assert compliance_framework.Description == "Framework 2 Description"
+        assert len(compliance_framework.Requirements) == 1
+
+        compliance_framework = Compliance.get(
+            bulk_compliance_frameworks, compliance_framework_name="framework1_m365"
+        )
+
+        assert compliance_framework.Framework == "Framework1"
+        assert compliance_framework.Provider == "m365"
+        assert compliance_framework.Version == "1.0"
+        assert compliance_framework.Description == "Framework 2 Description"
+        assert len(compliance_framework.Requirements) == 1
+        assert compliance_framework.Requirements[0].Id == "1.1.1"
+        assert compliance_framework.Requirements[0].Description == "description"
+        assert len(compliance_framework.Requirements[0].Attributes) == 1
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].Section == "1. Identity"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].Profile == "E3 Level 1"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].AssessmentStatus
+            == "Manual"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].Description
+            == "Description"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].RationaleStatement
+            == "Rationale"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].ImpactStatement
+            == "Impact"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].RemediationProcedure
+            == "Remediation"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].AuditProcedure == "Audit"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].AdditionalInformation
+            == "Additional"
+        )
+        assert (
+            compliance_framework.Requirements[0].Attributes[0].References
+            == "References"
+        )
 
     def test_get_non_existent_framework(self):
         bulk_compliance_frameworks = custom_compliance_metadata

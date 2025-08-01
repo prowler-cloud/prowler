@@ -1,44 +1,58 @@
-# Reporting
+# Reporting in Prowler
 
-By default, Prowler will generate the CSV and JSON-[OCSF](https://schema.ocsf.io/) report.
+Prowler generates security assessment reports in multiple formats, ensuring compatibility with various analysis tools and AWS integrations.
+
+## Default Report Generation
+
+By default, Prowler outputs reports in CSV and JSON-[OCSF](https://schema.ocsf.io/) formats:
 
 ```console
 prowler <provider> -M csv json-ocsf json-asff html
 ```
 
-If you want to generate the JSON-ASFF (used by AWS Security Hub) report you can set it using the `-M/--output-modes/--output-formats`, like:
+If you require reports in JSON-ASFF (used by AWS Security Hub), set it using the `-M/--output-modes/--output-formats` flag, as in the following example:
 
 ```console
 prowler <provider> --output-formats json-asff
 ```
 
-By default, all the compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside the `/output/compliance` directory.
+## Compliance Reports
+
+All compliance-related reports are automatically generated when Prowler is executed. These outputs are stored in the `/output/compliance` directory.
 
 ## Custom Output Flags
+
 By default, Prowler creates a file inside the `output` directory named: `prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
 
 However, both the output file name and directory can be personalised:
 
-- Custom output report name: you can use the flag `-F`/`--output-filename`
+- Custom output report name:
+
+You can use the flag `-F`/`--output-filename`
+
 ```console
 prowler <provider> -M csv json-ocsf json-asff -F <custom_report_name>
 ```
-- Custom output directory: you can use the flag `-o`/`--output-directory`
+
+
+- Custom output directory:
+
+You can use the flag `-o`/`--output-directory`
+
 ```console
 prowler <provider> -M csv json-ocsf json-asff -o <custom_report_directory>
 ```
+
 ???+ note
-    Both flags can be used simultaneously to provide a custom directory and filename.
-    ```console
-    prowler <provider> -M csv json-ocsf json-asff \
-            -F <custom_report_name> -o <custom_report_directory>
-    ```
+    Both flags can be used simultaneously to provide a custom directory and filename. `console prowler <provider> -M csv json-ocsf json-asff \ -F <custom_report_name> -o <custom_report_directory>`
+
 ## Output timestamp format
+
 By default, the timestamp format of the output files is ISO 8601. This can be changed with the flag `--unix-timestamp` generating the timestamp fields in pure unix timestamp format.
 
-## Output Formats
+## Supported Output Formats
 
-Prowler supports natively the following output formats:
+Prowler natively supports the following reporting output formats:
 
 - CSV
 - JSON-OCSF
@@ -49,74 +63,73 @@ Hereunder is the structure for each of the supported report formats by Prowler:
 
 ### CSV
 
-The CSV format has a common format for all the providers. The following are the available columns:
+The CSV format follows a standardized structure across all providers. The following are the available columns:
 
-- AUTH_METHOD
+- AUTH\_METHOD
 - TIMESTAMP
-- ACCOUNT_UID
-- ACCOUNT_NAME
-- ACCOUNT_EMAIL
-- ACCOUNT_ORGANIZATION_UID
-- ACCOUNT_ORGANIZATION_NAME
-- ACCOUNT_TAGS
-- FINDING_UID
+- ACCOUNT\_UID
+- ACCOUNT\_NAME
+- ACCOUNT\_EMAIL
+- ACCOUNT\_ORGANIZATION\_UID
+- ACCOUNT\_ORGANIZATION\_NAME
+- ACCOUNT\_TAGS
+- FINDING\_UID
 - PROVIDER
-- CHECK_ID
-- CHECK_TITLE
-- CHECK_TYPE
+- CHECK\_ID
+- CHECK\_TITLE
+- CHECK\_TYPE
 - STATUS
-- STATUS_EXTENDED
+- STATUS\_EXTENDED
 - MUTED
-- SERVICE_NAME
-- SUBSERVICE_NAME
+- SERVICE\_NAME
+- SUBSERVICE\_NAME
 - SEVERITY
-- RESOURCE_TYPE
-- RESOURCE_UID
-- RESOURCE_NAME
-- RESOURCE_DETAILS
-- RESOURCE_TAGS
+- RESOURCE\_TYPE
+- RESOURCE\_UID
+- RESOURCE\_NAME
+- RESOURCE\_DETAILS
+- RESOURCE\_TAGS
 - PARTITION
 - REGION
 - DESCRIPTION
 - RISK
-- RELATED_URL
-- REMEDIATION_RECOMMENDATION_TEXT
-- REMEDIATION_RECOMMENDATION_URL
-- REMEDIATION_CODE_NATIVEIAC
-- REMEDIATION_CODE_TERRAFORM
-- REMEDIATION_CODE_CLI
-- REMEDIATION_CODE_OTHER
+- RELATED\_URL
+- REMEDIATION\_RECOMMENDATION\_TEXT
+- REMEDIATION\_RECOMMENDATION\_URL
+- REMEDIATION\_CODE\_NATIVEIAC
+- REMEDIATION\_CODE\_TERRAFORM
+- REMEDIATION\_CODE\_CLI
+- REMEDIATION\_CODE\_OTHER
 - COMPLIANCE
 - CATEGORIES
-- DEPENDS_ON
-- RELATED_TO
+- DEPENDS\_ON
+- RELATED\_TO
 - NOTES
-- PROWLER_VERSION
+- PROWLER\_VERSION
 
 #### CSV Headers Mapping
 
 The following table shows the mapping between the CSV headers and the the providers fields:
 
-| Open Source Consolidated    | AWS                         | GCP                          | AZURE                       | KUBERNETES                 |
-|-----------------------------|-----------------------------|------------------------------|-----------------------------|----------------------------|
-| auth_method                 | profile                     | principal                    | identity_type : identity_id | in-cluster/kube-config     |
-| provider                    | provider                    | provider                     | provider                    | provider                   |
-| account_uid                 | account_id / account_arn    | project_id                   | subscription_id             | cluster                    |
-| account_name                | account_name                | project_name                 | subscription_name           | context:context            |
-| account_email               | account_email               | N/A                          | N/A                         | N/A                        |
-| account_organization_uid    | account_organizations_arn   | project_organization_id      | tenant_id                   | N/A                        |
-| account_organization_name   | account_org                 | project_organization_display_name | tenant_domain          | N/A                        |
-| account_tags                | account_tags                | project_labels               | subscription_tags           | N/A                        |
-| partition                   | partition                   | N/A                          | region_config.name          | N/A                        |
-| region                      | region                      | location                     | location                    | namespace:namespace        |
-| resource_name               | resource_id                 | resource_name                | resource_name               | resource_name              |
-| resource_uid                | resource_arn                | resource_id                  | resource_id                 | resource_id                |
-| finding_uid                 | finding_unique_id           | finding_unique_id            | finding_unique_id           | finding_unique_id          |
-
+| Open Source Consolidated| AWS| GCP| AZURE| KUBERNETES
+|----------|----------|----------|----------|----------
+| auth\_method| profile| principal| identity\_type : identity\_id| in-cluster/kube-config
+| provider| provider| provider| provider| provider
+| account\_uid| account\_id / account\_arn| project\_id| subscription\_id| cluster
+| account\_name| account\_name| project\_name| subscription\_name| context:context
+| account\_email| account\_email| N/A| N/A| N/A
+| account\_organization\_uid| account\_organizations\_arn| project\_organization\_id| tenant\_id| N/A
+| account\_organization\_name| account\_org| project\_organization\_display\_name| tenant\_domain| N/A
+| account\_tags| account\_tags| project\_labels| subscription\_tags| N/A
+| partition| partition| N/A| region\_config.name| N/A
+| region| region| location| location| namespace:namespace
+| resource\_name| resource\_id| resource\_name| resource\_name| resource\_name
+| resource\_uid| resource\_arn| resource\_id| resource\_id| resource\_id
+| finding\_uid| finding\_unique\_id| finding\_unique\_id| finding\_unique\_id| finding\_unique\_id
 
 ### JSON-OCSF
 
-The JSON-OCSF output format implements the [Detection Finding](https://schema.ocsf.io/1.1.0/classes/detection_finding) from the [OCSF v1.1.0](https://schema.ocsf.io/1.1.0)
+The JSON-OCSF output format implements the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) from the [OCSF](https://schema.ocsf.io)
 
 ```json
 [{
@@ -347,11 +360,9 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
 The following image is an example of the HTML output:
 
 <img src="../img/reporting/html-output.png">
-
 ## V4 Deprecations
 
 Some deprecations have been made to unify formats and improve outputs.
-
 
 ### JSON
 
@@ -359,63 +370,62 @@ Native JSON format has been deprecated in favor of JSON [OCSF](https://schema.oc
 
 The following is the mapping between the native JSON and the Detection Finding from the JSON-OCSF:
 
-| Native JSON Prowler v3 | JSON-OCSF v.1.1.0 |
-| --- |---|
-| AssessmentStartTime | time_dt |
-| FindingUniqueId | finding_info.uid |
-| Provider | cloud.provider |
-| CheckID | metadata.event_code |
-| CheckTitle | finding_info.title |
-| CheckType | finding_info.types |
-| ServiceName | resources.group.name |
-| SubServiceName | _Not mapped yet_ |
-| Status | status_code |
-| StatusExtended | status_detail |
-| Severity | severity |
-| ResourceType | resources.type |
-| ResourceDetails | resources.data.details |
-| Description | finding_info.desc |
-| Risk | risk_details |
-| RelatedUrl | unmapped.related_url |
-| Remediation.Recommendation.Text | remediation.desc |
-| Remediation.Recommendation.Url | remediation.references |
-| Remediation.Code.NativeIaC | remediation.references |
-| Remediation.Code.Terraform | remediation.references |
-| Remediation.Code.CLI | remediation.references |
-| Remediation.Code.Other | remediation.references |
-| Compliance | unmapped.compliance |
-| Categories | unmapped.categories |
-| DependsOn | unmapped.depends_on |
-| RelatedTo | unmapped.related_to |
-| Notes | unmapped.notes |
-| Profile | _Not mapped yet_ |
-| AccountId | cloud.account.uid |
-| OrganizationsInfo.account_name | cloud.account.name |
-| OrganizationsInfo.account_email | _Not mapped yet_ |
-| OrganizationsInfo.account_arn | _Not mapped yet_ |
-| OrganizationsInfo.account_org | cloud.org.name |
-| OrganizationsInfo.account_tags | cloud.account.labels |
-| Region | resources.region |
-| ResourceId | resources.name |
-| ResourceArn | resources.uid |
-| ResourceTags | resources.labels |
-
+| Native JSON Prowler v3| JSON-OCSF v.1.1.0
+|----------|----------
+| AssessmentStartTime| time\_dt
+| FindingUniqueId| finding\_info.uid
+| Provider| cloud.provider
+| CheckID| metadata.event\_code
+| CheckTitle| finding\_info.title
+| CheckType| finding\_info.types
+| ServiceName| resources.group.name
+| SubServiceName| _Not mapped yet_
+| Status| status\_code
+| StatusExtended| status\_detail
+| Severity| severity
+| ResourceType| resources.type
+| ResourceDetails| resources.data.details
+| Description| finding\_info.desc
+| Risk| risk\_details
+| RelatedUrl| unmapped.related\_url
+| Remediation.Recommendation.Text| remediation.desc
+| Remediation.Recommendation.Url| remediation.references
+| Remediation.Code.NativeIaC| remediation.references
+| Remediation.Code.Terraform| remediation.references
+| Remediation.Code.CLI| remediation.references
+| Remediation.Code.Other| remediation.references
+| Compliance| unmapped.compliance
+| Categories| unmapped.categories
+| DependsOn| unmapped.depends\_on
+| RelatedTo| unmapped.related\_to
+| Notes| unmapped.notes
+| Profile| _Not mapped yet_
+| AccountId| cloud.account.uid
+| OrganizationsInfo.account\_name| cloud.account.name
+| OrganizationsInfo.account\_email| _Not mapped yet_
+| OrganizationsInfo.account\_arn| _Not mapped yet_
+| OrganizationsInfo.account\_org| cloud.org.name
+| OrganizationsInfo.account\_tags| cloud.account.labels
+| Region| resources.region
+| ResourceId| resources.name
+| ResourceArn| resources.uid
+| ResourceTags| resources.labels
 
 ### CSV Columns
 
 In Prowler v3 each provider had some specific columns, different from the rest. These are the cases that have changed in Prowler v4:
 
-| Provider | v3 | v4 |
-| --- |---|---|
-| AWS | PROFILE | AUTH_METHOD |
-| AWS | ACCOUNT_ID| ACCOUNT_UID |
-| AWS | ACCOUNT_ORGANIZATION_ARN | ACCOUNT_ORGANIZATION_UID |
-| AWS | ACCOUNT_ORG | ACCOUNT_ORGANIZATION_NAME |
-| AWS | FINDING_UNIQUE_ID | FINDING_UID |
-| AWS | ASSESSMENT_START_TIME | TIMESTAMP |
-| AZURE | TENANT_DOMAIN | ACCOUNT_ORGANIZATION_NAME |
-| AZURE | SUBSCRIPTION | ACCOUNT_UID |
-| GCP | PROJECT_ID | ACCOUNT_UID |
-| GCP | LOCATION | REGION |
-| AWS / AZURE / GCP | RESOURCE_ID | RESOURCE_NAME |
-| AWS / AZURE / GCP | RESOURCE_ARN | RESOURCE_UID |
+| Provider| v3| v4
+|----------|----------|----------
+| AWS| PROFILE| AUTH\_METHOD
+| AWS| ACCOUNT\_ID| ACCOUNT\_UID
+| AWS| ACCOUNT\_ORGANIZATION\_ARN| ACCOUNT\_ORGANIZATION\_UID
+| AWS| ACCOUNT\_ORG| ACCOUNT\_ORGANIZATION\_NAME
+| AWS| FINDING\_UNIQUE\_ID| FINDING\_UID
+| AWS| ASSESSMENT\_START\_TIME| TIMESTAMP
+| AZURE| TENANT\_DOMAIN| ACCOUNT\_ORGANIZATION\_NAME
+| AZURE| SUBSCRIPTION| ACCOUNT\_UID
+| GCP| PROJECT\_ID| ACCOUNT\_UID
+| GCP| LOCATION| REGION
+| AWS / AZURE / GCP| RESOURCE\_ID| RESOURCE\_NAME
+| AWS / AZURE / GCP| RESOURCE\_ARN| RESOURCE\_UID

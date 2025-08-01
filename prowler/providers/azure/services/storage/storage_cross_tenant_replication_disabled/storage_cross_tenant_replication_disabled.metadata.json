@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_cross_tenant_replication_disabled",
+  "CheckTitle": "Ensure cross-tenant replication is disabled",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "account",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Ensure that cross-tenant replication is not enabled on Azure Storage Accounts to prevent unintended replication of data across tenant boundaries.",
+  "Risk": "If cross-tenant replication is enabled, sensitive data could be inadvertently replicated across tenants, increasing the risk of data leakage, unauthorized access, or non-compliance with data governance and privacy policies.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/blobs/object-replication-prevent-cross-tenant-policies?tabs=portal",
+  "Remediation": {
+    "Code": {
+      "CLI": "az storage account update --name <storage-account-name> --resource-group <resource-group> --default-to-oauth-authentication true --allow-cross-tenant-replication false",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/disable-cross-tenant-replication.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable Cross Tenant Replication on storage accounts to ensure that data remains within tenant boundaries unless explicitly shared, reducing the risk of data leakage and unauthorized access.",
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/blobs/object-replication-prevent-cross-tenant-policies?tabs=portal"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

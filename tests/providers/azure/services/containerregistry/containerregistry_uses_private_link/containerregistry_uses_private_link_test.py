@@ -2,12 +2,6 @@ from unittest import mock
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from azure.mgmt.containerregistry.models import (
-    PrivateEndpoint,
-    PrivateEndpointConnection,
-    PrivateLinkServiceConnectionState,
-)
-
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -110,6 +104,7 @@ class Test_containerregistry_uses_private_link:
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
+                PrivateEndpointConnection,
             )
             from prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link import (
                 containerregistry_uses_private_link,
@@ -132,15 +127,8 @@ class Test_containerregistry_uses_private_link:
                         private_endpoint_connections=[
                             PrivateEndpointConnection(
                                 id="/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/mock_resource_group/providers/Microsoft.ContainerRegistry/registries/mock_registry/privateEndpointConnections/myConnection",
-                                private_endpoint=PrivateEndpoint(
-                                    id="/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/mock_resource_group/providers/Microsoft.Network/privateEndpoints/myPrivateEndpoint"
-                                ),
-                                private_link_service_connection_state=PrivateLinkServiceConnectionState(
-                                    status="Approved",
-                                    description="Auto-approved connection",
-                                    actions_required="None",
-                                ),
-                                provisioning_state="Succeeded",
+                                name="myConnection",
+                                type="Microsoft.ContainerRegistry/registries/privateEndpointConnections",
                             )
                         ],
                     )

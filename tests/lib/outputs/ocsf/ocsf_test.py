@@ -6,9 +6,9 @@ import requests
 from freezegun import freeze_time
 from mock import patch
 from py_ocsf_models.events.base_event import SeverityID, StatusID
-from py_ocsf_models.events.findings.detection_finding import DetectionFinding
 from py_ocsf_models.events.findings.detection_finding import (
-    TypeID as DetectionFindingTypeID,
+    DetectionFinding,
+    DetectionFindingTypeID,
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
@@ -167,14 +167,14 @@ class TestOCSF:
             {
                 "message": "status extended",
                 "metadata": {
-                    "event_code": "test-check-id",
+                    "event_code": "service_test_check_id",
                     "product": {
                         "name": "Prowler",
                         "uid": "prowler",
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.4.0",
+                    "version": "1.5.0",
                     "profiles": ["cloud", "datetime"],
                     "tenant_uid": "test-organization-id",
                 },
@@ -198,7 +198,7 @@ class TestOCSF:
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
-                    "title": "test-check-id",
+                    "title": "service_test_check_id",
                     "uid": "test-unique-finding",
                     "types": ["test-type"],
                 },
@@ -210,7 +210,7 @@ class TestOCSF:
                             "details": "resource_details",
                             "metadata": {},
                         },
-                        "group": {"name": "test-service"},
+                        "group": {"name": "service"},
                         "labels": [],
                         "name": "resource_name",
                         "type": "test-resource",
@@ -328,7 +328,10 @@ class TestOCSF:
         assert isinstance(resource_details[0], ResourceDetails)
         assert resource_details[0].labels == ["Name:test", "Environment:dev"]
         assert resource_details[0].name == finding_output.resource_name
-        assert resource_details[0].uid == finding_output.resource_uid
+        assert resource_details[0].data == {
+            "details": finding_output.resource_details,
+            "metadata": {},  # TODO: add metadata to the resource details
+        }
         assert resource_details[0].type == finding_output.metadata.ResourceType
         assert resource_details[0].cloud_partition == finding_output.partition
         assert resource_details[0].region == finding_output.region

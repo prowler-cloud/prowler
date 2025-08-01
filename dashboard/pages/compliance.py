@@ -76,6 +76,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_AZURE", " - AZURE")
             if "KUBERNETES" in result:
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
+            if "M65" in result:
+                result = result.replace("_M65", " - M65")
             results.append(result)
 
     unique_results = set(results)
@@ -267,6 +269,15 @@ def display_data(
             data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
                 "REQUIREMENTS_ATTRIBUTES_PROFILE"
             ].apply(lambda x: x.split(" - ")[0])
+
+    # Add the column ACCOUNTID to the data if the provider is m65
+    if "m365" in analytics_input:
+        data.rename(columns={"TENANTID": "ACCOUNTID"}, inplace=True)
+        data.rename(columns={"LOCATION": "REGION"}, inplace=True)
+        if "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
+            data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
+                "REQUIREMENTS_ATTRIBUTES_PROFILE"
+            ].apply(lambda x: x.split(" - ")[0])
     # Filter the chosen level of the CIS
     if is_level_1:
         data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
@@ -335,34 +346,27 @@ def display_data(
         if item == "nan" or item.__class__.__name__ != "str":
             region_filter_options.remove(item)
 
+    # Convert ASSESSMENTDATE to datetime
     data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], errors="coerce")
-    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    data["ASSESSMENTDAY"] = data["ASSESSMENTDATE"].dt.date
 
-    # Choosing the date that is the most recent
-    data_values = data["ASSESSMENTDATE"].unique()
-    data_values.sort()
-    data_values = data_values[::-1]
-    aux = []
+    # Find the latest timestamp per account per day
+    latest_per_account_day = data.groupby(["ACCOUNTID", "ASSESSMENTDAY"])[
+        "ASSESSMENTDATE"
+    ].transform("max")
 
-    data_values = [str(i) for i in data_values]
-    for value in data_values:
-        if value.split(" ")[0] not in [aux[i].split(" ")[0] for i in range(len(aux))]:
-            aux.append(value)
-    data_values = [str(i) for i in aux]
+    # Keep only rows with the latest timestamp for each account and day
+    data = data[data["ASSESSMENTDATE"] == latest_per_account_day]
 
-    data = data[data["ASSESSMENTDATE"].isin(data_values)]
-    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].apply(lambda x: x.split(" ")[0])
+    # Prepare the date filter options (unique days, as strings)
+    options_date = sorted(data["ASSESSMENTDAY"].astype(str).unique(), reverse=True)
 
-    options_date = data["ASSESSMENTDATE"].unique()
-    options_date.sort()
-    options_date = options_date[::-1]
-
-    # Filter DATE
+    # Filter by selected date (as string)
     if date_filter_analytics in options_date:
-        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+        data = data[data["ASSESSMENTDAY"].astype(str) == date_filter_analytics]
     else:
         date_filter_analytics = options_date[0]
-        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+        data = data[data["ASSESSMENTDAY"].astype(str) == date_filter_analytics]
 
     if data.empty:
         fig = px.pie()
@@ -397,7 +401,13 @@ def display_data(
             compliance_module = importlib.import_module(
                 f"dashboard.compliance.{current}"
             )
-            data.drop_duplicates(keep="first", inplace=True)
+            data = data.drop_duplicates(
+                subset=["CHECKID", "STATUS", "MUTED", "RESOURCEID", "STATUSEXTENDED"]
+            )
+
+            if "threatscore" in analytics_input:
+                data = get_threatscore_mean_by_pillar(data)
+
             table = compliance_module.get_table(data)
         except ModuleNotFoundError:
             table = html.Div(
@@ -416,6 +426,9 @@ def display_data(
             )
 
         df = data.copy()
+        # Remove Muted rows
+        if "MUTED" in df.columns:
+            df = df[df["MUTED"] == "False"]
         df = df.groupby(["STATUS"]).size().reset_index(name="counts")
         df = df.sort_values(by=["counts"], ascending=False)
 
@@ -430,6 +443,9 @@ def display_data(
         if "pci" in analytics_input:
             pie_2 = get_bar_graph(df, "REQUIREMENTS_ID")
             current_filter = "req_id"
+        elif "threatscore" in analytics_input:
+            pie_2 = get_table_prowler_threatscore(df)
+            current_filter = "threatscore"
         elif (
             "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
@@ -488,6 +504,13 @@ def display_data(
         pie_2, f"Top 5 failed {current_filter} by requirements"
     )
 
+    if "threatscore" in analytics_input:
+        security_level_graph = get_graph(
+            pie_2,
+            "Pillar Score by requirements (1 = Lowest Risk, 5 = Highest Risk)",
+            margin_top=0,
+        )
+
     return (
         table_output,
         overall_status_result_graph,
@@ -501,7 +524,7 @@ def display_data(
     )
 
 
-def get_graph(pie, title):
+def get_graph(pie, title, margin_top=7):
     return [
         html.Span(
             title,
@@ -514,7 +537,7 @@ def get_graph(pie, title):
                 "display": "flex",
                 "justify-content": "center",
                 "align-items": "center",
-                "margin-top": "7%",
+                "margin-top": f"{margin_top}%",
             },
         ),
     ]
@@ -618,3 +641,146 @@ def get_table(current_compliance, table):
             className="relative flex flex-col bg-white shadow-provider rounded-xl px-4 py-3 flex-wrap w-full",
         ),
     ]
+
+
+def get_threatscore_mean_by_pillar(df):
+    score_per_pillar = {}
+    max_score_per_pillar = {}
+
+    for _, row in df.iterrows():
+        pillar = (
+            row["REQUIREMENTS_ATTRIBUTES_SECTION"].split(" - ")[0]
+            if isinstance(row["REQUIREMENTS_ATTRIBUTES_SECTION"], str)
+            else "Unknown"
+        )
+
+        if pillar not in score_per_pillar:
+            score_per_pillar[pillar] = 0
+            max_score_per_pillar[pillar] = 0
+
+        level_of_risk = pd.to_numeric(
+            row["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+        )
+        level_of_risk = 1 if pd.isna(level_of_risk) else level_of_risk
+
+        weight = 1
+        if "REQUIREMENTS_ATTRIBUTES_WEIGHT" in row and not pd.isna(
+            row["REQUIREMENTS_ATTRIBUTES_WEIGHT"]
+        ):
+            weight = pd.to_numeric(
+                row["REQUIREMENTS_ATTRIBUTES_WEIGHT"], errors="coerce"
+            )
+            weight = 1 if pd.isna(weight) else weight
+
+        max_score_per_pillar[pillar] += level_of_risk * weight
+
+        if row["STATUS"] == "PASS":
+            score_per_pillar[pillar] += level_of_risk * weight
+
+    output = []
+    for pillar in max_score_per_pillar:
+        risk_score = 0
+        if max_score_per_pillar[pillar] > 0:
+            risk_score = (score_per_pillar[pillar] / max_score_per_pillar[pillar]) * 100
+
+        output.append(f"{pillar} - [{risk_score:.1f}%]")
+
+    for value in output:
+        base_pillar = value.split(" - ")[0]
+        if base_pillar in df["REQUIREMENTS_ATTRIBUTES_SECTION"].values:
+            df.loc[
+                df["REQUIREMENTS_ATTRIBUTES_SECTION"] == base_pillar,
+                "REQUIREMENTS_ATTRIBUTES_SECTION",
+            ] = value
+
+    return df
+
+
+def get_table_prowler_threatscore(df):
+    score_per_pillar = {}
+    max_score_per_pillar = {}
+    pillars = {}
+
+    df_copy = df.copy()
+
+    for _, row in df_copy.iterrows():
+        pillar = (
+            row["REQUIREMENTS_ATTRIBUTES_SECTION"].split(" - ")[0]
+            if isinstance(row["REQUIREMENTS_ATTRIBUTES_SECTION"], str)
+            else "Unknown"
+        )
+
+        if pillar not in pillars:
+            pillars[pillar] = {"FAIL": 0, "PASS": 0, "MUTED": 0}
+            score_per_pillar[pillar] = 0
+            max_score_per_pillar[pillar] = 0
+
+        level_of_risk = pd.to_numeric(
+            row["REQUIREMENTS_ATTRIBUTES_LEVELOFRISK"], errors="coerce"
+        )
+        level_of_risk = 1 if pd.isna(level_of_risk) else level_of_risk
+
+        weight = 1
+        if "REQUIREMENTS_ATTRIBUTES_WEIGHT" in row and not pd.isna(
+            row["REQUIREMENTS_ATTRIBUTES_WEIGHT"]
+        ):
+            weight = pd.to_numeric(
+                row["REQUIREMENTS_ATTRIBUTES_WEIGHT"], errors="coerce"
+            )
+            weight = 1 if pd.isna(weight) else weight
+
+        max_score_per_pillar[pillar] += level_of_risk * weight
+
+        if row["STATUS"] == "PASS":
+            pillars[pillar]["PASS"] += 1
+            score_per_pillar[pillar] += level_of_risk * weight
+        elif row["STATUS"] == "FAIL":
+            pillars[pillar]["FAIL"] += 1
+
+        if "MUTED" in row and row["MUTED"] == "True":
+            pillars[pillar]["MUTED"] += 1
+
+    result_df = []
+
+    for pillar in pillars.keys():
+        risk_score = 0
+        if max_score_per_pillar[pillar] > 0:
+            risk_score = (score_per_pillar[pillar] / max_score_per_pillar[pillar]) * 100
+
+        result_df.append({"Pillar": pillar, "Score": risk_score})
+
+    score_df = pd.DataFrame(result_df)
+
+    score_df = score_df.sort_values("Score", ascending=True)
+
+    fig = px.bar(
+        score_df,
+        x="Pillar",
+        y="Score",
+        color="Score",
+        color_continuous_scale=[
+            "#e77676",
+            "#f4d44d",
+            "#45cc6e",
+        ],
+        labels={"Score": "Risk Score (%)", "Pillar": "Section"},
+        height=400,
+        text="Score",
+    )
+
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+
+    fig.update_layout(
+        xaxis_title="Pillar",
+        yaxis_title="Risk Score (%)",
+        margin=dict(l=20, r=20, t=30, b=20),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        coloraxis_colorbar=dict(title="Risk %"),
+        yaxis=dict(range=[0, 110]),
+    )
+
+    return dcc.Graph(
+        figure=fig,
+        style={"height": "25rem", "width": "40rem"},
+    )

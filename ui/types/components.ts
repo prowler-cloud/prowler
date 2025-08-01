@@ -1,6 +1,8 @@
 import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
 
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
@@ -42,18 +44,6 @@ export interface CollapseMenuButtonProps {
   isOpen: boolean | undefined;
 }
 
-export interface SelectScanComplianceDataProps {
-  scans: (ScanProps & {
-    providerInfo: {
-      provider: "aws" | "azure" | "gcp" | "kubernetes";
-      uid: string;
-      alias: string;
-    };
-  })[];
-  selectedScanId: string;
-  onSelectionChange: (selectedKey: string) => void;
-}
-
 export type NextUIVariants =
   | "solid"
   | "faded"
@@ -83,9 +73,11 @@ export interface FindingsByStatusData {
     attributes: {
       fail: number;
       pass: number;
+      muted: number;
       total: number;
       fail_new: number;
       pass_new: number;
+      muted_new: number;
       [key: string]: number;
     };
   };
@@ -174,27 +166,6 @@ export interface FindingsSeverityOverview {
   };
 }
 
-export interface ProviderOverviewProps {
-  data: {
-    type: "provider-overviews";
-    id: "aws" | "gcp" | "azure" | "kubernetes";
-    attributes: {
-      findings: {
-        pass: number;
-        fail: number;
-        manual: number;
-        total: number;
-      };
-      resources: {
-        total: number;
-      };
-    };
-  }[];
-  meta: {
-    version: string;
-  };
-}
-
 export interface TaskDetails {
   attributes: {
     state: string;
@@ -212,51 +183,65 @@ export interface TaskDetails {
   };
 }
 export type AWSCredentials = {
-  aws_access_key_id: string;
-  aws_secret_access_key: string;
-  aws_session_token: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: string;
+  [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: string;
+  [ProviderCredentialFields.AWS_SESSION_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type AWSCredentialsRole = {
-  role_arn: string;
-  aws_access_key_id?: string;
-  aws_secret_access_key?: string;
-  aws_session_token?: string;
-  external_id?: string;
-  role_session_name?: string;
-  session_duration?: number;
-  credentials_type?: "aws-sdk-default" | "access-secret-key";
+  [ProviderCredentialFields.ROLE_ARN]: string;
+  [ProviderCredentialFields.AWS_ACCESS_KEY_ID]?: string;
+  [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]?: string;
+  [ProviderCredentialFields.AWS_SESSION_TOKEN]?: string;
+  [ProviderCredentialFields.EXTERNAL_ID]?: string;
+  [ProviderCredentialFields.ROLE_SESSION_NAME]?: string;
+  [ProviderCredentialFields.SESSION_DURATION]?: number;
+  [ProviderCredentialFields.CREDENTIALS_TYPE]?:
+    | "aws-sdk-default"
+    | "access-secret-key";
 };
 
 export type AzureCredentials = {
-  client_id: string;
-  client_secret: string;
-  tenant_id: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CLIENT_SECRET]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
-export type GCPCredentials = {
+export type M365Credentials = {
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CLIENT_SECRET]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.USER]?: string;
+  [ProviderCredentialFields.PASSWORD]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type GCPDefaultCredentials = {
   client_id: string;
   client_secret: string;
   refresh_token: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type GCPServiceAccountKey = {
+  [ProviderCredentialFields.SERVICE_ACCOUNT_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type KubernetesCredentials = {
-  kubeconfig_content: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.KUBECONFIG_CONTENT]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
-  | GCPCredentials
-  | KubernetesCredentials;
+  | GCPDefaultCredentials
+  | GCPServiceAccountKey
+  | KubernetesCredentials
+  | M365Credentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
@@ -269,53 +254,6 @@ export interface ApiError {
     pointer: string;
   };
   code: string;
-}
-export interface CompliancesOverview {
-  links: {
-    first: string;
-    last: string;
-    next: string | null;
-    prev: string | null;
-  };
-  data: ComplianceOverviewData[];
-  meta: {
-    pagination: {
-      page: number;
-      pages: number;
-      count: number;
-    };
-    version: string;
-  };
-}
-
-export interface ComplianceOverviewData {
-  type: "compliance-overviews";
-  id: string;
-  attributes: {
-    inserted_at: string;
-    compliance_id: string;
-    framework: string;
-    version: string;
-    requirements_status: {
-      passed: number;
-      failed: number;
-      manual: number;
-      total: number;
-    };
-    region: string;
-    provider_type: string;
-  };
-  relationships: {
-    scan: {
-      data: {
-        type: "scans";
-        id: string;
-      };
-    };
-  };
-  links: {
-    self: string;
-  };
 }
 
 export interface InvitationProps {
@@ -498,97 +436,9 @@ export interface UserProps {
   }[];
 }
 
-export interface ProviderProps {
-  id: string;
-  type: "providers";
-  attributes: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
-    uid: string;
-    alias: string;
-    status: "completed" | "pending" | "cancelled";
-    resources: number;
-    connection: {
-      connected: boolean;
-      last_checked_at: string;
-    };
-    scanner_args: {
-      only_logs: boolean;
-      excluded_checks: string[];
-      aws_retries_max_attempts: number;
-    };
-    inserted_at: string;
-    updated_at: string;
-    created_by: {
-      object: string;
-      id: string;
-    };
-  };
-  relationships: {
-    secret: {
-      data: {
-        type: string;
-        id: string;
-      } | null;
-    };
-    provider_groups: {
-      meta: {
-        count: number;
-      };
-      data: Array<{
-        type: string;
-        id: string;
-      }>;
-    };
-  };
-  groupNames?: string[];
-}
-
-export interface ScanProps {
-  type: "scans";
-  id: string;
-  attributes: {
-    name: string;
-    trigger: "scheduled" | "manual";
-    state:
-      | "available"
-      | "scheduled"
-      | "executing"
-      | "completed"
-      | "failed"
-      | "cancelled";
-    unique_resource_count: number;
-    progress: number;
-    scanner_args: {
-      only_logs?: boolean;
-      excluded_checks?: string[];
-      aws_retries_max_attempts?: number;
-    } | null;
-    duration: number;
-    started_at: string;
-    inserted_at: string;
-    completed_at: string;
-    scheduled_at: string;
-    next_scan_at: string;
-  };
-  relationships: {
-    provider: {
-      data: {
-        id: string;
-        type: "providers";
-      };
-    };
-    task: {
-      data: {
-        id: string;
-        type: "tasks";
-      };
-    };
-  };
-  providerInfo?: {
-    provider: "aws" | "azure" | "gcp" | "kubernetes";
-    uid: string;
-    alias: string;
-  };
+export interface FindingsResponse {
+  data: FindingProps[];
+  meta: MetaDataProps;
 }
 
 export interface FindingProps {
@@ -597,10 +447,12 @@ export interface FindingProps {
   attributes: {
     uid: string;
     delta: "new" | "changed" | null;
-    status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+    status: "PASS" | "FAIL" | "MANUAL";
     status_extended: string;
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
+    muted: boolean;
+    muted_reason?: string;
     check_metadata: {
       risk: string;
       notes: string;
@@ -743,6 +595,7 @@ export interface MetaDataProps {
     page: number;
     pages: number;
     count: number;
+    itemsPerPage?: Array<number>;
   };
   version: string;
 }

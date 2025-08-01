@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Checkbox } from "@nextui-org/react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -18,8 +17,10 @@ import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
+import { ProviderType } from "@/types";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
@@ -41,7 +42,7 @@ export const TestConnectionForm = ({
           connected: boolean | null;
           last_checked_at: string | null;
         };
-        provider: "aws" | "azure" | "gcp" | "kubernetes";
+        provider: ProviderType;
         alias: string;
         scanner_args: Record<string, any>;
       };
@@ -280,7 +281,7 @@ export const TestConnectionForm = ({
               wrapper: "checkbox-update",
             }}
           >
-            Run a one-time scan (disable daily schedule).
+            Run a single scan (no recurring schedule).
           </Checkbox>
         )}
 
@@ -294,8 +295,9 @@ export const TestConnectionForm = ({
 
         <div className="flex w-full justify-end sm:space-x-6">
           {apiErrorMessage ? (
-            <Link
+            <CustomLink
               href="/providers"
+              target="_self"
               className="mr-3 flex w-fit items-center justify-center space-x-2 rounded-lg border border-solid border-gray-200 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <Icon
@@ -303,7 +305,7 @@ export const TestConnectionForm = ({
                 className="h-5 w-5 text-gray-600 dark:text-gray-400"
               />
               <span>Back to providers</span>
-            </Link>
+            </CustomLink>
           ) : connectionStatus?.error ? (
             <CustomButton
               onPress={isUpdated ? () => router.back() : onResetCredentials}

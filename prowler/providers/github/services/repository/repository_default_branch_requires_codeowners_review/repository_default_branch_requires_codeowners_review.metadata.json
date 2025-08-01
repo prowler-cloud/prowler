@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_default_branch_requires_codeowners_review",
+  "CheckTitle": "Check if code owner approval is required for changes to owned code",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "Severity": "high",
+  "ResourceType": "GitHubRepository",
+  "Description": "Ensure that code owners are required to review and approve any proposed changes that affect their respective areas of ownership in the code base.",
+  "Risk": "If code owner approval is not required, unauthorized or unqualified individuals may merge changes to sensitive or critical areas of the codebase, increasing the risk of security vulnerabilities, bugs, or malicious modifications.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#requiring-code-owner-review",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To require code owner review, navigate to the repository settings, click on 'Branches', add or edit a branch protection rule, and enable 'Require review from Code Owners'.",
+      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-review-from-code-owners"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

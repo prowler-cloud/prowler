@@ -1,10 +1,12 @@
 # Configuration File
+
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
+
 ```
 prowler/config/config.yaml
 ```
 
-Also you can input a custom configuration file using the `--config-file` argument.
+Additionally, you can input a custom configuration file using the `--config-file` argument.
 
 ## AWS
 
@@ -31,6 +33,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
 | `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
+| `codebuild_github_allowed_organizations`                      | `github_allowed_organizations`                   | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
 | `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                       | Boolean         |
@@ -77,6 +80,8 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
+| `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
+| `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
 
 
 ## GCP
@@ -97,15 +102,26 @@ The following list includes all the Kubernetes checks with configurable variable
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
 
 
-## Microsoft365
+## M365
 
 ### Configurable Checks
-The following list includes all the Microsoft365 checks with configurable variables that can be changed in the configuration yaml file:
+The following list includes all the Microsoft 365 checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
+| `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
+| `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
 
+
+## GitHub
+
+### Configurable Checks
+The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                 | Value                                       | Type    |
+|--------------------------------------------|---------------------------------------------|---------|
+| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
 
 ## Config YAML File Structure
 
@@ -468,6 +484,16 @@ azure:
       "1.3"
     ]
 
+  # Azure Virtual Machines
+  # azure.vm_desired_sku_size
+  # List of desired VM SKU sizes that are allowed in the organization
+  desired_vm_sku_sizes:
+    [
+      "Standard_A8_v2",
+      "Standard_DS3_v2",
+      "Standard_D4s_v3",
+    ]
+
 # GCP Configuration
 gcp:
   # GCP Compute Configuration
@@ -504,10 +530,29 @@ kubernetes:
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
 
-# Microsoft365 Configuration
-microsoft365:
-  # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency in hours
-  sign_in_frequency: 4
+# M365 Configuration
+m365:
+  # Entra Conditional Access Policy
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams Settings
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
+  # Exchange Organization Settings
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived
+  inactive_not_archived_days_threshold: 180
+
 
 ```

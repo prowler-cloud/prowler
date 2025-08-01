@@ -1,25 +1,25 @@
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from rest_framework.exceptions import NotFound, ValidationError
+
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation, Provider
+from api.utils import (
+    get_prowler_provider_kwargs,
+    initialize_prowler_provider,
+    merge_dicts,
+    prowler_provider_connection_test,
+    return_prowler_provider,
+    validate_invitation,
+)
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from rest_framework.exceptions import ValidationError, NotFound
-
-from api.db_router import MainRouter
-from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation
-from api.models import Provider
-from api.utils import (
-    merge_dicts,
-    return_prowler_provider,
-    initialize_prowler_provider,
-    prowler_provider_connection_test,
-    get_prowler_provider_kwargs,
-)
-from api.utils import validate_invitation
+from prowler.providers.m365.m365_provider import M365Provider
 
 
 class TestMergeDicts:
@@ -105,6 +105,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.GCP.value, GcpProvider),
             (Provider.ProviderChoices.AZURE.value, AzureProvider),
             (Provider.ProviderChoices.KUBERNETES.value, KubernetesProvider),
+            (Provider.ProviderChoices.M365.value, M365Provider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -130,6 +131,21 @@ class TestInitializeProwlerProvider:
         initialize_prowler_provider(provider)
         mock_return_prowler_provider.return_value.assert_called_once_with(key="value")
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_prowler_provider_with_mutelist(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.secret.secret = {"key": "value"}
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider, mutelist_processor)
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            key="value", mutelist_content={"key": "value"}
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -143,6 +159,18 @@ class TestProwlerProviderConnectionTest:
         mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
             key="value", provider_id="1234567890", raise_on_exception=False
         )
+
+    @pytest.mark.django_db
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_without_secret(
+        self, mock_return_prowler_provider, providers_fixture
+    ):
+        mock_return_prowler_provider.return_value = MagicMock()
+        connection = prowler_provider_connection_test(providers_fixture[0])
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
+        assert str(connection.error) == "Provider has no secret."
 
 
 class TestGetProwlerProviderKwargs:
@@ -165,6 +193,10 @@ class TestGetProwlerProviderKwargs:
                 Provider.ProviderChoices.KUBERNETES.value,
                 {"context": "provider_uid"},
             ),
+            (
+                Provider.ProviderChoices.M365.value,
+                {},
+            ),
         ],
     )
     def test_get_prowler_provider_kwargs(self, provider_type, expected_extra_kwargs):
@@ -181,6 +213,25 @@ class TestGetProwlerProviderKwargs:
         result = get_prowler_provider_kwargs(provider)
 
         expected_result = {**secret_dict, **expected_extra_kwargs}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_with_mutelist(self):
+        provider_uid = "provider_uid"
+        secret_dict = {"key": "value"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.AWS.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+        expected_result = {**secret_dict, "mutelist_content": {"key": "value"}}
         assert result == expected_result
 
     def test_get_prowler_provider_kwargs_unsupported_provider(self):
@@ -237,7 +288,7 @@ class TestValidateInvitation:
 
             assert result == invitation
             mock_db.get.assert_called_once_with(
-                token="VALID_TOKEN", email="user@example.com"
+                token="VALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_not_found_raises_validation_error(self):
@@ -252,7 +303,7 @@ class TestValidateInvitation:
                 "invitation_token": "Invalid invitation code."
             }
             mock_db.get.assert_called_once_with(
-                token="INVALID_TOKEN", email="user@example.com"
+                token="INVALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_not_found_raises_not_found(self):
@@ -267,7 +318,7 @@ class TestValidateInvitation:
 
             assert exc_info.value.detail == "Invitation is not valid."
             mock_db.get.assert_called_once_with(
-                token="INVALID_TOKEN", email="user@example.com"
+                token="INVALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_expired(self, invitation):
@@ -315,5 +366,27 @@ class TestValidateInvitation:
                 "invitation_token": "Invalid invitation code."
             }
             mock_db.get.assert_called_once_with(
-                token="VALID_TOKEN", email="different@example.com"
+                token="VALID_TOKEN", email__iexact="different@example.com"
+            )
+
+    def test_valid_invitation_uppercase_email(self):
+        """Test that validate_invitation works with case-insensitive email lookup."""
+        uppercase_email = "USER@example.com"
+
+        invitation = MagicMock(spec=Invitation)
+        invitation.token = "VALID_TOKEN"
+        invitation.email = uppercase_email
+        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.state = Invitation.State.PENDING
+        invitation.tenant = MagicMock()
+
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.return_value = invitation
+
+            result = validate_invitation("VALID_TOKEN", "user@example.com")
+
+            assert result == invitation
+            mock_db.get.assert_called_once_with(
+                token="VALID_TOKEN", email__iexact="user@example.com"
             )

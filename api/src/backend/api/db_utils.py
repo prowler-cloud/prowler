@@ -1,3 +1,4 @@
+import re
 import secrets
 import uuid
 from contextlib import contextmanager
@@ -6,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import connection, models, transaction
+from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
@@ -105,11 +107,12 @@ def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
     return "".join(secrets.choice(symbols or _symbols) for _ in range(length))
 
 
-def batch_delete(queryset, batch_size=5000):
+def batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_SIZE):
     """
     Deletes objects in batches and returns the total number of deletions and a summary.
 
     Args:
+        tenant_id (str): Tenant ID the queryset belongs to.
         queryset (QuerySet): The queryset of objects to delete.
         batch_size (int): The number of objects to delete in each batch.
 
@@ -120,21 +123,79 @@ def batch_delete(queryset, batch_size=5000):
     deletion_summary = {}
 
     while True:
-        # Get a batch of IDs to delete
-        batch_ids = set(
-            queryset.values_list("id", flat=True).order_by("id")[:batch_size]
-        )
-        if not batch_ids:
-            # No more objects to delete
-            break
+        with rls_transaction(tenant_id, POSTGRES_TENANT_VAR):
+            # Get a batch of IDs to delete
+            batch_ids = set(
+                queryset.values_list("id", flat=True).order_by("id")[:batch_size]
+            )
+            if not batch_ids:
+                # No more objects to delete
+                break
 
-        deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
+            deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
 
         total_deleted += deleted_count
         for model_label, count in deleted_info.items():
             deletion_summary[model_label] = deletion_summary.get(model_label, 0) + count
 
     return total_deleted, deletion_summary
+
+
+def delete_related_daily_task(provider_id: str):
+    """
+    Deletes the periodic task associated with a specific provider.
+
+    Args:
+        provider_id (str): The unique identifier for the provider
+                           whose related periodic task should be deleted.
+    """
+    task_name = f"scan-perform-scheduled-{provider_id}"
+    PeriodicTask.objects.filter(name=task_name).delete()
+
+
+def create_objects_in_batches(
+    tenant_id: str, model, objects: list, batch_size: int = 500
+):
+    """
+    Bulk-create model instances in repeated, per-tenant RLS transactions.
+
+    All chunks execute in their own transaction, so no single transaction
+    grows too large.
+
+    Args:
+        tenant_id (str): UUID string of the tenant under which to set RLS.
+        model: Django model class whose `.objects.bulk_create()` will be called.
+        objects (list): List of model instances (unsaved) to bulk-create.
+        batch_size (int): Maximum number of objects per bulk_create call.
+    """
+    total = len(objects)
+    for i in range(0, total, batch_size):
+        chunk = objects[i : i + batch_size]
+        with rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
+            model.objects.bulk_create(chunk, batch_size)
+
+
+def update_objects_in_batches(
+    tenant_id: str, model, objects: list, fields: list, batch_size: int = 500
+):
+    """
+    Bulk-update model instances in repeated, per-tenant RLS transactions.
+
+    All chunks execute in their own transaction, so no single transaction
+    grows too large.
+
+    Args:
+        tenant_id (str): UUID string of the tenant under which to set RLS.
+        model: Django model class whose `.objects.bulk_update()` will be called.
+        objects (list): List of model instances (saved) to bulk-update.
+        fields (list): List of field names to update.
+        batch_size (int): Maximum number of objects per bulk_update call.
+    """
+    total = len(objects)
+    for start in range(0, total, batch_size):
+        chunk = objects[start : start + batch_size]
+        with rls_transaction(value=tenant_id, parameter=POSTGRES_TENANT_VAR):
+            model.objects.bulk_update(chunk, fields, batch_size)
 
 
 # Postgres Enums
@@ -210,6 +271,167 @@ def register_enum(apps, schema_editor, enum_class):  # noqa: F841
         )
         register_type(enum_instance, connection)
         register_adapter(enum_class, enum_adapter)
+
+
+def _should_create_index_on_partition(
+    partition_name: str, all_partitions: bool = False
+) -> bool:
+    """
+    Determine if we should create an index on this partition.
+
+    Args:
+        partition_name: The name of the partition (e.g., "findings_2025_aug", "findings_default")
+        all_partitions: If True, create on all partitions. If False, only current/future partitions.
+
+    Returns:
+        bool: True if index should be created on this partition, False otherwise.
+    """
+    if all_partitions:
+        return True
+
+    # Extract date from partition name if it follows the pattern
+    # Partition names look like: findings_2025_aug, findings_2025_jul, etc.
+    date_pattern = r"(\d{4})_([a-z]{3})$"
+    match = re.search(date_pattern, partition_name)
+
+    if not match:
+        # If we can't parse the date, include it to be safe (e.g., default partition)
+        return True
+
+    try:
+        year_str, month_abbr = match.groups()
+        year = int(year_str)
+
+        # Map month abbreviations to numbers
+        month_map = {
+            "jan": 1,
+            "feb": 2,
+            "mar": 3,
+            "apr": 4,
+            "may": 5,
+            "jun": 6,
+            "jul": 7,
+            "aug": 8,
+            "sep": 9,
+            "oct": 10,
+            "nov": 11,
+            "dec": 12,
+        }
+
+        month = month_map.get(month_abbr.lower())
+        if month is None:
+            # Unknown month abbreviation, include it to be safe
+            return True
+
+        partition_date = datetime(year, month, 1, tzinfo=timezone.utc)
+
+        # Get current month start
+        now = datetime.now(timezone.utc)
+        current_month_start = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+
+        # Include current month and future partitions
+        return partition_date >= current_month_start
+
+    except (ValueError, TypeError):
+        # If date parsing fails, include it to be safe
+        return True
+
+
+def create_index_on_partitions(
+    apps,  # noqa: F841
+    schema_editor,
+    parent_table: str,
+    index_name: str,
+    columns: str,
+    method: str = "BTREE",
+    where: str = "",
+    all_partitions: bool = True,
+):
+    """
+    Create an index on existing partitions of `parent_table`.
+
+    Args:
+        parent_table: The name of the root table (e.g. "findings").
+        index_name: A short name for the index (will be prefixed per-partition).
+        columns: The parenthesized column list, e.g. "tenant_id, scan_id, status".
+        method: The index method—BTREE, GIN, etc. Defaults to BTREE.
+        where: Optional WHERE clause (without the leading "WHERE"), e.g. "status = 'FAIL'".
+        all_partitions: Whether to create indexes on all partitions or just current/future ones.
+                       Defaults to False (current/future only) to avoid maintenance overhead
+                       on old partitions where the index may not be needed.
+
+    Examples:
+        # Create index only on current and future partitions (recommended for new indexes)
+        create_index_on_partitions(
+            apps, schema_editor,
+            parent_table="findings",
+            index_name="new_performance_idx",
+            columns="tenant_id, status, severity",
+            all_partitions=False  # Default behavior
+        )
+
+        # Create index on all partitions (use when migrating existing critical indexes)
+        create_index_on_partitions(
+            apps, schema_editor,
+            parent_table="findings",
+            index_name="critical_existing_idx",
+            columns="tenant_id, scan_id",
+            all_partitions=True
+        )
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT inhrelid::regclass::text
+            FROM pg_inherits
+            WHERE inhparent = %s::regclass
+            """,
+            [parent_table],
+        )
+        partitions = [row[0] for row in cursor.fetchall()]
+
+    where_sql = f" WHERE {where}" if where else ""
+    for partition in partitions:
+        if _should_create_index_on_partition(partition, all_partitions):
+            idx_name = f"{partition.replace('.', '_')}_{index_name}"
+            sql = (
+                f"CREATE INDEX CONCURRENTLY IF NOT EXISTS {idx_name} "
+                f"ON {partition} USING {method} ({columns})"
+                f"{where_sql};"
+            )
+            schema_editor.execute(sql)
+
+
+def drop_index_on_partitions(
+    apps,  # noqa: F841
+    schema_editor,
+    parent_table: str,
+    index_name: str,
+):
+    """
+    Drop the per-partition indexes that were created by create_index_on_partitions.
+
+    Args:
+        parent_table: The name of the root table (e.g. "findings").
+        index_name: The same short name used when creating them.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT inhrelid::regclass::text
+            FROM pg_inherits
+            WHERE inhparent = %s::regclass
+            """,
+            [parent_table],
+        )
+        partitions = [row[0] for row in cursor.fetchall()]
+
+    for partition in partitions:
+        idx_name = f"{partition.replace('.', '_')}_{index_name}"
+        sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
+        schema_editor.execute(sql)
 
 
 # Postgres enum definition for member role
@@ -330,3 +552,15 @@ class IntegrationTypeEnum(EnumType):
 class IntegrationTypeEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("integration_type", *args, **kwargs)
+
+
+# Postgres enum definition for Processor type
+
+
+class ProcessorTypeEnum(EnumType):
+    enum_type_name = "processor_type"
+
+
+class ProcessorTypeEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("processor_type", *args, **kwargs)

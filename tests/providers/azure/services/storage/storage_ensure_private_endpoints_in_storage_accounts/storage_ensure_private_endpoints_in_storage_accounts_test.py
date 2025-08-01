@@ -1,9 +1,11 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.storage.v2023_01_01.models import PrivateEndpointConnection
-
-from prowler.providers.azure.services.storage.storage_service import Account
+from prowler.providers.azure.services.storage.storage_service import (
+    Account,
+    NetworkRuleSet,
+    PrivateEndpointConnection,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -44,16 +46,18 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                 )
             ]
         }
@@ -96,16 +100,24 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=PrivateEndpointConnection(),
+                    private_endpoint_connections=[
+                        PrivateEndpointConnection(
+                            id="f1ef2e48-978a-4b0e-b34f-e6c34a9e0724",
+                            name="Test Private Endpoint Connection",
+                            type="Test Type",
+                        )
+                    ],
                 )
             ]
         }

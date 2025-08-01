@@ -1,35 +1,21 @@
 "use client";
 
 import { Snippet } from "@nextui-org/react";
-import Link from "next/link";
 
-import { InfoField } from "@/components/ui/entities";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
+import { CustomSection } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
+import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import {
-  getProviderLogo,
-  type ProviderType,
-} from "@/components/ui/entities/get-provider-logo";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
-import { FindingProps } from "@/types";
+import { FindingProps, ProviderType } from "@/types";
+
+import { Muted } from "../muted";
+import { DeltaIndicator } from "./delta-indicator";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
 };
-
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-    <h3 className="text-md font-medium text-gray-800 dark:text-prowler-theme-pale/90">
-      {title}
-    </h3>
-    {children}
-  </div>
-);
 
 // Add new utility function for duration formatting
 const formatDuration = (seconds: number) => {
@@ -55,7 +41,7 @@ export const FindingDetail = ({
   const attributes = finding.attributes;
   const resource = finding.relationships.resource.attributes;
   const scan = finding.relationships.scan.attributes;
-  const provider = finding.relationships.provider.attributes;
+  const providerDetails = finding.relationships.provider.attributes;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
@@ -66,30 +52,35 @@ export const FindingDetail = ({
             {renderValue(attributes.check_metadata.checktitle)}
           </h2>
         </div>
+        <div className="flex items-center gap-x-4">
+          <Muted
+            isMuted={attributes.muted}
+            mutedReason={attributes.muted_reason || ""}
+          />
 
-        <div
-          className={`rounded-lg px-3 py-1 text-sm font-semibold ${
-            attributes.status === "PASS"
-              ? "bg-green-100 text-green-600"
-              : attributes.status === "MANUAL"
-                ? "bg-gray-100 text-gray-600"
-                : "bg-red-100 text-red-600"
-          }`}
-        >
-          {renderValue(attributes.status)}
+          <div
+            className={`rounded-lg px-3 py-1 text-sm font-semibold ${
+              attributes.status === "PASS"
+                ? "bg-green-100 text-green-600"
+                : attributes.status === "MANUAL"
+                  ? "bg-gray-100 text-gray-600"
+                  : "bg-red-100 text-system-severity-critical"
+            }`}
+          >
+            {renderValue(attributes.status)}
+          </div>
         </div>
       </div>
 
       {/* Check Metadata */}
-      <Section title="Finding Details">
-        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <InfoField label="Provider" variant="simple">
-            <div className="flex items-center gap-2">
-              {getProviderLogo(
-                attributes.check_metadata.provider as ProviderType,
-              )}
-            </div>
-          </InfoField>
+      <CustomSection title="Finding Details">
+        <div className="flex flex-wrap gap-4">
+          <EntityInfoShort
+            cloudProvider={providerDetails.provider as ProviderType}
+            entityAlias={providerDetails.alias}
+            entityId={providerDetails.uid}
+            showConnectionStatus={providerDetails.connection.connected}
+          />
           <InfoField label="Service">
             {attributes.check_metadata.servicename}
           </InfoField>
@@ -97,21 +88,31 @@ export const FindingDetail = ({
           <InfoField label="First Seen">
             <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
           </InfoField>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Check ID" variant="simple">
-            <Snippet
-              className="max-w-full bg-gray-50 py-1 text-xs dark:bg-slate-800"
-              hideSymbol
+          {attributes.delta && (
+            <InfoField
+              label="Delta"
+              tooltipContent="Indicates whether the finding is new (NEW), has changed status (CHANGED), or remains unchanged (NONE) compared to previous scans."
+              className="capitalize"
             >
-              {attributes.check_id}
-            </Snippet>
-          </InfoField>
+              <div className="flex items-center gap-2">
+                <DeltaIndicator delta={attributes.delta} />
+                {attributes.delta}
+              </div>
+            </InfoField>
+          )}
           <InfoField label="Severity" variant="simple">
             <SeverityBadge severity={attributes.severity || "-"} />
           </InfoField>
         </div>
+        <InfoField label="Finding ID" variant="simple">
+          <CodeSnippet value={findingDetails.id} />
+        </InfoField>
+        <InfoField label="Check ID" variant="simple">
+          <CodeSnippet value={attributes.check_id} />
+        </InfoField>
+        <InfoField label="Finding UID" variant="simple">
+          <CodeSnippet value={attributes.uid} />
+        </InfoField>
 
         {attributes.status === "FAIL" && (
           <InfoField label="Risk" variant="simple">
@@ -150,15 +151,14 @@ export const FindingDetail = ({
                     {attributes.check_metadata.remediation.recommendation.text}
                   </p>
                   {attributes.check_metadata.remediation.recommendation.url && (
-                    <Link
+                    <CustomLink
                       href={
                         attributes.check_metadata.remediation.recommendation.url
                       }
-                      target="_blank"
-                      className="text-sm text-blue-500 hover:underline"
+                      size="sm"
                     >
                       Learn more
-                    </Link>
+                    </CustomLink>
                   )}
                 </div>
               </InfoField>
@@ -178,13 +178,12 @@ export const FindingDetail = ({
             {/* Additional Resources section */}
             {attributes.check_metadata.remediation.code.other && (
               <InfoField label="Additional Resources">
-                <Link
+                <CustomLink
                   href={attributes.check_metadata.remediation.code.other}
-                  target="_blank"
-                  className="text-sm text-blue-500 hover:underline"
+                  size="sm"
                 >
                   View documentation
-                </Link>
+                </CustomLink>
               </InfoField>
             )}
           </div>
@@ -193,10 +192,10 @@ export const FindingDetail = ({
         <InfoField label="Categories">
           {attributes.check_metadata.categories?.join(", ") || "-"}
         </InfoField>
-      </Section>
+      </CustomSection>
 
       {/* Resource Details */}
-      <Section title="Resource Details">
+      <CustomSection title="Resource Details">
         <InfoField label="Resource ID" variant="simple">
           <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
             <span className="whitespace-pre-line text-xs">
@@ -242,12 +241,12 @@ export const FindingDetail = ({
             <DateWithTime inline dateTime={resource.updated_at || "-"} />
           </InfoField>
         </div>
-      </Section>
+      </CustomSection>
 
       {/* Add new Scan Details section */}
-      <Section title="Scan Details">
+      <CustomSection title="Scan Details">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Scan Name">{scan.name}</InfoField>
+          <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
           <InfoField label="Resources Scanned">
             {scan.unique_resource_count}
           </InfoField>
@@ -275,40 +274,13 @@ export const FindingDetail = ({
           <InfoField label="Launched At">
             <DateWithTime inline dateTime={scan.inserted_at || "-"} />
           </InfoField>
-          <InfoField label="Next Scan">
-            <DateWithTime inline dateTime={scan.next_scan_at || "-"} />
-          </InfoField>
+          {scan.scheduled_at && (
+            <InfoField label="Scheduled At">
+              <DateWithTime inline dateTime={scan.scheduled_at} />
+            </InfoField>
+          )}
         </div>
-
-        {scan.scheduled_at && (
-          <InfoField label="Scheduled At">
-            <DateWithTime inline dateTime={scan.scheduled_at} />
-          </InfoField>
-        )}
-      </Section>
-
-      {/* Provider Details section */}
-      <Section title="Provider Details">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Provider" variant="simple">
-            {getProviderLogo(
-              attributes.check_metadata.provider as ProviderType,
-            )}
-          </InfoField>
-          <InfoField label="Account ID">{provider.uid}</InfoField>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Alias">{provider.alias}</InfoField>
-          <InfoField label="Connection Status">
-            <span
-              className={`${provider.connection.connected ? "text-green-500" : "text-red-500"}`}
-            >
-              {provider.connection.connected ? "Connected" : "Disconnected"}
-            </span>
-          </InfoField>
-        </div>
-      </Section>
+      </CustomSection>
     </div>
   );
 };

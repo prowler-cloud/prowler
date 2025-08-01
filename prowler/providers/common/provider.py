@@ -207,20 +207,55 @@ class Provider(ABC):
                         kubeconfig_file=arguments.kubeconfig_file,
                         context=arguments.context,
                         namespace=arguments.namespace,
+                        cluster_name=arguments.cluster_name,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "microsoft365" in provider_class_name.lower():
+                elif "m365" in provider_class_name.lower():
                     provider_class(
                         region=arguments.region,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,
+                        env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         tenant_id=arguments.tenant_id,
+                        init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
+                    )
+                elif "nhn" in provider_class_name.lower():
+                    provider_class(
+                        username=arguments.nhn_username,
+                        password=arguments.nhn_password,
+                        tenant_id=arguments.nhn_tenant_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "github" in provider_class_name.lower():
+                    provider_class(
+                        personal_access_token=arguments.personal_access_token,
+                        oauth_app_token=arguments.oauth_app_token,
+                        github_app_key=arguments.github_app_key,
+                        github_app_id=arguments.github_app_id,
+                        mutelist_path=arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                        repositories=arguments.repository,
+                        organizations=arguments.organization,
+                    )
+                elif "iac" in provider_class_name.lower():
+                    provider_class(
+                        scan_path=arguments.scan_path,
+                        scan_repository_url=arguments.scan_repository_url,
+                        frameworks=arguments.frameworks,
+                        exclude_path=arguments.exclude_path,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                        github_username=arguments.github_username,
+                        personal_access_token=arguments.personal_access_token,
+                        oauth_app_token=arguments.oauth_app_token,
                     )
 
         except TypeError as error:

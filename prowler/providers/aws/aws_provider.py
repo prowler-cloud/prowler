@@ -105,10 +105,10 @@ class AwsProvider(Provider):
         self,
         retries_max_attempts: int = 3,
         role_arn: str = None,
-        session_duration: int = None,
+        session_duration: int = 3600,
         external_id: str = None,
         role_session_name: str = None,
-        mfa: bool = None,
+        mfa: bool = False,
         profile: str = None,
         regions: set = set(),
         organizations_role_arn: str = None,
@@ -193,6 +193,7 @@ class AwsProvider(Provider):
         ######## AWS Session
         logger.info("Generating original session ...")
 
+        # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
         aws_session = self.setup_session(
             mfa=mfa,
@@ -238,7 +239,6 @@ class AwsProvider(Provider):
             profile_region=profile_region,
         )
         ########
-
         ######## AWS Session with Assume Role (if needed)
         if role_arn:
             # Validate the input role
@@ -469,8 +469,8 @@ class AwsProvider(Provider):
 
         return profile_region
 
+    @staticmethod
     def set_identity(
-        self,
         caller_identity: AWSCallerIdentity,
         profile: str,
         regions: set,
@@ -796,6 +796,7 @@ class AwsProvider(Provider):
                 "elb",
                 "efs",
                 "sqs",
+                "eks",
             ]
             service_list = set()
             sub_service_list = set()
@@ -990,7 +991,8 @@ class AwsProvider(Provider):
         mfa_TOTP = input("Enter MFA code: ")
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
-    def set_session_config(self, retries_max_attempts: int) -> Config:
+    @staticmethod
+    def set_session_config(retries_max_attempts: int) -> Config:
         """
         set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
 

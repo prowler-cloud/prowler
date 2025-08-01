@@ -1,13 +1,10 @@
 from datetime import timedelta
-from typing import Dict
+from typing import Dict, Optional
 
-from azure.core.exceptions import (
-    ClientAuthenticationError,
-    HttpResponseError,
-    ResourceNotFoundError,
-)
+import requests
+from azure.core.exceptions import ClientAuthenticationError, ResourceNotFoundError
 from azure.mgmt.security import SecurityCenter
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -22,7 +19,11 @@ class Defender(AzureService):
         self.auto_provisioning_settings = self._get_auto_provisioning_settings()
         self.assessments = self._get_assessments()
         self.settings = self._get_settings()
-        self.security_contacts = self._get_security_contacts()
+        self.security_contact_configurations = self._get_security_contacts(
+            token=provider.session.get_token(
+                "https://management.azure.com/.default"
+            ).token
+        )
         self.iot_security_solutions = self._get_iot_security_solutions()
 
     def _get_pricings(self):
@@ -39,6 +40,7 @@ class Defender(AzureService):
                         {
                             pricing.name: Pricing(
                                 resource_id=pricing.id,
+                                resource_name=pricing.name,
                                 pricing_tier=getattr(pricing, "pricing_tier", None),
                                 free_trial_remaining_time=pricing.free_trial_remaining_time,
                                 extensions=dict(
@@ -148,47 +150,70 @@ class Defender(AzureService):
                 )
         return settings
 
-    def _get_security_contacts(self):
+    def _get_security_contacts(self, token: str) -> dict[str, dict]:
+        """
+        Get all security contacts configuration for all subscriptions.
+
+        Args:
+            token: The authentication token to make the request.
+
+        Returns:
+            A dictionary of security contacts for all subscriptions.
+        """
         logger.info("Defender - Getting security contacts...")
         security_contacts = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_name, subscription_id in self.subscriptions.items():
             try:
-                security_contacts.update({subscription_name: {}})
-                # TODO: List all security contacts. For now, the list method is not working.
-                security_contact_default = client.security_contacts.get("default")
-                security_contacts[subscription_name].update(
-                    {
-                        security_contact_default.name: SecurityContacts(
-                            resource_id=security_contact_default.id,
-                            name=security_contact_default.name,
-                            emails=security_contact_default.emails,
-                            phone=security_contact_default.phone,
-                            alert_notifications_minimal_severity=security_contact_default.alert_notifications.minimal_severity,
-                            alert_notifications_state=security_contact_default.alert_notifications.state,
-                            notified_roles=security_contact_default.notifications_by_role.roles,
-                            notified_roles_state=security_contact_default.notifications_by_role.state,
-                        )
-                    }
-                )
-            except HttpResponseError as error:
-                if error.status_code == 404:
-                    security_contacts[subscription_name].update(
-                        {
-                            "default": SecurityContacts(
-                                resource_id=f"/subscriptions/{self.subscriptions[subscription_name]}/providers/Microsoft.Security/securityContacts/default",
-                                name="",
-                                emails="",
-                                phone="",
-                                alert_notifications_minimal_severity="",
-                                alert_notifications_state="",
-                                notified_roles=[""],
-                                notified_roles_state="",
-                            )
-                        }
+                url = f"https://management.azure.com/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                }
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                contact_configurations = response.json().get("value", [])
+                security_contacts[subscription_name] = {}
+                for contact_configuration in contact_configurations:
+                    props = contact_configuration.get("properties", {})
+
+                    # Map notificationsByRole.state from "On"/"Off" to boolean
+                    notifications_by_role_state = props.get(
+                        "notificationsByRole", {}
+                    ).get("state", "Off")
+                    notifications_by_role_state_bool = (
+                        notifications_by_role_state.lower() == "on"
                     )
-                else:
-                    logger.error(
-                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    notifications_by_role_roles = props.get(
+                        "notificationsByRole", {}
+                    ).get("roles", [])
+
+                    # Extract minimalRiskLevel and minimalSeverity from notificationsSources
+                    attack_path_minimal_risk_level = None
+                    alert_minimal_severity = None
+                    for source in props.get("notificationsSources", []):
+                        if source.get("sourceType") == "AttackPath":
+                            value = source.get("minimalRiskLevel")
+                            if value is not None:
+                                attack_path_minimal_risk_level = value
+                        elif source.get("sourceType") == "Alert":
+                            value = source.get("minimalSeverity")
+                            if value is not None:
+                                alert_minimal_severity = value
+
+                    security_contacts[subscription_name][
+                        contact_configuration.get("name", "default")
+                    ] = SecurityContactConfiguration(
+                        id=contact_configuration.get("id", ""),
+                        name=contact_configuration.get("name", "default"),
+                        enabled=props.get("isEnabled", False),
+                        emails=props.get("emails", "").split(";"),
+                        phone=props.get("phone", ""),
+                        notifications_by_role=NotificationsByRole(
+                            state=notifications_by_role_state_bool,
+                            roles=notifications_by_role_roles,
+                        ),
+                        attack_path_minimal_risk_level=attack_path_minimal_risk_level,
+                        alert_minimal_severity=alert_minimal_severity,
                     )
             except Exception as error:
                 logger.error(
@@ -224,6 +249,7 @@ class Defender(AzureService):
 
 class Pricing(BaseModel):
     resource_id: str
+    resource_name: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
     extensions: Dict[str, bool] = {}
@@ -249,15 +275,42 @@ class Setting(BaseModel):
     enabled: bool
 
 
-class SecurityContacts(BaseModel):
-    resource_id: str
+class NotificationsByRole(BaseModel):
+    """
+    Defines whether to send email notifications from Microsoft Defender for Cloud to persons with specific RBAC roles on the subscription.
+
+    Attributes:
+        state: Whether notifications by role are enabled.
+        roles: List of Azure roles (e.g., 'Owner', 'Admin') to be notified.
+    """
+
+    state: bool
+    roles: list[str]
+
+
+class SecurityContactConfiguration(BaseModel):
+    """
+    Represents the configuration of an Azure Security Center security contact.
+
+    Attributes:
+        id: The unique resource ID of the security contact.
+        name: The name of the security contact (usually 'default').
+        enabled: Whether the security contact is enabled. If enabled, the security contact will receive notifications, otherwise it will not.
+        emails: List of email addresses to notify.
+        phone: Contact phone number.
+        notifications_by_role: Defines whether to send email notifications from Microsoft Defender for Cloud to persons with specific RBAC roles on the subscription.
+        attack_path_minimal_risk_level: Minimal risk level for Attack Path notifications (e.g., 'Critical').
+        alert_minimal_severity: Minimal severity for Alert notifications (e.g., 'Medium').
+    """
+
+    id: str
     name: str
-    emails: str
-    phone: str
-    alert_notifications_minimal_severity: str
-    alert_notifications_state: str
-    notified_roles: list[str]
-    notified_roles_state: str
+    enabled: bool
+    emails: list[str]
+    phone: Optional[str] = None
+    notifications_by_role: NotificationsByRole
+    attack_path_minimal_risk_level: Optional[str] = None
+    alert_minimal_severity: Optional[str] = None
 
 
 class IoTSecuritySolution(BaseModel):

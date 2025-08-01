@@ -1,12 +1,12 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from api.compliance import (
+    generate_compliance_overview_template,
+    generate_scan_compliance,
     get_prowler_provider_checks,
     get_prowler_provider_compliance,
-    load_prowler_compliance,
     load_prowler_checks,
-    generate_scan_compliance,
-    generate_compliance_overview_template,
+    load_prowler_compliance,
 )
 from api.models import Provider
 
@@ -69,7 +69,7 @@ class TestCompliance:
 
         load_prowler_compliance()
 
-        from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE, PROWLER_CHECKS
+        from api.compliance import PROWLER_CHECKS, PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
 
         assert PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE == {
             "template_key": "template_value"
@@ -218,6 +218,10 @@ class TestCompliance:
             Description="Description of requirement 1",
             Attributes=[],
             Checks=["check1", "check2"],
+            Tactics=["tactic1"],
+            SubTechniques=["subtechnique1"],
+            Platforms=["platform1"],
+            TechniqueURL="https://example.com",
         )
         requirement2 = MagicMock(
             Id="requirement2",
@@ -225,6 +229,10 @@ class TestCompliance:
             Description="Description of requirement 2",
             Attributes=[],
             Checks=[],
+            Tactics=[],
+            SubTechniques=[],
+            Platforms=[],
+            TechniqueURL="",
         )
         compliance1 = MagicMock(
             Requirements=[requirement1, requirement2],
@@ -247,6 +255,10 @@ class TestCompliance:
                         "requirement1": {
                             "name": "Requirement 1",
                             "description": "Description of requirement 1",
+                            "tactics": ["tactic1"],
+                            "subtechniques": ["subtechnique1"],
+                            "platforms": ["platform1"],
+                            "technique_url": "https://example.com",
                             "attributes": [],
                             "checks": {"check1": None, "check2": None},
                             "checks_status": {
@@ -260,6 +272,10 @@ class TestCompliance:
                         "requirement2": {
                             "name": "Requirement 2",
                             "description": "Description of requirement 2",
+                            "tactics": [],
+                            "subtechniques": [],
+                            "platforms": [],
+                            "technique_url": "",
                             "attributes": [],
                             "checks": {},
                             "checks_status": {
@@ -268,7 +284,7 @@ class TestCompliance:
                                 "manual": 0,
                                 "total": 0,
                             },
-                            "status": "PASS",
+                            "status": "MANUAL",
                         },
                     },
                     "requirements_status": {
