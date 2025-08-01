@@ -65,7 +65,7 @@ When onboarding multiple AWS accounts into Prowler Cloud, it’s important to de
 
 If you're using Infrastructure as Code (IaC), we recommend using Terraform to manage this deployment systematically.
 
-### 🧭 Recommended Approach
+### Recommended Approach
 
 - **Use StackSets** from the **Management Account** (or a Delegated Admin/Security Account).
 - **Use Terraform** to orchestrate the deployment.
@@ -78,7 +78,7 @@ If you're using Infrastructure as Code (IaC), we recommend using Terraform to ma
 
 ---
 
-### 🧩 Step-by-Step Using Terraform
+### Step-by-Step Using Terraform
 
 Below is a ready-to-use Terraform snippet that deploys the [Prowler Scan IAM Role CloudFormation template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml) across your AWS Organization using StackSets:
 
@@ -115,13 +115,13 @@ You may store this file locally and reference it in `template_path`, or download
 
 ---
 
-### 🛡 IAM Role: External ID Support
+### IAM Role: External ID Support
 
 Make sure to include the `ExternalId` parameter in your StackSet if required by your organization’s Prowler Cloud setup. This ensures secure cross-account access for scanning.
 
 ---
 
-### 🧪 Testing and Validation
+### Testing and Validation
 
 After deployment:
 - Go to the **CloudFormation Stack Instances** section in the AWS Console to validate the success in each account.
