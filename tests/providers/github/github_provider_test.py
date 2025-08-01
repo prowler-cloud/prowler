@@ -37,7 +37,7 @@ class TestGitHubProvider:
         personal_access_token = PAT_TOKEN
         oauth_app_token = None
         github_app_id = None
-        github_app_key = None
+        github_app_key_content = None
         fixer_config = load_and_validate_config_file(
             "github", default_fixer_config_file_path
         )
@@ -60,7 +60,7 @@ class TestGitHubProvider:
                 personal_access_token,
                 oauth_app_token,
                 github_app_id,
-                github_app_key,
+                github_app_key_content,
             )
 
             assert provider._type == "github"
@@ -79,7 +79,7 @@ class TestGitHubProvider:
         personal_access_token = None
         oauth_app_token = OAUTH_TOKEN
         github_app_id = None
-        github_app_key = None
+        github_app_key_content = None
         fixer_config = load_and_validate_config_file(
             "github", default_fixer_config_file_path
         )
@@ -102,7 +102,7 @@ class TestGitHubProvider:
                 personal_access_token,
                 oauth_app_token,
                 github_app_id,
-                github_app_key,
+                github_app_key_content,
             )
 
             assert provider._type == "github"
@@ -121,7 +121,7 @@ class TestGitHubProvider:
         personal_access_token = None
         oauth_app_token = None
         github_app_id = APP_ID
-        github_app_key = APP_KEY
+        github_app_key_content = APP_KEY
         fixer_config = load_and_validate_config_file(
             "github", default_fixer_config_file_path
         )
@@ -142,7 +142,7 @@ class TestGitHubProvider:
                 personal_access_token,
                 oauth_app_token,
                 github_app_id,
-                github_app_key,
+                github_app_key_content,
             )
 
             assert provider._type == "github"
@@ -210,7 +210,7 @@ class TestGitHubProvider:
             ),
         ):
             connection = GithubProvider.test_connection(
-                github_app_id=APP_ID, github_app_key=APP_KEY
+                github_app_id=APP_ID, github_app_key_content=APP_KEY
             )
 
             assert isinstance(connection, Connection)
@@ -272,7 +272,7 @@ class TestGitHubProvider:
         ):
             with pytest.raises(GithubInvalidCredentialsError):
                 GithubProvider.test_connection(
-                    github_app_id=APP_ID, github_app_key="invalid-key"
+                    github_app_id=APP_ID, github_app_key_content="invalid-key"
                 )
 
     def test_test_connection_with_invalid_app_credentials_no_raise(self):
@@ -291,7 +291,7 @@ class TestGitHubProvider:
         ):
             connection = GithubProvider.test_connection(
                 github_app_id=APP_ID,
-                github_app_key="invalid-key",
+                github_app_key_content="invalid-key",
                 raise_on_exception=False,
             )
 
