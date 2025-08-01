@@ -29,7 +29,7 @@ export const AWSRoleCredentialsForm = ({
   const credentialsType = useWatch({
     control,
     name: ProviderCredentialFields.CREDENTIALS_TYPE,
-    defaultValue: "aws-sdk-default",
+    defaultValue: "access-secret-key",
   });
 
   return (
@@ -50,7 +50,7 @@ export const AWSRoleCredentialsForm = ({
         name={ProviderCredentialFields.CREDENTIALS_TYPE}
         label="Authentication Method"
         placeholder="Select credentials type"
-        defaultSelectedKeys={["aws-sdk-default"]}
+        defaultSelectedKeys={["access-secret-key"]}
         className="mb-4"
         variant="bordered"
         onSelectionChange={(keys) =>
