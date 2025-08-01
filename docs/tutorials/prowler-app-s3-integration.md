@@ -18,7 +18,7 @@ The S3 Integration feature enables users to:
 Before configuring S3 Integration, ensure:
 
 - A user with a Role that has `MANAGE_INTEGRATIONS`
-- At least one cloud provider configured in Prowler App
+- At least one cloud provider configured
 - Access to an Amazon S3 bucket with proper write permissions
 - AWS credentials (IAM role or access keys) with S3 write permissions
 - Understanding of AWS IAM policies and S3 bucket permissions
