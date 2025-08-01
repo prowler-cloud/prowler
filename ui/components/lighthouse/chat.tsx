@@ -41,7 +41,9 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     onFinish: (message) => {
-      // Detect error messages sent from backend using specific prefix
+      // There is no specific way to output the error message from langgraph supervisor
+      // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
+      // Detect error messages sent from backend using specific prefix and display the error
       if (message.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")) {
         const errorText = message.content
           .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
@@ -57,6 +59,15 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     },
     onError: (error) => {
       console.error("Chat error:", error);
+
+      if (
+        error?.message?.includes("<html>") &&
+        error?.message?.includes("<title>403 Forbidden</title>")
+      ) {
+        setErrorMessage("403 Forbidden");
+        return;
+      }
+
       setErrorMessage(
         error?.message || "An error occurred. Please retry your message.",
       );
@@ -72,6 +83,30 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const messageValue = form.watch("message");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
+  const messageValueRef = useRef<string>("");
+
+  // Keep ref in sync with current value
+  messageValueRef.current = messageValue;
+
+  // Restore last user message to input when any error occurs
+  useEffect(() => {
+    if (errorMessage) {
+      // Capture current messages to avoid dependency issues
+      setMessages((currentMessages) => {
+        const lastUserMessage = currentMessages
+          .filter((m) => m.role === "user")
+          .pop();
+
+        if (lastUserMessage) {
+          form.setValue("message", lastUserMessage.content);
+          // Remove the last user message from history since it's now in the input
+          return currentMessages.slice(0, -1);
+        }
+
+        return currentMessages;
+      });
+    }
+  }, [errorMessage, form, setMessages]);
 
   // Sync form value with chat input
   useEffect(() => {
@@ -87,25 +122,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
       form.reset({ message: "" });
     }
   }, [status, form]);
-
-  // Populate input with last user message when any error occurs
-  useEffect(() => {
-    if (errorMessage && messages.length > 0) {
-      // Filter out the error message itself before finding the last user message
-      const nonErrorMessages = messages.filter(
-        (m) => !m.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:"),
-      );
-      if (nonErrorMessages.length > 0) {
-        const lastUserMessage = nonErrorMessages
-          .filter((m) => m.role === "user")
-          .pop();
-        if (lastUserMessage && !messageValue) {
-          form.setValue("message", lastUserMessage.content);
-          setMessages(nonErrorMessages.slice(0, -1));
-        }
-      }
-    }
-  }, [errorMessage, messages, messageValue, form, setMessages]);
 
   const onFormSubmit = form.handleSubmit((data) => {
     if (data.message.trim()) {
