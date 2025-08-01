@@ -2008,9 +2008,12 @@ aws:
             ).isoformat(),
         }
 
-        assert AwsProvider.refresh_credentials(
-            aws_provider._assumed_role_configuration, aws_provider._session
-        ) == refreshed_credentials
+        assert (
+            AwsProvider.refresh_credentials(
+                aws_provider._assumed_role_configuration, aws_provider._session
+            )
+            == refreshed_credentials
+        )
 
     @mock_aws
     def test_refresh_credentials_after_expiration(self):
