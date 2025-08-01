@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AlertCircle,
   Bookmark,
   CloudCog,
   Cog,
@@ -79,11 +78,6 @@ export const getMenuList = (pathname: string): GroupProps[] => {
           label: "Top failed findings",
           icon: Bookmark,
           submenus: [
-            {
-              href: "/findings?filter[status__in]=FAIL&sort=severity,-inserted_at",
-              label: "Misconfigurations",
-              icon: AlertCircle,
-            },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac&sort=-inserted_at",
               label: "IAM Issues",
