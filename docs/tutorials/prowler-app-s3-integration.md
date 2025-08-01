@@ -47,30 +47,35 @@ To access S3 Integration:
 ### Configuration Step
 
 1. Click the "Add Integration" button to start the configuration process
-![Add integration button](../tutorials/img/s3-integration-ui-3.png)
-2. Complete the configuration form with the following details:
-3.
-   - Cloud Providers: Select the providers whose scan results should be exported to this S3 bucket
-   - Bucket Name: Enter the name of your target S3 bucket (e.g., `my-security-findings-bucket`)
-   - Output Directory: Specify the directory path within the bucket (e.g., `/prowler-findings/`)
-![Configuration form](../tutorials/img/s3-integration-ui-4.png)
 
-1. Click "Next" to proceed to the credentials step
+    ![Add integration button](../tutorials/img/s3-integration-ui-3.png)
+
+2. Complete the configuration form with the following details:
+
+    - **Cloud Providers:** Select the providers whose scan results should be exported to this S3 bucket
+    - **Bucket Name:** Enter the name of your target S3 bucket (e.g., `my-security-findings-bucket`)
+    - **Output Directory:** Specify the directory path within the bucket (e.g., `/prowler-findings/`)
+
+    ![Configuration form](../tutorials/img/s3-integration-ui-4.png)
+
+3. Click "Next" to proceed to the credentials step
 
 ### Credentials Step
 
 1. Configure AWS authentication using one of the supported methods:
 
-   - AWS SDK Default: Use default AWS credentials from the environment
-   - Access Keys: Provide AWS access key ID and secret access key
-   - IAM Role (optional): Specify role ARN, external ID, and optional session parameters
-![Credentials configuration](../tutorials/img/s3-integration-ui-5.png)
+    - **AWS SDK Default:** Use default AWS credentials from the environment
+    - **Access Keys:** Provide AWS access key ID and secret access key
+    - **IAM Role (optional):** Specify role ARN, external ID, and optional session parameters
+
+    ![Credentials configuration](../tutorials/img/s3-integration-ui-5.png)
+
 2. For IAM role authentication, complete the required fields:
 
-   - Role ARN: The Amazon Resource Name of the IAM role
-   - External ID: Unique identifier for additional security (defaults to Tenant/Organization ID)
-   - Role Session Name: Optional name for the assumed role session
-   - Session Duration: Optional duration in seconds for the session
+    - **Role ARN:** The Amazon Resource Name of the IAM role
+    - **External ID:** Unique identifier for additional security (defaults to Tenant/Organization ID)
+    - **Role Session Name:** Optional name for the assumed role session
+    - **Session Duration:** Optional duration in seconds for the session
 
 3. Click "Create Integration" to complete the setup
 
@@ -82,12 +87,14 @@ To access S3 Integration:
 ### View Integration Status
 
 1. Review configured integrations in the management interface
+
 2. Each integration displays:
 
-   - Connection Status: Connected or Disconnected indicator
-   - Bucket Information: Bucket name and output directory
-   - Last Checked: Timestamp of the most recent connection test
-![Integration status view](../tutorials/img/s3-integration-ui-6.png)
+    - **Connection Status:** Connected or Disconnected indicator
+    - **Bucket Information:** Bucket name and output directory
+    - **Last Checked:** Timestamp of the most recent connection test
+
+    ![Integration status view](../tutorials/img/s3-integration-ui-6.png)
 
 
 ### Action buttons
@@ -99,9 +106,9 @@ To access S3 Integration:
 
 2. The system will verify:
 
-   - AWS credential validity
-   - S3 bucket accessibility
-   - Write permission verification
+    - AWS credential validity
+    - S3 bucket accessibility
+    - Write permission verification
 
 3. Review the test results in the notification message
 
@@ -111,16 +118,18 @@ To access S3 Integration:
 
 2. Update any of the following:
 
-   - Selected cloud providers
-   - Bucket name
-   - Output directory path
+    - Selected cloud providers
+    - Bucket name
+    - Output directory path
 
 3. Click "Update Configuration" to save changes
 
 ### Update Integration Credentials
 
 1. Click the "Credentials" button to modify authentication settings
+
 2. Update AWS credentials or authentication method
+
 3. Click "Update Credentials" to save the new authentication configuration
 
 ### Delete Integration
