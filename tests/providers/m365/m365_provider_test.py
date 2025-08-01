@@ -1,15 +1,16 @@
+import base64
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from azure.core.credentials import AccessToken
 from azure.identity import (
+    CertificateCredential,
     ClientSecretCredential,
     DefaultAzureCredential,
     InteractiveBrowserCredential,
 )
-from mock import MagicMock
 
 from prowler.config.config import (
     default_config_file_path,
@@ -18,15 +19,27 @@ from prowler.config.config import (
 )
 from prowler.providers.common.models import Connection
 from prowler.providers.m365.exceptions.exceptions import (
+    M365BrowserAuthNoFlagError,
+    M365BrowserAuthNoTenantIDError,
+    M365ClientIdAndClientSecretNotBelongingToTenantIdError,
     M365ConfigCredentialsError,
+    M365CredentialsUnavailableError,
+    M365DefaultAzureCredentialError,
+    M365EnvironmentVariableError,
+    M365GetTokenIdentityError,
     M365HTTPResponseError,
     M365InvalidProviderIdError,
+    M365MissingEnvironmentCredentialsError,
     M365NoAuthenticationMethodError,
+    M365NotTenantIdButClientIdAndClientSecretError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
     M365NotValidPasswordError,
     M365NotValidTenantIdError,
     M365NotValidUserError,
+    M365TenantIdAndClientIdNotBelongingToClientSecretError,
+    M365TenantIdAndClientSecretNotBelongingToClientIdError,
+    M365UserCredentialsError,
     M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.m365_provider import M365Provider
@@ -828,3 +841,615 @@ class TestM365Provider:
                 f"The provider ID {provider_id} does not match any of the service principal tenant domains: contoso.onmicrosoft.com, contoso.com"
                 in str(exception.value)
             )
+
+    def test_m365_provider_certificate_auth(self):
+        """Test M365 Provider initialization with certificate authentication"""
+        tenant_id = None
+        client_id = None
+        client_secret = None
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        fixer_config = load_and_validate_config_file(
+            "m365", default_fixer_config_file_path
+        )
+        azure_region = "M365Global"
+
+        # Mock certificate credential
+        mock_cert_credential = MagicMock()
+        mock_cert_credential.__class__ = CertificateCredential
+
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session",
+                return_value=mock_cert_credential,
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="Service Principal with Certificate",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    location=LOCATION,
+                    certificate_thumbprint="ABC123",
+                ),
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_powershell",
+                return_value=M365Credentials(
+                    client_id=CLIENT_ID,
+                    tenant_id=TENANT_ID,
+                    certificate_content=certificate_content,
+                ),
+            ),
+        ):
+            m365_provider = M365Provider(
+                sp_env_auth=False,
+                az_cli_auth=False,
+                browser_auth=False,
+                env_auth=False,
+                certificate_auth=True,
+                tenant_id=tenant_id,
+                client_id=client_id,
+                client_secret=client_secret,
+                certificate_content=certificate_content,
+                region=azure_region,
+                config_path=default_config_file_path,
+                fixer_config=fixer_config,
+            )
+
+            assert m365_provider.region_config == M365RegionConfig(
+                name="M365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+            assert (
+                m365_provider.identity.identity_type
+                == "Service Principal with Certificate"
+            )
+            assert m365_provider.session == mock_cert_credential
+
+    def test_check_service_principal_creds_env_vars_missing_client_id(self):
+        """Test check_service_principal_creds_env_vars with missing AZURE_CLIENT_ID"""
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(M365EnvironmentVariableError) as exception,
+        ):
+            M365Provider.check_service_principal_creds_env_vars()
+
+        assert exception.type == M365EnvironmentVariableError
+        assert (
+            "Missing environment variable AZURE_CLIENT_ID required to authenticate."
+            in str(exception.value)
+        )
+
+    def test_check_service_principal_creds_env_vars_missing_tenant_id(self):
+        """Test check_service_principal_creds_env_vars with missing AZURE_TENANT_ID"""
+        with (
+            patch.dict(os.environ, {"AZURE_CLIENT_ID": "test_client_id"}, clear=True),
+            pytest.raises(M365EnvironmentVariableError) as exception,
+        ):
+            M365Provider.check_service_principal_creds_env_vars()
+
+        assert exception.type == M365EnvironmentVariableError
+        assert (
+            "Missing environment variable AZURE_TENANT_ID required to authenticate."
+            in str(exception.value)
+        )
+
+    def test_check_service_principal_creds_env_vars_missing_client_secret(self):
+        """Test check_service_principal_creds_env_vars with missing AZURE_CLIENT_SECRET"""
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "AZURE_CLIENT_ID": "test_client_id",
+                    "AZURE_TENANT_ID": "test_tenant_id",
+                },
+                clear=True,
+            ),
+            pytest.raises(M365EnvironmentVariableError) as exception,
+        ):
+            M365Provider.check_service_principal_creds_env_vars()
+
+        assert exception.type == M365EnvironmentVariableError
+        assert (
+            "Missing environment variable AZURE_CLIENT_SECRET required to authenticate."
+            in str(exception.value)
+        )
+
+    def test_check_service_principal_creds_env_vars_success(self):
+        """Test check_service_principal_creds_env_vars with all required variables"""
+        with patch.dict(
+            os.environ,
+            {
+                "AZURE_CLIENT_ID": "test_client_id",
+                "AZURE_TENANT_ID": "test_tenant_id",
+                "AZURE_CLIENT_SECRET": "test_client_secret",
+            },
+        ):
+            # Should not raise any exception
+            M365Provider.check_service_principal_creds_env_vars()
+
+    def test_check_certificate_creds_env_vars_missing_client_id(self):
+        """Test check_certificate_creds_env_vars with missing AZURE_CLIENT_ID"""
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(M365EnvironmentVariableError) as exception,
+        ):
+            M365Provider.check_certificate_creds_env_vars()
+
+        assert exception.type == M365EnvironmentVariableError
+        assert (
+            "Missing environment variable AZURE_CLIENT_ID required to authenticate."
+            in str(exception.value)
+        )
+
+    def test_check_certificate_creds_env_vars_missing_tenant_id(self):
+        """Test check_certificate_creds_env_vars with missing AZURE_TENANT_ID"""
+        with (
+            patch.dict(os.environ, {"AZURE_CLIENT_ID": "test_client_id"}, clear=True),
+            pytest.raises(M365EnvironmentVariableError) as exception,
+        ):
+            M365Provider.check_certificate_creds_env_vars()
+
+        assert exception.type == M365EnvironmentVariableError
+        assert (
+            "Missing environment variable AZURE_TENANT_ID required to authenticate."
+            in str(exception.value)
+        )
+
+    def test_check_certificate_creds_env_vars_missing_certificate_content(self):
+        """Test check_certificate_creds_env_vars with missing M365_CERTIFICATE_CONTENT"""
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "AZURE_CLIENT_ID": "test_client_id",
+                    "AZURE_TENANT_ID": "test_tenant_id",
+                },
+                clear=True,
+            ),
+            pytest.raises(M365EnvironmentVariableError) as exception,
+        ):
+            M365Provider.check_certificate_creds_env_vars()
+
+        assert exception.type == M365EnvironmentVariableError
+        assert (
+            "Missing environment variable M365_CERTIFICATE_CONTENT required to authenticate."
+            in str(exception.value)
+        )
+
+    def test_check_certificate_creds_env_vars_success(self):
+        """Test check_certificate_creds_env_vars with all required variables"""
+        with patch.dict(
+            os.environ,
+            {
+                "AZURE_CLIENT_ID": "test_client_id",
+                "AZURE_TENANT_ID": "test_tenant_id",
+                "M365_CERTIFICATE_CONTENT": base64.b64encode(
+                    b"fake_certificate"
+                ).decode("utf-8"),
+            },
+        ):
+            # Should not raise any exception
+            M365Provider.check_certificate_creds_env_vars()
+
+    def test_setup_powershell_env_auth_missing_credentials(self):
+        """Test setup_powershell with env_auth but missing environment variables"""
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(M365MissingEnvironmentCredentialsError) as exception,
+        ):
+            M365Provider.setup_powershell(
+                env_auth=True,
+                identity=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            )
+
+        assert exception.type == M365MissingEnvironmentCredentialsError
+        assert (
+            "Missing M365_USER or M365_PASSWORD environment variables required for credentials authentication."
+            in str(exception.value)
+        )
+
+    def test_setup_powershell_env_auth_success(self):
+        """Test setup_powershell with env_auth and valid environment variables"""
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "M365_USER": "test@example.com",
+                    "M365_PASSWORD": "password",
+                    "AZURE_CLIENT_ID": CLIENT_ID,
+                    "AZURE_CLIENT_SECRET": CLIENT_SECRET,
+                    "AZURE_TENANT_ID": TENANT_ID,
+                },
+            ),
+            patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.test_credentials",
+                return_value=True,
+            ),
+        ):
+            result = M365Provider.setup_powershell(
+                env_auth=True,
+                identity=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            )
+
+            assert result.user == "test@example.com"
+            assert result.passwd == "password"
+            assert result.client_id == CLIENT_ID
+
+    def test_setup_powershell_sp_env_auth_success(self):
+        """Test setup_powershell with sp_env_auth and valid environment variables"""
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "AZURE_CLIENT_ID": CLIENT_ID,
+                    "AZURE_CLIENT_SECRET": CLIENT_SECRET,
+                    "AZURE_TENANT_ID": TENANT_ID,
+                },
+            ),
+            patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.test_credentials",
+                return_value=True,
+            ),
+        ):
+            result = M365Provider.setup_powershell(
+                sp_env_auth=True,
+                identity=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="Service Principal",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            )
+
+            assert result.client_id == CLIENT_ID
+            assert result.client_secret == CLIENT_SECRET
+            assert result.tenant_id == TENANT_ID
+
+    def test_setup_powershell_certificate_auth_success(self):
+        """Test setup_powershell with certificate_auth and valid environment variables"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "AZURE_CLIENT_ID": CLIENT_ID,
+                    "AZURE_TENANT_ID": TENANT_ID,
+                    "M365_CERTIFICATE_CONTENT": certificate_content,
+                },
+            ),
+            patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.test_credentials",
+                return_value=True,
+            ),
+        ):
+            identity = M365IdentityInfo(
+                identity_id=IDENTITY_ID,
+                identity_type="Service Principal with Certificate",
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                tenant_domains=["test.onmicrosoft.com"],
+                location=LOCATION,
+            )
+
+            result = M365Provider.setup_powershell(
+                certificate_auth=True,
+                identity=identity,
+            )
+
+            assert result.client_id == CLIENT_ID
+            assert result.tenant_id == TENANT_ID
+            assert result.certificate_content == certificate_content
+            assert identity.identity_type == "Service Principal with Certificate"
+
+    def test_setup_powershell_invalid_credentials(self):
+        """Test setup_powershell with invalid credentials"""
+        credentials_dict = {
+            "user": "test@example.com",
+            "password": "test_password",
+            "client_id": "test_client_id",
+            "tenant_id": "test_tenant_id",
+            "client_secret": "test_client_secret",
+        }
+
+        with (
+            patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.test_credentials",
+                return_value=False,
+            ),
+            pytest.raises(M365UserCredentialsError) as exception,
+        ):
+            M365Provider.setup_powershell(
+                env_auth=False,
+                m365_credentials=credentials_dict,
+                identity=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            )
+
+        assert exception.type == M365UserCredentialsError
+        assert "The provided User credentials are not valid." in str(exception.value)
+
+    def test_validate_arguments_browser_auth_without_tenant_id(self):
+        """Test validate_arguments with browser_auth but missing tenant_id"""
+        with pytest.raises(M365BrowserAuthNoTenantIDError) as exception:
+            M365Provider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=False,
+                browser_auth=True,
+                certificate_auth=False,
+                tenant_id=None,
+                client_id=None,
+                client_secret=None,
+                user=None,
+                password=None,
+                certificate_content=None,
+            )
+
+        assert exception.type == M365BrowserAuthNoTenantIDError
+        assert (
+            "M365 Tenant ID (--tenant-id) is required for browser authentication mode"
+            in str(exception.value)
+        )
+
+    def test_validate_arguments_tenant_id_without_browser_flag(self):
+        """Test validate_arguments with tenant_id but without browser auth flag"""
+        with pytest.raises(M365BrowserAuthNoFlagError) as exception:
+            M365Provider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=False,
+                browser_auth=False,
+                certificate_auth=False,
+                tenant_id=TENANT_ID,
+                client_id=None,
+                client_secret=None,
+                user=None,
+                password=None,
+                certificate_content=None,
+            )
+
+        assert exception.type == M365BrowserAuthNoFlagError
+        assert "browser authentication flag (--browser-auth) not found" in str(
+            exception.value
+        )
+
+    def test_validate_arguments_missing_tenant_id_with_credentials(self):
+        """Test validate_arguments with client credentials but missing tenant_id"""
+        with pytest.raises(M365NotTenantIdButClientIdAndClientSecretError) as exception:
+            M365Provider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=False,
+                browser_auth=False,
+                certificate_auth=False,
+                tenant_id=None,
+                client_id=CLIENT_ID,
+                client_secret=CLIENT_SECRET,
+                user=None,
+                password=None,
+                certificate_content=None,
+            )
+
+        assert exception.type == M365NotTenantIdButClientIdAndClientSecretError
+        assert "Tenant Id is required for M365 static credentials" in str(
+            exception.value
+        )
+
+    def test_test_connection_certificate_auth(self):
+        """Test test_connection with certificate authentication"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch("prowler.providers.m365.m365_provider.M365Provider.setup_powershell"),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="Service Principal with Certificate",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    tenant_domains=["test.onmicrosoft.com"],
+                    location=LOCATION,
+                ),
+            ),
+        ):
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            test_connection = M365Provider.test_connection(
+                certificate_auth=True,
+                tenant_id=TENANT_ID,
+                client_id=CLIENT_ID,
+                certificate_content=certificate_content,
+                region="M365Global",
+                raise_on_exception=False,
+                provider_id="test.onmicrosoft.com",
+            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
+            assert test_connection.error is None
+
+    def test_test_connection_get_token_identity_error(self):
+        """Test test_connection when setup_identity returns None"""
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=None,
+            ),
+            pytest.raises(M365GetTokenIdentityError) as exception,
+        ):
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            M365Provider.test_connection(
+                az_cli_auth=True,
+                raise_on_exception=True,
+            )
+
+        assert exception.type == M365GetTokenIdentityError
+        assert "Failed to retrieve M365 identity" in str(exception.value)
+
+    def test_validate_static_credentials_client_id_secret_tenant_error(self):
+        """Test validate_static_credentials with client/secret/tenant mismatch errors"""
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.verify_client",
+                side_effect=M365NotValidTenantIdError(
+                    file="test", message="Invalid tenant"
+                ),
+            ),
+            pytest.raises(
+                M365ClientIdAndClientSecretNotBelongingToTenantIdError
+            ) as exception,
+        ):
+            M365Provider.validate_static_credentials(
+                tenant_id=str(uuid4()),
+                client_id=str(uuid4()),
+                client_secret="test_secret",
+                user="test@example.com",
+                password="test_password",
+            )
+
+        assert exception.type == M365ClientIdAndClientSecretNotBelongingToTenantIdError
+        assert (
+            "The provided Client ID and Client Secret do not belong to the specified Tenant ID."
+            in str(exception.value)
+        )
+
+    def test_validate_static_credentials_tenant_secret_client_error(self):
+        """Test validate_static_credentials with tenant/secret/client mismatch errors"""
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.verify_client",
+                side_effect=M365NotValidClientIdError(
+                    file="test", message="Invalid client ID"
+                ),
+            ),
+            pytest.raises(
+                M365TenantIdAndClientSecretNotBelongingToClientIdError
+            ) as exception,
+        ):
+            M365Provider.validate_static_credentials(
+                tenant_id=str(uuid4()),
+                client_id=str(uuid4()),
+                client_secret="test_secret",
+                user="test@example.com",
+                password="test_password",
+            )
+
+        assert exception.type == M365TenantIdAndClientSecretNotBelongingToClientIdError
+        assert (
+            "The provided Tenant ID and Client Secret do not belong to the specified Client ID."
+            in str(exception.value)
+        )
+
+    def test_validate_static_credentials_tenant_client_secret_error(self):
+        """Test validate_static_credentials with tenant/client/secret mismatch errors"""
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.verify_client",
+                side_effect=M365NotValidClientSecretError(
+                    file="test", message="Invalid client secret"
+                ),
+            ),
+            pytest.raises(
+                M365TenantIdAndClientIdNotBelongingToClientSecretError
+            ) as exception,
+        ):
+            M365Provider.validate_static_credentials(
+                tenant_id=str(uuid4()),
+                client_id=str(uuid4()),
+                client_secret="test_secret",
+                user="test@example.com",
+                password="test_password",
+            )
+
+        assert exception.type == M365TenantIdAndClientIdNotBelongingToClientSecretError
+        assert (
+            "The provided Tenant ID and Client ID do not belong to the specified Client Secret."
+            in str(exception.value)
+        )
+
+    def test_test_connection_default_azure_credential_error(self):
+        """Test test_connection with DefaultAzureCredential error in exception handling"""
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session",
+                side_effect=M365DefaultAzureCredentialError(
+                    file="test",
+                    original_exception=Exception("Default credential error"),
+                ),
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            pytest.raises(M365DefaultAzureCredentialError) as exception,
+        ):
+            M365Provider.test_connection(
+                az_cli_auth=True,
+                raise_on_exception=True,
+            )
+
+        assert exception.type == M365DefaultAzureCredentialError
+
+    def test_test_connection_credentials_unavailable_error_handling(self):
+        """Test test_connection with CredentialsUnavailableError in exception handling"""
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session",
+                side_effect=M365CredentialsUnavailableError(
+                    file="test", original_exception=Exception("Credentials unavailable")
+                ),
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_arguments"
+            ),
+            pytest.raises(M365CredentialsUnavailableError) as exception,
+        ):
+            M365Provider.test_connection(
+                sp_env_auth=True,
+                raise_on_exception=True,
+            )
+
+        assert exception.type == M365CredentialsUnavailableError
