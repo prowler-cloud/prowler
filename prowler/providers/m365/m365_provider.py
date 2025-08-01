@@ -1028,11 +1028,10 @@ class M365Provider(Provider):
                 client = GraphServiceClient(credentials=session)
 
                 domain_result = await client.domains.get()
-                if getattr(domain_result, "value"):
-                    if getattr(domain_result.value[0], "id"):
-                        identity.tenant_domain = domain_result.value[0].id
-                        for domain in domain_result.value:
-                            identity.tenant_domains.append(domain.id)
+                for domain in getattr(domain_result, "value", []):
+                    identity.tenant_domains.append(domain.id)
+                    if getattr(domain, "is_default", None):
+                        identity.tenant_domain = domain.id
 
             except HttpResponseError as error:
                 logger.error(

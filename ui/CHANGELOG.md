@@ -2,11 +2,24 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [v1.9.3] (Prowler v5.9.3)
+## [1.10.0] (Prowler v5.10.0 - UNRELEASED)
 
-### 🚀 Added
+### Added
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+- Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
+
+### 🔄 Changed
+
+- Rename `Memberships` to `Organization` in the sidebar [(#8415)](https://github.com/prowler-cloud/prowler/pull/8415)
+- Removed `Browse all resources` from the sidebar, sidebar now shows a single `Resources` entry [(#8418)](https://github.com/prowler-cloud/prowler/pull/8418)
+___
+
+## [v1.9.3] (Prowler v5.9.3)
+
+### 🐞 Fixed
+
+- Display error messages and allow editing last message in Lighthouse [(#8358)](https://github.com/prowler-cloud/prowler/pull/8358)
 
 ## [v1.9.0] (Prowler v5.9.0)
 

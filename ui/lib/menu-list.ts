@@ -8,7 +8,6 @@ import {
   Group,
   LayoutGrid,
   Mail,
-  Package,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -137,17 +136,9 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
-          href: "",
+          href: "/resources",
           label: "Resources",
           icon: Warehouse,
-          submenus: [
-            {
-              href: "/resources",
-              label: "Browse all resources",
-              icon: Package,
-            },
-          ],
-          defaultOpen: true,
         },
       ],
     },
@@ -174,7 +165,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       menus: [
         {
           href: "",
-          label: "Memberships",
+          label: "Organization",
           icon: Users,
           submenus: [
             { href: "/users", label: "Users", icon: User },

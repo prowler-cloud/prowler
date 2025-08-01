@@ -1950,6 +1950,16 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
+    def validate(self, attrs):
+        if Integration.objects.filter(
+            configuration=attrs.get("configuration")
+        ).exists():
+            raise serializers.ValidationError(
+                {"name": "This integration already exists."}
+            )
+
+        return super().validate(attrs)
+
     @staticmethod
     def validate_integration_data(
         integration_type: str,
@@ -1957,7 +1967,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
         configuration: dict,
         credentials: dict,
     ):
-        if integration_type == Integration.IntegrationChoices.S3:
+        if integration_type == Integration.IntegrationChoices.AMAZON_S3:
             config_serializer = S3ConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
             # TODO: This will be required for AWS Security Hub
@@ -1975,7 +1985,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 }
             )
 
-        config_serializer(data=configuration).is_valid(raise_exception=True)
+        serializer_instance = config_serializer(data=configuration)
+        serializer_instance.is_valid(raise_exception=True)
+
+        # Apply the validated (and potentially transformed) data back to configuration
+        configuration.update(serializer_instance.validated_data)
 
         for cred_serializer in credentials_serializers:
             try:
@@ -2059,6 +2073,7 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
+        super().validate(attrs)
         integration_type = attrs.get("integration_type")
         providers = attrs.get("providers")
         configuration = attrs.get("configuration")
@@ -2118,6 +2133,7 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
+        super().validate(attrs)
         integration_type = self.instance.integration_type
         providers = attrs.get("providers")
         configuration = attrs.get("configuration") or self.instance.configuration
