@@ -1,4 +1,5 @@
-import { Divider, Select, SelectItem } from "@nextui-org/react";
+import { Divider, Select, SelectItem, Switch } from "@nextui-org/react";
+import { useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
@@ -23,6 +24,8 @@ export const AWSRoleCredentialsForm = ({
   };
   type?: "providers" | "s3-integration";
 }) => {
+  const [showRoleSection, setShowRoleSection] = useState(type === "providers");
+
   const credentialsType = useWatch({
     control,
     name: ProviderCredentialFields.CREDENTIALS_TYPE,
@@ -111,81 +114,96 @@ export const AWSRoleCredentialsForm = ({
         </>
       )}
       <Divider className="" />
-      <span className="text-xs font-bold text-default-500">
-        {type === "providers"
-          ? "Assume Role"
-          : "Optionally, assume a role is possible"}
-      </span>
-      <CredentialsRoleHelper
-        externalId={externalId}
-        templateLinks={templateLinks}
-        type={type}
-      />
 
-      <Divider />
+      {type === "providers" ? (
+        <span className="text-xs font-bold text-default-500">Assume Role</span>
+      ) : (
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-default-500">
+            Optionally add a role
+          </span>
+          <Switch
+            size="sm"
+            isSelected={showRoleSection}
+            onValueChange={setShowRoleSection}
+          />
+        </div>
+      )}
 
-      <CustomInput
-        control={control}
-        name={ProviderCredentialFields.ROLE_ARN}
-        type="text"
-        label="Role ARN"
-        labelPlacement="inside"
-        placeholder="Enter the Role ARN"
-        variant="bordered"
-        isRequired={type === "providers"}
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
-        }
-      />
-      <CustomInput
-        control={control}
-        name={ProviderCredentialFields.EXTERNAL_ID}
-        type="text"
-        label="External ID"
-        labelPlacement="inside"
-        placeholder={externalId}
-        variant="bordered"
-        defaultValue={externalId}
-        isDisabled
-        isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.EXTERNAL_ID]
-        }
-      />
+      {showRoleSection && (
+        <>
+          <CredentialsRoleHelper
+            externalId={externalId}
+            templateLinks={templateLinks}
+            type={type}
+          />
 
-      <span className="text-xs text-default-500">Optional fields</span>
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <CustomInput
-          control={control}
-          name={ProviderCredentialFields.ROLE_SESSION_NAME}
-          type="text"
-          label="Role session name"
-          labelPlacement="inside"
-          placeholder="Enter the role session name"
-          variant="bordered"
-          isRequired={false}
-          isInvalid={
-            !!control._formState.errors[
-              ProviderCredentialFields.ROLE_SESSION_NAME
-            ]
-          }
-        />
-        <CustomInput
-          control={control}
-          name={ProviderCredentialFields.SESSION_DURATION}
-          type="number"
-          label="Session duration (seconds)"
-          labelPlacement="inside"
-          placeholder="Enter the session duration (default: 3600 seconds)"
-          variant="bordered"
-          isRequired={false}
-          isInvalid={
-            !!control._formState.errors[
-              ProviderCredentialFields.SESSION_DURATION
-            ]
-          }
-        />
-      </div>
+          <Divider />
+
+          <CustomInput
+            control={control}
+            name={ProviderCredentialFields.ROLE_ARN}
+            type="text"
+            label="Role ARN"
+            labelPlacement="inside"
+            placeholder="Enter the Role ARN"
+            variant="bordered"
+            isRequired={type === "providers"}
+            isInvalid={
+              !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
+            }
+          />
+          <CustomInput
+            control={control}
+            name={ProviderCredentialFields.EXTERNAL_ID}
+            type="text"
+            label="External ID"
+            labelPlacement="inside"
+            placeholder={externalId}
+            variant="bordered"
+            defaultValue={externalId}
+            isDisabled
+            isRequired
+            isInvalid={
+              !!control._formState.errors[ProviderCredentialFields.EXTERNAL_ID]
+            }
+          />
+
+          <span className="text-xs text-default-500">Optional fields</span>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <CustomInput
+              control={control}
+              name={ProviderCredentialFields.ROLE_SESSION_NAME}
+              type="text"
+              label="Role session name"
+              labelPlacement="inside"
+              placeholder="Enter the role session name"
+              variant="bordered"
+              isRequired={false}
+              isInvalid={
+                !!control._formState.errors[
+                  ProviderCredentialFields.ROLE_SESSION_NAME
+                ]
+              }
+            />
+            <CustomInput
+              control={control}
+              name={ProviderCredentialFields.SESSION_DURATION}
+              type="number"
+              label="Session duration (seconds)"
+              labelPlacement="inside"
+              placeholder="Enter the session duration (default: 3600 seconds)"
+              variant="bordered"
+              isRequired={false}
+              isInvalid={
+                !!control._formState.errors[
+                  ProviderCredentialFields.SESSION_DURATION
+                ]
+              }
+            />
+          </div>
+        </>
+      )}
     </>
   );
 };
