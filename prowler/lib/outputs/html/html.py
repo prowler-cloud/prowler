@@ -556,7 +556,6 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
-            # Handle different GitHub identity types
             if hasattr(provider.identity, "account_name"):
                 # GithubIdentityInfo (Personal Access Token, OAuth)
                 account_display = provider.identity.account_name
