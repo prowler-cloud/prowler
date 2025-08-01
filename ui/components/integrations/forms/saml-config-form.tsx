@@ -13,6 +13,96 @@ import { SnippetChip } from "@/components/ui/entities";
 import { FormButtons } from "@/components/ui/form";
 import { apiBaseUrl } from "@/lib";
 
+const validateXMLContent = (
+  xmlContent: string,
+): { isValid: boolean; error?: string } => {
+  try {
+    // Basic checks
+    if (!xmlContent || !xmlContent.trim()) {
+      return {
+        isValid: false,
+        error: "XML content is empty.",
+      };
+    }
+
+    const trimmedContent = xmlContent.trim();
+
+    // Check if it starts and ends with XML tags
+    if (!trimmedContent.startsWith("<") || !trimmedContent.endsWith(">")) {
+      return {
+        isValid: false,
+        error: "Content does not appear to be valid XML format.",
+      };
+    }
+
+    // Use DOMParser to validate XML structure
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+
+    // Check for parser errors
+    const parserError = xmlDoc.querySelector("parsererror");
+    if (parserError) {
+      const errorText = parserError.textContent || "Unknown XML parsing error";
+      return {
+        isValid: false,
+        error: `XML parsing error: ${errorText.substring(0, 100)}...`,
+      };
+    }
+
+    // Check if the document has a root element
+    if (!xmlDoc.documentElement) {
+      return {
+        isValid: false,
+        error: "XML does not have a valid root element.",
+      };
+    }
+
+    // Optional: Check for basic SAML metadata structure
+    const rootElement = xmlDoc.documentElement;
+    const rootTagName = rootElement.tagName.toLowerCase();
+
+    // Check if it looks like SAML metadata (common root elements)
+    const samlRootElements = [
+      "entitydescriptor",
+      "entitiesDescriptor",
+      "metadata",
+      "md:entitydescriptor",
+      "md:entitiesdescriptor",
+    ];
+
+    const isSamlMetadata = samlRootElements.some((element) =>
+      rootTagName.includes(element.toLowerCase()),
+    );
+
+    if (!isSamlMetadata) {
+      // Check for common SAML namespace attributes
+      const xmlString = xmlContent.toLowerCase();
+      const hasSamlNamespace =
+        xmlString.includes("saml") ||
+        xmlString.includes("urn:oasis:names:tc:saml") ||
+        xmlString.includes("metadata");
+
+      if (!hasSamlNamespace) {
+        return {
+          isValid: false,
+          error:
+            "The XML file does not appear to be SAML metadata. Please ensure you're uploading the correct SAML metadata file from your Identity Provider.",
+        };
+      }
+    }
+
+    return { isValid: true };
+  } catch (error) {
+    return {
+      isValid: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to validate XML content.",
+    };
+  }
+};
+
 export const SamlConfigForm = ({
   setIsOpen,
   samlConfig,
@@ -109,12 +199,13 @@ export const SamlConfigForm = ({
     reader.onload = (e) => {
       const content = e.target?.result as string;
 
-      // Basic XML validation
-      if (!content.trim().startsWith("<") || !content.includes("</")) {
+      // Comprehensive XML validation
+      const xmlValidationResult = validateXMLContent(content);
+      if (!xmlValidationResult.isValid) {
         toast({
           variant: "destructive",
           title: "Invalid XML content",
-          description: "The file does not contain valid XML content.",
+          description: xmlValidationResult.error,
         });
         // Clear the file input
         event.target.value = "";
