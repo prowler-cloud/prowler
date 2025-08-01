@@ -1,15 +1,21 @@
 import json
 import logging
 import re
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
+from allauth.socialaccount.models import SocialApp
 from config.custom_logging import BackendLogger
+from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
@@ -21,12 +27,14 @@ from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
 
+from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
     FindingDeltaEnumField,
     IntegrationTypeEnumField,
     InvitationStateEnumField,
     MemberRoleEnumField,
+    ProcessorTypeEnumField,
     ProviderEnumField,
     ProviderSecretTypeEnumField,
     ScanTriggerEnumField,
@@ -197,6 +205,7 @@ class Provider(RowLevelSecurityProtectedModel):
         GCP = "gcp", _("GCP")
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
+        GITHUB = "github", _("GitHub")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -254,6 +263,16 @@ class Provider(RowLevelSecurityProtectedModel):
                 "starting and ending with a lowercase letter or number, containing only "
                 "lowercase alphanumeric characters and hyphens) or a valid AWS EKS Cluster ARN, GCP GKE Context Name or Azure AKS Cluster Name.",
                 code="kubernetes-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_github_uid(value):
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$", value):
+            raise ModelValidationError(
+                detail="GitHub provider ID must be a valid GitHub username or organization name (1-39 characters, "
+                "starting with alphanumeric, containing only alphanumeric characters and hyphens).",
+                code="github-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -402,20 +421,6 @@ class Scan(RowLevelSecurityProtectedModel):
     name = models.CharField(
         blank=True, null=True, max_length=100, validators=[MinLengthValidator(3)]
     )
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.CASCADE,
-        related_name="scans",
-        related_query_name="scan",
-    )
-    task = models.ForeignKey(
-        Task,
-        on_delete=models.CASCADE,
-        related_name="scans",
-        related_query_name="scan",
-        null=True,
-        blank=True,
-    )
     trigger = ScanTriggerEnumField(
         choices=TriggerChoices.choices,
     )
@@ -433,9 +438,29 @@ class Scan(RowLevelSecurityProtectedModel):
     scheduler_task = models.ForeignKey(
         PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True
     )
-    output_location = models.CharField(blank=True, null=True, max_length=200)
-
-    # TODO: mutelist foreign key
+    output_location = models.CharField(blank=True, null=True, max_length=4096)
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+    )
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
+    )
+    processor = models.ForeignKey(
+        "Processor",
+        on_delete=models.SET_NULL,
+        related_name="scans",
+        related_query_name="scan",
+        null=True,
+        blank=True,
+    )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "scans"
@@ -461,6 +486,13 @@ class Scan(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "provider_id", "state", "-inserted_at"],
                 condition=Q(state=StateChoices.COMPLETED),
                 name="scans_prov_state_ins_desc_idx",
+            ),
+            # TODO This might replace `scans_prov_state_ins_desc_idx` completely. Review usage
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                condition=Q(state=StateChoices.COMPLETED),
+                include=["id"],
+                name="scans_prov_ins_desc_idx",
             ),
         ]
 
@@ -547,6 +579,8 @@ class Resource(RowLevelSecurityProtectedModel):
     details = models.TextField(blank=True, null=True)
     partition = models.TextField(blank=True, null=True)
 
+    failed_findings_count = models.IntegerField(default=0)
+
     # Relationships
     tags = models.ManyToManyField(
         ResourceTag,
@@ -592,6 +626,10 @@ class Resource(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider_id"],
                 name="resources_tenant_provider_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "-failed_findings_count", "id"],
+                name="resources_failed_findings_idx",
             ),
         ]
 
@@ -691,6 +729,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     check_id = models.CharField(max_length=100, blank=False, null=False)
     check_metadata = models.JSONField(default=dict, null=False)
     muted = models.BooleanField(default=False, null=False)
+    muted_reason = models.TextField(
+        blank=True, null=True, validators=[MinLengthValidator(3)], max_length=500
+    )
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Denormalize resource data for performance
@@ -832,6 +873,16 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
         #   - tenant_id
         #   - id
 
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "finding_id"],
+                name="rfm_tenant_finding_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "resource_id"],
+                name="rfm_tenant_resource_idx",
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "resource_id", "finding_id"),
@@ -935,6 +986,11 @@ class Invitation(RowLevelSecurityProtectedModel):
         related_query_name="invitation",
         null=True,
     )
+
+    def save(self, *args, **kwargs):
+        if self.email:
+            self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "invitations"
@@ -1290,7 +1346,7 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
-        S3 = "amazon_s3", _("Amazon S3")
+        AMAZON_S3 = "amazon_s3", _("Amazon S3")
         AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
         JIRA = "jira", _("JIRA")
         SLACK = "slack", _("Slack")
@@ -1316,6 +1372,10 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
+            models.UniqueConstraint(
+                fields=("configuration", "tenant"),
+                name="unique_configuration_per_tenant",
+            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
@@ -1364,242 +1424,271 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
         ]
 
 
-# class SAMLToken(models.Model):
-#     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-#     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
-#     updated_at = models.DateTimeField(auto_now=True, editable=False)
-#     expires_at = models.DateTimeField(editable=False)
-#     token = models.JSONField(unique=True)
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+class SAMLToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    expires_at = models.DateTimeField(editable=False)
+    token = models.JSONField(unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-#     class Meta:
-#         db_table = "saml_tokens"
+    class Meta:
+        db_table = "saml_tokens"
 
-#     def save(self, *args, **kwargs):
-#         if not self.expires_at:
-#             self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
-#         super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+        super().save(*args, **kwargs)
 
-#     def is_expired(self) -> bool:
-#         return datetime.now(timezone.utc) >= self.expires_at
-
-
-# class SAMLDomainIndex(models.Model):
-#     """
-#     Public index of SAML domains. No RLS. Used for fast lookup in SAML login flow.
-#     """
-
-#     email_domain = models.CharField(max_length=254, unique=True)
-#     tenant = models.ForeignKey("Tenant", on_delete=models.CASCADE)
-
-#     class Meta:
-#         db_table = "saml_domain_index"
-
-#         constraints = [
-#             models.UniqueConstraint(
-#                 fields=("email_domain", "tenant"),
-#                 name="unique_resources_by_email_domain",
-#             ),
-#             BaseSecurityConstraint(
-#                 name="statements_on_%(class)s",
-#                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-#             ),
-#         ]
+    def is_expired(self) -> bool:
+        return datetime.now(timezone.utc) >= self.expires_at
 
 
-# class SAMLConfiguration(RowLevelSecurityProtectedModel):
-#     """
-#     Stores per-tenant SAML settings, including email domain and IdP metadata.
-#     Automatically syncs to a SocialApp instance on save.
+class SAMLDomainIndex(models.Model):
+    """
+    Public index of SAML domains. No RLS. Used for fast lookup in SAML login flow.
+    """
 
-#     Note:
-#     This model exists to provide a tenant-aware abstraction over SAML configuration.
-#     It supports row-level security, custom validation, and metadata parsing, enabling
-#     Prowler to expose a clean API and admin interface for managing SAML integrations.
+    email_domain = models.CharField(max_length=254, unique=True)
+    tenant = models.ForeignKey("Tenant", on_delete=models.CASCADE)
 
-#     Although Django Allauth uses the SocialApp model to store provider configuration,
-#     it is not designed for multi-tenant use. SocialApp lacks support for tenant scoping,
-#     email domain mapping, and structured metadata handling.
+    class Meta:
+        db_table = "saml_domain_index"
 
-#     By managing SAMLConfiguration separately, we ensure:
-#         - Strong isolation between tenants via RLS.
-#         - Ownership of raw IdP metadata and its validation.
-#         - An explicit link between SAML config and business-level identifiers (e.g. email domain).
-#         - Programmatic transformation into the SocialApp format used by Allauth.
+        constraints = [
+            models.UniqueConstraint(
+                fields=("email_domain", "tenant"),
+                name="unique_resources_by_email_domain",
+            ),
+            BaseSecurityConstraint(
+                name="statements_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
 
-#     In short, this model acts as a secure and user-friendly layer over Allauth's lower-level primitives.
-#     """
 
-#     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-#     email_domain = models.CharField(
-#         max_length=254,
-#         unique=True,
-#         help_text="Email domain used to identify the tenant, e.g. prowlerdemo.com",
-#     )
-#     metadata_xml = models.TextField(
-#         help_text="Raw IdP metadata XML to configure SingleSignOnService, certificates, etc."
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+class SAMLConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Stores per-tenant SAML settings, including email domain and IdP metadata.
+    Automatically syncs to a SocialApp instance on save.
 
-#     class JSONAPIMeta:
-#         resource_name = "saml-configurations"
+    Note:
+    This model exists to provide a tenant-aware abstraction over SAML configuration.
+    It supports row-level security, custom validation, and metadata parsing, enabling
+    Prowler to expose a clean API and admin interface for managing SAML integrations.
 
-#     class Meta:
-#         db_table = "saml_configurations"
+    Although Django Allauth uses the SocialApp model to store provider configuration,
+    it is not designed for multi-tenant use. SocialApp lacks support for tenant scoping,
+    email domain mapping, and structured metadata handling.
 
-#         constraints = [
-#             RowLevelSecurityConstraint(
-#                 field="tenant_id",
-#                 name="rls_on_%(class)s",
-#                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-#             ),
-#             # 1 config per tenant
-#             models.UniqueConstraint(
-#                 fields=["tenant"],
-#                 name="unique_samlconfig_per_tenant",
-#             ),
-#         ]
+    By managing SAMLConfiguration separately, we ensure:
+        - Strong isolation between tenants via RLS.
+        - Ownership of raw IdP metadata and its validation.
+        - An explicit link between SAML config and business-level identifiers (e.g. email domain).
+        - Programmatic transformation into the SocialApp format used by Allauth.
 
-#     def clean(self, old_email_domain=None):
-#         # Domain must not contain @
-#         if "@" in self.email_domain:
-#             raise ValidationError({"email_domain": "Domain must not contain @"})
+    In short, this model acts as a secure and user-friendly layer over Allauth's lower-level primitives.
+    """
 
-#         # Enforce at most one config per tenant
-#         qs = SAMLConfiguration.objects.filter(tenant=self.tenant)
-#         # Exclude ourselves in case of update
-#         if self.pk:
-#             qs = qs.exclude(pk=self.pk)
-#         if qs.exists():
-#             raise ValidationError(
-#                 {"tenant": "A SAML configuration already exists for this tenant."}
-#             )
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    email_domain = models.CharField(
+        max_length=254,
+        unique=True,
+        help_text="Email domain used to identify the tenant, e.g. prowlerdemo.com",
+    )
+    metadata_xml = models.TextField(
+        help_text="Raw IdP metadata XML to configure SingleSignOnService, certificates, etc."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-#         # The email domain must be unique in the entire system
-#         qs = SAMLConfiguration.objects.using(MainRouter.admin_db).filter(
-#             email_domain__iexact=self.email_domain
-#         )
-#         if qs.exists() and old_email_domain != self.email_domain:
-#             raise ValidationError(
-#                 {"tenant": "There is a problem with your email domain."}
-#             )
+    class JSONAPIMeta:
+        resource_name = "saml-configurations"
 
-#     def save(self, *args, **kwargs):
-#         self.email_domain = self.email_domain.strip().lower()
-#         is_create = not SAMLConfiguration.objects.filter(pk=self.pk).exists()
+    class Meta:
+        db_table = "saml_configurations"
 
-#         if not is_create:
-#             old = SAMLConfiguration.objects.get(pk=self.pk)
-#             old_email_domain = old.email_domain
-#             old_metadata_xml = old.metadata_xml
-#         else:
-#             old_email_domain = None
-#             old_metadata_xml = None
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            # 1 config per tenant
+            models.UniqueConstraint(
+                fields=["tenant"],
+                name="unique_samlconfig_per_tenant",
+            ),
+        ]
 
-#         self.clean(old_email_domain)
-#         super().save(*args, **kwargs)
+    def clean(self, old_email_domain=None, is_create=False):
+        # Domain must not contain @
+        if "@" in self.email_domain:
+            raise ValidationError({"email_domain": "Domain must not contain @"})
 
-#         if is_create or (
-#             old_email_domain != self.email_domain
-#             or old_metadata_xml != self.metadata_xml
-#         ):
-#             self._sync_social_app(old_email_domain)
+        # Enforce at most one config per tenant
+        qs = SAMLConfiguration.objects.filter(tenant=self.tenant)
+        # Exclude ourselves in case of update
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                {"tenant": "A SAML configuration already exists for this tenant."}
+            )
 
-#         # Sync the public index
-#         if not is_create and old_email_domain and old_email_domain != self.email_domain:
-#             SAMLDomainIndex.objects.filter(email_domain=old_email_domain).delete()
+        # The email domain must be unique in the entire system
+        qs = SAMLConfiguration.objects.using(MainRouter.admin_db).filter(
+            email_domain__iexact=self.email_domain
+        )
+        if qs.exists() and old_email_domain != self.email_domain:
+            raise ValidationError(
+                {"tenant": "There is a problem with your email domain."}
+            )
 
-#         # Create/update the new domain index
-#         SAMLDomainIndex.objects.update_or_create(
-#             email_domain=self.email_domain, defaults={"tenant": self.tenant}
-#         )
+        # The entityID must be unique in the system
+        idp_settings = self._parsed_metadata
+        entity_id = idp_settings.get("entity_id")
 
-#     def _parse_metadata(self):
-#         """
-#         Parse the raw IdP metadata XML and extract:
-#             - entity_id
-#             - sso_url
-#             - slo_url (may be None)
-#             - x509cert (required)
-#         """
-#         ns = {
-#             "md": "urn:oasis:names:tc:SAML:2.0:metadata",
-#             "ds": "http://www.w3.org/2000/09/xmldsig#",
-#         }
-#         try:
-#             root = ET.fromstring(self.metadata_xml)
-#         except ET.ParseError as e:
-#             raise ValidationError({"metadata_xml": f"Invalid XML: {e}"})
+        if entity_id:
+            # Find any SocialApp with this entityID
+            q = SocialApp.objects.filter(provider="saml", provider_id=entity_id)
 
-#         # Entity ID
-#         entity_id = root.attrib.get("entityID")
+            # If updating, exclude our own SocialApp from the check
+            if not is_create:
+                q = q.exclude(client_id=old_email_domain)
+            else:
+                q = q.exclude(client_id=self.email_domain)
 
-#         # SSO endpoint (must exist)
-#         sso = root.find(".//md:IDPSSODescriptor/md:SingleSignOnService", ns)
-#         if sso is None or "Location" not in sso.attrib:
-#             raise ValidationError(
-#                 {"metadata_xml": "Missing SingleSignOnService in metadata."}
-#             )
-#         sso_url = sso.attrib["Location"]
+            if q.exists():
+                raise ValidationError(
+                    {"metadata_xml": "There is a problem with your metadata."}
+                )
 
-#         # SLO endpoint (optional)
-#         slo = root.find(".//md:IDPSSODescriptor/md:SingleLogoutService", ns)
-#         slo_url = slo.attrib.get("Location") if slo is not None else None
+    def save(self, *args, **kwargs):
+        self.email_domain = self.email_domain.strip().lower()
+        is_create = not SAMLConfiguration.objects.filter(pk=self.pk).exists()
 
-#         # X.509 certificate (required)
-#         cert = root.find(
-#             './/md:KeyDescriptor[@use="signing"]/ds:KeyInfo/ds:X509Data/ds:X509Certificate',
-#             ns,
-#         )
-#         if cert is None or not cert.text or not cert.text.strip():
-#             raise ValidationError(
-#                 {
-#                     "metadata_xml": 'Metadata must include a <ds:X509Certificate> under <KeyDescriptor use="signing">.'
-#                 }
-#             )
-#         x509cert = cert.text.strip()
+        if not is_create:
+            old = SAMLConfiguration.objects.get(pk=self.pk)
+            old_email_domain = old.email_domain
+            old_metadata_xml = old.metadata_xml
+        else:
+            old_email_domain = None
+            old_metadata_xml = None
 
-#         return {
-#             "entity_id": entity_id,
-#             "sso_url": sso_url,
-#             "slo_url": slo_url,
-#             "x509cert": x509cert,
-#         }
+        self._parsed_metadata = self._parse_metadata()
+        self.clean(old_email_domain, is_create)
+        super().save(*args, **kwargs)
 
-#     def _sync_social_app(self, previous_email_domain=None):
-#         """
-#         Create or update the corresponding SocialApp based on email_domain.
-#         If the domain changed, update the matching SocialApp.
-#         """
-#         idp_settings = self._parse_metadata()
-#         settings_dict = SOCIALACCOUNT_PROVIDERS["saml"].copy()
-#         settings_dict["idp"] = idp_settings
+        if is_create or (
+            old_email_domain != self.email_domain
+            or old_metadata_xml != self.metadata_xml
+        ):
+            self._sync_social_app(old_email_domain)
 
-#         current_site = Site.objects.get(id=settings.SITE_ID)
+        # Sync the public index
+        if not is_create and old_email_domain and old_email_domain != self.email_domain:
+            SAMLDomainIndex.objects.filter(email_domain=old_email_domain).delete()
 
-#         social_app_qs = SocialApp.objects.filter(
-#             provider="saml", client_id=previous_email_domain or self.email_domain
-#         )
+        # Create/update the new domain index
+        SAMLDomainIndex.objects.update_or_create(
+            email_domain=self.email_domain, defaults={"tenant": self.tenant}
+        )
 
-#         client_id = self.email_domain[:191]
-#         name = f"SAML-{self.email_domain}"[:40]
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
 
-#         if social_app_qs.exists():
-#             social_app = social_app_qs.first()
-#             social_app.client_id = client_id
-#             social_app.name = name
-#             social_app.settings = settings_dict
-#             social_app.save()
-#             social_app.sites.set([current_site])
-#         else:
-#             social_app = SocialApp.objects.create(
-#                 provider="saml",
-#                 client_id=client_id,
-#                 name=name,
-#                 settings=settings_dict,
-#             )
-#             social_app.sites.set([current_site])
+        SocialApp.objects.filter(provider="saml", client_id=self.email_domain).delete()
+        SAMLDomainIndex.objects.filter(email_domain=self.email_domain).delete()
+
+    def _parse_metadata(self):
+        """
+        Parse the raw IdP metadata XML and extract:
+            - entity_id
+            - sso_url
+            - slo_url (may be None)
+            - x509cert (required)
+        """
+        ns = {
+            "md": "urn:oasis:names:tc:SAML:2.0:metadata",
+            "ds": "http://www.w3.org/2000/09/xmldsig#",
+        }
+        try:
+            root = ET.fromstring(self.metadata_xml)
+        except ET.ParseError as e:
+            raise ValidationError({"metadata_xml": f"Invalid XML: {e}"})
+
+        # Entity ID
+        entity_id = root.attrib.get("entityID")
+        if not entity_id:
+            raise ValidationError({"metadata_xml": "Missing entityID in metadata."})
+
+        # SSO endpoint (must exist)
+        sso = root.find(".//md:IDPSSODescriptor/md:SingleSignOnService", ns)
+        if sso is None or "Location" not in sso.attrib:
+            raise ValidationError(
+                {"metadata_xml": "Missing SingleSignOnService in metadata."}
+            )
+        sso_url = sso.attrib["Location"]
+
+        # SLO endpoint (optional)
+        slo = root.find(".//md:IDPSSODescriptor/md:SingleLogoutService", ns)
+        slo_url = slo.attrib.get("Location") if slo is not None else None
+
+        # X.509 certificate (required)
+        cert = root.find(
+            './/md:KeyDescriptor[@use="signing"]/ds:KeyInfo/ds:X509Data/ds:X509Certificate',
+            ns,
+        )
+        if cert is None or not cert.text or not cert.text.strip():
+            raise ValidationError(
+                {
+                    "metadata_xml": 'Metadata must include a <ds:X509Certificate> under <KeyDescriptor use="signing">.'
+                }
+            )
+        x509cert = cert.text.strip()
+
+        return {
+            "entity_id": entity_id,
+            "sso_url": sso_url,
+            "slo_url": slo_url,
+            "x509cert": x509cert,
+        }
+
+    def _sync_social_app(self, previous_email_domain=None):
+        """
+        Create or update the corresponding SocialApp based on email_domain.
+        If the domain changed, update the matching SocialApp.
+        """
+        settings_dict = SOCIALACCOUNT_PROVIDERS["saml"].copy()
+        settings_dict["idp"] = self._parsed_metadata
+
+        current_site = Site.objects.get(id=settings.SITE_ID)
+
+        social_app_qs = SocialApp.objects.filter(
+            provider="saml", client_id=previous_email_domain or self.email_domain
+        )
+
+        client_id = self.email_domain[:191]
+        name = f"SAML-{self.email_domain}"[:40]
+
+        if social_app_qs.exists():
+            social_app = social_app_qs.first()
+            social_app.client_id = client_id
+            social_app.name = name
+            social_app.settings = settings_dict
+            social_app.provider_id = self._parsed_metadata["entity_id"]
+            social_app.save()
+            social_app.sites.set([current_site])
+        else:
+            social_app = SocialApp.objects.create(
+                provider="saml",
+                client_id=client_id,
+                name=name,
+                settings=settings_dict,
+                provider_id=self._parsed_metadata["entity_id"],
+            )
+            social_app.sites.set([current_site])
 
 
 class ResourceScanSummary(RowLevelSecurityProtectedModel):
@@ -1776,3 +1865,42 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "lighthouse-configurations"
+
+
+class Processor(RowLevelSecurityProtectedModel):
+    class ProcessorChoices(models.TextChoices):
+        MUTELIST = "mutelist", _("Mutelist")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    processor_type = ProcessorTypeEnumField(choices=ProcessorChoices.choices)
+    configuration = models.JSONField(default=dict)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "processors"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "processor_type"),
+                name="unique_processor_types_tenant",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "id"],
+                name="processor_tenant_id_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "processor_type"],
+                name="processor_tenant_type_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "processors"

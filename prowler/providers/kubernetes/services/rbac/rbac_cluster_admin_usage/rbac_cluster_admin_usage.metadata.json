@@ -3,7 +3,7 @@
   "CheckID": "rbac_cluster_admin_usage",
   "CheckTitle": "Ensure that the cluster-admin role is only used where required",
   "CheckType": [],
-  "ServiceName": "RBAC",
+  "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

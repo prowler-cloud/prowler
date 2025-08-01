@@ -43,9 +43,9 @@ class Test_entra_users_mfa_capable:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "User Test User is not MFA capable."
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Users"
-            assert result[0].resource_id == "users"
+            assert result[0].resource == entra_client.users[user_id]
+            assert result[0].resource_name == "Test User"
+            assert result[0].resource_id == user_id
 
     def test_user_mfa_capable(self):
         """User is MFA capable: expected PASS."""
@@ -84,9 +84,9 @@ class Test_entra_users_mfa_capable:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "User Test User is MFA capable."
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Users"
-            assert result[0].resource_id == "users"
+            assert result[0].resource == entra_client.users[user_id]
+            assert result[0].resource_name == "Test User"
+            assert result[0].resource_id == user_id
 
     def test_multiple_users(self):
         """Multiple users with different MFA capabilities: expected mixed results."""
@@ -134,6 +134,12 @@ class Test_entra_users_mfa_capable:
             # First user (MFA capable)
             assert result[0].status == "PASS"
             assert result[0].status_extended == "User Test User 1 is MFA capable."
+            assert result[0].resource == entra_client.users[user1_id]
+            assert result[0].resource_name == "Test User 1"
+            assert result[0].resource_id == user1_id
             # Second user (not MFA capable)
             assert result[1].status == "FAIL"
             assert result[1].status_extended == "User Test User 2 is not MFA capable."
+            assert result[1].resource == entra_client.users[user2_id]
+            assert result[1].resource_name == "Test User 2"
+            assert result[1].resource_id == user2_id

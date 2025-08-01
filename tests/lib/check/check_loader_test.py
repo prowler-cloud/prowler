@@ -14,6 +14,11 @@ S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_CUSTOM_ALIAS = (
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY = "medium"
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_SERVICE = "s3"
 
+IAM_USER_NO_MFA_NAME = "iam_user_no_mfa"
+IAM_USER_NO_MFA_NAME_CUSTOM_ALIAS = "iam_user_no_mfa"
+IAM_USER_NO_MFA_NAME_SERVICE = "iam"
+IAM_USER_NO_MFA_SEVERITY = "high"
+
 CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME = "cloudtrail_threat_detection_enumeration"
 
 
@@ -48,6 +53,40 @@ class TestCheckLoader:
                 ),
             ),
             Categories=["internet-exposed"],
+            DependsOn=[],
+            RelatedTo=[],
+            Notes="",
+            Compliance=[],
+        )
+
+    def get_custom_check_iam_metadata(self):
+        return CheckMetadata(
+            Provider="aws",
+            CheckID=IAM_USER_NO_MFA_NAME,
+            CheckTitle="Check IAM User No MFA.",
+            CheckType=["Data Protection"],
+            CheckAliases=[IAM_USER_NO_MFA_NAME_CUSTOM_ALIAS],
+            ServiceName=IAM_USER_NO_MFA_NAME_SERVICE,
+            SubServiceName="",
+            ResourceIdTemplate="arn:partition:iam::account-id:user/user_name",
+            Severity=IAM_USER_NO_MFA_SEVERITY,
+            ResourceType="AwsIamUser",
+            Description="Check IAM User No MFA.",
+            Risk="IAM users should have Multi-Factor Authentication (MFA) enabled.",
+            RelatedUrl="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+            Remediation=Remediation(
+                Code=Code(
+                    NativeIaC="",
+                    Terraform="https://docs.prowler.com/checks/aws/iam-policies/bc_aws_iam_20#terraform",
+                    CLI="aws iam create-virtual-mfa-device --user-name <USER_NAME> --serial-number <SERIAL_NUMBER>",
+                    Other="https://github.com/cloudmatos/matos/tree/master/remediations/aws/iam/iam/enable-mfa",
+                ),
+                Recommendation=Recommendation(
+                    Text="You can enable MFA for your IAM user to prevent unauthorized access to your AWS account.",
+                    Url="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+                ),
+            ),
+            Categories=[],
             DependsOn=[],
             RelatedTo=[],
             Notes="",
@@ -124,6 +163,24 @@ class TestCheckLoader:
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
 
         assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
+            service_list=service_list,
+            severities=severities,
+            provider=self.provider,
+        )
+
+    def test_load_checks_to_execute_with_severities_and_services_multiple(self):
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            IAM_USER_NO_MFA_NAME: self.get_custom_check_iam_metadata(),
+        }
+        service_list = ["s3", "iam"]
+        severities = ["medium", "high"]
+
+        assert {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+            IAM_USER_NO_MFA_NAME,
+        } == load_checks_to_execute(
             bulk_checks_metadata=bulk_checks_metatada,
             service_list=service_list,
             severities=severities,

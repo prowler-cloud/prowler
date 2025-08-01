@@ -430,6 +430,10 @@ azure:
   # TODO: create common config
   shodan_api_key: null
 
+  # Configurable minimal risk level for attack path notifications
+  # azure.defender_attack_path_notifications_properly_configured
+  defender_attack_path_minimal_risk_level: "High"
+
   # Azure App Service
   # azure.app_ensure_php_version_is_latest
   php_latest_version: "8.2"
@@ -446,6 +450,15 @@ azure:
       "1.3",
     ]
 
+  # Azure Virtual Machines
+  # azure.vm_desired_sku_size
+  # List of desired VM SKU sizes that are allowed in the organization
+  desired_vm_sku_sizes:
+    [
+      "Standard_A8_v2",
+      "Standard_DS3_v2",
+      "Standard_D4s_v3",
+    ]
   # Azure VM Backup Configuration
   # azure.vm_sufficient_daily_backup_retention_period
   vm_backup_min_daily_retention_days: 7

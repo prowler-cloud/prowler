@@ -1,13 +1,13 @@
 "use client";
 
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
-import { Link } from "@nextui-org/react";
 import { CheckIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 
 import { SamlConfigForm } from "./forms";
 
@@ -73,14 +73,9 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
               ) : (
                 <>
                   Configure SAML Single Sign-On for secure authentication.{" "}
-                  <Link
-                    target="_blank"
-                    href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium text-primary"
-                  >
+                  <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso">
                     Read the docs
-                  </Link>
+                  </CustomLink>
                 </>
               )}
             </p>

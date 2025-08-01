@@ -86,6 +86,12 @@ class TestAzureProvider:
                 "java_latest_version": "17",
                 "recommended_minimal_tls_versions": ["1.2", "1.3"],
                 "vm_backup_min_daily_retention_days": 7,
+                "desired_vm_sku_sizes": [
+                    "Standard_A8_v2",
+                    "Standard_DS3_v2",
+                    "Standard_D4s_v3",
+                ],
+                "defender_attack_path_minimal_risk_level": "High",
             }
 
     def test_azure_provider_not_auth_methods(self):

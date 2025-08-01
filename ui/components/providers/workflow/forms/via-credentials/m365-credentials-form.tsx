@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Control } from "react-hook-form";
 
 import { InfoIcon } from "@/components/icons";
 import { CustomInput } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { M365Credentials } from "@/types";
 
 export const M365CredentialsForm = ({
@@ -57,14 +57,12 @@ export const M365CredentialsForm = ({
         {" "}
         User and password authentication is being deprecated due to
         Microsoft&apos;s on-going MFA enforcement across all tenants (see{" "}
-        <Link
+        <CustomLink
           href="https://azure.microsoft.com/en-us/blog/announcing-mandatory-multi-factor-authentication-for-azure-sign-in/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
+          size="sm"
         >
           Microsoft docs
-        </Link>
+        </CustomLink>
         ).
       </p>
 
@@ -76,14 +74,12 @@ export const M365CredentialsForm = ({
       </div>
       <p className="text-sm text-default-500">
         Due to that change, you must only{" "}
-        <Link
+        <CustomLink
           href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365/#step-3-configure-your-m365-account"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
+          size="sm"
         >
           use application authentication
-        </Link>{" "}
+        </CustomLink>{" "}
         to maintain all Prowler M365 scan capabilities.
       </p>
       <CustomInput
