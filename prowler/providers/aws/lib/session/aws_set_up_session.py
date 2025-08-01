@@ -146,7 +146,9 @@ class AwsSetUpSession:
 
             # Store a new current session using the assumed IAM Role
             self._session.current_session = AwsProvider.setup_assumed_session(
-                self._identity, assumed_role_configuration.credentials
+                self._identity,
+                self._assumed_role_configuration,
+                self._session,
             )
             logger.info("Audit session is the new session created assuming an IAM Role")
 
