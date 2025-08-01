@@ -1,4 +1,4 @@
-# AWS Organizations in Prow
+# AWS Organizations in Prowler
 
 Prowler can integrate with AWS Organizations to allow you to manage the visibility and onboarding of accounts centrally.
 
