@@ -69,6 +69,9 @@ IGNORED_EXCEPTIONS = [
     "AzureClientIdAndClientSecretNotBelongingToTenantIdError",
     "AzureHTTPResponseError",
     "Error with credentials provided",
+    # PowerShell Errors in User Authentication
+    "Microsoft Teams User Auth connection failed: Please check your permissions and try again.",
+    "Exchange Online User Auth connection failed: Please check your permissions and try again.",
 ]
 
 

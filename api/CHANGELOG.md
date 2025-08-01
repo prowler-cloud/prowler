@@ -8,6 +8,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 
+### Fixed
+- Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
+
 ---
 
 ## [1.10.2] (Prowler v5.9.2)
