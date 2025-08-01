@@ -1453,3 +1453,261 @@ class TestM365Provider:
             )
 
         assert exception.type == M365CredentialsUnavailableError
+
+    def test_setup_session_certificate_auth_success(self):
+        """Test setup_session method with certificate authentication - success"""
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "AZURE_CLIENT_ID": CLIENT_ID,
+                    "AZURE_TENANT_ID": TENANT_ID,
+                    "M365_CERTIFICATE_CONTENT": base64.b64encode(
+                        b"fake_certificate"
+                    ).decode("utf-8"),
+                },
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.CertificateCredential"
+            ) as mock_cert_credential,
+        ):
+            mock_credential_instance = MagicMock()
+            mock_cert_credential.return_value = mock_credential_instance
+
+            region_config = M365RegionConfig(
+                name="M365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+
+            result = M365Provider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=False,
+                browser_auth=False,
+                certificate_auth=True,
+                tenant_id=None,
+                m365_credentials=None,
+                region_config=region_config,
+            )
+
+            assert result == mock_credential_instance
+            mock_cert_credential.assert_called_once_with(
+                tenant_id=TENANT_ID,
+                client_id=CLIENT_ID,
+                certificate_data=base64.b64decode(
+                    base64.b64encode(b"fake_certificate").decode("utf-8")
+                ),
+            )
+
+    def test_setup_session_certificate_auth_client_authentication_error(self):
+        """Test setup_session method with certificate authentication - ClientAuthenticationError"""
+        from azure.core.exceptions import ClientAuthenticationError
+
+        from prowler.providers.m365.exceptions.exceptions import M365SetUpSessionError
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "AZURE_CLIENT_ID": CLIENT_ID,
+                    "AZURE_TENANT_ID": TENANT_ID,
+                    "M365_CERTIFICATE_CONTENT": base64.b64encode(
+                        b"fake_certificate"
+                    ).decode("utf-8"),
+                },
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.CertificateCredential",
+                side_effect=ClientAuthenticationError("Authentication failed"),
+            ),
+            pytest.raises(M365SetUpSessionError) as exception,
+        ):
+            region_config = M365RegionConfig(
+                name="M365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+
+            M365Provider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=False,
+                browser_auth=False,
+                certificate_auth=True,
+                tenant_id=None,
+                m365_credentials=None,
+                region_config=region_config,
+            )
+
+        # The error should be wrapped in M365SetUpSessionError and contain the ClientAuthenticationError
+        assert exception.type == M365SetUpSessionError
+        assert "M365ClientAuthenticationError" in str(exception.value)
+
+    def test_setup_session_certificate_auth_with_static_credentials(self):
+        """Test setup_session method with certificate authentication using static credentials"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+        m365_credentials = {
+            "tenant_id": TENANT_ID,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "user": None,
+            "password": None,
+            "certificate_content": certificate_content,
+        }
+
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.ClientSecretCredential"
+            ) as mock_credential,
+        ):
+            mock_credential_instance = MagicMock()
+            mock_credential.return_value = mock_credential_instance
+
+            region_config = M365RegionConfig(
+                name="M365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+
+            result = M365Provider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=False,
+                browser_auth=False,
+                certificate_auth=False,
+                tenant_id=None,
+                m365_credentials=m365_credentials,
+                region_config=region_config,
+            )
+
+            assert result == mock_credential_instance
+            mock_credential.assert_called_once_with(
+                tenant_id=TENANT_ID,
+                client_id=CLIENT_ID,
+                client_secret=CLIENT_SECRET,
+                user=None,
+                password=None,
+                certificate_content=certificate_content,
+            )
+
+    def test_setup_powershell_certificate_auth_missing_env_vars(self):
+        """Test setup_powershell with certificate_auth but missing environment variables"""
+        from pydantic.v1.error_wrappers import ValidationError
+
+        with (patch.dict(os.environ, {}, clear=True),):
+            identity = M365IdentityInfo(
+                identity_id=IDENTITY_ID,
+                identity_type="Service Principal with Certificate",
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                tenant_domains=["test.onmicrosoft.com"],
+                location=LOCATION,
+            )
+
+            # Should raise ValidationError when trying to create credentials with None values
+            with pytest.raises(ValidationError) as exc_info:
+                M365Provider.setup_powershell(
+                    certificate_auth=True,
+                    identity=identity,
+                )
+
+            # Verify the error is about None values not being allowed
+            assert "none is not an allowed value" in str(exc_info.value).lower()
+
+    def test_validate_arguments_certificate_auth_valid(self):
+        """Test validate_arguments method with valid certificate authentication arguments"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        # Should not raise any exception
+        M365Provider.validate_arguments(
+            az_cli_auth=False,
+            sp_env_auth=False,
+            env_auth=False,
+            browser_auth=False,
+            certificate_auth=True,
+            tenant_id=TENANT_ID,
+            client_id=CLIENT_ID,
+            client_secret=None,
+            user=None,
+            password=None,
+            certificate_content=certificate_content,
+        )
+
+    def test_validate_arguments_certificate_auth_missing_certificate_content(self):
+        """Test validate_arguments method with certificate auth but missing certificate content"""
+        with pytest.raises(M365ConfigCredentialsError) as exception:
+            M365Provider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                env_auth=False,
+                browser_auth=False,
+                certificate_auth=False,
+                tenant_id=TENANT_ID,
+                client_id=CLIENT_ID,
+                client_secret=None,
+                user=None,
+                password=None,
+                certificate_content=None,
+            )
+
+        assert "You must provide a valid set of credentials" in str(exception.value)
+
+    def test_print_credentials_with_certificate(self):
+        """Test print_credentials method with certificate authentication"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        # Mock certificate credential
+        mock_cert_credential = MagicMock()
+        mock_cert_credential.__class__ = CertificateCredential
+
+        with (
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_session",
+                return_value=mock_cert_credential,
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_identity",
+                return_value=M365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="Service Principal with Certificate",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    location=LOCATION,
+                    certificate_thumbprint="ABC123DEF456",
+                ),
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.setup_powershell",
+                return_value=M365Credentials(
+                    client_id=CLIENT_ID,
+                    tenant_id=TENANT_ID,
+                    certificate_content=certificate_content,
+                ),
+            ),
+            patch(
+                "prowler.providers.m365.m365_provider.print_boxes"
+            ) as mock_print_boxes,
+        ):
+            m365_provider = M365Provider(
+                certificate_auth=True,
+                region="M365Global",
+            )
+
+            m365_provider.print_credentials()
+
+            # Verify print_boxes was called
+            mock_print_boxes.assert_called_once()
+            args, _ = mock_print_boxes.call_args
+            report_lines = args[0]
+
+            # Check that certificate thumbprint is in the output
+            cert_line_found = any(
+                "Certificate Thumbprint" in line for line in report_lines
+            )
+            assert (
+                cert_line_found
+            ), "Certificate thumbprint should be in printed credentials"
