@@ -26,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Use the correct @staticmethod decorator for `set_identity` and `set_session_config` methods in AwsProvider [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 - Use the correct default value for `role_session_name` and `session_duration` in AwsSetUpSession [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 - Use the correct default value for `role_session_name` and `session_duration` in S3 [(#8417)](https://github.com/prowler-cloud/prowler/pull/8417)
+- GitHub App authentication fails to generate output files and HTML header sections [(#8423)](https://github.com/prowler-cloud/prowler/pull/8423)
 
 ---
 
