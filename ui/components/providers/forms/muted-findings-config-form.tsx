@@ -1,7 +1,7 @@
 "use client";
 
 import { Textarea } from "@nextui-org/react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 
 import {
@@ -23,11 +23,11 @@ import {
 } from "@/types/processors";
 
 interface MutedFindingsConfigFormProps {
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  onCancel: () => void;
 }
 
 export const MutedFindingsConfigForm = ({
-  setIsOpen,
+  onCancel,
 }: MutedFindingsConfigFormProps) => {
   const [config, setConfig] = useState<ProcessorData | null>(null);
   const [configText, setConfigText] = useState("");
@@ -64,7 +64,7 @@ export const MutedFindingsConfigForm = ({
         title: "Configuration saved successfully",
         description: state.success,
       });
-      setIsOpen(false);
+      onCancel();
     } else if (state?.errors?.general) {
       toast({
         variant: "destructive",
@@ -75,7 +75,7 @@ export const MutedFindingsConfigForm = ({
       // Reset typing state when there are new server errors
       setHasUserStartedTyping(false);
     }
-  }, [state, toast, setIsOpen]);
+  }, [state, toast, onCancel]);
 
   const handleConfigChange = (value: string) => {
     setConfigText(value);
@@ -100,7 +100,7 @@ export const MutedFindingsConfigForm = ({
           title: "Configuration deleted successfully",
           description: result.success,
         });
-        setIsOpen(false);
+        onCancel();
       } else if (result?.errors?.general) {
         toast({
           variant: "destructive",
@@ -232,7 +232,8 @@ export const MutedFindingsConfigForm = ({
 
       <div className="flex flex-col space-y-4">
         <FormButtons
-          setIsOpen={setIsOpen}
+          setIsOpen={() => {}}
+          onCancel={onCancel}
           submitText={config ? "Update" : "Save"}
           isDisabled={!yamlValidation.isValid || !configText.trim()}
         />

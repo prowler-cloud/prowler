@@ -1,4 +1,5 @@
 import { Spacer } from "@nextui-org/react";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -23,19 +24,27 @@ export default async function Providers({
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
 
+  const providersData = await getProviders({});
+  const hasProviders = providersData?.data && providersData.data.length > 0;
+
+  // If modal=mutelist is present but no providers, redirect
+  if (searchParams.modal === "mutelist" && !hasProviders) {
+    redirect("/providers");
+  }
+
   return (
     <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
       <FilterControls search customFilters={filterProviders || []} />
       <Spacer y={8} />
+      <div className="flex items-center gap-4 md:justify-end">
+        <ManageGroupsButton />
+        <MutedFindingsConfigButton isDisabled={!hasProviders} />
+        <AddProviderButton />
+      </div>
       <Suspense
         key={searchParamsKey}
         fallback={
           <>
-            <div className="flex items-center gap-4 md:justify-end">
-              <ManageGroupsButton />
-              <MutedFindingsConfigButton isDisabled={true} />
-              <AddProviderButton />
-            </div>
             <Spacer y={8} />
             <div className="grid grid-cols-12 gap-4">
               <div className="col-span-12">
@@ -76,8 +85,6 @@ const ProvidersContent = async ({
     pageSize,
   });
 
-  const hasProviders = providersData?.data && providersData.data.length > 0;
-
   const providerGroupDict =
     providersData?.included
       ?.filter((item: any) => item.type === "provider-groups")
@@ -98,11 +105,6 @@ const ProvidersContent = async ({
 
   return (
     <>
-      <div className="flex items-center gap-4 md:justify-end">
-        <ManageGroupsButton />
-        <MutedFindingsConfigButton isDisabled={!hasProviders} />
-        <AddProviderButton />
-      </div>
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 gap-4">

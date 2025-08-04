@@ -1,7 +1,7 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 
@@ -14,23 +14,33 @@ interface MutedFindingsConfigButtonProps {
 export const MutedFindingsConfigButton = ({
   isDisabled = false,
 }: MutedFindingsConfigButtonProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  const isOpen = searchParams.get("modal") === "mutelist";
 
   const handleOpenModal = () => {
     if (!isDisabled) {
-      setIsOpen(true);
+      const params = new URLSearchParams(window.location.search);
+      params.set("modal", "mutelist");
+      window.history.pushState({}, "", `?${params.toString()}`);
     }
+  };
+
+  const handleModalClose = () => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete("modal");
+    window.history.pushState({}, "", `?${params.toString()}`);
   };
 
   return (
     <>
       <CustomAlertModal
         isOpen={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={handleModalClose}
         title="Configure Mutelist"
         size="3xl"
       >
-        <MutedFindingsConfigForm setIsOpen={setIsOpen} />
+        <MutedFindingsConfigForm onCancel={handleModalClose} />
       </CustomAlertModal>
 
       <CustomButton

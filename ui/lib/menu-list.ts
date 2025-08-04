@@ -30,6 +30,7 @@ import {
   KubernetesIcon,
   LighthouseIcon,
   M365Icon,
+  MutedIcon,
   SupportIcon,
 } from "@/components/icons/Icons";
 import { GroupProps } from "@/types";
@@ -151,6 +152,11 @@ export const getMenuList = (pathname: string): GroupProps[] => {
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },
             { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
+            {
+              href: "/providers?modal=mutelist",
+              label: "Mutelist",
+              icon: MutedIcon,
+            },
           ],
           defaultOpen: true,
         },
