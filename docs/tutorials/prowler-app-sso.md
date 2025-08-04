@@ -36,13 +36,13 @@ Prowler can be integrated with SAML SSO identity providers such as Okta to enabl
 
 To access the account settings, click the "Account" button in the top-right corner of Prowler App, or navigate directly to `https://cloud.prowler.com/profile` (or `http://localhost:3000/profile` for local setups).
 
-![Access Profile Settings](../img/saml/saml-step-1.png)
+![Access Profile Settings](./img/saml/saml-step-1.png)
 
 #### Step 2: Enable SAML Integration
 
 On the profile page, find the "SAML SSO Integration" card and click "Enable" to begin the configuration process.
 
-![Enable SAML Integration](../img/saml/saml-step-2.png)
+![Enable SAML Integration](./img/saml/saml-step-2.png)
 
 #### Step 3: Configure the Identity Provider (IdP)
 
@@ -53,7 +53,7 @@ Prowler App displays the SAML configuration information needed to configure the 
 
 To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler App and use them to set up a new SAML application.
 
-![IdP configuration](../img/saml/idp_config.png)
+![IdP configuration](./img/saml/idp_config.png)
 
 ???+ info "IdP Configuration"
     The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](./prowler-app-sso-entra.md).
@@ -71,7 +71,7 @@ For Prowler App to correctly identify and provision users, configure the IdP to 
 
 ???+ info "IdP Attribute Mapping"
     Note that the attribute name is just an example and may be different in your IdP. For instance, if your IdP provides a 'division' attribute, you can map it to 'userType'.
-    ![IdP configuration](../img/saml/saml_attribute_statements.png)
+    ![IdP configuration](./img/saml/saml_attribute_statements.png)
 
 ???+ warning "Dynamic Updates"
     Prowler App updates these attributes each time a user logs in. Any changes made in the Identity Provider (IdP) will be reflected when the user logs in again.
@@ -88,26 +88,26 @@ To complete the Prowler App configuration:
 
 3.  Upload the **metadata XML file** downloaded from the IdP.
 
-![Configure Prowler with IdP Metadata](../img/saml/saml-step-3.png)
+![Configure Prowler with IdP Metadata](./img/saml/saml-step-3.png)
 
 #### Step 6: Save and Verify Configuration
 
 Click the "Save" button to complete the setup. The "SAML Integration" card will now display an "Active" status, indicating the configuration is complete and enabled.
 
-![Verify Integration Status](../img/saml/saml-step-4.png)
+![Verify Integration Status](./img/saml/saml-step-4.png)
 
 ???+ info "IdP Configuration"
     The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application.
 
 ##### Remove SAML Configuration
 You can disable SAML SSO by removing the existing configuration from the integration panel.
-![Remove SAML configuration](../img/saml/saml-step-remove.png)
+![Remove SAML configuration](./img/saml/saml-step-remove.png)
 
 ### Signing in with SAML SSO
 
 Once SAML SSO is enabled, users from the configured domain can sign in by entering their email address on the login page and clicking "Continue with SAML SSO". The system redirects users to the IdP for authentication and then returns them to Prowler App.
 
-![Sign in with SAML SSO](../img/saml/saml-step-5.png)
+![Sign in with SAML SSO](./img/saml/saml-step-5.png)
 
 ### IdP-Initiated SSO Configuration - Prowler Cloud
 
@@ -119,21 +119,21 @@ Instead of creating a custom SAML integration, administrators can configure Prow
 
 1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., "Browse App Catalog" in Okta).
 
-    ![Browse App Catalog](../img/saml/app-catalog-browse.png)
+    ![Browse App Catalog](./img/saml/app-catalog-browse.png)
 
 2. **Search for Prowler**: Use the search functionality to find "Prowler Cloud" in the app catalog. The official Prowler Cloud application will appear in the search results.
 
-    ![Search for Prowler](../img/saml/app-catalog-browse-prowler.png)
+    ![Search for Prowler](./img/saml/app-catalog-browse-prowler.png)
 
 3. **Select Prowler Cloud Application**: Click on the Prowler Cloud application from the search results to view its details page.
 
-    ![Prowler Application Details](../img/saml/app-catalog-browse-prowler-add.png)
+    ![Prowler Application Details](./img/saml/app-catalog-browse-prowler-add.png)
 
 4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler Cloud to the organization's applications.
 
 5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings. You may optionally customize the **Application Label** if desired.
 
-![Add Prowler Configuration](../img/saml/app-catalog-browse-prowler-configure.png)
+![Add Prowler Configuration](./img/saml/app-catalog-browse-prowler-configure.png)
 
 #### Completing the Setup
 
