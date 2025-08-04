@@ -23,7 +23,7 @@ Prowler can be integrated with SAML SSO identity providers such as Okta to enabl
 -   **Just-in-Time Provisioning**: Users from the organization signing into Prowler for the first time will be automatically created.
 
 ???+ warning "Deactivate SAML"
-    If the SAML configuration is removed, users who previously authenticated via SAML will need to reset their password to regain access using standard login. This is because their accounts no longer have valid authentication credentials without the SAML integration.
+    If the SAML configuration is removed, users who previously authenticated via SAML will need to reset their password to regain access using standard login. This occurs because accounts no longer have valid authentication credentials without the SAML integration.
 
 ### Prerequisites
 
@@ -46,12 +46,12 @@ On the profile page, find the "SAML SSO Integration" card and click "Enable" to 
 
 #### Step 3: Configure the Identity Provider (IdP)
 
-The Prowler SAML configuration panel displays the information needed to configure the IdP. This information must be used to create a new SAML application in the IdP.
+Prowler App displays the SAML configuration information needed to configure the IdP. Use this information to create a new SAML application in the IdP.
 
 1.  **Assertion Consumer Service (ACS) URL**: The endpoint in Prowler that will receive the SAML assertion from the IdP.
 2.  **Audience URI (Entity ID)**: A unique identifier for the Prowler application (Service Provider).
 
-To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler and use them to set up a new SAML application.
+To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler App and use them to set up a new SAML application.
 
 ![IdP configuration](../img/saml/idp_config.png)
 
@@ -60,7 +60,7 @@ To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler and
 
 #### Step 4: Configure Attribute Mapping in the IdP
 
-For Prowler to correctly identify and provision users, the IdP must be configured to send the following attributes in the SAML assertion:
+For Prowler App to correctly identify and provision users, configure the IdP to send the following attributes in the SAML assertion:
 
 | Attribute Name | Description                                                                                             | Required |
 |----------------|---------------------------------------------------------------------------------------------------------|----------|
@@ -74,17 +74,17 @@ For Prowler to correctly identify and provision users, the IdP must be configure
     ![IdP configuration](../img/saml/saml_attribute_statements.png)
 
 ???+ warning "Dynamic Updates"
-    These attributes are updated in Prowler each time a user logs in. Any changes made in the identity provider (IdP) will be reflected the next time the user logs in again.
+    Prowler App updates these attributes each time a user logs in. Any changes made in the Identity Provider (IdP) will be reflected when the user logs in again.
 
 #### Step 5: Upload IdP Metadata to Prowler
 
 Once the IdP is configured, it provides a **metadata XML file**. This file contains the IdP's configuration information, such as its public key and login URL.
 
-To complete the Prowler-side configuration:
+To complete the Prowler App configuration:
 
 1.  Return to the Prowler SAML configuration page.
 
-2.  Enter the **email domain** for the organization (e.g., `mycompany.com`). Prowler uses this to identify users who should authenticate via SAML.
+2.  Enter the **email domain** for the organization (e.g., `mycompany.com`). Prowler App uses this to identify users who should authenticate via SAML.
 
 3.  Upload the **metadata XML file** downloaded from the IdP.
 
@@ -92,7 +92,7 @@ To complete the Prowler-side configuration:
 
 #### Step 6: Save and Verify Configuration
 
-Click the "Save" button to complete the setup. The "SAML Integration" card will now show an "Active" status, indicating that the configuration is complete and enabled.
+Click the "Save" button to complete the setup. The "SAML Integration" card will now display an "Active" status, indicating the configuration is complete and enabled.
 
 ![Verify Integration Status](../img/saml/saml-step-4.png)
 
@@ -105,19 +105,19 @@ You can disable SAML SSO by removing the existing configuration from the integra
 
 ### Signing in with SAML SSO
 
-Once SAML SSO is enabled, users from the configured domain can sign in by entering their email address on the login page and clicking "Continue with SAML SSO". They will be redirected to the IdP to authenticate and then returned to Prowler.
+Once SAML SSO is enabled, users from the configured domain can sign in by entering their email address on the login page and clicking "Continue with SAML SSO". The system redirects users to the IdP for authentication and then returns them to Prowler App.
 
 ![Sign in with SAML SSO](../img/saml/saml-step-5.png)
 
 ### IdP-Initiated SSO Configuration
 
-For organizations using published Prowler applications in their Identity Provider's app catalog, follow these steps to configure IdP-Initiated SSO.
+Organizations using published Prowler applications in their Identity Provider's app catalog can follow these steps to configure IdP-Initiated SSO.
 
 #### Configuring Prowler from App Catalog
 
-Instead of creating a custom SAML integration, users can configure Prowler directly from their IdP's application catalog:
+Instead of creating a custom SAML integration, administrators can configure Prowler directly from the IdP's application catalog:
 
-1. **Access App Catalog**: Navigate to your IdP's application catalog (e.g., "Browse App Catalog" in Okta).
+1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., "Browse App Catalog" in Okta).
 
 ![Browse App Catalog](../img/saml/app-catalog-browse.png)
 
@@ -129,7 +129,7 @@ Instead of creating a custom SAML integration, users can configure Prowler direc
 
 ![Prowler Application Details](../img/saml/app-catalog-browse-prowler-add.png)
 
-4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler to your organization's applications.
+4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler to the organization's applications.
 
 5. **Configure General Settings**: In the "Add Prowler" configuration screen, the integration automatically configures the necessary settings. You may optionally customize the **Application Label** if desired (e.g., "Prowler Cloud Security").
 
@@ -145,20 +145,13 @@ Once the Prowler application is added from the app catalog:
 
    - Navigate to the IdP dashboard or portal
    - Click on the Prowler application tile
-   - Users will be automatically authenticated and redirected to Prowler
+   - The system automatically authenticates users and redirects them to Prowler App
 
-![IdP Dashboard with Prowler](../img/saml/idp-dashboard-prowler.png)
 
 ???+ info "IdP-Initiated vs SP-Initiated SSO"
-    **IdP-Initiated SSO**: Users start the login process from their Identity Provider's dashboard by clicking the Prowler application tile. This method is convenient for users who primarily work from their IdP portal.
+    **IdP-Initiated SSO**: Users start the login process from their Identity Provider's dashboard by clicking the Prowler application tile. This method is convenient for users who primarily work from the IdP portal.
 
-    **SP-Initiated SSO**: Users start the login process from Prowler's login page by entering their email and clicking "Continue with SAML SSO". This method is useful when users bookmark or directly navigate to Prowler.
-
-???+ tip "User Experience Best Practices"
-    For the best user experience:
-    - Configure both IdP-Initiated and SP-Initiated SSO
-    - Train users on both login methods
-    - Consider setting up deep links for specific Prowler features accessible from the IdP dashboard
+    **SP-Initiated SSO**: Users start the login process from Prowler's login page by entering their email and clicking "Continue with SAML SSO". This method is useful when users bookmark Prowler or navigate directly to the application.
 
 ---
 
