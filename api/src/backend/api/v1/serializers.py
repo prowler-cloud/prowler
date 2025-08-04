@@ -2068,7 +2068,6 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "connected": {"read_only": True},
-            "enabled": {"read_only": True},
             "connection_last_checked_at": {"read_only": True},
         }
 
