@@ -111,17 +111,17 @@ Once SAML SSO is enabled, users from the configured domain can sign in by enteri
 
 ### IdP-Initiated SSO Configuration
 
-Organizations using published Prowler applications in their Identity Provider's app catalog can follow these steps to configure IdP-Initiated SSO.
+Organizations using published Prowler Cloud in their Identity Provider's app catalog can follow these steps to configure IdP-Initiated SSO.
 
 #### Configuring Prowler from App Catalog
 
-Instead of creating a custom SAML integration, administrators can configure Prowler directly from the IdP's application catalog:
+Instead of creating a custom SAML integration, administrators can configure Prowler C;pid directly from the IdP's application catalog:
 
 1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., "Browse App Catalog" in Okta).
 
     ![Browse App Catalog](./img/saml/app-catalog-browse.png)
 
-2. **Search for Prowler**: Use the search functionality to find "Prowler Cloud" in the app catalog. The official Prowler Cloud application will appear in the search results.
+2. **Search for Prowler Cloud**: Use the search functionality to find "Prowler Cloud" in the app catalog. The official Prowler Cloud application will appear in the search results.
 
     ![Search for Prowler](./img/saml/app-catalog-browse-prowler.png)
 
