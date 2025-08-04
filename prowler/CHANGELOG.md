@@ -16,7 +16,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Handle some AWS errors as warnings instead of errors [(#8347)](https://github.com/prowler-cloud/prowler/pull/8347)
 - Revert import of `checkov` python library [(#8385)](https://github.com/prowler-cloud/prowler/pull/8385)
 - Updated policy mapping in ISMS-P compliance file for improved alignment [(#8367)](https://github.com/prowler-cloud/prowler/pull/8367)
-- Update mutelist docs related with Prowler App across all the providers [(#8397)](https://github.com/prowler-cloud/prowler/pull/8397)
 
 ### Fixed
 - False positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
