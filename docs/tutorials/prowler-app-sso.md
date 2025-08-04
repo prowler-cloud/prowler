@@ -123,17 +123,17 @@ Instead of creating a custom SAML integration, users can configure Prowler direc
 
 2. **Search for Prowler**: Use the search functionality to find "Prowler" in the app catalog. The official Prowler application will appear in the search results.
 
-![Search for Prowler](../img/saml/app-catalog-search-prowler.png)
+![Search for Prowler](../img/saml/app-catalog-browse-prowler.png)
 
 3. **Select Prowler Application**: Click on the Prowler application from the search results to view its details page.
 
-![Prowler Application Details](../img/saml/app-catalog-prowler-details.png)
+![Prowler Application Details](../img/saml/app-catalog-browse-prowler-add.png)
 
 4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler to your organization's applications.
 
 5. **Configure General Settings**: In the "Add Prowler" configuration screen, the integration automatically configures the necessary settings. You may optionally customize the **Application Label** if desired (e.g., "Prowler Cloud Security").
 
-![Add Prowler Configuration](../img/saml/app-catalog-add-prowler-config.png)
+![Add Prowler Configuration](../img/saml/app-catalog-browse-prowler-configure.png)
 
 #### Completing the Setup
 
@@ -142,6 +142,7 @@ Once the Prowler application is added from the app catalog:
 1. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
 
 2. **Test IdP-Initiated Login**: Users can now access Prowler directly from their IdP dashboard:
+
    - Navigate to the IdP dashboard or portal
    - Click on the Prowler application tile
    - Users will be automatically authenticated and redirected to Prowler
