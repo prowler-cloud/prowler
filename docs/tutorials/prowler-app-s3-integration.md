@@ -200,7 +200,9 @@ aws cloudformation update-stack \
 
 To update the ProwlerProScanRole through the AWS Management Console:
 
-1. **Navigate to CloudFormation service** in the AWS region where ProwlerProScanRole was deployed or **click the link** "Use the following AWS CloudFormation Quick Link to create the IAM Role" in the Prowler App UI to navigate to the CloudFormation service (check the image above)
+1. **Navigate to CloudFormation service** in the AWS region where ProwlerProScanRole was deployed or **click the link** "Use the following AWS CloudFormation Quick Link to create the IAM Role" in the Prowler App UI to navigate to the CloudFormation service
+
+    ![CloudFormation Quick Link](../tutorials/img/s3-integration-quick-link.png)
 
 2. **Select the stack** named "ProwlerProScanRole" and click "Update"
 
