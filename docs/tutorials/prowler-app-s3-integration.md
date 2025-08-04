@@ -143,9 +143,9 @@ To access S3 Integration:
 
 2. Complete the configuration form with the following details:
 
-   - **Cloud Providers:** Select the providers whose scan results should be exported to this S3 bucket
-   - **Bucket Name:** Enter the name of your target S3 bucket (e.g., `my-security-findings-bucket`)
-   - **Output Directory:** Specify the directory path within the bucket (e.g., `/prowler-findings/`)
+    - **Cloud Providers:** Select the providers whose scan results should be exported to this S3 bucket
+    - **Bucket Name:** Enter the name of your target S3 bucket (e.g., `my-security-findings-bucket`)
+    - **Output Directory:** Specify the directory path within the bucket (e.g., `/prowler-findings/`)
 
 ![Configuration form](../tutorials/img/s3-integration-ui-4.png)
 
@@ -155,18 +155,18 @@ To access S3 Integration:
 
 1. Configure AWS authentication using one of the supported methods:
 
-   - **AWS SDK Default:** Use default AWS credentials from the environment
-   - **Access Keys:** Provide AWS access key ID and secret access key
-   - **IAM Role (optional):** Specify role ARN, external ID, and optional session parameters
+    - **AWS SDK Default:** Use default AWS credentials from the environment
+    - **Access Keys:** Provide AWS access key ID and secret access key
+    - **IAM Role (optional):** Specify role ARN, external ID, and optional session parameters
 
 ![Credentials configuration](../tutorials/img/s3-integration-ui-5.png)
 
 2. For IAM role authentication, complete the required fields:
 
-   - **Role ARN:** The Amazon Resource Name of the IAM role
-   - **External ID:** Unique identifier for additional security (defaults to Tenant/Organization ID)
-   - **Role Session Name:** Optional name for the assumed role session
-   - **Session Duration:** Optional duration in seconds for the session
+    - **Role ARN:** The Amazon Resource Name of the IAM role
+    - **External ID:** Unique identifier for additional security (defaults to Tenant/Organization ID)
+    - **Role Session Name:** Optional name for the assumed role session
+    - **Session Duration:** Optional duration in seconds for the session
 
 **Prowler App** provides Infrastructure as Code (IaC) templates to automate the required permissions setup. These templates simplify the process of adding S3 integration permissions to existing Prowler SaaS roles.
 
@@ -235,9 +235,9 @@ To update the ProwlerProScanRole through the AWS Management Console:
 
 2. Each integration displays:
 
-   - **Connection Status:** Connected or Disconnected indicator
-   - **Bucket Information:** Bucket name and output directory
-   - **Last Checked:** Timestamp of the most recent connection test
+    - **Connection Status:** Connected or Disconnected indicator
+    - **Bucket Information:** Bucket name and output directory
+    - **Last Checked:** Timestamp of the most recent connection test
 
 ![Integration status view](../tutorials/img/s3-integration-ui-6.png)
 
@@ -250,9 +250,9 @@ To update the ProwlerProScanRole through the AWS Management Console:
 
 2. The system will verify:
 
-   - AWS credential validity
-   - S3 bucket accessibility
-   - Write permission verification
+    - AWS credential validity
+    - S3 bucket accessibility
+    - Write permission verification
 
 3. Review the test results in the notification message
 
@@ -262,9 +262,9 @@ To update the ProwlerProScanRole through the AWS Management Console:
 
 2. Update any of the following:
 
-   - Selected cloud providers
-   - Bucket name
-   - Output directory path
+    - Selected cloud providers
+    - Bucket name
+    - Output directory path
 
 3. Click "Update Configuration" to save changes
 
