@@ -1,4 +1,4 @@
-# SAML Single Sign-On (SSO) Configuration
+# SAML Single Sign-On (SSO)
 
 This guide provides comprehensive instructions to configure SAML-based Single Sign-On (SSO) in Prowler App. This configuration allows users to authenticate using the organization's Identity Provider (IdP).
 
@@ -108,6 +108,56 @@ You can disable SAML SSO by removing the existing configuration from the integra
 Once SAML SSO is enabled, users from the configured domain can sign in by entering their email address on the login page and clicking "Continue with SAML SSO". They will be redirected to the IdP to authenticate and then returned to Prowler.
 
 ![Sign in with SAML SSO](../img/saml/saml-step-5.png)
+
+### IdP-Initiated SSO Configuration
+
+For organizations using published Prowler applications in their Identity Provider's app catalog, follow these steps to configure IdP-Initiated SSO.
+
+#### Configuring Prowler from App Catalog
+
+Instead of creating a custom SAML integration, users can configure Prowler directly from their IdP's application catalog:
+
+1. **Access App Catalog**: Navigate to your IdP's application catalog (e.g., "Browse App Catalog" in Okta).
+
+![Browse App Catalog](../img/saml/app-catalog-browse.png)
+
+2. **Search for Prowler**: Use the search functionality to find "Prowler" in the app catalog. The official Prowler application will appear in the search results.
+
+![Search for Prowler](../img/saml/app-catalog-search-prowler.png)
+
+3. **Select Prowler Application**: Click on the Prowler application from the search results to view its details page.
+
+![Prowler Application Details](../img/saml/app-catalog-prowler-details.png)
+
+4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler to your organization's applications.
+
+5. **Configure General Settings**: In the "Add Prowler" configuration screen, the integration automatically configures the necessary settings. You may optionally customize the **Application Label** if desired (e.g., "Prowler Cloud Security").
+
+![Add Prowler Configuration](../img/saml/app-catalog-add-prowler-config.png)
+
+#### Completing the Setup
+
+Once the Prowler application is added from the app catalog:
+
+1. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
+
+2. **Test IdP-Initiated Login**: Users can now access Prowler directly from their IdP dashboard:
+   - Navigate to the IdP dashboard or portal
+   - Click on the Prowler application tile
+   - Users will be automatically authenticated and redirected to Prowler
+
+![IdP Dashboard with Prowler](../img/saml/idp-dashboard-prowler.png)
+
+???+ info "IdP-Initiated vs SP-Initiated SSO"
+    **IdP-Initiated SSO**: Users start the login process from their Identity Provider's dashboard by clicking the Prowler application tile. This method is convenient for users who primarily work from their IdP portal.
+
+    **SP-Initiated SSO**: Users start the login process from Prowler's login page by entering their email and clicking "Continue with SAML SSO". This method is useful when users bookmark or directly navigate to Prowler.
+
+???+ tip "User Experience Best Practices"
+    For the best user experience:
+    - Configure both IdP-Initiated and SP-Initiated SSO
+    - Train users on both login methods
+    - Consider setting up deep links for specific Prowler features accessible from the IdP dashboard
 
 ---
 
