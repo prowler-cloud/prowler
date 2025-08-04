@@ -66,7 +66,7 @@ export const S3IntegrationForm = ({
         integration?.attributes.configuration.output_directory || "",
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
-      credentials_type: "aws-sdk-default" as const,
+      credentials_type: "access-secret-key" as const,
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
@@ -392,16 +392,18 @@ export const S3IntegrationForm = ({
         className="flex flex-col space-y-6"
       >
         <div className="flex flex-col space-y-4">
-          <p className="flex items-center gap-2 text-sm text-default-500">
-            Need help connecting your AWS account?
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+            <p className="flex items-center gap-2 text-sm text-default-500">
+              Need help configuring your Amazon S3 integrations?
+            </p>
             <CustomLink
-              href="https://goto.prowler.com/provider-aws"
+              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/"
               target="_blank"
               size="sm"
             >
               Read the docs
             </CustomLink>
-          </p>
+          </div>
           {renderStepContent()}
         </div>
         {renderStepButtons()}
