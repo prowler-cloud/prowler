@@ -11,7 +11,6 @@ export default async function Integrations() {
     <ContentLayout title="Integrations" icon="lucide:puzzle">
       <div className="space-y-6">
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Available Integrations</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Connect external services to enhance your security workflow and
             automatically export your scan results.

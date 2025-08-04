@@ -36,7 +36,7 @@ export default async function S3Integrations() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                Multiple bucket support
+                Multi-Cloud support
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
