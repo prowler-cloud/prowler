@@ -115,7 +115,7 @@ Organizations using published Prowler Cloud in their Identity Provider's app cat
 
 #### Configuring Prowler from App Catalog
 
-Instead of creating a custom SAML integration, administrators can configure Prowler C;pid directly from the IdP's application catalog:
+Instead of creating a custom SAML integration, administrators can configure Prowler Cloud directly from the IdP's application catalog:
 
 1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., "Browse App Catalog" in Okta).
 
