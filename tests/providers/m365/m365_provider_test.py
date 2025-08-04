@@ -610,7 +610,10 @@ class TestM365Provider:
                 user="test@example.com",
                 password="test_password",
             )
-        assert "The provided Client Secret is not valid." in str(exception.value)
+        assert (
+            "You must provide a client secret or certificate content. Please check your credentials and try again."
+            in str(exception.value)
+        )
 
     def test_validate_arguments_missing_env_credentials(self):
         with pytest.raises(M365ConfigCredentialsError) as exception:
@@ -1286,6 +1289,17 @@ class TestM365Provider:
                     location=LOCATION,
                 ),
             ),
+            patch(
+                "prowler.providers.m365.m365_provider.M365Provider.validate_static_credentials",
+                return_value={
+                    "tenant_id": TENANT_ID,
+                    "client_id": CLIENT_ID,
+                    "client_secret": None,
+                    "user": None,
+                    "password": None,
+                    "certificate_content": certificate_content,
+                },
+            ),
         ):
             mock_session = MagicMock()
             mock_setup_session.return_value = mock_session
@@ -1560,7 +1574,7 @@ class TestM365Provider:
 
         with (
             patch(
-                "prowler.providers.m365.m365_provider.ClientSecretCredential"
+                "prowler.providers.m365.m365_provider.CertificateCredential"
             ) as mock_credential,
         ):
             mock_credential_instance = MagicMock()
@@ -1588,10 +1602,7 @@ class TestM365Provider:
             mock_credential.assert_called_once_with(
                 tenant_id=TENANT_ID,
                 client_id=CLIENT_ID,
-                client_secret=CLIENT_SECRET,
-                user=None,
-                password=None,
-                certificate_content=certificate_content,
+                certificate_data=base64.b64decode(certificate_content),
             )
 
     def test_setup_powershell_certificate_auth_missing_env_vars(self):

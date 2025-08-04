@@ -1175,6 +1175,12 @@ class M365Provider(Provider):
                 message="The provided Client ID is not valid.",
             )
 
+        if not certificate_content and not client_secret:
+            raise M365NotValidClientSecretError(
+                file=os.path.basename(__file__),
+                message="You must provide a client secret or certificate content. Please check your credentials and try again.",
+            )
+
         if certificate_content:
             try:
                 # Validate that certificate content can be properly decoded from base64
