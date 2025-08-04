@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AlertCircle,
   Bookmark,
   CloudCog,
   Cog,
@@ -82,11 +81,6 @@ export const getMenuList = (pathname: string): GroupProps[] => {
           icon: Bookmark,
           submenus: [
             {
-              href: "/findings?filter[status__in]=FAIL&sort=severity,-inserted_at",
-              label: "Misconfigurations",
-              icon: AlertCircle,
-            },
-            {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac&sort=-inserted_at",
               label: "IAM Issues",
               icon: ShieldCheck,
@@ -138,17 +132,9 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
-          href: "",
+          href: "/resources",
           label: "Resources",
           icon: Warehouse,
-          submenus: [
-            {
-              href: "/resources",
-              label: "Browse all resources",
-              icon: Package,
-            },
-          ],
-          defaultOpen: true,
         },
       ],
     },
@@ -176,7 +162,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       menus: [
         {
           href: "",
-          label: "Memberships",
+          label: "Organization",
           icon: Users,
           submenus: [
             { href: "/users", label: "Users", icon: User },
