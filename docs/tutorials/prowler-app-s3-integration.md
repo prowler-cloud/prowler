@@ -206,19 +206,15 @@ To update the ProwlerProScanRole through the AWS Management Console:
 
 3. **Choose template replacement:**
 
-   - Select "Replace current template"
-
-   - Choose "Upload a template file"
-
-   - Upload the new ProwlerProScanRole IAM Role template
+    - Select "Replace current template"
+    - Choose "Upload a template file"
+    - Upload the new ProwlerProScanRole IAM Role template
 
 4. **Configure stack parameters:**
 
-   - **ExternalID:** Retain the existing value (required for account scanning)
-
-   - **S3IntegrationBucketName:** Enter the destination bucket name (without folders, paths, or trailing slashes)
-
-   - **S3IntegrationBucketAccount:** Enter the AWS account ID that owns the destination bucket
+    - **ExternalID:** Retain the existing value (required for account scanning)
+    - **S3IntegrationBucketName:** Enter the destination bucket name (without folders, paths, or trailing slashes)
+    - **S3IntegrationBucketAccount:** Enter the AWS account ID that owns the destination bucket
 
 5. **Review configuration:** In "Configure stack options," maintain existing settings and click "Next"
 
