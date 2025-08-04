@@ -7,7 +7,6 @@ import {
   Group,
   LayoutGrid,
   Mail,
-  Package,
   Puzzle,
   Settings,
   ShieldCheck,
