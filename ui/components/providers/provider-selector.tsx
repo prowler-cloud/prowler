@@ -13,6 +13,7 @@ const providerTypeLabels: Record<ProviderType, string> = {
   azure: "Microsoft Azure",
   m365: "Microsoft 365",
   kubernetes: "Kubernetes",
+  github: "GitHub",
 };
 
 interface ProviderSelectorProps {
