@@ -23,8 +23,88 @@ Before configuring S3 Integration, ensure:
 - AWS credentials (IAM role or access keys) with S3 write permissions
 - Understanding of AWS IAM policies and S3 bucket permissions
 
-???+ warning
-    Ensure your AWS credentials have the minimum required permissions for S3 operations. Overly permissive credentials may pose security risks. Review AWS IAM best practices before configuring credentials.
+## Required Permissions Setup
+
+Before configuring S3 Integration, the existing Prowler SaaS role (ProwlerProSaaSScanRole) requires additional permissions to write scan results to the designated S3 bucket.
+
+### Required IAM Policy Statements
+
+The S3 integration requires the following permissions to be added to the existing ProwlerProScanRole:
+
+#### S3 Delete Object Permission
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Condition": {
+                "StringEquals": {
+                    "s3:ResourceAccount": "<BUCKET AWS ACCOUNT NUMBER>"
+                }
+            },
+            "Action": [
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<BUCKET NAME>/*ProwlerProBeacon"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
+#### S3 Put Object Permission
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Condition": {
+                "StringEquals": {
+                    "s3:ResourceAccount": "<BUCKET AWS ACCOUNT NUMBER>"
+                }
+            },
+            "Action": [
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<BUCKET NAME>/*"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
+#### S3 Get Object Permission
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Condition": {
+                "StringEquals": {
+                    "s3:ResourceAccount": "<BUCKET AWS ACCOUNT NUMBER>"
+                }
+            },
+            "Action": [
+                "s3:GetBucketLocation"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<BUCKET NAME>"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
+???+ note
+    Replace `<BUCKET AWS ACCOUNT NUMBER>` with the AWS account ID that owns the destination S3 bucket, and `<BUCKET NAME>` with the actual bucket name.
 
 ## Step 1: Navigate to Integrations
 
@@ -77,10 +157,55 @@ To access S3 Integration:
 - **Role Session Name:** Optional name for the assumed role session
 - **Session Duration:** Optional duration in seconds for the session
 
-#### 3. Click "Create Integration" to complete the setup
+## Infrastructure as Code Template Deployment
 
-???+ note
-    When using IAM roles, ensure the role trusts the appropriate AWS account and includes the external ID condition for enhanced security.
+**Prowler App** provides Infrastructure as Code (IaC) templates to automate the required permissions setup. These templates simplify the process of adding S3 integration permissions to existing Prowler SaaS roles.
+
+### Available Templates
+
+Choose from the following deployment options:
+
+- [CloudFormation](https://raw.githubusercontent.com/prowler-cloud/prowlerpro-permissions-templates-public/main/terraform/s3-integration/main.tf)
+- [Terraform](https://s3.eu-west-1.amazonaws.com/prowler-pro-saas-pro-artifacts/templates/prowler-pro-scan-role-s3-integration.yaml)
+
+### CloudFormation Deployment Methods
+
+#### Method 1: AWS CLI Deployment
+
+Execute the following command to update the existing ProwlerProScanRole:
+
+```bash
+aws cloudformation update-stack \
+  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
+  --stack-name "ProwlerProScanRole" \
+  --template-url "https://s3.eu-west-1.amazonaws.com/prowler-pro-saas-pro-artifacts/templates/prowler-pro-scan-role-s3-integration.yaml" \
+  --parameters \
+      ParameterKey=ExternalID,ParameterValue="your-external-id" \
+      ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
+      ParameterKey=S3IntegrationBucketAccount,ParameterValue="your-account-id"
+```
+
+#### Method 2: AWS Console Deployment
+
+To update the ProwlerProScanRole through the AWS Management Console:
+
+1. **Navigate to CloudFormation service** in the AWS region where ProwlerProScanRole was deployed or **click the link** "Use the following AWS CloudFormation Quick Link to create the IAM Role" in the Prowler App UI to navigate to the CloudFormation service (check the image above)
+2. **Select the stack** named "ProwlerProScanRole" and click "Update"
+3. **Choose template replacement:**
+   * Select "Replace current template"
+   * Choose "Upload a template file"
+   * Upload the new ProwlerProScanRole IAM Role template
+4. **Configure stack parameters:**
+   * **ExternalID:** Retain the existing value (required for account scanning)
+   * **S3IntegrationBucketName:** Enter the destination bucket name (without folders, paths, or trailing slashes)
+   * **S3IntegrationBucketAccount:** Enter the AWS account ID that owns the destination bucket
+5. **Review configuration:** In "Configure stack options," maintain existing settings and click "Next"
+6. **Deploy updates:** Under "Review ProwlerProScanRole," click "Update stack" to apply the changes
+
+???+ warning
+    Ensure AWS credentials have the minimum required permissions for S3 operations. Overly permissive credentials may pose security risks. Review AWS IAM best practices before configuring credentials.
+
+#### 3. Click "Create Integration" to complete the setup
 
 ## Step 4: Manage Existing Integrations
 
@@ -95,7 +220,6 @@ To access S3 Integration:
 - **Last Checked:** Timestamp of the most recent connection test
 
 ![Integration status view](../tutorials/img/s3-integration-ui-6.png)
-
 
 ### Action buttons
 ![Action buttons](../tutorials/img/s3-integration-ui-7.png)
