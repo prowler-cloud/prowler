@@ -322,12 +322,12 @@ export const permissionFormFields: PermissionInfo[] = [
     description:
       "Allows configuration and management of cloud provider connections",
   },
-  // {
-  //   field: "manage_integrations",
-  //   label: "Manage Integrations",
-  //   description:
-  //     "Controls the setup and management of third-party integrations",
-  // },
+  {
+    field: "manage_integrations",
+    label: "Manage Integrations",
+    description:
+      "Controls the setup and management of third-party integrations",
+  },
   {
     field: "manage_scans",
     label: "Manage Scans",
