@@ -159,7 +159,7 @@ To access S3 Integration:
 
     - **AWS SDK Default:** Use default AWS credentials from the environment
     - **Access Keys:** Provide AWS access key ID and secret access key
-    - **IAM Role (optional):** Specify role ARN, external ID, and optional session parameters
+    - **IAM Role (optional):** Specify the IAM Role ARN, external ID, and optional session parameters
 
     ![Credentials configuration](../tutorials/img/s3-integration-ui-5.png)
 
