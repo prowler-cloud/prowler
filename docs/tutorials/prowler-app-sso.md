@@ -109,7 +109,7 @@ Once SAML SSO is enabled, users from the configured domain can sign in by enteri
 
 ![Sign in with SAML SSO](./img/saml/saml-step-5.png)
 
-### IdP-Initiated SSO Configuration - Prowler Cloud
+### IdP-Initiated SSO Configuration
 
 Organizations using published Prowler applications in their Identity Provider's app catalog can follow these steps to configure IdP-Initiated SSO.
 
@@ -131,7 +131,7 @@ Instead of creating a custom SAML integration, administrators can configure Prow
 
 4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler Cloud to the organization's applications.
 
-5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings. You may optionally customize the **Application Label** if desired.
+5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings.
 
 ![Add Prowler Configuration](./img/saml/app-catalog-browse-prowler-configure.png)
 
@@ -143,9 +143,9 @@ Once the Prowler Cloud application is added from the app catalog:
 
 2. **Test IdP-Initiated Login**: Users can now access Prowler Cloud directly from their IdP dashboard:
 
-   - Navigate to the IdP dashboard or portal
-   - Click on the Prowler Cloud application tile
-   - The system automatically authenticates users and redirects them to Prowler Cloud
+    - Navigate to the IdP dashboard or portal
+    - Click on the Prowler Cloud application tile
+    - The system automatically authenticates users and redirects them to Prowler Cloud
 
 
 ???+ info "IdP-Initiated vs SP-Initiated SSO"
