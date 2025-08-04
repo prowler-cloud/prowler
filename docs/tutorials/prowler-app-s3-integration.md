@@ -187,18 +187,18 @@ aws cloudformation update-stack \
 
 To update the ProwlerProScanRole through the AWS Management Console:
 
-1. **Navigate to CloudFormation service** in the AWS region where ProwlerProScanRole was deployed or **click the link** "Use the following AWS CloudFormation Quick Link to create the IAM Role" in the Prowler App UI to navigate to the CloudFormation service (check the image above)
-2. **Select the stack** named "ProwlerProScanRole" and click "Update"
-3. **Choose template replacement:**
+#### 1. **Navigate to CloudFormation service** in the AWS region where ProwlerProScanRole was deployed or **click the link** "Use the following AWS CloudFormation Quick Link to create the IAM Role" in the Prowler App UI to navigate to the CloudFormation service (check the image above)
+#### 2. **Select the stack** named "ProwlerProScanRole" and click "Update"
+#### 3. **Choose template replacement:**
    - Select "Replace current template"
    - Choose "Upload a template file"
    - Upload the new ProwlerProScanRole IAM Role template
-4. **Configure stack parameters:**
+#### 4. **Configure stack parameters:**
    - **ExternalID:** Retain the existing value (required for account scanning)
    - **S3IntegrationBucketName:** Enter the destination bucket name (without folders, paths, or trailing slashes)
    - **S3IntegrationBucketAccount:** Enter the AWS account ID that owns the destination bucket
-5. **Review configuration:** In "Configure stack options," maintain existing settings and click "Next"
-6. **Deploy updates:** Under "Review ProwlerProScanRole," click "Update stack" to apply the changes
+#### 5. **Review configuration:** In "Configure stack options," maintain existing settings and click "Next"
+#### 6. **Deploy updates:** Under "Review ProwlerProScanRole," click "Update stack" to apply the changes
 
 ???+ warning
     Ensure AWS credentials have the minimum required permissions for S3 operations. Overly permissive credentials may pose security risks. Review AWS IAM best practices before configuring credentials.
