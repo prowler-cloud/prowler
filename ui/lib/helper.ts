@@ -326,7 +326,7 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "manage_integrations",
     label: "Manage Integrations",
     description:
-      "Controls the setup and management of third-party integrations",
+      "Allows configuration and management of third-party integrations",
   },
   {
     field: "manage_scans",
