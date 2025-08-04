@@ -46,11 +46,11 @@ To access S3 Integration:
 
 ### Configuration Step
 
-1. Click the "Add Integration" button to start the configuration process
+#### 1. Click the "Add Integration" button to start the configuration process
 
 ![Add integration button](../tutorials/img/s3-integration-ui-3.png)
 
-2. Complete the configuration form with the following details:
+#### 2. Complete the configuration form with the following details:
 
 - **Cloud Providers:** Select the providers whose scan results should be exported to this S3 bucket
 - **Bucket Name:** Enter the name of your target S3 bucket (e.g., `my-security-findings-bucket`)
@@ -58,11 +58,11 @@ To access S3 Integration:
 
 ![Configuration form](../tutorials/img/s3-integration-ui-4.png)
 
-3. Click "Next" to proceed to the credentials step
+#### 3. Click "Next" to proceed to the credentials step
 
 ### Credentials Step
 
-1. Configure AWS authentication using one of the supported methods:
+#### 1. Configure AWS authentication using one of the supported methods:
 
 - **AWS SDK Default:** Use default AWS credentials from the environment
 - **Access Keys:** Provide AWS access key ID and secret access key
@@ -70,14 +70,14 @@ To access S3 Integration:
 
 ![Credentials configuration](../tutorials/img/s3-integration-ui-5.png)
 
-2. For IAM role authentication, complete the required fields:
+#### 2. For IAM role authentication, complete the required fields:
 
 - **Role ARN:** The Amazon Resource Name of the IAM role
 - **External ID:** Unique identifier for additional security (defaults to Tenant/Organization ID)
 - **Role Session Name:** Optional name for the assumed role session
 - **Session Duration:** Optional duration in seconds for the session
 
-3. Click "Create Integration" to complete the setup
+#### 3. Click "Create Integration" to complete the setup
 
 ???+ note
     When using IAM roles, ensure the role trusts the appropriate AWS account and includes the external ID condition for enhanced security.
@@ -86,9 +86,9 @@ To access S3 Integration:
 
 ### View Integration Status
 
-1. Review configured integrations in the management interface
+#### 1. Review configured integrations in the management interface
 
-2. Each integration displays:
+#### 2. Each integration displays:
 
 - **Connection Status:** Connected or Disconnected indicator
 - **Bucket Information:** Bucket name and output directory
@@ -102,55 +102,55 @@ To access S3 Integration:
 
 ### Test Integration Connection
 
-1. Click the "Test" button for any configured integration
+#### 1. Click the "Test" button for any configured integration
 
-2. The system will verify:
+#### 2. The system will verify:
 
 - AWS credential validity
 - S3 bucket accessibility
 - Write permission verification
 
-3. Review the test results in the notification message
+#### 3. Review the test results in the notification message
 
 ### Edit Integration Configuration
 
-1. Click the "Config" button to modify integration settings
+#### 1. Click the "Config" button to modify integration settings
 
-2. Update any of the following:
+#### 2. Update any of the following:
 
 - Selected cloud providers
 - Bucket name
 - Output directory path
 
-3. Click "Update Configuration" to save changes
+#### 3. Click "Update Configuration" to save changes
 
 ### Update Integration Credentials
 
-1. Click the "Credentials" button to modify authentication settings
+#### 1. Click the "Credentials" button to modify authentication settings
 
-2. Update AWS credentials or authentication method
+#### 2. Update AWS credentials or authentication method
 
-3. Click "Update Credentials" to save the new authentication configuration
+#### 3. Click "Update Credentials" to save the new authentication configuration
 
 ### Delete Integration
 
-1. Click the "Delete" button for the integration you want to remove
-2. Confirm the deletion in the modal dialog
-3. The integration will be permanently removed from your configuration
+#### 1. Click the "Delete" button for the integration you want to remove
+#### 2. Confirm the deletion in the modal dialog
+#### 3. The integration will be permanently removed from your configuration
 
 ???+ warning
     Deleting an integration cannot be undone. Ensure you no longer need the integration before confirming deletion.
 
 ### Enable/Disable Integration
 
-1. Click the "Enable/Disable" button
-2. The integration will be enabled or disabled accordingly
+#### 1. Click the "Enable/Disable" button
+#### 2. The integration will be enabled or disabled accordingly
 
 ## Step 5: Verify Export Functionality
 
-1. Run a new scan with a provider configured in the S3 integration
-2. Check your S3 bucket for the exported scan results
-3. Verify the files appear in the specified output directory
+#### 1. Run a new scan with a provider configured in the S3 integration
+#### 2. Check your S3 bucket for the exported scan results
+#### 3. Verify the files appear in the specified output directory
 
 ???+ note
     S3 exports are processed after scan completion. Depending on scan size and network conditions, exports may take a few minutes to appear in your bucket.
