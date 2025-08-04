@@ -224,10 +224,10 @@ To update the ProwlerProScanRole through the AWS Management Console:
 
 6. **Deploy updates:** Under "Review ProwlerProScanRole," click "Update stack" to apply the changes
 
+7. Click "Create Integration" to complete the setup
+
 ???+ warning
     Ensure AWS credentials have the minimum required permissions for S3 operations. Overly permissive credentials may pose security risks. Review AWS IAM best practices before configuring credentials.
-
-7. Click "Create Integration" to complete the setup
 
 ## Step 4: Manage Existing Integrations
 
