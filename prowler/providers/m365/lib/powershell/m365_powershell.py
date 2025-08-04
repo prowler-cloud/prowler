@@ -321,7 +321,14 @@ class M365PowerShell(PowerShellSession):
         """Test Microsoft Teams API connection using user authentication and raise exception if it fails."""
         result = self.execute("Connect-MicrosoftTeams -Credential $credential")
         if self.tenant_identity.user not in result:
-            logger.error(f"Microsoft Teams User connection failed: {result}")
+            logger.error(f"Microsoft Teams User Auth connection failed: {result}.")
+            return False
+
+        connection = self.execute("Get-CsTeamsClientConfiguration")
+        if not connection:
+            logger.error(
+                "Microsoft Teams User Auth connection failed: Please check your permissions and try again."
+            )
             return False
         return True
 
@@ -365,7 +372,14 @@ class M365PowerShell(PowerShellSession):
         """Test Exchange Online API connection using user authentication and raise exception if it fails."""
         result = self.execute("Connect-ExchangeOnline -Credential $credential")
         if "https://aka.ms/exov3-module" not in result:
-            logger.error(f"Exchange Online User connection failed: {result}")
+            logger.error(f"Exchange Online User Auth connection failed: {result}.")
+            return False
+
+        connection = self.execute("Get-OrganizationConfig")
+        if not connection:
+            logger.error(
+                "Exchange Online User Auth connection failed: Please check your permissions and try again."
+            )
             return False
         return True
 

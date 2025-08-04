@@ -26,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add missing audit evidence for controls 1.1.4 and 2.5.5 for ISMS-P compliance. [(#8386)](https://github.com/prowler-cloud/prowler/pull/8386)
 - Use the correct @staticmethod decorator for `set_identity` and `set_session_config` methods in AwsProvider [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 - Use the correct default value for `role_session_name` and `session_duration` in AwsSetUpSession [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+- Use the correct default value for `role_session_name` and `session_duration` in S3 [(#8417)](https://github.com/prowler-cloud/prowler/pull/8417)
 
 ---
 
@@ -38,7 +39,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Way of counting FAILED/PASS reqs from `kisa_isms_p_2023_aws` table [(#8382)](https://github.com/prowler-cloud/prowler/pull/8382)
 - Use default tenant domain instead of first domain in list for Azure and M365 providers [(#8402)](https://github.com/prowler-cloud/prowler/pull/8402)
 - Avoid multiple module error calls in M365 provider [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
+- Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
 - Tweaks from Prowler ThreatScore in order to handle the correct reqs [(#8401)](https://github.com/prowler-cloud/prowler/pull/8401)
+- Make `setup_assumed_session` static for the AWS provider [(#8419)](https://github.com/prowler-cloud/prowler/pull/8419)
+
 ---
 
 ## [v5.9.2] (Prowler v5.9.2)
