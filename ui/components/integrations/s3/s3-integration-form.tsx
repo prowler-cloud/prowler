@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Divider } from "@nextui-org/react";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
@@ -372,6 +372,7 @@ export const S3IntegrationForm = ({
         submitText="Create Integration"
         cancelText="Back"
         loadingText="Creating..."
+        leftIcon={<ArrowLeftIcon size={24} />}
         isDisabled={isLoading}
       />
     );
