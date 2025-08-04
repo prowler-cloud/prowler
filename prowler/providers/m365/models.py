@@ -29,7 +29,7 @@ class M365Credentials(BaseModel):
     passwd: Optional[str] = None
     encrypted_passwd: Optional[str] = None
     client_id: str = ""
-    client_secret: str = ""
+    client_secret: Optional[str] = None
     tenant_id: str = ""
     tenant_domains: list[str] = []
     certificate_content: Optional[str] = None

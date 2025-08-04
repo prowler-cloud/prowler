@@ -43,6 +43,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365MissingEnvironmentCredentialsError,
     M365NoAuthenticationMethodError,
     M365NotTenantIdButClientIdAndClientSecretError,
+    M365NotValidCertificateContentError,
     M365NotValidClientIdError,
     M365NotValidClientSecretError,
     M365NotValidTenantIdError,
@@ -419,7 +420,7 @@ class M365Provider(Provider):
                 client_id=m365_credentials.get("client_id", ""),
                 client_secret=m365_credentials.get("client_secret", ""),
                 tenant_id=m365_credentials.get("tenant_id", ""),
-                certificate_content=m365_credentials.get("certificate_content", None),
+                certificate_content=m365_credentials.get("certificate_content", ""),
                 tenant_domains=identity.tenant_domains,
             )
         elif env_auth:
@@ -578,14 +579,22 @@ class M365Provider(Provider):
             try:
                 if m365_credentials:
                     try:
-                        credentials = ClientSecretCredential(
-                            tenant_id=m365_credentials["tenant_id"],
-                            client_id=m365_credentials["client_id"],
-                            client_secret=m365_credentials["client_secret"],
-                            user=m365_credentials["user"],
-                            password=m365_credentials["password"],
-                            certificate_content=m365_credentials["certificate_content"],
-                        )
+                        if m365_credentials["certificate_content"]:
+                            credentials = CertificateCredential(
+                                tenant_id=m365_credentials["tenant_id"],
+                                client_id=m365_credentials["client_id"],
+                                certificate_data=base64.b64decode(
+                                    m365_credentials["certificate_content"]
+                                ),
+                            )
+                        else:
+                            credentials = ClientSecretCredential(
+                                tenant_id=m365_credentials["tenant_id"],
+                                client_id=m365_credentials["client_id"],
+                                client_secret=m365_credentials["client_secret"],
+                                user=m365_credentials["user"],
+                                password=m365_credentials["password"],
+                            )
                         return credentials
                     except ClientAuthenticationError as error:
                         logger.error(
@@ -771,8 +780,6 @@ class M365Provider(Provider):
                         tenant_id=tenant_id,
                         client_id=client_id,
                         client_secret=client_secret,
-                        user=None,
-                        password=None,
                     )
                 else:
                     m365_credentials = M365Provider.validate_static_credentials(
@@ -782,6 +789,12 @@ class M365Provider(Provider):
                         user=user,
                         password=password,
                     )
+            elif tenant_id and client_id and certificate_content:
+                m365_credentials = M365Provider.validate_static_credentials(
+                    tenant_id=tenant_id,
+                    client_id=client_id,
+                    certificate_content=certificate_content,
+                )
 
             # Set up the M365 session
             session = M365Provider.setup_session(
@@ -1121,6 +1134,7 @@ class M365Provider(Provider):
         client_secret: str = None,
         user: str = None,
         password: str = None,
+        certificate_content: str = None,
     ) -> dict:
         """
         Validates the static credentials for the M365 provider.
@@ -1161,21 +1175,27 @@ class M365Provider(Provider):
                 message="The provided Client ID is not valid.",
             )
 
-        # Validate the Client Secret
-        if not client_secret:
-            raise M365NotValidClientSecretError(
-                file=os.path.basename(__file__),
-                message="The provided Client Secret is not valid.",
-            )
+        if certificate_content:
+            try:
+                # Validate that certificate content can be properly decoded from base64
+                base64.b64decode(certificate_content)
+            except Exception as e:
+                raise M365NotValidCertificateContentError(
+                    file=os.path.basename(__file__),
+                    message=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+                )
 
         try:
-            M365Provider.verify_client(tenant_id, client_id, client_secret)
+            M365Provider.verify_client(
+                tenant_id, client_id, client_secret, certificate_content
+            )
             return {
                 "tenant_id": tenant_id,
                 "client_id": client_id,
                 "client_secret": client_secret,
                 "user": user,
                 "password": password,
+                "certificate_content": certificate_content,
             }
         except M365NotValidTenantIdError as tenant_id_error:
             logger.error(
@@ -1203,7 +1223,7 @@ class M365Provider(Provider):
             )
 
     @staticmethod
-    def verify_client(tenant_id, client_id, client_secret) -> None:
+    def verify_client(tenant_id, client_id, client_secret, certificate_content) -> None:
         """
         Verifies the M365 client credentials using the specified tenant ID, client ID, and client secret.
 
@@ -1211,6 +1231,7 @@ class M365Provider(Provider):
             tenant_id (str): The M365 Active Directory tenant ID.
             client_id (str): The M365 client ID.
             client_secret (str): The M365 client secret.
+            certificate_content (str): The M365 certificate content.
 
         Raises:
             M365NotValidTenantIdError: If the provided M365 Tenant ID is not valid.
@@ -1222,41 +1243,67 @@ class M365Provider(Provider):
         """
         authority = f"https://login.microsoftonline.com/{tenant_id}"
         try:
-            # Create a ConfidentialClientApplication instance
-            app = ConfidentialClientApplication(
-                client_id=client_id,
-                client_credential=client_secret,
-                authority=authority,
-            )
+            if client_secret:
+                # Create a ConfidentialClientApplication instance
+                app = ConfidentialClientApplication(
+                    client_id=client_id,
+                    client_credential=client_secret,
+                    authority=authority,
+                )
+                # Attempt to acquire a token
+                result = app.acquire_token_for_client(
+                    scopes=["https://graph.microsoft.com/.default"]
+                )
 
-            # Attempt to acquire a token
-            result = app.acquire_token_for_client(
-                scopes=["https://graph.microsoft.com/.default"]
-            )
+                # Check if token acquisition was successful
+                if "access_token" not in result:
+                    # Handle specific errors based on the MSAL response
+                    error_description = result.get("error_description", "")
+                    if f"Tenant '{tenant_id}'" in error_description:
+                        raise M365NotValidTenantIdError(
+                            file=os.path.basename(__file__),
+                            message="The provided Tenant ID is not valid for the specified Client ID and Client Secret.",
+                        )
+                    if (
+                        f"Application with identifier '{client_id}'"
+                        in error_description
+                    ):
+                        raise M365NotValidClientIdError(
+                            file=os.path.basename(__file__),
+                            message="The provided Client ID is not valid for the specified Tenant ID and Client Secret.",
+                        )
+                    if "Invalid client secret provided" in error_description:
+                        raise M365NotValidClientSecretError(
+                            file=os.path.basename(__file__),
+                            message="The provided Client Secret is not valid for the specified Tenant ID and Client ID.",
+                        )
+            elif certificate_content:
+                credential = CertificateCredential(
+                    client_id=client_id,
+                    tenant_id=tenant_id,
+                    certificate_data=base64.b64decode(certificate_content),
+                )
+                client = GraphServiceClient(credentials=credential)
 
-            # Check if token acquisition was successful
-            if "access_token" not in result:
-                # Handle specific errors based on the MSAL response
-                error_description = result.get("error_description", "")
-                if f"Tenant '{tenant_id}'" in error_description:
-                    raise M365NotValidTenantIdError(
+                # Verify that the certificate is valid
+                async def verify_certificate():
+                    result = await client.domains.get()
+                    return result.value
+
+                result = asyncio.get_event_loop().run_until_complete(
+                    verify_certificate()
+                )
+                if not result:
+                    raise M365NotValidCertificateContentError(
                         file=os.path.basename(__file__),
-                        message="The provided Tenant ID is not valid for the specified Client ID and Client Secret.",
+                        message="The provided certificate content is not valid.",
                     )
-                if f"Application with identifier '{client_id}'" in error_description:
-                    raise M365NotValidClientIdError(
-                        file=os.path.basename(__file__),
-                        message="The provided Client ID is not valid for the specified Tenant ID and Client Secret.",
-                    )
-                if "Invalid client secret provided" in error_description:
-                    raise M365NotValidClientSecretError(
-                        file=os.path.basename(__file__),
-                        message="The provided Client Secret is not valid for the specified Tenant ID and Client ID.",
-                    )
+
         except (
             M365NotValidTenantIdError,
             M365NotValidClientIdError,
             M365NotValidClientSecretError,
+            M365NotValidCertificateContentError,
         ) as m365_error:
             # M365 specific errors already raised
             raise RuntimeError(f"{m365_error}")

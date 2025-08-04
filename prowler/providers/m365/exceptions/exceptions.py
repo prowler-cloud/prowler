@@ -130,6 +130,10 @@ class M365BaseException(ProwlerException):
             "message": "Failed to create X.509 certificate object from provided certificate content.",
             "remediation": "Ensure the certificate content is valid base64 encoded X.509 certificate data and is properly formatted.",
         },
+        (6031, "M365NotValidCertificateContentError"): {
+            "message": "The provided certificate content is not valid base64 encoded data.",
+            "remediation": "Ensure the certificate content is valid base64 encoded X.509 certificate data without line breaks or invalid characters.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -367,4 +371,11 @@ class M365CertificateCreationError(M365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6030, file=file, original_exception=original_exception, message=message
+        )
+
+
+class M365NotValidCertificateContentError(M365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6031, file=file, original_exception=original_exception, message=message
         )
