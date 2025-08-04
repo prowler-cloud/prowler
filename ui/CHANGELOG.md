@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### Added
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+- Amazon AWS S3 integration [(#8391)](https://github.com/prowler-cloud/prowler/pull/8391)
 - Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
 - XML validation for SAML metadata in the UI [(#8429)](https://github.com/prowler-cloud/prowler/pull/8429)
 
