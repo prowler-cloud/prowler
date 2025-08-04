@@ -1,4 +1,4 @@
-# S3 Integration (Amazon S3)
+# Amazon S3 Integration
 
 **Prowler App** allows users to automatically export scan results to Amazon S3 buckets, enabling seamless integration with existing data workflows and storage infrastructure. This comprehensive guide demonstrates how to configure and manage Amazon S3 integrations to streamline security finding management and reporting.
 
@@ -28,13 +28,13 @@ Before configuring S3 Integration, ensure:
 
 - Access to an Amazon S3 bucket with proper write permissions
 
-- AWS credentials (IAM role or access keys) with S3 write permissions
+- AWS credentials with S3 write permissions
 
 - Understanding of AWS IAM policies and S3 bucket permissions
 
 ## Required Permissions Setup
 
-Before configuring S3 Integration, the existing Prowler SaaS role (ProwlerProSaaSScanRole) requires additional permissions to write scan results to the designated S3 bucket.
+Before configuring S3 Integration, the existing Prowler role (ProwlerScanRole) requires additional permissions to write scan results to the designated S3 bucket.
 
 ### Required IAM Policy Statements
 
@@ -163,6 +163,9 @@ To access S3 Integration:
 
     ![Credentials configuration](../tutorials/img/s3-integration-ui-5.png)
 
+???+ note
+    In Prowler Cloud this is the recommended credentials as the service has AWS credentials to assume an IAM role with an ARN matching  `arn:aws:iam::*:role/Prowler*` or `arn:aws:iam::*:role/prowler*`
+
 2. For IAM role authentication, complete the required fields:
 
     - **Role ARN:** The Amazon Resource Name of the IAM role
@@ -170,9 +173,9 @@ To access S3 Integration:
     - **Role Session Name:** Optional name for the assumed role session
     - **Session Duration:** Optional duration in seconds for the session
 
-**Prowler App** provides Infrastructure as Code (IaC) templates to automate the required permissions setup. These templates simplify the process of adding S3 integration permissions to existing Prowler SaaS roles.
-
 ### Available Templates
+
+**Prowler App** provides Infrastructure as Code (IaC) templates to automate the required permissions setup. These templates simplify the process of adding S3 integration permissions to existing Prowler SaaS roles.
 
 Choose from the following deployment options:
 
