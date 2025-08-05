@@ -49,7 +49,7 @@ Parameters:
       The S3 bucket name where Prowler will store scan reports for your cloud providers.
     Type: String
     Default: ""
-  S3IntegrationBucketAccount:
+  S3IntegrationBucketAccountId:
     Description: |
       The AWS Account ID owner of the S3 Bucket.
     Type: String
@@ -153,7 +153,7 @@ Resources:
                     - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*"
                   Condition:
                     StringEquals:
-                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
                 - Effect: Allow
                   Action:
                     - "s3:GetBucketLocation"
@@ -161,7 +161,7 @@ Resources:
                     - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}"
                   Condition:
                     StringEquals:
-                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
                 - Effect: Allow
                   Action:
                     - "s3:DeleteObject"
@@ -169,7 +169,7 @@ Resources:
                     - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*test-prowler-connection.txt"
                   Condition:
                     StringEquals:
-                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
           - !Ref AWS::NoValue
       Tags:
         - Key: "Service"
@@ -196,7 +196,7 @@ Metadata:
           default: Optional
         Parameters:
           - S3IntegrationBucketName
-          - S3IntegrationBucketAccount
+          - S3IntegrationBucketAccountId
 
 Outputs:
   ProwlerScanRoleArn:
