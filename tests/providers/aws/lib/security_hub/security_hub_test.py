@@ -564,5 +564,5 @@ class TestSecurityHub:
 
         assert (
             str(e.value)
-            == "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
+            == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
         )
