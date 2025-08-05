@@ -44,6 +44,10 @@ class S3ConfigSerializer(BaseValidateSerializer):
                 "Output directory path is too long (max 900 characters)."
             )
 
+        if not len(normalized_path):
+            # If the path is empty, set it to a default value
+            normalized_path = "output"
+
         return normalized_path
 
     class Meta:

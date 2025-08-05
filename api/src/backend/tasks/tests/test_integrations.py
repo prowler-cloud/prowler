@@ -331,6 +331,35 @@ class TestS3IntegrationUploads:
         # Verify complex path normalization
         assert configuration["output_directory"] == "test/folder/subfolder"
 
+    @patch("tasks.jobs.integrations.S3")
+    def test_s3_client_uses_output_directory_in_object_paths(self, mock_s3_class):
+        """Test that S3 client uses output_directory correctly when generating object paths."""
+        mock_integration = MagicMock()
+        mock_integration.credentials = {
+            "aws_access_key_id": "AKIA...",
+            "aws_secret_access_key": "SECRET",
+        }
+        mock_integration.configuration = {
+            "bucket_name": "test-bucket",
+            "output_directory": "my-custom-prefix/scan-results",
+        }
+
+        mock_s3_instance = MagicMock()
+        mock_connection = MagicMock()
+        mock_connection.is_connected = True
+        mock_s3_instance.test_connection.return_value = mock_connection
+        mock_s3_class.return_value = mock_s3_instance
+
+        connected, s3 = get_s3_client_from_integration(mock_integration)
+
+        assert connected is True
+        # Verify S3 was initialized with the correct output_directory
+        mock_s3_class.assert_called_once_with(
+            **mock_integration.credentials,
+            bucket_name="test-bucket",
+            output_directory="my-custom-prefix/scan-results",
+        )
+
 
 @pytest.mark.django_db
 class TestProwlerIntegrationConnectionTest:

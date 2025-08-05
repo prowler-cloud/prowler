@@ -83,13 +83,6 @@ def upload_s3_integration(
         for integration in integrations:
             try:
                 connected, s3 = get_s3_client_from_integration(integration)
-                # Since many scans will be send to the same S3 bucket, we need to
-                # add the output directory to the S3 output directory to avoid
-                # overwriting the files and known the scan origin.
-                folder = os.getenv("OUTPUT_DIRECTORY", "/tmp/prowler_api_output")
-                s3._output_directory = (
-                    f"{s3._output_directory}{output_directory.split(folder)[-1]}"
-                )
             except Exception as e:
                 logger.error(
                     f"S3 connection failed for integration {integration.id}: {e}"
