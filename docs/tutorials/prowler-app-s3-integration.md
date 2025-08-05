@@ -6,7 +6,6 @@ When enabled and configured, scan results will be automatically stored in your c
 
 - csv
 - html
-- json
 - json-ocsf
 <!-- TODO: remove the comment once the AWS Security Hub integration is completed -->
 <!-- - json-asff -->
@@ -36,13 +35,13 @@ The Amazon S3 Integration feature enables users to:
     Before configuring S3 Integration, ensure you have:
 
     - A user with a Role that has `MANAGE_INTEGRATIONS` permission
-    - At least one cloud provider configured in **Prowler App**
+    - At least one cloud provider configured
     - Access to an Amazon S3 bucket with proper write permissions
     - AWS credentials with S3 write permissions (or IAM role configuration)
 
 ## Required Permissions
 
-Before configuring S3 Integration, ensure the AWS credentials, and optionally the IAM Role, used for S3 access have the necessary permissions to write scan results to the designated S3 bucket. This applies whether using static credentials, session credentials, or an IAM role (either self-created or generated using Prowler's infrastructure templates).
+Before configuring the Amazon S3 Integration, ensure the AWS credentials, and optionally the IAM Role, used for S3 access have the necessary permissions to write scan results to the designated S3 bucket. This applies whether using static credentials, session credentials, or an IAM role (either self-created or generated using [Prowler's permissions templates](#available-templates)).
 
 ### IAM Policy
 
@@ -124,11 +123,9 @@ The S3 integration requires the following permissions. Add these to your IAM rol
 
 If your S3 destination bucket is in a different AWS account than the one providing the credentials for S3 access, you must also configure a bucket policy on the destination bucket to allow cross-account access.
 
-#### When Bucket Policy Is Required
-
 The following diagrams illustrate the three common S3 integration scenarios:
 
-##### Scenario 1: Same Account Setup (No Bucket Policy Required)
+#### Scenario 1: Same Account Setup (No Bucket Policy Required)
 
 When both the Prowler credentials and destination S3 bucket are in the same AWS account, no additional bucket policy is required.
 
@@ -136,13 +133,13 @@ When both the Prowler credentials and destination S3 bucket are in the same AWS 
 graph TB
     subgraph Account["AWS Account A"]
         direction TB
-        Role["🔑 Prowler Role/Credentials<br/>- S3:PutObject ✅<br/>- S3:DeleteObject ✅<br/>- S3:GetBucketLocation ✅"]
-        Bucket["🪣 S3 Destination Bucket"]
+        Role["Prowler Credentials<br/>- `s3:PutObject` <br/>- `s3:DeleteObjec`t <br/>- `s3:GetBucketLocation` "]
+        Bucket["S3 Destination Bucket"]
 
-        Role -->|"✅ Direct Access<br/>(Same Account)"| Bucket
+        Role -->|" Direct Access<br/>(Same Account)"| Bucket
     end
 
-    Note["📝 No bucket policy needed<br/>Same account resources can<br/>access each other by default"]
+    Note["No bucket policy needed<br/>Same account resources can<br/>access each other by default"]
 
     style Account fill:#e8f5e8,stroke:#4caf50,stroke-width:3px
     style Role fill:#fff3cd,stroke:#856404,stroke-width:2px
@@ -150,26 +147,26 @@ graph TB
     style Note fill:#f8f9fa,stroke:#6c757d,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
-##### Scenario 2: Cross-Account Setup (Bucket Policy Required)
+#### Scenario 2: Cross-Account Setup (Bucket Policy Required)
 
 When the S3 bucket is in a different AWS account, you must configure a bucket policy to allow cross-account access.
 
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A (Source)"]
-        RoleA["🔑 Prowler Role/Credentials<br/>- S3:PutObject ✅<br/>- S3:DeleteObject ✅<br/>- S3:GetBucketLocation ✅"]
+        RoleA["Prowler Credentials<br/>- s3:PutObject <br/>- s3:DeleteObject <br/>- s3:GetBucketLocation "]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
-        BucketB["🪣 S3 Destination Bucket"]
-        PolicyB["🛡️ Cross-Account Bucket Policy<br/>- Allow PutObject from Account A<br/>- Allow DeleteObject from Account A<br/>- Allow GetBucketLocation from Account A"]
+        BucketB["S3 Destination Bucket"]
+        PolicyB["Cross-Account Bucket Policy<br/>- Allow `s3:PutObject` from Account A<br/>- Allow `s3:DeleteObject` from Account A<br/>- Allow `s3:GetBucketLocation` from Account A"]
 
         PolicyB -.->|"Protects"| BucketB
     end
 
-    RoleA -->|"✅ Cross-Account Access<br/>(Bucket Policy Required)"| BucketB
+    RoleA -->|" Cross-Account Access<br/>(Bucket Policy Required)"| BucketB
 
-    Warning["⚠️ Bucket policy must be configured<br/>on the destination bucket in Account B"]
+    Warning["Bucket policy must be configured<br/>on the destination bucket in Account B"]
 
     style AccountA fill:#fff3cd,stroke:#856404,stroke-width:3px
     style AccountB fill:#d1ecf1,stroke:#0c5460,stroke-width:3px
@@ -179,29 +176,28 @@ graph TB
     style Warning fill:#f8d7da,stroke:#721c24,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
-##### Scenario 3: Multi-Account Setup (Multiple Principals in Bucket Policy)
+#### Scenario 3: Multi-Account Setup (Multiple Principals in Bucket Policy)
 
 When multiple AWS accounts need to write to the same destination bucket, configure the bucket policy with multiple principals.
 
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A"]
-        RoleA["🔑 Prowler Role A<br/>- S3:PutObject ✅<br/>- S3:DeleteObject ✅<br/>- S3:GetBucketLocation ✅"]
+        RoleA["Prowler Role A<br/>- `s3:PutObject` <br/>- `s3:DeleteObject` <br/>- `s3:GetBucketLocation` "]
     end
 
     subgraph AccountC["AWS Account C"]
-        RoleC["🔑 Prowler Role C<br/>- S3:PutObject ✅<br/>- S3:DeleteObject ✅<br/>- S3:GetBucketLocation ✅"]
+        RoleC["Prowler Role C<br/>- `s3:PutObject` <br/>- `s3:DeleteObject` <br/>- `s3:GetBucketLocation` "]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
-        BucketB["🪣 Shared S3 Destination Bucket"]
-        PolicyB["🛡️ Multi-Account Bucket Policy<br/>- Allow access from Account A<br/>- Allow access from Account C<br/>- Multiple principals in policy"]
+        BucketB["Shared S3 Destination Bucket"]
+        PolicyB["Multi-Account Bucket Policy<br/>- Allow access from Account A<br/>- Allow access from Account C<br/>- Multiple principals in policy"]
 
         PolicyB -.->|"Protects"| BucketB
     end
-
-    RoleA -->|"✅ Multi-Account Access"| BucketB
-    RoleC -->|"✅ Multi-Account Access"| BucketB
+    RoleA -->|"Multi-Account Access"| BucketB
+    RoleC -->|"Multi-Account Access"| BucketB
 
     Info["💡 Add multiple AWS account ARNs<br/>to the Principal field in bucket policy"]
 
