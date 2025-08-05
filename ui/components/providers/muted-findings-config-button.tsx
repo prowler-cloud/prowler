@@ -2,7 +2,7 @@
 
 import { SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 
@@ -21,12 +21,6 @@ export const MutedFindingsConfigButton = ({
 }: MutedFindingsConfigButtonProps) => {
   const [isOpen, setIsOpen] = useState(autoOpen);
   const router = useRouter();
-
-  useEffect(() => {
-    if (autoOpen) {
-      setIsOpen(true);
-    }
-  }, [autoOpen]);
 
   const handleOpenModal = () => {
     if (!isDisabled) {

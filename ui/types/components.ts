@@ -20,6 +20,7 @@ export type SubmenuProps = {
   label: string;
   active?: boolean;
   icon: IconComponent;
+  disabled?: boolean;
 };
 
 export type MenuProps = {
