@@ -13,6 +13,10 @@ export const initializePostHog = (): void => {
       capture_exceptions: true,
       capture_pageview: false,
       capture_pageleave: false,
+      session_recording: {
+        maskAllInputs: true,
+        maskTextSelector: "*",
+      },
     });
   } catch (error) {
     console.error("Failed to initialize PostHog:", error);
