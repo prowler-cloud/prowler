@@ -133,7 +133,7 @@ When both the Prowler credentials and destination S3 bucket are in the same AWS 
 graph TB
     subgraph Account["AWS Account A"]
         direction TB
-        Role["Prowler Credentials<br/>- `s3:PutObject` <br/>- `s3:DeleteObjec`t <br/>- `s3:GetBucketLocation` "]
+        Role["Prowler Credentials<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
         Bucket["S3 Destination Bucket"]
 
         Role -->|" Direct Access<br/>(Same Account)"| Bucket
@@ -154,7 +154,7 @@ When the S3 bucket is in a different AWS account, you must configure a bucket po
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A (Source)"]
-        RoleA["Prowler Credentials<br/>- s3:PutObject <br/>- s3:DeleteObject <br/>- s3:GetBucketLocation "]
+        RoleA["Prowler Credentials<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
@@ -183,11 +183,11 @@ When multiple AWS accounts need to write to the same destination bucket, configu
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A"]
-        RoleA["Prowler Role A<br/>- `s3:PutObject` <br/>- `s3:DeleteObject` <br/>- `s3:GetBucketLocation` "]
+        RoleA["Prowler Role A<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
     end
 
     subgraph AccountC["AWS Account C"]
-        RoleC["Prowler Role C<br/>- `s3:PutObject` <br/>- `s3:DeleteObject` <br/>- `s3:GetBucketLocation` "]
+        RoleC["Prowler Role C<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
@@ -211,11 +211,10 @@ graph TB
     style Info fill:#cce5ff,stroke:#004085,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
-#### Configuration Summary
-
-- **Same account**: If the S3 bucket is in the same AWS account as your credentials, no bucket policy changes are needed
-- **Different account**: If the S3 bucket is in a different AWS account, **you must add the bucket policy below**
-- **Multi-account setup**: If multiple AWS accounts write to the same destination bucket, add multiple principals to the bucket policy
+**Summary:**
+- Same account: No bucket policy needed
+- Different account: Bucket policy required
+- Multiple accounts: Multiple principals in bucket policy
 
 #### Required S3 Bucket Policy
 
@@ -302,14 +301,14 @@ For multi-account setups where multiple AWS accounts write to the same bucket, m
 ```
 
 ???+ note
-    In this multi-account example, both accounts use the default `ProwlerScan` role name from Prowler's templates. If using custom IAM roles, replace `ProwlerScan` with your actual role names for each account.
+    Replace `ProwlerScan` with your actual role name if using custom IAM roles.
 
 ### Available Templates
 
-If you prefer using IAM roles over static credentials, **Prowler App** provides Infrastructure as Code (IaC) templates to automate the required permissions setup. These templates create or update IAM roles with the necessary S3 integration permissions, and are particularly useful if you want to use Prowler's recommended role configuration.
+**Prowler App** provides Infrastructure as Code (IaC) templates to automate IAM role setup with S3 integration permissions.
 
 ???+ note
-    These templates are optional. You can also configure S3 integration using your own IAM roles or static AWS credentials with the permissions listed above.
+    Templates are optional. You can use your own IAM roles or static credentials.
 
 Choose from the following deployment options:
 
@@ -335,34 +334,19 @@ aws cloudformation update-stack \
 
 #### Method 2: AWS Console Deployment
 
-If you're using Prowler's CloudFormation template, update the ProwlerScan stack through the AWS Management Console:
-
-1. **Navigate to CloudFormation service** in the AWS region where ProwlerScan stack was deployed
-2. **Select the stack** named "ProwlerScan" and click "Update"
-
-3. **Choose template replacement:**
-
-    - Select "Replace current template"
-    - Choose "Upload a template file"
-    - Upload the new ProwlerScan IAM Role template
-
-4. **Configure stack parameters:**
-
-    - **ExternalID:** Retain the existing value
-    - **S3IntegrationBucketName:** Enter the destination S3 bucket name (without folders, paths, or trailing slashes)
-    - **S3IntegrationBucketAccount:** Enter the AWS account ID that owns the destination S3 bucket
-
-5. **Review configuration:** In "Configure stack options," maintain existing settings and click "Next"
-
-6. **Deploy updates:** Under "Review ProwlerScan," click "Update stack" to apply the changes
+1. Navigate to CloudFormation service
+2. Select "ProwlerScan" stack and click "Update"
+3. Replace template with the new template file
+4. Configure parameters:
+    - **ExternalID:** Keep existing value
+    - **S3IntegrationBucketName:** Your bucket name
+    - **S3IntegrationBucketAccount:** Bucket owner's AWS account ID
+5. Click "Update stack"
 
 #### Terraform
 
-To add the Amazon S3 integration to the ProwlerScan IAM role using Terraform:
-
-1. Download the Terraform code from the [GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform)
-
-2. Execute the following Terraform commands:
+1. Download from [GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform)
+2. Run Terraform commands:
 
 ```bash
 terraform init
@@ -508,6 +492,7 @@ prowler-output-{provider-uid}-{timestamp}.{extension}
 ```
 
 **Components:**
+
 - **prowler-output**: Fixed prefix identifying Prowler scan results
 - **{provider-uid}**: Account identifier (AWS Account ID, Azure Subscription ID, etc.)
 - **{timestamp}**: Scan completion time in `YYYYMMDD-HHMMSS` format
@@ -515,50 +500,14 @@ prowler-output-{provider-uid}-{timestamp}.{extension}
 
 For detailed information about Prowler's reporting formats, refer to the [Prowler reporting documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/reporting/).
 
-### Custom Output Paths
+## Troubleshooting
 
-If you specify a custom output directory during integration setup (e.g., `/security-reports/prowler/`), the structure becomes:
+**Connection test fails:**
+- Check AWS credentials are valid
+- Verify bucket permissions and region
+- Confirm network access to S3
 
-```
-security-reports/
-└── prowler/
-    └── output/
-        ├── csv/
-        ├── html/
-        ├── json/
-        └── json-ocsf/
-```
-
-???+ tip
-    **Organization Best Practices:**
-    - Use descriptive output paths like `/security-scans/prowler-{environment}/` to separate different environments
-    - Consider S3 lifecycle policies to manage storage costs for older scan results
-    - Set up S3 bucket notifications to trigger downstream processing when new scan results arrive
-
-## Troubleshooting Common Issues
-
-### Connection Test Failures
-
-If connection tests fail, verify:
-
-- **AWS Credentials:** Ensure credentials are valid and not expired
-
-- **Bucket Permissions:** Confirm the credentials have write access to the specified bucket
-
-- **Network Connectivity:** Check if network policies allow access to AWS S3
-
-- **Bucket Region:** Verify the bucket exists in the expected AWS region
-
-### Export Failures
-
-If scan results are not appearing in S3:
-
-- **Integration Status:** Ensure the integration shows "Connected" status
-
-- **Provider Association:** Verify the scanned provider is associated with the S3 integration
-
-- **Bucket Policies:** Check for bucket policies that might block writes
-
-- **Path Permissions:** Ensure the output directory path is accessible
-
-For additional assistance, consult the AWS documentation for S3 permissions and IAM role configuration.
+**No scan results in bucket:**
+- Ensure integration shows "Connected"
+- Check provider is associated with integration
+- Verify bucket policies allow writes
