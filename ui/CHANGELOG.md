@@ -36,7 +36,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Status column for findings table in the Compliance Detail view [(#8244)](https://github.com/prowler-cloud/prowler/pull/8244)
 - Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
 - Max character limit validation for Scan label [(#8319)](https://github.com/prowler-cloud/prowler/pull/8319)
-- Notification bell with RSS feed parsing [(#8394)](https://github.com/prowler-cloud/prowler/pull/8394)
 
 ### Security
 
