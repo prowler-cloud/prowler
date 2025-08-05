@@ -2,7 +2,6 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
