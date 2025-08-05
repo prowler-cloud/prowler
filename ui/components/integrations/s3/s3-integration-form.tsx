@@ -66,6 +66,7 @@ export const S3IntegrationForm = ({
         integration?.attributes.configuration.output_directory || "output",
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
+      enabled: integration?.attributes.enabled ?? true,
       credentials_type: "access-secret-key" as const,
       aws_access_key_id: "",
       aws_secret_access_key: "",
@@ -140,33 +141,13 @@ export const S3IntegrationForm = ({
     return credentials;
   };
 
-  const buildConfiguration = (values: any, isPartial = false) => {
+  const buildConfiguration = (values: any) => {
     const configuration: any = {};
 
-    // For creation mode, include all fields
-    if (!isPartial) {
-      configuration.bucket_name = values.bucket_name;
-      configuration.output_directory = values.output_directory || "output";
-    } else {
-      // For edit mode, only include fields that have actually changed
-      const originalBucketName =
-        integration?.attributes.configuration.bucket_name || "";
-      const originalOutputDirectory =
-        integration?.attributes.configuration.output_directory || "";
-
-      // Only include bucket_name if it has changed
-      if (values.bucket_name && values.bucket_name !== originalBucketName) {
-        configuration.bucket_name = values.bucket_name;
-      }
-
-      // Only include output_directory if it has changed
-      if (
-        values.output_directory &&
-        values.output_directory !== originalOutputDirectory
-      ) {
-        configuration.output_directory = values.output_directory;
-      }
-    }
+    // Always include all fields for both creation and edit modes
+    // Backend expects complete configuration object
+    configuration.bucket_name = values.bucket_name;
+    configuration.output_directory = values.output_directory || "output";
 
     return configuration;
   };
@@ -177,10 +158,8 @@ export const S3IntegrationForm = ({
     formData.append("integration_type", values.integration_type);
 
     if (isEditingConfig) {
-      const configuration = buildConfiguration(values, true);
-      if (Object.keys(configuration).length > 0) {
-        formData.append("configuration", JSON.stringify(configuration));
-      }
+      const configuration = buildConfiguration(values);
+      formData.append("configuration", JSON.stringify(configuration));
       // Always send providers array, even if empty, to update relationships
       formData.append("providers", JSON.stringify(values.providers || []));
     } else if (isEditingCredentials) {
@@ -194,6 +173,7 @@ export const S3IntegrationForm = ({
       formData.append("configuration", JSON.stringify(configuration));
       formData.append("credentials", JSON.stringify(credentials));
       formData.append("providers", JSON.stringify(values.providers));
+      formData.append("enabled", JSON.stringify(values.enabled ?? true));
     }
 
     return formData;
