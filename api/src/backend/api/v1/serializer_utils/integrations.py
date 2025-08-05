@@ -9,15 +9,17 @@ from api.v1.serializer_utils.base import BaseValidateSerializer
 
 class S3ConfigSerializer(BaseValidateSerializer):
     bucket_name = serializers.CharField()
-    output_directory = serializers.CharField()
+    output_directory = serializers.CharField(allow_blank=True)
 
     def validate_output_directory(self, value):
         """
         Validate the output_directory field to ensure it's a properly formatted path.
         Prevents paths with excessive slashes like "///////test".
+        If empty, sets a default value.
         """
+        # If empty or None, set default value
         if not value:
-            raise serializers.ValidationError("Output directory cannot be empty.")
+            return "output"
 
         # Normalize the path to remove excessive slashes
         normalized_path = os.path.normpath(value)
@@ -43,10 +45,6 @@ class S3ConfigSerializer(BaseValidateSerializer):
             raise serializers.ValidationError(
                 "Output directory path is too long (max 900 characters)."
             )
-
-        if not len(normalized_path):
-            # If the path is empty, set it to a default value
-            normalized_path = "output"
 
         return normalized_path
 
@@ -140,12 +138,13 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                     "output_directory": {
                         "type": "string",
-                        "description": 'The directory path within the bucket where files will be saved. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
+                        "description": 'The directory path within the bucket where files will be saved. Optional - defaults to "output" if not provided. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
                         "maxLength": 900,
                         "pattern": '^[^<>:"|?*]+$',
+                        "default": "output",
                     },
                 },
-                "required": ["bucket_name", "output_directory"],
+                "required": ["bucket_name"],
             },
         ]
     }
