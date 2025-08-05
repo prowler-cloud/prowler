@@ -32,31 +32,23 @@ The Amazon S3 Integration feature enables users to:
 
 - **Manage integrations independently** with separate configuration and credential controls
 
-## Prerequisites
+???+ info "Prerequisites"
+    Before configuring S3 Integration, ensure you have:
 
-Before configuring S3 Integration, ensure:
-
-- A user with a Role that has `MANAGE_INTEGRATIONS`
-
-- At least one cloud provider configured
-
-- Access to an Amazon S3 bucket with proper write permissions
-
-- AWS credentials with S3 write permissions
-
-- Understanding of AWS IAM policies and S3 bucket permissions
+    - A user with a Role that has `MANAGE_INTEGRATIONS` permission
+    - At least one cloud provider configured in **Prowler App**
+    - Access to an Amazon S3 bucket with proper write permissions
+    - AWS credentials with S3 write permissions (or IAM role configuration)
 
 ## Required Permissions
 
 Before configuring S3 Integration, ensure the AWS credentials, and optionally the IAM Role, used for S3 access have the necessary permissions to write scan results to the designated S3 bucket. This applies whether using static credentials, session credentials, or an IAM role (either self-created or generated using Prowler's infrastructure templates).
 
-### Required IAM Policy Statements
+### IAM Policy
 
 The S3 integration requires the following permissions. Add these to your IAM role policy, or ensure your AWS credentials have these permissions:
 
-#### S3 Delete Object Permission
-
-```json
+```json title="s3:DeleteObject"
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -81,9 +73,7 @@ The S3 integration requires the following permissions. Add these to your IAM rol
 ???+ note
     The delete object permission is required for connection testing. When you test the S3 integration, Prowler creates a temporary beacon file (`test-prowler-connection.txt`) to verify write permissions, then deletes it to confirm the connection is working properly.
 
-#### S3 Put Object Permission
-
-```json
+```json title="s3:PutObject"
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -105,9 +95,7 @@ The S3 integration requires the following permissions. Add these to your IAM rol
 }
 ```
 
-#### S3 Get Object Permission
-
-```json
+```json title="s3:GetBucketLocation"
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -439,7 +427,22 @@ Once you have set up the required permissions (either manually or using the temp
 ???+ success
     Once your credentials are configured and the connection test passes, your S3 integration will be active. Scan results will automatically be exported to your specified bucket after each scan completes.
 
+### Verify Export Functionality
+
+With your S3 integration configured and active, you can now verify that scan results are being exported correctly:
+
+1. **Run a new scan** with a cloud provider configured in the S3 integration
+2. **Check your S3 bucket** for the exported scan results in the specified output directory
+3. **Verify the file structure** matches the expected format (see Export Structure section below)
+
+???+ note
+    S3 exports are processed after scan completion. Depending on scan size and network conditions, exports may take a few minutes to appear in your S3 bucket.
+
 ---
+
+## Managing Your S3 Integrations
+
+Once your integration is active, you can monitor its status and make adjustments as needed through the integrations management interface.
 
 ### View Integration Status
 
@@ -453,73 +456,26 @@ Once you have set up the required permissions (either manually or using the temp
 
     ![Integration status view](./img/s3/s3-integration-ui-6.png)
 
-### Action buttons
+### Integration Management Actions
 
 ![Action buttons](./img/s3/s3-integration-ui-7.png)
 
-### Test Integration Connection
+Each S3 integration provides several management actions accessible through dedicated buttons:
 
-1. Click the "Test" button for any configured integration
+| Button | Purpose | Available Actions | Notes |
+|--------|---------|------------------|-------|
+| **Test** | Verify integration connectivity | • Test AWS credential validity<br/>• Check S3 bucket accessibility<br/>• Verify write permissions<br/>• Validate connection setup | Results displayed in notification message |
+| **Config** | Modify integration settings | • Update selected cloud providers<br/>• Change bucket name<br/>• Modify output directory path | Click "Update Configuration" to save changes |
+| **Credentials** | Update authentication settings | • Modify AWS access keys<br/>• Update IAM role configuration<br/>• Change authentication method | Click "Update Credentials" to save changes |
+| **Enable/Disable** | Toggle integration status | • Enable integration to start exporting results<br/>• Disable integration to pause exports | Status change takes effect immediately |
+| **Delete** | Remove integration permanently | • Permanently delete integration<br/>• Remove all configuration data | ⚠️ **Cannot be undone** - confirm before deleting |
 
-2. The system will verify:
-
-    - AWS credential validity
-    - S3 bucket accessibility
-    - Write permission verification
-
-3. Review the test results in the notification message
-
-### Edit Integration Configuration
-
-1. Click the "Config" button to modify integration settings
-
-2. Update any of the following:
-
-    - Selected cloud providers
-    - Bucket name
-    - Output directory path
-
-3. Click "Update Configuration" to save changes
-
-### Update Integration Credentials
-
-1. Click the "Credentials" button to modify authentication settings
-
-2. Update AWS credentials or authentication method
-
-3. Click "Update Credentials" to save the new authentication configuration
-
-### Delete Integration
-
-1. Click the "Delete" button for the integration you want to remove
-
-2. Confirm the deletion in the modal dialog
-
-3. The integration will be permanently removed from your configuration
-
-???+ warning
-    Deleting an integration cannot be undone. Ensure you no longer need the integration before confirming deletion.
-
-### Enable/Disable Integration
-
-1. Click the "Enable/Disable" button
-
-2. The integration will be enabled or disabled accordingly
+???+ tip "Management Best Practices"
+    - Test your integration after any configuration changes
+    - Use the Enable/Disable toggle for temporary changes instead of deleting
+    - Regularly verify connection status to ensure continuous export functionality
 
 ---
-
-## Step 5: Verify Export Functionality
-
-With your S3 integration configured and active, you can now verify that scan results are being exported correctly to your destination bucket.
-
-1. Run a new scan with a provider configured in the S3 integration
-
-2. Check your S3 bucket for the exported scan results
-
-3. Verify the files appear in the specified output directory
-
-???+ note
-    S3 exports are processed after scan completion. Depending on scan size and network conditions, exports may take a few minutes to appear in your bucket.
 
 ## Understanding S3 Export Structure
 
