@@ -2,7 +2,6 @@
 
 import { ReactNode } from "react";
 
-import { FeedsDetail } from "@/components/feeds";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { BreadcrumbNavigation } from "@/components/ui";
 
