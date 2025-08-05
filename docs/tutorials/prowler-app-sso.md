@@ -151,9 +151,10 @@ This method is convenient for users who primarily work from the IdP portal and p
 Users can also initiate the login process directly from Prowler's login page:
 
 1. Navigate to the Prowler login page
-    ![Sign in with SAML SSO](./img/saml/saml-step-5.png)
-2. Enter their email address from the configured domain
-3. Click "Continue with SAML SSO"
+2. Click "Continue with SAML SSO"
+    ![](./img/saml/saml-signin-1.png)
+3. Enter their email address from the configured domain
+    ![](./img/saml/saml-signin-1.png)
 4. The system redirects users to the IdP for authentication
 5. After successful authentication, users are returned to Prowler App
 
