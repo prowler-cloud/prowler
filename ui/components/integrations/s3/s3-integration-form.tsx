@@ -66,6 +66,7 @@ export const S3IntegrationForm = ({
         integration?.attributes.configuration.output_directory || "output",
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
+      enabled: integration?.attributes.enabled ?? true,
       credentials_type: "access-secret-key" as const,
       aws_access_key_id: "",
       aws_secret_access_key: "",
@@ -194,6 +195,7 @@ export const S3IntegrationForm = ({
       formData.append("configuration", JSON.stringify(configuration));
       formData.append("credentials", JSON.stringify(credentials));
       formData.append("providers", JSON.stringify(values.providers));
+      formData.append("enabled", JSON.stringify(values.enabled ?? true));
     }
 
     return formData;

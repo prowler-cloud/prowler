@@ -68,11 +68,14 @@ export const createIntegration = async (
     const configuration = JSON.parse(formData.get("configuration") as string);
     const credentials = JSON.parse(formData.get("credentials") as string);
     const providers = JSON.parse(formData.get("providers") as string);
+    const enabled = formData.get("enabled")
+      ? JSON.parse(formData.get("enabled") as string)
+      : true;
 
     const integrationData = {
       data: {
         type: "integrations",
-        attributes: { integration_type, configuration, credentials },
+        attributes: { integration_type, configuration, credentials, enabled },
         relationships: {
           providers: {
             data: providers.map((providerId: string) => ({
@@ -83,6 +86,8 @@ export const createIntegration = async (
         },
       },
     };
+
+    console.log("integrationData", JSON.stringify(integrationData, null, 2));
 
     const response = await fetch(url.toString(), {
       method: "POST",
