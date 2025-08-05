@@ -16,22 +16,27 @@ const statusColorMap: Record<
 export const StatusFindingBadge = ({
   status,
   size = "sm",
+  value,
   ...props
 }: {
   status: FindingStatus;
   size?: "sm" | "md" | "lg";
+  value?: string | number;
 }) => {
   const color = statusColorMap[status];
 
   return (
     <Chip
-      className="gap-1 border-none px-2 py-1 capitalize text-default-600"
+      className="border-none px-2 py-0"
       size={size}
       variant="flat"
       color={color}
       {...props}
     >
-      {status}
+      <span className="text-xs font-light tracking-wide text-default-600">
+        {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+        {value !== undefined && `: ${value}`}
+      </span>
     </Chip>
   );
 };

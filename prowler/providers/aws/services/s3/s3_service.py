@@ -2,7 +2,7 @@ import json
 from typing import Dict, List, Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -16,6 +16,7 @@ class S3(AWSService):
         self.account_arn_template = f"arn:{self.audited_partition}:s3:{self.region}:{self.audited_account}:account"
         self.regions_with_buckets = []
         self.buckets = {}
+        self.audited_canonical_id = ""
         self._list_buckets(provider)
         self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
         self.__threading_call__(self._get_bucket_logging, self.buckets.values())
@@ -40,6 +41,7 @@ class S3(AWSService):
         logger.info("S3 - Listing buckets...")
         try:
             list_buckets = self.client.list_buckets()
+            self.audited_canonical_id = list_buckets["Owner"]["ID"]
             for bucket in list_buckets["Buckets"]:
                 try:
                     bucket_region = self.client.get_bucket_location(
@@ -237,9 +239,10 @@ class S3(AWSService):
         logger.info("S3 - Get buckets acl...")
         try:
             regional_client = self.regional_clients[bucket.region]
+            acl = regional_client.get_bucket_acl(Bucket=bucket.name)
+            bucket.owner_id = acl["Owner"]["ID"]
             grantees = []
-            acl_grants = regional_client.get_bucket_acl(Bucket=bucket.name)["Grants"]
-            for grant in acl_grants:
+            for grant in acl["Grants"]:
                 grantee = ACL_Grantee(type=grant["Grantee"]["Type"])
                 if "DisplayName" in grant["Grantee"]:
                     grantee.display_name = grant["Grantee"]["DisplayName"]
@@ -511,9 +514,10 @@ class S3Control(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.account_public_access_block = self._get_public_access_block()
+        self.account_public_access_block = None
         self.access_points = {}
         self.multi_region_access_points = {}
+        self._get_public_access_block()
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
         if self.audited_partition == "aws":
@@ -525,7 +529,7 @@ class S3Control(AWSService):
             public_access_block = self.client.get_public_access_block(
                 AccountId=self.audited_account
             )["PublicAccessBlockConfiguration"]
-            return PublicAccessBlock(
+            self.account_public_access_block = PublicAccessBlock(
                 block_public_acls=public_access_block["BlockPublicAcls"],
                 ignore_public_acls=public_access_block["IgnorePublicAcls"],
                 block_public_policy=public_access_block["BlockPublicPolicy"],
@@ -534,15 +538,19 @@ class S3Control(AWSService):
         except Exception as error:
             if "NoSuchPublicAccessBlockConfiguration" in str(error):
                 # Set all block as False
-                return PublicAccessBlock(
+                self.account_public_access_block = PublicAccessBlock(
                     block_public_acls=False,
                     ignore_public_acls=False,
                     block_public_policy=False,
                     restrict_public_buckets=False,
                 )
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _list_access_points(self, regional_client):
         logger.info("S3 - Listing account access points...")
@@ -678,6 +686,8 @@ class ReplicationRule(BaseModel):
 class Bucket(BaseModel):
     arn: str
     name: str
+    owner_id: Optional[str]
+    owner: Optional[str]
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class AWSCISModel(BaseModel):
@@ -16,7 +16,7 @@ class AWSCISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str
@@ -25,9 +25,9 @@ class AWSCISModel(BaseModel):
     Requirements_Attributes_RemediationProcedure: str
     Requirements_Attributes_AuditProcedure: str
     Requirements_Attributes_AdditionalInformation: str
-    Requirements_Attributes_DefaultValue: Optional[
-        str
-    ]  # TODO Optional for now since it's not present in the CIS 1.5, 2.0 and 3.0 AWS benchmark
+    Requirements_Attributes_DefaultValue: Optional[str] = (
+        None  # TODO Optional for now since it's not present in the CIS 1.5, 2.0 and 3.0 AWS benchmark
+    )
     Requirements_Attributes_References: str
     Status: str
     StatusExtended: str
@@ -50,7 +50,7 @@ class AzureCISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str
@@ -69,9 +69,9 @@ class AzureCISModel(BaseModel):
     Muted: bool
 
 
-class Microsoft365CISModel(BaseModel):
+class M365CISModel(BaseModel):
     """
-    Microsoft365CISModel generates a finding's output in Microsoft365 CIS Compliance format.
+    M365CISModel generates a finding's output in Microsoft 365 CIS Compliance format.
     """
 
     Provider: str
@@ -82,6 +82,7 @@ class Microsoft365CISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str
@@ -113,7 +114,7 @@ class GCPCISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str
@@ -144,7 +145,38 @@ class KubernetesCISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
+    Requirements_Attributes_Profile: Optional[str] = None
+    Requirements_Attributes_AssessmentStatus: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_RationaleStatement: str
+    Requirements_Attributes_ImpactStatement: str
+    Requirements_Attributes_RemediationProcedure: str
+    Requirements_Attributes_AuditProcedure: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_References: str
+    Requirements_Attributes_DefaultValue: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+
+
+class GithubCISModel(BaseModel):
+    """
+    GithubCISModel generates a finding's output in Github CIS Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    Account_Name: str
+    Account_Id: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: str
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str

@@ -245,6 +245,31 @@ def create_service_dropdown(services: list) -> html.Div:
     )
 
 
+def create_provider_dropdown(providers: list) -> html.Div:
+    """
+    Dropdown to select the provider.
+    Args:
+        providers (list): List of providers.
+    Returns:
+        html.Div: Dropdown to select the provider.
+    """
+    return html.Div(
+        [
+            html.Label(
+                "Provider:", className="text-prowler-stone-900 font-bold text-sm"
+            ),
+            dcc.Dropdown(
+                id="provider-filter",
+                options=[{"label": i, "value": i} for i in providers],
+                value=["All"],
+                clearable=False,
+                multi=True,
+                style={"color": "#000000"},
+            ),
+        ],
+    )
+
+
 def create_status_dropdown(status: list) -> html.Div:
     """
     Dropdown to select the status.

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -86,13 +86,14 @@ class Route53(AWSService):
                 )
                 for page in list_query_logging_configs_paginator.paginate():
                     for logging_config in page["QueryLoggingConfigs"]:
-                        self.hosted_zones[hosted_zone.id].logging_config = (
-                            LoggingConfig(
-                                cloudwatch_log_group_arn=logging_config[
-                                    "CloudWatchLogsLogGroupArn"
-                                ]
+                        if logging_config["HostedZoneId"] == hosted_zone.id:
+                            self.hosted_zones[hosted_zone.id].logging_config = (
+                                LoggingConfig(
+                                    cloudwatch_log_group_arn=logging_config[
+                                        "CloudWatchLogsLogGroupArn"
+                                    ]
+                                )
                             )
-                        )
 
         except Exception as error:
             logger.error(

@@ -12,6 +12,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
+from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
 
 html_stats = {
     "total_pass": 25,
@@ -25,10 +26,10 @@ pass_html_finding = """
                         <tr class="p-3 mb-2 bg-success-custom">
                             <td>PASS</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -43,10 +44,10 @@ fail_html_finding = """
                         <tr class="table-danger">
                             <td>FAIL</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td>test-resource-uid</td>
                             <td>
 &#x2022;key1=value1
@@ -65,10 +66,10 @@ muted_html_finding = """
                         <tr class="table-warning">
                             <td>MUTED (PASS)</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -83,10 +84,10 @@ manual_html_finding = """
                         <tr class="table-info">
                             <td>MANUAL</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -222,6 +223,38 @@ kubernetes_html_assessment_summary = """
                     </div>
                 </div>"""
 
+m365_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            M365 Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>M365 Tenant Domain:</b> user.onmicrosoft.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        M365 Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>M365 Identity Type:</b> Application
+                            </li>
+                            <li class="list-group-item">
+                                <b>M365 Identity ID:</b> 00000000-0000-0000-0000-000000000000
+                            </li>
+                            <li class="list-group-item">
+                                <b>M365 User:</b> user@email.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
 
 def get_aws_html_header(args: list) -> str:
     """
@@ -233,8 +266,7 @@ def get_aws_html_header(args: list) -> str:
     Returns:
         str: HTML header for AWS
     """
-    aws_html_header = f"""
-<!DOCTYPE html>
+    aws_html_header = f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -438,10 +470,10 @@ class TestHTML:
                 status="FAIL",
                 resource_tags={"key1": "value1", "key2": "value2"},
                 severity="high",
-                service_name="test-service",
+                service_name="service",
                 region=AWS_REGION_EU_WEST_1,
-                check_id="test-check-id",
-                check_title="test-check-id",
+                check_id="service_test_check_id",
+                check_title="service_test_check_id",
                 resource_uid="test-resource-uid",
                 status_extended="test-status-extended",
                 risk="test-risk",
@@ -555,3 +587,13 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert summary == kubernetes_html_assessment_summary
+
+    def test_m365_get_assessment_summary(self):
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_m365_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        expected_summary = m365_html_assessment_summary
+        assert summary == expected_summary

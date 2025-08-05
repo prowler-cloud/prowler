@@ -8,7 +8,7 @@ class inspector2_active_findings_exist(Check):
     def execute(self):
         findings = []
         for inspector in inspector2_client.inspectors:
-            if inspector.status == "ENABLED":
+            if inspector.status == "ENABLED" and inspector.active_findings is not None:
                 report = Check_Report_AWS(metadata=self.metadata(), resource=inspector)
                 report.status = "PASS"
                 report.status_extended = (

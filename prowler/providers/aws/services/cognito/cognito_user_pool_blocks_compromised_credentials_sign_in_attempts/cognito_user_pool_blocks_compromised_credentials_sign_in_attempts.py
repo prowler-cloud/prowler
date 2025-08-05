@@ -9,6 +9,7 @@ class cognito_user_pool_blocks_compromised_credentials_sign_in_attempts(Check):
             report = Check_Report_AWS(metadata=self.metadata(), resource=pool)
             if (
                 pool.advanced_security_mode == "ENFORCED"
+                and pool.risk_configuration
                 and "SIGN_IN"
                 in pool.risk_configuration.compromised_credentials_risk_configuration.event_filter
                 and pool.risk_configuration.compromised_credentials_risk_configuration.actions

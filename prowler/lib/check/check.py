@@ -631,8 +631,17 @@ def execute(
                 )
             elif global_provider.type == "kubernetes":
                 is_finding_muted_args["cluster"] = global_provider.identity.cluster
-
+            elif global_provider.type == "github":
+                is_finding_muted_args["account_name"] = (
+                    global_provider.identity.account_name
+                )
+            elif global_provider.type == "m365":
+                is_finding_muted_args["tenant_id"] = global_provider.identity.tenant_id
             for finding in check_findings:
+                if global_provider.type == "azure":
+                    is_finding_muted_args["subscription_id"] = (
+                        global_provider.identity.subscriptions.get(finding.subscription)
+                    )
                 is_finding_muted_args["finding"] = finding
                 finding.muted = global_provider.mutelist.is_finding_muted(
                     **is_finding_muted_args

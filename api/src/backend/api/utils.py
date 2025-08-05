@@ -1,16 +1,22 @@
 from datetime import datetime, timezone
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Subquery
 from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation, Provider
+from api.models import Integration, Invitation, Processor, Provider, Resource
+from api.v1.serializers import FindingMetadataSerializer
 from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
+from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
+from prowler.providers.m365.m365_provider import M365Provider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -51,14 +57,21 @@ def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
 
 def return_prowler_provider(
     provider: Provider,
-) -> [AwsProvider | AzureProvider | GcpProvider | KubernetesProvider]:
+) -> [
+    AwsProvider
+    | AzureProvider
+    | GcpProvider
+    | GithubProvider
+    | KubernetesProvider
+    | M365Provider
+]:
     """Return the Prowler provider class based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider: The corresponding provider class.
+        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -72,16 +85,23 @@ def return_prowler_provider(
             prowler_provider = AzureProvider
         case Provider.ProviderChoices.KUBERNETES.value:
             prowler_provider = KubernetesProvider
+        case Provider.ProviderChoices.M365.value:
+            prowler_provider = M365Provider
+        case Provider.ProviderChoices.GITHUB.value:
+            prowler_provider = GithubProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
 
 
-def get_prowler_provider_kwargs(provider: Provider) -> dict:
+def get_prowler_provider_kwargs(
+    provider: Provider, mutelist_processor: Processor | None = None
+) -> dict:
     """Get the Prowler provider kwargs based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secret.
+        mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
         dict: The provider kwargs for the corresponding provider class.
@@ -99,24 +119,39 @@ def get_prowler_provider_kwargs(provider: Provider) -> dict:
         }
     elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
+
+    if mutelist_processor:
+        mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
+        if mutelist_content:
+            prowler_provider_kwargs["mutelist_content"] = mutelist_content
+
     return prowler_provider_kwargs
 
 
 def initialize_prowler_provider(
     provider: Provider,
-) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider:
+    mutelist_processor: Processor | None = None,
+) -> (
+    AwsProvider
+    | AzureProvider
+    | GcpProvider
+    | GithubProvider
+    | KubernetesProvider
+    | M365Provider
+):
     """Initialize a Prowler provider instance based on the given provider type.
 
     Args:
         provider (Provider): The provider object containing the provider type and associated secrets.
+        mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | KubernetesProvider: An instance of the corresponding provider class
-            (`AwsProvider`, `AzureProvider`, `GcpProvider`, or `KubernetesProvider`) initialized with the
+        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
+            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `GithubProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
             provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
-    prowler_provider_kwargs = get_prowler_provider_kwargs(provider)
+    prowler_provider_kwargs = get_prowler_provider_kwargs(provider, mutelist_processor)
     return prowler_provider(**prowler_provider_kwargs)
 
 
@@ -130,10 +165,46 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         Connection: A connection object representing the result of the connection test for the specified provider.
     """
     prowler_provider = return_prowler_provider(provider)
-    prowler_provider_kwargs = provider.secret.secret
+
+    try:
+        prowler_provider_kwargs = provider.secret.secret
+    except Provider.secret.RelatedObjectDoesNotExist as secret_error:
+        return Connection(is_connected=False, error=secret_error)
+
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )
+
+
+def prowler_integration_connection_test(integration: Integration) -> Connection:
+    """Test the connection to a Prowler integration based on the given integration type.
+
+    Args:
+        integration (Integration): The integration object containing the integration type and associated credentials.
+
+    Returns:
+        Connection: A connection object representing the result of the connection test for the specified integration.
+    """
+    if integration.integration_type == Integration.IntegrationChoices.AMAZON_S3:
+        return S3.test_connection(
+            **integration.credentials,
+            bucket_name=integration.configuration["bucket_name"],
+            raise_on_exception=False,
+        )
+    # TODO: It is possible that we can unify the connection test for all integrations, but need refactoring
+    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified making some changes in the SDK.
+    elif (
+        integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+    ):
+        pass
+    elif integration.integration_type == Integration.IntegrationChoices.JIRA:
+        pass
+    elif integration.integration_type == Integration.IntegrationChoices.SLACK:
+        pass
+    else:
+        raise ValueError(
+            f"Integration type {integration.integration_type} not supported"
+        )
 
 
 def validate_invitation(
@@ -176,7 +247,7 @@ def validate_invitation(
         # Admin DB connector is used to bypass RLS protection since the invitation belongs to a tenant the user
         # is not a member of yet
         invitation = Invitation.objects.using(MainRouter.admin_db).get(
-            token=invitation_token, email=email
+            token=invitation_token, email__iexact=email
         )
     except Invitation.DoesNotExist:
         if raise_not_found:
@@ -197,3 +268,33 @@ def validate_invitation(
         )
 
     return invitation
+
+
+# ToRemove after removing the fallback mechanism in /findings/metadata
+def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
+    filtered_ids = filtered_queryset.order_by().values("id")
+
+    relevant_resources = Resource.all_objects.filter(
+        tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
+    ).only("service", "region", "type")
+
+    aggregation = relevant_resources.aggregate(
+        services=ArrayAgg("service", flat=True),
+        regions=ArrayAgg("region", flat=True),
+        resource_types=ArrayAgg("type", flat=True),
+    )
+
+    services = sorted(set(aggregation["services"] or []))
+    regions = sorted({region for region in aggregation["regions"] or [] if region})
+    resource_types = sorted(set(aggregation["resource_types"] or []))
+
+    result = {
+        "services": services,
+        "regions": regions,
+        "resource_types": resource_types,
+    }
+
+    serializer = FindingMetadataSerializer(data=result)
+    serializer.is_valid(raise_exception=True)
+
+    return serializer.data

@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
+import { apiBaseUrl } from "@/lib";
 import { authFormSchema } from "@/types";
 
 const formSchemaSignIn = authFormSchema("sign-in");
@@ -57,8 +58,7 @@ export async function authenticate(
 export const createNewUser = async (
   formData: z.infer<typeof formSchemaSignUp>,
 ) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/users`);
+  const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
     url.searchParams.append("invitation_token", formData.invitationToken);
@@ -105,8 +105,7 @@ export const createNewUser = async (
 };
 
 export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/tokens`);
+  const url = new URL(`${apiBaseUrl}/tokens`);
 
   const bodyData = {
     data: {
@@ -144,8 +143,7 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
 };
 
 export const getUserByMe = async (accessToken: string) => {
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/users/me`);
+  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -173,11 +171,26 @@ export const getUserByMe = async (accessToken: string) => {
       }
     }
 
+    const userRole = parsedResponse.included?.find(
+      (item: any) => item.type === "roles",
+    );
+
+    const permissions = {
+      manage_users: userRole.attributes.manage_users || false,
+      manage_account: userRole.attributes.manage_account || false,
+      manage_providers: userRole.attributes.manage_providers || false,
+      manage_scans: userRole.attributes.manage_scans || false,
+      manage_integrations: userRole.attributes.manage_integrations || false,
+      manage_billing: userRole.attributes.manage_billing || false,
+      unlimited_visibility: userRole.attributes.unlimited_visibility || false,
+    };
+
     return {
       name: parsedResponse.data.attributes.name,
       email: parsedResponse.data.attributes.email,
       company: parsedResponse.data.attributes.company_name,
       dateJoined: parsedResponse.data.attributes.date_joined,
+      permissions,
     };
   } catch (error: any) {
     throw new Error(error.message || "Network error or server unreachable");

@@ -42,6 +42,19 @@ junit-reports/
 # VSCode files
 .vscode/
 
+# Cursor files
+.cursorignore
+.cursor/
+
+# RooCode files
+.roo/
+.rooignore
+.roomodes
+
+# Cline files
+.cline/
+.clineignore
+
 # Terraform
 .terraform*
 *.tfstate
@@ -50,6 +63,7 @@ junit-reports/
 # .env
 ui/.env*
 api/.env*
+.env.local
 
 # Coverage
 .coverage*

@@ -87,7 +87,7 @@ class Test_vpc_endpoint_for_multi_az:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"VPC Endpoint {vpc_endpoint['VpcEndpointId']} in VPC {vpc['VpcId']} has subnets in different AZs."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpointId']} in VPC {vpc['VpcId']} does not have subnets in different AZs."
                 )
                 assert (
                     result[0].resource_arn
@@ -158,7 +158,7 @@ class Test_vpc_endpoint_for_multi_az:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"VPC Endpoint {vpc_endpoint['VpcEndpointId']} in VPC {vpc['VpcId']} does not have subnets in different AZs."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpointId']} in VPC {vpc['VpcId']} has subnets in different AZs."
                 )
                 assert (
                     result[0].resource_arn

@@ -1,45 +1,52 @@
-# Boto3 Retrier Configuration
+# Boto3 Retrier Configuration in Prowler
 
-Prowler's AWS Provider uses the Boto3 [Standard](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html) retry mode to assist in retrying client calls to AWS services when these kinds of errors or exceptions are experienced. This mode includes the following behaviours:
+Prowler's AWS Provider leverages Boto3's [Standard](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html) retry mode to automatically retry client calls to AWS services when encountering errors or exceptions.
 
-- A default value of 3 for maximum retry attempts. This can be overwritten with the `--aws-retries-max-attempts 5` argument.
+## Retry Behavior Overview
 
-- Retry attempts for an expanded list of errors/exceptions:
-    ```
-    # Transient errors/exceptions
-    RequestTimeout
-    RequestTimeoutException
-    PriorRequestNotComplete
-    ConnectionError
-    HTTPClientError
+Boto3's Standard retry mode includes the following mechanisms:
 
-    # Service-side throttling/limit errors and exceptions
-    Throttling
-    ThrottlingException
-    ThrottledException
-    RequestThrottledException
-    TooManyRequestsException
-    ProvisionedThroughputExceededException
-    TransactionInProgressException
-    RequestLimitExceeded
-    BandwidthLimitExceeded
-    LimitExceededException
-    RequestThrottled
-    SlowDown
-    EC2ThrottledException
-    ```
+- Maximum Retry Attempts: Default value set to 3, configurable via the `--aws-retries-max-attempts 5` argument.
 
-- Retry attempts on nondescriptive, transient error codes. Specifically, these HTTP status codes: 500, 502, 503, 504.
+- Expanded Error Handling: Retries occur for a comprehensive set of errors.
 
-- Any retry attempt will include an exponential backoff by a base factor of 2 for a maximum backoff time of 20 seconds.
+  ```
+  # *Transient Errors/Exceptions*
+  The retrier handles various temporary failures:
+  RequestTimeout
+  RequestTimeoutException
+  PriorRequestNotComplete
+  ConnectionError
+  HTTPClientError
 
-## Notes for validating retry attempts
+  # *Service-Side Throttling and Limit Errors*
+  Retries occur for service-imposed rate limits and resource constraints:
+  Throttling
+  ThrottlingException
+  ThrottledException
+  RequestThrottledException
+  TooManyRequestsException
+  ProvisionedThroughputExceededException
+  TransactionInProgressException
+  RequestLimitExceeded
+  BandwidthLimitExceeded
+  LimitExceededException
+  RequestThrottled
+  SlowDown
+  EC2ThrottledException
+  ```
 
-If you are making changes to Prowler, and want to validate if requests are being retried or given up on, you can take the following approach
+- Nondescriptive Transient Error Codes: The retrier applies retry logic to standard HTTP status codes signaling transient errors: 500, 502, 503, 504.
+
+- Exponential Backoff Strategy: Each retry attempt follows exponential backoff with a base factor of 2, ensuring progressive delay between retries. Maximum backoff time: 20 seconds
+
+## Validating Retry Attempts
+
+For testing or modifying Prowler's behavior, use the following steps to confirm whether requests are being retried or abandoned:
 
 * Run prowler with `--log-level DEBUG` and `--log-file debuglogs.txt`
 * Search for retry attempts using `grep -i 'Retry needed' debuglogs.txt`
 
-This is based off of the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), which states that if a retry is performed, you will see a message starting with "Retry needed".
+This approach follows the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), which states that if a retry is performed, a message starting with "Retry needed” will be prompted.
 
-You can determine the total number of calls made using `grep -i 'Sending http request' debuglogs.txt | wc -l`
+It is possible to determine the total number of calls made using `grep -i 'Sending http request' debuglogs.txt | wc -l`

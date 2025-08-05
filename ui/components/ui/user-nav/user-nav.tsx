@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut, User } from "lucide-react";
-import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 import { logOut } from "@/actions/auth";
 import {
@@ -9,6 +9,8 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar/avatar";
+import { Button } from "@/components/ui/button/button";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,14 +26,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
-import { UserProfileProps } from "@/types";
 
-import { Button } from "../button/button";
+export const UserNav = () => {
+  const { data: session } = useSession();
 
-export const UserNav = ({ user }: { user?: UserProfileProps }) => {
-  if (!user || !user.data) return null;
+  if (!session?.user) return null;
 
-  const { name, email, company_name } = user.data.attributes;
+  const { name, email, companyName } = session.user;
 
   return (
     <DropdownMenu>
@@ -66,8 +67,8 @@ export const UserNav = ({ user }: { user?: UserProfileProps }) => {
           <div className="flex flex-col space-y-1">
             <p className="text-small font-medium leading-none">
               {name}
-              {company_name && (
-                <span className="text-xs">{` | ${company_name}`}</span>
+              {companyName && (
+                <span className="text-xs">{` | ${companyName}`}</span>
               )}
             </p>
             <p className="text-muted-foreground text-xs leading-none">
@@ -77,11 +78,15 @@ export const UserNav = ({ user }: { user?: UserProfileProps }) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem disabled className="hover:cursor-pointer" asChild>
-            <Link href="/profile" className="flex items-center">
+          <DropdownMenuItem className="hover:cursor-pointer" asChild>
+            <CustomLink
+              href="/profile"
+              className="flex items-center font-normal text-prowler-black dark:text-prowler-white"
+              target="_self"
+            >
               <User className="text-muted-foreground mr-3 h-4 w-4" />
               Account
-            </Link>
+            </CustomLink>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

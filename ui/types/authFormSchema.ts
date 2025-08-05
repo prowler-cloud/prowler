@@ -1,5 +1,69 @@
 import { z } from "zod";
 
+import { SPECIAL_CHARACTERS } from "@/lib/utils";
+
+export type AuthSocialProvider = "google" | "github";
+
+export const PASSWORD_REQUIREMENTS = {
+  minLength: 12,
+  specialChars: SPECIAL_CHARACTERS,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumbers: true,
+} as const;
+
+export const passwordRequirementCheckers = {
+  minLength: (password: string) =>
+    password.length >= PASSWORD_REQUIREMENTS.minLength,
+  specialChars: (password: string) =>
+    PASSWORD_REQUIREMENTS.specialChars
+      .split("")
+      .some((char) => password.includes(char)),
+  uppercase: (password: string) => /[A-Z]/.test(password),
+  lowercase: (password: string) => /[a-z]/.test(password),
+  numbers: (password: string) => /[0-9]/.test(password),
+};
+
+export const validatePassword = () => {
+  const {
+    minLength,
+    specialChars,
+    requireUppercase,
+    requireLowercase,
+    requireNumbers,
+  } = PASSWORD_REQUIREMENTS;
+
+  return z
+    .string()
+    .min(minLength, {
+      message: `Password must contain at least ${minLength} characters.`,
+    })
+    .refine(passwordRequirementCheckers.specialChars, {
+      message: `Password must contain at least one special character from: ${specialChars}`,
+    })
+    .refine(
+      (password) =>
+        !requireUppercase || passwordRequirementCheckers.uppercase(password),
+      {
+        message: "Password must contain at least one uppercase letter.",
+      },
+    )
+    .refine(
+      (password) =>
+        !requireLowercase || passwordRequirementCheckers.lowercase(password),
+      {
+        message: "Password must contain at least one lowercase letter.",
+      },
+    )
+    .refine(
+      (password) =>
+        !requireNumbers || passwordRequirementCheckers.numbers(password),
+      {
+        message: "Password must contain at least one number.",
+      },
+    );
+};
+
 export const authFormSchema = (type: string) =>
   z
     .object({
@@ -18,8 +82,8 @@ export const authFormSchema = (type: string) =>
       confirmPassword:
         type === "sign-in"
           ? z.string().optional()
-          : z.string().min(12, {
-              message: "It must contain at least 12 characters.",
+          : z.string().min(1, {
+              message: "Please confirm your password.",
             }),
       invitationToken:
         type === "sign-in" ? z.string().optional() : z.string().optional(),
@@ -33,15 +97,14 @@ export const authFormSchema = (type: string) =>
 
       // Fields for Sign In and Sign Up
       email: z.string().email(),
-      password:
-        type === "sign-in"
-          ? z.string()
-          : z.string().min(12, {
-              message: "It must contain at least 12 characters.",
-            }),
+      password: type === "sign-in" ? z.string() : validatePassword(),
+      isSamlMode: z.boolean().optional(),
     })
     .refine(
-      (data) => type === "sign-in" || data.password === data.confirmPassword,
+      (data) => {
+        if (data.isSamlMode) return true;
+        return type === "sign-in" || data.password === data.confirmPassword;
+      },
       {
         message: "The password must match",
         path: ["confirmPassword"],

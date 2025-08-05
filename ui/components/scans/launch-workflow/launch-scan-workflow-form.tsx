@@ -26,8 +26,20 @@ export const LaunchScanWorkflow = ({
 }: {
   providers: ProviderInfo[];
 }) => {
-  const formSchema = onDemandScanFormSchema();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const formSchema = z.object({
+    ...onDemandScanFormSchema().shape,
+    scanName: z
+      .union([
+        z
+          .string()
+          .min(3, "Must be at least 3 characters")
+          .max(32, "Must not exceed 32 characters"),
+        z.literal(""),
+      ])
+      .optional(),
+  });
+
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerId: "",
@@ -55,13 +67,11 @@ export const LaunchScanWorkflow = ({
 
     const data = await scanOnDemand(formData);
 
-    if (data?.errors && data.errors.length > 0) {
-      const error = data.errors[0];
-      const errorMessage = `${error.detail}`;
+    if (data?.error) {
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: errorMessage,
+        description: data.error,
       });
     } else {
       toast({
@@ -77,25 +87,25 @@ export const LaunchScanWorkflow = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-wrap justify-start gap-4"
       >
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-3">
-            <SelectScanProvider
-              providers={providers}
-              control={form.control}
-              name="providerId"
-            />
-          </div>
-          <AnimatePresence>
-            {form.watch("providerId") && (
-              <>
+        <div className="w-72">
+          <SelectScanProvider
+            providers={providers}
+            control={form.control}
+            name="providerId"
+          />
+        </div>
+        <AnimatePresence>
+          {form.watch("providerId") && (
+            <>
+              <div className="flex flex-wrap gap-6 md:gap-4">
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="col-span-2 self-end"
+                  className="h-[3.4rem] min-w-[15.2rem] self-end"
                 >
                   <CustomInput
                     control={form.control}
@@ -115,36 +125,35 @@ export const LaunchScanWorkflow = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="col-span-4 flex items-end gap-4"
+                  className="flex items-end gap-4"
                 >
-                  <div className="flex flex-row items-end gap-4">
-                    <CustomButton
-                      type="submit"
-                      ariaLabel="Start scan now"
-                      variant="solid"
-                      color="action"
-                      size="sm"
-                      isLoading={isLoading}
-                      startContent={!isLoading && <RocketIcon size={16} />}
-                    >
-                      {isLoading ? <>Loading</> : <span>Start now</span>}
-                    </CustomButton>
-                    <CustomButton
-                      onPress={() => form.reset()}
-                      className="w-fit border-gray-200 bg-transparent"
-                      ariaLabel="Clear form"
-                      variant="bordered"
-                      size="sm"
-                      radius="sm"
-                    >
-                      Cancel
-                    </CustomButton>
-                  </div>
+                  <CustomButton
+                    type="submit"
+                    ariaLabel="Start scan now"
+                    variant="solid"
+                    color="action"
+                    size="sm"
+                    isLoading={isLoading}
+                    startContent={!isLoading && <RocketIcon size={16} />}
+                  >
+                    {isLoading ? <>Loading</> : <span>Start now</span>}
+                  </CustomButton>
+                  <CustomButton
+                    onPress={() => form.reset()}
+                    className="w-fit border-gray-200 bg-transparent"
+                    ariaLabel="Clear form"
+                    variant="bordered"
+                    size="sm"
+                    radius="sm"
+                  >
+                    Cancel
+                  </CustomButton>
                 </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-          {/* 
+              </div>
+            </>
+          )}
+        </AnimatePresence>
+        {/*
           <div className="flex flex-col justify-start">
             <AnimatePresence>
               {form.watch("providerId") && (
@@ -169,7 +178,6 @@ export const LaunchScanWorkflow = ({
               )}
             </AnimatePresence>
           </div> */}
-        </div>
       </form>
     </Form>
   );

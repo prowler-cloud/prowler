@@ -13,6 +13,7 @@ def get_kisa_ismsp_table(
     compliance_overview: bool,
 ):
     sections = {}
+    sections_status = {}
     kisa_ismsp_compliance_table = {
         "Provider": [],
         "Section": [],
@@ -36,7 +37,10 @@ def get_kisa_ismsp_table(
                         # Check if Section exists
                         if section not in sections:
                             sections[section] = {
-                                "Status": f"{Fore.GREEN}PASS{Style.RESET_ALL}",
+                                "Status": {
+                                    "PASS": 0,
+                                    "FAIL": 0,
+                                },
                                 "Muted": 0,
                             }
                         if finding.muted:
@@ -46,14 +50,29 @@ def get_kisa_ismsp_table(
                         else:
                             if finding.status == "FAIL" and index not in fail_count:
                                 fail_count.append(index)
+                                sections[section]["Status"]["FAIL"] += 1
                             elif finding.status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
+                                sections[section]["Status"]["PASS"] += 1
 
     # Add results to table
     sections = dict(sorted(sections.items()))
     for section in sections:
+        if sections[section]["Status"]["FAIL"] > 0:
+            sections_status[section] = (
+                f"{Fore.RED}FAIL({sections[section]['Status']['FAIL']}){Style.RESET_ALL}"
+            )
+        else:
+            if sections[section]["Status"]["PASS"] > 0:
+                sections_status[section] = (
+                    f"{Fore.GREEN}PASS({sections[section]['Status']['PASS']}){Style.RESET_ALL}"
+                )
+            else:
+                sections_status[section] = f"{Fore.GREEN}PASS{Style.RESET_ALL}"
+    for section in sections:
         kisa_ismsp_compliance_table["Provider"].append(compliance.Provider)
         kisa_ismsp_compliance_table["Section"].append(section)
+        kisa_ismsp_compliance_table["Status"].append(sections_status[section])
         kisa_ismsp_compliance_table["Muted"].append(
             f"{orange_color}{sections[section]['Muted']}{Style.RESET_ALL}"
         )

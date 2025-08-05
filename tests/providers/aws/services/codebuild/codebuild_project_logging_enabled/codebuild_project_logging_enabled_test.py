@@ -224,7 +224,7 @@ class Test_codebuild_project_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has enabled CloudWartch logs in log group cw-test-group and S3 logs in bucket s3://test-bucket/logs."
+                == f"CodeBuild project {project_name} has enabled CloudWatch logs in log group cw-test-group and S3 logs in bucket s3://test-bucket/logs."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn

@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+from unittest import mock
 
 from freezegun import freeze_time
 from mock import patch
@@ -25,7 +26,9 @@ class TestAWSWellArchitected:
             )
         ]
 
-        output = AWSWellArchitected(findings, AWS_WELL_ARCHITECTED)
+        output = AWSWellArchitected(
+            findings, AWS_WELL_ARCHITECTED, file_extension=".csv"
+        )
         output_data = output.data[0]
         assert isinstance(output_data, AWSWellArchitectedModel)
         assert output_data.Provider == "aws"
@@ -82,7 +85,7 @@ class TestAWSWellArchitected:
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
         assert output_data.ResourceName == ""
-        assert output_data.CheckId == "test-check-id"
+        assert output_data.CheckId == "service_test_check_id"
         assert output_data.Muted is False
         # Test manual check
         output_data_manual = output.data[1]
@@ -146,7 +149,11 @@ class TestAWSWellArchitected:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
-    @freeze_time(datetime.now())
+    @freeze_time("2025-01-01 00:00:00")
+    @mock.patch(
+        "prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected.timestamp",
+        "2025-01-01 00:00:00",
+    )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [
@@ -164,5 +171,5 @@ class TestAWSWellArchitected:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_NAME;REQUIREMENTS_ATTRIBUTES_WELLARCHITECTEDQUESTIONID;REQUIREMENTS_ATTRIBUTES_WELLARCHITECTEDPRACTICEID;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_SUBSECTION;REQUIREMENTS_ATTRIBUTES_LEVELOFRISK;REQUIREMENTS_ATTRIBUTES_ASSESSMENTMETHOD;REQUIREMENTS_ATTRIBUTES_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_IMPLEMENTATIONGUIDANCEURL;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\naws;Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.;123456789012;eu-west-1;{datetime.now()};SEC01-BP01;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;SEC01-BP01 Separate workloads using accounts;securely-operate;sec_securely_operate_multi_accounts;Security foundations;AWS account management and separation;High;Automated;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.;PASS;;;test-check-id;False;\r\naws;Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.;;;{datetime.now()};SEC01-BP02;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;SEC01-BP01 Separate workloads using accounts;securely-operate;sec_securely_operate_multi_accounts;Security foundations;AWS account management and separation;High;Automated;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.;MANUAL;Manual check;manual_check;manual;False;Manual check\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_NAME;REQUIREMENTS_ATTRIBUTES_WELLARCHITECTEDQUESTIONID;REQUIREMENTS_ATTRIBUTES_WELLARCHITECTEDPRACTICEID;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_SUBSECTION;REQUIREMENTS_ATTRIBUTES_LEVELOFRISK;REQUIREMENTS_ATTRIBUTES_ASSESSMENTMETHOD;REQUIREMENTS_ATTRIBUTES_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_IMPLEMENTATIONGUIDANCEURL;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\naws;Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.;123456789012;eu-west-1;{datetime.now()};SEC01-BP01;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;SEC01-BP01 Separate workloads using accounts;securely-operate;sec_securely_operate_multi_accounts;Security foundations;AWS account management and separation;High;Automated;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.;PASS;;;service_test_check_id;False;\r\naws;Best Practices for AWS Well-Architected Framework Security Pillar. The focus of this framework is the security pillar of the AWS Well-Architected Framework. It provides guidance to help you apply best practices, current recommendations in the design, delivery, and maintenance of secure AWS workloads.;;;{datetime.now()};SEC01-BP02;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;SEC01-BP01 Separate workloads using accounts;securely-operate;sec_securely_operate_multi_accounts;Security foundations;AWS account management and separation;High;Automated;Establish common guardrails and isolation between environments (such as production, development, and test) and workloads through a multi-account strategy. Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access.;https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.;MANUAL;Manual check;manual_check;manual;False;Manual check\r\n"
         assert content == expected_csv
