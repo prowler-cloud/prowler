@@ -44,7 +44,12 @@ On the profile page, find the "SAML SSO Integration" card and click "Enable" to 
 
 ![Enable SAML Integration](./img/saml/saml-step-2.png)
 
-#### Step 3: Configure the Identity Provider (IdP)
+???+ info "Choose Your Method"
+    **Use Step 3A (Generic Method)** for any SAML 2.0 compliant Identity Provider or when you need custom configuration.
+
+    **Use Step 3B (Okta App Catalog)** if you're using Okta and want a simplified setup process with pre-configured settings.
+
+#### Step 3A: Configure the Identity Provider (IdP) - Generic
 
 Prowler App displays the SAML configuration information needed to configure the IdP. Use this information to create a new SAML application in the IdP.
 
@@ -57,6 +62,33 @@ To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler App
 
 ???+ info "IdP Configuration"
     The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](./prowler-app-sso-entra.md).
+
+#### Step 3B: Configure Prowler from App Catalog - Okta
+
+Instead of creating a custom SAML integration, Okta administrators can configure Prowler Cloud directly from Okta's application catalog:
+
+1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., [Browse App Catalog](https://www.okta.com/integrations/) in Okta).
+
+    ![Browse App Catalog](./img/saml/app-catalog-browse.png)
+
+2. **Search for Prowler Cloud**: Use the search functionality to find "Prowler Cloud" in the app catalog. The official Prowler Cloud application will appear in the search results.
+
+    ![Search for Prowler](./img/saml/app-catalog-browse-prowler.png)
+
+3. **Select Prowler Cloud Application**: Click on the Prowler Cloud application from the search results to view its details page.
+
+    ![Prowler Application Details](./img/saml/app-catalog-browse-prowler-add.png)
+
+4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler Cloud to the organization's applications.
+
+5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings.
+
+![Add Prowler Configuration](./img/saml/app-catalog-browse-prowler-configure.png)
+
+6. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
+
+With this step, the Okta app catalog configuration is complete. Users can now access Prowler Cloud using either IdP-initiated or SP-initiated SSO flows.
+
 
 #### Step 4: Configure Attribute Mapping in the IdP
 
@@ -103,55 +135,28 @@ Click the "Save" button to complete the setup. The "SAML Integration" card will 
 You can disable SAML SSO by removing the existing configuration from the integration panel.
 ![Remove SAML configuration](./img/saml/saml-step-remove.png)
 
-### Signing in with SAML SSO
+### IdP-Initiated SSO
 
-Once SAML SSO is enabled, users from the configured domain can sign in by entering their email address on the login page and clicking "Continue with SAML SSO". The system redirects users to the IdP for authentication and then returns them to Prowler App.
+Once SAML SSO is configured, users can access Prowler Cloud directly from their Identity Provider's dashboard:
 
-![Sign in with SAML SSO](./img/saml/saml-step-5.png)
+1. Navigate to the IdP dashboard or portal
+2. Click on the Prowler Cloud application tile
+3. The system automatically authenticates users and redirects them to Prowler Cloud
 
-### IdP-Initiated SSO Configuration
+This method is convenient for users who primarily work from the IdP portal and prefer a seamless single-click access.
 
-Organizations using published Prowler Cloud in their Identity Provider's app catalog can follow these steps to configure IdP-Initiated SSO.
+### SP-Initiated SSO
 
-#### Configuring Prowler from App Catalog
+Users can also initiate the login process directly from Prowler's login page:
 
-Instead of creating a custom SAML integration, administrators can configure Prowler Cloud directly from the IdP's application catalog:
+1. Navigate to the Prowler login page
+    ![Sign in with SAML SSO](./img/saml/saml-step-5.png)
+2. Enter their email address from the configured domain
+3. Click "Continue with SAML SSO"
+4. The system redirects users to the IdP for authentication
+5. After successful authentication, users are returned to Prowler App
 
-1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., [Browse App Catalog](https://www.okta.com/integrations/) in Okta).
-
-    ![Browse App Catalog](./img/saml/app-catalog-browse.png)
-
-2. **Search for Prowler Cloud**: Use the search functionality to find "Prowler Cloud" in the app catalog. The official Prowler Cloud application will appear in the search results.
-
-    ![Search for Prowler](./img/saml/app-catalog-browse-prowler.png)
-
-3. **Select Prowler Cloud Application**: Click on the Prowler Cloud application from the search results to view its details page.
-
-    ![Prowler Application Details](./img/saml/app-catalog-browse-prowler-add.png)
-
-4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler Cloud to the organization's applications.
-
-5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings.
-
-![Add Prowler Configuration](./img/saml/app-catalog-browse-prowler-configure.png)
-
-#### Completing the Setup
-
-Once the Prowler Cloud application is added from the app catalog:
-
-1. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
-
-2. **Test IdP-Initiated Login**: Users can now access Prowler Cloud directly from their IdP dashboard:
-
-    - Navigate to the IdP dashboard or portal
-    - Click on the Prowler Cloud application tile
-    - The system automatically authenticates users and redirects them to Prowler Cloud
-
-
-???+ info "IdP-Initiated vs SP-Initiated SSO"
-    **IdP-Initiated SSO**: Users start the login process from their Identity Provider's dashboard by clicking the Prowler application tile. This method is convenient for users who primarily work from the IdP portal.
-
-    **SP-Initiated SSO**: Users start the login process from Prowler's login page by entering their email and clicking "Continue with SAML SSO". This method is useful when users bookmark Prowler or navigate directly to the application.
+This method is useful when users bookmark Prowler or navigate directly to the application.
 
 ---
 
