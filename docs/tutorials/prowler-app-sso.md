@@ -18,8 +18,8 @@ Follow these steps to enable and configure SAML SSO for an organization.
 
 Prowler can be integrated with SAML SSO identity providers such as Okta to enable single sign-on for the organization's users. The Prowler SAML integration currently supports the following features:
 
--   **IdP-Initiated SSO**: Users can initiate login from their Identity Provider's dashboard.
--   **SP-Initiated SSO**: Users can initiate login directly from the Prowler login page.
+-   [**IdP-Initiated SSO**](#idp-initiated-sso): Users can initiate login from their Identity Provider's dashboard.
+-   [**SP-Initiated SSO**](#sp-initiated-sso): Users can initiate login directly from the Prowler login page.
 -   **Just-in-Time Provisioning**: Users from the organization signing into Prowler for the first time will be automatically created.
 
 ???+ warning "Deactivate SAML"
