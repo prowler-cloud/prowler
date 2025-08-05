@@ -172,16 +172,16 @@ When multiple AWS accounts need to write to the same destination bucket, configu
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A"]
-        RoleA["Prowler Role A"]
+        RoleA["IAM Credentials A"]
     end
 
     subgraph AccountC["AWS Account C"]
-        RoleC["Prowler Role C"]
+        RoleC["IAM Credentials B"]
     end
 
     subgraph AccountB["AWS Account B"]
         BucketB["Shared S3 Destination Bucket"]
-        PolicyB["Multi-Account Bucket Policy<br/>Allow access from Account A & C"]
+        PolicyB["Multi-Account Bucket Policy<br/>Allow access from Account A & B"]
 
         PolicyB -.->|"Protects"| BucketB
     end
@@ -283,6 +283,10 @@ aws cloudformation update-stack \
       ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
       ParameterKey=S3IntegrationBucketAccount,ParameterValue="your-bucket-aws-account-id-owner"
 ```
+
+<!-- TODO: review quick link
+Or use the following AWS CloudFormation [Quick Link](ADD quick link) to deploy the ProwlerScan IAM role with the permissions for the S3 integration: -->
+
 
 ##### AWS Console Deployment
 
