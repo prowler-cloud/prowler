@@ -5167,6 +5167,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5175,6 +5176,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5185,6 +5187,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5195,6 +5198,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5427,6 +5431,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5435,6 +5440,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5445,6 +5451,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5455,6 +5462,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5693,6 +5701,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5701,6 +5710,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5711,6 +5721,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5721,6 +5732,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -8865,7 +8877,6 @@ components:
               readOnly: true
             enabled:
               type: boolean
-              readOnly: true
             connected:
               type: boolean
               readOnly: true
@@ -8897,8 +8908,12 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Path will be normalized to remove excessive slashes
+                      and invalid characters are not allowed (< > : " | ? *). Maximum
+                      length is 900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
                 required:
                 - bucket_name
                 - output_directory
@@ -9006,7 +9021,6 @@ components:
                   readOnly: true
                 enabled:
                   type: boolean
-                  readOnly: true
                 connected:
                   type: boolean
                   readOnly: true
@@ -9039,8 +9053,12 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Path will be normalized to remove excessive
+                          slashes and invalid characters are not allowed (< > : "
+                          | ? *). Maximum length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
                     required:
                     - bucket_name
                     - output_directory
@@ -9195,8 +9213,12 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Path will be normalized to remove excessive slashes
+                      and invalid characters are not allowed (< > : " | ? *). Maximum
+                      length is 900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
                 required:
                 - bucket_name
                 - output_directory
@@ -10549,8 +10571,12 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Path will be normalized to remove excessive
+                          slashes and invalid characters are not allowed (< > : "
+                          | ? *). Maximum length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
                     required:
                     - bucket_name
                     - output_directory
