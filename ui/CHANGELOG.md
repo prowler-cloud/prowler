@@ -10,7 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Amazon AWS S3 integration [(#8391)](https://github.com/prowler-cloud/prowler/pull/8391)
 - Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
 - XML validation for SAML metadata in the UI [(#8429)](https://github.com/prowler-cloud/prowler/pull/8429)
-- Added Mutelist item under Configuration menu for quick access to mutelist configuration [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
+- New menu item under Configuration section for quick access to the Mutelist [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
 
 ### 🔄 Changed
 
