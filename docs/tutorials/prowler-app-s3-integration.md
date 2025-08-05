@@ -133,7 +133,7 @@ When both the Prowler credentials and destination S3 bucket are in the same AWS 
 graph TB
     subgraph Account["AWS Account A"]
         direction TB
-        Role["Prowler Credentials<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
+        Role["Prowler Credentials<br/>"]
         Bucket["S3 Destination Bucket"]
 
         Role -->|" Direct Access<br/>(Same Account)"| Bucket
@@ -154,12 +154,12 @@ When the S3 bucket is in a different AWS account, you must configure a bucket po
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A (Source)"]
-        RoleA["Prowler Credentials<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
+        RoleA["Prowler Credentials<br/>"]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
         BucketB["S3 Destination Bucket"]
-        PolicyB["Cross-Account Bucket Policy<br/>- Allow `s3:PutObject` from Account A<br/>- Allow `s3:DeleteObject` from Account A<br/>- Allow `s3:GetBucketLocation` from Account A"]
+        PolicyB["Cross-Account Bucket Policy<br/>- Allow from Account A"]
 
         PolicyB -.->|"Protects"| BucketB
     end
@@ -183,23 +183,23 @@ When multiple AWS accounts need to write to the same destination bucket, configu
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A"]
-        RoleA["Prowler Role A<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
+        RoleA["Prowler Role A<br/>"]
     end
 
     subgraph AccountC["AWS Account C"]
-        RoleC["Prowler Role C<br/>- s3:PutObject<br/>- s3:DeleteObject<br/>- s3:GetBucketLocation"]
+        RoleC["Prowler Role C<br/>"]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
         BucketB["Shared S3 Destination Bucket"]
-        PolicyB["Multi-Account Bucket Policy<br/>- Allow access from Account A<br/>- Allow access from Account C<br/>- Multiple principals in policy"]
+        PolicyB["Multi-Account Bucket Policy<br/>- Allow access from Account A<br/>- Allow access from Account C"]
 
         PolicyB -.->|"Protects"| BucketB
     end
     RoleA -->|"Multi-Account Access"| BucketB
     RoleC -->|"Multi-Account Access"| BucketB
 
-    Info["💡 Add multiple AWS account ARNs<br/>to the Principal field in bucket policy"]
+    Info["Add multiple AWS account ARNs<br/>to the Principal field in bucket policy"]
 
     style AccountA fill:#fff3cd,stroke:#856404,stroke-width:3px
     style AccountC fill:#e2e3e5,stroke:#383d41,stroke-width:3px
