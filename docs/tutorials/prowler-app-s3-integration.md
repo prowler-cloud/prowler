@@ -125,7 +125,7 @@ If your S3 destination bucket is in a different AWS account than the one providi
 
 The following diagrams illustrate the three common S3 integration scenarios:
 
-#### Scenario 1: Same Account Setup (No Bucket Policy Required)
+##### Same Account Setup (No Bucket Policy Required)
 
 When both the Prowler credentials and destination S3 bucket are in the same AWS account, no additional bucket policy is required.
 
@@ -147,7 +147,7 @@ graph TB
     style Note fill:#f8f9fa,stroke:#6c757d,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
-#### Scenario 2: Cross-Account Setup (Bucket Policy Required)
+##### Cross-Account Setup (Bucket Policy Required)
 
 When the S3 bucket is in a different AWS account, you must configure a bucket policy to allow cross-account access.
 
@@ -176,7 +176,7 @@ graph TB
     style Warning fill:#f8d7da,stroke:#721c24,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
-#### Scenario 3: Multi-Account Setup (Multiple Principals in Bucket Policy)
+##### Multi-Account Setup (Multiple Principals in Bucket Policy)
 
 When multiple AWS accounts need to write to the same destination bucket, configure the bucket policy with multiple principals.
 
@@ -216,7 +216,7 @@ graph TB
 - Different account: Bucket policy required
 - Multiple accounts: Multiple principals in bucket policy
 
-#### Required S3 Bucket Policy
+#### S3 Bucket Policy
 
 Apply the following bucket policy to your destination S3 bucket:
 
@@ -285,7 +285,7 @@ Choose from the following deployment options:
 
 #### CloudFormation
 
-##### Method 1: AWS CLI Deployment
+##### AWS CLI Deployment
 
 If you're using Prowler's CloudFormation template, execute the following command to update the existing ProwlerScan stack:
 
@@ -300,15 +300,15 @@ aws cloudformation update-stack \
       ParameterKey=S3IntegrationBucketAccount,ParameterValue="your-bucket-aws-account-id-owner"
 ```
 
-##### Method 2: AWS Console Deployment
+##### AWS Console Deployment
 
 1. Navigate to CloudFormation service
 2. Select "ProwlerScan" stack and click "Update"
 3. Replace template with the new template file
 4. Configure parameters:
-    - **ExternalID:** Keep existing value
-    - **S3IntegrationBucketName:** Your bucket name
-    - **S3IntegrationBucketAccount:** Bucket owner's AWS account ID
+    - `ExternalID`: Keep existing value
+    - `S3IntegrationBucketName`: Your bucket name
+    - `S3IntegrationBucketAccount`: Bucket owner's AWS account ID
 5. Click "Update stack"
 
 #### Terraform
@@ -379,14 +379,12 @@ Once you have set up the required permissions, you can proceed to configure the 
     Scan outputs are processed after scan completion. Depending on scan size and network conditions, exports may take a few minutes to appear in your S3 bucket.
 ---
 
-## Managing Your S3 Integrations
+
+### Integration Status
 
 Once your integration is active, you can monitor its status and make adjustments as needed through the integrations management interface.
 
-### View Integration Status
-
 1. Review configured integrations in the management interface
-
 2. Each integration displays:
 
     - **Connection Status:** Connected or Disconnected indicator
@@ -395,7 +393,7 @@ Once your integration is active, you can monitor its status and make adjustments
 
     ![Integration status view](./img/s3/s3-integration-ui-6.png)
 
-### Integration Management Actions
+#### Actions
 
 ![Action buttons](./img/s3/s3-integration-ui-7.png)
 
@@ -454,7 +452,7 @@ prowler-output-{provider-uid}-{timestamp}.{extension}
 
 - **prowler-output**: Fixed prefix identifying Prowler scan results
 - **{provider-uid}**: Account identifier (AWS Account ID, Azure Subscription ID, etc.)
-- **{timestamp}**: Scan completion time in `YYYYMMDD-HHMMSS` format
+- **{timestamp}**: Scan completion time in `YYYYMMDDHHMMSS` format
 - **{extension}**: File format extension (`csv`, `html`, `ocsf.json`)
 
 For detailed information about Prowler's reporting formats, refer to the [Prowler reporting documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/reporting/).
