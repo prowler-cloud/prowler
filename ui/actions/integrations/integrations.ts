@@ -87,8 +87,6 @@ export const createIntegration = async (
       },
     };
 
-    console.log("integrationData", JSON.stringify(integrationData, null, 2));
-
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,

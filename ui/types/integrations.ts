@@ -37,7 +37,7 @@ const baseS3IntegrationSchema = z.object({
   bucket_name: z.string().min(1, "Bucket name is required"),
   output_directory: z.string().min(1, "Output directory is required"),
   providers: z.array(z.string()).optional(),
-  enabled: z.boolean().default(true),
+  enabled: z.boolean().optional(),
   // AWS Credentials fields compatible with AWSCredentialsRole
   credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]),
   aws_access_key_id: z.string().optional(),
@@ -122,6 +122,7 @@ const s3IntegrationEditValidation = (data: any, ctx: z.RefinementCtx) => {
 
 export const s3IntegrationFormSchema = baseS3IntegrationSchema
   .extend({
+    enabled: z.boolean().default(true),
     credentials_type: z
       .enum(["aws-sdk-default", "access-secret-key"])
       .default("aws-sdk-default"),
@@ -136,7 +137,6 @@ export const editS3IntegrationFormSchema = baseS3IntegrationSchema
       .min(1, "Output directory is required")
       .optional(),
     providers: z.array(z.string()).optional(),
-    enabled: z.boolean().optional(),
     credentials_type: z
       .enum(["aws-sdk-default", "access-secret-key"])
       .optional(),
