@@ -47,6 +47,9 @@ export default async function Providers({
       >
         <ProvidersContent searchParams={searchParams} />
       </Suspense>
+      {searchParams.mutelist === "true" && (
+        <MutedFindingsConfigButton autoOpen={true} hideButton={true} />
+      )}
     </ContentLayout>
   );
 }

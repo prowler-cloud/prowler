@@ -17,6 +17,7 @@ import {
   User,
   UserCog,
   Users,
+  VolumeX,
   Warehouse,
 } from "lucide-react";
 
@@ -146,6 +147,11 @@ export const getMenuList = (pathname: string): GroupProps[] => {
           icon: Settings,
           submenus: [
             { href: "/providers", label: "Cloud Providers", icon: CloudCog },
+            {
+              href: "/providers?mutelist=true",
+              label: "Mutelist",
+              icon: VolumeX,
+            },
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
