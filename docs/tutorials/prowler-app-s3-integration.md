@@ -269,7 +269,7 @@ Choose from the following deployment options:
 
 #### CloudFormation
 
-##### AWS CLI Deployment
+##### AWS CLI
 
 If you're using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
 
@@ -301,7 +301,7 @@ aws cloudformation create-stack \
 
 A CloudFormation Quick Link is also available [here](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_EnableS3Integration=true)
 
-##### AWS Console Deployment
+##### AWS Console
 
 If you're using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
 
