@@ -36,6 +36,28 @@ Parameters:
       The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
     Type: String
     Default: role/prowler*
+  EnableS3Integration:
+    Description: |
+      Enable S3 integration for storing Prowler scan reports.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+  S3IntegrationBucketName:
+    Description: |
+      The S3 bucket name where Prowler will store scan reports for your cloud providers.
+    Type: String
+    Default: ""
+  S3IntegrationBucketAccount:
+    Description: |
+      The AWS Account ID owner of the S3 Bucket.
+    Type: String
+    Default: ""
+
+Conditions:
+  S3IntegrationEnabled: !Equals [!Ref EnableS3Integration, true]
+
 
 Resources:
   ProwlerScan:
@@ -118,6 +140,37 @@ Resources:
                 Resource:
                   - "arn:*:apigateway:*::/restapis/*"
                   - "arn:*:apigateway:*::/apis/*"
+        - !If
+          - S3IntegrationEnabled
+          - PolicyName: S3Integration
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "s3:PutObject"
+                  Resource:
+                    - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*"
+                  Condition:
+                    StringEquals:
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+                - Effect: Allow
+                  Action:
+                    - "s3:GetBucketLocation"
+                  Resource:
+                    - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}"
+                  Condition:
+                    StringEquals:
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+                - Effect: Allow
+                  Action:
+                    - "s3:DeleteObject"
+                  Resource:
+                    - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*test-prowler-connection.txt"
+                  Condition:
+                    StringEquals:
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccount}
+          - !Ref AWS::NoValue
       Tags:
         - Key: "Service"
           Value: "https://prowler.com"
@@ -127,6 +180,23 @@ Resources:
           Value: "true"
         - Key: "Name"
           Value: "ProwlerScan"
+
+Metadata:
+  AWS::CloudFormation::StackName: "Prowler"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Required
+        Parameters:
+          - ExternalId
+          - AccountId
+          - IAMPrincipal
+          - EnableS3Integration
+      - Label:
+          default: Optional
+        Parameters:
+          - S3IntegrationBucketName
+          - S3IntegrationBucketAccount
 
 Outputs:
   ProwlerScanRoleArn:
