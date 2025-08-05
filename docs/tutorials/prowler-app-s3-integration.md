@@ -146,7 +146,7 @@ graph TB
         RoleA["IAM Credentials"]
     end
 
-    subgraph AccountB["AWS Account B (Destination)"]
+    subgraph AccountB["AWS Account B"]
         BucketB["S3 Destination Bucket"]
         PolicyB["Cross-Account Bucket Policy<br/>Allow from Account A"]
 
@@ -155,7 +155,7 @@ graph TB
 
     RoleA -->|"Cross-Account Access (Bucket Policy Required)"| BucketB
 
-    Warning["⚠️ Bucket policy must be configured on the destination bucket in Account B"]
+    Warning["Bucket policy must be configured on the destination bucket in Account B"]
 
     style AccountA stroke:#f59e0b,stroke-width:2px
     style AccountB stroke:#2563eb,stroke-width:2px
@@ -179,7 +179,7 @@ graph TB
         RoleC["Prowler Role C"]
     end
 
-    subgraph AccountB["AWS Account B (Destination)"]
+    subgraph AccountB["AWS Account B"]
         BucketB["Shared S3 Destination Bucket"]
         PolicyB["Multi-Account Bucket Policy<br/>Allow access from Account A & C"]
 
@@ -188,7 +188,7 @@ graph TB
     RoleA -->|"Multi-Account Access"| BucketB
     RoleC -->|"Multi-Account Access"| BucketB
 
-    Info["💡 Add multiple AWS account ARNs to the Principal field in bucket policy"]
+    Info["Add multiple AWS account ARNs to the Principal field in bucket policy"]
 
     style AccountA stroke:#f59e0b,stroke-width:2px
     style AccountC stroke:#8b5cf6,stroke-width:2px
@@ -246,14 +246,14 @@ For multiple AWS accounts, change the `Principal` field to an array:
 ```json
 "Principal": {
     "AWS": [
-        "arn:aws:iam::<ACCOUNT-1>:role/ProwlerScan",
-        "arn:aws:iam::<ACCOUNT-2>:role/ProwlerScan"
+        "arn:aws:iam::<SOURCE ACCOUNT ID 1>:role/ProwlerScan",
+        "arn:aws:iam::<SOURCE ACCOUNT ID 2>:role/ProwlerScan"
     ]
 }
 ```
 
 ???+ note
-    Replace `ProwlerScan` with your actual role name if using custom IAM roles.
+    Replace `<SOURCE ACCOUNT ID>` with the AWS account ID that contains your IAM role and `<BUCKET NAME>` with your destination bucket name. The role name `ProwlerScan` is the default name when using Prowler's permissions templates. If you're using your own IAM role or different authentication method, replace `ProwlerScan` with your actual role name.
 
 ### Available Templates
 
@@ -400,7 +400,8 @@ Each S3 integration provides several management actions accessible through dedic
 
 When the S3 integration is enabled and a scan completes, Prowler creates a folder inside your specified bucket path (using `output` as the default folder name) with subfolders for each output format:
 
-`prowler-output-{provider-uid}-{timestamp}.{extension}`
+- Regular: `prowler-output-{provider-uid}-{timestamp}.{extension}`
+- Compliance: `prowler-output-{provider-uid}-{timestamp}_{compliance_framework}.{extension}`
 
 ```
 output/
@@ -423,6 +424,7 @@ For detailed information about Prowler's reporting formats, refer to the [Prowle
 **Connection test fails:**
 
 - Check AWS credentials are valid
+- If using IAM Role, check their permissions
 - Verify bucket permissions and region
 - Confirm network access to S3
 
