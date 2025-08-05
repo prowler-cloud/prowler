@@ -14,7 +14,7 @@ A provider is any platform or service that offers resources, data, or functional
 For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.com/).
 
 ???+ important
-    There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI, the idea with this documentation is to know how to create a new provider and integrate it not only in the CLI but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI, the idea with this documentation is to know how to create a new provider and integrate it not only in the CLI but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
 
 ---
 
@@ -63,15 +63,15 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 
 #### Classification Examples
 
-| Provider | Type | Reasoning |
-|----------|------|-----------|
-| AWS | SDK | Official boto3 SDK, multiple auth methods, mature ecosystem |
-| Azure | SDK | Official azure-identity SDK, service principals, managed identity |
-| GCP | SDK | Official google-auth SDK, service accounts, ADC support |
-| GitHub | SDK | Non-Official PyGithub SDK but it's been updated and maintained |
-| NHN Cloud | API | Custom REST API, no official SDK, community provider |
-| IAC/Checkov | Tool | Third-party security tool, no auth needed, output conversion |
-| M365 | Hybrid | Combines msgraph SDK for auth + PowerShell wrapper for operations |
+| Provider    | Type   | Reasoning                                                         |
+| ----------- | ------ | ----------------------------------------------------------------- |
+| AWS         | SDK    | Official boto3 SDK, multiple auth methods, mature ecosystem       |
+| Azure       | SDK    | Official azure-identity SDK, service principals, managed identity |
+| GCP         | SDK    | Official google-auth SDK, service accounts, ADC support           |
+| GitHub      | SDK    | Non-Official PyGithub SDK but it's been updated and maintained    |
+| NHN Cloud   | API    | Custom REST API, no official SDK, community provider              |
+| IAC/Checkov | Tool   | Third-party security tool, no auth needed, output conversion      |
+| M365        | Hybrid | Combines msgraph SDK for auth + PowerShell wrapper for operations |
 
 #### Questions to Ask Yourself
 
@@ -101,9 +101,138 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 - **API Providers**: Medium complexity, you need to implement the authentication and session management, and the API calls to the provider, but you now have Github as example to follow.
 - **Tool/Wrapper Providers**: High complexity, you need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have, but you now have IAC and the PowerShell wrapper as example to follow.
 
+### Determining Regional vs Non-Regional Architecture
+
+After classifying your provider type, the next critical decision is determining whether your provider operates with **regional concepts** or is **global/non-regional**. This decision fundamentally affects how your provider and services are structured and executed.
+
+#### Regional Providers
+
+Regional providers operate across multiple geographic locations and require region-specific resource discovery and iteration.
+
+**Examples:**
+
+- **AWS**: Has regions like `us-east-1`, `eu-west-1`, `ap-southeast-2`
+- **Azure**: Has regions like `East US`, `West Europe`, `Australia East`
+- **GCP**: Has regions like `us-central1`, `europe-west1`, `asia-southeast1`
+
+**Implementation Requirements:**
+
+- Must implement region discovery and iteration
+- Services must be instantiated per region or handle multi-region data
+- Checks must execute across all available/specified regions
+- Resource ARNs/IDs must include region information
+- Region-specific client initialization
+
+**Execution Pattern:**
+
+```python
+# Regional provider execution pattern
+for region in provider.get_regions():
+    regional_client = service.get_regional_client(region)
+    regional_resources = regional_client.discover_resources()
+    # Process regional resources
+```
+
+#### Non-Regional (Global) Providers
+
+Non-regional providers operate globally without geographic partitioning.
+
+**Examples:**
+
+- **GitHub**: Repositories, organizations are global concepts
+- **M365**: Tenants operate globally across Microsoft datacenters
+- **Kubernetes**: Clusters are independent units without regional concepts
+
+**Implementation Requirements:**
+
+- Single global client/session
+- No region iteration required
+- Global resource discovery
+- Simpler resource identification (no region in ARNs/IDs)
+- Single audit execution
+
+**Execution Pattern:**
+
+```python
+# Non-regional provider execution pattern
+global_client = service.get_client()
+global_resources = global_client.discover_resources()
+# Process all resources in single iteration
+```
+
+#### Decision Matrix
+
+| Aspect                   | Regional Provider        | Non-Regional Provider  |
+| ------------------------ | ------------------------ | ---------------------- |
+| **Client Init**          | Per-region clients       | Single global client   |
+| **Resource Discovery**   | Iterate through regions  | Single discovery call  |
+| **Resource ARN/ID**      | Include region           | Global identifier/None |
+| **Audit Execution**      | Multi-region loops       | Single execution       |
+| **Service Architecture** | Region-aware services    | Global services        |
+| **Performance**          | Parallelizable by region | Linear execution       |
+
+#### Region Discovery
+
+Region discovery is the process of getting the list of regions that are available for the account. This is done by the provider and is stored in the `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py` file.
+
+```python
+# File: prowler/providers/aws/aws_provider.py
+def get_aws_enabled_regions(self, current_session: Session) -> set:
+    """get_aws_enabled_regions returns a set of enabled AWS regions"""
+    try:
+        # EC2 Client to check enabled regions
+        service = "ec2"
+        default_region = self.get_default_region(service)
+        ec2_client = current_session.client(service, region_name=default_region)
+
+        enabled_regions = set()
+        # With AllRegions=False we only get the enabled regions for the account
+        for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
+            enabled_regions.add(region.get("RegionName"))
+
+        return enabled_regions
+    except Exception as error:
+        logger.error(f"{error.__class__.__name__}: {error}")
+        return set()
+```
+
+The result of the function is a JSON file that contains the list of regions for the provider. It is used to get the list of regions for the provider and is used to validate the region that the user has provided.
+
+```json
+# File: prowler/providers/aws/aws_regions_by_service.json (extract)
+{
+  "services": {
+    "ec2": {
+      "regions": {
+        "aws": [
+          "af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2",
+          "ap-northeast-3", "ap-south-1", "ap-southeast-1", "ap-southeast-2",
+          "ca-central-1", "eu-central-1", "eu-north-1", "eu-south-1",
+          "eu-west-1", "eu-west-2", "eu-west-3", "me-south-1",
+          "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2"
+        ],
+        "aws-cn": ["cn-north-1", "cn-northwest-1"],
+        "aws-us-gov": ["us-gov-east-1", "us-gov-west-1"]
+      }
+    }
+  }
+}
+```
+
+### Regional Service Implementation
+
+For detailed guidance on implementing services for regional services, including code examples, service architecture, and check execution patterns, see the [Regional Service Implementation](./services.md#regional-service-implementation) section in the Services documentation.
+
+**Key concepts covered:**
+
+- Threading and parallel processing across regions
+- Service implementation patterns for regional providers
+- Cross-region resource attribution and ARN handling
+- Best practices for performance and error isolation
+
 ## Step 1: Create the Provider Backend (CLI Integration)
 
-Once the type of provider is determined, the next step is to start creating the code of the provider.
+Once the type of provider and its regional architecture are determined, the next step is to start creating the code of the provider.
 
 ### SDK Providers
 
@@ -147,6 +276,7 @@ Now it's time to start creating the code needed to implement the provider.
 SDK providers require a specific folder structure to organize authentication, configuration, and service management. This structure follows Prowler's conventions and ensures proper integration with the CLI and API.
 
 **Required Structure:**
+
 ```
 prowler/providers/<provider_name>/
 ├── __init__.py
@@ -652,7 +782,7 @@ class YourProviderMutelist(Mutelist):
 Region management is essential for cloud providers that operate across multiple geographic locations. This component handles region validation and provides region-specific functionality.
 
 ???+ note
-    Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
 
 **File:** `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py`
 
@@ -1029,6 +1159,7 @@ Update the provider documentation to include your new provider in the examples a
 API providers require a specific folder structure to organize authentication, configuration, and service management. This structure follows Prowler's conventions and ensures proper integration with the CLI and API.
 
 **Required Structure:**
+
 ```
 prowler/providers/<provider_name>/
 ├── __init__.py
@@ -1054,6 +1185,7 @@ prowler/providers/<provider_name>/
 ```
 
 **Key Components:**
+
 - **`<provider_name>_provider.py`**: Main provider class with HTTP session management
 - **`models.py`**: Data structures for identity and API responses
 - **`exceptions/`**: Custom exception classes for API errors
@@ -1750,6 +1882,7 @@ Update the provider documentation to include your new API provider in the exampl
 ---
 
 **Example Skeleton:**
+
 ```python
 import os
 import requests
@@ -1866,6 +1999,7 @@ class NhnProvider(Provider):
 Tool/Wrapper providers require a specific folder structure to organize tool integration, configuration, and service management. This structure follows Prowler's conventions and ensures proper integration with the CLI and API.
 
 **Required Structure:**
+
 ```
 prowler/providers/<provider_name>/
 ├── __init__.py
@@ -1881,6 +2015,7 @@ prowler/providers/<provider_name>/
 ```
 
 **Key Components:**
+
 - **`<provider_name>_provider.py`**: Main provider class with tool integration
 - **`models.py`**: Data structures for tool output and configuration
 - **`lib/arguments/`**: CLI argument validation and parsing
@@ -2721,6 +2856,7 @@ Update the provider documentation to include your new tool provider in the examp
 ---
 
 **Example Skeleton:**
+
 ```python
 import json
 import subprocess
@@ -2962,6 +3098,7 @@ TBD
 ### Checklist for New Providers
 
 #### CLI Integration Only
+
 - [ ] Folder and files created in `prowler/providers/<name>`
 - [ ] Provider class implemented and inherits from `Provider`
 - [ ] Authentication/session logic implemented
@@ -2971,6 +3108,7 @@ TBD
 - [ ] Minimal usage example provided
 
 #### API Integration
+
 - [ ] All CLI integration items completed
 - [ ] Provider added to `ProviderChoices` enum in API models
 - [ ] API serializers created/updated for the provider
@@ -2981,6 +3119,7 @@ TBD
 - [ ] API tests created and passing
 
 #### UI Integration
+
 - TBD
 
 ---
