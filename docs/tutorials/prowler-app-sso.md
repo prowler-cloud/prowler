@@ -10,7 +10,7 @@ This document is divided into two main sections:
 
 ---
 
-## User Guide: Configuring SAML SSO in Prowler App
+## User Guide Configuration
 
 Follow these steps to enable and configure SAML SSO for an organization.
 
@@ -83,12 +83,13 @@ Instead of creating a custom SAML integration, Okta administrators can configure
 
 5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings.
 
-![Add Prowler Configuration](./img/saml/app-catalog-browse-prowler-configure.png)
+    ![Add Prowler Configuration](./img/saml/app-catalog-browse-prowler-configure.png)
 
 6. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
 
-With this step, the Okta app catalog configuration is complete. Users can now access Prowler Cloud using either IdP-initiated or SP-initiated SSO flows.
+With this step, the Okta app catalog configuration is complete. Users can now access Prowler Cloud using either [IdP-initiated](#idp-initiated-sso) or [SP-initiated SSO](#sp-initiated-sso) flows.
 
+**If you used Step 3B (Okta App Catalog)**, jump to [Step 6: Save and Verify Configuration](#step-6-save-and-verify-configuration).
 
 #### Step 4: Configure Attribute Mapping in the IdP
 
@@ -98,11 +99,11 @@ For Prowler App to correctly identify and provision users, configure the IdP to 
 |----------------|---------------------------------------------------------------------------------------------------------|----------|
 | `firstName`    | The user's first name.                                                                                  | Yes      |
 | `lastName`     | The user's last name.                                                                                   | Yes      |
-| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role called `no_permissions` will be created with minimal permissions. You can then edit the permissions for that role in the [RBAC Management tab](./prowler-app-rbac.md). | No       |
+| `userType`     | The Prowler role to be assigned to the user (e.g., `admin`, `auditor`). If a role with that name already exists, it will be used; otherwise, a new role called `no_permissions` will be created with minimal permissions. Role permissions can be edited in the [RBAC Management tab](./prowler-app-rbac.md). | No       |
 | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
 
 ???+ info "IdP Attribute Mapping"
-    Note that the attribute name is just an example and may be different in your IdP. For instance, if your IdP provides a 'division' attribute, you can map it to 'userType'.
+    Note that the attribute name is just an example and may be different depending on the IdP. For instance, if the IdP provides a 'division' attribute, it can be mapped to 'userType'.
     ![IdP configuration](./img/saml/saml_attribute_statements.png)
 
 ???+ warning "Dynamic Updates"
@@ -132,7 +133,7 @@ Click the "Save" button to complete the setup. The "SAML Integration" card will 
     The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application.
 
 ##### Remove SAML Configuration
-You can disable SAML SSO by removing the existing configuration from the integration panel.
+SAML SSO can be disabled by removing the existing configuration from the integration panel.
 ![Remove SAML configuration](./img/saml/saml-step-remove.png)
 
 ### IdP-Initiated SSO
@@ -225,7 +226,7 @@ When configuring the IdP for testing, use the ngrok URL for the ACS URL:
 
 #### 4. Configure Prowler via API
 
-To create a SAML configuration for testing, use `curl`. Make sure to replace placeholders with actual data.
+To create a SAML configuration for testing, use `curl`. Replace placeholders with actual data.
 
 ```bash
 curl --location 'http://localhost:8080/api/v1/saml-config' \
@@ -245,7 +246,7 @@ curl --location 'http://localhost:8080/api/v1/saml-config' \
 
 #### 5. Initiate Login Flow
 
-To test the end-to-end flow, construct the login URL and open it in a browser. This will start the IdP-initiated login flow.
+To test the end-to-end flow, construct the login URL and open it in a browser. This starts the IdP-initiated login flow.
 
 `https://<your-ngrok-url>/api/v1/accounts/saml/<YOUR_DOMAIN>/login/`
 
