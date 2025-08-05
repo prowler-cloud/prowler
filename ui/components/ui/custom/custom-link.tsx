@@ -34,7 +34,7 @@ export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
         href={href}
         scroll={scroll}
         className={cn(
-          `text-${size} break-all font-medium text-primary decoration-1 hover:underline`,
+          `text-${size} text-nowrap break-all font-medium text-primary decoration-1 hover:underline`,
           className,
         )}
         aria-label={ariaLabel}

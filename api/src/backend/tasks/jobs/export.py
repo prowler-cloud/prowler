@@ -171,7 +171,7 @@ def get_s3_client():
     return s3_client
 
 
-def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
+def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
     """
     Upload the specified ZIP file to an S3 bucket.
     If the S3 bucket environment variables are not configured,
@@ -188,7 +188,7 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     """
     bucket = base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET
     if not bucket:
-        return None
+        return
 
     try:
         s3 = get_s3_client()

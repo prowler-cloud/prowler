@@ -1,28 +1,39 @@
-# AWS Organizations
+# AWS Organizations in Prowler
 
-## Get AWS Account details from your AWS Organization
+## Retrieving AWS Account Details
 
-Prowler allows you to get additional information of the scanned account from AWS Organizations.
+If AWS Organizations is enabled, Prowler can fetch detailed account information during scans, including:
 
-If you have AWS Organizations enabled, Prowler can get your account details like account name, email, ARN, organization id and tags and you will have them next to every finding's output.
+- Account Name
+- Email Address
+- ARN
+- Organization ID
+- Tags
 
-In order to do that you can use the argument `-O`/`--organizations-role <organizations_role_arn>`. If this argument is not present Prowler will try to fetch that information automatically if the AWS account is a delegated administrator for the AWS Organization.
+These details will be included alongside each security finding in the output.
+
+### Enabling AWS Organizations Data Retrieval
+
+To retrieve AWS Organizations account details, use the `-O`/`--organizations-role <organizations_role_arn>` argument. If this argument is not provided, Prowler will attempt to fetch the data automatically—provided the AWS account is a delegated administrator for the AWS Organization.
 
 ???+ note
-    Refer [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html) for more information about AWS Organizations delegated administrator.
+    For more information on AWS Organizations delegated administrator, refer to the official documentation [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html).
 
-See the following sample command:
+The following command is an example:
 
 ```shell
 prowler aws \
   -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>
 ```
+
 ???+ note
-    Make sure the role in your AWS Organizations management account has the permissions `organizations:DescribeAccount` and `organizations:ListTagsForResource`.
+    Ensure the IAM role used in your AWS Organizations management account has the following permissions:`organizations:DescribeAccount` and `organizations:ListTagsForResource`.
 
 Prowler will scan the AWS account and get the account details from AWS Organizations.
 
-In the JSON output below you can see tags coded in base64 to prevent breaking CSV or JSON due to its format:
+### Handling JSON Output
+
+In Prowler’s JSON output, tags are encoded in Base64 to prevent formatting errors in CSV or JSON outputs. This ensures compatibility when exporting findings.
 
 ```json
   "Account Email": "my-prod-account@domain.com",
@@ -34,17 +45,17 @@ In the JSON output below you can see tags coded in base64 to prevent breaking CS
 
 The additional fields in CSV header output are as follows:
 
-- ACCOUNT_DETAILS_EMAIL
-- ACCOUNT_DETAILS_NAME
-- ACCOUNT_DETAILS_ARN
-- ACCOUNT_DETAILS_ORG
-- ACCOUNT_DETAILS_TAGS
+- ACCOUNT\_DETAILS\_EMAIL
+- ACCOUNT\_DETAILS\_NAME
+- ACCOUNT\_DETAILS\_ARN
+- ACCOUNT\_DETAILS\_ORG
+- ACCOUNT\_DETAILS\_TAGS
 
 ## Extra: Run Prowler across all accounts in AWS Organizations by assuming roles
 
-If you want to run Prowler across all accounts of AWS Organizations you can do this:
+### Running Prowler Across All AWS Organization Accounts
 
-1. First get a list of accounts that are not suspended:
+1. To run Prowler across all accounts in AWS Organizations, first retrieve a list of accounts that are not suspended:
 
     ```shell
     ACCOUNTS_IN_ORGS=$(aws organizations list-accounts \
@@ -65,5 +76,4 @@ If you want to run Prowler across all accounts of AWS Organizations you can do t
     ```
 
 ???+ note
-    Using the same for loop it can be scanned a list of accounts with a variable like:
-    </br>`ACCOUNTS_LIST='11111111111 2222222222 333333333'`
+    This same loop structure can be adapted to scan a predefined list of accounts using a variable like the following: </br>`ACCOUNTS_LIST='11111111111 2222222222 333333333'`

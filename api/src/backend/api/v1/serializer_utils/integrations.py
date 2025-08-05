@@ -1,3 +1,6 @@
+import os
+import re
+
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 
@@ -7,6 +10,41 @@ from api.v1.serializer_utils.base import BaseValidateSerializer
 class S3ConfigSerializer(BaseValidateSerializer):
     bucket_name = serializers.CharField()
     output_directory = serializers.CharField()
+
+    def validate_output_directory(self, value):
+        """
+        Validate the output_directory field to ensure it's a properly formatted path.
+        Prevents paths with excessive slashes like "///////test".
+        """
+        if not value:
+            raise serializers.ValidationError("Output directory cannot be empty.")
+
+        # Normalize the path to remove excessive slashes
+        normalized_path = os.path.normpath(value)
+
+        # Remove leading slashes for S3 paths
+        if normalized_path.startswith("/"):
+            normalized_path = normalized_path.lstrip("/")
+
+        # Check for invalid characters or patterns
+        if re.search(r'[<>:"|?*]', normalized_path):
+            raise serializers.ValidationError(
+                'Output directory contains invalid characters. Avoid: < > : " | ? *'
+            )
+
+        # Check for empty path after normalization
+        if not normalized_path or normalized_path == ".":
+            raise serializers.ValidationError(
+                "Output directory cannot be empty or just '.'."
+            )
+
+        # Check for paths that are too long (S3 key limit is 1024 characters, leave some room for filename)
+        if len(normalized_path) > 900:
+            raise serializers.ValidationError(
+                "Output directory path is too long (max 900 characters)."
+            )
+
+        return normalized_path
 
     class Meta:
         resource_name = "integrations"
@@ -98,7 +136,9 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                     "output_directory": {
                         "type": "string",
-                        "description": "The directory path within the bucket where files will be saved.",
+                        "description": 'The directory path within the bucket where files will be saved. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
+                        "maxLength": 900,
+                        "pattern": '^[^<>:"|?*]+$',
                     },
                 },
                 "required": ["bucket_name", "output_directory"],
