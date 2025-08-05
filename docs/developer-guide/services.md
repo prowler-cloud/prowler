@@ -3,7 +3,7 @@
 Here you can find how to create a new service, or to complement an existing one, for a [Prowler Provider](./provider.md).
 
 ???+note
-    First ensure that the provider you want to add the service is already created. It can be checked [here](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers). If the provider is not present, please refer to the [Provider](./provider.md) documentation to create it from scratch.
+First ensure that the provider you want to add the service is already created. It can be checked [here](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers). If the provider is not present, please refer to the [Provider](./provider.md) documentation to create it from scratch.
 
 ## Introduction
 
@@ -160,7 +160,7 @@ class <Service>(ServiceParentClass):
 ```
 
 ???+note
-    To prevent false findings, when Prowler fails to retrieve items due to Access Denied or similar errors, the affected item's value is set to `None`.
+To prevent false findings, when Prowler fails to retrieve items due to Access Denied or similar errors, the affected item's value is set to `None`.
 
 #### Resource Models
 
@@ -197,11 +197,11 @@ class <Item>(BaseModel):
 
 #### Service Attributes
 
-*Optimized Data Storage with Python Dictionaries*
+_Optimized Data Storage with Python Dictionaries_
 
 Each group of resources within a service should be structured as a Python [dictionary](https://docs.python.org/3/tutorial/datastructures.html#dictionaries) to enable efficient lookups. The dictionary lookup operation has [O(1) complexity](https://en.wikipedia.org/wiki/Big_O_notation#Orders_of_common_functions), and lookups are constantly executed.
 
-*Assigning Unique Identifiers*
+_Assigning Unique Identifiers_
 
 Each dictionary key must be a unique ID to identify the resource in a univocal way.
 
@@ -237,6 +237,301 @@ Provider-Specific Permissions Documentation:
 - [M365](../getting-started/requirements.md#needed-permissions_2)
 - [GitHub](../getting-started/requirements.md#authentication_2)
 
+## Service Architecture and Cross-Service Communication
+
+### Core Principle: Service Isolation with Client Communication
+
+Each service must contain **ONLY** the information unique to that specific service. When a check requires information from multiple services, it must use the **client objects** of other services rather than directly accessing their data structures.
+
+This architecture ensures:
+
+- **Loose coupling** between services
+- **Clear separation of concerns**
+- **Maintainable and testable code**
+- **Consistent data access patterns**
+
+### Cross-Service Communication Pattern
+
+Instead of services directly accessing each other's internal data, checks should import and use client objects:
+
+**❌ INCORRECT - Direct data access:**
+
+```python
+# DON'T DO THIS
+from prowler.providers.aws.services.cloudtrail.cloudtrail_service import cloudtrail_service
+from prowler.providers.aws.services.s3.s3_service import s3_service
+
+class cloudtrail_bucket_requires_mfa_delete(Check):
+    def execute(self):
+        # WRONG: Directly accessing service data
+        for trail in cloudtrail_service.trails.values():
+            for bucket in s3_service.buckets.values():
+                # Direct access violates separation of concerns
+```
+
+**✅ CORRECT - Client-based communication:**
+
+```python
+# DO THIS INSTEAD
+from prowler.providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
+from prowler.providers.aws.services.s3.s3_client import s3_client
+
+class cloudtrail_bucket_requires_mfa_delete(Check):
+    def execute(self):
+        # CORRECT: Using client objects for cross-service communication
+        for trail in cloudtrail_client.trails.values():
+            trail_bucket = trail.s3_bucket
+            for bucket in s3_client.buckets.values():
+                if trail_bucket == bucket.name:
+                    # Use bucket properties through s3_client
+                    if bucket.mfa_delete:
+                        # Implementation logic
+```
+
+### Real-World Example: CloudTrail + S3 Integration
+
+This example demonstrates how CloudTrail checks validate S3 bucket configurations:
+
+```python
+from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
+from prowler.providers.aws.services.s3.s3_client import s3_client
+
+class cloudtrail_bucket_requires_mfa_delete(Check):
+    def execute(self):
+        findings = []
+        if cloudtrail_client.trails is not None:
+            for trail in cloudtrail_client.trails.values():
+                if trail.is_logging:
+                    trail_bucket_is_in_account = False
+                    trail_bucket = trail.s3_bucket
+
+                    # Cross-service communication: CloudTrail check uses S3 client
+                    for bucket in s3_client.buckets.values():
+                        if trail_bucket == bucket.name:
+                            trail_bucket_is_in_account = True
+                            if bucket.mfa_delete:
+                                report.status = "PASS"
+                                report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) has MFA delete enabled."
+
+                    # Handle cross-account scenarios
+                    if not trail_bucket_is_in_account:
+                        report.status = "MANUAL"
+                        report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) is a cross-account bucket or out of Prowler's audit scope, please check it manually."
+
+                    findings.append(report)
+        return findings
+```
+
+**Key Benefits:**
+
+- **CloudTrail service** only contains CloudTrail-specific data (trails, configurations)
+- **S3 service** only contains S3-specific data (buckets, policies, ACLs)
+- **Check logic** orchestrates between services using their public client interfaces
+- **Cross-account detection** is handled gracefully when resources span accounts
+
+### Service Consolidation Guidelines
+
+**When to combine services in the same file:**
+
+Implement multiple services as **separate classes in the same file** when two services are **practically the same** or one is a **direct extension** of another.
+
+**Example: S3 and S3Control**
+
+S3Control is an extension of S3 that provides account-level controls and access points. Both are implemented in `s3_service.py`:
+
+```python
+# File: prowler/providers/aws/services/s3/s3_service.py
+
+class S3(AWSService):
+    """Standard S3 service for bucket operations"""
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
+        self.buckets = {}
+        self.regions_with_buckets = []
+
+        # S3-specific initialization
+        self._list_buckets(provider)
+        self._get_bucket_versioning()
+        # ... other S3-specific operations
+
+class S3Control(AWSService):
+    """S3Control service for account-level and access point operations"""
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
+        self.account_public_access_block = None
+        self.access_points = {}
+
+        # S3Control-specific initialization
+        self._get_public_access_block()
+        self._list_access_points()
+        # ... other S3Control-specific operations
+```
+
+**Separate client files:**
+
+```python
+# File: prowler/providers/aws/services/s3/s3_client.py
+from prowler.providers.aws.services.s3.s3_service import S3
+s3_client = S3(Provider.get_global_provider())
+
+# File: prowler/providers/aws/services/s3/s3control_client.py
+from prowler.providers.aws.services.s3.s3_service import S3Control
+s3control_client = S3Control(Provider.get_global_provider())
+```
+
+**When NOT to consolidate services:**
+
+Keep services separate when they:
+
+- **Operate on different resource types** (EC2 vs RDS)
+- **Have different authentication mechanisms** (different API endpoints)
+- **Serve different operational domains** (IAM vs CloudTrail)
+- **Have different regional behaviors** (global vs regional services)
+
+### Cross-Service Dependencies Guidelines
+
+**1. Always use client imports:**
+
+```python
+# Correct pattern
+from prowler.providers.aws.services.service_a.service_a_client import service_a_client
+from prowler.providers.aws.services.service_b.service_b_client import service_b_client
+```
+
+**2. Handle missing resources gracefully:**
+
+```python
+# Handle cross-service scenarios
+resource_found_in_account = False
+for external_resource in other_service_client.resources.values():
+    if target_resource_id == external_resource.id:
+        resource_found_in_account = True
+        # Process found resource
+        break
+
+if not resource_found_in_account:
+    # Handle cross-account or missing resource scenarios
+    report.status = "MANUAL"
+    report.status_extended = "Resource is cross-account or out of audit scope"
+```
+
+**3. Document cross-service dependencies:**
+
+```python
+class check_with_dependencies(Check):
+    """
+    Check Description
+
+    Dependencies:
+    - service_a_client: For primary resource information
+    - service_b_client: For related resource validation
+    - service_c_client: For policy analysis
+    """
+```
+
+## Regional Service Implementation
+
+When implementing services for regional providers (like AWS, Azure, GCP), special considerations are needed to handle resource discovery across multiple geographic locations. This section provides a complete guide using AWS as the reference example.
+
+### Regional vs Non-Regional Services
+
+**Regional Services:** Require iteration across multiple geographic locations where resources may exist (e.g., EC2 instances, VPC, RDS databases).
+
+**Non-Regional/Global Services:** Operate at a global or tenant level without regional concepts (e.g., IAM users, Route53 hosted zones).
+
+### AWS Regional Implementation Example
+
+AWS is the perfect example of a regional provider. Here's how Prowler handles AWS's regional architecture:
+
+
+```python
+# File: prowler/providers/aws/services/ec2/ec2_service.py
+class EC2(AWSService):
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
+        self.instances = {}
+        self.security_groups = {}
+
+        # Regional resource discovery across all AWS regions
+        self.__threading_call__(self._describe_instances)
+        self.__threading_call__(self._describe_security_groups)
+
+    def _describe_instances(self, regional_client):
+        """Discover EC2 instances in a specific region"""
+        try:
+            describe_instances_paginator = regional_client.get_paginator("describe_instances")
+            for page in describe_instances_paginator.paginate():
+                for reservation in page["Reservations"]:
+                    for instance in reservation["Instances"]:
+                        # Each instance includes its region
+                        self.instances[instance["InstanceId"]] = Instance(
+                            id=instance["InstanceId"],
+                            region=regional_client.region,
+                            state=instance["State"]["Name"],
+                            # ... other properties
+                        )
+        except Exception as error:
+            logger.error(f"Failed to describe instances in {regional_client.region}: {error}")
+```
+
+#### Regional Check Execution
+
+```python
+# File: prowler/providers/aws/services/ec2/ec2_instance_public_ip/ec2_instance_public_ip.py
+class ec2_instance_public_ip(Check):
+    def execute(self):
+        findings = []
+
+        # Automatically iterates across ALL AWS regions where instances exist
+        for instance in ec2_client.instances.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
+            report.region = instance.region  # Critical: region attribution
+            report.resource_arn = f"arn:aws:ec2:{instance.region}:{instance.account_id}:instance/{instance.id}"
+
+            if instance.public_ip:
+                report.status = "FAIL"
+                report.status_extended = f"Instance {instance.id} in {instance.region} has public IP {instance.public_ip}"
+            else:
+                report.status = "PASS"
+                report.status_extended = f"Instance {instance.id} in {instance.region} does not have a public IP"
+
+            findings.append(report)
+
+        return findings
+```
+
+#### Key AWS Regional Features
+
+**Region-Specific ARNs:**
+
+```
+arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0
+arn:aws:s3:eu-west-1:123456789012:bucket/my-bucket
+arn:aws:rds:ap-southeast-2:123456789012:db:my-database
+```
+
+**Parallel Processing:**
+
+- Each region processed independently in separate threads
+- Failed regions don't affect other regions
+- User can filter specific regions: `-f us-east-1`
+
+**Global vs Regional Services:**
+
+- **Regional**: EC2, RDS, VPC (require region iteration)
+- **Global**: IAM, Route53, CloudFront (single `us-east-1` call)
+
+This architecture allows Prowler to efficiently scan AWS accounts with resources spread across multiple regions while maintaining performance and error isolation.
+
+### Regional Service Best Practices
+
+1. **Use Threading for Regional Discovery**: Leverage the `__threading_call__` method to parallelize resource discovery across regions
+2. **Store Region Information**: Always include region metadata in resource objects for proper attribution
+3. **Handle Regional Failures Gracefully**: Ensure that failures in one region don't affect others
+4. **Optimize for Performance**: Use paginated calls and efficient data structures for large-scale resource discovery
+5. **Support Region Filtering**: Allow users to limit scans to specific regions for focused audits
+
 ## Best Practices
 
 - When available in the provider, use threading or parallelization utilities for all methods that can be parallelized by to maximize performance and reduce scan time.
@@ -248,3 +543,5 @@ Provider-Specific Permissions Documentation:
 - Collect and store resource tags and additional attributes to support richer checks and reporting.
 - Leverage shared utility helpers for session setup, identifier parsing, and other cross-cutting concerns to avoid code duplication. This kind of code is typically stored in a `lib` folder in the service folder.
 - Keep code modular, maintainable, and well-documented for ease of extension and troubleshooting.
+- **Each service should contain only information unique to that specific service** - use client objects for cross-service communication.
+- **Handle cross-account and missing resources gracefully** when checks span multiple services.
