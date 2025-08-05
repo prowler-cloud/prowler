@@ -264,40 +264,58 @@ For multiple AWS accounts, change the `Principal` field to an array:
 
 Choose from the following deployment options:
 
-- [CloudFormation](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role-with-s3-integration.yml)
+- [CloudFormation](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml)
 - [Terraform](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform)
 
 #### CloudFormation
 
 ##### AWS CLI Deployment
 
-If you're using Prowler's CloudFormation template, execute the following command to update the existing ProwlerScan stack:
+If you're using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
 
 ```bash
 aws cloudformation update-stack \
   --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
-  --stack-name "ProwlerScan" \
-  --template-url "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role-with-s3-integration.yml" \
+  --stack-name "Prowler" \
+  --template-url "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml" \
   --parameters \
+      ParameterKey=EnableS3Integration,ParameterValue="true" \
       ParameterKey=ExternalID,ParameterValue="your-external-id" \
       ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
-      ParameterKey=S3IntegrationBucketAccount,ParameterValue="your-bucket-aws-account-id-owner"
+      ParameterKey=S3IntegrationBucketAccounId,ParameterValue="your-bucket-aws-account-id-owner"
 ```
 
-<!-- TODO: review quick link
-Or use the following AWS CloudFormation [Quick Link](ADD quick link) to deploy the ProwlerScan IAM role with the permissions for the S3 integration: -->
+Alternatively, if you don't have the `ProwlerScan` IAM Role, execute the following command to create the CloudFormation stack:
 
+```bash
+aws cloudformation create-stack \
+ --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
+ --stack-name "Prowler" \
+ --template-body "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml" \
+ --parameters \
+      ParameterKey=EnableS3Integration,ParameterValue="true" \
+      ParameterKey=ExternalID,ParameterValue="your-external-id" \
+      ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
+      ParameterKey=S3IntegrationBucketAccounId,ParameterValue="your-bucket-aws-account-id-owner"
+```
+
+A CloudFormation Quick Link is also available [here](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_EnableS3Integration=true)
 
 ##### AWS Console Deployment
 
-1. Navigate to CloudFormation service
-2. Select "ProwlerScan" stack and click "Update"
-3. Replace template with the new template file
+If you're using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
+
+
+1. Navigate to CloudFormation service in the AWS region you arre using
+2. Select "ProwlerScan", click "Update" and then "Make a direct update"
+3. Replace template, uploading the [CloudFormation template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml)
 4. Configure parameters:
     - `ExternalID`: Keep existing value
+    - `EnableS3Integration`: Select "true"
     - `S3IntegrationBucketName`: Your bucket name
-    - `S3IntegrationBucketAccount`: Bucket owner's AWS account ID
-5. Click "Update stack"
+    - `S3IntegrationBucketAccountId`: Bucket owner's AWS account ID
+5. In the "Configure stack options" screen, again, leave everything as it is and click on "Next"
+6. Finally, under "Review Prowler", at the bottom click on "Submit"
 
 #### Terraform
 
