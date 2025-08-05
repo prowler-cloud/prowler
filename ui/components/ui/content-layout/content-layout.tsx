@@ -6,7 +6,7 @@ import { Navbar } from "../nav-bar/navbar";
 
 interface ContentLayoutProps {
   title: string;
-  icon: string | ReactNode;
+  icon?: string | ReactNode;
   children: React.ReactNode;
 }
 

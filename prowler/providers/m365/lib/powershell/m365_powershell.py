@@ -286,7 +286,7 @@ class M365PowerShell(PowerShellSession):
                 return True
             else:
                 logger.error(
-                    "Microsoft Teams connection failed: Please check your permissions and try again."
+                    "Microsoft Teams User Auth connection failed: Please check your permissions and try again."
                 )
             return connection
         # Application Auth
@@ -398,7 +398,7 @@ class M365PowerShell(PowerShellSession):
                 return True
             else:
                 logger.error(
-                    "Exchange Online connection failed: Please check your permissions and try again."
+                    "Exchange Online User Auth connection failed: Please check your permissions and try again."
                 )
                 return False
         # Application Auth
