@@ -28,13 +28,6 @@ The Amazon S3 Integration enables users to:
 
 - **Manage integrations independently** with separate configuration and credential controls
 
-???+ info "Prerequisites"
-    Before configuring S3 Integration, ensure you have:
-
-    - A user with a Role that has `MANAGE_INTEGRATIONS` permission
-    - At least one cloud provider configured
-    - Access to an Amazon S3 bucket with proper write permissions
-    - AWS credentials with S3 write permissions (or IAM role configuration)
 
 ## Required Permissions
 
@@ -66,8 +59,7 @@ The S3 integration requires the following permissions. Add these to your IAM rol
 }
 ```
 
-???+ note
-    The delete object permission is required for connection testing. When you test the S3 integration, Prowler creates a temporary beacon file (`test-prowler-connection.txt`) to verify write permissions, then deletes it to confirm the connection is working properly.
+`s3:DeleteObject` permission is required for connection testing. When you test the S3 integration, Prowler creates a temporary beacon file, `test-prowler-connection.txt`, to verify write permissions, then deletes it to confirm the connection is working properly.
 
 ```json title="s3:PutObject"
 {
@@ -116,7 +108,7 @@ The S3 integration requires the following permissions. Add these to your IAM rol
 ???+ note
     Replace `<BUCKET AWS ACCOUNT NUMBER>` with the AWS account ID that owns the destination S3 bucket, and `<BUCKET NAME>` with the actual bucket name.
 
-### Cross-Account S3 Bucket Policy
+### Cross-Account S3 Bucket
 
 If your S3 destination bucket is in a different AWS account than the one providing the credentials for S3 access, you must also configure a bucket policy on the destination bucket to allow cross-account access.
 
@@ -124,24 +116,24 @@ The following diagrams illustrate the three common S3 integration scenarios:
 
 ##### Same Account Setup (No Bucket Policy Required)
 
-When both the Prowler credentials and destination S3 bucket are in the same AWS account, no additional bucket policy is required.
+When both the IAM credentials and destination S3 bucket are in the same AWS account, no additional bucket policy is required.
 
 ```mermaid
 graph TB
     subgraph Account["AWS Account A"]
         direction TB
-        Role["Prowler Credentials<br/>"]
+        Role["IAM Credentials"]
         Bucket["S3 Destination Bucket"]
 
-        Role -->|" Direct Access<br/>(Same Account)"| Bucket
+        Role -->|"Direct Access (Same Account)"| Bucket
     end
 
-    Note["No bucket policy needed<br/>Same account resources can<br/>access each other by default"]
+    Note["No bucket policy needed - Same account resources can access each other by default"]
 
-    style Account fill:#e8f5e8,stroke:#4caf50,stroke-width:3px
-    style Role fill:#fff3cd,stroke:#856404,stroke-width:2px
-    style Bucket fill:#d4edda,stroke:#155724,stroke-width:2px
-    style Note fill:#f8f9fa,stroke:#6c757d,stroke-width:1px,stroke-dasharray: 5 5
+    style Account stroke:#2563eb,stroke-width:2px
+    style Role stroke:#059669,stroke-width:2px
+    style Bucket stroke:#059669,stroke-width:2px
+    style Note stroke:#6b7280,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
 ##### Cross-Account Setup (Bucket Policy Required)
@@ -151,26 +143,26 @@ When the S3 bucket is in a different AWS account, you must configure a bucket po
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A (Source)"]
-        RoleA["Prowler Credentials<br/>"]
+        RoleA["IAM Credentials"]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
         BucketB["S3 Destination Bucket"]
-        PolicyB["Cross-Account Bucket Policy<br/>- Allow from Account A"]
+        PolicyB["Cross-Account Bucket Policy<br/>Allow from Account A"]
 
         PolicyB -.->|"Protects"| BucketB
     end
 
-    RoleA -->|" Cross-Account Access<br/>(Bucket Policy Required)"| BucketB
+    RoleA -->|"Cross-Account Access (Bucket Policy Required)"| BucketB
 
-    Warning["Bucket policy must be configured<br/>on the destination bucket in Account B"]
+    Warning["⚠️ Bucket policy must be configured on the destination bucket in Account B"]
 
-    style AccountA fill:#fff3cd,stroke:#856404,stroke-width:3px
-    style AccountB fill:#d1ecf1,stroke:#0c5460,stroke-width:3px
-    style RoleA fill:#fff3cd,stroke:#856404,stroke-width:2px
-    style BucketB fill:#d4edda,stroke:#155724,stroke-width:2px
-    style PolicyB fill:#f8d7da,stroke:#721c24,stroke-width:2px
-    style Warning fill:#f8d7da,stroke:#721c24,stroke-width:1px,stroke-dasharray: 5 5
+    style AccountA stroke:#f59e0b,stroke-width:2px
+    style AccountB stroke:#2563eb,stroke-width:2px
+    style RoleA stroke:#f59e0b,stroke-width:2px
+    style BucketB stroke:#059669,stroke-width:2px
+    style PolicyB stroke:#dc2626,stroke-width:2px
+    style Warning stroke:#dc2626,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
 ##### Multi-Account Setup (Multiple Principals in Bucket Policy)
@@ -180,32 +172,32 @@ When multiple AWS accounts need to write to the same destination bucket, configu
 ```mermaid
 graph TB
     subgraph AccountA["AWS Account A"]
-        RoleA["Prowler Role A<br/>"]
+        RoleA["Prowler Role A"]
     end
 
     subgraph AccountC["AWS Account C"]
-        RoleC["Prowler Role C<br/>"]
+        RoleC["Prowler Role C"]
     end
 
     subgraph AccountB["AWS Account B (Destination)"]
         BucketB["Shared S3 Destination Bucket"]
-        PolicyB["Multi-Account Bucket Policy<br/>- Allow access from Account A<br/>- Allow access from Account C"]
+        PolicyB["Multi-Account Bucket Policy<br/>Allow access from Account A & C"]
 
         PolicyB -.->|"Protects"| BucketB
     end
     RoleA -->|"Multi-Account Access"| BucketB
     RoleC -->|"Multi-Account Access"| BucketB
 
-    Info["Add multiple AWS account ARNs<br/>to the Principal field in bucket policy"]
+    Info["💡 Add multiple AWS account ARNs to the Principal field in bucket policy"]
 
-    style AccountA fill:#fff3cd,stroke:#856404,stroke-width:3px
-    style AccountC fill:#e2e3e5,stroke:#383d41,stroke-width:3px
-    style AccountB fill:#d1ecf1,stroke:#0c5460,stroke-width:3px
-    style RoleA fill:#fff3cd,stroke:#856404,stroke-width:2px
-    style RoleC fill:#e2e3e5,stroke:#383d41,stroke-width:2px
-    style BucketB fill:#d4edda,stroke:#155724,stroke-width:2px
-    style PolicyB fill:#f8d7da,stroke:#721c24,stroke-width:2px
-    style Info fill:#cce5ff,stroke:#004085,stroke-width:1px,stroke-dasharray: 5 5
+    style AccountA stroke:#f59e0b,stroke-width:2px
+    style AccountC stroke:#8b5cf6,stroke-width:2px
+    style AccountB stroke:#2563eb,stroke-width:2px
+    style RoleA stroke:#f59e0b,stroke-width:2px
+    style RoleC stroke:#8b5cf6,stroke-width:2px
+    style BucketB stroke:#059669,stroke-width:2px
+    style PolicyB stroke:#dc2626,stroke-width:2px
+    style Info stroke:#2563eb,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
 #### S3 Bucket Policy
@@ -322,8 +314,7 @@ terraform apply \
   -var="s3_integration_bucket_account=123456789012"
 ```
 
-???+ info
-    For detailed information about deploying the Terraform stack for Amazon S3 integration, refer to the [Terraform README](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/README.md).
+For detailed information about deploying the Terraform stack for Amazon S3 integration, refer to the [Terraform README](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/README.md).
 
 ---
 
@@ -333,12 +324,11 @@ Once you have set up the required permissions, you can proceed to configure the 
 
 1. Navigate to "Integrations"
     ![Navigate to integrations](./img/s3/s3-integration-ui-1.png)
-2. Locate the Amazon S3 Integration card on the integrations page
-3. Click on the "Configure" button on the S3 integration card to access the dedicated management page
+2. Locate the Amazon S3 Integration card and click on the "Configure" button
     ![Access S3 integration](./img/s3/s3-integration-ui-2.png)
-4. Click the "Add Integration" button
+3. Click the "Add Integration" button
     ![Add integration button](./img/s3/s3-integration-ui-3.png)
-5. Complete the configuration form with the following details:
+4. Complete the configuration form with the following details:
 
     - **Cloud Providers:** Select the providers whose scan results should be exported to this S3 bucket
     - **Bucket Name:** Enter the name of your target S3 bucket (e.g., `my-security-findings-bucket`)
@@ -362,7 +352,7 @@ Once you have set up the required permissions, you can proceed to configure the 
     - **Role Session Name:** Optional - name for the assumed role session
     - **Session Duration:** Optional - duration in seconds for the session
 
-9. Click "Test and Create Integration" to verify the connection and complete the setup
+9. Click "Create Integration" to verify the connection and complete the setup
 
 ???+ success
     Once your credentials are configured and the connection test passes, your S3 integration will be active. Scan results will automatically be exported to your specified bucket after each scan completes. Run a new scan and check your S3 bucket to verify the integration is working.
@@ -402,48 +392,29 @@ Each S3 integration provides several management actions accessible through dedic
 ???+ tip "Management Best Practices"
     - Test your integration after any configuration changes
     - Use the Enable/Disable toggle for temporary changes instead of deleting
-    - Regularly verify connection status to ensure continuous export functionality
+
 
 ---
 
 ## Understanding S3 Export Structure
 
-When the S3 integration is enabled and a scan completes, Prowler automatically creates an organized folder structure in your destination bucket to store the scan results.
+When the S3 integration is enabled and a scan completes, Prowler creates a folder inside your specified bucket path (using `output` as the default folder name) with subfolders for each output format:
 
-### Default Output Structure
-
-Prowler creates a folder inside your specified bucket path (using `output` as the default folder name) with subfolders for each output format:
+`prowler-output-{provider-uid}-{timestamp}.{extension}`
 
 ```
 output/
+├── compliance/
+│   └── prowler-output-111122223333-20250805120000_cis_5.0_aws.csv
 ├── csv/
-│   ├── prowler-output-{provider-uid}-{timestamp}.csv
 │   └── prowler-output-111122223333-20250805120000.csv
 ├── html/
-│   ├── prowler-output-{provider-uid}-{timestamp}.html
 │   └── prowler-output-111122223333-20250805120000.html
-├── json/
-│   ├── prowler-output-{provider-uid}-{timestamp}.json
-│   └── prowler-output-111122223333-20250805120000.json
 └── json-ocsf/
-    ├── prowler-output-{provider-uid}-{timestamp}.ocsf.json
     └── prowler-output-111122223333-20250805120000.ocsf.json
 ```
 
 ![](./img/s3/s3-output-folder.png)
-
-### File Naming Convention
-
-Scan result files follow a consistent naming pattern:
-
-```
-prowler-output-{provider-uid}-{timestamp}.{extension}
-```
-
-- `prowler-output`: Fixed prefix identifying Prowler scan results
-- `{provider-uid}`: Account identifier (AWS Account ID, Azure Subscription ID, etc.)
-- `{timestamp}`: Scan completion time in `YYYYMMDDHHMMSS` format
-- `{extension}`: File format extension (`csv`, `html`, `ocsf.json`)
 
 For detailed information about Prowler's reporting formats, refer to the [Prowler reporting documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/reporting/).
 
