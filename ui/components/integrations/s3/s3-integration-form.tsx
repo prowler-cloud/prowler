@@ -15,7 +15,7 @@ import { CustomInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
-import { getAWSCredentialsTemplateBucketLinks } from "@/lib";
+import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
 import {
   editS3IntegrationFormSchema,
@@ -258,9 +258,9 @@ export const S3IntegrationForm = ({
       const bucketName = form.getValues("bucket_name") || "";
       const externalId =
         form.getValues("external_id") || session?.tenantId || "";
-      const templateLinks = getAWSCredentialsTemplateBucketLinks(
-        bucketName,
+      const templateLinks = getAWSCredentialsTemplateLinks(
         externalId,
+        bucketName,
       );
 
       return (

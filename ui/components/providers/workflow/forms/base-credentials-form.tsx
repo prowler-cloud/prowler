@@ -7,7 +7,7 @@ import { Control } from "react-hook-form";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
-import { getAWSCredentialsTemplateScanLinks } from "@/lib";
+import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { requiresBackButton } from "@/lib/provider-helpers";
 import {
@@ -62,7 +62,7 @@ export const BaseCredentialsForm = ({
     successNavigationUrl,
   });
 
-  const templateLinks = getAWSCredentialsTemplateScanLinks(externalId);
+  const templateLinks = getAWSCredentialsTemplateLinks(externalId);
 
   return (
     <Form {...form}>
