@@ -259,8 +259,8 @@ export const S3IntegrationForm = ({
       const externalId =
         form.getValues("external_id") || session?.tenantId || "";
       const templateLinks = getAWSCredentialsTemplateLinks(
-        bucketName,
         externalId,
+        bucketName,
       );
 
       return (
