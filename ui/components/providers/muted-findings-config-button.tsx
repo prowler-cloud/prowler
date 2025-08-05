@@ -1,7 +1,7 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
@@ -21,6 +21,16 @@ export const MutedFindingsConfigButton = ({
 }: MutedFindingsConfigButtonProps) => {
   const [isOpen, setIsOpen] = useState(autoOpen);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleCancel = () => {
+    setIsOpen(false);
+    // Remove the mutelist parameter from URL when cancel is clicked
+    const hasMutelistParam = searchParams.get("mutelist") === "true";
+    if (hasMutelistParam) {
+      router.replace("/providers");
+    }
+  };
 
   const handleOpenModal = () => {
     if (!isDisabled) {
@@ -44,7 +54,10 @@ export const MutedFindingsConfigButton = ({
         title="Configure Mutelist"
         size="3xl"
       >
-        <MutedFindingsConfigForm setIsOpen={setIsOpen} />
+        <MutedFindingsConfigForm
+          setIsOpen={setIsOpen}
+          onCancel={handleCancel}
+        />
       </CustomAlertModal>
 
       {!hideButton && (
