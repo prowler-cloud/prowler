@@ -2,11 +2,8 @@
 
 **Prowler App** allows users to automatically export scan results to Amazon S3 buckets, enabling seamless integration with existing data workflows and storage infrastructure. This comprehensive guide demonstrates how to configure and manage Amazon S3 integrations to streamline security finding management and reporting.
 
-When enabled and configured, scan results will be automatically stored in your chosen bucket. Results are provided in the following formats, offering flexibility for custom integrations:
+When enabled and configured, scan results will be automatically stored in your chosen bucket. Results are provided in the `csv`, `html` and `json-ocsf`, offering flexibility for custom integrations:
 
-- csv
-- html
-- json-ocsf
 <!-- TODO: remove the comment once the AWS Security Hub integration is completed -->
 <!-- - json-asff -->
 <!--
@@ -443,23 +440,23 @@ Scan result files follow a consistent naming pattern:
 prowler-output-{provider-uid}-{timestamp}.{extension}
 ```
 
-**Components:**
-
-- **prowler-output**: Fixed prefix identifying Prowler scan results
-- **{provider-uid}**: Account identifier (AWS Account ID, Azure Subscription ID, etc.)
-- **{timestamp}**: Scan completion time in `YYYYMMDDHHMMSS` format
-- **{extension}**: File format extension (`csv`, `html`, `ocsf.json`)
+- `prowler-output`: Fixed prefix identifying Prowler scan results
+- `{provider-uid}`: Account identifier (AWS Account ID, Azure Subscription ID, etc.)
+- `{timestamp}`: Scan completion time in `YYYYMMDDHHMMSS` format
+- `{extension}`: File format extension (`csv`, `html`, `ocsf.json`)
 
 For detailed information about Prowler's reporting formats, refer to the [Prowler reporting documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/reporting/).
 
 ## Troubleshooting
 
 **Connection test fails:**
+
 - Check AWS credentials are valid
 - Verify bucket permissions and region
 - Confirm network access to S3
 
 **No scan results in bucket:**
+
 - Ensure integration shows "Connected"
 - Check provider is associated with integration
 - Verify bucket policies allow writes
