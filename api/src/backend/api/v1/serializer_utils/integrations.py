@@ -37,7 +37,7 @@ class S3ConfigSerializer(BaseValidateSerializer):
         # Check for empty path after normalization
         if not normalized_path or normalized_path == ".":
             raise serializers.ValidationError(
-                "Output directory cannot be empty or just '.'."
+                "Output directory cannot be empty or just '.' or '/'."
             )
 
         # Check for paths that are too long (S3 key limit is 1024 characters, leave some room for filename)
