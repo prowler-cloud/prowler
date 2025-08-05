@@ -2,10 +2,10 @@
 
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { SettingsIcon } from "lucide-react";
-import Link from "next/link";
 
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { IntegrationProps } from "@/types/integrations";
 
 import { S3IntegrationCardSkeleton } from "./skeleton-s3-integration-card";
@@ -40,31 +40,28 @@ export const S3IntegrationCard = ({
   return (
     <Card className="dark:bg-gray-800">
       <CardHeader className="gap-2">
-        <div className="flex w-full items-center justify-between">
+        <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <AmazonS3Icon size={40} />
             <div className="flex flex-col gap-1">
               <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 Amazon S3
               </h4>
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-gray-500 dark:text-gray-300">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+                <p className="text-nowrap text-xs text-gray-500 dark:text-gray-300">
                   Export security findings to Amazon S3 buckets.
                 </p>
-                {/* Todo: add real DOCS, use CustomLink when available */}
-                <Link
-                  href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary"
+                <CustomLink
+                  href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/"
                   aria-label="Learn more about S3 integration"
+                  size="xs"
                 >
                   Learn more
-                </Link>
+                </CustomLink>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-center">
             {isConfigured && (
               <Chip
                 size="sm"

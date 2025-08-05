@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { format } from "date-fns";
 import {
   PlusIcon,
   Power,
@@ -314,9 +315,12 @@ export const S3IntegrationsManager = ({
                       {integration.attributes.connection_last_checked_at && (
                         <p>
                           <span className="font-medium">Last checked:</span>{" "}
-                          {new Date(
-                            integration.attributes.connection_last_checked_at,
-                          ).toLocaleDateString()}
+                          {format(
+                            new Date(
+                              integration.attributes.connection_last_checked_at,
+                            ),
+                            "yyyy/MM/dd",
+                          )}
                         </p>
                       )}
                     </div>
