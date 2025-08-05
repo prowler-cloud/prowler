@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.9.0
+  version: 1.11.0
   description: |-
     Prowler API specification.
 
@@ -10,9 +10,7 @@ paths:
   /api/v1/compliance-overviews:
     get:
       operationId: compliance_overviews_list
-      description: Retrieve an overview of all the compliance in a given scan. If
-        no region filters are provided, the region with the most fails will be returned
-        by default.
+      description: Retrieve an overview of all the compliance in a given scan.
       summary: List compliance overviews for a scan
       parameters:
       - in: query
@@ -22,15 +20,13 @@ paths:
           items:
             type: string
             enum:
-            - inserted_at
-            - compliance_id
+            - id
             - framework
             - version
-            - requirements_status
-            - region
-            - provider_type
-            - scan
-            - url
+            - requirements_passed
+            - requirements_failed
+            - requirements_manual
+            - total_requirements
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -74,44 +70,6 @@ paths:
         schema:
           type: string
           format: date-time
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          enum:
-          - aws
-          - azure
-          - gcp
-          - kubernetes
-          - m365
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - aws
-            - azure
-            - gcp
-            - kubernetes
-            - m365
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-        explode: false
-        style: form
       - in: query
         name: filter[region]
         schema:
@@ -171,14 +129,8 @@ paths:
           items:
             type: string
             enum:
-            - inserted_at
-            - -inserted_at
             - compliance_id
             - -compliance_id
-            - framework
-            - -framework
-            - region
-            - -region
         explode: false
       tags:
       - Compliance Overview
@@ -190,41 +142,45 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/PaginatedComplianceOverviewList'
-          description: ''
-  /api/v1/compliance-overviews/{id}:
+          description: Compliance overviews obtained successfully
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaskList'
+          description: The task is in progress
+        '500':
+          description: Compliance overviews generation task failed
+  /api/v1/compliance-overviews/attributes:
     get:
-      operationId: compliance_overviews_retrieve
-      description: Fetch detailed information about a specific compliance overview
-        by its ID, including detailed requirement information and check's status.
-      summary: Retrieve data from a specific compliance overview
+      operationId: compliance_overviews_attributes_retrieve
+      description: Retrieve detailed attribute information for all requirements in
+        a specific compliance framework along with the associated check IDs for each
+        requirement.
+      summary: Get compliance requirement attributes
       parameters:
       - in: query
-        name: fields[compliance-overviews]
+        name: fields[compliance-requirements-attributes]
         schema:
           type: array
           items:
             type: string
             enum:
-            - inserted_at
-            - compliance_id
+            - id
+            - framework_description
+            - name
             - framework
             - version
-            - requirements_status
-            - region
-            - provider_type
-            - scan
-            - url
             - description
-            - requirements
+            - attributes
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: path
-        name: id
+      - in: query
+        name: filter[compliance_id]
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this compliance overview.
+        description: Compliance framework ID to get attributes for.
         required: true
       tags:
       - Compliance Overview
@@ -235,8 +191,8 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ComplianceOverviewFullResponse'
-          description: ''
+                $ref: '#/components/schemas/PaginatedComplianceOverviewAttributesList'
+          description: Compliance attributes obtained successfully
   /api/v1/compliance-overviews/metadata:
     get:
       operationId: compliance_overviews_metadata_retrieve
@@ -271,8 +227,142 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ComplianceOverviewMetadataResponse'
-          description: ''
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: Compliance overviews metadata obtained successfully
+        '202':
+          description: The task is in progress
+        '500':
+          description: Compliance overviews generation task failed
+  /api/v1/compliance-overviews/requirements:
+    get:
+      operationId: compliance_overviews_requirements_retrieve
+      description: Retrieve a detailed overview of compliance requirements in a given
+        scan, grouped by compliance framework. This endpoint provides requirement-level
+        details and aggregates status across regions.
+      summary: List compliance requirements overview for a scan
+      parameters:
+      - in: query
+        name: fields[compliance-requirements-details]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - framework
+            - version
+            - description
+            - status
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[compliance_id]
+        schema:
+          type: string
+        description: Compliance ID.
+        required: true
+      - in: query
+        name: filter[compliance_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework__iexact]
+        schema:
+          type: string
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan_id]
+        schema:
+          type: string
+          format: uuid
+        description: Related scan ID.
+        required: true
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[version]
+        schema:
+          type: string
+      - in: query
+        name: filter[version__icontains]
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - compliance_id
+            - -compliance_id
+        explode: false
+      tags:
+      - Compliance Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedComplianceOverviewDetailList'
+          description: Compliance requirement details obtained successfully
+        '202':
+          description: The task is in progress
+        '500':
+          description: Compliance overviews generation task failed
   /api/v1/findings:
     get:
       operationId: findings_list
@@ -299,6 +389,7 @@ paths:
             - updated_at
             - first_seen_at
             - muted
+            - muted_reason
             - url
             - scan
             - resources
@@ -453,6 +544,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -461,6 +553,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -471,6 +564,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -481,6 +575,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -770,6 +865,7 @@ paths:
             - updated_at
             - first_seen_at
             - muted
+            - muted_reason
             - url
             - scan
             - resources
@@ -969,6 +1065,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -977,6 +1074,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -987,6 +1085,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -997,6 +1096,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -1264,6 +1364,7 @@ paths:
             - updated_at
             - first_seen_at
             - muted
+            - muted_reason
             - url
             - scan
             - resources
@@ -1393,6 +1494,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -1401,6 +1503,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1411,6 +1514,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -1421,6 +1525,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -1816,6 +1921,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -1824,6 +1930,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1834,6 +1941,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -1844,6 +1952,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -2227,6 +2336,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -2235,6 +2345,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2245,6 +2356,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -2255,6 +2367,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -2524,11 +2637,9 @@ paths:
           - amazon_s3
           - aws_security_hub
           - jira
-          - saml
           - slack
         description: |-
           * `amazon_s3` - Amazon S3
-          * `saml` - SAML
           * `aws_security_hub` - AWS Security Hub
           * `jira` - JIRA
           * `slack` - Slack
@@ -2542,13 +2653,11 @@ paths:
             - amazon_s3
             - aws_security_hub
             - jira
-            - saml
             - slack
         description: |-
           Multiple values may be separated by commas.
 
           * `amazon_s3` - Amazon S3
-          * `saml` - SAML
           * `aws_security_hub` - AWS Security Hub
           * `jira` - JIRA
           * `slack` - Slack
@@ -2762,6 +2871,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/integrations/{id}/connection:
+    post:
+      operationId: integrations_connection_create
+      description: Try to verify integration connection
+      summary: Check integration connection
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this integration.
+        required: true
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
@@ -2786,6 +2919,180 @@ paths:
       - jwtAuth: []
       responses:
         '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
+  /api/v1/lighthouse-configurations:
+    get:
+      operationId: lighthouse_configurations_list
+      description: Retrieve a list of all Lighthouse configurations.
+      summary: List all Lighthouse configurations
+      parameters:
+      - in: query
+        name: fields[lighthouse-configurations]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - api_key
+            - model
+            - temperature
+            - max_tokens
+            - business_context
+            - is_active
+            - inserted_at
+            - updated_at
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - is_active
+            - -is_active
+        explode: false
+      tags:
+      - Lighthouse
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseConfigList'
+          description: ''
+    post:
+      operationId: lighthouse_configurations_create
+      description: Create a new Lighthouse configuration with the specified details.
+      summary: Create a new Lighthouse configuration
+      tags:
+      - Lighthouse
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/LighthouseConfigCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LighthouseConfigCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LighthouseConfigCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseConfigCreateResponse'
+          description: ''
+  /api/v1/lighthouse-configurations/{id}:
+    patch:
+      operationId: lighthouse_configurations_partial_update
+      description: Update certain fields of an existing Lighthouse configuration.
+      summary: Partially update a Lighthouse configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Lighthouse
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseConfigUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseConfigUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseConfigUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseConfigUpdateResponse'
+          description: ''
+    delete:
+      operationId: lighthouse_configurations_destroy
+      description: Remove a Lighthouse configuration by its ID.
+      summary: Delete a Lighthouse configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Lighthouse
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/lighthouse-configurations/{id}/connection:
+    post:
+      operationId: lighthouse_configurations_connection_create
+      description: Verify the connection to the OpenAI API for a specific Lighthouse
+        configuration.
+      summary: Check the connection to the OpenAI API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Lighthouse
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
           content:
             application/vnd.api+json:
               schema:
@@ -2858,6 +3165,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -2866,6 +3174,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2876,6 +3185,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -2886,6 +3196,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -3019,6 +3330,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -3027,6 +3339,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3037,6 +3350,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -3047,6 +3361,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -3196,6 +3511,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -3204,6 +3520,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3214,6 +3531,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -3224,6 +3542,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -3280,6 +3599,222 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewServiceResponse'
           description: ''
+  /api/v1/processors:
+    get:
+      operationId: processors_list
+      description: Retrieve a list of all configured processors with options for filtering
+        by various criteria.
+      summary: List all processors
+      parameters:
+      - in: query
+        name: fields[processors]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - processor_type
+            - configuration
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[processor_type]
+        schema:
+          type: string
+          enum:
+          - mutelist
+        description: '* `mutelist` - Mutelist'
+      - in: query
+        name: filter[processor_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - mutelist
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `mutelist` - Mutelist
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - processor_type
+            - -processor_type
+            - configuration
+            - -configuration
+            - url
+            - -url
+        explode: false
+      tags:
+      - Processor
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProcessorList'
+          description: ''
+    post:
+      operationId: processors_create
+      description: Register a new processor with the system, providing necessary configuration
+        details. There can only be one processor of each type per tenant.
+      summary: Create a new processor
+      tags:
+      - Processor
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ProcessorCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProcessorCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProcessorCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProcessorCreateResponse'
+          description: ''
+  /api/v1/processors/{id}:
+    get:
+      operationId: processors_retrieve
+      description: Fetch detailed information about a specific processor by its ID.
+      summary: Retrieve processor details
+      parameters:
+      - in: query
+        name: fields[processors]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - processor_type
+            - configuration
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this processor.
+        required: true
+      tags:
+      - Processor
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProcessorResponse'
+          description: ''
+    patch:
+      operationId: processors_partial_update
+      description: Modify certain fields of an existing processor without affecting
+        other settings.
+      summary: Partially update a processor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this processor.
+        required: true
+      tags:
+      - Processor
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessorUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessorUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessorUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProcessorUpdateResponse'
+          description: ''
+    delete:
+      operationId: processors_destroy
+      description: Remove a processor from the system by its ID.
+      summary: Delete a processor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this processor.
+        required: true
+      tags:
+      - Processor
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/provider-groups:
     get:
       operationId: provider_groups_list
@@ -3686,6 +4221,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -3694,6 +4230,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider__in]
         schema:
@@ -4198,6 +4735,7 @@ paths:
             - tags
             - provider
             - findings
+            - failed_findings_count
             - url
             - type
         description: endpoint return only specific fields in the response on a per-type
@@ -4266,6 +4804,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -4274,6 +4813,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4284,6 +4824,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -4294,6 +4835,370 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[tag]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[tags]
+        schema:
+          type: string
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+        description: At least one of the variations of the `filter[updated_at]` filter
+          must be provided.
+        required: true
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - findings
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_uid
+            - -provider_uid
+            - uid
+            - -uid
+            - name
+            - -name
+            - region
+            - -region
+            - service
+            - -service
+            - type
+            - -type
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Resource
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResourceList'
+          description: ''
+  /api/v1/resources/{id}:
+    get:
+      operationId: resources_retrieve
+      description: Fetch detailed information about a specific resource by their ID.
+        A Resource is an object that is discovered by Prowler. It can be anything
+        from a single host to a whole VPC.
+      summary: Retrieve data for a resource
+      parameters:
+      - in: query
+        name: fields[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - uid
+            - name
+            - region
+            - service
+            - tags
+            - provider
+            - findings
+            - failed_findings_count
+            - url
+            - type
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this resource.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - findings
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Resource
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+          description: ''
+  /api/v1/resources/latest:
+    get:
+      operationId: resources_latest_retrieve
+      description: Retrieve a list of the latest resources from the latest scans for
+        each provider with options for filtering by various criteria.
+      summary: List the latest resources
+      parameters:
+      - in: query
+        name: fields[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - uid
+            - name
+            - region
+            - service
+            - tags
+            - provider
+            - findings
+            - failed_findings_count
+            - url
+            - type
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -4395,21 +5300,6 @@ paths:
         schema:
           type: string
       - in: query
-        name: filter[updated_at]
-        schema:
-          type: string
-          format: date
-      - in: query
-        name: filter[updated_at__gte]
-        schema:
-          type: string
-          format: date-time
-      - in: query
-        name: filter[updated_at__lte]
-        schema:
-          type: string
-          format: date-time
-      - in: query
         name: include
         schema:
           type: array
@@ -4421,18 +5311,6 @@ paths:
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
       - name: sort
         required: false
         in: query
@@ -4468,55 +5346,281 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/PaginatedResourceList'
+                $ref: '#/components/schemas/ResourceResponse'
           description: ''
-  /api/v1/resources/{id}:
+  /api/v1/resources/metadata:
     get:
-      operationId: resources_retrieve
-      description: Fetch detailed information about a specific resource by their ID.
-        A Resource is an object that is discovered by Prowler. It can be anything
-        from a single host to a whole VPC.
-      summary: Retrieve data for a resource
+      operationId: resources_metadata_retrieve
+      description: Fetch unique metadata values from a set of resources. This is useful
+        for dynamic filtering.
+      summary: Retrieve metadata values from resources
       parameters:
       - in: query
-        name: fields[resources]
+        name: fields[resources-metadata]
         schema:
           type: array
           items:
             type: string
             enum:
-            - inserted_at
-            - updated_at
-            - uid
-            - name
-            - region
-            - service
-            - tags
-            - provider
-            - findings
-            - url
-            - type
+            - services
+            - regions
+            - types
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
-      - in: path
-        name: id
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this resource.
-        required: true
       - in: query
-        name: include
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+      - in: query
+        name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
             enum:
-            - findings
-            - provider
-        description: include query parameter to allow the client to customize which
-          related resources should be returned.
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[tag]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[tags]
+        schema:
+          type: string
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+        description: At least one of the variations of the `filter[updated_at]` filter
+          must be provided.
+        required: true
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_uid
+            - -provider_uid
+            - uid
+            - -uid
+            - name
+            - -name
+            - region
+            - -region
+            - service
+            - -service
+            - type
+            - -type
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
         explode: false
       tags:
       - Resource
@@ -4527,7 +5631,244 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ResourceResponse'
+                $ref: '#/components/schemas/ResourceMetadataResponse'
+          description: ''
+  /api/v1/resources/metadata/latest:
+    get:
+      operationId: resources_metadata_latest_retrieve
+      description: Fetch unique metadata values from a set of resources from the latest
+        scans for each provider. This is useful for dynamic filtering.
+      summary: Retrieve metadata values from the latest resources
+      parameters:
+      - in: query
+        name: fields[resources-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - services
+            - regions
+            - types
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[tag]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[tags]
+        schema:
+          type: string
+      - in: query
+        name: filter[type]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__icontains]
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_uid
+            - -provider_uid
+            - uid
+            - -uid
+            - name
+            - -name
+            - region
+            - -region
+            - service
+            - -service
+            - type
+            - -type
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Resource
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ResourceMetadataResponse'
           description: ''
   /api/v1/roles:
     get:
@@ -4892,6 +6233,199 @@ paths:
       responses:
         '204':
           description: Relationship deleted successfully
+  /api/v1/saml-config:
+    get:
+      operationId: saml_config_list
+      description: Returns all the SAML-based SSO configurations associated with the
+        current tenant.
+      summary: List all SSO configurations
+      parameters:
+      - in: query
+        name: fields[saml-configurations]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - email_domain
+            - metadata_xml
+            - created_at
+            - updated_at
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - email_domain
+            - -email_domain
+            - metadata_xml
+            - -metadata_xml
+            - created_at
+            - -created_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - SAML
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSAMLConfigurationList'
+          description: ''
+    post:
+      operationId: saml_config_create
+      description: Creates a new SAML SSO configuration for the current tenant, including
+        email domain and metadata XML.
+      summary: Create the SSO configuration
+      tags:
+      - SAML
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/SAMLConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SAMLConfigurationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SAMLConfigurationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SAMLConfigurationResponse'
+          description: ''
+  /api/v1/saml-config/{id}:
+    get:
+      operationId: saml_config_retrieve
+      description: Returns the details of a specific SAML configuration belonging
+        to the current tenant.
+      summary: Retrieve SSO configuration details
+      parameters:
+      - in: query
+        name: fields[saml-configurations]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - email_domain
+            - metadata_xml
+            - created_at
+            - updated_at
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this saml configuration.
+        required: true
+      tags:
+      - SAML
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SAMLConfigurationResponse'
+          description: ''
+    patch:
+      operationId: saml_config_partial_update
+      description: Partially updates an existing SAML SSO configuration. Supports
+        changes to email domain and metadata XML.
+      summary: Update the SSO configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this saml configuration.
+        required: true
+      tags:
+      - SAML
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SAMLConfigurationResponse'
+          description: ''
+    delete:
+      operationId: saml_config_destroy
+      description: Deletes an existing SAML SSO configuration associated with the
+        current tenant.
+      summary: Delete the SSO configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this saml configuration.
+        required: true
+      tags:
+      - SAML
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/scans:
     get:
       operationId: scans_list
@@ -4919,6 +6453,7 @@ paths:
             - completed_at
             - scheduled_at
             - next_scan_at
+            - processor
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -4996,6 +6531,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5004,6 +6540,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5014,6 +6551,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5024,6 +6562,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5230,6 +6769,7 @@ paths:
             - completed_at
             - scheduled_at
             - next_scan_at
+            - processor
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -5376,7 +6916,8 @@ paths:
         '403':
           description: There is a problem with credentials
         '404':
-          description: The scan has no reports
+          description: The scan has no reports, or the report generation task has
+            not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -6838,80 +8379,37 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type7f7Enum'
+          - $ref: '#/components/schemas/ComplianceOverviewTypeEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
-        id:
-          type: string
-          format: uuid
+        id: {}
         attributes:
           type: object
           properties:
-            inserted_at:
+            id:
               type: string
-              format: date-time
-              readOnly: true
-            compliance_id:
-              type: string
-              maxLength: 100
             framework:
               type: string
-              maxLength: 100
             version:
               type: string
-              maxLength: 50
-            requirements_status:
-              type: object
-              properties:
-                passed:
-                  type: integer
-                failed:
-                  type: integer
-                manual:
-                  type: integer
-                total:
-                  type: integer
-              readOnly: true
-            region:
-              type: string
-              maxLength: 50
-            provider_type:
-              type: string
-              nullable: true
-              readOnly: true
+            requirements_passed:
+              type: integer
+            requirements_failed:
+              type: integer
+            requirements_manual:
+              type: integer
+            total_requirements:
+              type: integer
           required:
-          - compliance_id
+          - id
           - framework
-        relationships:
-          type: object
-          properties:
-            scan:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                      - scans
-                      title: Resource Type Name
-                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                        member is used to describe resource objects that share common
-                        attributes and relationships.
-                  required:
-                  - id
-                  - type
-              required:
-              - data
-              description: The identifier of the related object.
-              title: Resource Identifier
-              nullable: true
-    ComplianceOverviewFull:
+          - version
+          - requirements_passed
+          - requirements_failed
+          - requirements_manual
+          - total_requirements
+    ComplianceOverviewAttributes:
       type: object
       required:
       - type
@@ -6920,134 +8418,84 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type7f7Enum'
+          - $ref: '#/components/schemas/ComplianceOverviewAttributesTypeEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
-        id:
-          type: string
-          format: uuid
+        id: {}
         attributes:
           type: object
           properties:
-            inserted_at:
+            id:
               type: string
-              format: date-time
-              readOnly: true
-            compliance_id:
+            framework_description:
               type: string
-              maxLength: 100
+            name:
+              type: string
             framework:
               type: string
-              maxLength: 100
             version:
               type: string
-              maxLength: 50
-            requirements_status:
-              type: object
-              properties:
-                passed:
-                  type: integer
-                failed:
-                  type: integer
-                manual:
-                  type: integer
-                total:
-                  type: integer
-              readOnly: true
-            region:
-              type: string
-              maxLength: 50
-            provider_type:
-              type: string
-              nullable: true
-              readOnly: true
             description:
               type: string
-            requirements:
-              type: object
-              properties:
-                requirement_id:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    checks:
-                      type: object
-                      properties:
-                        check_name:
-                          type: object
-                          properties:
-                            status:
-                              type: string
-                              enum:
-                              - PASS
-                              - FAIL
-                              - null
-                      description: Each key in the 'checks' object is a check name,
-                        with values as 'PASS', 'FAIL', or null.
-                    status:
-                      type: string
-                      enum:
-                      - PASS
-                      - FAIL
-                      - MANUAL
-                    attributes:
-                      type: array
-                      items:
-                        type: object
-                    description:
-                      type: string
-                    checks_status:
-                      type: object
-                      properties:
-                        total:
-                          type: integer
-                        pass:
-                          type: integer
-                        fail:
-                          type: integer
-                        manual:
-                          type: integer
-              readOnly: true
+            attributes: {}
           required:
-          - compliance_id
+          - id
+          - framework_description
+          - name
           - framework
-        relationships:
+          - version
+          - description
+          - attributes
+    ComplianceOverviewAttributesTypeEnum:
+      type: string
+      enum:
+      - compliance-requirements-attributes
+    ComplianceOverviewDetail:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ComplianceOverviewDetailTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
           type: object
           properties:
-            scan:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                      - scans
-                      title: Resource Type Name
-                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                        member is used to describe resource objects that share common
-                        attributes and relationships.
-                  required:
-                  - id
-                  - type
-              required:
-              - data
-              description: The identifier of the related object.
-              title: Resource Identifier
-              nullable: true
-    ComplianceOverviewFullResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ComplianceOverviewFull'
-      required:
-      - data
+            id:
+              type: string
+            framework:
+              type: string
+            version:
+              type: string
+            description:
+              type: string
+            status:
+              enum:
+              - FAIL
+              - PASS
+              - MANUAL
+              type: string
+              description: |-
+                * `FAIL` - Fail
+                * `PASS` - Pass
+                * `MANUAL` - Manual
+          required:
+          - id
+          - framework
+          - version
+          - description
+          - status
+    ComplianceOverviewDetailTypeEnum:
+      type: string
+      enum:
+      - compliance-requirements-details
     ComplianceOverviewMetadata:
       type: object
       required:
@@ -7071,17 +8519,14 @@ components:
                 type: string
           required:
           - regions
-    ComplianceOverviewMetadataResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ComplianceOverviewMetadata'
-      required:
-      - data
     ComplianceOverviewMetadataTypeEnum:
       type: string
       enum:
       - compliance-overviews-metadata
+    ComplianceOverviewTypeEnum:
+      type: string
+      enum:
+      - compliance-overviews
     Finding:
       type: object
       required:
@@ -7161,6 +8606,11 @@ components:
               nullable: true
             muted:
               type: boolean
+            muted_reason:
+              type: string
+              nullable: true
+              minLength: 3
+              maxLength: 500
           required:
           - uid
           - status
@@ -7357,14 +8807,12 @@ components:
             integration_type:
               enum:
               - amazon_s3
-              - saml
               - aws_security_hub
               - jira
               - slack
               type: string
               description: |-
                 * `amazon_s3` - Amazon S3
-                * `saml` - SAML
                 * `aws_security_hub` - AWS Security Hub
                 * `jira` - JIRA
                 * `slack` - Slack
@@ -7429,7 +8877,6 @@ components:
               readOnly: true
             enabled:
               type: boolean
-              readOnly: true
             connected:
               type: boolean
               readOnly: true
@@ -7442,14 +8889,12 @@ components:
             integration_type:
               enum:
               - amazon_s3
-              - saml
               - aws_security_hub
               - jira
               - slack
               type: string
               description: |-
                 * `amazon_s3` - Amazon S3
-                * `saml` - SAML
                 * `aws_security_hub` - AWS Security Hub
                 * `jira` - JIRA
                 * `slack` - Slack
@@ -7463,8 +8908,12 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Path will be normalized to remove excessive slashes
+                      and invalid characters are not allowed (< > : " | ? *). Maximum
+                      length is 900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
                 required:
                 - bucket_name
                 - output_directory
@@ -7572,7 +9021,6 @@ components:
                   readOnly: true
                 enabled:
                   type: boolean
-                  readOnly: true
                 connected:
                   type: boolean
                   readOnly: true
@@ -7585,14 +9033,12 @@ components:
                 integration_type:
                   enum:
                   - amazon_s3
-                  - saml
                   - aws_security_hub
                   - jira
                   - slack
                   type: string
                   description: |-
                     * `amazon_s3` - Amazon S3
-                    * `saml` - SAML
                     * `aws_security_hub` - AWS Security Hub
                     * `jira` - JIRA
                     * `slack` - Slack
@@ -7607,8 +9053,12 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Path will be normalized to remove excessive
+                          slashes and invalid characters are not allowed (< > : "
+                          | ? *). Maximum length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
                     required:
                     - bucket_name
                     - output_directory
@@ -7743,14 +9193,12 @@ components:
             integration_type:
               enum:
               - amazon_s3
-              - saml
               - aws_security_hub
               - jira
               - slack
               type: string
               description: |-
                 * `amazon_s3` - Amazon S3
-                * `saml` - SAML
                 * `aws_security_hub` - AWS Security Hub
                 * `jira` - JIRA
                 * `slack` - Slack
@@ -7765,8 +9213,12 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Path will be normalized to remove excessive slashes
+                      and invalid characters are not allowed (< > : " | ? *). Maximum
+                      length is 900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
                 required:
                 - bucket_name
                 - output_directory
@@ -8288,6 +9740,290 @@ components:
           $ref: '#/components/schemas/InvitationUpdate'
       required:
       - data
+    LighthouseConfig:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4bfEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the configuration
+              maxLength: 100
+              minLength: 3
+            api_key:
+              type: string
+            model:
+              enum:
+              - gpt-4o-2024-11-20
+              - gpt-4o-2024-08-06
+              - gpt-4o-2024-05-13
+              - gpt-4o
+              - gpt-4o-mini-2024-07-18
+              - gpt-4o-mini
+              type: string
+              description: |-
+                Must be one of the supported model names
+
+                * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                * `gpt-4o` - GPT-4o Default
+                * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                * `gpt-4o-mini` - GPT-4o Mini Default
+            temperature:
+              type: number
+              format: double
+              description: Must be between 0 and 1
+            max_tokens:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              description: Must be between 500 and 5000
+            business_context:
+              type: string
+              description: Additional business context for this AI model configuration
+            is_active:
+              type: boolean
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+    LighthouseConfigCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4bfEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the configuration
+              maxLength: 100
+              minLength: 3
+            api_key:
+              type: string
+              writeOnly: true
+            model:
+              enum:
+              - gpt-4o-2024-11-20
+              - gpt-4o-2024-08-06
+              - gpt-4o-2024-05-13
+              - gpt-4o
+              - gpt-4o-mini-2024-07-18
+              - gpt-4o-mini
+              type: string
+              description: |-
+                Must be one of the supported model names
+
+                * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                * `gpt-4o` - GPT-4o Default
+                * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                * `gpt-4o-mini` - GPT-4o Mini Default
+            temperature:
+              type: number
+              format: double
+              description: Must be between 0 and 1
+            max_tokens:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              description: Must be between 500 and 5000
+            business_context:
+              type: string
+              description: Additional business context for this AI model configuration
+            is_active:
+              type: boolean
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+          - api_key
+    LighthouseConfigCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-configurations
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  description: Name of the configuration
+                  maxLength: 100
+                api_key:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+                model:
+                  enum:
+                  - gpt-4o-2024-11-20
+                  - gpt-4o-2024-08-06
+                  - gpt-4o-2024-05-13
+                  - gpt-4o
+                  - gpt-4o-mini-2024-07-18
+                  - gpt-4o-mini
+                  type: string
+                  description: |-
+                    Must be one of the supported model names
+
+                    * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                    * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                    * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                    * `gpt-4o` - GPT-4o Default
+                    * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                    * `gpt-4o-mini` - GPT-4o Mini Default
+                temperature:
+                  type: number
+                  format: double
+                  description: Must be between 0 and 1
+                max_tokens:
+                  type: integer
+                  maximum: 2147483647
+                  minimum: -2147483648
+                  description: Must be between 500 and 5000
+                business_context:
+                  type: string
+                  description: Additional business context for this AI model configuration
+                is_active:
+                  type: boolean
+                  readOnly: true
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+              required:
+              - name
+              - api_key
+      required:
+      - data
+    LighthouseConfigCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseConfigCreate'
+      required:
+      - data
+    LighthouseConfigUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4bfEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the configuration
+              maxLength: 100
+              minLength: 3
+            api_key:
+              type: string
+              writeOnly: true
+            model:
+              enum:
+              - gpt-4o-2024-11-20
+              - gpt-4o-2024-08-06
+              - gpt-4o-2024-05-13
+              - gpt-4o
+              - gpt-4o-mini-2024-07-18
+              - gpt-4o-mini
+              type: string
+              description: |-
+                Must be one of the supported model names
+
+                * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                * `gpt-4o` - GPT-4o Default
+                * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                * `gpt-4o-mini` - GPT-4o Mini Default
+            temperature:
+              type: number
+              format: double
+              description: Must be between 0 and 1
+            max_tokens:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              description: Must be between 500 and 5000
+            business_context:
+              type: string
+              description: Additional business context for this AI model configuration
+            is_active:
+              type: boolean
+              readOnly: true
+    LighthouseConfigUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseConfigUpdate'
+      required:
+      - data
     Membership:
       type: object
       required:
@@ -8385,7 +10121,7 @@ components:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/Membership'
+          $ref: '#/components/schemas/ComplianceOverviewMetadata'
       required:
       - data
     OverviewFinding:
@@ -8600,29 +10336,33 @@ components:
       type: string
       enum:
       - findings-severity-overview
+    PaginatedComplianceOverviewAttributesList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceOverviewAttributes'
+      required:
+      - data
+    PaginatedComplianceOverviewDetailList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceOverviewDetail'
+      required:
+      - data
     PaginatedComplianceOverviewList:
       type: object
-      required:
-      - count
-      - results
       properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page[number]=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page[number]=2
-        results:
+        data:
           type: array
           items:
             $ref: '#/components/schemas/ComplianceOverview'
+      required:
+      - data
     PaginatedFindingList:
       type: object
       properties:
@@ -8650,6 +10390,15 @@ components:
             $ref: '#/components/schemas/Invitation'
       required:
       - data
+    PaginatedLighthouseConfigList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseConfig'
+      required:
+      - data
     PaginatedMembershipList:
       type: object
       properties:
@@ -8657,6 +10406,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Membership'
+      required:
+      - data
+    PaginatedProcessorList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Processor'
       required:
       - data
     PaginatedProviderGroupList:
@@ -8702,6 +10460,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Role'
+      required:
+      - data
+    PaginatedSAMLConfigurationList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SAMLConfiguration'
       required:
       - data
     PaginatedScanList:
@@ -8783,14 +10550,12 @@ components:
                 integration_type:
                   enum:
                   - amazon_s3
-                  - saml
                   - aws_security_hub
                   - jira
                   - slack
                   type: string
                   description: |-
                     * `amazon_s3` - Amazon S3
-                    * `saml` - SAML
                     * `aws_security_hub` - AWS Security Hub
                     * `jira` - JIRA
                     * `slack` - Slack
@@ -8806,8 +10571,12 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Path will be normalized to remove excessive
+                          slashes and invalid characters are not allowed (< > : "
+                          | ? *). Maximum length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
                     required:
                     - bucket_name
                     - output_directory
@@ -8964,6 +10733,173 @@ components:
                   - data
                   description: A related resource object from type roles
                   title: roles
+      required:
+      - data
+    PatchedLighthouseConfigUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-configurations
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  description: Name of the configuration
+                  maxLength: 100
+                api_key:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+                model:
+                  enum:
+                  - gpt-4o-2024-11-20
+                  - gpt-4o-2024-08-06
+                  - gpt-4o-2024-05-13
+                  - gpt-4o
+                  - gpt-4o-mini-2024-07-18
+                  - gpt-4o-mini
+                  type: string
+                  description: |-
+                    Must be one of the supported model names
+
+                    * `gpt-4o-2024-11-20` - GPT-4o v2024-11-20
+                    * `gpt-4o-2024-08-06` - GPT-4o v2024-08-06
+                    * `gpt-4o-2024-05-13` - GPT-4o v2024-05-13
+                    * `gpt-4o` - GPT-4o Default
+                    * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
+                    * `gpt-4o-mini` - GPT-4o Mini Default
+                temperature:
+                  type: number
+                  format: double
+                  description: Must be between 0 and 1
+                max_tokens:
+                  type: integer
+                  maximum: 2147483647
+                  minimum: -2147483648
+                  description: Must be between 500 and 5000
+                business_context:
+                  type: string
+                  description: Additional business context for this AI model configuration
+                is_active:
+                  type: boolean
+                  readOnly: true
+      required:
+      - data
+    PatchedProcessorUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - processors
+            id: {}
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                configuration:
+                  oneOf:
+                  - type: object
+                    title: Mutelist
+                    properties:
+                      Mutelist:
+                        type: object
+                        properties:
+                          Accounts:
+                            type: object
+                            patternProperties:
+                              .*:
+                                type: object
+                                properties:
+                                  Checks:
+                                    type: object
+                                    patternProperties:
+                                      .*:
+                                        type: object
+                                        properties:
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Exceptions:
+                                            type: object
+                                            properties:
+                                              Accounts:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Regions:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Resources:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Tags:
+                                                type: array
+                                                items:
+                                                  type: string
+                                            additionalProperties: false
+                                          Description:
+                                            type: string
+                                        required:
+                                        - Regions
+                                        - Resources
+                                        additionalProperties: false
+                                    additionalProperties: false
+                                required:
+                                - Checks
+                                additionalProperties: false
+                            additionalProperties: false
+                        required:
+                        - Accounts
+                        additionalProperties: false
+                    additionalProperties: false
+              required:
+              - configuration
       required:
       - data
     PatchedProviderGroupMembershipRequest:
@@ -9136,11 +11072,12 @@ components:
                   enum:
                   - static
                   - role
+                  - service_account
                   type: string
                   description: |-
                     * `static` - Key-value pairs
                     * `role` - Role assumption
-                  readOnly: true
+                    * `service_account` - GCP Service Account Key
                 secret:
                   oneOf:
                   - type: object
@@ -9269,6 +11206,14 @@ components:
                     - client_secret
                     - refresh_token
                   - type: object
+                    title: GCP Service Account Key
+                    properties:
+                      service_account_key:
+                        type: object
+                        description: The service account key for GCP.
+                    required:
+                    - service_account_key
+                  - type: object
                     title: Kubernetes Static Credentials
                     properties:
                       kubeconfig_content:
@@ -9277,6 +11222,34 @@ components:
                           encoded as a string.
                     required:
                     - kubeconfig_content
+                  - type: object
+                    title: GitHub Personal Access Token
+                    properties:
+                      personal_access_token:
+                        type: string
+                        description: GitHub personal access token for authentication.
+                    required:
+                    - personal_access_token
+                  - type: object
+                    title: GitHub OAuth App Token
+                    properties:
+                      oauth_app_token:
+                        type: string
+                        description: GitHub OAuth App token for authentication.
+                    required:
+                    - oauth_app_token
+                  - type: object
+                    title: GitHub App Credentials
+                    properties:
+                      github_app_id:
+                        type: integer
+                        description: GitHub App ID for authentication.
+                      github_app_key:
+                        type: string
+                        description: Path to the GitHub App private key file.
+                    required:
+                    - github_app_id
+                    - github_app_key
                   writeOnly: true
               required:
               - secret
@@ -9513,6 +11486,52 @@ components:
                   readOnly: true
       required:
       - data
+    PatchedSAMLConfigurationRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - saml-configurations
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                email_domain:
+                  type: string
+                  minLength: 1
+                  description: Email domain used to identify the tenant, e.g. prowlerdemo.com
+                  maxLength: 254
+                metadata_xml:
+                  type: string
+                  minLength: 1
+                  description: Raw IdP metadata XML to configure SingleSignOnService,
+                    certificates, etc.
+                created_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+              required:
+              - email_domain
+              - metadata_xml
+      required:
+      - data
     PatchedScanUpdateRequest:
       type: object
       properties:
@@ -9683,6 +11702,425 @@ components:
               - email
       required:
       - data
+    Processor:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type552Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            processor_type:
+              enum:
+              - mutelist
+              type: string
+              description: '* `mutelist` - Mutelist'
+            configuration:
+              oneOf:
+              - type: object
+                title: Mutelist
+                properties:
+                  Mutelist:
+                    type: object
+                    properties:
+                      Accounts:
+                        type: object
+                        patternProperties:
+                          .*:
+                            type: object
+                            properties:
+                              Checks:
+                                type: object
+                                patternProperties:
+                                  .*:
+                                    type: object
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
+                                        type: object
+                                        properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                        additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
+                                    additionalProperties: false
+                                additionalProperties: false
+                            required:
+                            - Checks
+                            additionalProperties: false
+                        additionalProperties: false
+                    required:
+                    - Accounts
+                    additionalProperties: false
+                additionalProperties: false
+          required:
+          - processor_type
+          - configuration
+    ProcessorCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type552Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            processor_type:
+              enum:
+              - mutelist
+              type: string
+              description: '* `mutelist` - Mutelist'
+            configuration:
+              oneOf:
+              - type: object
+                title: Mutelist
+                properties:
+                  Mutelist:
+                    type: object
+                    properties:
+                      Accounts:
+                        type: object
+                        patternProperties:
+                          .*:
+                            type: object
+                            properties:
+                              Checks:
+                                type: object
+                                patternProperties:
+                                  .*:
+                                    type: object
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
+                                        type: object
+                                        properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                        additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
+                                    additionalProperties: false
+                                additionalProperties: false
+                            required:
+                            - Checks
+                            additionalProperties: false
+                        additionalProperties: false
+                    required:
+                    - Accounts
+                    additionalProperties: false
+                additionalProperties: false
+          required:
+          - processor_type
+          - configuration
+    ProcessorCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - processors
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                processor_type:
+                  enum:
+                  - mutelist
+                  type: string
+                  description: '* `mutelist` - Mutelist'
+                configuration:
+                  oneOf:
+                  - type: object
+                    title: Mutelist
+                    properties:
+                      Mutelist:
+                        type: object
+                        properties:
+                          Accounts:
+                            type: object
+                            patternProperties:
+                              .*:
+                                type: object
+                                properties:
+                                  Checks:
+                                    type: object
+                                    patternProperties:
+                                      .*:
+                                        type: object
+                                        properties:
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Exceptions:
+                                            type: object
+                                            properties:
+                                              Accounts:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Regions:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Resources:
+                                                type: array
+                                                items:
+                                                  type: string
+                                              Tags:
+                                                type: array
+                                                items:
+                                                  type: string
+                                            additionalProperties: false
+                                          Description:
+                                            type: string
+                                        required:
+                                        - Regions
+                                        - Resources
+                                        additionalProperties: false
+                                    additionalProperties: false
+                                required:
+                                - Checks
+                                additionalProperties: false
+                            additionalProperties: false
+                        required:
+                        - Accounts
+                        additionalProperties: false
+                    additionalProperties: false
+              required:
+              - processor_type
+              - configuration
+      required:
+      - data
+    ProcessorCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProcessorCreate'
+      required:
+      - data
+    ProcessorResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Processor'
+      required:
+      - data
+    ProcessorUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type552Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            configuration:
+              oneOf:
+              - type: object
+                title: Mutelist
+                properties:
+                  Mutelist:
+                    type: object
+                    properties:
+                      Accounts:
+                        type: object
+                        patternProperties:
+                          .*:
+                            type: object
+                            properties:
+                              Checks:
+                                type: object
+                                patternProperties:
+                                  .*:
+                                    type: object
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
+                                        type: object
+                                        properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Regions:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Resources:
+                                            type: array
+                                            items:
+                                              type: string
+                                          Tags:
+                                            type: array
+                                            items:
+                                              type: string
+                                        additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
+                                    additionalProperties: false
+                                additionalProperties: false
+                            required:
+                            - Checks
+                            additionalProperties: false
+                        additionalProperties: false
+                    required:
+                    - Accounts
+                    additionalProperties: false
+                additionalProperties: false
+          required:
+          - configuration
+    ProcessorUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProcessorUpdate'
+      required:
+      - data
     Provider:
       type: object
       required:
@@ -9717,6 +12155,7 @@ components:
               - gcp
               - kubernetes
               - m365
+              - github
               type: string
               description: |-
                 * `aws` - AWS
@@ -9724,6 +12163,7 @@ components:
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
+                * `github` - GitHub
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -9831,6 +12271,7 @@ components:
               - gcp
               - kubernetes
               - m365
+              - github
               type: string
               description: |-
                 * `aws` - AWS
@@ -9838,6 +12279,7 @@ components:
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
+                * `github` - GitHub
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -9876,6 +12318,7 @@ components:
                   - gcp
                   - kubernetes
                   - m365
+                  - github
                   type: string
                   description: |-
                     * `aws` - AWS
@@ -9883,6 +12326,7 @@ components:
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
+                    * `github` - GitHub
                 uid:
                   type: string
                   minLength: 3
@@ -10316,10 +12760,12 @@ components:
               enum:
               - static
               - role
+              - service_account
               type: string
               description: |-
                 * `static` - Key-value pairs
                 * `role` - Role assumption
+                * `service_account` - GCP Service Account Key
           required:
           - secret_type
         relationships:
@@ -10383,10 +12829,12 @@ components:
               enum:
               - static
               - role
+              - service_account
               type: string
               description: |-
                 * `static` - Key-value pairs
                 * `role` - Role assumption
+                * `service_account` - GCP Service Account Key
             secret:
               oneOf:
               - type: object
@@ -10514,6 +12962,14 @@ components:
                 - client_secret
                 - refresh_token
               - type: object
+                title: GCP Service Account Key
+                properties:
+                  service_account_key:
+                    type: object
+                    description: The service account key for GCP.
+                required:
+                - service_account_key
+              - type: object
                 title: Kubernetes Static Credentials
                 properties:
                   kubeconfig_content:
@@ -10522,6 +12978,34 @@ components:
                       as a string.
                 required:
                 - kubeconfig_content
+              - type: object
+                title: GitHub Personal Access Token
+                properties:
+                  personal_access_token:
+                    type: string
+                    description: GitHub personal access token for authentication.
+                required:
+                - personal_access_token
+              - type: object
+                title: GitHub OAuth App Token
+                properties:
+                  oauth_app_token:
+                    type: string
+                    description: GitHub OAuth App token for authentication.
+                required:
+                - oauth_app_token
+              - type: object
+                title: GitHub App Credentials
+                properties:
+                  github_app_id:
+                    type: integer
+                    description: GitHub App ID for authentication.
+                  github_app_key:
+                    type: string
+                    description: Path to the GitHub App private key file.
+                required:
+                - github_app_id
+                - github_app_key
               writeOnly: true
           required:
           - secret_type
@@ -10591,10 +13075,12 @@ components:
                   enum:
                   - static
                   - role
+                  - service_account
                   type: string
                   description: |-
                     * `static` - Key-value pairs
                     * `role` - Role assumption
+                    * `service_account` - GCP Service Account Key
                 secret:
                   oneOf:
                   - type: object
@@ -10723,6 +13209,14 @@ components:
                     - client_secret
                     - refresh_token
                   - type: object
+                    title: GCP Service Account Key
+                    properties:
+                      service_account_key:
+                        type: object
+                        description: The service account key for GCP.
+                    required:
+                    - service_account_key
+                  - type: object
                     title: Kubernetes Static Credentials
                     properties:
                       kubeconfig_content:
@@ -10731,6 +13225,34 @@ components:
                           encoded as a string.
                     required:
                     - kubeconfig_content
+                  - type: object
+                    title: GitHub Personal Access Token
+                    properties:
+                      personal_access_token:
+                        type: string
+                        description: GitHub personal access token for authentication.
+                    required:
+                    - personal_access_token
+                  - type: object
+                    title: GitHub OAuth App Token
+                    properties:
+                      oauth_app_token:
+                        type: string
+                        description: GitHub OAuth App token for authentication.
+                    required:
+                    - oauth_app_token
+                  - type: object
+                    title: GitHub App Credentials
+                    properties:
+                      github_app_id:
+                        type: integer
+                        description: GitHub App ID for authentication.
+                      github_app_key:
+                        type: string
+                        description: Path to the GitHub App private key file.
+                    required:
+                    - github_app_id
+                    - github_app_key
                   writeOnly: true
               required:
               - secret_type
@@ -10816,11 +13338,12 @@ components:
               enum:
               - static
               - role
+              - service_account
               type: string
               description: |-
                 * `static` - Key-value pairs
                 * `role` - Role assumption
-              readOnly: true
+                * `service_account` - GCP Service Account Key
             secret:
               oneOf:
               - type: object
@@ -10948,6 +13471,14 @@ components:
                 - client_secret
                 - refresh_token
               - type: object
+                title: GCP Service Account Key
+                properties:
+                  service_account_key:
+                    type: object
+                    description: The service account key for GCP.
+                required:
+                - service_account_key
+              - type: object
                 title: Kubernetes Static Credentials
                 properties:
                   kubeconfig_content:
@@ -10956,6 +13487,34 @@ components:
                       as a string.
                 required:
                 - kubeconfig_content
+              - type: object
+                title: GitHub Personal Access Token
+                properties:
+                  personal_access_token:
+                    type: string
+                    description: GitHub personal access token for authentication.
+                required:
+                - personal_access_token
+              - type: object
+                title: GitHub OAuth App Token
+                properties:
+                  oauth_app_token:
+                    type: string
+                    description: GitHub OAuth App token for authentication.
+                required:
+                - oauth_app_token
+              - type: object
+                title: GitHub App Credentials
+                properties:
+                  github_app_id:
+                    type: integer
+                    description: GitHub App ID for authentication.
+                  github_app_key:
+                    type: string
+                    description: Path to the GitHub App private key file.
+                required:
+                - github_app_id
+                - github_app_key
               writeOnly: true
           required:
           - secret
@@ -11040,6 +13599,9 @@ components:
                 env: prod
                 owner: johndoe
               readOnly: true
+            failed_findings_count:
+              type: integer
+              readOnly: true
             type:
               type: string
               readOnly: true
@@ -11079,33 +13641,72 @@ components:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - findings
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - findings
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type findings
-              title: findings
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
           required:
           - provider
+    ResourceMetadata:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ResourceMetadataTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            services:
+              type: array
+              items:
+                type: string
+            regions:
+              type: array
+              items:
+                type: string
+            types:
+              type: array
+              items:
+                type: string
+          required:
+          - services
+          - regions
+          - types
+    ResourceMetadataResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ResourceMetadata'
+      required:
+      - data
+    ResourceMetadataTypeEnum:
+      type: string
+      enum:
+      - resources-metadata
     ResourceResponse:
       type: object
       properties:
@@ -11594,6 +14195,97 @@ components:
           $ref: '#/components/schemas/Role'
       required:
       - data
+    SAMLConfiguration:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/SAMLConfigurationTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            email_domain:
+              type: string
+              description: Email domain used to identify the tenant, e.g. prowlerdemo.com
+              maxLength: 254
+            metadata_xml:
+              type: string
+              description: Raw IdP metadata XML to configure SingleSignOnService,
+                certificates, etc.
+            created_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - email_domain
+          - metadata_xml
+    SAMLConfigurationRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - saml-configurations
+            attributes:
+              type: object
+              properties:
+                email_domain:
+                  type: string
+                  minLength: 1
+                  description: Email domain used to identify the tenant, e.g. prowlerdemo.com
+                  maxLength: 254
+                metadata_xml:
+                  type: string
+                  minLength: 1
+                  description: Raw IdP metadata XML to configure SingleSignOnService,
+                    certificates, etc.
+                created_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+              required:
+              - email_domain
+              - metadata_xml
+      required:
+      - data
+    SAMLConfigurationResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SAMLConfiguration'
+      required:
+      - data
+    SAMLConfigurationTypeEnum:
+      type: string
+      enum:
+      - saml-configurations
     Scan:
       type: object
       required:
@@ -11717,6 +14409,31 @@ components:
                       type: string
                       enum:
                       - tasks
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+            processor:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - processors
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -11861,6 +14578,7 @@ components:
       type: object
       required:
       - type
+      - id
       additionalProperties: false
       properties:
         type:
@@ -11869,6 +14587,9 @@ components:
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+        id:
+          type: string
+          format: uuid
         attributes:
           type: object
           properties:
@@ -12279,14 +15000,18 @@ components:
       type: string
       enum:
       - provider-groups
+    Type4bfEnum:
+      type: string
+      enum:
+      - lighthouse-configurations
+    Type552Enum:
+      type: string
+      enum:
+      - processors
     Type6bbEnum:
       type: string
       enum:
       - roles
-    Type7f7Enum:
-      type: string
-      enum:
-      - compliance-overviews
     Type8cdEnum:
       type: string
       enum:
@@ -12604,3 +15329,10 @@ tags:
   description: Endpoints for managing third-party integrations, including registration,
     configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
     services.
+- name: Lighthouse
+  description: Endpoints for managing Lighthouse configurations, including creation,
+    retrieval, updating, and deletion of configurations such as OpenAI keys, models,
+    and business context.
+- name: Processor
+  description: Endpoints for managing post-processors used to process Prowler findings,
+    including registration, configuration, and deletion of post-processing actions.

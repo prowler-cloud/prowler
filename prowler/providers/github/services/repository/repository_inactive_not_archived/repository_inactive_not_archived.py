@@ -20,9 +20,7 @@ class repository_inactive_not_archived(Check):
         )
 
         for repo in repository_client.repositories.values():
-            report = CheckReportGithub(
-                metadata=self.metadata(), resource=repo, repository=repo.name
-            )
+            report = CheckReportGithub(metadata=self.metadata(), resource=repo)
 
             if repo.archived:
                 report.status = "PASS"

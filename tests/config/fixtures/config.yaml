@@ -376,6 +376,8 @@ azure:
   # azure.network_public_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+    # Configurable minimal risk level for attack path notifications
+  defender_attack_path_minimal_risk_level: "High"
 
   # Azure App Service
   # azure.app_ensure_php_version_is_latest
@@ -391,6 +393,16 @@ azure:
     [
       "1.2",
       "1.3"
+    ]
+
+  # Azure Virtual Machines
+  # azure.vm_desired_sku_size
+  # List of desired VM SKU sizes that are allowed in the organization
+  desired_vm_sku_sizes:
+    [
+      "Standard_A8_v2",
+      "Standard_DS3_v2",
+      "Standard_D4s_v3",
     ]
 
 # GCP Configuration

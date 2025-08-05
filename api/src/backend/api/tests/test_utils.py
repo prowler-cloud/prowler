@@ -131,6 +131,21 @@ class TestInitializeProwlerProvider:
         initialize_prowler_provider(provider)
         mock_return_prowler_provider.return_value.assert_called_once_with(key="value")
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_prowler_provider_with_mutelist(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.secret.secret = {"key": "value"}
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider, mutelist_processor)
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            key="value", mutelist_content={"key": "value"}
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -200,6 +215,25 @@ class TestGetProwlerProviderKwargs:
         expected_result = {**secret_dict, **expected_extra_kwargs}
         assert result == expected_result
 
+    def test_get_prowler_provider_kwargs_with_mutelist(self):
+        provider_uid = "provider_uid"
+        secret_dict = {"key": "value"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.AWS.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+        expected_result = {**secret_dict, "mutelist_content": {"key": "value"}}
+        assert result == expected_result
+
     def test_get_prowler_provider_kwargs_unsupported_provider(self):
         # Setup
         provider_uid = "provider_uid"
@@ -254,7 +288,7 @@ class TestValidateInvitation:
 
             assert result == invitation
             mock_db.get.assert_called_once_with(
-                token="VALID_TOKEN", email="user@example.com"
+                token="VALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_not_found_raises_validation_error(self):
@@ -269,7 +303,7 @@ class TestValidateInvitation:
                 "invitation_token": "Invalid invitation code."
             }
             mock_db.get.assert_called_once_with(
-                token="INVALID_TOKEN", email="user@example.com"
+                token="INVALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_not_found_raises_not_found(self):
@@ -284,7 +318,7 @@ class TestValidateInvitation:
 
             assert exc_info.value.detail == "Invitation is not valid."
             mock_db.get.assert_called_once_with(
-                token="INVALID_TOKEN", email="user@example.com"
+                token="INVALID_TOKEN", email__iexact="user@example.com"
             )
 
     def test_invitation_expired(self, invitation):
@@ -332,5 +366,27 @@ class TestValidateInvitation:
                 "invitation_token": "Invalid invitation code."
             }
             mock_db.get.assert_called_once_with(
-                token="VALID_TOKEN", email="different@example.com"
+                token="VALID_TOKEN", email__iexact="different@example.com"
+            )
+
+    def test_valid_invitation_uppercase_email(self):
+        """Test that validate_invitation works with case-insensitive email lookup."""
+        uppercase_email = "USER@example.com"
+
+        invitation = MagicMock(spec=Invitation)
+        invitation.token = "VALID_TOKEN"
+        invitation.email = uppercase_email
+        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.state = Invitation.State.PENDING
+        invitation.tenant = MagicMock()
+
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.return_value = invitation
+
+            result = validate_invitation("VALID_TOKEN", "user@example.com")
+
+            assert result == invitation
+            mock_db.get.assert_called_once_with(
+                token="VALID_TOKEN", email__iexact="user@example.com"
             )

@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
 
+import openai
 from celery.utils.log import get_task_logger
 
-from api.models import Provider
-from api.utils import prowler_provider_connection_test
+from api.models import Integration, LighthouseConfiguration, Provider
+from api.utils import (
+    prowler_integration_connection_test,
+    prowler_provider_connection_test,
+)
 
 logger = get_task_logger(__name__)
 
@@ -39,3 +43,78 @@ def check_provider_connection(provider_id: str):
 
     connection_error = f"{connection_result.error}" if connection_result.error else None
     return {"connected": connection_result.is_connected, "error": connection_error}
+
+
+def check_lighthouse_connection(lighthouse_config_id: str):
+    """
+    Business logic to check the connection status of a Lighthouse configuration.
+
+    Args:
+        lighthouse_config_id (str): The primary key of the LighthouseConfiguration instance to check.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'connected' (bool): Indicates whether the connection is successful.
+            - 'error' (str or None): The error message if the connection failed, otherwise `None`.
+            - 'available_models' (list): List of available models if connection is successful.
+
+    Raises:
+        Model.DoesNotExist: If the lighthouse configuration does not exist.
+    """
+    lighthouse_config = LighthouseConfiguration.objects.get(pk=lighthouse_config_id)
+
+    if not lighthouse_config.api_key_decoded:
+        lighthouse_config.is_active = False
+        lighthouse_config.save()
+        return {
+            "connected": False,
+            "error": "API key is invalid or missing.",
+            "available_models": [],
+        }
+
+    try:
+        client = openai.OpenAI(api_key=lighthouse_config.api_key_decoded)
+        models = client.models.list()
+        lighthouse_config.is_active = True
+        lighthouse_config.save()
+        return {
+            "connected": True,
+            "error": None,
+            "available_models": [model.id for model in models.data],
+        }
+    except Exception as e:
+        lighthouse_config.is_active = False
+        lighthouse_config.save()
+        return {"connected": False, "error": str(e), "available_models": []}
+
+
+def check_integration_connection(integration_id: str):
+    """
+    Business logic to check the connection status of an integration.
+
+    Args:
+        integration_id (str): The primary key of the Integration instance to check.
+    """
+    integration = Integration.objects.filter(pk=integration_id, enabled=True).first()
+
+    if not integration:
+        logger.info(f"Integration {integration_id} is not enabled")
+        return {"connected": False, "error": "Integration is not enabled"}
+
+    try:
+        result = prowler_integration_connection_test(integration)
+    except Exception as e:
+        logger.warning(
+            f"Unexpected exception checking {integration.integration_type} integration connection: {str(e)}"
+        )
+        raise e
+
+    # Update integration connection status
+    integration.connected = result.is_connected
+    integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+    integration.save()
+
+    return {
+        "connected": result.is_connected,
+        "error": str(result.error) if result.error else None,
+    }

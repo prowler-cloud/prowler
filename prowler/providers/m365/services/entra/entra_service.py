@@ -4,7 +4,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -493,6 +493,7 @@ class ConditionalAccessGrantControl(Enum):
     BLOCK = "block"
     DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
     PASSWORD_CHANGE = "passwordChange"
+    COMPLIANT_DEVICE = "compliantDevice"
 
 
 class GrantControlOperator(Enum):

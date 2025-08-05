@@ -24,7 +24,7 @@ CIS_1_4_AWS = Compliance(
     Description="The CIS Benchmark for CIS Amazon Web Services Foundations Benchmark, v1.4.0, Level 1 and 2 provides prescriptive guidance for configuring security options for a subset of Amazon Web Services. It has an emphasis on foundational, testable, and architecture agnostic settings",
     Requirements=[
         Compliance_Requirement(
-            Checks=["test-check-id"],
+            Checks=["service_test_check_id"],
             Id="2.1.3",
             Description="Ensure MFA Delete is enabled on S3 buckets",
             Attributes=[
@@ -73,7 +73,7 @@ CIS_2_0_AZURE = Compliance(
     Description="The CIS Azure Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Azure with an emphasis on foundational, testable, and architecture agnostic settings.",
     Requirements=[
         Compliance_Requirement(
-            Checks=["test-check-id"],
+            Checks=["service_test_check_id"],
             Id="2.1.3",
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
@@ -179,7 +179,7 @@ CIS_1_8_KUBERNETES = Compliance(
                 CIS_Requirement_Attribute(
                     Section="1. Control Plane",
                     SubSection="1.1 Control Plane Node Configuration Files",
-                    Profile="Level 1 - Master Node",
+                    Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
                     RationaleStatement="The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.",
@@ -199,7 +199,7 @@ CIS_1_8_KUBERNETES = Compliance(
             Attributes=[
                 CIS_Requirement_Attribute(
                     Section="1.1 Control Plane Node Configuration Files",
-                    Profile="Level 1 - Master Node",
+                    Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
                     RationaleStatement="The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.",
@@ -279,7 +279,7 @@ CIS_4_0_M365 = Compliance(
             Attributes=[
                 CIS_Requirement_Attribute(
                     Section="1.1 Control Plane Node Configuration Files",
-                    Profile="Level 1 - Master Node",
+                    Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
                     RationaleStatement="The controller manager pod specification file controls various parameters that set the behavior of the Controller Manager on the master node. You should restrict its file permissions to maintain the integrity of the file. The file should be writable by only the administrators on the system.",
@@ -857,7 +857,6 @@ KISA_ISMSP_AWS = Compliance(
     ],
 )
 
-PROWLER_THREATSCORE_AWS_NAME = "prowler_threatscore_aws"
 PROWLER_THREATSCORE_AWS = Compliance(
     Framework="ProwlerThreatScore",
     Version="1.0",
@@ -901,7 +900,6 @@ PROWLER_THREATSCORE_AWS = Compliance(
     ],
 )
 
-PROWLER_THREATSCORE_AZURE_NAME = "prowler_threatscore_azure"
 PROWLER_THREATSCORE_AZURE = Compliance(
     Framework="ProwlerThreatScore",
     Version="1.0",
@@ -945,7 +943,6 @@ PROWLER_THREATSCORE_AZURE = Compliance(
     ],
 )
 
-PROWLER_THREATSCORE_GCP_NAME = "prowler_threatscore_gcp"
 PROWLER_THREATSCORE_GCP = Compliance(
     Framework="ProwlerThreatScore",
     Version="1.0",
@@ -989,7 +986,6 @@ PROWLER_THREATSCORE_GCP = Compliance(
     ],
 )
 
-PROWLER_THREATSCORE_M365_NAME = "prowler_threatscore_m365"
 PROWLER_THREATSCORE_M365 = Compliance(
     Framework="ProwlerThreatScore",
     Version="1.0",

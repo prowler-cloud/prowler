@@ -1,22 +1,29 @@
 import json
 import time
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, Sum, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Sum, When
 from tasks.utils import CustomEncoder
 
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_utils import rls_transaction
+from api.db_utils import (
+    create_objects_in_batches,
+    rls_transaction,
+    update_objects_in_batches,
+)
+from api.exceptions import ProviderConnectionError
 from api.models import (
-    ComplianceOverview,
+    ComplianceRequirementOverview,
     Finding,
+    Processor,
     Provider,
     Resource,
     ResourceScanSummary,
@@ -26,7 +33,7 @@ from api.models import (
     StateChoices,
 )
 from api.models import StatusChoices as FindingStatus
-from api.utils import initialize_prowler_provider
+from api.utils import initialize_prowler_provider, return_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
@@ -101,7 +108,10 @@ def _store_resources(
 
 
 def perform_prowler_scan(
-    tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
+    tenant_id: str,
+    scan_id: str,
+    provider_id: str,
+    checks_to_execute: list[str] | None = None,
 ):
     """
     Perform a scan using Prowler and store the findings and resources in the database.
@@ -119,11 +129,11 @@ def perform_prowler_scan(
         ValueError: If the provider cannot be connected.
 
     """
-    check_status_by_region = {}
     exception = None
     unique_resources = set()
     scan_resource_cache: set[tuple[str, str, str, str]] = set()
     start_time = time.time()
+    exc = None
 
     with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
@@ -132,14 +142,28 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
 
+    # Find the mutelist processor if it exists
+    with rls_transaction(tenant_id):
+        try:
+            mutelist_processor = Processor.objects.get(
+                tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
+            )
+        except Processor.DoesNotExist:
+            mutelist_processor = None
+        except Exception as e:
+            logger.error(f"Error processing mutelist rules: {e}")
+            mutelist_processor = None
+
     try:
         with rls_transaction(tenant_id):
             try:
-                prowler_provider = initialize_prowler_provider(provider_instance)
+                prowler_provider = initialize_prowler_provider(
+                    provider_instance, mutelist_processor
+                )
                 provider_instance.connected = True
             except Exception as e:
                 provider_instance.connected = False
-                raise ValueError(
+                exc = ProviderConnectionError(
                     f"Provider {provider_instance.provider} is not connected: {e}"
                 )
             finally:
@@ -148,11 +172,18 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
+        # If the provider is not connected, raise an exception outside the transaction.
+        # If raised within the transaction, the transaction will be rolled back and the provider will not be marked
+        # as not connected.
+        if exc:
+            raise exc
+
         prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
 
         resource_cache = {}
         tag_cache = {}
         last_status_cache = {}
+        resource_failed_findings_cache = defaultdict(int)
 
         for progress, findings in prowler_scan.scan():
             for finding in findings:
@@ -178,6 +209,9 @@ def perform_prowler_scan(
                                     },
                                 )
                                 resource_cache[resource_uid] = resource_instance
+
+                                # Initialize all processed resources in the cache
+                                resource_failed_findings_cache[resource_uid] = 0
                             else:
                                 resource_instance = resource_cache[resource_uid]
 
@@ -268,6 +302,9 @@ def perform_prowler_scan(
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
+                    # If the finding is muted at this time the reason must be the configured Mutelist
+                    muted_reason = "Muted by mutelist" if finding.muted else None
+
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
@@ -283,19 +320,15 @@ def perform_prowler_scan(
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
                         muted=finding.muted,
+                        muted_reason=muted_reason,
                         compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
 
-                # Update compliance data if applicable
-                if finding.status.value == "MUTED":
-                    continue
-
-                region_dict = check_status_by_region.setdefault(finding.region, {})
-                current_status = region_dict.get(finding.check_id)
-                if current_status == "FAIL":
-                    continue
-                region_dict[finding.check_id] = finding.status.value
+                    # Increment failed_findings_count cache if the finding status is FAIL and not muted
+                    if status == FindingStatus.FAIL and not finding.muted:
+                        resource_uid = finding.resource_uid
+                        resource_failed_findings_cache[resource_uid] += 1
 
                 # Update scan resource summaries
                 scan_resource_cache.add(
@@ -314,6 +347,24 @@ def perform_prowler_scan(
 
         scan_instance.state = StateChoices.COMPLETED
 
+        # Update failed_findings_count for all resources in batches if scan completed successfully
+        if resource_failed_findings_cache:
+            resources_to_update = []
+            for resource_uid, failed_count in resource_failed_findings_cache.items():
+                if resource_uid in resource_cache:
+                    resource_instance = resource_cache[resource_uid]
+                    resource_instance.failed_findings_count = failed_count
+                    resources_to_update.append(resource_instance)
+
+            if resources_to_update:
+                update_objects_in_batches(
+                    tenant_id=tenant_id,
+                    model=Resource,
+                    objects=resources_to_update,
+                    fields=["failed_findings_count"],
+                    batch_size=1000,
+                )
+
     except Exception as e:
         logger.error(f"Error performing scan {scan_id}: {e}")
         exception = e
@@ -328,63 +379,6 @@ def perform_prowler_scan(
 
     if exception is not None:
         raise exception
-
-    try:
-        regions = prowler_provider.get_regions()
-    except AttributeError:
-        regions = set()
-
-    compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
-        provider_instance.provider
-    ]
-    compliance_overview_by_region = {
-        region: deepcopy(compliance_template) for region in regions
-    }
-
-    for region, check_status in check_status_by_region.items():
-        compliance_data = compliance_overview_by_region.setdefault(
-            region, deepcopy(compliance_template)
-        )
-        for check_name, status in check_status.items():
-            generate_scan_compliance(
-                compliance_data,
-                provider_instance.provider,
-                check_name,
-                status,
-            )
-
-    # Prepare compliance overview objects
-    compliance_overview_objects = []
-    for region, compliance_data in compliance_overview_by_region.items():
-        for compliance_id, compliance in compliance_data.items():
-            compliance_overview_objects.append(
-                ComplianceOverview(
-                    tenant_id=tenant_id,
-                    scan=scan_instance,
-                    region=region,
-                    compliance_id=compliance_id,
-                    framework=compliance["framework"],
-                    version=compliance["version"],
-                    description=compliance["description"],
-                    requirements=compliance["requirements"],
-                    requirements_passed=compliance["requirements_status"]["passed"],
-                    requirements_failed=compliance["requirements_status"]["failed"],
-                    requirements_manual=compliance["requirements_status"]["manual"],
-                    total_requirements=compliance["total_requirements"],
-                )
-            )
-    try:
-        with rls_transaction(tenant_id):
-            ComplianceOverview.objects.bulk_create(
-                compliance_overview_objects, batch_size=500
-            )
-    except Exception as overview_exception:
-        import sentry_sdk
-
-        sentry_sdk.capture_exception(overview_exception)
-        logger.error(
-            f"Error storing compliance overview for scan {scan_id}: {overview_exception}"
-        )
 
     try:
         resource_scan_summaries = [
@@ -422,6 +416,9 @@ def aggregate_findings(tenant_id: str, scan_id: str):
     metrics such as counts of failed, passed, and muted findings, as well as their deltas (new,
     changed, unchanged). The results are grouped by `check_id`, `service`, `severity`, and `region`.
     These aggregated metrics are then stored in the `ScanSummary` table.
+
+    Additionally, it updates the failed_findings_count field for each resource based on the most
+    recent findings for each finding.uid.
 
     Args:
         tenant_id (str): The ID of the tenant to which the scan belongs.
@@ -564,3 +561,123 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             for agg in aggregation
         }
         ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
+
+
+def create_compliance_requirements(tenant_id: str, scan_id: str):
+    """
+    Create detailed compliance requirement overview records for a scan.
+
+    This function processes the compliance data collected during a scan and creates
+    individual records for each compliance requirement in each region. These detailed
+    records provide a granular view of compliance status.
+
+    Args:
+        tenant_id (str): The ID of the tenant for which to create records.
+        scan_id (str): The ID of the scan for which to create records.
+
+    Returns:
+        dict: A dictionary containing the number of requirements created and the regions processed.
+
+    Raises:
+        ValidationError: If tenant_id is not a valid UUID.
+    """
+    try:
+        with rls_transaction(tenant_id):
+            scan_instance = Scan.objects.get(pk=scan_id)
+            provider_instance = scan_instance.provider
+            prowler_provider = return_prowler_provider(provider_instance)
+
+        # Get check status data by region from findings
+        findings = (
+            Finding.all_objects.filter(scan_id=scan_id, muted=False)
+            .only("id", "check_id", "status")
+            .prefetch_related(
+                Prefetch(
+                    "resources",
+                    queryset=Resource.objects.only("id", "region"),
+                    to_attr="small_resources",
+                )
+            )
+            .iterator(chunk_size=1000)
+        )
+
+        check_status_by_region = {}
+        with rls_transaction(tenant_id):
+            for finding in findings:
+                for resource in finding.small_resources:
+                    region = resource.region
+                    current_status = check_status_by_region.setdefault(region, {})
+                    if current_status.get(finding.check_id) != "FAIL":
+                        current_status[finding.check_id] = finding.status
+
+        try:
+            # Try to get regions from provider
+            regions = prowler_provider.get_regions()
+        except (AttributeError, Exception):
+            # If not available, use regions from findings
+            regions = set(check_status_by_region.keys())
+
+        # Get compliance template for the provider
+        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
+            provider_instance.provider
+        ]
+
+        # Create compliance data by region
+        compliance_overview_by_region = {
+            region: deepcopy(compliance_template) for region in regions
+        }
+
+        # Apply check statuses to compliance data
+        for region, check_status in check_status_by_region.items():
+            compliance_data = compliance_overview_by_region.setdefault(
+                region, deepcopy(compliance_template)
+            )
+            for check_name, status in check_status.items():
+                generate_scan_compliance(
+                    compliance_data,
+                    provider_instance.provider,
+                    check_name,
+                    status,
+                )
+
+        # Prepare compliance requirement objects
+        compliance_requirement_objects = []
+        for region, compliance_data in compliance_overview_by_region.items():
+            for compliance_id, compliance in compliance_data.items():
+                # Create an overview record for each requirement within each compliance framework
+                for requirement_id, requirement in compliance["requirements"].items():
+                    compliance_requirement_objects.append(
+                        ComplianceRequirementOverview(
+                            tenant_id=tenant_id,
+                            scan=scan_instance,
+                            region=region,
+                            compliance_id=compliance_id,
+                            framework=compliance["framework"],
+                            version=compliance["version"],
+                            requirement_id=requirement_id,
+                            description=requirement["description"],
+                            passed_checks=requirement["checks_status"]["pass"],
+                            failed_checks=requirement["checks_status"]["fail"],
+                            total_checks=requirement["checks_status"]["total"],
+                            requirement_status=requirement["status"],
+                        )
+                    )
+
+        # Bulk create requirement records
+        create_objects_in_batches(
+            tenant_id, ComplianceRequirementOverview, compliance_requirement_objects
+        )
+
+        return {
+            "requirements_created": len(compliance_requirement_objects),
+            "regions_processed": list(regions),
+            "compliance_frameworks": (
+                list(compliance_overview_by_region.get(list(regions)[0], {}).keys())
+                if regions
+                else []
+            ),
+        }
+
+    except Exception as e:
+        logger.error(f"Error creating compliance requirements for scan {scan_id}: {e}")
+        raise e

@@ -41,7 +41,7 @@ class HTML(Output):
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
                             <td>{finding.metadata.ServiceName}</td>
-                            <td>{finding.region.lower()}</td>
+                            <td>{":".join([finding.resource_metadata['file_path'], "-".join(map(str, finding.resource_metadata['file_line_range']))]) if finding.metadata.Provider == "iac" else finding.region.lower()}</td>
                             <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
                             <td>{finding.metadata.CheckTitle}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
@@ -204,7 +204,7 @@ class HTML(Output):
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
                     <th scope="col">Service Name</th>
-                    <th scope="col">Region</th>
+                    <th scope="col">{"File" if provider.type == "iac" else "Region"}</th>
                     <th style="width:20%" scope="col">Check ID</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>
@@ -679,6 +679,49 @@ class HTML(Output):
                             </li>
                             <li class="list-group-item">
                                 <b>NHN Identity ID:</b> {provider.identity.identity_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_iac_assessment_summary(provider: Provider) -> str:
+        """
+        get_iac_assessment_summary gets the HTML assessment summary for the provider
+
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            IAC Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                {"<b>IAC repository URL:</b> " + provider.scan_repository_url if provider.scan_repository_url else "<b>IAC path:</b> " + provider.scan_path}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            IAC Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>IAC authentication method:</b> {provider.auth_method}
                             </li>
                         </ul>
                     </div>

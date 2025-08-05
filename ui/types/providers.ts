@@ -1,4 +1,13 @@
-export type ProviderType = "aws" | "azure" | "m365" | "gcp" | "kubernetes";
+export const PROVIDER_TYPES = [
+  "aws",
+  "azure",
+  "gcp",
+  "kubernetes",
+  "m365",
+  "github",
+] as const;
+
+export type ProviderType = (typeof PROVIDER_TYPES)[number];
 
 export interface ProviderProps {
   id: string;
@@ -45,7 +54,7 @@ export interface ProviderProps {
   groupNames?: string[];
 }
 
-export interface ProviderAccountProps {
+export interface ProviderEntity {
   provider: ProviderType;
   uid: string;
   alias: string | null;
