@@ -13,6 +13,7 @@ This flexibility allows you to scan and analyze your GitHub account, including r
 Here are the available login methods and their respective flags:
 
 ### Personal Access Token (PAT)
+
 Use this method by providing your personal access token directly.
 
 ```console
@@ -20,6 +21,7 @@ prowler github --personal-access-token pat
 ```
 
 ### OAuth App Token
+
 Authenticate using an OAuth app token.
 
 ```console
@@ -34,6 +36,7 @@ prowler github --github-app-id app_id --github-app-key-path app_key_path
 ```
 
 ### Automatic Login Method Detection
+
 If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
 
 1. `GITHUB_PERSONAL_ACCESS_TOKEN`

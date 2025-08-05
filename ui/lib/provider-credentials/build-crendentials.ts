@@ -1,11 +1,4 @@
-import { revalidatePath } from "next/cache";
-
-import {
-  filterEmptyValues,
-  getErrorMessage,
-  getFormValue,
-  parseStringify,
-} from "@/lib";
+import { filterEmptyValues, getFormValue } from "@/lib";
 import { ProviderType } from "@/types";
 
 import { ProviderCredentialFields } from "./provider-credential-fields";
@@ -147,6 +140,56 @@ export const buildKubernetesSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildGitHubSecret = (formData: FormData) => {
+  // Check which authentication method is being used
+  const hasPersonalToken =
+    formData.get(ProviderCredentialFields.PERSONAL_ACCESS_TOKEN) !== null &&
+    formData.get(ProviderCredentialFields.PERSONAL_ACCESS_TOKEN) !== "";
+  const hasOAuthToken =
+    formData.get(ProviderCredentialFields.OAUTH_APP_TOKEN) !== null &&
+    formData.get(ProviderCredentialFields.OAUTH_APP_TOKEN) !== "";
+  const hasGitHubApp =
+    formData.get(ProviderCredentialFields.GITHUB_APP_ID) !== null &&
+    formData.get(ProviderCredentialFields.GITHUB_APP_ID) !== "";
+
+  if (hasPersonalToken) {
+    const secret = {
+      [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]: getFormValue(
+        formData,
+        ProviderCredentialFields.PERSONAL_ACCESS_TOKEN,
+      ),
+    };
+    return filterEmptyValues(secret);
+  }
+
+  if (hasOAuthToken) {
+    const secret = {
+      [ProviderCredentialFields.OAUTH_APP_TOKEN]: getFormValue(
+        formData,
+        ProviderCredentialFields.OAUTH_APP_TOKEN,
+      ),
+    };
+    return filterEmptyValues(secret);
+  }
+
+  if (hasGitHubApp) {
+    const secret = {
+      [ProviderCredentialFields.GITHUB_APP_ID]: getFormValue(
+        formData,
+        ProviderCredentialFields.GITHUB_APP_ID,
+      ),
+      [ProviderCredentialFields.GITHUB_APP_KEY]: getFormValue(
+        formData,
+        ProviderCredentialFields.GITHUB_APP_KEY,
+      ),
+    };
+    return filterEmptyValues(secret);
+  }
+
+  // If no credentials are provided, return empty object
+  return {};
+};
+
 // Main function to build secret configuration
 export const buildSecretConfig = (
   formData: FormData,
@@ -177,6 +220,10 @@ export const buildSecretConfig = (
       secretType: "static",
       secret: buildKubernetesSecret(formData),
     }),
+    github: () => ({
+      secretType: "static",
+      secret: buildGitHubSecret(formData),
+    }),
   };
 
   const builder = secretBuilders[providerType];
@@ -185,26 +232,4 @@ export const buildSecretConfig = (
   }
 
   return builder();
-};
-
-// Helper function to handle API responses consistently
-export const handleApiResponse = async (
-  response: Response,
-  pathToRevalidate?: string,
-) => {
-  const data = await response.json();
-
-  if (pathToRevalidate) {
-    revalidatePath(pathToRevalidate);
-  }
-
-  return parseStringify(data);
-};
-
-// Helper function to handle API errors consistently
-export const handleApiError = (error: unknown) => {
-  console.error(error);
-  return {
-    error: getErrorMessage(error),
-  };
 };

@@ -15,9 +15,9 @@ class AdminCenter(M365Service):
         self.organization_config = None
         self.sharing_policy = None
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.organization_config = self._get_organization_config()
-            self.sharing_policy = self._get_sharing_policy()
+            if self.powershell.connect_exchange_online():
+                self.organization_config = self._get_organization_config()
+                self.sharing_policy = self._get_sharing_policy()
             self.powershell.close()
 
         loop = get_event_loop()

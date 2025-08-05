@@ -46,6 +46,10 @@ export const useCredentialsForm = ({
     if (providerType === "gcp" && via === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
     }
+    // For GitHub, we need to pass the via parameter to determine which fields are required
+    if (providerType === "github") {
+      return addCredentialsFormSchema(providerType, via);
+    }
     return addCredentialsFormSchema(providerType);
   };
 
@@ -62,7 +66,7 @@ export const useCredentialsForm = ({
     if (providerType === "aws" && via === "role") {
       return {
         ...baseDefaults,
-        [ProviderCredentialFields.CREDENTIALS_TYPE]: "aws-sdk-default",
+        [ProviderCredentialFields.CREDENTIALS_TYPE]: "access-secret-key",
         [ProviderCredentialFields.ROLE_ARN]: "",
         [ProviderCredentialFields.EXTERNAL_ID]: session?.tenantId || "",
         [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",
@@ -117,6 +121,28 @@ export const useCredentialsForm = ({
           ...baseDefaults,
           [ProviderCredentialFields.KUBECONFIG_CONTENT]: "",
         };
+      case "github":
+        // GitHub credentials based on via parameter
+        if (via === "personal_access_token") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]: "",
+          };
+        }
+        if (via === "oauth_app") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.OAUTH_APP_TOKEN]: "",
+          };
+        }
+        if (via === "github_app") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.GITHUB_APP_ID]: "",
+            [ProviderCredentialFields.GITHUB_APP_KEY]: "",
+          };
+        }
+        return baseDefaults;
       default:
         return baseDefaults;
     }
