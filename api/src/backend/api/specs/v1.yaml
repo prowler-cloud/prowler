@@ -8909,14 +8909,15 @@ components:
                   output_directory:
                     type: string
                     description: 'The directory path within the bucket where files
-                      will be saved. Path will be normalized to remove excessive slashes
-                      and invalid characters are not allowed (< > : " | ? *). Maximum
-                      length is 900 characters.'
+                      will be saved. Optional - defaults to "output" if not provided.
+                      Path will be normalized to remove excessive slashes and invalid
+                      characters are not allowed (< > : " | ? *). Maximum length is
+                      900 characters.'
                     maxLength: 900
                     pattern: ^[^<>:"|?*]+$
+                    default: output
                 required:
                 - bucket_name
-                - output_directory
             credentials:
               oneOf:
               - type: object
@@ -9054,14 +9055,15 @@ components:
                       output_directory:
                         type: string
                         description: 'The directory path within the bucket where files
-                          will be saved. Path will be normalized to remove excessive
-                          slashes and invalid characters are not allowed (< > : "
-                          | ? *). Maximum length is 900 characters.'
+                          will be saved. Optional - defaults to "output" if not provided.
+                          Path will be normalized to remove excessive slashes and
+                          invalid characters are not allowed (< > : " | ? *). Maximum
+                          length is 900 characters.'
                         maxLength: 900
                         pattern: ^[^<>:"|?*]+$
+                        default: output
                     required:
                     - bucket_name
-                    - output_directory
                 credentials:
                   oneOf:
                   - type: object
@@ -9214,14 +9216,15 @@ components:
                   output_directory:
                     type: string
                     description: 'The directory path within the bucket where files
-                      will be saved. Path will be normalized to remove excessive slashes
-                      and invalid characters are not allowed (< > : " | ? *). Maximum
-                      length is 900 characters.'
+                      will be saved. Optional - defaults to "output" if not provided.
+                      Path will be normalized to remove excessive slashes and invalid
+                      characters are not allowed (< > : " | ? *). Maximum length is
+                      900 characters.'
                     maxLength: 900
                     pattern: ^[^<>:"|?*]+$
+                    default: output
                 required:
                 - bucket_name
-                - output_directory
             credentials:
               oneOf:
               - type: object
@@ -10572,14 +10575,15 @@ components:
                       output_directory:
                         type: string
                         description: 'The directory path within the bucket where files
-                          will be saved. Path will be normalized to remove excessive
-                          slashes and invalid characters are not allowed (< > : "
-                          | ? *). Maximum length is 900 characters.'
+                          will be saved. Optional - defaults to "output" if not provided.
+                          Path will be normalized to remove excessive slashes and
+                          invalid characters are not allowed (< > : " | ? *). Maximum
+                          length is 900 characters.'
                         maxLength: 900
                         pattern: ^[^<>:"|?*]+$
+                        default: output
                     required:
                     - bucket_name
-                    - output_directory
                 credentials:
                   oneOf:
                   - type: object
