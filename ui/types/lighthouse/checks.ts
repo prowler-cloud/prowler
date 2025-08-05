@@ -10,5 +10,5 @@ export const checkSchema = z.object({
 });
 
 export const checkDetailsSchema = z.object({
-  id: z.string(),
+  checkId: z.string(),
 });
