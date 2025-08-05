@@ -5641,7 +5641,7 @@ class TestIntegrationViewSet:
         [
             # Amazon S3 - AWS credentials
             (
-                Integration.IntegrationChoices.S3,
+                Integration.IntegrationChoices.AMAZON_S3,
                 {
                     "bucket_name": "bucket-name",
                     "output_directory": "output-directory",
@@ -5653,7 +5653,7 @@ class TestIntegrationViewSet:
             ),
             # Amazon S3 - No credentials (AWS self-hosted)
             (
-                Integration.IntegrationChoices.S3,
+                Integration.IntegrationChoices.AMAZON_S3,
                 {
                     "bucket_name": "bucket-name",
                     "output_directory": "output-directory",
@@ -5717,7 +5717,7 @@ class TestIntegrationViewSet:
             "data": {
                 "type": "integrations",
                 "attributes": {
-                    "integration_type": Integration.IntegrationChoices.S3,
+                    "integration_type": Integration.IntegrationChoices.AMAZON_S3,
                     "configuration": {
                         "bucket_name": "bucket-name",
                         "output_directory": "output-directory",
@@ -5952,11 +5952,11 @@ class TestIntegrationViewSet:
                 ("inserted_at", TODAY, 2),
                 ("inserted_at.gte", "2024-01-01", 2),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("integration_type", Integration.IntegrationChoices.S3, 2),
+                ("integration_type", Integration.IntegrationChoices.AMAZON_S3, 2),
                 ("integration_type", Integration.IntegrationChoices.SLACK, 0),
                 (
                     "integration_type__in",
-                    f"{Integration.IntegrationChoices.S3},{Integration.IntegrationChoices.SLACK}",
+                    f"{Integration.IntegrationChoices.AMAZON_S3},{Integration.IntegrationChoices.SLACK}",
                     2,
                 ),
             ]

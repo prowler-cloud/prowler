@@ -1,4 +1,4 @@
-# Getting Started with GitHub Authentication
+# Getting Started with GitHub
 
 This guide explains how to set up authentication with GitHub for Prowler. The documentation covers credential retrieval processes for each supported authentication method.
 
