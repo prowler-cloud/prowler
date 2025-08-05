@@ -63,7 +63,7 @@ export const S3IntegrationForm = ({
       integration_type: "amazon_s3" as const,
       bucket_name: integration?.attributes.configuration.bucket_name || "",
       output_directory:
-        integration?.attributes.configuration.output_directory || "",
+        integration?.attributes.configuration.output_directory || "output",
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
       credentials_type: "access-secret-key" as const,
@@ -146,7 +146,7 @@ export const S3IntegrationForm = ({
     // For creation mode, include all fields
     if (!isPartial) {
       configuration.bucket_name = values.bucket_name;
-      configuration.output_directory = values.output_directory;
+      configuration.output_directory = values.output_directory || "output";
     } else {
       // For edit mode, only include fields that have actually changed
       const originalBucketName =
@@ -314,7 +314,7 @@ export const S3IntegrationForm = ({
               type="text"
               label="Output directory"
               labelPlacement="inside"
-              placeholder="/prowler-findings/"
+              placeholder="output"
               variant="bordered"
               isRequired
               isInvalid={!!form.formState.errors.output_directory}
