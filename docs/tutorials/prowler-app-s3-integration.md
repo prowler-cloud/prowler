@@ -211,11 +211,6 @@ graph TB
     style Info fill:#cce5ff,stroke:#004085,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
-**Summary:**
-- Same account: No bucket policy needed
-- Different account: Bucket policy required
-- Multiple accounts: Multiple principals in bucket policy
-
 #### S3 Bucket Policy
 
 Apply the following bucket policy to your destination S3 bucket:
