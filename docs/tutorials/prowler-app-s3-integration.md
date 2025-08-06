@@ -118,87 +118,19 @@ The following diagrams illustrate the three common S3 integration scenarios:
 
 When both the IAM credentials and destination S3 bucket are in the same AWS account, no additional bucket policy is required.
 
-```mermaid
-graph TB
-    subgraph Account["AWS Account A"]
-        direction TB
-        Role["IAM Credentials"]
-        Bucket["S3 Destination Bucket"]
-
-        Role -->|"Direct Access (Same Account)"| Bucket
-    end
-
-    Note["No bucket policy needed - Same account resources can access each other by default"]
-
-    style Account stroke:#2563eb,stroke-width:2px
-    style Role stroke:#059669,stroke-width:2px
-    style Bucket stroke:#059669,stroke-width:2px
-    style Note stroke:#6b7280,stroke-width:1px,stroke-dasharray: 5 5
-```
+![](./img/s3/s3-same-account.png)
 
 ##### Cross-Account Setup (Bucket Policy Required)
 
 When the S3 bucket is in a different AWS account, you must configure a bucket policy to allow cross-account access.
 
-```mermaid
-graph TB
-    subgraph AccountA["AWS Account A (Source)"]
-        RoleA["IAM Credentials"]
-    end
-
-    subgraph AccountB["AWS Account B"]
-        BucketB["S3 Destination Bucket"]
-        PolicyB["Cross-Account Bucket Policy<br/>Allow from Account A"]
-
-        PolicyB -.->|"Protects"| BucketB
-    end
-
-    RoleA -->|"Cross-Account Access (Bucket Policy Required)"| BucketB
-
-    Warning["Bucket policy must be configured on the destination bucket in Account B"]
-
-    style AccountA stroke:#f59e0b,stroke-width:2px
-    style AccountB stroke:#2563eb,stroke-width:2px
-    style RoleA stroke:#f59e0b,stroke-width:2px
-    style BucketB stroke:#059669,stroke-width:2px
-    style PolicyB stroke:#dc2626,stroke-width:2px
-    style Warning stroke:#dc2626,stroke-width:1px,stroke-dasharray: 5 5
-```
+![](./img/s3/s3-cross-account.png)
 
 ##### Multi-Account Setup (Multiple Principals in Bucket Policy)
 
 When multiple AWS accounts need to write to the same destination bucket, configure the bucket policy with multiple principals.
 
-```mermaid
-graph TB
-    subgraph AccountA["AWS Account A"]
-        RoleA["IAM Credentials A"]
-    end
-
-    subgraph AccountC["AWS Account C"]
-        RoleC["IAM Credentials B"]
-    end
-
-    subgraph AccountB["AWS Account B"]
-        BucketB["Shared S3 Destination Bucket"]
-        PolicyB["Multi-Account Bucket Policy<br/>Allow access from Account A & B"]
-
-        PolicyB -.->|"Protects"| BucketB
-    end
-    RoleA -->|"Multi-Account Access"| BucketB
-    RoleC -->|"Multi-Account Access"| BucketB
-
-    Info["Add multiple AWS account ARNs to the Principal field in bucket policy"]
-
-    style AccountA stroke:#f59e0b,stroke-width:2px
-    style AccountC stroke:#8b5cf6,stroke-width:2px
-    style AccountB stroke:#2563eb,stroke-width:2px
-    style RoleA stroke:#f59e0b,stroke-width:2px
-    style RoleC stroke:#8b5cf6,stroke-width:2px
-    style BucketB stroke:#059669,stroke-width:2px
-    style PolicyB stroke:#dc2626,stroke-width:2px
-    style Info stroke:#2563eb,stroke-width:1px,stroke-dasharray: 5 5
-```
+![](./img/s3/s3-multiple-accounts.png)
 
 #### S3 Bucket Policy
 
