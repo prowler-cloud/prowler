@@ -475,8 +475,9 @@ class S3:
             if raise_on_exception:
                 if (
                     "specified bucket does not exist"
-                    or "An error occurred (404) when calling the HeadBucket operation: Not Found"
-                ) in client_error.response["Error"]["Message"]:
+                    in client_error.response["Error"]["Message"]
+                    or "Not Found" in client_error.response["Error"]["Message"]
+                ):
                     raise S3InvalidBucketNameError(original_exception=client_error)
                 elif (
                     "IllegalLocationConstraintException"
