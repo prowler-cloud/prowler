@@ -192,6 +192,7 @@ class Provider(ABC):
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
+                        retries_max_attempts=arguments.gcp_retries_max_attempts,
                         organization_id=arguments.organization_id,
                         project_ids=arguments.project_id,
                         excluded_project_ids=arguments.excluded_project_id,

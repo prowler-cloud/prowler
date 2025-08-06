@@ -5,16 +5,47 @@ import { getProviders } from "@/actions/providers";
 import { S3IntegrationsManager } from "@/components/integrations/s3/s3-integrations-manager";
 import { ContentLayout } from "@/components/ui";
 
-export default async function S3Integrations() {
+interface S3IntegrationsProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default async function S3Integrations({
+  searchParams,
+}: S3IntegrationsProps) {
+  const page = parseInt(searchParams.page?.toString() || "1", 10);
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  const sort = searchParams.sort?.toString();
+
+  // Extract all filter parameters
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
+  const urlSearchParams = new URLSearchParams();
+  urlSearchParams.set("filter[integration_type]", "amazon_s3");
+  urlSearchParams.set("page[number]", page.toString());
+  urlSearchParams.set("page[size]", pageSize.toString());
+
+  if (sort) {
+    urlSearchParams.set("sort", sort);
+  }
+
+  // Add any additional filters
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && key !== "filter[integration_type]") {
+      const stringValue = Array.isArray(value) ? value[0] : String(value);
+      urlSearchParams.set(key, stringValue);
+    }
+  });
+
   const [integrations, providers] = await Promise.all([
-    getIntegrations(
-      new URLSearchParams({ "filter[integration_type]": "amazon_s3" }),
-    ),
+    getIntegrations(urlSearchParams),
     getProviders({ pageSize: 100 }),
   ]);
 
   const s3Integrations = integrations?.data || [];
   const availableProviders = providers?.data || [];
+  const metadata = integrations?.meta;
 
   return (
     <ContentLayout title="Amazon S3">
@@ -36,7 +67,7 @@ export default async function S3Integrations() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                Multiple bucket support
+                Multi-Cloud support
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
@@ -53,6 +84,7 @@ export default async function S3Integrations() {
         <S3IntegrationsManager
           integrations={s3Integrations}
           providers={availableProviders}
+          metadata={metadata}
         />
       </div>
     </ContentLayout>

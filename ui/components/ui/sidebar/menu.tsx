@@ -33,6 +33,10 @@ const MENU_HIDE_RULES: MenuHideRule[] = [
     label: "Billing",
     condition: (permissions) => permissions?.manage_billing === false,
   },
+  {
+    label: "Integrations",
+    condition: (permissions) => permissions?.manage_integrations === false,
+  },
   // Add more rules as needed:
   // {
   //   label: "Users",
