@@ -90,11 +90,6 @@ export const AWSRoleCredentialsForm = ({
         <SelectItem key="access-secret-key" textValue="Access & Secret Key">
           <div className="flex w-full items-center justify-between">
             <span>Access & Secret Key</span>
-            {!isCloudEnv && (
-              <Chip size="sm" variant="flat" color="primary" className="ml-2">
-                Recommended
-              </Chip>
-            )}
           </div>
         </SelectItem>
       </Select>
