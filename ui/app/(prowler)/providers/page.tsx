@@ -33,7 +33,7 @@ export default async function Providers({
           <>
             <div className="flex items-center gap-4 md:justify-end">
               <ManageGroupsButton />
-              <MutedFindingsConfigButton isDisabled={true} />
+              <MutedFindingsConfigButton />
               <AddProviderButton />
             </div>
             <Spacer y={8} />
@@ -47,9 +47,6 @@ export default async function Providers({
       >
         <ProvidersContent searchParams={searchParams} />
       </Suspense>
-      {searchParams.mutelist === "true" && (
-        <MutedFindingsConfigButton autoOpen={true} hideButton={true} />
-      )}
     </ContentLayout>
   );
 }
@@ -79,8 +76,6 @@ const ProvidersContent = async ({
     pageSize,
   });
 
-  const hasProviders = providersData?.data && providersData.data.length > 0;
-
   const providerGroupDict =
     providersData?.included
       ?.filter((item: any) => item.type === "provider-groups")
@@ -103,7 +98,7 @@ const ProvidersContent = async ({
     <>
       <div className="flex items-center gap-4 md:justify-end">
         <ManageGroupsButton />
-        <MutedFindingsConfigButton isDisabled={!hasProviders} />
+        <MutedFindingsConfigButton />
         <AddProviderButton />
       </div>
       <Spacer y={8} />

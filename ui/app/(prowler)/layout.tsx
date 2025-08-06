@@ -3,6 +3,8 @@ import "@/styles/globals.css";
 import { Metadata, Viewport } from "next";
 import React from "react";
 
+import { getProviders } from "@/actions/providers";
+import { StoreInitializer } from "@/components/providers/store-initializer";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { Toaster } from "@/components/ui/toast";
 import { fontSans } from "@/config/fonts";
@@ -29,11 +31,14 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const providersData = await getProviders({ page: 1, pageSize: 1 });
+  const hasProviders = !!(providersData?.data && providersData.data.length > 0);
+
   return (
     <html suppressHydrationWarning lang="en">
       <head />
@@ -45,6 +50,7 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+          <StoreInitializer hasProviders={hasProviders} />
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>

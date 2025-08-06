@@ -5,3 +5,4 @@ export * from "./link-to-scans";
 export * from "./muted-findings-config-button";
 export * from "./provider-info";
 export * from "./radio-group-provider";
+export * from "./store-initializer";

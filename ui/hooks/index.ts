@@ -1,7 +1,6 @@
 export * from "./use-auth";
 export * from "./use-credentials-form";
 export * from "./use-form-server-errors";
-export * from "./use-has-providers";
 export * from "./use-local-storage";
 export * from "./use-related-filters";
 export * from "./use-sidebar";
