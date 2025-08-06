@@ -393,7 +393,7 @@ export const S3IntegrationForm = ({
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
             <p className="flex items-center gap-2 text-sm text-default-500">
-              Need help configuring your Amazon S3 integrations?
+              Need help configuring your Amazon S3 integration?
             </p>
             <CustomLink
               href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/"
