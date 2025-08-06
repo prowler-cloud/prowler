@@ -256,6 +256,7 @@ class Finding(BaseModel):
                     output_data["account_uid"] = provider.identity.account_id
                 elif hasattr(provider.identity, "app_id"):
                     # GithubAppIdentityInfo (GitHub App)
+                    # TODO: Get Github App name
                     output_data["account_name"] = f"app-{provider.identity.app_id}"
                     output_data["account_uid"] = provider.identity.app_id
 
