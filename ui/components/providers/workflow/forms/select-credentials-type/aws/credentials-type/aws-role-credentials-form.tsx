@@ -1,4 +1,4 @@
-import { Divider, Select, SelectItem, Switch } from "@nextui-org/react";
+import { Chip, Divider, Select, SelectItem, Switch } from "@nextui-org/react";
 import { useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
@@ -25,11 +25,17 @@ export const AWSRoleCredentialsForm = ({
   type?: "providers" | "s3-integration";
 }) => {
   const [showRoleSection, setShowRoleSection] = useState(type === "providers");
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
+  // Set default credentials type based on environment
+  const defaultCredentialsType = isCloudEnv
+    ? "aws-sdk-default"
+    : "access-secret-key";
 
   const credentialsType = useWatch({
     control,
     name: ProviderCredentialFields.CREDENTIALS_TYPE,
-    defaultValue: "access-secret-key",
+    defaultValue: defaultCredentialsType,
   });
 
   return (
@@ -50,7 +56,7 @@ export const AWSRoleCredentialsForm = ({
         name={ProviderCredentialFields.CREDENTIALS_TYPE}
         label="Authentication Method"
         placeholder="Select credentials type"
-        defaultSelectedKeys={["access-secret-key"]}
+        defaultSelectedKeys={[defaultCredentialsType]}
         className="mb-4"
         variant="bordered"
         onSelectionChange={(keys) =>
@@ -60,8 +66,37 @@ export const AWSRoleCredentialsForm = ({
           )
         }
       >
-        <SelectItem key="aws-sdk-default">AWS SDK default</SelectItem>
-        <SelectItem key="access-secret-key">Access & Secret Key</SelectItem>
+        <SelectItem
+          key="aws-sdk-default"
+          textValue={
+            isCloudEnv
+              ? "Prowler Cloud will assume your IAM role"
+              : "AWS SDK Default"
+          }
+        >
+          <div className="flex w-full items-center justify-between">
+            <span>
+              {isCloudEnv
+                ? "Prowler Cloud will assume your IAM role"
+                : "AWS SDK Default"}
+            </span>
+            {isCloudEnv && (
+              <Chip size="sm" variant="flat" color="success" className="ml-2">
+                Recommended
+              </Chip>
+            )}
+          </div>
+        </SelectItem>
+        <SelectItem key="access-secret-key" textValue="Access & Secret Key">
+          <div className="flex w-full items-center justify-between">
+            <span>Access & Secret Key</span>
+            {!isCloudEnv && (
+              <Chip size="sm" variant="flat" color="primary" className="ml-2">
+                Recommended
+              </Chip>
+            )}
+          </div>
+        </SelectItem>
       </Select>
 
       {credentialsType === "access-secret-key" && (
