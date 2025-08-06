@@ -212,7 +212,7 @@ aws cloudformation update-stack \
   --template-url "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml" \
   --parameters \
       ParameterKey=EnableS3Integration,ParameterValue="true" \
-      ParameterKey=ExternalID,ParameterValue="your-external-id" \
+      ParameterKey=ExternalId,ParameterValue="your-external-id" \
       ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
       ParameterKey=S3IntegrationBucketAccountId,ParameterValue="your-bucket-aws-account-id-owner"
 ```
@@ -223,10 +223,10 @@ Alternatively, if you don't have the `ProwlerScan` IAM Role, execute the followi
 aws cloudformation create-stack \
  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
  --stack-name "Prowler" \
- --template-body "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml" \
+ --template-url "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml" \
  --parameters \
       ParameterKey=EnableS3Integration,ParameterValue="true" \
-      ParameterKey=ExternalID,ParameterValue="your-external-id" \
+      ParameterKey=ExternalId,ParameterValue="your-external-id" \
       ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
       ParameterKey=S3IntegrationBucketAccountId,ParameterValue="your-bucket-aws-account-id-owner"
 ```
@@ -242,7 +242,7 @@ If using Prowler's CloudFormation template, execute the following command to upd
 2. Select "ProwlerScan", click "Update" and then "Make a direct update"
 3. Replace template, uploading the [CloudFormation template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml)
 4. Configure parameters:
-    - `ExternalID`: Keep existing value
+    - `ExternalId`: Keep existing value
     - `EnableS3Integration`: Select "true"
     - `S3IntegrationBucketName`: Your bucket name
     - `S3IntegrationBucketAccountId`: Bucket owner's AWS account ID
