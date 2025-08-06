@@ -10,6 +10,7 @@ export const CustomSearchInput: React.FC = () => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
   const [searchQuery, setSearchQuery] = useState("");
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const applySearch = useCallback(
     (query: string) => {
@@ -34,10 +35,14 @@ export const CustomSearchInput: React.FC = () => {
     applySearch("");
   };
 
+  // Only sync from URL on initial mount
   useEffect(() => {
-    const searchFromUrl = searchParams.get("filter[search]") || "";
-    setSearchQuery(searchFromUrl);
-  }, [searchParams]);
+    if (!hasInitialized) {
+      const searchFromUrl = searchParams.get("filter[search]") || "";
+      setSearchQuery(searchFromUrl);
+      setHasInitialized(true);
+    }
+  }, [searchParams, hasInitialized]);
 
   return (
     <Input
