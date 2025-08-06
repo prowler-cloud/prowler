@@ -65,13 +65,19 @@ class Test_GitHubArguments:
 
         # Check that all authentication arguments are present
         calls = self.mock_auth_group.add_argument.call_args_list
-        auth_args = [call[0][0] for call in calls]
+        auth_args = []
+        for call in calls:
+            # Handle both single arguments and aliases
+            if len(call[0]) > 1:
+                auth_args.extend(call[0])
+            else:
+                auth_args.append(call[0][0])
 
         assert "--personal-access-token" in auth_args
         assert "--oauth-app-token" in auth_args
         assert "--github-app-id" in auth_args
-        # Check for either form of the github app key argument
-        assert any("--github-app-key" in arg for arg in auth_args)
+        assert "--github-app-key-path" in auth_args
+        assert "--github-app-key" in auth_args
 
     def test_init_parser_adds_scoping_arguments(self):
         """Test that init_parser adds all scoping arguments"""
