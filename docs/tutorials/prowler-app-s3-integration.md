@@ -83,7 +83,7 @@ The S3 integration requires the following permissions. Add these to the IAM role
 }
 ```
 
-```json title="s3:GetBucketLocation"
+```json title="s3:ListBucket"
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -94,7 +94,7 @@ The S3 integration requires the following permissions. Add these to the IAM role
                 }
             },
             "Action": [
-                "s3:GetBucketLocation"
+                "s3:ListBucket"
             ],
             "Resource": [
                 "arn:aws:s3:::<BUCKET NAME>"
@@ -161,7 +161,7 @@ Apply the following bucket policy to the destination S3 bucket:
           "Principal": {
               "AWS": "arn:aws:iam::<SOURCE ACCOUNT ID>:role/ProwlerScan"
           },
-          "Action": "s3:GetBucketLocation",
+          "Action": "s3:ListBucket",
           "Resource": "arn:aws:s3:::<BUCKET NAME>"
       }
   ]
