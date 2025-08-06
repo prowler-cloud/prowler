@@ -1,8 +1,8 @@
 # Amazon S3 Integration
 
-**Prowler App** allows users to automatically export scan results to Amazon S3 buckets, enabling seamless integration with existing data workflows and storage infrastructure. This comprehensive guide demonstrates how to configure and manage Amazon S3 integrations to streamline security finding management and reporting.
+**Prowler App** allows automatic export of scan results to Amazon S3 buckets, providing seamless integration with existing data workflows and storage infrastructure. This comprehensive guide demonstrates configuration and management of Amazon S3 integrations to streamline security finding management and reporting.
 
-When enabled and configured, scan results will be automatically stored in your chosen bucket. Results are provided in the `csv`, `html` and `json-ocsf`, offering flexibility for custom integrations:
+When enabled and configured, scan results are automatically stored in the configured bucket. Results are provided in `csv`, `html` and `json-ocsf` formats, offering flexibility for custom integrations:
 
 <!-- TODO: remove the comment once the AWS Security Hub integration is completed -->
 <!-- - json-asff -->
@@ -11,10 +11,10 @@ When enabled and configured, scan results will be automatically stored in your c
     The `json-asff` file will be only present in your configured Amazon S3 Bucket if you have the AWS Security Hub integration enabled. You can get more information about that integration here. -->
 
 ???+ note
-    Take into account that enabling this integration will incur in costs in Amazon S3, please refer to its [pricing here](https://aws.amazon.com/s3/pricing/) for more information.
+    Enabling this integration incurs costs in Amazon S3. Refer to [Amazon S3 pricing](https://aws.amazon.com/s3/pricing/) for more information.
 
 
-The Amazon S3 Integration enables users to:
+The Amazon S3 Integration provides the following capabilities:
 
 - **Automate scan result exports** to designated S3 buckets after each scan
 
@@ -31,11 +31,11 @@ The Amazon S3 Integration enables users to:
 
 ## Required Permissions
 
-Before configuring the Amazon S3 Integration, ensure the AWS credentials, and optionally the IAM Role, used for S3 access have the necessary permissions to write scan results to the designated S3 bucket. This applies whether using static credentials, session credentials, or an IAM role (either self-created or generated using [Prowler's permissions templates](#available-templates)).
+Before configuring the Amazon S3 Integration, ensure that AWS credentials and optionally the IAM Role used for S3 access have the necessary permissions to write scan results to the designated S3 bucket. This requirement applies when using static credentials, session credentials, or an IAM role (either self-created or generated using [Prowler's permissions templates](#available-templates)).
 
 ### IAM Policy
 
-The S3 integration requires the following permissions. Add these to your IAM role policy, or ensure your AWS credentials have these permissions:
+The S3 integration requires the following permissions. Add these to the IAM role policy, or ensure AWS credentials have these permissions:
 
 ```json title="s3:DeleteObject"
 {
@@ -59,7 +59,7 @@ The S3 integration requires the following permissions. Add these to your IAM rol
 }
 ```
 
-`s3:DeleteObject` permission is required for connection testing. When you test the S3 integration, Prowler creates a temporary beacon file, `test-prowler-connection.txt`, to verify write permissions, then deletes it to confirm the connection is working properly.
+`s3:DeleteObject` permission is required for connection testing. When testing the S3 integration, Prowler creates a temporary beacon file, `test-prowler-connection.txt`, to verify write permissions, then deletes it to confirm the connection is working properly.
 
 ```json title="s3:PutObject"
 {
@@ -110,7 +110,7 @@ The S3 integration requires the following permissions. Add these to your IAM rol
 
 ### Cross-Account S3 Bucket
 
-If your S3 destination bucket is in a different AWS account than the one providing the credentials for S3 access, you must also configure a bucket policy on the destination bucket to allow cross-account access.
+If the S3 destination bucket is in a different AWS account than the one providing the credentials for S3 access, configure a bucket policy on the destination bucket to allow cross-account access.
 
 The following diagrams illustrate the three common S3 integration scenarios:
 
@@ -134,7 +134,7 @@ When multiple AWS accounts need to write to the same destination bucket, configu
 
 #### S3 Bucket Policy
 
-Apply the following bucket policy to your destination S3 bucket:
+Apply the following bucket policy to the destination S3 bucket:
 
 ```json
 {
@@ -169,11 +169,11 @@ Apply the following bucket policy to your destination S3 bucket:
 ```
 
 ???+ note
-    Replace `<SOURCE ACCOUNT ID>` with the AWS account ID that contains your IAM role and `<BUCKET NAME>` with your destination bucket name. The role name `ProwlerScan` is the default name when using Prowler's permissions templates. If you're using your own IAM role or different authentication method, replace `ProwlerScan` with your actual role name.
+    Replace `<SOURCE ACCOUNT ID>` with the AWS account ID that contains the IAM role and `<BUCKET NAME>` with the destination bucket name. The role name `ProwlerScan` is the default name when using Prowler's permissions templates. If using a custom IAM role or different authentication method, replace `ProwlerScan` with the actual role name.
 
 ##### Multi-Account Configuration
 
-For multiple AWS accounts, change the `Principal` field to an array:
+For multiple AWS accounts, modify the `Principal` field to an array:
 
 ```json
 "Principal": {
@@ -185,14 +185,14 @@ For multiple AWS accounts, change the `Principal` field to an array:
 ```
 
 ???+ note
-    Replace `<SOURCE ACCOUNT ID>` with the AWS account ID that contains your IAM role and `<BUCKET NAME>` with your destination bucket name. The role name `ProwlerScan` is the default name when using Prowler's permissions templates. If you're using your own IAM role or different authentication method, replace `ProwlerScan` with your actual role name.
+    Replace `<SOURCE ACCOUNT ID>` with the AWS account ID that contains the IAM role and `<BUCKET NAME>` with the destination bucket name. The role name `ProwlerScan` is the default name when using Prowler's permissions templates. If using a custom IAM role or different authentication method, replace `ProwlerScan` with the actual role name.
 
 ### Available Templates
 
 **Prowler App** provides Infrastructure as Code (IaC) templates to automate IAM role setup with S3 integration permissions.
 
 ???+ note
-    Templates are optional. You can use your own IAM roles or static credentials.
+    Templates are optional. Custom IAM roles or static credentials can be used instead.
 
 Choose from the following deployment options:
 
@@ -203,7 +203,7 @@ Choose from the following deployment options:
 
 ##### AWS CLI
 
-If you're using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
+When using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
 
 ```bash
 aws cloudformation update-stack \
@@ -235,10 +235,10 @@ A CloudFormation Quick Link is also available [here](https://us-east-1.console.a
 
 ##### AWS Console
 
-If you're using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
+If using Prowler's CloudFormation template, execute the following command to update the existing Prowler stack:
 
 
-1. Navigate to CloudFormation service in the AWS region you arre using
+1. Navigate to CloudFormation service in the AWS region you are using
 2. Select "ProwlerScan", click "Update" and then "Make a direct update"
 3. Replace template, uploading the [CloudFormation template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml)
 4. Configure parameters:
@@ -274,7 +274,7 @@ For detailed information about deploying the Terraform stack for Amazon S3 integ
 
 ## Configuration
 
-Once you have set up the required permissions, you can proceed to configure the S3 integration in **Prowler App**.
+Once the required permissions are set up, proceed to configure the S3 integration in **Prowler App**.
 
 1. Navigate to "Integrations"
     ![Navigate to integrations](./img/s3/s3-integration-ui-1.png)
@@ -285,7 +285,7 @@ Once you have set up the required permissions, you can proceed to configure the 
 4. Complete the configuration form with the following details:
 
     - **Cloud Providers:** Select the providers whose scan results should be exported to this S3 bucket
-    - **Bucket Name:** Enter the name of your target S3 bucket (e.g., `my-security-findings-bucket`)
+    - **Bucket Name:** Enter the name of the target S3 bucket (e.g., `my-security-findings-bucket`)
     - **Output Directory:** Specify the directory path within the bucket (e.g., `/prowler-findings/`, defaults to `output`)
 
     ![Configuration form](./img/s3/s3-integration-ui-4.png)
@@ -309,16 +309,16 @@ Once you have set up the required permissions, you can proceed to configure the 
 9. Click "Create Integration" to verify the connection and complete the setup
 
 ???+ success
-    Once your credentials are configured and the connection test passes, your S3 integration will be active. Scan results will automatically be exported to your specified bucket after each scan completes. Run a new scan and check your S3 bucket to verify the integration is working.
+    Once credentials are configured and the connection test passes, the S3 integration will be active. Scan results will automatically be exported to the specified bucket after each scan completes. Run a new scan and check the S3 bucket to verify the integration is working.
 
 ???+ note
-    Scan outputs are processed after scan completion. Depending on scan size and network conditions, exports may take a few minutes to appear in your S3 bucket.
+    Scan outputs are processed after scan completion. Depending on scan size and network conditions, exports may take a few minutes to appear in the S3 bucket.
 ---
 
 
 ### Integration Status
 
-Once your integration is active, you can monitor its status and make adjustments as needed through the integrations management interface.
+Once the integration is active, monitor its status and make adjustments as needed through the integrations management interface.
 
 1. Review configured integrations in the management interface
 2. Each integration displays:
@@ -344,7 +344,7 @@ Each S3 integration provides several management actions accessible through dedic
 | **Delete** | Remove integration permanently | • Permanently delete integration<br/>• Remove all configuration data | ⚠️ **Cannot be undone** - confirm before deleting |
 
 ???+ tip "Management Best Practices"
-    - Test your integration after any configuration changes
+    - Test the integration after any configuration changes
     - Use the Enable/Disable toggle for temporary changes instead of deleting
 
 
@@ -352,7 +352,7 @@ Each S3 integration provides several management actions accessible through dedic
 
 ## Understanding S3 Export Structure
 
-When the S3 integration is enabled and a scan completes, Prowler creates a folder inside your specified bucket path (using `output` as the default folder name) with subfolders for each output format:
+When the S3 integration is enabled and a scan completes, Prowler creates a folder inside the specified bucket path (using `output` as the default folder name) with subfolders for each output format:
 
 - Regular: `prowler-output-{provider-uid}-{timestamp}.{extension}`
 - Compliance: `prowler-output-{provider-uid}-{timestamp}_{compliance_framework}.{extension}`
@@ -378,12 +378,12 @@ For detailed information about Prowler's reporting formats, refer to the [Prowle
 **Connection test fails:**
 
 - Check AWS credentials are valid
-- If using IAM Role, check their permissions
+- If using IAM Role, check its permissions
 - Verify bucket permissions and region
 - Confirm network access to S3
 
 **No scan results in bucket:**
 
 - Ensure integration shows "Connected"
-- Check provider is associated with integration
+- Check that provider is associated with integration
 - Verify bucket policies allow writes
