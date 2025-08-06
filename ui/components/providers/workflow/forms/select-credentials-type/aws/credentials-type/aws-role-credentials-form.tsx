@@ -24,19 +24,18 @@ export const AWSRoleCredentialsForm = ({
   };
   type?: "providers" | "s3-integration";
 }) => {
-  const [showRoleSection, setShowRoleSection] = useState(type === "providers");
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-
-  // Set default credentials type based on environment
   const defaultCredentialsType = isCloudEnv
     ? "aws-sdk-default"
     : "access-secret-key";
-
   const credentialsType = useWatch({
     control,
     name: ProviderCredentialFields.CREDENTIALS_TYPE,
     defaultValue: defaultCredentialsType,
   });
+  const [showOptionalRole, setShowOptionalRole] = useState(false);
+  const showRoleSection =
+    (isCloudEnv && credentialsType === "aws-sdk-default") || showOptionalRole;
 
   return (
     <>
@@ -150,12 +149,15 @@ export const AWSRoleCredentialsForm = ({
       ) : (
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-default-500">
-            Optionally add a role
+            {isCloudEnv && credentialsType === "aws-sdk-default"
+              ? "Adding a role is required"
+              : "Optionally add a role"}
           </span>
           <Switch
             size="sm"
             isSelected={showRoleSection}
-            onValueChange={setShowRoleSection}
+            onValueChange={setShowOptionalRole}
+            isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
           />
         </div>
       )}
