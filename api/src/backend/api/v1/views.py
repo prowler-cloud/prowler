@@ -57,6 +57,7 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
     check_lighthouse_connection_task,
     check_provider_connection_task,
     delete_provider_task,
@@ -292,7 +293,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.10.2"
+        spectacular_settings.VERSION = "1.11.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -3837,6 +3838,32 @@ class IntegrationViewSet(BaseRLSViewSet):
         context = super().get_serializer_context()
         context["allowed_providers"] = self.allowed_providers
         return context
+
+    @extend_schema(
+        tags=["Integration"],
+        summary="Check integration connection",
+        description="Try to verify integration connection",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        get_object_or_404(Integration, pk=pk)
+        with transaction.atomic():
+            task = check_integration_connection_task.delay(
+                integration_id=pk, tenant_id=self.request.tenant_id
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
 
 
 @extend_schema_view(

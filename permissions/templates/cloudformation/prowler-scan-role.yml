@@ -3,8 +3,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 # You can invoke CloudFormation and pass the principal ARN from a command line like this:
 # aws cloudformation create-stack \
 #  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
-#  --template-body "file://prowler-pro-saas-scan-role.yaml" \
-#  --stack-name "ProwlerProSaaSScanRole" \
+#  --template-body "file://prowler-scan-role.yaml" \
+#  --stack-name "ProwlerScanRole" \
 #  --parameters "ParameterKey=ExternalId,ParameterValue=ProvidedExternalID"
 
 Description: |
@@ -12,6 +12,8 @@ Description: |
   all read-only permissions to scan your account for security issues.
   Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
   It sets the trust policy on that IAM Role to permit Prowler to assume that role.
+  This template is designed to be used in Prowler Cloud, but can also be used in other Prowler deployments.
+  If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId, IAMPrincipal and ExternalId parameters.
 Parameters:
   ExternalId:
     Description: |
@@ -34,6 +36,28 @@ Parameters:
       The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
     Type: String
     Default: role/prowler*
+  EnableS3Integration:
+    Description: |
+      Enable S3 integration for storing Prowler scan reports.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+  S3IntegrationBucketName:
+    Description: |
+      The S3 bucket name where Prowler will store scan reports for your cloud providers.
+    Type: String
+    Default: ""
+  S3IntegrationBucketAccountId:
+    Description: |
+      The AWS Account ID owner of the S3 Bucket.
+    Type: String
+    Default: ""
+
+Conditions:
+  S3IntegrationEnabled: !Equals [!Ref EnableS3Integration, true]
+
 
 Resources:
   ProwlerScan:
@@ -116,6 +140,37 @@ Resources:
                 Resource:
                   - "arn:*:apigateway:*::/restapis/*"
                   - "arn:*:apigateway:*::/apis/*"
+        - !If
+          - S3IntegrationEnabled
+          - PolicyName: S3Integration
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "s3:PutObject"
+                  Resource:
+                    - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*"
+                  Condition:
+                    StringEquals:
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
+                - Effect: Allow
+                  Action:
+                    - "s3:GetBucketLocation"
+                  Resource:
+                    - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}"
+                  Condition:
+                    StringEquals:
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
+                - Effect: Allow
+                  Action:
+                    - "s3:DeleteObject"
+                  Resource:
+                    - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*test-prowler-connection.txt"
+                  Condition:
+                    StringEquals:
+                      "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
+          - !Ref AWS::NoValue
       Tags:
         - Key: "Service"
           Value: "https://prowler.com"
@@ -125,3 +180,27 @@ Resources:
           Value: "true"
         - Key: "Name"
           Value: "ProwlerScan"
+
+Metadata:
+  AWS::CloudFormation::StackName: "Prowler"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Required
+        Parameters:
+          - ExternalId
+          - AccountId
+          - IAMPrincipal
+          - EnableS3Integration
+      - Label:
+          default: Optional
+        Parameters:
+          - S3IntegrationBucketName
+          - S3IntegrationBucketAccountId
+
+Outputs:
+  ProwlerScanRoleArn:
+    Description: "ARN of the ProwlerScan IAM Role"
+    Value: !GetAtt ProwlerScan.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"

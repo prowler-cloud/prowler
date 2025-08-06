@@ -2871,6 +2871,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/integrations/{id}/connection:
+    post:
+      operationId: integrations_connection_create
+      description: Try to verify integration connection
+      summary: Check integration connection
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this integration.
+        required: true
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
@@ -5143,6 +5167,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5151,6 +5176,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5161,6 +5187,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5171,6 +5198,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5403,6 +5431,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5411,6 +5440,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5421,6 +5451,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5431,6 +5462,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5669,6 +5701,7 @@ paths:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5677,6 +5710,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5687,6 +5721,7 @@ paths:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5697,6 +5732,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -8841,7 +8877,6 @@ components:
               readOnly: true
             enabled:
               type: boolean
-              readOnly: true
             connected:
               type: boolean
               readOnly: true
@@ -8873,11 +8908,16 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Optional - defaults to "output" if not provided.
+                      Path will be normalized to remove excessive slashes and invalid
+                      characters are not allowed (< > : " | ? *). Maximum length is
+                      900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
+                    default: output
                 required:
                 - bucket_name
-                - output_directory
             credentials:
               oneOf:
               - type: object
@@ -8982,7 +9022,6 @@ components:
                   readOnly: true
                 enabled:
                   type: boolean
-                  readOnly: true
                 connected:
                   type: boolean
                   readOnly: true
@@ -9015,11 +9054,16 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Optional - defaults to "output" if not provided.
+                          Path will be normalized to remove excessive slashes and
+                          invalid characters are not allowed (< > : " | ? *). Maximum
+                          length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
+                        default: output
                     required:
                     - bucket_name
-                    - output_directory
                 credentials:
                   oneOf:
                   - type: object
@@ -9171,11 +9215,16 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Optional - defaults to "output" if not provided.
+                      Path will be normalized to remove excessive slashes and invalid
+                      characters are not allowed (< > : " | ? *). Maximum length is
+                      900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
+                    default: output
                 required:
                 - bucket_name
-                - output_directory
             credentials:
               oneOf:
               - type: object
@@ -10525,11 +10574,16 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Optional - defaults to "output" if not provided.
+                          Path will be normalized to remove excessive slashes and
+                          invalid characters are not allowed (< > : " | ? *). Maximum
+                          length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
+                        default: output
                     required:
                     - bucket_name
-                    - output_directory
                 credentials:
                   oneOf:
                   - type: object

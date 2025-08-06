@@ -141,7 +141,7 @@ The permissions you need to grant depends on whether you are using user credenti
 
 #### If using application(service principal) authentication (Recommended)
 
-To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration.
+To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration. All of this assignments are done through Entra ID.
 
 ???+ warning "Warning"
     You need to have a license that allows you to use the APIs.
