@@ -251,24 +251,47 @@ If using Prowler's CloudFormation template, execute the following command to upd
 
 #### Terraform
 
-1. Download from [GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform)
-2. Run Terraform commands:
+1. Download the Terraform code:
+   ```bash
+   # Clone or download from GitHub
+   git clone https://github.com/prowler-cloud/prowler.git
+   cd prowler/permissions/templates/terraform
+   ```
 
-```bash
-terraform init
-terraform plan \
-  -var="external_id=your-external-id-here" \
-  -var="enable_s3_integration=true" \
-  -var="s3_integration_bucket_name=your-s3-bucket-name" \
-  -var="s3_integration_bucket_account=123456789012"
-terraform apply \
-  -var="external_id=your-external-id-here" \
-  -var="enable_s3_integration=true" \
-  -var="s3_integration_bucket_name=your-s3-bucket-name" \
-  -var="s3_integration_bucket_account=123456789012"
-```
+2. Configure your variables:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
 
-For detailed information about deploying the Terraform stack for Amazon S3 integration, refer to the [Terraform README](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/README.md).
+3. Edit `terraform.tfvars` with your specific values:
+   ```hcl
+   # Required: External ID from Prowler App
+   external_id = "your-unique-external-id-here"
+
+   # S3 Integration Configuration
+   enable_s3_integration = true
+   s3_integration_bucket_name = "your-s3-bucket-name"
+   s3_integration_bucket_account_id = "123456789012"  # Bucket owner's AWS Account ID
+   ```
+
+4. **Deploy the infrastructure:**
+   ```bash
+   terraform init
+   terraform plan    # Review the planned changes
+   terraform apply   # Type 'yes' when prompted
+   ```
+
+5. **Save the outputs:**
+   After successful deployment, Terraform will display important values:
+   ```
+   Outputs:
+   prowler_role_arn = "arn:aws:iam::123456789012:role/ProwlerScan"
+   prowler_role_name = "ProwlerScan"
+   ```
+
+6. Copy the `prowler_role_arn`, as it's required to complete the S3 integration credentials configuration.
+
+For detailed information, refer to the [Terraform README](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/README.md).
 
 ---
 

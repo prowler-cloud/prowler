@@ -17,7 +17,7 @@ resource "aws_iam_role_policy" "prowler_s3_integration" {
         ]
         Condition = {
           StringEquals = {
-            "s3:ResourceAccount" = var.s3_integration_bucket_account
+            "s3:ResourceAccount" = var.s3_integration_bucket_account_id
           }
         }
       },
@@ -31,7 +31,7 @@ resource "aws_iam_role_policy" "prowler_s3_integration" {
         ]
         Condition = {
           StringEquals = {
-            "s3:ResourceAccount" = var.s3_integration_bucket_account
+            "s3:ResourceAccount" = var.s3_integration_bucket_account_id
           }
         }
       },
@@ -45,7 +45,7 @@ resource "aws_iam_role_policy" "prowler_s3_integration" {
         ]
         Condition = {
           StringEquals = {
-            "s3:ResourceAccount" = var.s3_integration_bucket_account
+            "s3:ResourceAccount" = var.s3_integration_bucket_account_id
           }
         }
       }
