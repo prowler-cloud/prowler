@@ -156,7 +156,7 @@ Resources:
                       "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
                 - Effect: Allow
                   Action:
-                    - "s3:GetBucketLocation"
+                    - "s3:ListBucket"
                   Resource:
                     - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}"
                   Condition:

@@ -39,6 +39,7 @@ from prowler.providers.aws.lib.s3.exceptions.exceptions import (
     S3ClientError,
     S3IllegalLocationConstraintError,
     S3InvalidBucketNameError,
+    S3InvalidBucketRegionError,
     S3TestConnectionError,
 )
 from prowler.providers.aws.lib.session.aws_set_up_session import (
@@ -312,28 +313,25 @@ class S3:
                     region_name=aws_region,
                     profile_name=profile,
                 )
-
             s3_client = session.client(__class__.__name__.lower())
             if "s3://" in bucket_name:
                 bucket_name = bucket_name.removeprefix("s3://")
-            # Check for the bucket location
-            bucket_location = s3_client.get_bucket_location(Bucket=bucket_name)
-            if bucket_location["LocationConstraint"] == "EU":
-                bucket_location["LocationConstraint"] = "eu-west-1"
-            if (
-                bucket_location["LocationConstraint"] == ""
-                or bucket_location["LocationConstraint"] is None
-            ):
-                bucket_location["LocationConstraint"] = "us-east-1"
+            # Check bucket location, requires s3:ListBucket permission
+            # https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadBucket.html
+            bucket_region = s3_client.head_bucket(Bucket=bucket_name).get(
+                "BucketRegion"
+            )
+            if bucket_region is None:
+                exception = S3InvalidBucketRegionError()
+                if raise_on_exception:
+                    raise exception
+                return Connection(error=exception)
 
             # If the bucket location is not the same as the session region, change the session region
-            if (
-                session.region_name != bucket_location["LocationConstraint"]
-                and bucket_location["LocationConstraint"] is not None
-            ):
+            if session.region_name != bucket_region:
                 s3_client = session.client(
                     __class__.__name__.lower(),
-                    region_name=bucket_location["LocationConstraint"],
+                    region_name=bucket_region,
                 )
             # Set a Temp file to upload
             with tempfile.TemporaryFile() as temp_file:
@@ -466,12 +464,19 @@ class S3:
             if raise_on_exception:
                 raise session_token_expired
             return Connection(error=session_token_expired)
-
+        except S3InvalidBucketRegionError as invalid_bucket_region_error:
+            logger.error(
+                f"{invalid_bucket_region_error.__class__.__name__}[{invalid_bucket_region_error.__traceback__.tb_lineno}]: {invalid_bucket_region_error}"
+            )
+            if raise_on_exception:
+                raise invalid_bucket_region_error
+            return Connection(error=invalid_bucket_region_error)
         except ClientError as client_error:
             if raise_on_exception:
                 if (
                     "specified bucket does not exist"
                     in client_error.response["Error"]["Message"]
+                    or "Not Found" in client_error.response["Error"]["Message"]
                 ):
                     raise S3InvalidBucketNameError(original_exception=client_error)
                 elif (

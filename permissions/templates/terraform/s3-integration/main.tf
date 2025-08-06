@@ -38,7 +38,7 @@ resource "aws_iam_role_policy" "prowler_s3_integration" {
       {
         Effect = "Allow"
         Action = [
-          "s3:GetBucketLocation"
+          "s3:ListBucket"
         ]
         Resource = [
           "arn:${data.aws_partition.current.partition}:s3:::${var.s3_integration_bucket_name}"

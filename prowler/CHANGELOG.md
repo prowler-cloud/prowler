@@ -28,6 +28,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Use the correct default value for `role_session_name` and `session_duration` in AwsSetUpSession [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
 - Use the correct default value for `role_session_name` and `session_duration` in S3 [(#8417)](https://github.com/prowler-cloud/prowler/pull/8417)
 - GitHub App authentication fails to generate output files and HTML header sections [(#8423)](https://github.com/prowler-cloud/prowler/pull/8423)
+- S3 `test_connection` uses AWS S3 API `HeadBucket` instead of `GetBucketLocation` [(#8456)](https://github.com/prowler-cloud/prowler/pull/8456)
 
 ---
 
