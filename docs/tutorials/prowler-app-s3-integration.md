@@ -281,8 +281,7 @@ If using Prowler's CloudFormation template, execute the following command to upd
    terraform apply   # Type 'yes' when prompted
    ```
 
-5.*Save the outputs:
-   After successful deployment, Terraform will display important values:
+5. After successful deployment, Terraform will display important values:
    ```
    Outputs:
    prowler_role_arn        = "arn:aws:iam::123456789012:role/ProwlerScan"
