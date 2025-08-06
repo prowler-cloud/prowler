@@ -228,7 +228,7 @@ aws cloudformation create-stack \
       ParameterKey=EnableS3Integration,ParameterValue="true" \
       ParameterKey=ExternalID,ParameterValue="your-external-id" \
       ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
-      ParameterKey=S3IntegrationBucketAccounId,ParameterValue="your-bucket-aws-account-id-owner"
+      ParameterKey=S3IntegrationBucketAccountId,ParameterValue="your-bucket-aws-account-id-owner"
 ```
 
 A CloudFormation Quick Link is also available [here](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_EnableS3Integration=true)
