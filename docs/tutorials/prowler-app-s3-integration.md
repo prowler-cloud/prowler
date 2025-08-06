@@ -214,7 +214,7 @@ aws cloudformation update-stack \
       ParameterKey=EnableS3Integration,ParameterValue="true" \
       ParameterKey=ExternalID,ParameterValue="your-external-id" \
       ParameterKey=S3IntegrationBucketName,ParameterValue="your-bucket-name" \
-      ParameterKey=S3IntegrationBucketAccounId,ParameterValue="your-bucket-aws-account-id-owner"
+      ParameterKey=S3IntegrationBucketAccountId,ParameterValue="your-bucket-aws-account-id-owner"
 ```
 
 Alternatively, if you don't have the `ProwlerScan` IAM Role, execute the following command to create the CloudFormation stack:
