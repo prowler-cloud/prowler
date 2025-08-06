@@ -84,9 +84,11 @@ def upload_s3_integration(
             try:
                 connected, s3 = get_s3_client_from_integration(integration)
             except Exception as e:
-                logger.error(
+                logger.info(
                     f"S3 connection failed for integration {integration.id}: {e}"
                 )
+                integration.connected = False
+                integration.save()
                 continue
 
             if connected:
@@ -138,7 +140,7 @@ def upload_s3_integration(
                 integration.connected = False
                 integration.save()
                 logger.error(
-                    f"S3 upload failed for integration {integration.id}: {s3.error}"
+                    f"S3 upload failed, connection failed for integration {integration.id}: {s3.error}"
                 )
 
         result = integration_executions == len(integrations)
@@ -147,7 +149,7 @@ def upload_s3_integration(
                 f"All the S3 integrations completed successfully for provider {provider_id}"
             )
         else:
-            logger.error(f"Some S3 integrations failed for provider {provider_id}")
+            logger.info(f"Some S3 integrations failed for provider {provider_id}")
         return result
     except Exception as e:
         logger.error(f"S3 integrations failed for provider {provider_id}: {str(e)}")

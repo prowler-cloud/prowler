@@ -161,7 +161,7 @@ class TestS3IntegrationUploads:
         integration.save.assert_called_once()
         assert integration.connected is False
         mock_logger.error.assert_any_call(
-            "S3 upload failed for integration i-1: Connection failed"
+            "S3 upload failed, connection failed for integration i-1: Connection failed"
         )
 
     @patch("tasks.jobs.integrations.rls_transaction")
@@ -204,7 +204,7 @@ class TestS3IntegrationUploads:
         result = upload_s3_integration(tenant_id, provider_id, output_directory)
 
         assert result is False
-        mock_logger.error.assert_any_call(
+        mock_logger.info.assert_any_call(
             "S3 connection failed for integration i-1: failed"
         )
 
