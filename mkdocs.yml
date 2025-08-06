@@ -101,6 +101,7 @@ nav:
           - Authentication: tutorials/gcp/authentication.md
           - Projects: tutorials/gcp/projects.md
           - Organization: tutorials/gcp/organization.md
+          - Retry Configuration: tutorials/gcp/retry-configuration.md
       - Kubernetes:
           - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
           - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md

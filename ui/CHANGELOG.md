@@ -7,8 +7,18 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### Added
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
+- Amazon AWS S3 integration [(#8391)](https://github.com/prowler-cloud/prowler/pull/8391)
 - Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
-___
+- XML validation for SAML metadata in the UI [(#8429)](https://github.com/prowler-cloud/prowler/pull/8429)
+- Default Mutelist placeholder in the UI [(#8455)](https://github.com/prowler-cloud/prowler/pull/8455)
+
+### 🔄 Changed
+
+- Rename `Memberships` to `Organization` in the sidebar [(#8415)](https://github.com/prowler-cloud/prowler/pull/8415)
+- Removed `Browse all resources` from the sidebar, sidebar now shows a single `Resources` entry [(#8418)](https://github.com/prowler-cloud/prowler/pull/8418)
+- Removed `Misconfigurations` from the `Top Failed Findings` section in the sidebar [(#8426)](https://github.com/prowler-cloud/prowler/pull/8426)
+
+---
 
 ## [v1.9.3] (Prowler v5.9.3)
 
