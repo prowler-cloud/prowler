@@ -274,19 +274,20 @@ If using Prowler's CloudFormation template, execute the following command to upd
    s3_integration_bucket_account_id = "123456789012"  # Bucket owner's AWS Account ID
    ```
 
-4. **Deploy the infrastructure:**
+4. Deploy the infrastructure:
    ```bash
    terraform init
    terraform plan    # Review the planned changes
    terraform apply   # Type 'yes' when prompted
    ```
 
-5. **Save the outputs:**
+5.*Save the outputs:
    After successful deployment, Terraform will display important values:
    ```
    Outputs:
-   prowler_role_arn = "arn:aws:iam::123456789012:role/ProwlerScan"
-   prowler_role_name = "ProwlerScan"
+   prowler_role_arn        = "arn:aws:iam::123456789012:role/ProwlerScan"
+   prowler_role_name       = "ProwlerScan"
+   s3_integration_enabled  = "true"
    ```
 
 6. Copy the `prowler_role_arn`, as it's required to complete the S3 integration credentials configuration.
