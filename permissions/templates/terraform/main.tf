@@ -3,15 +3,15 @@
 locals {
   s3_integration_validation = (
     !var.enable_s3_integration ||
-    (var.enable_s3_integration && var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account != "")
+    (var.enable_s3_integration && var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account_id != "")
   )
 }
 
 # Validation check using check block (Terraform 1.5+)
 check "s3_integration_requirements" {
   assert {
-    condition     = !var.enable_s3_integration || (var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account != "")
-    error_message = "When enable_s3_integration is true, both s3_integration_bucket_name and s3_integration_bucket_account must be provided and non-empty."
+    condition     = !var.enable_s3_integration || (var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account_id != "")
+    error_message = "When enable_s3_integration is true, both s3_integration_bucket_name and s3_integration_bucket_account_id must be provided and non-empty."
   }
 }
 
@@ -75,7 +75,7 @@ module "s3_integration" {
   source = "./s3-integration"
 
   s3_integration_bucket_name    = var.s3_integration_bucket_name
-  s3_integration_bucket_account = var.s3_integration_bucket_account
+  s3_integration_bucket_account_id = var.s3_integration_bucket_account_id
 
   prowler_role_name = aws_iam_role.prowler_scan.name
 }
