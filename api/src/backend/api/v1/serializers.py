@@ -2083,21 +2083,19 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "connected": {"read_only": True},
-            "enabled": {"read_only": True},
             "connection_last_checked_at": {"read_only": True},
         }
 
     def validate(self, attrs):
-        super().validate(attrs)
         integration_type = attrs.get("integration_type")
         providers = attrs.get("providers")
         configuration = attrs.get("configuration")
         credentials = attrs.get("credentials")
 
-        validated_attrs = super().validate(attrs)
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
+        validated_attrs = super().validate(attrs)
         return validated_attrs
 
     def create(self, validated_data):

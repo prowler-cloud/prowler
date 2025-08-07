@@ -311,6 +311,24 @@
       ]
     },
     {
+      "Id": "1.1.18",
+      "Description": "Ensure that only administrative roles have access to Microsoft Admin Portals",
+      "Checks": [
+        "entra_admin_portals_access_restriction"
+      ],
+      "Attributes": [
+        {
+          "Title": "Only administrative roles have access to Microsoft Admin Portals",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Restrict access to Microsoft Admin Portals exclusively to administrative roles to prevent unauthorized modifications, privilege escalation, and security misconfigurations",
+          "AdditionalInformation": "Granting non-administrative users access to Microsoft Admin Portals exposes the environment to unauthorized changes, potential elevation of privileges, and misconfigured security settings. This could allow attackers to alter configurations, disable protections, or gain access to sensitive information.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
       "Id": "1.2.1",
       "Description": "Ensure that only organizationally managed/approved public groups exist",
       "Checks": [

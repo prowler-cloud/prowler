@@ -9,15 +9,17 @@ from api.v1.serializer_utils.base import BaseValidateSerializer
 
 class S3ConfigSerializer(BaseValidateSerializer):
     bucket_name = serializers.CharField()
-    output_directory = serializers.CharField()
+    output_directory = serializers.CharField(allow_blank=True)
 
     def validate_output_directory(self, value):
         """
         Validate the output_directory field to ensure it's a properly formatted path.
         Prevents paths with excessive slashes like "///////test".
+        If empty, sets a default value.
         """
+        # If empty or None, set default value
         if not value:
-            raise serializers.ValidationError("Output directory cannot be empty.")
+            return "output"
 
         # Normalize the path to remove excessive slashes
         normalized_path = os.path.normpath(value)
@@ -35,7 +37,7 @@ class S3ConfigSerializer(BaseValidateSerializer):
         # Check for empty path after normalization
         if not normalized_path or normalized_path == ".":
             raise serializers.ValidationError(
-                "Output directory cannot be empty or just '.'."
+                "Output directory cannot be empty or just '.' or '/'."
             )
 
         # Check for paths that are too long (S3 key limit is 1024 characters, leave some room for filename)
@@ -144,12 +146,13 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                     "output_directory": {
                         "type": "string",
-                        "description": 'The directory path within the bucket where files will be saved. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
+                        "description": 'The directory path within the bucket where files will be saved. Optional - defaults to "output" if not provided. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
                         "maxLength": 900,
                         "pattern": '^[^<>:"|?*]+$',
+                        "default": "output",
                     },
                 },
-                "required": ["bucket_name", "output_directory"],
+                "required": ["bucket_name"],
             },
             {
                 "type": "object",

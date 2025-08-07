@@ -391,6 +391,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         s3_integrations = Integration.objects.filter(
             integrationproviderrelationship__provider_id=provider_id,
             integration_type=Integration.IntegrationChoices.AMAZON_S3,
+            enabled=True,
         )
 
     if s3_integrations:
@@ -492,7 +493,8 @@ def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = Non
         integration_tasks = []
         with rls_transaction(tenant_id):
             integrations = Integration.objects.filter(
-                integrationproviderrelationship__provider_id=provider_id
+                integrationproviderrelationship__provider_id=provider_id,
+                enabled=True,
             )
 
             if not integrations.exists():

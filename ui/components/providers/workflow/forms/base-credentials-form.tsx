@@ -7,7 +7,9 @@ import { Control } from "react-hook-form";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
+import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { requiresBackButton } from "@/lib/provider-helpers";
 import {
   AWSCredentials,
   AWSCredentialsRole,
@@ -25,6 +27,7 @@ import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credential
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
+import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
 
@@ -59,6 +62,8 @@ export const BaseCredentialsForm = ({
     successNavigationUrl,
   });
 
+  const templateLinks = getAWSCredentialsTemplateLinks(externalId);
+
   return (
     <Form {...form}>
       <form
@@ -85,6 +90,7 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<AWSCredentialsRole>}
             setValue={form.setValue as any}
             externalId={externalId}
+            templateLinks={templateLinks}
           />
         )}
         {providerType === "aws" && searchParamsObj.get("via") !== "role" && (
@@ -121,26 +127,29 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<KubernetesCredentials>}
           />
         )}
+        {providerType === "github" && (
+          <GitHubCredentialsForm
+            control={form.control}
+            credentialsType={searchParamsObj.get("via") || undefined}
+          />
+        )}
 
         <div className="flex w-full justify-end sm:space-x-6">
-          {showBackButton &&
-            (searchParamsObj.get("via") === "credentials" ||
-              searchParamsObj.get("via") === "role" ||
-              searchParamsObj.get("via") === "service-account") && (
-              <CustomButton
-                type="button"
-                ariaLabel="Back"
-                className="w-1/2 bg-transparent"
-                variant="faded"
-                size="lg"
-                radius="lg"
-                onPress={handleBackStep}
-                startContent={!isLoading && <ChevronLeftIcon size={24} />}
-                isDisabled={isLoading}
-              >
-                <span>Back</span>
-              </CustomButton>
-            )}
+          {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (
+            <CustomButton
+              type="button"
+              ariaLabel="Back"
+              className="w-1/2 bg-transparent"
+              variant="faded"
+              size="lg"
+              radius="lg"
+              onPress={handleBackStep}
+              startContent={!isLoading && <ChevronLeftIcon size={24} />}
+              isDisabled={isLoading}
+            >
+              <span>Back</span>
+            </CustomButton>
+          )}
           <CustomButton
             type="submit"
             ariaLabel="Save"

@@ -163,7 +163,7 @@ class TestS3IntegrationUploads:
         integration.save.assert_called_once()
         assert integration.connected is False
         mock_logger.error.assert_any_call(
-            "S3 upload failed for integration i-1: Connection failed"
+            "S3 upload failed, connection failed for integration i-1: Connection failed"
         )
 
     @patch("tasks.jobs.integrations.rls_transaction")
@@ -206,8 +206,32 @@ class TestS3IntegrationUploads:
         result = upload_s3_integration(tenant_id, provider_id, output_directory)
 
         assert result is False
-        mock_logger.error.assert_any_call(
+        mock_logger.info.assert_any_call(
             "S3 connection failed for integration i-1: failed"
+        )
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Integration.objects.filter")
+    def test_upload_s3_integration_filters_enabled_only(
+        self, mock_integration_filter, mock_rls
+    ):
+        """Test that upload_s3_integration only processes enabled integrations."""
+        tenant_id = "tenant-id"
+        provider_id = "provider-id"
+        output_directory = "/tmp/prowler_output/scan123"
+
+        # Mock that no enabled integrations are found
+        mock_integration_filter.return_value = []
+        mock_rls.return_value.__enter__.return_value = None
+
+        result = upload_s3_integration(tenant_id, provider_id, output_directory)
+
+        assert result is False
+        # Verify the filter includes the correct parameters including enabled=True
+        mock_integration_filter.assert_called_once_with(
+            integrationproviderrelationship__provider_id=provider_id,
+            integration_type=Integration.IntegrationChoices.AMAZON_S3,
+            enabled=True,
         )
 
     def test_s3_integration_validates_and_normalizes_output_directory(self):
@@ -308,6 +332,35 @@ class TestS3IntegrationUploads:
 
         # Verify complex path normalization
         assert configuration["output_directory"] == "test/folder/subfolder"
+
+    @patch("tasks.jobs.integrations.S3")
+    def test_s3_client_uses_output_directory_in_object_paths(self, mock_s3_class):
+        """Test that S3 client uses output_directory correctly when generating object paths."""
+        mock_integration = MagicMock()
+        mock_integration.credentials = {
+            "aws_access_key_id": "AKIA...",
+            "aws_secret_access_key": "SECRET",
+        }
+        mock_integration.configuration = {
+            "bucket_name": "test-bucket",
+            "output_directory": "my-custom-prefix/scan-results",
+        }
+
+        mock_s3_instance = MagicMock()
+        mock_connection = MagicMock()
+        mock_connection.is_connected = True
+        mock_s3_instance.test_connection.return_value = mock_connection
+        mock_s3_class.return_value = mock_s3_instance
+
+        connected, s3 = get_s3_client_from_integration(mock_integration)
+
+        assert connected is True
+        # Verify S3 was initialized with the correct output_directory
+        mock_s3_class.assert_called_once_with(
+            **mock_integration.credentials,
+            bucket_name="test-bucket",
+            output_directory="my-custom-prefix/scan-results",
+        )
 
 
 @pytest.mark.django_db
