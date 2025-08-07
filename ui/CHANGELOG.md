@@ -28,18 +28,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Rename `Memberships` to `Organization` in the sidebar [(#8415)](https://github.com/prowler-cloud/prowler/pull/8415)
 
+### 🐞 Fixed
+
+- Display error messages and allow editing last message in Lighthouse [(#8358)](https://github.com/prowler-cloud/prowler/pull/8358)
+
 ### ❌ Removed
 
 - Removed `Browse all resources` from the sidebar, sidebar now shows a single `Resources` entry [(#8418)](https://github.com/prowler-cloud/prowler/pull/8418)
 - Removed `Misconfigurations` from the `Top Failed Findings` section in the sidebar [(#8426)](https://github.com/prowler-cloud/prowler/pull/8426)
-
----
-
-## [v1.9.3] (Prowler v5.9.3)
-
-### 🐞 Fixed
-
-- Display error messages and allow editing last message in Lighthouse [(#8358)](https://github.com/prowler-cloud/prowler/pull/8358)
 
 ---
 
