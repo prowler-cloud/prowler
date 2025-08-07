@@ -105,6 +105,23 @@ jobs:
         run: |
           poetry lock
 
+      - name: Update resolved_reference to latest commit
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          # Get the latest commit hash from the prowler-cloud/prowler repository
+          LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+          echo "Latest commit hash: $LATEST_COMMIT"
+
+          # Update the resolved_reference specifically for prowler-cloud/prowler repository
+          sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+            s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+          }' poetry.lock
+
+          # Verify the change was made
+          echo "Updated resolved_reference:"
+          grep -A2 -B2 "resolved_reference" poetry.lock
+
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
