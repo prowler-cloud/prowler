@@ -659,7 +659,7 @@ class TestFinding:
         check_output.file_path = "/path/to/iac/file.tf"
         check_output.resource_name = "aws_s3_bucket.example"
         check_output.resource_path = "/path/to/iac/file.tf"
-        check_output.file_line_range = [1, 5]
+        check_output.resource_line_range = "1:5"
         check_output.resource = {
             "resource": "aws_s3_bucket.example",
             "value": {},
