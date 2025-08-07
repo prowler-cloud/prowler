@@ -2,9 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.10.0] (Prowler v5.10.0 - UNRELEASED)
+## [1.11.0] (Prowler v5.11.0 - UNRELEASED)
 
-### Added
+### 🚀 Added
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.10.0] (Prowler v5.10.0)
+
+### 🚀 Added
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
 - Amazon AWS S3 integration [(#8391)](https://github.com/prowler-cloud/prowler/pull/8391)
@@ -25,6 +35,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Display error messages and allow editing last message in Lighthouse [(#8358)](https://github.com/prowler-cloud/prowler/pull/8358)
+
+---
 
 ## [v1.9.0] (Prowler v5.9.0)
 
