@@ -252,7 +252,7 @@ export const SamlConfigForm = ({
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
-      <p className="py-1 text-xs text-gray-500">
+      <p className="py-1 text-xs">
         Need help configuring SAML SSO?{" "}
         <CustomLink
           href={
