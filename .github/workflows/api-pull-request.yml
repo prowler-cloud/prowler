@@ -110,7 +110,7 @@ jobs:
 
       - name: Update resolved_reference to latest commit
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           # Get the latest commit hash from the prowler-cloud/prowler repository
           LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
@@ -126,21 +126,21 @@ jobs:
           grep -A2 -B2 "resolved_reference" poetry.lock
 
       - name: Set up Python ${{ matrix.python-version }}
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
       - name: Install system dependencies for xmlsec
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
 
       - name: Install dependencies
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry install --no-root
           poetry run pip list
@@ -152,37 +152,37 @@ jobs:
 
       - name: Poetry check
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry check --lock
 
       - name: Lint with ruff
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run ruff check . --exclude contrib
 
       - name: Check Format with ruff
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run ruff format --check . --exclude contrib
 
       - name: Lint with pylint
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
 
       - name: Bandit
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
 
       - name: Safety
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
         # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
         run: |
@@ -190,24 +190,24 @@ jobs:
 
       - name: Vulture
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
 
       - name: Hadolint
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           /tmp/hadolint Dockerfile --ignore=DL3013
 
       - name: Test with pytest
         working-directory: ./api
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run pytest --cov=./src/backend --cov-report=xml src/backend
 
       - name: Upload coverage reports to Codecov
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -225,10 +225,10 @@ jobs:
           files: api/**
           files_ignore: ${{ env.IGNORE_FILES }}
       - name: Set up Docker Buildx
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
       - name: Build Container
-        if: steps.should-run-api-steps.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.API_WORKING_DIR }}
