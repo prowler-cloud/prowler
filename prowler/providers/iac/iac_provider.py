@@ -152,11 +152,11 @@ class IacProvider(Provider):
             if "VulnerabilityID" in finding:
                 finding_id = finding["VulnerabilityID"]
                 finding_description = finding["Description"]
-                finding_status = "FAIL"
+                finding_status = finding.get("Status", "FAIL")
             elif "RuleID" in finding:
                 finding_id = finding["RuleID"]
                 finding_description = finding["Title"]
-                finding_status = "FAIL"
+                finding_status = finding.get("Status", "FAIL")
             else:
                 finding_id = finding["ID"]
                 finding_description = finding["Description"]
