@@ -27,9 +27,16 @@ const renderBanner = ({ message, href, gradient }: BannerConfig) => (
   </Link>
 );
 
+// Triggers a background job to process the scans and generate recommendations
+// Immediately returns a banner with different content
+// If Lighthouse is not configured, returns a banner with a different message
+// If cache available, returns a banner with the cached recommendation
+// If recommendation is being processed, returns a banner with a different message
 export const LighthouseBanner = async () => {
   try {
+    // Triggers a background job to process the scans and generate recommendations
     await initializeTenantCache();
+
     const lighthouseConfig = await getLighthouseConfig();
 
     if (!lighthouseConfig) {
@@ -38,6 +45,18 @@ export const LighthouseBanner = async () => {
         href: "/lighthouse/config",
         gradient:
           "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
+      });
+    }
+
+    // Check if recommendation is being processed
+    const isProcessing = await CacheService.isRecommendationProcessing();
+
+    if (isProcessing) {
+      return renderBanner({
+        message: "Lighthouse is reviewing your findings for insights",
+        href: "",
+        gradient:
+          "bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:ring-orange-500/50 dark:from-orange-600 dark:to-yellow-600 dark:hover:from-orange-700 dark:hover:to-yellow-700 dark:focus:ring-orange-400/50",
       });
     }
 
@@ -57,20 +76,13 @@ export const LighthouseBanner = async () => {
       });
     }
 
-    // Check if recommendation is being processed
-    const isProcessing = await CacheService.isRecommendationProcessing();
-
-    if (isProcessing) {
-      return renderBanner({
-        message: "Lighthouse is reviewing your findings for insights",
-        href: "",
-        gradient:
-          "bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:ring-orange-500/50 dark:from-orange-600 dark:to-yellow-600 dark:hover:from-orange-700 dark:hover:to-yellow-700 dark:focus:ring-orange-400/50",
-      });
-    }
-
     // Lighthouse configured but no recommendation and not processing - don't show banner
-    return null;
+    return renderBanner({
+      message: "Use Lighthouse to review your findings and gain insights",
+      href: "/lighthouse",
+      gradient:
+        "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
+    });
   } catch (error) {
     console.error("Error getting banner state:", error);
     return null;

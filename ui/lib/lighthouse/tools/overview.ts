@@ -42,7 +42,7 @@ export const getFindingsBySeverityTool = tool(
   {
     name: "getFindingsBySeverity",
     description:
-      "Retrieves an aggregated summary of findings grouped by severity levels, such as low, medium, high, and critical. The response includes the total count of findings for each severity, considering only the latest scans for each provider. Additional filters can be applied to narrow down results by region, provider type, or other attributes.",
+      "Retrieves an aggregated summary of all findings (including passed and failed) grouped by severity levels, such as low, medium, high, and critical. The response includes the total count of findings for each severity, considering only the latest scans for each provider. Additional filters can be applied to narrow down results by region, provider type, or other attributes. Note: This endpoint doesn't allow filtering or ordering by status, it only provides a summary of all detected findings including passed, failed and muted.",
     schema: getFindingsBySeveritySchema,
   },
 );

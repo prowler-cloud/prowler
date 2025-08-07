@@ -5,9 +5,7 @@ import { getAIKey, getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 import { type SuggestedAction } from "./suggested-actions";
 import { initLighthouseWorkflow } from "./workflow";
 
-export const generateDetailedRecommendation = async (
-  scanSummary: string,
-): Promise<string> => {
+export const generateDetailedRecommendation = async (): Promise<string> => {
   try {
     const apiKey = await getAIKey();
     if (!apiKey) {
@@ -19,60 +17,47 @@ export const generateDetailedRecommendation = async (
       return "";
     }
 
-    const config = lighthouseConfig.attributes;
-    const businessContext = config.business_context || "";
+    const workflow = await initLighthouseWorkflow();
+    const response = await workflow.invoke({
+      messages: [
+        {
+          role: "user",
+          content: `Create focused and actionable recommendations to Security Engineering Manager based on findings from all recent completed scans.
 
-    const llm = new ChatOpenAI({
-      model: config.model || "gpt-4o",
-      temperature: config.temperature || 0,
-      maxTokens: 1500,
-      apiKey: apiKey,
+Your output should include both an overview of recent scans and your analysis about the findings. Your analysis should include the most urgent bug that needs to be fixed first (even if there are multiple bugs with different severities).
+
+Your output should contain the following:
+- Overview of the recent scans and findings
+- Comprehensive analysis of finding/pattern that users need to fix immediately
+
+When you're talking about any issue, be clear. For example:
+
+- When talking about findings, give the details of resources, account IDs, etc instead of just providing UUIDs of findings, resources, etc.
+- When giving issue description, convey what exactly is the problem and the reason you think why it should be fixed first.
+- When finding patterns, convey if users must focus on a particular bug class or particular cloud service or they must focus on a particular finding to improve their cloud security posture.
+- When mentioning the affected resources, try to give the names of resources and account IDs instead of just providing UUIDs of findings, resources, etc.
+- When giving business impact, tell the actual security risks of findings and potential consequences (possible bruteforce attacks on resources, compliance violation, etc)
+- When giving remediation steps, give clear step-by-step instructions and any gotcha's they need to check before fix (if applicable).
+- Be specific with numbers (e.g., "affects 12 S3 buckets", "resolves 15 findings"). Focus on actionable guidance that will have the biggest security improvement.
+
+Guidelines for checking findings:
+- Go by the severity: critical, high, medium, low
+- When fetching findings, order by severity
+- Ignore muted findings
+
+Guidelines for writing the output:
+- Use a formal yet casual tone.
+- Don't make it look like a report. The output is read by humans.
+- The output need not contain subheadings like issue description, affected resources, etc.
+- First, give a few sentence overview about the recent scans and findings, then dig deeper into the critical top findings that user must focus on.
+- Don't burden the user with too many findings. Evaluate the findings and tell them what they should focus on.`,
+        },
+      ],
     });
 
-    let systemPrompt = `You are a cloud security analyst providing focused, actionable recommendations.
-
-IMPORTANT: Focus on ONE of these high-impact opportunities:
-1. The most CRITICAL finding that needs immediate attention
-2. A pattern where fixing one check ID resolves many findings (e.g., "Fix aws_s3_bucket_public_access_block to resolve 15 findings")
-3. The issue with highest business impact
-
-Your response should be a comprehensive analysis of this ONE focus area including:
-
-**Issue Description:**
-- What exactly is the problem
-- Why it's critical or high-impact
-- How many findings it affects
-
-**Affected Resources:**
-- Specific resources, services, or configurations involved
-- Number of affected resources
-
-**Business Impact:**
-- Security risks and potential consequences
-- Compliance violations (mention specific frameworks if applicable)
-- Operational impact
-
-**Remediation Steps:**
-- Clear, step-by-step instructions
-- Specific commands or configuration changes where applicable
-- Expected outcome after fix
-
-Be specific with numbers (e.g., "affects 12 S3 buckets", "resolves 15 findings"). Focus on actionable guidance that will have the biggest security improvement.`;
-
-    if (businessContext) {
-      systemPrompt += `\n\nBUSINESS CONTEXT: ${businessContext}`;
-    }
-
-    systemPrompt += `\n\nSecurity Scan Summary:\n${scanSummary}`;
-
-    const response = await llm.invoke([
-      {
-        role: "system",
-        content: systemPrompt,
-      },
-    ]);
-
-    return response.content.toString().trim();
+    const lastMessage =
+      response.messages[response.messages.length - 1]?.content?.toString?.();
+    return lastMessage;
   } catch (error) {
     console.error("Error generating detailed recommendation:", error);
     return "";
@@ -136,16 +121,6 @@ ${detailedRecommendation}`;
     );
     return "";
   }
-};
-
-// Legacy function for backward compatibility
-export const generateRecommendation = async (
-  scanSummary: string,
-): Promise<string> => {
-  const detailed = await generateDetailedRecommendation(scanSummary);
-  if (!detailed) return "";
-
-  return await generateBannerFromDetailed(detailed);
 };
 
 export const generateQuestionAnswers = async (

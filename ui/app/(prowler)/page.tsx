@@ -35,10 +35,6 @@ export default function Home({
     <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
       <FilterControls providers mutedFindings showClearButton={false} />
 
-      {/* <Suspense fallback={null}>
-        <SSRCacheInitializer />
-      </Suspense> */}
-
       <div className="grid grid-cols-12 gap-12 lg:gap-6">
         <div className="col-span-12 lg:col-span-4">
           <Suspense fallback={<SkeletonProvidersOverview />}>

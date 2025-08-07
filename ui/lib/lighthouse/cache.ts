@@ -388,7 +388,7 @@ export async function initializeTenantCache(): Promise<{
   scanSummary?: string;
 }> {
   try {
-    // Quick pre-check: Do we need to process anything?
+    // Check if there are any scans in the last 24h
     const currentScanIds = await getCompletedScansLast24h();
 
     if (currentScanIds.length === 0) {
