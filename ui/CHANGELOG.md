@@ -11,7 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
 - XML validation for SAML metadata in the UI [(#8429)](https://github.com/prowler-cloud/prowler/pull/8429)
 - Default Mutelist placeholder in the UI [(#8455)](https://github.com/prowler-cloud/prowler/pull/8455)
--  Help link in the SAML configuration modal [(#8461)](https://github.com/prowler-cloud/prowler/pull/8461)
+- Help link in the SAML configuration modal [(#8461)](https://github.com/prowler-cloud/prowler/pull/8461)
 
 ### 🔄 Changed
 
