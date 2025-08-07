@@ -13,6 +13,7 @@ on:
       - "master"
       - "v5.*"
     paths:
+      - ".github/workflows/api-pull-request.yml"
       - "api/**"
 
 env:
