@@ -252,6 +252,16 @@ export const SamlConfigForm = ({
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
+      <div className="py-1 text-xs">
+        Need help configuring SAML SSO?{" "}
+        <CustomLink
+          href={
+            "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso/"
+          }
+        >
+          Read the docs
+        </CustomLink>
+      </div>
       <input type="hidden" name="id" value={samlConfig?.id || ""} />
       <CustomServerInput
         name="email_domain"
