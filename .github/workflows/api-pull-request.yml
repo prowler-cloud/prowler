@@ -108,9 +108,9 @@ jobs:
         run: |
           poetry lock
 
-      - name: Update resolved_reference to latest commit
+      - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
         working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push'
         run: |
           # Get the latest commit hash from the prowler-cloud/prowler repository
           LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
