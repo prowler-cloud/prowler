@@ -932,6 +932,7 @@
           "RemediationProcedure": "For every repository in use, designate scanners to identify and prevent sensitive data in code by performing the following (enterprise only):\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Code security and analysis**.\n 4. Scroll down to the bottom of the page and click **Enable** for secret scanning.",
           "AuditProcedure": "For every repository in use, verify that scanners are set to identify and prevent the existence of sensitive data in code by performing the following (enterprise only):\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Code security and analysis**.\n 4. Scroll down to the bottom of the page. If you see a **Disable** button, it means that secret scanning is already enabled for the repository.",
           "AdditionalInformation": "By January 2023, this feature is supposed to be open to all plans. Until then it is only for enterprise users.",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -991,6 +992,7 @@
           "RemediationProcedure": "For every repository that is in use, set a scanning tool to identify and prevent code vulnerabilities by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under the repository name, click **Security**.\n 3. To the right of \"Code scanning alerts\", click **Set up code scanning**.\n 4. Under \"Get started with code scanning\", click Set up this workflow on a workflow of your choice.\n 5. To customize how code scanning scans your code, edit the workflow.\n 6. Use the **Start commit** drop-down and type a commit message.\n 7. Choose whether you'd like to commit directly to the default branch or create a new branch and start a pull request.\n 8. Click **Commit new file** or **Propose new file**.",
           "AuditProcedure": "For every repository that is in use, verify that a scanning tool is set to identify and prevent code vulnerabilities by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under the repository name, click **Security**.\n 3. Verify that \"Code scanning alerts\" is **Enabled** or that there is a workflow that scans your code.",
           "AdditionalInformation": "All public repositories in all plans can use code scanning in GitHub. In private repositories, only GitHub Enterprise can use code scanning.",
+          "DefaultValue": "",
           "References": ""
         }
       ]
