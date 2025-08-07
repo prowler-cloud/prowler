@@ -252,7 +252,7 @@ export const SamlConfigForm = ({
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
-      <p className="py-1 text-xs">
+      <div className="py-1 text-xs">
         Need help configuring SAML SSO?{" "}
         <CustomLink
           href={
@@ -261,7 +261,7 @@ export const SamlConfigForm = ({
         >
           Read the docs
         </CustomLink>
-      </p>
+      </div>
       <input type="hidden" name="id" value={samlConfig?.id || ""} />
       <CustomServerInput
         name="email_domain"
