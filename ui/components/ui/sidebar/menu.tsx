@@ -17,8 +17,9 @@ import {
 import { useAuth } from "@/hooks";
 import { getMenuList } from "@/lib/menu-list";
 import { cn } from "@/lib/utils";
-import { useUIStore } from "@/store/ui/ui-store";
+import { useUIStore } from "@/store/ui/store";
 import { GroupProps } from "@/types";
+import { RolePermissionAttributes } from "@/types/users";
 
 import { Button } from "../button/button";
 import { CustomButton } from "../custom/custom-button";
@@ -26,7 +27,7 @@ import { ScrollArea } from "../scroll-area/scroll-area";
 
 interface MenuHideRule {
   label: string;
-  condition: (permissions: Record<string, any>) => boolean;
+  condition: (permissions: RolePermissionAttributes) => boolean;
 }
 
 // Configuration for hiding menu items based on permissions

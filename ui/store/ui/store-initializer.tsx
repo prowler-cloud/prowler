@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { useUIStore } from "@/store/ui/ui-store";
+import { useUIStore } from "@/store/ui/store";
 
 interface StoreInitializerProps {
   values: {

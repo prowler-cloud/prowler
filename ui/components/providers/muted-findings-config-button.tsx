@@ -3,7 +3,7 @@
 import { SettingsIcon } from "lucide-react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
-import { useUIStore } from "@/store/ui/ui-store";
+import { useUIStore } from "@/store/ui/store";
 
 import { MutedFindingsConfigForm } from "./forms";
 

@@ -4,12 +4,12 @@ import { Metadata, Viewport } from "next";
 import React from "react";
 
 import { getProviders } from "@/actions/providers";
-import { StoreInitializer } from "@/components/providers/store-initializer";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { Toaster } from "@/components/ui/toast";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { StoreInitializer } from "@/store/ui/store-initializer";
 
 import { Providers } from "../providers";
 
