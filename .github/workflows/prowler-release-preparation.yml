@@ -147,6 +147,9 @@ jobs:
           exit 1
         fi
         git checkout -b "$BRANCH_NAME"
+        
+        # Push the new branch first so it exists remotely
+        git push origin "$BRANCH_NAME"
 
     - name: Update prowler dependency in api/pyproject.toml
       if: ${{ env.PATCH_VERSION == '0' }}
