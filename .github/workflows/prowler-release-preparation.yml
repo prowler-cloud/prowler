@@ -168,7 +168,7 @@ jobs:
         # Update poetry lock file
         echo "Updating poetry.lock file..."
         cd api
-        poetry lock --no-update
+        poetry lock
         cd ..
 
         # Commit and push the changes
