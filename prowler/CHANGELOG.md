@@ -7,6 +7,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Remove invalid requirement from CIS 1.0 for GitHub provider [(#8472)](https://github.com/prowler-cloud/prowler/pull/8472)
 
+---
+
 ## [v5.10.0] (Prowler v5.10.0)
 
 ### Added
