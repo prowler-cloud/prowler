@@ -253,7 +253,7 @@ export const SamlConfigForm = ({
   return (
     <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
       <p className="py-1 text-xs text-gray-500">
-        Need help configuring your Amazon S3 integrations?{" "}
+        Need help configuring SAML SSO?{" "}
         <CustomLink
           href={
             "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso/"
