@@ -16,7 +16,11 @@ import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { FormButtons } from "@/components/ui/form";
 import { fontMono } from "@/config/fonts";
-import { convertToYaml, parseYamlValidation } from "@/lib/yaml";
+import {
+  convertToYaml,
+  defaultMutedFindingsConfig,
+  parseYamlValidation,
+} from "@/lib/yaml";
 import {
   MutedFindingsConfigActionState,
   ProcessorData,
@@ -203,7 +207,7 @@ export const MutedFindingsConfigForm = ({
             <Textarea
               id="configuration"
               name="configuration"
-              placeholder="Enter your YAML configuration..."
+              placeholder={defaultMutedFindingsConfig}
               variant="bordered"
               value={configText}
               onChange={(e) => handleConfigChange(e.target.value)}

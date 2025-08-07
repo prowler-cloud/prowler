@@ -1,0 +1,13 @@
+# Required variable
+external_id = "your-unique-external-id-here"
+
+# Optional Variables
+# Prowler Cloud Account
+# account_id = "232136659152"
+# Prowler Cloud Role
+# iam_principal = "role/prowler*"
+
+# S3 Integration (optional)
+# enable_s3_integration = true
+# s3_bucket_name = "your-prowler-reports-bucket"
+# s3_bucket_account = "123456789012"

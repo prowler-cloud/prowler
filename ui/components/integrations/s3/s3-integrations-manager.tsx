@@ -19,6 +19,8 @@ import {
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
+import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
@@ -28,11 +30,13 @@ import { S3IntegrationCardSkeleton } from "./skeleton-s3-integration-card";
 interface S3IntegrationsManagerProps {
   integrations: IntegrationProps[];
   providers: ProviderProps[];
+  metadata?: MetaDataProps;
 }
 
 export const S3IntegrationsManager = ({
   integrations,
   providers,
+  metadata,
 }: S3IntegrationsManagerProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIntegration, setEditingIntegration] =
@@ -392,6 +396,12 @@ export const S3IntegrationsManager = ({
             ))}
           </div>
         ) : null}
+
+        {metadata && integrations.length > 0 && (
+          <div className="mt-6">
+            <DataTablePagination metadata={metadata} />
+          </div>
+        )}
       </div>
     </>
   );

@@ -1,42 +1,13 @@
 "use client";
 
-import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@nextui-org/react";
 import { SettingsIcon } from "lucide-react";
 
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { IntegrationProps } from "@/types/integrations";
 
-import { S3IntegrationCardSkeleton } from "./skeleton-s3-integration-card";
-
-interface S3IntegrationCardProps {
-  integrations?: IntegrationProps[];
-  isLoading?: boolean;
-}
-
-export const S3IntegrationCard = ({
-  integrations = [],
-  isLoading = false,
-}: S3IntegrationCardProps) => {
-  const s3Integrations = integrations.filter(
-    (integration) => integration.attributes.integration_type === "amazon_s3",
-  );
-
-  const isConfigured = s3Integrations.length > 0;
-  const connectedCount = s3Integrations.filter(
-    (integration) => integration.attributes.connected,
-  ).length;
-
-  if (isLoading) {
-    return (
-      <S3IntegrationCardSkeleton
-        variant="main"
-        count={s3Integrations.length || 1}
-      />
-    );
-  }
-
+export const S3IntegrationCard = () => {
   return (
     <Card className="dark:bg-gray-800">
       <CardHeader className="gap-2">
@@ -62,84 +33,24 @@ export const S3IntegrationCard = ({
             </div>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-center">
-            {isConfigured && (
-              <Chip
-                size="sm"
-                color={connectedCount > 0 ? "success" : "warning"}
-                variant="flat"
-              >
-                {connectedCount} / {s3Integrations.length} connected
-              </Chip>
-            )}
             <CustomButton
               size="sm"
               variant="bordered"
               startContent={<SettingsIcon size={14} />}
               asLink="/integrations/s3"
-              ariaLabel={
-                isConfigured
-                  ? "Manage S3 integrations"
-                  : "Configure S3 integration"
-              }
+              ariaLabel="Manage S3 integrations"
             >
-              {isConfigured ? "Manage" : "Configure"}
+              Manage
             </CustomButton>
           </div>
         </div>
       </CardHeader>
       <CardBody>
         <div className="flex flex-col gap-4">
-          {isConfigured ? (
-            <>
-              <div className="space-y-2">
-                {s3Integrations.map((integration) => (
-                  <div
-                    key={integration.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">
-                        {integration.attributes.configuration.bucket_name ||
-                          "Unknown Bucket"}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-300">
-                        Output directory:{" "}
-                        {integration.attributes.configuration
-                          .output_directory ||
-                          integration.attributes.configuration.path ||
-                          "/"}
-                      </span>
-                    </div>
-                    <Chip
-                      size="sm"
-                      color={
-                        integration.attributes.connected ? "success" : "danger"
-                      }
-                      variant="dot"
-                    >
-                      {integration.attributes.connected
-                        ? "Connected"
-                        : "Disconnected"}
-                    </Chip>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-sm">
-                <span className="font-medium">Status: </span>
-                <span className="text-gray-500">Not configured</span>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Export your security findings to Amazon S3 buckets
-                  automatically.
-                </p>
-              </div>
-            </>
-          )}
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Configure and manage your Amazon S3 integrations to automatically
+            export security findings to your S3 buckets.
+          </p>
         </div>
       </CardBody>
     </Card>
