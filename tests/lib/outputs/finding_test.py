@@ -683,7 +683,7 @@ class TestFinding:
         assert finding_output.auth_method == "No auth"
         assert finding_output.resource_name == "aws_s3_bucket.example"
         assert finding_output.resource_uid == "aws_s3_bucket.example"
-        assert finding_output.region == "/path/to/iac/file.tf"
+        assert finding_output.region == "1:5"
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
         assert finding_output.muted is False
