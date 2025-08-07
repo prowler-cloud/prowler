@@ -250,7 +250,7 @@ class Provider(ABC):
                     provider_class(
                         scan_path=arguments.scan_path,
                         scan_repository_url=arguments.scan_repository_url,
-                        frameworks=arguments.frameworks,
+                        scanners=arguments.scanners,
                         exclude_path=arguments.exclude_path,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
