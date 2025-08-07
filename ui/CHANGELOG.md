@@ -12,7 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Switch in AWS role credentials form shown when adding a role [(#8484)](https://github.com/prowler-cloud/prowler/pull/8484)
+- Field for `Assume Role` in AWS role credentials form shown again [(#8484)](https://github.com/prowler-cloud/prowler/pull/8484)
 
 ### ❌ Removed
 
