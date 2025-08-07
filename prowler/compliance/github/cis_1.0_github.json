@@ -5,27 +5,6 @@
   "Description": "This document provides prescriptive guidance for establishing a secure configuration posture for securing GitHub.",
   "Requirements": [
     {
-      "Id": "Id",
-      "Description": "Title",
-      "Checks": [
-        "Checks"
-      ],
-      "Attributes": [
-        {
-          "Section": "Attributes_Section",
-          "Profile": "Attributes_Level",
-          "AssessmentStatus": "Attributes_AssessmentStatus",
-          "Description": "Attributes_Description",
-          "RationaleStatement": "Attributes_RationaleStatement",
-          "ImpactStatement": "Attributes_ImpactStatement",
-          "RemediationProcedure": "Attributes_RemediationProcedure",
-          "AuditProcedure": "Attributes_AuditProcedure",
-          "AdditionalInformation": "Attributes_AdditionalInformation",
-          "References": "Attributes_References"
-        }
-      ]
-    },
-    {
       "Id": "1.1.1",
       "Description": "Ensure any changes to code are tracked in a version control platform",
       "Checks": [
