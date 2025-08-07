@@ -35,7 +35,9 @@ export const AWSRoleCredentialsForm = ({
   });
   const [showOptionalRole, setShowOptionalRole] = useState(false);
   const showRoleSection =
-    (isCloudEnv && credentialsType === "aws-sdk-default") || showOptionalRole;
+    type === "providers" ||
+    (isCloudEnv && credentialsType === "aws-sdk-default") ||
+    showOptionalRole;
 
   return (
     <>
@@ -144,21 +146,23 @@ export const AWSRoleCredentialsForm = ({
       )}
       <Divider className="" />
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-default-500">
-          {type === "providers"
-            ? "Assume Role"
-            : isCloudEnv && credentialsType === "aws-sdk-default"
+      {type === "providers" ? (
+        <span className="text-xs font-bold text-default-500">Assume Role</span>
+      ) : (
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-default-500">
+            {isCloudEnv && credentialsType === "aws-sdk-default"
               ? "Adding a role is required"
               : "Optionally add a role"}
-        </span>
-        <Switch
-          size="sm"
-          isSelected={showRoleSection}
-          onValueChange={setShowOptionalRole}
-          isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
-        />
-      </div>
+          </span>
+          <Switch
+            size="sm"
+            isSelected={showRoleSection}
+            onValueChange={setShowOptionalRole}
+            isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
+          />
+        </div>
+      )}
 
       {showRoleSection && (
         <>
