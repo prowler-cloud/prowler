@@ -144,23 +144,21 @@ export const AWSRoleCredentialsForm = ({
       )}
       <Divider className="" />
 
-      {type === "providers" ? (
-        <span className="text-xs font-bold text-default-500">Assume Role</span>
-      ) : (
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-default-500">
-            {isCloudEnv && credentialsType === "aws-sdk-default"
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-default-500">
+          {type === "providers"
+            ? "Assume Role"
+            : isCloudEnv && credentialsType === "aws-sdk-default"
               ? "Adding a role is required"
               : "Optionally add a role"}
-          </span>
-          <Switch
-            size="sm"
-            isSelected={showRoleSection}
-            onValueChange={setShowOptionalRole}
-            isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
-          />
-        </div>
-      )}
+        </span>
+        <Switch
+          size="sm"
+          isSelected={showRoleSection}
+          onValueChange={setShowOptionalRole}
+          isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
+        />
+      </div>
 
       {showRoleSection && (
         <>
