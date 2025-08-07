@@ -9,6 +9,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 ### 🐞 Fixed
+- DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
 
 ### ❌ Removed
 
