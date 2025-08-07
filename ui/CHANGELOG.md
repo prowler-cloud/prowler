@@ -10,6 +10,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
+### ❌ Removed
+
 ---
 
 ## [1.10.0] (Prowler v5.10.0)
@@ -25,6 +27,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Rename `Memberships` to `Organization` in the sidebar [(#8415)](https://github.com/prowler-cloud/prowler/pull/8415)
+
+### ❌ Removed
+
 - Removed `Browse all resources` from the sidebar, sidebar now shows a single `Resources` entry [(#8418)](https://github.com/prowler-cloud/prowler/pull/8418)
 - Removed `Misconfigurations` from the `Top Failed Findings` section in the sidebar [(#8426)](https://github.com/prowler-cloud/prowler/pull/8426)
 
@@ -50,7 +55,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
 - Max character limit validation for Scan label [(#8319)](https://github.com/prowler-cloud/prowler/pull/8319)
 
-### Security
+### 🔐 Security
 
 - Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
 
@@ -65,8 +70,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Error message when launching a scan if user has no permissions [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
 - Include compliance in the download button tooltip [(#8307)](https://github.com/prowler-cloud/prowler/pull/8307)
 
-### Removed
-
 ---
 
 ## [v1.8.1] (Prowler 5.8.1)
@@ -75,7 +78,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Latest new failed findings now use `GET /findings/latest` [(#8219)](https://github.com/prowler-cloud/prowler/pull/8219)
 
-### Removed
+### ❌ Removed
 
 - Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
 
@@ -167,7 +170,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Moved ProviderType to a shared types file and replaced all occurrences across the codebase [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
 - Added filter to retrieve only connected providers on the scan page [(#7723)](https://github.com/prowler-cloud/prowler/pull/7723)
 
-### Removed
+### ❌ Removed
 
 - Alias if not added from findings detail page [(#7751)](https://github.com/prowler-cloud/prowler/pull/7751)
 
