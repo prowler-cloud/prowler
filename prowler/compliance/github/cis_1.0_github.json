@@ -1858,26 +1858,6 @@
       ]
     },
     {
-      "Id": "",
-      "Description": "Validate Packages",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "3.2",
-          "Profile": "",
-          "AssessmentStatus": "",
-          "Description": "This section consists of security recommendations for managing package validations and checks. Third-party packages and dependencies might put the organization in danger, not only by being vulnerable to attacks, but also by being improperly used and harming license conditions. To protect the software supply chain from these dangers, it is important to validate packages and understand how and if to use them. This section's recommendations cover this topic.",
-          "RationaleStatement": "",
-          "ImpactStatement": "",
-          "RemediationProcedure": "",
-          "AuditProcedure": "",
-          "AdditionalInformation": "",
-          "DefaultValue": "",
-          "References": ""
-        }
-      ]
-    },
-    {
       "Id": "3.2.1",
       "Description": "Ensure an organization-wide dependency usage policy is enforced",
       "Checks": [],
@@ -2011,26 +1991,6 @@
           "ImpactStatement": "",
           "RemediationProcedure": "Grant decryption capabilities of the organization's artifacts only for trusted and authorized platforms.",
           "AuditProcedure": "Ensure only trusted and authorized platforms have decryption capabilities of the organization's artifacts.",
-          "AdditionalInformation": "",
-          "DefaultValue": "",
-          "References": ""
-        }
-      ]
-    },
-    {
-      "Id": "",
-      "Description": "Access to Artifacts",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "4.2",
-          "Profile": "",
-          "AssessmentStatus": "",
-          "Description": "This section consists of security recommendations for access management of artifacts. \n \n\n Artifacts are often stored in registries, some external and some internal. Those registries have user entities that control access and permissions. Artifacts are considered sensitive, because they are being delivered to the costumer, and are prune to many attacks: data theft, dependency confusion, malicious packages and more. That's why their access management should be restrictive and careful.",
-          "RationaleStatement": "",
-          "ImpactStatement": "",
-          "RemediationProcedure": "",
-          "AuditProcedure": "",
           "AdditionalInformation": "",
           "DefaultValue": "",
           "References": ""
