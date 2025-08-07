@@ -15,9 +15,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
 import { useAuth } from "@/hooks";
-import { useHasProviders } from "@/hooks/use-has-providers";
 import { getMenuList } from "@/lib/menu-list";
 import { cn } from "@/lib/utils";
+import { useUIStore } from "@/store/ui/ui-store";
 import { GroupProps } from "@/types";
 
 import { Button } from "../button/button";
@@ -68,8 +68,12 @@ const hideMenuItems = (menuGroups: GroupProps[], labelsToHide: string[]) => {
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  const { hasProviders } = useHasProviders();
-  const menuList = getMenuList(pathname);
+  const { hasProviders, openMutelistModal } = useUIStore();
+  const menuList = getMenuList({
+    pathname,
+    hasProviders,
+    openMutelistModal,
+  });
 
   const labelsToHide = MENU_HIDE_RULES.filter((rule) =>
     rule.condition(permissions),
@@ -183,12 +187,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                       <CollapseMenuButton
                         icon={Icon}
                         label={label}
-                        submenus={submenus.map((submenu) => ({
-                          ...submenu,
-                          disabled:
-                            submenu.label === "Mutelist" &&
-                            hasProviders === false,
-                        }))}
+                        submenus={submenus}
                         isOpen={isOpen}
                         defaultOpen={defaultOpen ?? false}
                       />

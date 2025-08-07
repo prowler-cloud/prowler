@@ -50,7 +50,7 @@ export default async function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <StoreInitializer hasProviders={hasProviders} />
+          <StoreInitializer values={{ hasProviders }} />
           <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>

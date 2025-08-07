@@ -89,7 +89,10 @@ export const CollapseMenuButton = ({
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         {submenus.map(
-          ({ href, label, active, icon: SubIcon, target, disabled }, index) => {
+          (
+            { href, label, active, icon: SubIcon, target, disabled, onClick },
+            index,
+          ) => {
             const isActive =
               (active === undefined && pathname === href) || active;
 
@@ -143,7 +146,12 @@ export const CollapseMenuButton = ({
                 asChild={!disabled}
                 disabled={disabled}
               >
-                <Link href={href} target={target} className="flex items-center">
+                <Link
+                  href={href}
+                  target={target}
+                  className="flex items-center"
+                  onClick={onClick}
+                >
                   <div className="mr-4 h-full border-l border-default-200"></div>
                   <span className="mr-2">
                     <SubIcon size={16} />
@@ -202,7 +210,10 @@ export const CollapseMenuButton = ({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {submenus.map(
-          ({ href, label, active, icon: SubIcon, disabled }, index) => {
+          (
+            { href, label, active, icon: SubIcon, disabled, onClick },
+            index,
+          ) => {
             const isActive =
               (active === undefined && pathname === href) || active;
 
@@ -250,6 +261,7 @@ export const CollapseMenuButton = ({
                   <Link
                     className="flex cursor-pointer items-center gap-2"
                     href={href}
+                    onClick={onClick}
                   >
                     <SubIcon size={16} />
                     <p className="max-w-[180px] truncate">{label}</p>

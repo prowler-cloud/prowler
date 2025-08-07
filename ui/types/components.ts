@@ -21,6 +21,7 @@ export type SubmenuProps = {
   active?: boolean;
   icon: IconComponent;
   disabled?: boolean;
+  onClick?: () => void;
 };
 
 export type MenuProps = {

@@ -35,7 +35,17 @@ import {
 } from "@/components/icons/Icons";
 import { GroupProps } from "@/types";
 
-export const getMenuList = (pathname: string): GroupProps[] => {
+interface MenuListOptions {
+  pathname: string;
+  hasProviders?: boolean;
+  openMutelistModal?: () => void;
+}
+
+export const getMenuList = ({
+  pathname,
+  hasProviders,
+  openMutelistModal,
+}: MenuListOptions): GroupProps[] => {
   return [
     {
       groupLabel: "",
@@ -148,9 +158,12 @@ export const getMenuList = (pathname: string): GroupProps[] => {
           submenus: [
             { href: "/providers", label: "Cloud Providers", icon: CloudCog },
             {
-              href: "/providers?mutelist=true",
+              // Use trailing slash to prevent both menu items from being active at /providers
+              href: "/providers/",
               label: "Mutelist",
               icon: VolumeX,
+              disabled: hasProviders === false,
+              onClick: openMutelistModal,
             },
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
