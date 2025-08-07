@@ -186,7 +186,7 @@ class GithubCISModel(BaseModel):
     Requirements_Attributes_AuditProcedure: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_References: str
-    Requirements_Attributes_DefaultValue: str
+    Requirements_Attributes_DefaultValue: Optional[str] = None
     Status: str
     StatusExtended: str
     ResourceId: str

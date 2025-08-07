@@ -19,6 +19,7 @@
           "RemediationProcedure": "Upload existing code projects to a dedicated Github organization and repositories and create an identity for each active team member who might contribute or need access to it.",
           "AuditProcedure": "Ensure that all code activity is managed through Github repository for every micro-service or application developed by an organization.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -38,6 +39,7 @@
           "RemediationProcedure": "Use a task management system to manage tasks as the starting point for each code change. Whether it is a new feature, bug fix, or security fix - all should originate from a dedicated task (ticket) in your organization's task management system. These tasks should also be linked to the code changes themselves in a way that is easy to follow: from code to task, and from task back to code.",
           "AuditProcedure": "Ensure every code change can be traced back to its origin task in a task management system.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -59,6 +61,7 @@
           "RemediationProcedure": "For every code repository in use, perform the next steps to require two approvals from the specific code repository team in order to push new code to the code base:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you added the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Check **Require a pull request before merging** and **Require approvals**, and set **Required number of approvals before merging** to 2.\n 5. Click **Create** or **Save changes**.",
           "AuditProcedure": "For every code repository in use, perform the next steps to verify that two approvals from the specific code repository team are required to push new code to the code base:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Require a pull request before merging** and **Require approvals** are checked, and verify that **Required number of approvals before merging** is set to 2.",
           "AdditionalInformation": "",
+          "DefaultValue": "0",
           "References": ""
         }
       ]
@@ -78,6 +81,7 @@
           "RemediationProcedure": "For each code repository in use, perform the next steps to enforce dismissal of given approvals to code change suggestions if those suggestions were updated:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you added the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Require pull request reviews before merging** and then **Dismiss stale pull request approvals when new commits are pushed**.\n 5. Click **Create** or **Save changes**.",
           "AuditProcedure": "For each code repository in use, perform the next steps to verify that each updated code suggestion declines the previously received approvals:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Require a pull request before merging** is checked, and verify that **Dismiss stale pull request approvals when new commits are pushed** is checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -97,6 +101,7 @@
           "RemediationProcedure": "For each code repository in use, perform the next steps to restrict dismissal of code changes reviews unless it is necessary:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you added the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 4. Select **Require pull request reviews before merging** and **Restrict who can dismiss pull request reviews**.\n 5. Do not add any user or team unless it is obligatory. If it is obligatory, carefully select the users or teams whom you trust with the ability to dismiss code change reviews.\n 6. Click **Create** or **Save changes**.",
           "AuditProcedure": "For each code repository in use, perform the next steps to verify that only trusted users are allowed to dismiss code change reviews: \n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 4. Verify that **Require a pull request before merging** and **Restrict who can dismiss pull request reviews** is checked.\n 5. Verify that no users and teams are specified except for organization and repository admins. If it is obligatory, verify that the users or teams specified were carefully selected to be trusted with the ability to dismiss code change reviews.",
           "AdditionalInformation": "",
+          "DefaultValue": "By default, all users who have write access to the code repository are able to dismiss code change reviews.",
           "References": ""
         }
       ]
@@ -118,6 +123,7 @@
           "RemediationProcedure": "In every code repository create a CODEOWNERS file in the root, docs/, or .github/ directory of the repository.\n In the file, specify codeowners for the .github/workflows/ directory atleast. Specify organization members you trust. For example:\n ```\n .github/workflows/ @user1 @user2\n ```",
           "AuditProcedure": "In every code repository, verify that a file named CODEOWNERS exists in the root, docs/, or .github/ directory of the repository.\n In the CODEOWNERS file, verify that the users specified are users you trust.",
           "AdditionalInformation": "",
+          "DefaultValue": "None",
           "References": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners"
         }
       ]
@@ -139,6 +145,7 @@
           "RemediationProcedure": "For every code repository in use, perform the following steps to require code owners' approvals for each change proposal related to code they own:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Require pull request reviews before merging** and **Require review from Code Owners**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For every code repository in use, perform the following steps to verify that code owners are required to review all code change proposals relevant to areas they own before code merge:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 4. Ensure that **Require a pull request before merging** and **Require review from Code Owners** are checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "Code owners are not required to review changes by default.",
           "References": ""
         }
       ]
@@ -161,6 +168,7 @@
           "RemediationProcedure": "For each code repository in use, review existing Git branches and remove those which have not been active for a period of time by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Above the list of files, click **Branches**.\n 3. Use the navigation at the top of the page to view the Stale branches. The Stale view shows all branches that no one has committed to in the last three months, ordered by the branches with the oldest commits first.\n 4. For each branch listed, either delete it by clicking the trash bin icon, or find the valid reason it still exists.\n \n\n You can perform the next steps to prevent pull request branches from becoming stale branches:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click Settings.\n 3. Under \"Pull Requests\", select **Automatically delete head branches**.",
           "AuditProcedure": "For each code repository in use, verify that all existing Git branches are active or have yet to be checked for inactivity by performing the next steps:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Above the list of files, click **Branches**.\n 3. Use the navigation at the top of the page to view the Stale branches. The Stale view shows all branches that no one has committed to in the last three months, ordered by the branches with the oldest commits first.\n 4. If the list is empty, you are compliant. If the list is not empty, but there is a valid reason the branches listed are not deleted, you are compliant.",
           "AdditionalInformation": "",
+          "DefaultValue": "By default, newly opened Git branches would never be removed, regardless of activity or inactivity.",
           "References": ""
         }
       ]
@@ -182,6 +190,7 @@
           "RemediationProcedure": "For each code repository in use, require all status checks to pass before permitting a merge of new code by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", check if there is a rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Require status checks to pass before merging**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For each code repository in use, verify that status checks are required to pass before allowing any code change proposal merge by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Require status checks to pass before merging** is checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "By default, no checks are defined per project, and thus no enforcement of checks is made.",
           "References": ""
         }
       ]
@@ -201,6 +210,7 @@
           "RemediationProcedure": "For each code repository in use, enforce a policy to only allow merging open branches if they are current with the latest change from their original repository by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Require status checks to pass before merging** and **Require branches to be up to date before merging**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For each code repository in use, verify that open branches must be updated before merging is permitted by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Require status checks to pass before merging** and **Require branches to be up to date before merging** are checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "By default, there is no requirement to update a branch before merging it.",
           "References": "https://github.blog/changelog/2022-02-03-more-ways-to-keep-your-pull-request-branch-up-to-date/"
         }
       ]
@@ -222,6 +232,7 @@
           "RemediationProcedure": "For each code repository in use, require open comments to be resolved before the relevant code change can be merged by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Require conversation resolution before merging**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For every code repository in use, verify that each merged code change does not contain open, unattended comments by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Require conversation resolution before merging** is checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "By default, code changes with open comments on them are able to be merged into the code base.",
           "References": ""
         }
       ]
@@ -243,6 +254,7 @@
           "RemediationProcedure": "For each repository in use, enforce the branch protection rule of requiring signed commits, and make sure only signed commits are capable of merging by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Require signed commits**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "Ensure only signed commits can be merged for every branch, especially the main branch, via branch protection rules by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Require signed commits** is checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits"
         }
       ]
@@ -264,6 +276,7 @@
           "RemediationProcedure": "For every code repository in use, perform the following steps to require linear history and/or allow only rebase merge and squash merge:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Require linear history**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For every code repository in use, perform the following steps to verify that linear history is required and/or that only squash merge and rebase merge are allowed:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Require linear history** is checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -285,6 +298,7 @@
           "RemediationProcedure": "For every code repository in use, enforce branch protection rules on administrators as well, by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Do not allow bypassing the above settings**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For every code repository in use, validate branch protection rules also apply to administrator accounts by performing the next steps:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Do not allow bypassing the above settings** is checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "Administrator accounts are not subject to branch protection rules by default.",
           "References": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule"
         }
       ]
@@ -304,6 +318,7 @@
           "RemediationProcedure": "For every code repository in use, allow only trusted and responsible users to push or merge new code by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4.Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Select **Restrict who can push to matching branches** and choose trusted and responsible users and teams who will have the permission to do so. \n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For every code repository in use, ensure only trusted and responsible users can push or merge new code by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Restrict who can push to matching branches** is checked and that only trusted and responsible users and teams are selected.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule"
         }
       ]
@@ -325,6 +340,7 @@
           "RemediationProcedure": "For each repository in use, block the option to \"Force Push\" code by performing the following: \n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Uncheck **Allow force pushes**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For every code repository in use, validate that no one can force push code by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Allow force pushes** is not checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule"
         }
       ]
@@ -346,6 +362,7 @@
           "RemediationProcedure": "For each repository that is being used, block the option to delete protected branches by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, click **Add rule**.\n 5. If you add the rule, under \"Branch name pattern\", type the branch name or pattern you want to protect.\n 6. Uncheck **Allow deletions**.\n 7. Click **Create** or **Save changes**.",
           "AuditProcedure": "For each repository that is being used, verify that protected branches cannot be deleted by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", verify that there is at least one rule for your main branch. If there is, click **Edit** to its right. If there isn't, you are not compliant.\n 5. Ensure that **Allow deletions** is not checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule"
         }
       ]
@@ -365,6 +382,7 @@
           "RemediationProcedure": "For every repository in use, enforce risk scanning on every pull request by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Actions**.\n 3. If the repository already has at least one workflow set up and running, click **New workflow** and go to step 5. If there are currently no workflows configured for the repository, go to the next step.\n 4. Scroll down to the \"Security\" category and click **Configure** under the workflow you want to configure or click **View all** to see all available security workflows.\n 5. On the right pane of the workflow page, click **Documentation** and follow the on-screen instructions to tailor the workflow to your needs.",
           "AuditProcedure": "For each repository in use, ensure that every pull request must be scanned for risks by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Actions**.\n 3. Ensure that at least one workflow is configured to run like that: \n ```\n on:\n  push:\n  branches: [ \"main\" ]\n  pull_request:\n  branches: [ \"main\" ]\n ```\n and that it has a step that runs code scanning on the code.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -384,6 +402,7 @@
           "RemediationProcedure": "Use the audit log to audit changes in branch protection rules by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Archives\" section of the sidebar, click **Logs**, then click **Audit log**.\n 4. Use the action qualifier in your query and look for **protected_branch** category. Ensure every action is reasonable and secure and investigate if not.",
           "AuditProcedure": "Ensure changes in branch protection rules are audited by performing the following regularly:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Archives\" section of the sidebar, click **Logs**, then click **Audit log**.\n 4. Use the action qualifier in your query and look for **protected_branch** category. Ensure every action is reasonable and secure and is investigated if not.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches"
         }
       ]
@@ -405,6 +424,7 @@
           "RemediationProcedure": "Perform the following to enforce branch protection on the main branch:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Next to \"Branch protection rules\", click **Add rule**.\n 5. Under \"Branch name pattern\", type the branch name or pattern you want to protect. Ensure it applies to the main branch name.\n 6. Configure policies you want.\n 7. Click Create.",
           "AuditProcedure": "Perform the following to ensure branch protection is enforced on the main branch:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Code and automation\" section of the sidebar, click **Branches**.\n 4. Under **Branch protection rules**, verify that there is a rule applied to the \"main\" or default branch.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -426,6 +446,7 @@
           "RemediationProcedure": "Enforce that each public repository has a SECURITY.md file by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under the repository name, click **Security**.\n 3. In the left sidebar, click **Security policy**.\n 4. Click **Start setup**.\n 5. In the new SECURITY.md file, add information about supported versions of your project and how to report a vulnerability.\n 6. At the bottom of the page, type a commit message.\n 7. Below the commit message fields, choose to create a new branch for your commit and then create a pull request.\n 8. Click **Propose file change**.",
           "AuditProcedure": "Verify that each public repository has a SECURITY.md file by performing the following:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under the repository name, click **Security**.\n 3. Verify that **Security policy** is enabled.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -445,6 +466,7 @@
           "RemediationProcedure": "Restrict repository creation to trusted users and teams only by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Member privileges**.\n 4. Under \"Repository creation\", unselect both options - **Public** and **Private**.\n 5. Click **Save**.",
           "AuditProcedure": "Verify that only trusted users and teams can create repositories by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Member privileges**.\n 4. Under \"Repository creation\", ensure that **Public** and **Private** are not checked. This means only owners are able to create repositories.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -464,6 +486,7 @@
           "RemediationProcedure": "Enforce repository deletion by a few trusted and responsible users only by performing either of the following steps:\n \n\n If Your organizations > Settings > Access > Member privileges > Allow members to delete or transfer repositories for this organization is selected, allow only trusted members to have admin privileges:\n 1. In every repository, on GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings** and then in the \"Access\" section of the sidebar, click **Collaborators & teams**.\n 3. Under \"Manage access\" use the dropdown **Role** menu to filter and search for admin members. Change their role by clicking the **Role** dropdown next to the username until there are only two trusted and qualified users with admin privileges. \n \n\n If it is not selected, allow only trusted users to become an organization owner:\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Click the name of your organization and under your organization name, click **People**.\n 3. You will see a list of the people in your organization. Click Role and select Owners. Check every member you want to change permissions to. Above the list of members, use the drop-down menu and click Change role and choose Member > change role. Do that until there are only a few trusted and qualified users with organization owner privileges. \n \n\n In any case, only members with administrator or organization owner privileges can delete repositories, regardless of your setting.",
           "AuditProcedure": "Verify that only a limited number of trusted users can delete repositories by performing either of the following steps:\n \n\n If Your organizations > Settings > Access > Member privileges > Allow members to delete or transfer repositories for this organization is selected, verify that every admin member is trusted by you:\n 1. In every repository, on GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings** and then in the \"Access\" section of the sidebar, click **Collaborators & teams**.\n 3. Under \"Manage access\" use the dropdown **Role** menu to filter and search for admin members. Verify that there are only two of them and that they are trusted and qualified. \n \n\n If it is not selected, verify that every organization owner is trusted by you:\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Click the name of your organization and under your organization name, click **People**.\n 3. You will see a list of the people in your organization. Click Role and select Owners. Verify that there are only a few of them and that they are trusted and qualified. \n \n\n In any case, only members with administrator or organization owner privileges can delete repositories, regardless of your setting.",
           "AdditionalInformation": "",
+          "DefaultValue": "Only organization owners or members with admin privileges can delete repositories.",
           "References": ""
         }
       ]
@@ -483,6 +506,7 @@
           "RemediationProcedure": "Restrict issue deletion to a few trusted and responsible users only by performing either of the following steps:\n \n\n If Your organizations > Settings > Access > Member privileges > Allow members to delete issues for this organization is selected, allow only trusted members to have admin privileges:\n 1. In every repository, on GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings** and then in the \"Access\" section of the sidebar, click **Collaborators & teams**.\n 3. Under \"Manage access\" use the dropdown **Role** menu to filter and search for admin members. Change their role by clicking the **Role** dropdown next to the username until there are only two trusted and qualified users with admin privileges.\n \n\n If it is not selected, allow only trusted users to become an organization owner:\n 1. In the top right corner of GitHub.com, click your profile photo, then click Your organizations.\n 2. Click the name of your organization and under your organization name, click **People**.\n 3. You will see a list of the people in your organization. Click **Role** and select **Owners**. Check every member you want to change permissions to. Above the list of members, use the drop-down menu and click **Change role** and choose Member > change role. Do that until there are only a few trusted and qualified users with organization owner privileges.\n \n\n In any case, only members with administrator or organization owner privileges can delete issues, regardless of your setting.",
           "AuditProcedure": "Verify that only a limited number of trusted users can delete issues by performing either of the following steps:\n \n\n If Your organizations > Settings > Access > Member privileges > Allow members to delete issues for this organization is selected, verify that every admin member is trusted by you:\n 1. In every repository, on GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings** and then in the \"Access\" section of the sidebar, click **Collaborators & teams**.\n 3. Under \"Manage access\" use the dropdown **Role** menu to filter and search for admin members. Verify that there are only two of them and that they are trusted and qualified.\n \n\n If it is not selected, verify that every organization owner is trusted by you:\n 1. In the top right corner of GitHub.com, click your profile photo, then click Your organizations.\n 2. Click the name of your organization and under your organization name, click **People**.\n 3. You will see a list of the people in your organization. Click **Role** and select **Owners**. Verify that there are only a few of them and that they are trusted and qualified.\n \n\n In any case, only members with administrator or organization owner privileges can delete issues, regardless of your setting.",
           "AdditionalInformation": "",
+          "DefaultValue": "Only organization owners or members with admin privileges can delete issues.",
           "References": ""
         }
       ]
@@ -502,6 +526,7 @@
           "RemediationProcedure": "Track forks and examine them by performing the following on a regular basis:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Insights**.\n 3. In the left sidebar, click **Forks**.\n 4. Examine the forks listed there.",
           "AuditProcedure": "Verify that the following steps are done regularly to track and examine forks:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Insights**.\n 3. In the left sidebar, click **Forks**.\n 4. Examine the forks listed there.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -521,6 +546,7 @@
           "RemediationProcedure": "Track every change in project visibility and investigate if suspicious behavior occurs, by performing the following regularly:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Archives\" section of the sidebar, click **Logs**, then click **Audit log**.\n 4. Use the **repo** qualifier in your query and look for **access** category. Ensure every change is reasonable and secure and investigate if it is not.",
           "AuditProcedure": "Ensure that every change in project visibility is tracked and investigated, by performing the following regularly:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Archives\" section of the sidebar, click **Logs**, then click **Audit log**.\n 4. Use the **repo** qualifier in your query and look for **access** category. Ensure every change is reasonable and secure and is investigated if it is not.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -540,6 +566,7 @@
           "RemediationProcedure": "Perform the following to review all inactive repositories and archive them periodically:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Click on your organization name and then on **repositories**.\n 3. Ensure every repository listed has been active in the last 3 to 6 months. Every repository that isn't active you should either review or archive by performing the next steps:\n  1. On GitHub.com, navigate to the main page of the repository.\n  2. Under your repository name, click **Settings**.\n  3. Under \"Danger Zone\", click **Archive this repository**.\n  4. Read the warnings.\n  5. Type the name of the repository you want to archive.\n  6. Click **I understand the consequences, archive this repository**.",
           "AuditProcedure": "Perform the following to ensure that all the repositories in the organization are active, and those that are not reviewed or archived:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Click on your organization name and then on **repositories**.\n 3. Ensure every repository listed has been active in the last 3 to 6 months. If it's not, then ensure it is archived or reviewed regularly.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -559,6 +586,7 @@
           "RemediationProcedure": "If you have GitHub AE, perform the following to review inactive user accounts and remove them:\n \n\n 1. From an administrative account on GitHub AE, in the upper-right corner of any page, click the rocket icon.\n 2. If you're not already on the \"Site admin\" page, in the upper-left corner, click **Site admin**.\n 3. In the left sidebar, click **Dormant users**.\n 4. Find the users listed there under **Your organizations** > your organization > **People** and select them.\n 5. Click **Remove from organization** and **Remove members**.\n \n\n If you have GitHub Enterprise Cloud, perform the following:\n \n\n 1. In the top-right corner of GitHub.com, click your profile photo, then click **Your enterprises**.\n 2. In the list of enterprises, click the enterprise you want to view.\n 3. In the enterprise account sidebar, click **Compliance**.\n 4. To download your Dormant Users (beta) report as a CSV file, under \"Other\", click **Download**.\n 5. Find the users listed in the file under **Your organizations** > your organization > **People** and select them.\n 6. Click **Remove from organization** and **Remove members**.",
           "AuditProcedure": "If you have GitHub AE, verify that all user accounts are active by performing the following:\n \n\n 1. From an administrative account on GitHub AE, in the upper-right corner of any page, click the rocket icon.\n 2. If you're not already on the \"Site admin\" page, in the upper-left corner, click **Site admin**.\n 3. In the left sidebar, click **Dormant users**.\n 4. Verify that the list is empty.\n \n\n If you have GitHub Enterprise Cloud, perform the following:\n \n\n 1. In the top-right corner of GitHub.com, click your profile photo, then click **Your enterprises**.\n 2. In the list of enterprises, click the enterprise you want to view.\n 3. In the enterprise account sidebar, click **Compliance**.\n 4. To download your Dormant Users (beta) report as a CSV file, under \"Other\", click **Download**.\n 5. Verify that there are no users listed.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -578,6 +606,7 @@
           "RemediationProcedure": "For every organization, limit team creation to specific, trusted users by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Member privileges**.\n 4. Under \"Team creation rules\", deselect **Allow members to create teams**.\n 5. Click **Save**.",
           "AuditProcedure": "For every organization, ensure that team creation is limited to specific, trusted users by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Member privileges**.\n 4. Under \"Team creation rules\", verify that **Allow members to create teams** is not selected.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -597,6 +626,7 @@
           "RemediationProcedure": "Set the minimum number of administrators in your organization by performing the following:\n \n\n 1. In the top right corner of GitHub, click your profile photo, then click **Your profile**.\n 2. On the left side of your profile page, under \"Organizations\", click the icon for your organization.\n 3. Under your organization name, click **People**. \n 4. In the Role drop-down, choose **Owners**.\n 5. Select the person or people you'd like to remove from owner role.\n 6. Above the list of members, use the drop-down menu and click Change role.\n 7. Select **Member**, then click **Change role**.",
           "AuditProcedure": "Verify the minimum number of administrators in your organization by performing the following:\n \n\n 1. In the top right corner of GitHub, click your profile photo, then click **Your profile**.\n 2. On the left side of your profile page, under \"Organizations\", click the icon for your organization.\n 3. Under your organization name, click **People**. \n 4. In the Role drop-down, choose **Owners**.\n 5. If there are minimum number of members in the list, you are compliant.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -618,6 +648,7 @@
           "RemediationProcedure": "For each repository in use, enforce Multi-Factor Authentication is the only way to authenticate for contributors, by doing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. Under \"Authentication\", select **Require two-factor authentication for everyone in your organization**, then click **Save**.",
           "AuditProcedure": "For each repository in use, verify that Multi-Factor Authentication is enforced for contributors and is the only way to authenticate, by doing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. Under \"Authentication\", check if **Require two-factor authentication for everyone in your organization** is checked. If so, you are compliant.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -639,6 +670,7 @@
           "RemediationProcedure": "For every organization that exists in your GitHub platform, enforce Multi-Factor Authentication and define it as the only way to authenticate, by doing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. Under \"Authentication\", select **Require two-factor authentication for everyone in your organization**, then click **Save**.\n 5. If prompted, read the information about members and outside collaborators who will be removed from the organization. Type your organization's name to confirm the change, then click **Remove members & require two-factor authentication**.",
           "AuditProcedure": "For every organization that exists in your GitHub platform, verify that Multi-Factor Authentication is enforced and is the only way to authenticate, by doing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. Under \"Authentication\", check if **Require two-factor authentication for everyone in your organization** is checked. If so, you are compliant.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -658,6 +690,7 @@
           "RemediationProcedure": "For each organization, allow only users with company-approved email to be invited. If a user was invited without company-approved email, perform the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Click the name of your organization and under your organization name, click **People**.\n 3. On the People tab, click **Invitations**. Next to the username or email address of the person whose invitation you'd like to cancel, click **Edit invitation**.\n 4. To cancel the user's invitation to join your organization, click **Cancel invitation**.",
           "AuditProcedure": "For each organization in use, verify for every invitation that the invited email address is company-approved by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Click the name of your organization and under your organization name, click **People**.\n 3. On the People tab, click **Invitations**. Verify that each invitation email is company approved by your company.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -677,6 +710,7 @@
           "RemediationProcedure": "For every repository in use, set two administrators by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Collaborators & teams**.\n 4. Under **Manage access**, find the team or person whose you'd like to revoke admin permissions, then select the Role drop-down and click a new role.",
           "AuditProcedure": "For every repository in use, verify there are two administrators by performing the following:\n \n\n 1. On GitHub, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Collaborators & teams**.\n 4. Under **Manage access**, verify that there are only 2 members with Admin permission.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -696,6 +730,7 @@
           "RemediationProcedure": "Set strict base permissions for the organization repositories with the next steps:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Member privileges**.\n 4. Under \"Base permissions\", use the drop-down to select new base permissions - \"Read\" or \"None\".\n 5. Review the changes. To confirm, click **Change default permission to PERMISSION**.",
           "AuditProcedure": "Verify that strict base permissions are set for the organization repositories by doing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Access\" section of the sidebar, click **Member privileges**.\n 4. Under \"Base permissions\", verify that it is set to \"Read\" or \"None\". If it does, you are compliant.",
           "AdditionalInformation": "",
+          "DefaultValue": "Read permission",
           "References": ""
         }
       ]
@@ -715,6 +750,7 @@
           "RemediationProcedure": "Only if you have an enterprise account, verify the organization's domains and secure a \"Verified\" badge next to its name by performing the following:\n \n\n 1. In the top-right corner of GitHub.com, click your profile photo, then click **Your enterprises**.\n 2. In the list of enterprises, click the enterprise you want to view. Then in the enterprise account sidebar, click **Settings**.\n 3. Under \"Settings\", click **Verified & approved domains**.\n 4. Click **Add a domain**.\n 5. In the domain field, type the domain you'd like to verify, then click **Add domain**.\n 6. Follow the instructions under **Add a DNS TXT record** to create a DNS TXT record with your domain hosting service. Wait for your DNS configuration to change, which may take up to 72 hours. You can confirm your DNS configuration has changed by running the `dig` command on the command line, replacing ENTERPRISE-ACCOUNT with the name of your enterprise account, and example.com with the domain you'd like to verify. You should see your new TXT record listed in the command output.\n ```\n dig _github-challenge-ENTERPRISE-ACCOUNT.DOMAIN-NAME +nostats +nocomments +nocmd TXT\n ```\n 7. After confirming your TXT record is added to your DNS, follow steps one through three above to navigate to your enterprise account's approved and verified domains.\n 8. To the right of the domain that's pending verification, click the 3-dots, then click **Continue verifying**. Click **Verify**.\n 9. Optionally, after the \"Verified\" badge is visible on your organizations' profiles, delete the TXT entry from the DNS record at your domain hosting service.",
           "AuditProcedure": "Only if you have an enterprise account, view the enterprise organization profile page and ensure it has a \"Verified\" badge in it.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization"
         }
       ]
@@ -734,6 +770,7 @@
           "RemediationProcedure": "Only if you have an enterprise account, restrict Source Code Management email notifications to approved domains only by performing the following:\n \n\n 1. In the top-right corner of GitHub.com, click your profile photo, then click **Your enterprises**.\n 2. In the list of enterprises, click the enterprise you want to view. Then in the enterprise account sidebar, click **Settings**.\n 3. Under \"Settings\", click **Verified & approved domains**.\n 4. Under \"Notification preferences\", select **Restrict email notifications to only approved or verified domains**.\n 5. Click **Save**.",
           "AuditProcedure": "Only if you have an enterprise account, ensure Source Code Management email notifications are restricted to approved domains only by performing the following:\n \n\n 1. In the top-right corner of GitHub.com, click your profile photo, then click **Your enterprises**.\n 2. In the list of enterprises, click the enterprise you want to view. Then in the enterprise account sidebar, click **Settings**.\n 3. Under \"Settings\", click **Verified & approved domains**.\n 4. Under \"Notification preferences\", verify that **Restrict email notifications to only approved or verified domains** is selected.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -753,6 +790,7 @@
           "RemediationProcedure": "Only if you have an enterprise account, deploy an SSH Certificate Authority server and configure it to provide an SSH certificate with which to sign keys by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. To the right of \"SSH Certificate Authorities\", click **New CA**.\n 5. Under \"Key,\" paste your public SSH key.\n 6. Click **Add CA**.\n 7. Click **Save**.",
           "AuditProcedure": "Only if you have an enterprise account, verify that the enterprise organization has an SSH Certificate Authority server and provides an SSH certificate with which to sign keys by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. Verify that there's an SSH certificate authority listed there.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -772,6 +810,7 @@
           "RemediationProcedure": "Only if you have an enterprise account, create an IP allowlist and forbid all other IPs from accessing the source code by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. At the bottom of the \"IP allow list\" section, enter an IP address, or a range of addresses in CIDR notation. Optionally, enter a description of the allowed IP address or range.\n 5. Click **Add**.\n 6. After that, under \"IP allow list\", select **Enable IP allow list**.\n 7. Click **Save**.",
           "AuditProcedure": "Only if you have an enterprise account, in every organization of yours, ensure access is allowed only by IP allowlist, and that access is forbidden for all other IPs by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Security\" section of the sidebar, click **Authentication security**.\n 4. Verify that there's an IP address, or a range of addresses in CIDR notation listed. Also verify that **Enable IP allow list** is selected.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-allowed-ip-addresses-for-your-organization"
         }
       ]
@@ -791,6 +830,7 @@
           "RemediationProcedure": "For every repository in use, track and investigate anomalous code behavior and activity.",
           "AuditProcedure": "For every repository in use, ensure code anomalies relevant to the organization are promptly investigated.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -810,6 +850,7 @@
           "RemediationProcedure": "Require an administrator approval for every installed application:\n \n\n a. For GitHub Apps, you are compliant by default. That is because by default only organization owners and administrators can install them.\n \n\n b. For OAuth Apps, perform the following:\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Third-party Access\" section of the sidebar, click **OAuth application policy**.\n 4. Under \"Third-party application access policy\", click **Setup application access restrictions**.\n 5. After you review the information about third-party access restrictions, click **Restrict third-party application access**.",
           "AuditProcedure": "Verify that applications are installed only after receiving administrator approval:\n \n\n a. For GitHub Apps, you are compliant by default. That is because by default only organization owners and administrators can install them.\n \n\n b. For OAuth Apps, perform the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Third-party Access\" section of the sidebar, click **OAuth application policy**.\n 4. Under \"Third-party application access policy\" verify that the policy status is **Access restricted**.",
           "AdditionalInformation": "",
+          "DefaultValue": "Maintainers are organization owners.",
           "References": ""
         }
       ]
@@ -829,6 +870,7 @@
           "RemediationProcedure": "Review all stale applications and periodically remove them.",
           "AuditProcedure": "Verify that all the applications in the organization are actively used, and remove those that are no longer in use.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -848,6 +890,7 @@
           "RemediationProcedure": "Grant permissions to applications by the \"least privilege\" principle, meaning the lowest possible permission necessary:\n \n\n a. For GitHub Apps, perform the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Integrations\" section of the sidebar, click **GitHub Apps**.\n 4. Next to every GitHub App, click **Configure**.\n 5. Review the GitHub App's permissions and repository access. Edit the permissions granted to the least possible. For example, restrict the number of repositories the App can access.\n 6. Click **Save**.",
           "AuditProcedure": "Verify that each installed application has the least privilege needed:\n \n\n a. For GitHub Apps, perform the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the \"Integrations\" section of the sidebar, click **GitHub Apps**.\n 4. Next to every GitHub App, click **Configure**.\n 5. Review the GitHub App's permissions and repository access. Verify that the App permissions are the least possible and that it can access only necessary repositories.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -867,6 +910,7 @@
           "RemediationProcedure": "Perform the following to secure all webhooks used(over HTTPS):\n \n\n 1. Navigate to your organization or repository and select **Settings**.\n 2. Select **Webhooks** on the side menu.\n 3. Find the webhooks that starts with 'http' and not 'https'.\n 4. Ensure the endpoint (URL) of the webhook listens to secured port (443) and uses certificate.\n 5. Click **Edit**.\n 6. Change the payload URL to https and ensure **Enable SSL verification** is checked.\n 7. Click **Update webhook**.",
           "AuditProcedure": "Perform the following to secure all webhooks used(over HTTPS):\n \n\n 1. Navigate to your organization or repository and select **Settings**.\n 2. Select **Webhooks** on the side menu.\n 3. Ensure all webhooks starts with 'https'.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -907,6 +951,7 @@
           "RemediationProcedure": "Set a CI instructions scanning tool to identify and prevent misconfigurations and insecure instructions and scans all CI pipelines.",
           "AuditProcedure": "Verify that a CI instructions scanning tool is set to identify and prevent misconfigurations and insecure instructions and that it scans all CI pipelines.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -926,6 +971,7 @@
           "RemediationProcedure": "For every repository that holds IaC instructions files, set a scanning tool to identify and prevent misconfigurations and insecure instructions.",
           "AuditProcedure": "For every repository that holds IaC instructions files, verify that a scanning tool is set to identify and prevent misconfigurations and insecure instructions.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -966,6 +1012,7 @@
           "RemediationProcedure": "Set scanners that will monitor, identify, and prevent open-source vulnerabilities in packages by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**. In the \"Security\" section of the sidebar, click **Code security and analysis**.\n 3. Under \"Code security and analysis\", to the right of Dependabot alerts, click **Disable all** or **Enable all**.\n 4. Check the **Enable by default for new repositories** option and then click **Enable Dependabot alerts**.\n \n\n It is also recommended to use another additional solution for package scanning because GitHub doesn't always recognize the vulnerabilities.",
           "AuditProcedure": "Verify that scanners are set to monitor, identify, and prevent open-source vulnerabilities in packages by performing the following:\n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**. In the \"Security\" section of the sidebar, click **Code security and analysis**.\n 3. Verify that the Dependabot alerts is enabled and that **Enable by default for new repositories** is checked.\n \n\n It is also recommended to verify that you're using another additional solution for package scanning because GitHub doesn't always recognize the vulnerabilities.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -985,6 +1032,7 @@
           "RemediationProcedure": "Designate a license scanning tool to identify open-source license problems and fix them and scan every package you use.",
           "AuditProcedure": "Ensure a license scanning tool is set up to identify open-source license problems and that every package you use is scanned by it.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1004,6 +1052,7 @@
           "RemediationProcedure": "Divide each multi-responsibility pipeline into multiple pipelines, each having a single responsibility with the least privilege. Additionally, create all new pipelines with a sole purpose going forward.",
           "AuditProcedure": "For each pipeline, ensure it has only one responsibility in the build process.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs"
         }
       ]
@@ -1023,6 +1072,7 @@
           "RemediationProcedure": "Use an immutable pipeline orchestrator and ensure that its configuration and all other aspects of the built environment are immutable, as well.",
           "AuditProcedure": "Verify that the pipeline orchestrator, its configuration, and all other aspects of the build environment are immutable.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1042,6 +1092,7 @@
           "RemediationProcedure": "Keep logs of the build environment. For example, use the .buildinfo file for Debian build workers. Also, store the logs in a centralized organizational log store.",
           "AuditProcedure": "Verify that the build environment is logged and stored in a centralized organizational log store.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1061,6 +1112,7 @@
           "RemediationProcedure": "Automate the deployment of the build environment.",
           "AuditProcedure": "Verify that the deployment of the build environment is automated and can be easily redeployed.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1080,6 +1132,7 @@
           "RemediationProcedure": "Restrict access to the build environment to trusted and qualified users.",
           "AuditProcedure": "Verify each build environment is accessible only to known and authorized users.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1099,6 +1152,7 @@
           "RemediationProcedure": "Require authentication to access the build environment and disable anonymous access.",
           "AuditProcedure": "Ensure authentication is required to access the build environment.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1118,6 +1172,7 @@
           "RemediationProcedure": "For each build tool, review the secrets defined and their permissions scope and change over permissive scopes to more restrictive ones based on the required access.",
           "AuditProcedure": "For each build tool in use, review the secrets defined and the permission scopes they are assigned.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1137,6 +1192,7 @@
           "RemediationProcedure": "Set an automated vulnerability scanning for your build infrastructure.",
           "AuditProcedure": "Verify that your build infrastructure is automatically scanned for vulnerabilities.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1156,6 +1212,7 @@
           "RemediationProcedure": "For each build tool, change the default password.",
           "AuditProcedure": "For each build tool, ensure the password used is not the default one.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1175,6 +1232,7 @@
           "RemediationProcedure": "For each webhook in use, change it to secured (over HTTPS).",
           "AuditProcedure": "For each webhook in use, ensure it is secured (HTTPS).",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1194,6 +1252,7 @@
           "RemediationProcedure": "Set the minimum number of administrators in the build environment.",
           "AuditProcedure": "Verify that the build environment has only the minimum number of administrators.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1213,6 +1272,7 @@
           "RemediationProcedure": "Create a clean build worker for every pipeline that is being run, or use build platform-hosted runners, as they typically offer a clean instance for every run.",
           "AuditProcedure": "Ensure that every pipeline that is being run has its own clean, new runner.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1232,6 +1292,7 @@
           "RemediationProcedure": "For each build worker, pass its environment and commands to it instead of pulling it.",
           "AuditProcedure": "For each build worker, ensure its environment and commands are passed and not pulled.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1251,6 +1312,7 @@
           "RemediationProcedure": "For each build worker, limit its responsibility to one duty.",
           "AuditProcedure": "For each build worker, ensure it has the least responsibility possible, preferably only one duty.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1270,6 +1332,7 @@
           "RemediationProcedure": "Limit the network connectivity of build workers, environment, and any other components to the necessary minimum.",
           "AuditProcedure": "Verify that build workers, environment, and any other components have only the required minimum of network connectivity.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1289,6 +1352,7 @@
           "RemediationProcedure": "Deploy and enforce a run-time security solution on build workers.",
           "AuditProcedure": "Verify that a run-time security solution is enforced on every active build worker.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1308,6 +1372,7 @@
           "RemediationProcedure": "For each build worker, automatically scan its environmental sources, such as docker image, for vulnerabilities.",
           "AuditProcedure": "For each build worker, ensure the environmental sources it uses are scanned for vulnerabilities.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1327,6 +1392,7 @@
           "RemediationProcedure": "Document and store every deployment configuration of build workers in a version control platform.",
           "AuditProcedure": "Verify that the deployment configuration of build workers is stored in a version control platform.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1346,6 +1412,7 @@
           "RemediationProcedure": "Set reources consumption monitoring for each build worker.",
           "AuditProcedure": "Verify that there is monitoring of resources consumption for each build worker.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1365,6 +1432,7 @@
           "RemediationProcedure": "Convert pipeline instructions into code-based syntax and upload them to the organization's version control platform.",
           "AuditProcedure": "Verify that all build steps are defined as code and stored in a version control system.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1384,6 +1452,7 @@
           "RemediationProcedure": "For each build stage, clearly define what is expected for input and output.",
           "AuditProcedure": "For each build stage, verify that the expected input and output are clearly defined.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1403,6 +1472,7 @@
           "RemediationProcedure": "For each pipeline that produces output artifacts, write them to a secured storage repository.",
           "AuditProcedure": "For each pipeline that produces output artifacts, ensure that they're written to a secured storage repository.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1422,6 +1492,7 @@
           "RemediationProcedure": "For each pipeline file, track changes to it and review them.",
           "AuditProcedure": "For each pipeline file, ensure changes to it are being tracked and reviewed.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1441,6 +1512,7 @@
           "RemediationProcedure": "For every pipeline in use, grant only the necessary users permission to trigger it.",
           "AuditProcedure": "For every pipeline in use, verify only the necessary users have permission to trigger it.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1460,6 +1532,7 @@
           "RemediationProcedure": "For each pipeline, set automated misconfiguration scanning.",
           "AuditProcedure": "For each pipeline, verify that it is automatically scanned for misconfigurations.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1479,6 +1552,7 @@
           "RemediationProcedure": "For each pipeline, set automated vulnerability scanning.",
           "AuditProcedure": "For each pipeline, verify that it is automatically scanned for vulnerabilities.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1498,6 +1572,7 @@
           "RemediationProcedure": "For every pipeline that is in use, set scanners that will identify and prevent sensitive data within it.",
           "AuditProcedure": "For every pipeline that is in use, verify that scanners are set to identify and prevent the existence of sensitive data within it.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1517,6 +1592,7 @@
           "RemediationProcedure": "For every artifact in every release, verify that all are properly signed.",
           "AuditProcedure": "Ensure every artifact in every release is signed.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1536,6 +1612,7 @@
           "RemediationProcedure": "For all external dependencies being used in pipelines, verify they are locked.",
           "AuditProcedure": "Ensure every external dependency being used in pipelines is locked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://argon.io/blog/pipeline-composition-analysis-how-your-ci-pipeline-presents-new-opportunities-for-attackers/"
         }
       ]
@@ -1555,6 +1632,7 @@
           "RemediationProcedure": "For every dependency used in every pipeline, validate each one.",
           "AuditProcedure": "For every dependency used in every pipeline, ensure it has been validated.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1574,6 +1652,7 @@
           "RemediationProcedure": "Create build pipelines that produce the same artifact given the same input (for example, artifacts that do not rely on timestamps).",
           "AuditProcedure": "Ensure that build pipelines create reproducible artifacts.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1593,6 +1672,7 @@
           "RemediationProcedure": "For each pipeline, configure it to produce a Software Bill of Materials on every run.",
           "AuditProcedure": "For each pipeline, ensure it produces a Software Bill of Materials on every run.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1612,6 +1692,7 @@
           "RemediationProcedure": "For each pipeline, configure it to sign its produced Software Bill of Materials on every run.",
           "AuditProcedure": "For each pipeline, ensure it signs the Software Bill of Materials it produces on every run.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1631,6 +1712,7 @@
           "RemediationProcedure": "Verify every GitHub action (building block of a GitHub workflow) in use by performing the following: \n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the left sidebar, click **Actions**, then click **General**.\n 4. Under \"Policies\", check **Allow OWNER, and select non-OWNER, actions and reusable workflows**, and then **Allow actions created by GitHub**.\n 5. Click **Save**.\n \n\n Alternatively, perform the following for each repository where GitHub actions are used:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the left sidebar, click **Actions**, then click **General**.\n 4. Under \"Actions permissions\", check **Allow OWNER, and select non-OWNER, actions and reusable workflows**, and then **Allow actions created by GitHub**.\n 5. Click **Save**.",
           "AuditProcedure": "For every GitHub action (building block of a GitHub workflow), ensure verification before use by performing the following: \n \n\n 1. In the top right corner of GitHub.com, click your profile photo, then click **Your organizations**.\n 2. Next to the organization, click **Settings**.\n 3. In the left sidebar, click **Actions**, then click **General**.\n 4. Under \"Policies\", ensure **Allow OWNER, and select non-OWNER, actions and reusable workflows**, and **Allow actions created by GitHub** are checked.\n \n\n Alternatively, perform the following for each repository where GitHub actions are used:\n \n\n 1. On GitHub.com, navigate to the main page of the repository.\n 2. Under your repository name, click **Settings**.\n 3. In the left sidebar, click **Actions**, then click **General**.\n 4. Under \"Actions permissions\", ensure **Allow OWNER, and select non-OWNER, actions and reusable workflows** and **Allow actions created by GitHub** are checked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1650,6 +1732,7 @@
           "RemediationProcedure": "For every third-party dependency in use, require a Software Bill of Materials from its supplier.",
           "AuditProcedure": "For every third-party dependency in use, ensure it has a Software Bill of Materials.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1669,6 +1752,7 @@
           "RemediationProcedure": "For each artifact in use, require and verify signed metadata of the build process.",
           "AuditProcedure": "For each artifact used, ensure it was supplied with verified and signed metadata of its build process. The signature should be the organizational signature and should be verifiable by common Certificate Authority servers.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1688,6 +1772,7 @@
           "RemediationProcedure": "For each open-source component, monitor its dependencies.",
           "AuditProcedure": "For each open-source component, ensure its dependencies are monitored.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1707,6 +1792,7 @@
           "RemediationProcedure": "For each package to be downloaded, configure it to be downloaded from a trusted source.",
           "AuditProcedure": "For each package registry in use, ensure it is trusted.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1726,6 +1812,7 @@
           "RemediationProcedure": "For every artifact supplied, require and verify a signed Software Bill of Materials from its supplier.",
           "AuditProcedure": "For every artifact supplied, ensure it has a validated, signed Software Bill of Materials.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1745,6 +1832,7 @@
           "RemediationProcedure": "For every dependency in use, pin to a specific version.",
           "AuditProcedure": "For every dependency in use, ensure it is pinned to a specific version.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1764,6 +1852,7 @@
           "RemediationProcedure": "If a package used is less than 60 days old, stop using it and find another solution.",
           "AuditProcedure": "For every package used, ensure it is more than 60 days old.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1783,6 +1872,7 @@
           "RemediationProcedure": "",
           "AuditProcedure": "",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1802,6 +1892,7 @@
           "RemediationProcedure": "Enforce policies for dependency usage across the organization.",
           "AuditProcedure": "Verify that a policy for dependency usage is enforced across the organization.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1821,6 +1912,7 @@
           "RemediationProcedure": "Set automatic scanning of packages for vulnerabilities.",
           "AuditProcedure": "Ensure automatic scanning of packages for vulnerabilities is enabled.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1840,6 +1932,7 @@
           "RemediationProcedure": "Set automatic package scanning for license implications.",
           "AuditProcedure": "Ensure license implication rules are configured and are scanned automatically.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1859,6 +1952,7 @@
           "RemediationProcedure": "Set automatic scanning of packages for ownership change.",
           "AuditProcedure": "Ensure automatic scanning of packages for ownership change is set.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://blog.npmjs.org/post/182828408610/the-security-risks-of-changing-package-owners.html:https://blog.npmjs.org/post/180565383195/details-about-the-event-stream-incident"
         }
       ]
@@ -1878,6 +1972,7 @@
           "RemediationProcedure": "Sign every artifact produced with the build pipeline that created it. Configure the build pipeline to sign each artifact.\n \n\n Steps from GitHub Documentation:\n \n\n You can follow the steps below to sign artifacts in GitHub actions. The trick involves loading in your private key into GitHub Actions using the gpg command-line commands.\n \n\n Export your gpg private key from the system that you have created it.\n Find your key-id (using gpg --list-secret-keys --keyid-format=long)\n Export the gpg secret key to an ASCII file using gpg --export-secret-keys -a <key-id> > secret.txt\n Edit secret.txt using a plain text editor, and replace all newlines with a literal \"\\n\" until everything is on a single line\n Set up GitHub Actions secrets\n Create a secret called OSSRH_GPG_SECRET_KEY using the text from your edited secret.txt file (the whole text should be in a single line)\n Create a secret called OSSRH_GPG_SECRET_KEY_PASSWORD containing the password for your gpg secret key\n Create a GitHub Actions step to install the gpg secret key\n Add an action similar to:\n ```\n - id: install-secret-key\n  name: Install gpg secret key\n  run: |\n  cat <(echo -e \"${{ secrets.OSSRH_GPG_SECRET_KEY }}\") | gpg --batch --import\n  gpg --list-secret-keys --keyid-format LONG\n ```\n Verify that the secret key is shown in the GitHub Actions logs\n You can remove the output from list secret keys if you are confident that this action will work, but it is better to leave it in there\n Bring it all together, and create a GitHub Actions step to publish\n Add an action similar to:\n ```\n - id: publish-to-central\n  name: Publish to Central Repository\n  env:\n  MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}\n  MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}\n  run: |\n  mvn \\\n  --no-transfer-progress \\\n  --batch-mode \\\n  -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} \\\n  clean deploy\n ```\n After a couple of hours, verify that the artifact got published to The Central Repository",
           "AuditProcedure": "Verify that the build pipeline signs every new artifact it produces and all artifacts are signed.\n \n\n There are many different signing tools or options each have there own method or commands to verify that the code or package created is signed.",
           "AdditionalInformation": "",
+          "DefaultValue": "Artifacts are not signed by Default.",
           "References": "https://docs.github.com/en/code-security/supply-chain-security/end-to-end-supply-chain/securing-builds:https://gist.github.com/sualeh/ae78dc16123899d7942bc38baba5203c"
         }
       ]
@@ -1897,6 +1992,7 @@
           "RemediationProcedure": "Encrypt every artifact before distribution.",
           "AuditProcedure": "Ensure every artifact is encrypted before it is delivered.",
           "AdditionalInformation": "",
+          "DefaultValue": "Artifacts do not get encrypted by default.",
           "References": ""
         }
       ]
@@ -1916,6 +2012,7 @@
           "RemediationProcedure": "Grant decryption capabilities of the organization's artifacts only for trusted and authorized platforms.",
           "AuditProcedure": "Ensure only trusted and authorized platforms have decryption capabilities of the organization's artifacts.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1935,6 +2032,7 @@
           "RemediationProcedure": "",
           "AuditProcedure": "",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1954,6 +2052,7 @@
           "RemediationProcedure": "Limit which artifact can be certified by which authority.",
           "AuditProcedure": "Ensure only certain artifacts can be certified by certain parties.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1973,6 +2072,7 @@
           "RemediationProcedure": "Allow only trusted and qualified users to upload new artifacts and limit them in number.",
           "AuditProcedure": "Ensure only trusted and qualified users can upload new artifacts, and that their number is the lowest possible.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -1992,6 +2092,7 @@
           "RemediationProcedure": "For each package registry in use, enforce Multi-Factor Authentication as the only way to authenticate.",
           "AuditProcedure": "For each package registry in use, verify that Multi-Factor Authentication is enforced and is the only way to authenticate.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2011,6 +2112,7 @@
           "RemediationProcedure": "For each package registry, use the main authentication server of the organization for user management and do not manage locally.",
           "AuditProcedure": "For each package registry, verify that its user access is not managed locally, but instead with the main authentication server of the organization.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2030,6 +2132,7 @@
           "RemediationProcedure": "Changing a repository's visibility\n \n\n 1. On your GitHub Enterprise Server instance, navigate to the main page of the repository.\n 1. Under your repository name, click Settings\n 1. Under \"Danger Zone\", to the right of to \"Change repository visibility\", click Change visibility.\n 1. Select a visibility.\n \n\n 1. Choose \n  - Mark private\n  - Make Internal\n \n\n 6. To verify that you're changing the correct repository's visibility, type the name of the repository you want to change the visibility of.",
           "AuditProcedure": "To Audit the existing settings:\n \n\n 1. On your GitHub Enterprise Server instance, navigate to the main page of the repository.\n 1. Under your repository name, click Settings\n 3. Under \"Danger Zone\", to the right of to \"Change repository visibility\", click Change visibility.\n \n\n Review the current selection.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/enterprise-server@3.3/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility"
         }
       ]
@@ -2049,6 +2152,7 @@
           "RemediationProcedure": "Set the minimum number of administrators in your package registry.\n \n\n To accomplish this:\n \n\n For each repository that you administer on GitHub, you can see an overview of every team or person with access to the repository. From the overview, choose Manage access and provide access to the appropriate people or teams.",
           "AuditProcedure": "Verify that your package registry has only the minimum number of administrators.\n \n\n For each repository that you administer on GitHub, you can see an overview of every team or person with access to the repository. From the overview, you can also invite new teams or people, change each team or person's role for the repository, or remove access to the repository.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/managing-teams-and-people-with-access-to-your-repository"
         }
       ]
@@ -2068,6 +2172,7 @@
           "RemediationProcedure": "Validate every artifact with its signature before uploading it to the package registry. It is recommended to do so automatically.",
           "AuditProcedure": "Ensure every artifact in the package registry has been validated with its signature.\n \n\n 1. On GitHub, navigate to a pull request\n 2. On the pull request, click <> Commits and view the detailed information regarding the signature.",
           "AdditionalInformation": "",
+          "DefaultValue": "Artifacts are not scanned by default.",
           "References": "https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification:https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits"
         }
       ]
@@ -2087,6 +2192,7 @@
           "RemediationProcedure": "For each artifact, sign and validate each version before uploading or using the artifact.",
           "AuditProcedure": "For each artifact, ensure that all of its versions are signed and validated before it is uploaded or used.\n \n\n Ensure every artifact in the package registry has been validated with its signature.\n \n\n On GitHub, navigate to a pull request\n On the pull request, click <> Commits and view the detailed information regarding the signature.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2106,6 +2212,7 @@
           "RemediationProcedure": "Audit the changes to the package registry configuration.",
           "AuditProcedure": "Verify that all changes to the packages registry configuration are audited.\n \n\n Search the audit log with\n \n\n repo category actions",
           "AdditionalInformation": "",
+          "DefaultValue": "GitHub audits this by default.",
           "References": "https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/reviewing-the-audit-log-for-your-organization"
         }
       ]
@@ -2125,6 +2232,7 @@
           "RemediationProcedure": "For each webhook in use, change it to secured (over HTTPS).",
           "AuditProcedure": "",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2144,6 +2252,7 @@
           "RemediationProcedure": "For each artifact supplied, supply information about its origin. For each artifact in use, ask for information about its origin.",
           "AuditProcedure": "For each artifact, ensure it has information about its origin.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2163,6 +2272,7 @@
           "RemediationProcedure": "Store each deployment configuration file in a dedicated repository separately from source code.",
           "AuditProcedure": "Ensure each deployment configuration file is stored separately from source code.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2182,6 +2292,7 @@
           "RemediationProcedure": "For each deployment configuration, track and audit changes made to it.",
           "AuditProcedure": "For each deployment configuration, ensure changes made to it are audited and tracked.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2201,6 +2312,7 @@
           "RemediationProcedure": "For each deployment configuration file, set scanners to identify and prevent sensitive data within it.",
           "AuditProcedure": "For each deployment configuration file, verify that scanners are set to identify and prevent the existence of sensitive data within it.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2220,6 +2332,7 @@
           "RemediationProcedure": "Restrict access to the deployment configuration to trusted and qualified users.",
           "AuditProcedure": "Verify each deployment configuration is accessible only to known and authorized users.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2239,6 +2352,7 @@
           "RemediationProcedure": "For every Infrastructure as Code (IaC) instructions file, set scanners to identify and prevent misconfigurations and insecure instructions.",
           "AuditProcedure": "For every Infrastructure as Code (IaC) instructions file, verify that scanners are set to identify and prevent misconfigurations and insecure instructions.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2258,6 +2372,7 @@
           "RemediationProcedure": "Verify each deployment configuration manifest in use.",
           "AuditProcedure": "For each deployment configuration manifest in use, ensure it has been verified.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2277,6 +2392,7 @@
           "RemediationProcedure": "For every deployment configuration manifest in use, pin to a specific version or commit Secure Hash Algorithm (SHA).",
           "AuditProcedure": "For every deployment configuration manifest in use, ensure it is pinned to a specific version or commit Secure Hash Algorithm (SHA).",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2296,6 +2412,7 @@
           "RemediationProcedure": "Automate each deployment process of the production environment and application.",
           "AuditProcedure": "For each deployment process, ensure it is automated.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2315,6 +2432,7 @@
           "RemediationProcedure": "Adjust the process that deploys the deployment/production environment to build the same environment each time when the configuration has not changed.",
           "AuditProcedure": "Verify that the deployment/production environment is reproducible.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2334,6 +2452,7 @@
           "RemediationProcedure": "Restrict access to the production environment to trusted and qualified users.",
           "AuditProcedure": "Verify that the production environment is accessible only to trusted and qualified users.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
@@ -2353,6 +2472,7 @@
           "RemediationProcedure": "For each deployment tool, change the password.",
           "AuditProcedure": "For each deployment tool, ensure the password is not the default one.",
           "AdditionalInformation": "",
+          "DefaultValue": "",
           "References": ""
         }
       ]
