@@ -12,25 +12,16 @@ interface StoreInitializerProps {
   };
 }
 
-// Define which keys from values should be watched
-const STORE_KEYS: (keyof StoreInitializerProps["values"])[] = [
-  "hasProviders",
-  // Add more keys here as the store grows
-];
-
 export function StoreInitializer({ values }: StoreInitializerProps) {
   const setHasProviders = useUIStore((state) => state.setHasProviders);
 
-  useEffect(
-    () => {
-      // Initialize store values from server
-      if (values.hasProviders !== undefined) {
-        setHasProviders(values.hasProviders);
-      }
-      // Add more setters here as needed in the future
-    },
-    STORE_KEYS.map((key) => values[key]),
-  );
+  useEffect(() => {
+    // Initialize store values from server
+    if (values.hasProviders !== undefined) {
+      setHasProviders(values.hasProviders);
+    }
+    // Add more setters here as needed in the future
+  }, [values.hasProviders, setHasProviders]);
 
   return null;
 }
