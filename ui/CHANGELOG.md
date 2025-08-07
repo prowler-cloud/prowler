@@ -5,10 +5,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 ## [1.11.0] (Prowler v5.11.0 - UNRELEASED)
 
 ### 🚀 Added
--  `Cloud Provider` type filter to providers page [(#8473)](https://github.com/prowler-cloud/prowler/pull/8473)
+
+- `Cloud Provider` type filter to providers page [(#8473)](https://github.com/prowler-cloud/prowler/pull/8473)
+
 ### 🔄 Changed
 
 ### 🐞 Fixed
+
+- Switch in AWS role credentials form shown when adding a role [(#8484)](https://github.com/prowler-cloud/prowler/pull/8484)
 
 ### ❌ Removed
 
