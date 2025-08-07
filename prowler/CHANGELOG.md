@@ -38,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
 - Tweaks from Prowler ThreatScore in order to handle the correct reqs [(#8401)](https://github.com/prowler-cloud/prowler/pull/8401)
 - Make `setup_assumed_session` static for the AWS provider [(#8419)](https://github.com/prowler-cloud/prowler/pull/8419)
+- Remove invalid requirement from CIS 1.0 for GitHub provider [(#8472)](https://github.com/prowler-cloud/prowler/pull/8472)
 
 ---
 
