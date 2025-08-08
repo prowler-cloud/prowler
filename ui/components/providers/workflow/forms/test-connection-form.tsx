@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
+import { trackCloudConnectionSuccess } from "@/lib/analytics";
 import { checkTaskStatus } from "@/lib/helper";
 import { ProviderType } from "@/types";
 import { ApiError, testConnectionFormSchema } from "@/types";
@@ -145,6 +146,12 @@ export const TestConnectionForm = ({
               });
             } else {
               setIsRedirecting(true);
+              // Track cloud connection success event
+              trackCloudConnectionSuccess({
+                providerType: providerType,
+                providerAlias: providerData.data.attributes.alias,
+                scanType: form.watch("runOnce") ? "single" : "scheduled",
+              });
               router.push("/scans");
             }
           } catch (error) {
