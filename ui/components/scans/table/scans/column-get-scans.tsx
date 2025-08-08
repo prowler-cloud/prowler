@@ -123,7 +123,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return (
         <TableLink
           href={`/compliance?scanId=${id}`}
-          isDisabled={!["completed", "executing"].includes(scanState)}
+          isDisabled={!["completed"].includes(scanState)}
           label="See Compliance"
         />
       );
