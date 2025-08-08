@@ -11,6 +11,7 @@ from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -196,7 +197,24 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
     elif (
         integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
     ):
-        pass
+        # Get the provider associated with this integration
+        provider_relationship = integration.integrationproviderrelationship_set.first()
+        if not provider_relationship:
+            return Connection(
+                is_connected=False, error="No provider associated with this integration"
+            )
+
+        provider_obj = provider_relationship.provider
+
+        # Initialize prowler provider to get aws_account_id and aws_partition
+        prowler_provider = initialize_prowler_provider(provider_obj)
+
+        return SecurityHub.test_connection(
+            aws_account_id=prowler_provider.identity.account,
+            aws_partition=prowler_provider.identity.partition,
+            raise_on_exception=False,
+            session=prowler_provider.session.current_session,
+        )
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
         pass
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:

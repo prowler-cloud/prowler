@@ -2895,6 +2895,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/integrations/securityhub/{provider_id}:
+    get:
+      operationId: integrations_securityhub_retrieve
+      description: Retrieve the active SecurityHub regions for a specific provider
+      summary: Get SecurityHub regions for provider
+      parameters:
+      - in: path
+        name: provider_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Integration
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
