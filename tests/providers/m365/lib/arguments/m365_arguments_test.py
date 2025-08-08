@@ -97,7 +97,7 @@ class TestM365Arguments:
         arguments.init_parser(mock_m365_args)
 
         # Verify non-exclusive arguments were added to main parser
-        assert self.mock_m365_parser.add_argument.call_count == 2
+        assert self.mock_m365_parser.add_argument.call_count == 3
 
         # Check that non-exclusive arguments are present
         calls = self.mock_m365_parser.add_argument.call_args_list
@@ -105,6 +105,7 @@ class TestM365Arguments:
 
         assert "--tenant-id" in non_exclusive_args
         assert "--init-modules" in non_exclusive_args
+        assert "--certificate-path" in non_exclusive_args
 
     def test_init_parser_adds_region_arguments(self):
         """Test that init_parser adds region arguments"""
@@ -568,3 +569,73 @@ class TestM365ArgumentsIntegration:
         args = parser.parse_args(["m365", "--az-cli-auth", "--tenant-id"])
 
         assert args.tenant_id is None
+
+    def test_certificate_path_argument_configuration(self):
+        """Test that certificate_path argument is properly configured"""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers()
+        common_parser = argparse.ArgumentParser(add_help=False)
+
+        mock_m365_args = MagicMock()
+        mock_m365_args.subparsers = subparsers
+        mock_m365_args.common_providers_parser = common_parser
+
+        arguments.init_parser(mock_m365_args)
+
+        # Parse arguments with certificate-path
+        args = parser.parse_args(
+            ["m365", "--certificate-auth", "--certificate-path", "/path/to/cert.pem"]
+        )
+
+        assert args.certificate_auth is True
+        assert args.certificate_path == "/path/to/cert.pem"
+
+    def test_certificate_path_without_value(self):
+        """Test certificate_path argument without value (should be None due to nargs='?')"""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers()
+        common_parser = argparse.ArgumentParser(add_help=False)
+
+        mock_m365_args = MagicMock()
+        mock_m365_args.subparsers = subparsers
+        mock_m365_args.common_providers_parser = common_parser
+
+        arguments.init_parser(mock_m365_args)
+
+        # Parse arguments with certificate-path but no value
+        args = parser.parse_args(["m365", "--certificate-auth", "--certificate-path"])
+
+        assert args.certificate_auth is True
+        assert args.certificate_path is None
+
+    def test_certificate_auth_with_certificate_path_integration(self):
+        """Test certificate authentication with certificate path integration"""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers()
+        common_parser = argparse.ArgumentParser(add_help=False)
+
+        mock_m365_args = MagicMock()
+        mock_m365_args.subparsers = subparsers
+        mock_m365_args.common_providers_parser = common_parser
+
+        arguments.init_parser(mock_m365_args)
+
+        # Parse complete certificate authentication arguments
+        args = parser.parse_args(
+            [
+                "m365",
+                "--certificate-auth",
+                "--certificate-path",
+                "/home/user/cert.pem",
+                "--tenant-id",
+                "12345678-1234-1234-1234-123456789012",
+            ]
+        )
+
+        assert args.certificate_auth is True
+        assert args.certificate_path == "/home/user/cert.pem"
+        assert args.tenant_id == "12345678-1234-1234-1234-123456789012"
+        assert args.az_cli_auth is False
+        assert args.env_auth is False
+        assert args.sp_env_auth is False
+        assert args.browser_auth is False

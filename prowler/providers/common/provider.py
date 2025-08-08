@@ -223,6 +223,7 @@ class Provider(ABC):
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         certificate_auth=arguments.certificate_auth,
+                        certificate_path=arguments.certificate_path,
                         tenant_id=arguments.tenant_id,
                         init_modules=arguments.init_modules,
                         fixer_config=fixer_config,

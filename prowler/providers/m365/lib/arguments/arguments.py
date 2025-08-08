@@ -34,6 +34,12 @@ def init_parser(self):
         help="Use Certificate authentication to log in against Microsoft 365",
     )
     m365_parser.add_argument(
+        "--certificate-path",
+        nargs="?",
+        default=None,
+        help="Path to the certificate file to be used with --certificate-auth option",
+    )
+    m365_parser.add_argument(
         "--tenant-id",
         nargs="?",
         default=None,

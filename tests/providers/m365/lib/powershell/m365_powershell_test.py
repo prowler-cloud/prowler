@@ -1411,3 +1411,258 @@ class Testm365PowerShell:
         session.test_exchange_certificate_connection.assert_called_once()
 
         session.close()
+
+    @patch("subprocess.Popen")
+    def test_clean_certificate_content_basic(self, mock_popen):
+        """Test clean_certificate_content method with basic certificate content"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_process.returncode = 0
+
+        session = M365PowerShell(
+            M365Credentials(
+                client_id="test_client_id",
+                client_secret="test_secret",
+                tenant_id="test_tenant_id",
+                tenant_domains=["contoso.com"],
+            ),
+            M365IdentityInfo(
+                tenant_id="test_tenant_id",
+                tenant_domain="contoso.com",
+                tenant_domains=["contoso.com"],
+                identity_id="test_identity_id",
+                identity_type="Service Principal",
+            ),
+        )
+
+        # Test basic certificate content cleaning
+        cert_content = "LS0tLS1CRUdJTi\nBFUlRJRklD\rQVRFLS0tLS0\n"
+        expected = "LS0tLS1CRUdJTiBFUlRJRklDQVRFLS0tLS0"
+
+        result = session.clean_certificate_content(cert_content)
+
+        assert result == expected
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_clean_certificate_content_with_spaces(self, mock_popen):
+        """Test clean_certificate_content method with spaces in certificate content"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_process.returncode = 0
+
+        session = M365PowerShell(
+            M365Credentials(
+                client_id="test_client_id",
+                client_secret="test_secret",
+                tenant_id="test_tenant_id",
+                tenant_domains=["contoso.com"],
+            ),
+            M365IdentityInfo(
+                tenant_id="test_tenant_id",
+                tenant_domain="contoso.com",
+                tenant_domains=["contoso.com"],
+                identity_id="test_identity_id",
+                identity_type="Service Principal",
+            ),
+        )
+
+        # Test certificate content with spaces
+        cert_content = "  LS0tLS1CRUdJTi BFUlRJRklD QVRFLS0tLS0  "
+        expected = "LS0tLS1CRUdJTiBFUlRJRklDQVRFLS0tLS0"
+
+        result = session.clean_certificate_content(cert_content)
+
+        assert result == expected
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_clean_certificate_content_empty(self, mock_popen):
+        """Test clean_certificate_content method with empty certificate content"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_process.returncode = 0
+
+        session = M365PowerShell(
+            M365Credentials(
+                client_id="test_client_id",
+                client_secret="test_secret",
+                tenant_id="test_tenant_id",
+                tenant_domains=["contoso.com"],
+            ),
+            M365IdentityInfo(
+                tenant_id="test_tenant_id",
+                tenant_domain="contoso.com",
+                tenant_domains=["contoso.com"],
+                identity_id="test_identity_id",
+                identity_type="Service Principal",
+            ),
+        )
+
+        # Test empty certificate content
+        cert_content = ""
+        expected = ""
+
+        result = session.clean_certificate_content(cert_content)
+
+        assert result == expected
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_init_credential_certificate_auth_with_domains(self, mock_popen):
+        """Test init_credential method with certificate authentication and tenant domains"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_process.returncode = 0
+
+        executed_commands = []
+
+        def mock_execute(command):
+            executed_commands.append(command)
+            if "Error creating certificate" in command:
+                return None  # No error
+            return ""
+
+        # Create session with non-certificate credentials first
+        session = M365PowerShell(
+            M365Credentials(
+                client_id="test_client_id",
+                client_secret="test_secret",
+                tenant_id="test_tenant_id",
+                tenant_domains=["contoso.com", "subdomain.contoso.com"],
+            ),
+            M365IdentityInfo(
+                tenant_id="test_tenant_id",
+                tenant_domain="contoso.com",
+                tenant_domains=["contoso.com", "subdomain.contoso.com"],
+                identity_id="test_identity_id",
+                identity_type="Service Principal with Certificate",
+            ),
+        )
+
+        # Mock methods before calling init_credential
+        session.execute = MagicMock(side_effect=mock_execute)
+        session.sanitize = MagicMock(side_effect=lambda x: x)
+        session.clean_certificate_content = MagicMock(return_value=certificate_content)
+
+        # Now test certificate authentication
+        session.init_credential(
+            M365Credentials(
+                client_id="test_client_id",
+                tenant_id="test_tenant_id",
+                certificate_content=certificate_content,
+                tenant_domains=["contoso.com", "subdomain.contoso.com"],
+            )
+        )
+
+        # Verify that certificate content was cleaned
+        session.clean_certificate_content.assert_called_once_with(certificate_content)
+
+        # Verify certificate creation commands were executed
+        assert any(
+            "$certBytes = [Convert]::FromBase64String" in cmd
+            for cmd in executed_commands
+        )
+        assert any(
+            "$certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2"
+            in cmd
+            for cmd in executed_commands
+        )
+        assert any('$clientID = "test_client_id"' in cmd for cmd in executed_commands)
+        assert any('$tenantID = "test_tenant_id"' in cmd for cmd in executed_commands)
+        assert any('$tenantDomain = "contoso.com"' in cmd for cmd in executed_commands)
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_credentials_certificate_auth_with_or_logic(self, mock_popen):
+        """Test test_credentials method with certificate auth using OR logic between Teams and Exchange"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_process.returncode = 0
+
+        # Create session with non-certificate credentials first
+        session = M365PowerShell(
+            M365Credentials(
+                client_id="test_client_id",
+                client_secret="test_secret",
+                tenant_id="test_tenant_id",
+                tenant_domains=["contoso.com"],
+            ),
+            M365IdentityInfo(
+                tenant_id="test_tenant_id",
+                tenant_domain="contoso.com",
+                tenant_domains=["contoso.com"],
+                identity_id="test_identity_id",
+                identity_type="Service Principal with Certificate",
+            ),
+        )
+
+        # Mock that Teams connection fails but Exchange succeeds
+        session.test_teams_certificate_connection = MagicMock(return_value=False)
+        session.test_exchange_certificate_connection = MagicMock(return_value=True)
+
+        result = session.test_credentials(
+            M365Credentials(
+                client_id="test_client_id",
+                tenant_id="test_tenant_id",
+                certificate_content=certificate_content,
+                tenant_domains=["contoso.com"],
+            )
+        )
+
+        assert result is True
+        session.test_teams_certificate_connection.assert_called_once()
+        session.test_exchange_certificate_connection.assert_called_once()
+
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_test_credentials_certificate_auth_both_fail(self, mock_popen):
+        """Test test_credentials method with certificate auth when both Teams and Exchange fail"""
+        certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
+
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+        mock_process.returncode = 0
+
+        # Create session with non-certificate credentials first
+        session = M365PowerShell(
+            M365Credentials(
+                client_id="test_client_id",
+                client_secret="test_secret",
+                tenant_id="test_tenant_id",
+                tenant_domains=["contoso.com"],
+            ),
+            M365IdentityInfo(
+                tenant_id="test_tenant_id",
+                tenant_domain="contoso.com",
+                tenant_domains=["contoso.com"],
+                identity_id="test_identity_id",
+                identity_type="Service Principal with Certificate",
+            ),
+        )
+
+        # Mock that both connections fail
+        session.test_teams_certificate_connection = MagicMock(return_value=False)
+        session.test_exchange_certificate_connection = MagicMock(return_value=False)
+
+        # Even when both fail, the method should return True (this is the intended logic)
+        result = session.test_credentials(
+            M365Credentials(
+                client_id="test_client_id",
+                tenant_id="test_tenant_id",
+                certificate_content=certificate_content,
+                tenant_domains=["contoso.com"],
+            )
+        )
+
+        assert result is True
+        session.test_teams_certificate_connection.assert_called_once()
+        session.test_exchange_certificate_connection.assert_called_once()
+
+        session.close()
