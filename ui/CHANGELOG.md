@@ -8,9 +8,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - New menu item under Configuration section for quick access to the Mutelist [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
 
+
+- `Cloud Provider` type filter to providers page [(#8473)](https://github.com/prowler-cloud/prowler/pull/8473)
+
 ### 🔄 Changed
 
 ### 🐞 Fixed
+
+- Field for `Assume Role` in AWS role credentials form shown again [(#8484)](https://github.com/prowler-cloud/prowler/pull/8484)
 
 ### ❌ Removed
 
