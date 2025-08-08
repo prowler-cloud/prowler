@@ -174,7 +174,7 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "cloudProvider",
-    header: "Cloud provider",
+    header: "Cloud Provider",
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");
