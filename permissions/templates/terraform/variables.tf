@@ -44,13 +44,13 @@ variable "s3_integration_bucket_name" {
   }
 }
 
-variable "s3_integration_bucket_account" {
+variable "s3_integration_bucket_account_id" {
   type        = string
   description = "The AWS Account ID owner of the S3 Bucket. Required if enable_s3_integration is true."
   default     = ""
 
   validation {
-    condition     = var.s3_integration_bucket_account == "" || (length(var.s3_integration_bucket_account) == 12 && can(tonumber(var.s3_integration_bucket_account)))
-    error_message = "s3_integration_bucket_account must be a valid 12-digit AWS Account ID or empty."
+    condition     = var.s3_integration_bucket_account_id == "" || (length(var.s3_integration_bucket_account_id) == 12 && can(tonumber(var.s3_integration_bucket_account_id)))
+    error_message = "s3_integration_bucket_account_id must be a valid 12-digit AWS Account ID or empty."
   }
 }

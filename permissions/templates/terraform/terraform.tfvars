@@ -2,8 +2,7 @@
 # Prowler Terraform Configuration
 # =============================================================================
 
-# REQUIRED: External ID from your Prowler App setup
-# This must match exactly what you configured in Prowler App
+# REQUIRED: External ID from your Prowler App
 external_id = "your-unique-external-id-here"
 
 # =============================================================================

@@ -20,6 +20,8 @@ export type SubmenuProps = {
   label: string;
   active?: boolean;
   icon: IconComponent;
+  disabled?: boolean;
+  onClick?: () => void;
 };
 
 export type MenuProps = {

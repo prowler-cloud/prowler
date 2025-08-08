@@ -86,12 +86,12 @@ prowler dashboard
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 567 | 82 | 36 | 10 |
+| AWS | 571 | 82 | 36 | 10 |
 | GCP | 79 | 13 | 10 | 3 |
-| Azure | 142 | 18 | 11 | 3 |
+| Azure | 162 | 19 | 11 | 4 |
 | Kubernetes | 83 | 7 | 5 | 7 |
-| GitHub | 16 | 2 | 1 | 0 |
-| M365 | 69 | 7 | 3 | 2 |
+| GitHub | 17 | 2 | 1 | 0 |
+| M365 | 70 | 7 | 3 | 2 |
 | NHN (Unofficial) | 6 | 2 | 1 | 0 |
 
 > [!Note]
