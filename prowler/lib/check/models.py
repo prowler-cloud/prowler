@@ -694,6 +694,22 @@ class CheckReportNHN(Check_Report):
         self.location = getattr(resource, "location", "kr1")
 
 
+@dataclass
+class Check_Report_IONOS(Check_Report):
+    """Contains the IONOS Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    datacenter_id: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(resource, "name", "")
+        self.resource_id = getattr(resource, "id", "")
+        self.location = "global"
+        self.datacenter_id = getattr(resource, "datacenter_id", "")
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """
