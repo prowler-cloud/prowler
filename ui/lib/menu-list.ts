@@ -125,14 +125,14 @@ export const getMenuList = ({
               icon: GCPIcon,
             },
             {
-              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=github&sort=severity,-inserted_at",
-              label: "Github",
-              icon: GithubIcon,
-            },
-            {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity,-inserted_at",
               label: "Kubernetes",
               icon: KubernetesIcon,
+            },
+            {
+              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=github&sort=severity,-inserted_at",
+              label: "Github",
+              icon: GithubIcon,
             },
           ],
           defaultOpen: false,
