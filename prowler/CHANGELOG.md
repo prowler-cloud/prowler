@@ -2,7 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.10.1] (Prowler UNRELEASED)
+## [v5.11.0] (Prowler UNRELEASED)
+
+### Added
+- Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
+
+---
+
+## [v5.10.1] (Prowler v5.10.1)
 
 ### Fixed
 - Remove invalid requirements from CIS 1.0 for GitHub provider [(#8472)](https://github.com/prowler-cloud/prowler/pull/8472)
@@ -19,7 +26,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_desired_sku_size` check for Azure provider [(#8191)](https://github.com/prowler-cloud/prowler/pull/8191)
 - `vm_scaleset_not_empty` check for Azure provider [(#8192)](https://github.com/prowler-cloud/prowler/pull/8192)
 - GitHub repository and organization scoping support with `--repository/respositories` and `--organization/organizations` flags [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
-- Certificate authentication for M365 provider (CLI) [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
 - GCP provider retry configuration [(#8412)](https://github.com/prowler-cloud/prowler/pull/8412)
 - `s3_bucket_shadow_resource_vulnerability` check for AWS provider [(#8398)](https://github.com/prowler-cloud/prowler/pull/8398)
 
