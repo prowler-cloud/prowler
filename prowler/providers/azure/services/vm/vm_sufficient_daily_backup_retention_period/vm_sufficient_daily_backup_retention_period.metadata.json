@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_sufficient_daily_backup_retention_period",
+  "CheckTitle": "Ensure there is a sufficient daily backup retention period configured for Azure virtual machines.",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Compute/virtualMachines",
+  "Description": "Ensure there is a sufficient daily backup retention period configured for Azure virtual machines.",
+  "Risk": "Having an optimal daily backup retention period for your Azure virtual machines will enforce your backup strategy to follow the best practices as specified in the compliance regulations promoted by your organization. Retaining VM backups for a longer period of time will allow you to handle more efficiently your data restoration process in the event of a failure.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/sufficient-backup-retention-period.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the daily backup retention period for each VM's backup policy to meet or exceed your organization's minimum requirement.",
+      "Url": "https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
