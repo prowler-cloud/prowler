@@ -4,6 +4,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [v5.10.1] (Prowler UNRELEASED)
 
+### Changed
+- Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
+
 ### Fixed
 - Remove invalid requirements from CIS 1.0 for GitHub provider [(#8472)](https://github.com/prowler-cloud/prowler/pull/8472)
 
