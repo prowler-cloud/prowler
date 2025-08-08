@@ -180,7 +180,7 @@ def mock_defender_get_outbound_spam_filter_policy(_):
             notify_limit_exceeded=True,
             notify_limit_exceeded_addresses=["security@example.com"],
             notify_sender_blocked_addresses=["security@example.com"],
-            auto_forwarding_mode=False,
+            auto_forwarding_mode="Off",
             default=False,
         ),
         "Policy2": OutboundSpamPolicy(
@@ -189,7 +189,7 @@ def mock_defender_get_outbound_spam_filter_policy(_):
             notify_limit_exceeded=False,
             notify_limit_exceeded_addresses=[],
             notify_sender_blocked_addresses=[],
-            auto_forwarding_mode=True,
+            auto_forwarding_mode="On",
             default=True,
         ),
     }
@@ -438,7 +438,7 @@ class Test_Defender_Service:
             assert outbound_spam_policies[
                 "Policy1"
             ].notify_sender_blocked_addresses == ["security@example.com"]
-            assert outbound_spam_policies["Policy1"].auto_forwarding_mode is False
+            assert outbound_spam_policies["Policy1"].auto_forwarding_mode == "Off"
             assert outbound_spam_policies["Policy1"].default is False
             assert outbound_spam_policies["Policy2"].name == "Policy2"
             assert outbound_spam_policies["Policy2"].notify_sender_blocked is False
@@ -449,7 +449,7 @@ class Test_Defender_Service:
             assert (
                 outbound_spam_policies["Policy2"].notify_sender_blocked_addresses == []
             )
-            assert outbound_spam_policies["Policy2"].auto_forwarding_mode is True
+            assert outbound_spam_policies["Policy2"].auto_forwarding_mode == "On"
             assert outbound_spam_policies["Policy2"].default is True
             defender_client.powershell.close()
 
