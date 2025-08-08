@@ -278,6 +278,13 @@ export const getComplianceCsv = async (
   scanId: string,
   complianceId: string,
 ) => {
+  // Only allow alphanumeric, dash, and underscore for IDs
+  const idPattern = /^[a-zA-Z0-9_-]+$/;
+  if (!idPattern.test(scanId) || !idPattern.test(complianceId)) {
+    return {
+      error: "Invalid scan or compliance ID format.",
+    };
+  }
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(
