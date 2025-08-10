@@ -3,6 +3,7 @@ import {
   getExportsZip,
   getThreatscoreReport,
 } from "@/actions/scans";
+import { revalidatePath } from "next/cache";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
