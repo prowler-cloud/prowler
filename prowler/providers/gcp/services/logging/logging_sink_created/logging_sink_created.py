@@ -17,11 +17,6 @@ class logging_sink_created(Check):
                     resource=logging_client.projects[project],
                     project_id=project,
                     location=logging_client.region,
-                    resource_name=(
-                        logging_client.projects[project].name
-                        if logging_client.projects[project].name
-                        else "GCP Project"
-                    ),
                 )
                 report.status = "FAIL"
                 report.status_extended = f"There are no logging sinks to export copies of all the log entries in project {project}."

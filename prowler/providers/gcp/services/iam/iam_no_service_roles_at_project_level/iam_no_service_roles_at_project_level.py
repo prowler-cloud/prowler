@@ -31,11 +31,6 @@ class iam_no_service_roles_at_project_level(Check):
                     metadata=self.metadata(),
                     resource=cloudresourcemanager_client.projects[project],
                     project_id=project,
-                    resource_name=(
-                        cloudresourcemanager_client.projects[project].name
-                        if cloudresourcemanager_client.projects[project].name
-                        else "GCP Project"
-                    ),
                     location=cloudresourcemanager_client.region,
                 )
                 report.status = "PASS"

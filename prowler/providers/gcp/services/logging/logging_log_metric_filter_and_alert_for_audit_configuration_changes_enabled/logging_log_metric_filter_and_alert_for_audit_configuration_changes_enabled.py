@@ -40,11 +40,6 @@ class logging_log_metric_filter_and_alert_for_audit_configuration_changes_enable
                     resource=logging_client.projects[project],
                     project_id=project,
                     location=logging_client.region,
-                    resource_name=(
-                        logging_client.projects[project].name
-                        if logging_client.projects[project].name
-                        else "GCP Project"
-                    ),
                 )
                 report.status = "FAIL"
                 report.status_extended = f"There are no log metric filters or alerts associated in project {project}."

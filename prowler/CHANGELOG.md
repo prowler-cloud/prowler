@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Order requirements by ID in Prowler ThreatScore AWS compliance framework [(#8495)](https://github.com/prowler-cloud/prowler/pull/8495)
+- Add explicit resource name to GCP and Azure Defender checks [(#8352)](https://github.com/prowler-cloud/prowler/pull/8352)
 
 ---
 
@@ -55,7 +56,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - GitHub App authentication fails to generate output files and HTML header sections [(#8423)](https://github.com/prowler-cloud/prowler/pull/8423)
 - S3 `test_connection` uses AWS S3 API `HeadBucket` instead of `GetBucketLocation` [(#8456)](https://github.com/prowler-cloud/prowler/pull/8456)
 - Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
-- Add explicit resource name to GCP and Azure Defender checks [(#8352)](https://github.com/prowler-cloud/prowler/pull/8352)
 - `sns_topics_not_publicly_accessible` false positive with `aws:SourceArn` conditions [(#8326)](https://github.com/prowler-cloud/prowler/issues/8326)
 - Remove typo from description req 1.2.3 - Prowler ThreatScore m365 [(#8384)](https://github.com/prowler-cloud/prowler/pull/8384)
 - Way of counting FAILED/PASS reqs from `kisa_isms_p_2023_aws` table [(#8382)](https://github.com/prowler-cloud/prowler/pull/8382)
