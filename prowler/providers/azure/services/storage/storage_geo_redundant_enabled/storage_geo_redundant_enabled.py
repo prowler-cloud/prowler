@@ -29,6 +29,12 @@ class storage_geo_redundant_enabled(Check):
                 if (
                     storage_account.replication_settings
                     == ReplicationSettings.STANDARD_GRS
+                    or storage_account.replication_settings
+                    == ReplicationSettings.STANDARD_GZRS
+                    or storage_account.replication_settings
+                    == ReplicationSettings.STANDARD_RAGRS
+                    or storage_account.replication_settings
+                    == ReplicationSettings.STANDARD_RAGZRS
                 ):
                     report.status = "PASS"
                     report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has Geo-redundant storage (GRS) enabled."
