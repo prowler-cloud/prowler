@@ -2,10 +2,10 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-
 ## [v5.11.0] (Prowler UNRELEASED)
 
 ### Added
+- Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
 
 ### Changed
 
