@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 
 ### Fixed
+- Azure `storage_geo_redundant_enabled` check false positives [(#8504)](https://github.com/prowler-cloud/prowler/pull/8504)
 
 ---
 
