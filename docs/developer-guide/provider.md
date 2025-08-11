@@ -2722,15 +2722,15 @@ Update the provider documentation to include your new tool provider in the examp
 ---
 
 
-### Step 2: Integrate the Provider in the API
+## Step 2: Integrate the Provider in the API
 
 This step is required only if you want your provider to be available in the API and UI. The API integration involves several components:
 
-#### 2.1. Backend API Models
+### 2.1. Backend API Models
 
 **Location:** `api/src/backend/api/models.py`
 
-Add your provider to the `ProviderChoices` enum:
+Add your provider to the `ProviderChoices` enum and implement UID validation:
 
 ```python
 class ProviderChoices(models.TextChoices):
@@ -2742,73 +2742,461 @@ class ProviderChoices(models.TextChoices):
     GITHUB = "github", "GitHub"
     NHN = "nhn", "NHN Cloud"
     IAC = "iac", "Infrastructure as Code"
-    # Add your new provider here
-    NEW_PROVIDER = "new_provider", "New Provider"
+    YOUR_PROVIDER = "your_provider", "Your Provider"  # Add your provider here
+
+@staticmethod
+def validate_your_provider_uid(value):
+    """Validate your provider UID format."""
+    if not re.match(r"^your-regex-pattern$", value):
+        raise ModelValidationError(
+            detail="Your provider UID must follow the specified format.",
+            code="your-provider-uid",
+            pointer="/data/attributes/uid",
+        )
 ```
 
 **Provider Model:**
 The `Provider` model already exists and supports all provider types. Ensure your provider type is included in the choices.
 
-#### 2.2. API Serializers
+### 2.2. Add the provider to the Provider Choices
 
-**Location:** `api/src/backend/api/serializers.py`
+Update the `return_prowler_provider` function to include your provider. This function is crucial for the API to instantiate the correct provider class.
 
-Create or update serializers for your provider:
+**File:** `api/src/backend/api/utils.py`
 
 ```python
-class NewProviderSerializer(serializers.ModelSerializer):
+from prowler.providers.your_provider.your_provider import YourProvider  # Add your import
+
+def return_prowler_provider(
+    provider: Provider,
+) -> [
+    AwsProvider
+    | AzureProvider
+    | GcpProvider
+    | GithubProvider
+    | KubernetesProvider
+    | M365Provider
+    | YourProvider  # Add your provider to the return type annotation
+]:
+    """Return the Prowler provider class based on the given provider type."""
+    match provider.provider:
+        case Provider.ProviderChoices.AWS.value:
+            prowler_provider = AwsProvider
+        case Provider.ProviderChoices.AZURE.value:
+            prowler_provider = AzureProvider
+        case Provider.ProviderChoices.GCP.value:
+            prowler_provider = GcpProvider
+        case Provider.ProviderChoices.KUBERNETES.value:
+            prowler_provider = KubernetesProvider
+        case Provider.ProviderChoices.M365.value:
+            prowler_provider = M365Provider
+        case Provider.ProviderChoices.GITHUB.value:
+            prowler_provider = GithubProvider
+        case Provider.ProviderChoices.YOUR_PROVIDER.value:  # Add your provider here
+            prowler_provider = YourProvider
+        case _:
+            raise ValueError(f"Provider type {provider.provider} not supported")
+    return prowler_provider
+```
+
+**Also update the `initialize_prowler_provider` function:**
+
+```python
+def initialize_prowler_provider(
+    provider: Provider,
+    mutelist_processor: Processor | None = None,
+) -> (
+    AwsProvider
+    | AzureProvider
+    | GcpProvider
+    | GithubProvider
+    | KubernetesProvider
+    | M365Provider
+    | YourProvider  # Add your provider to the return type annotation
+):
+    """Initialize a Prowler provider instance based on the given provider type."""
+    prowler_provider = return_prowler_provider(provider)
+    prowler_provider_kwargs = get_prowler_provider_kwargs(provider, mutelist_processor)
+    return prowler_provider(**prowler_provider_kwargs)
+```
+
+**Note:** The `match` statement requires Python 3.10+. If you're using an older version, you can use traditional `if-elif` statements instead.
+
+### 2.3. API Serializers
+
+Create or update serializers for your provider. You'll need to add your provider to the validation logic:
+
+**File:** `api/src/backend/api/v1/serializers.py`
+
+```python
+def validate_secret_based_on_provider(provider_type, secret):
+    """Validate provider-specific secrets."""
+    if provider_type == Provider.ProviderChoices.AWS.value:
+        serializer = AWSProviderSecret(data=secret)
+    elif provider_type == Provider.ProviderChoices.AZURE.value:
+        serializer = AzureProviderSecret(data=secret)
+    elif provider_type == Provider.ProviderChoices.GCP.value:
+        serializer = GCPProviderSecret(data=secret)
+    elif provider_type == Provider.ProviderChoices.YOUR_PROVIDER.value:  # Add your provider here
+        serializer = YourProviderSecret(data=secret)
+    # ... other providers
+
+    if serializer.is_valid():
+        return serializer.validated_data
+    else:
+        raise serializers.ValidationError(serializer.errors)
+
+class YourProviderSecret(serializers.Serializer):
+    """Serializer for your provider credentials."""
+    your_auth_field = serializers.CharField(required=True)
+    your_optional_field = serializers.CharField(required=False)
+
     class Meta:
-        model = Provider
-        fields = ['id', 'provider', 'uid', 'alias', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-    def validate_provider(self, value):
-        if value not in ProviderChoices.values:
-            raise serializers.ValidationError("Invalid provider type")
-        return value
+        resource_name = "provider-secrets"
 ```
 
-#### 2.3. API Views
+Also update the providers included in the serializer:
 
-**Location:** `api/src/backend/api/v1/views.py`
-
-The `ProviderViewSet` handles CRUD operations for providers. Ensure your provider is supported:
+**File:** `api/src/backend/api/v1/serializer_utils/providers.py`
 
 ```python
-class ProviderViewSet(viewsets.ModelViewSet):
-    queryset = Provider.objects.all()
-    serializer_class = ProviderSerializer
-    permission_classes = [IsAuthenticated]
+@extend_schema_field(
+    {
+        "oneOf": [
+            # ... existing provider schemas ...
+            {
+                "type": "object",
+                "title": "Your Provider Credentials",
+                "properties": {
+                    "your_auth_field": {
+                        "type": "string",
+                        "description": "Your provider authentication field description.",
+                    },
+                    "your_optional_field": {
+                        "type": "string",
+                        "description": "Optional field for your provider (if applicable).",
+                    },
+                    "your_required_field": {
+                        "type": "string",
+                        "description": "Required field for your provider authentication.",
+                    }
+                },
+                "required": ["your_auth_field", "your_required_field"]
+            },
+            # ... other existing schemas ...
+        ]
+    }
+)
 
-    def get_queryset(self):
-        # Add any provider-specific filtering if needed
-        return Provider.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        # Add validation for your provider type
-        provider_type = serializer.validated_data.get('provider')
-        if provider_type == 'new_provider':
-            # Add provider-specific validation
-            pass
-        serializer.save(user=self.request.user)
 ```
 
-#### 2.4. Provider Credentials Management
+### 2.4. Database Migration
 
-**Location:** `api/src/backend/api/models.py`
+Create a new migration to add your provider to the database. This is crucial for the API to recognize your provider type.
 
-The `ProviderSecret` model handles credential storage:
+**File:** `api/src/backend/api/migrations/XXXX_your_provider.py`
 
 ```python
-class ProviderSecret(models.Model):
-    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
-    secret_type = models.CharField(max_length=50)  # e.g., 'aws_credentials', 'azure_service_principal'
-    secret = models.JSONField()  # Encrypted credentials
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# Generated by Django X.X.X on YYYY-MM-DD
+
+from django.db import migrations
+
+import api.db_utils
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("api", "previous_migration_name"),  # Update this to the latest migration
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="provider",
+            name="provider",
+            field=api.db_utils.ProviderEnumField(
+                choices=[
+                    ("aws", "AWS"),
+                    ("azure", "Azure"),
+                    ("gcp", "GCP"),
+                    ("kubernetes", "Kubernetes"),
+                    ("m365", "M365"),
+                    ("github", "GitHub"),
+                    ("your_provider", "Your Provider"),  # Add your provider here
+                ],
+                default="aws",
+            ),
+        ),
+        migrations.RunSQL(
+            "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'your_provider';",
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+    ]
 ```
 
-#### 2.5. API Endpoints
+**Important Notes:**
+
+- **Migration Number**: Use the next sequential number (e.g., if latest is 0044, use 0045)
+- **Dependencies**: Update the `dependencies` list to point to the most recent migration
+- **Choices Array**: Add your provider to the `choices` array with proper display name
+- **SQL Operation**: The `RunSQL` operation adds your provider to the PostgreSQL enum type
+- **Reverse SQL**: Use `migrations.RunSQL.noop` since adding enum values cannot be easily reversed
+
+**Migration Naming Convention:**
+
+- Format: `XXXX_your_provider.py` (e.g., `0045_your_provider.py`)
+- Use descriptive names that indicate what the migration does
+- Follow the existing pattern in the migrations folder
+
+### 2.5. Update the V1 Yaml
+
+Update the OpenAPI specification (`v1.yaml`) to include your provider in all relevant endpoints and schemas. This is crucial for API documentation and client generation.
+
+**File:** `api/src/backend/api/specs/v1.yaml`
+
+#### 2.5.1. Provider Enum Values
+
+Add your provider to the provider enum in the Provider schema:
+
+```yaml
+# Around line 12150 in v1.yaml
+Provider:
+  type: object
+  properties:
+    attributes:
+      properties:
+        provider:
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+          - m365
+          - github
+          - your_provider  # Add your provider here
+          type: string
+          description: |-
+            * `aws` - AWS
+            * `azure` - Azure
+            * `gcp` - GCP
+            * `kubernetes` - Kubernetes
+            * `m365` - M365
+            * `github` - GitHub
+            * `your_provider` - Your Provider  # Add your provider here
+```
+
+#### 2.5.2. Provider Credential Schemas
+
+Add your provider's credential schema to the integration configuration. This defines how your provider's credentials are structured:
+
+```yaml
+# Around line 11100 in v1.yaml, in the integration configuration
+- type: object
+  title: Your Provider Credentials  # Add your provider here
+  properties:
+    your_auth_field:
+      type: string
+      description: Your provider authentication field description.
+    your_optional_field:
+      type: string
+      description: Optional field for your provider (if applicable).
+    your_required_field:
+      type: string
+      description: Required field for your provider authentication.
+  required:
+  - your_auth_field
+  - your_required_field
+```
+
+#### 2.5.3. Example Provider Schemas
+
+Here are examples of how existing providers are documented:
+
+**AWS Provider:**
+```yaml
+- type: object
+  title: AWS Static Credentials
+  properties:
+    aws_access_key_id:
+      type: string
+      description: The AWS access key ID.
+    aws_secret_access_key:
+      type: string
+      description: The AWS secret access key.
+  required:
+  - aws_access_key_id
+  - aws_secret_access_key
+
+- type: object
+  title: AWS Assume Role
+  properties:
+    role_arn:
+      type: string
+      description: The Amazon Resource Name (ARN) of the role to assume.
+    external_id:
+      type: string
+      description: An identifier to enhance security for role assumption.
+  required:
+  - role_arn
+  - external_id
+```
+
+**GitHub Provider:**
+```yaml
+- type: object
+  title: GitHub Personal Access Token
+  properties:
+    personal_access_token:
+      type: string
+      description: GitHub personal access token for authentication.
+  required:
+  - personal_access_token
+
+- type: object
+  title: GitHub OAuth App Token
+  properties:
+    oauth_app_token:
+      type: string
+      description: GitHub OAuth App token for authentication.
+  required:
+  - oauth_app_token
+```
+
+**M365 Provider:**
+```yaml
+- type: object
+  title: M365 Static Credentials
+  properties:
+    client_id:
+      type: string
+      description: The Azure application (client) ID for authentication in Azure AD.
+    client_secret:
+      type: string
+      description: The client secret associated with the application (client) ID.
+    tenant_id:
+      type: string
+      description: The Azure tenant ID, representing the directory where the application is registered.
+    user:
+      type: email
+      description: User microsoft email address.
+    password:
+      type: string
+      description: User password.
+  required:
+  - client_id
+  - client_secret
+  - tenant_id
+  - user
+  - password
+```
+
+#### 2.5.4. Important Notes
+
+- **Position**: Add your schema in the `oneOf` array alongside existing providers
+- **Structure**: Follow the exact pattern of other providers (title, properties, required fields)
+- **Descriptions**: Provide clear, helpful descriptions for each field
+- **Required Fields**: Specify which fields are mandatory in the `required` array
+- **Field Types**: Use appropriate JSON schema types (`string`, `integer`, `boolean`, `email`, etc.)
+- **Validation**: Add any field-specific validation patterns or constraints
+- **Documentation**: Ensure your provider appears in the generated API documentation
+
+### 2.6. Testing API Integration
+
+Create tests for your provider:
+
+**Location:** `api/src/backend/api/tests/`
+
+```python
+class YourProviderAPITestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_your_provider(self):
+        data = {
+            'provider': 'your_provider',
+            'uid': 'valid-uid-123',
+            'alias': 'Test Account'
+        }
+        response = self.client.post('/api/v1/providers/', data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['provider'], 'your_provider')
+
+    def test_your_provider_uid_validation(self):
+        """Test UID validation for your provider."""
+        invalid_uids = [
+            'invalid@uid',
+            '-invalid-start',
+            'a' * 40,  # Too long
+        ]
+
+        for invalid_uid in invalid_uids:
+            data = {
+                'provider': 'your_provider',
+                'uid': invalid_uid,
+                'alias': 'Test'
+            }
+            response = self.client.post('/api/v1/providers/', data)
+            self.assertEqual(response.status_code, 400)
+            self.assertIn('your-provider-uid', str(response.data))
+
+    def test_add_your_provider_credentials(self):
+        # Create provider first
+        provider = Provider.objects.create(
+            user=self.user,
+            provider='your_provider',
+            uid='valid-uid-123'
+        )
+
+        # Add credentials
+        credentials_data = {
+            'secret_type': 'your_provider_credentials',
+            'secret': {
+                'your_auth_field': 'auth_value',
+                'your_optional_field': 'optional_value'
+            },
+            'provider': provider.id
+        }
+        response = self.client.post('/api/v1/providers/secrets/', credentials_data)
+        self.assertEqual(response.status_code, 201)
+```
+
+### 2.7. Compliance and Output Support
+
+Add your provider to the compliance export functionality:
+
+**File:** `api/src/backend/tasks/jobs/export.py`
+
+```python
+COMPLIANCE_FRAMEWORKS = {
+    "aws": [...],
+    "azure": [...],
+    "gcp": [...],
+    "kubernetes": [...],
+    "m365": [...],
+    "github": [...],
+    "your_provider": [  # Add your provider here
+        (lambda name: name.startswith("cis_"), YourProviderCIS),
+        (lambda name: name.startswith("iso27001_"), YourProviderISO27001),
+    ],
+}
+```
+
+If your provider has specific fields, add them to the finding transformation:
+
+**File:** `prowler/lib/outputs/finding.py`
+
+```python
+def transform_api_finding(cls, finding, provider) -> "Finding":
+    # ... existing code ...
+
+    # Your provider specific field
+    if provider.type == "your_provider":
+        finding.your_field = resource.your_field
+
+    # ... rest of the code ...
+```
+
+### 2.8. API Endpoints
 
 Your provider will be available through these endpoints:
 
@@ -2819,78 +3207,68 @@ Your provider will be available through these endpoints:
 - `DELETE /api/v1/providers/{id}/` - Delete provider
 - `POST /api/v1/providers/secrets/` - Add provider credentials
 
-#### 2.6. Provider-Specific Validation
+### 2.9. Update the provider if needed
 
-**Location:** `api/src/backend/api/validators.py`
+Depending on your provider's authentication requirements, you may need to add new authentication methods that are compatible with the API. This involves updating the provider class to support additional credential types beyond the basic ones.
 
-Add validation for your provider:
+#### 2.9.1. Adding New Authentication Methods
 
-```python
-def validate_new_provider_credentials(credentials):
-    """Validate credentials for the new provider"""
-    required_fields = ['username', 'password', 'tenant_id']
+If your provider requires specific authentication methods, you'll need to:
 
-    for field in required_fields:
-        if field not in credentials:
-            raise ValidationError(f"Missing required field: {field}")
+1. **Update the provider constructor** to accept new authentication parameters
+2. **Extend the credential handling** to support the new authentication method
+3. **Update the API serializers** to include the new credential fields
+4. **Modify the OpenAPI specification** to document the new authentication schema
 
-    # Add provider-specific validation logic
-    return credentials
-```
+#### 2.9.2. Example: GitHub Provider Authentication Methods
 
-#### 2.7. Testing API Integration
-
-Create tests for your provider:
-
-**Location:** `api/src/backend/api/tests/`
+The GitHub provider demonstrates how to implement multiple authentication methods:
 
 ```python
-class NewProviderAPITestCase(APITestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass')
-        self.client.force_authenticate(user=self.user)
+# In prowler/providers/github/github_provider.py
+def __init__(
+    self,
+    # Authentication methods
+    personal_access_token: str = "",
+    oauth_app_token: str = "",
+    github_app_key: str = "",
+    #Needed for the API integration
+    github_app_key_content: str = "",
+    github_app_id: int = 0,
+    # Provider configuration
+    config_path: str = None,
+    # ... other parameters
+):
+    """
+    Initialize GitHub provider.
 
-    def test_create_new_provider(self):
-        data = {
-            'provider': 'new_provider',
-            'uid': 'test-account-123',
-            'alias': 'Test Account'
-        }
-        response = self.client.post('/api/v1/providers/', data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['provider'], 'new_provider')
-
-    def test_add_new_provider_credentials(self):
-        # Create provider first
-        provider = Provider.objects.create(
-            user=self.user,
-            provider='new_provider',
-            uid='test-account-123'
-        )
-
-        # Add credentials
-        credentials_data = {
-            'secret_type': 'new_provider_credentials',
-            'secret': {
-                'username': 'testuser',
-                'password': 'testpass',
-                'tenant_id': 'test-tenant'
-            },
-            'provider': provider.id
-        }
-        response = self.client.post('/api/v1/providers/secrets/', credentials_data)
-        self.assertEqual(response.status_code, 201)
+    Args:
+        personal_access_token (str): GitHub personal access token.
+        oauth_app_token (str): GitHub OAuth App token.
+        github_app_key (str): GitHub App key.
+        github_app_key_content (str): GitHub App key content.
+        github_app_id (int): GitHub App ID.
+        config_path (str): Path to the audit configuration file.
+        # ... other parameters
+    """
+    super().__init__(
+        personal_access_token,
+        oauth_app_token,
+        github_app_id,
+        github_app_key,
+        github_app_key_content,
+    )
 ```
 
 ---
 
-### Step 3: Integrate the Provider in the UI
+## Step 3: Integrate the Provider in the UI
 
 TBD
 
 ---
 
-### Provider Implementation Guidance
+## Provider Implementation Guidance
 
 Use existing providers as templates, this will help you to understand better the structure and the implementation will be easier:
 
@@ -2905,7 +3283,7 @@ Use existing providers as templates, this will help you to understand better the
 
 ---
 
-### Best Practices
+## Best Practices
 
 - **Code Quality & Documentation**
 
@@ -2990,9 +3368,9 @@ Use existing providers as templates, this will help you to understand better the
 
     - **Use Rules**: Use rules to ensure the code generated by AI is following the way of working in Prowler.
 
-### Checklist for New Providers
+## Checklist for New Providers
 
-#### CLI Integration Only
+### CLI Integration Only
 
 **Phase 1: Research & Planning**
 
@@ -3019,7 +3397,7 @@ Use existing providers as templates, this will help you to understand better the
 - [ ] QA and documentation completed
 - [ ] GA release ready
 
-#### API Integration
+### API Integration
 
 - [ ] All CLI integration items completed
 - [ ] Provider added to `ProviderChoices` enum in API models
@@ -3030,13 +3408,13 @@ Use existing providers as templates, this will help you to understand better the
 - [ ] Provider-specific validation implemented
 - [ ] API tests created and passing
 
-#### UI Integration
+### UI Integration
 
 - TBD
 
 ---
 
-### Next Steps
+## Next Steps
 
 - [How to add a new Service](./services.md)
 - [How to add new Checks](./checks.md)
