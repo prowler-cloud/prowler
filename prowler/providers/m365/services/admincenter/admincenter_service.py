@@ -87,9 +87,11 @@ class AdminCenter(M365Service):
                     {
                         user.id: User(
                             id=user.id,
-                            name=user.display_name,
+                            name=getattr(user, "display_name", ""),
                             license=(
-                                license_details.value[0].sku_part_number
+                                getattr(
+                                    license_details.value[0], "sku_part_number", None
+                                )
                                 if license_details.value
                                 else None
                             ),
@@ -149,8 +151,8 @@ class AdminCenter(M365Service):
                     {
                         group.id: Group(
                             id=group.id,
-                            name=group.display_name,
-                            visibility=group.visibility,
+                            name=getattr(group, "display_name", ""),
+                            visibility=getattr(group, "visibility", ""),
                         )
                     }
                 )
@@ -168,14 +170,21 @@ class AdminCenter(M365Service):
             domains_list = await self.client.domains.get()
             domains.update({})
             for domain in domains_list.value:
-                domains.update(
-                    {
-                        domain.id: Domain(
-                            id=domain.id,
-                            password_validity_period=domain.password_validity_period_in_days,
-                        )
-                    }
-                )
+                if domain:
+                    password_validity_period = getattr(
+                        domain, "password_validity_period_in_days", None
+                    )
+                    if password_validity_period is None:
+                        password_validity_period = 0
+
+                    domains.update(
+                        {
+                            domain.id: Domain(
+                                id=domain.id,
+                                password_validity_period=password_validity_period,
+                            )
+                        }
+                    )
 
         except Exception as error:
             logger.error(
