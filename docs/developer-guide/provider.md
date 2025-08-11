@@ -14,7 +14,7 @@ A provider is any platform or service that offers resources, data, or functional
 For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.com/).
 
 ???+ important
-There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI, the idea with this documentation is to know how to create a new provider and integrate it not only in the CLI but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+    There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI, the idea with this documentation is to know how to create a new provider and integrate it not only in the CLI but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
 
 ---
 
@@ -68,9 +68,10 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 | AWS         | SDK    | Official boto3 SDK, multiple auth methods, mature ecosystem       |
 | Azure       | SDK    | Official azure-identity SDK, service principals, managed identity |
 | GCP         | SDK    | Official google-auth SDK, service accounts, ADC support           |
+| Kubernetes  | SDK    | Official kubernetes SDK, service accounts, ADC support            |
 | GitHub      | SDK    | Non-Official PyGithub SDK but it's been updated and maintained    |
 | NHN Cloud   | API    | Custom REST API, no official SDK, community provider              |
-| IAC/Checkov | Tool   | Third-party security tool, no auth needed, output conversion      |
+| IAC         | Tool   | Third-party security tool that uses trivy, no auth needed, output conversion      |
 | M365        | Hybrid | Combines msgraph SDK for auth + PowerShell wrapper for operations |
 
 #### Questions to Ask Yourself
@@ -80,7 +81,7 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 - Yes → Consider SDK Provider
 - No → Continue to question 2
 
-**2. Does the platform have an non-official Python SDK?**
+**2. Does the platform have a non-official Python SDK?**
 
 - Yes → Then if the SDK is updated and maintained, consider SDK Provider, otherwise continue to question 3.
 - No → Continue to question 3
@@ -312,7 +313,7 @@ prowler/providers/<provider_name>/
 - **`services/`**: Folder that contains all the provider services, how to make a new service is explained in another section.
 - **`lib/arguments/`**: CLI argument validation and parsing
 - **`lib/mutelist/`**: Resource exclusion and muting functionality
-- **`lib/regions/`**: Region management and validation
+- **`lib/regions/`**: Region management and validation. If the provider is NOT regional, this folder will not be created.
 - **`lib/service/`**: Base service class for provider-specific services
 
 #### Step 2: Implement the Provider Class
@@ -782,7 +783,7 @@ class YourProviderMutelist(Mutelist):
 Region management is essential for cloud providers that operate across multiple geographic locations. This component handles region validation and provides region-specific functionality.
 
 ???+ note
-Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+    Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
 
 **File:** `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py`
 
@@ -924,7 +925,26 @@ PROVIDERS = {
 }
 ```
 
-#### Step 10: Add to Config
+#### Step 10: Register in the list of providers
+
+**Explanation:**
+This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
+
+**File:** `prowler/providers/common/provider.py`
+
+```python
+elif "your_provider" in provider_class_name.lower():
+    provider_class(
+        username=arguments.your_provider_username,
+        password=arguments.your_provider_password,
+        tenant_id=arguments.your_provider_tenant_id,
+        config_path=arguments.config_file,
+        mutelist_path=arguments.mutelist_file,
+        fixer_config=fixer_config,
+    )
+```
+
+#### Step 11: Add to Config
 
 **Explanation:**
 Configuration registration ensures your provider is recognized by Prowler's configuration system. This enables proper handling of provider-specific settings and defaults.
@@ -942,7 +962,7 @@ class Provider(str, Enum):
     YOUR_PROVIDER = "your_provider"  # Add your provider here
 ```
 
-#### Step 11: Create Compliance Files
+#### Step 12: Create Compliance Files
 
 **Explanation:**
 Compliance files define the security checks and standards that your provider supports. These JSON files map security controls to specific checks and provide remediation guidance.
@@ -983,7 +1003,7 @@ Compliance files define the security checks and standards that your provider sup
 }
 ```
 
-#### Step 12: Add Output Support
+#### Step 13: Add Output Support
 
 **Explanation:**
 Output support ensures that your provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
@@ -1003,7 +1023,7 @@ PROVIDER_SUMMARY_TABLE = {
 }
 ```
 
-#### Step 13: Add the Check Report Model
+#### Step 14: Add the Check Report Model
 
 **Explanation:**
 Add the provider to the generic models, this is needed to be able to use the provider in the generic checks.
@@ -1026,7 +1046,7 @@ class CheckReportYourProvider(CheckReport):
 
 ```
 
-#### Step 14: Add Dependencies
+#### Step 15: Add Dependencies
 
 **Explanation:**
 Dependencies ensure that your provider's required libraries are available when Prowler is installed. This step adds the necessary SDK or API client to Prowler's dependency management.
@@ -1040,7 +1060,7 @@ python = "^3.9"
 your-sdk-library = "^1.0.0"  # Add your SDK dependency
 ```
 
-#### Step 15: Create Tests
+#### Step 16: Create Tests
 
 **Explanation:**
 Testing ensures that your provider works correctly and maintains compatibility as Prowler evolves. Comprehensive tests cover authentication, session management, and provider-specific functionality.
@@ -1110,7 +1130,7 @@ class TestYourProvider:
             validate_your_provider_arguments()
 ```
 
-#### Step 16: Update Documentation
+#### Step 17: Update Documentation
 
 **Explanation:**
 Documentation updates ensure that users can find information about your provider in Prowler's documentation. This includes examples, configuration guides, and troubleshooting information.
@@ -1179,6 +1199,9 @@ prowler/providers/<provider_name>/
     ├── mutelist/
     │   ├── __init__.py
     │   └── mutelist.py
+    ├── regions/
+    │   ├── __init__.py
+    │   └── regions.py
     └── service/
         ├── __init__.py
         └── service.py
@@ -1192,6 +1215,7 @@ prowler/providers/<provider_name>/
 - **`services/`**: Folder that contains all the provider services
 - **`lib/arguments/`**: CLI argument validation and parsing
 - **`lib/mutelist/`**: Resource exclusion and muting functionality
+- **`lib/regions/`**: Region management and validation. If the provider is NOT regional, this folder will not be created.
 - **`lib/service/`**: Base service class for provider-specific services
 
 #### Step 2: Implement the Provider Class
@@ -1707,7 +1731,26 @@ PROVIDERS = {
 }
 ```
 
-#### Step 9: Add to Config
+#### Step 9: Register in the list of providers
+
+**Explanation:**
+This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
+
+**File:** `prowler/providers/common/provider.py`
+
+```python
+elif "your_provider" in provider_class_name.lower():
+    provider_class(
+        username=arguments.your_provider_username,
+        password=arguments.your_provider_password,
+        tenant_id=arguments.your_provider_tenant_id,
+        config_path=arguments.config_file,
+        mutelist_path=arguments.mutelist_file,
+        fixer_config=fixer_config,
+    )
+```
+
+#### Step 10: Add to Config
 
 **Explanation:**
 Configuration registration ensures your API provider is recognized by Prowler's configuration system. This enables proper handling of provider-specific settings and defaults.
@@ -1726,7 +1769,7 @@ class Provider(str, Enum):
     YOUR_API_PROVIDER = "your_api_provider"  # Add your API provider here
 ```
 
-#### Step 10: Create Compliance Files
+#### Step 11: Create Compliance Files
 
 **Explanation:**
 Compliance files define the security checks and standards that your API provider supports. These JSON files map security controls to specific checks and provide remediation guidance.
@@ -1767,7 +1810,7 @@ Compliance files define the security checks and standards that your API provider
 }
 ```
 
-#### Step 11: Add Output Support
+#### Step 12: Add Output Support
 
 **Explanation:**
 Output support ensures that your API provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
@@ -1788,7 +1831,7 @@ PROVIDER_SUMMARY_TABLE = {
 }
 ```
 
-#### Step 12: Add the Check Report Model
+#### Step 13: Add the Check Report Model
 
 **Explanation:**
 Add the provider to the generic models, this is needed to be able to use the provider in the generic checks.
@@ -1810,7 +1853,7 @@ class CheckReportYourApi(CheckReport):
         self.resource_id = resource.id
 ```
 
-#### Step 13: Create Tests
+#### Step 14: Create Tests
 
 **Explanation:**
 Testing ensures that your API provider works correctly and maintains compatibility as Prowler evolves. Comprehensive tests cover authentication, session management, and API-specific functionality.
@@ -1872,90 +1915,12 @@ class TestYourApiProvider:
         assert "X-Auth-Token" in provider.session.headers
 ```
 
-#### Step 14: Update Documentation
+#### Step 15: Update Documentation
 
 **Explanation:**
 Documentation updates ensure that users can find information about your API provider in Prowler's documentation. This includes examples, configuration guides, and troubleshooting information.
 
 Update the provider documentation to include your new API provider in the examples and implementation guidance.
-
----
-
-**Example Skeleton:**
-
-```python
-import os
-import requests
-from prowler.providers.common.provider import Provider
-from prowler.providers.common.models import Audit_Metadata
-
-class NhnProvider(Provider):
-    _type: str = "nhn"
-    _session: Optional[requests.Session]
-    _identity: NHNIdentityInfo
-    _audit_config: dict
-    _mutelist: NHNMutelist
-    audit_metadata: Audit_Metadata
-
-    def __init__(self, username=None, password=None, tenant_id=None, ...):
-        logger.info("Initializing NHN Provider...")
-
-        # Store argument values with environment variable fallback
-        self._username = username or os.getenv("NHN_USERNAME")
-        self._password = password or os.getenv("NHN_PASSWORD")
-        self._tenant_id = tenant_id or os.getenv("NHN_TENANT_ID")
-
-        # Validate required parameters
-        if not all([self._username, self._password, self._tenant_id]):
-            raise ValueError("NHN Provider requires username, password and tenant_id")
-
-        # Setup session and authentication
-        self._token = None
-        self._session = None
-        self.setup_session()
-
-        # Create identity object
-        self._identity = NHNIdentityInfo(
-            tenant_id=self._tenant_id,
-            username=self._username,
-        )
-
-        # Set audit metadata
-        self.audit_metadata = Audit_Metadata(...)
-
-    def setup_session(self):
-        """Implement NHN Cloud Authentication method by calling Keystone v2.0 API"""
-        url = "https://api-identity-infrastructure.nhncloudservice.com/v2.0/tokens"
-        data = {
-            "auth": {
-                "tenantId": self._tenant_id,
-                "passwordCredentials": {
-                    "username": self._username,
-                    "password": self._password,
-                },
-            }
-        }
-        # Implementation for token acquisition and session setup
-
-    @property
-    def identity(self):
-        return self._identity
-
-    @property
-    def session(self):
-        return self._session
-
-    def print_credentials(self):
-        """Display account information with color formatting"""
-        # Implementation using colorama for formatting
-        pass
-
-    @staticmethod
-    def test_connection(username, password, tenant_id, raise_on_exception=True):
-        """Test connection to NHN Cloud"""
-        # Implementation for connection testing
-        pass
-```
 
 ---
 
@@ -1987,7 +1952,9 @@ class NhnProvider(Provider):
 - They require mapping between Prowler's interface and the tool's arguments.
 - Output parsing and conversion to Prowler's standard format is crucial.
 - Tool-specific configuration files and validation.
-- Repository cloning and temporary file management for remote scans.
+- Repository cloning and temporary file management for remote scans (if needed).
+
+**Note:** This guide provides a general framework for integrating any external tool. The specific implementation details (like repository cloning, authentication tokens, etc.) will depend on your particular tool's requirements. The core pattern is: integrate with Prowler's CLI, execute your tool via subprocess, and parse the output into Prowler's format.
 
 ---
 
@@ -2029,16 +1996,11 @@ The provider class is the core component that handles tool integration, executio
 
 ```python
 import json
-import shutil
 import subprocess
 import sys
-import tempfile
-from os import environ
 from typing import List
 
-from alive_progress import alive_bar
 from colorama import Fore, Style
-from dulwich import porcelain
 
 from prowler.config.config import (
     default_config_file_path,
@@ -2072,32 +2034,28 @@ class YourToolProvider(Provider):
         self,
         # Tool-specific parameters
         scan_path: str = ".",
-        scan_repository_url: str = None,
-        frameworks: list[str] = ["all"],
+        tool_specific_arg: str = "default_value",
         exclude_path: list[str] = [],
         # Configuration
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
-        # Authentication (if needed for repository access)
-        username: str = None,
-        personal_access_token: str = None,
-        oauth_app_token: str = None,
+        # Authentication (if needed for your tool)
+        auth_token: str = None,
+        auth_username: str = None,
     ):
         """
         Initializes the YourToolProvider instance.
 
         Args:
             scan_path: Path to the folder containing files to scan
-            scan_repository_url: URL to the repository containing files to scan
-            frameworks: List of frameworks to scan
+            tool_specific_arg: Tool-specific argument for your external tool
             exclude_path: List of paths to exclude from scan
             config_path: Path to the configuration file
             config_content: Configuration content as dictionary
             fixer_config: Fixer configuration dictionary
-            username: Username for repository authentication
-            personal_access_token: Personal access token for authentication
-            oauth_app_token: OAuth app token for authentication
+            auth_token: Authentication token for your tool (if needed)
+            auth_username: Username for your tool (if needed)
 
         Raises:
             ValueError: If required parameters are missing
@@ -2106,8 +2064,7 @@ class YourToolProvider(Provider):
 
         # Store tool-specific parameters
         self.scan_path = scan_path
-        self.scan_repository_url = scan_repository_url
-        self.frameworks = frameworks
+        self.tool_specific_arg = tool_specific_arg
         self.exclude_path = exclude_path
         self.region = "global"
         self.audited_account = "local-tool"
@@ -2115,30 +2072,17 @@ class YourToolProvider(Provider):
         self._identity = "prowler"
         self._auth_method = "No auth"
 
-        # Handle repository authentication if needed
-        if scan_repository_url:
-            oauth_app_token = oauth_app_token or environ.get("YOUR_TOOL_OAUTH_APP_TOKEN")
-            username = username or environ.get("YOUR_TOOL_USERNAME")
-            personal_access_token = personal_access_token or environ.get(
-                "YOUR_TOOL_PERSONAL_ACCESS_TOKEN"
-            )
-
-            if oauth_app_token:
-                self.oauth_app_token = oauth_app_token
-                self.username = None
-                self.personal_access_token = None
-                self._auth_method = "OAuth App Token"
-                logger.info("Using OAuth App Token for repository authentication")
-            elif username and personal_access_token:
-                self.username = username
-                self.personal_access_token = personal_access_token
-                self.oauth_app_token = None
-                self._auth_method = "Personal Access Token"
-                logger.info("Using username and personal access token for authentication")
+        # Handle tool authentication if needed
+        if auth_token:
+            self.auth_token = auth_token
+            self._auth_method = "Token"
+            logger.info("Using token for tool authentication")
+        elif auth_username:
+            self.auth_username = auth_username
+            self._auth_method = "Username"
+            logger.info("Using username for tool authentication")
+                logger.info("Using username for tool authentication")
             else:
-                self.username = None
-                self.personal_access_token = None
-                self.oauth_app_token = None
                 logger.debug("No authentication method provided; proceeding without authentication.")
 
         # Audit Config
@@ -2271,81 +2215,17 @@ class YourToolProvider(Provider):
             )
             sys.exit(1)
 
-    def _clone_repository(
-        self,
-        repository_url: str,
-        username: str = None,
-        personal_access_token: str = None,
-        oauth_app_token: str = None,
-    ) -> str:
-        """
-        Clone a git repository to a temporary directory, supporting authentication.
-        """
-        try:
-            if username and personal_access_token:
-                repository_url = repository_url.replace(
-                    "https://github.com/",
-                    f"https://{username}:{personal_access_token}@github.com/",
-                )
-            elif oauth_app_token:
-                repository_url = repository_url.replace(
-                    "https://github.com/",
-                    f"https://oauth2:{oauth_app_token}@github.com/",
-                )
-
-            temporary_directory = tempfile.mkdtemp()
-            logger.info(
-                f"Cloning repository {repository_url} into {temporary_directory}..."
-            )
-            with alive_bar(
-                ctrl_c=False,
-                bar="blocks",
-                spinner="classic",
-                stats=False,
-                enrich_print=False,
-            ) as bar:
-                try:
-                    bar.title = f"-> Cloning {repository_url}..."
-                    porcelain.clone(repository_url, temporary_directory, depth=1)
-                    bar.title = "-> Repository cloned successfully!"
-                except Exception as clone_error:
-                    bar.title = "-> Cloning failed!"
-                    raise clone_error
-            return temporary_directory
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-            )
-
     def run(self) -> List[CheckReportYourTool]:
         """
-        Main execution method that handles repository cloning and tool execution.
+        Main execution method that handles tool execution.
 
         Returns:
             List[CheckReportYourTool]: List of check reports from the tool scan
         """
-        temp_dir = None
-        if self.scan_repository_url:
-            scan_dir = temp_dir = self._clone_repository(
-                self.scan_repository_url,
-                getattr(self, "username", None),
-                getattr(self, "personal_access_token", None),
-                getattr(self, "oauth_app_token", None),
-            )
-        else:
-            scan_dir = self.scan_path
-
-        try:
-            reports = self.run_scan(scan_dir, self.frameworks, self.exclude_path)
-        finally:
-            if temp_dir:
-                logger.info(f"Removing temporary directory {temp_dir}...")
-                shutil.rmtree(temp_dir)
-
-        return reports
+        return self.run_scan(self.scan_path, self.exclude_path)
 
     def run_scan(
-        self, directory: str, frameworks: list[str], exclude_path: list[str]
+        self, directory: str, exclude_path: list[str]
     ) -> List[CheckReportYourTool]:
         """
         Execute the external tool and parse its output.
@@ -2364,6 +2244,7 @@ class YourToolProvider(Provider):
             # Build the tool command
             tool_command = [
                 "your_tool_command",
+                # Add your tool-specific arguments here, this are just examples
                 "-d",
                 directory,
                 "-o",
@@ -2517,11 +2398,12 @@ Argument validation ensures that the tool provider receives valid configuration 
 **File:** `prowler/providers/<provider_name>/lib/arguments/arguments.py`
 
 ```python
-FRAMEWORK_CHOICES = [
-    "framework1",
-    "framework2",
-    "framework3",
-    # Add your tool's supported frameworks
+# Add your tool-specific choices if needed
+TOOL_SPECIFIC_CHOICES = [
+    "option1",
+    "option2",
+    "option3",
+    # Add your tool's supported options
 ]
 
 def init_parser(self):
@@ -2537,26 +2419,15 @@ def init_parser(self):
         "-P",
         dest="scan_path",
         default=".",
-        help="Path to the folder containing your files to scan. Default: current directory. Mutually exclusive with --scan-repository-url.",
+        help="Path to the folder containing your files to scan. Default: current directory.",
     )
 
     <provider_name>_scan_subparser.add_argument(
-        "--scan-repository-url",
-        "-R",
-        dest="scan_repository_url",
-        default=None,
-        help="URL to the repository containing your files to scan. Mutually exclusive with --scan-path.",
-    )
-
-    <provider_name>_scan_subparser.add_argument(
-        "--frameworks",
-        "-f",
-        "--framework",
-        dest="frameworks",
-        nargs="+",
-        default=["all"],
-        choices=FRAMEWORK_CHOICES,
-        help="Comma-separated list of frameworks to scan. Default: all",
+        "--tool-specific-arg",
+        dest="tool_specific_arg",
+        default="default_value",
+        choices=TOOL_SPECIFIC_CHOICES,
+        help="Tool-specific argument for your external tool. Default: default_value",
     )
 
     <provider_name>_scan_subparser.add_argument(
@@ -2567,27 +2438,20 @@ def init_parser(self):
         help="Comma-separated list of paths to exclude from the scan. Default: none",
     )
 
-    # Authentication (if needed)
+    # Authentication (if needed for your tool)
     <provider_name>_scan_subparser.add_argument(
-        "--username",
-        dest="username",
+        "--auth-token",
+        dest="auth_token",
         nargs="?",
         default=None,
-        help="Username for authenticated repository cloning (used with --personal-access-token). If not provided, will use YOUR_TOOL_USERNAME env var.",
+        help="Authentication token for your tool. If not provided, will use YOUR_TOOL_AUTH_TOKEN env var.",
     )
     <provider_name>_scan_subparser.add_argument(
-        "--personal-access-token",
-        dest="personal_access_token",
+        "--auth-username",
+        dest="auth_username",
         nargs="?",
         default=None,
-        help="Personal access token for authenticated repository cloning (used with --username). If not provided, will use YOUR_TOOL_PERSONAL_ACCESS_TOKEN env var.",
-    )
-    <provider_name>_scan_subparser.add_argument(
-        "--oauth-app-token",
-        dest="oauth_app_token",
-        nargs="?",
-        default=None,
-        help="OAuth app token for authenticated repository cloning. If not provided, will use YOUR_TOOL_OAUTH_APP_TOKEN env var.",
+        help="Username for your tool authentication. If not provided, will use YOUR_TOOL_AUTH_USERNAME env var.",
     )
 
 def validate_arguments(arguments):
@@ -2630,17 +2494,10 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--your-tool-scan-repository-url",
-    help="Repository URL to scan with Your Tool Provider",
+    "--your-tool-specific-arg",
+    help="Tool-specific argument for Your Tool Provider",
     type=str,
-)
-
-parser.add_argument(
-    "--your-tool-frameworks",
-    help="Frameworks to scan (comma-separated)",
-    type=str,
-    nargs="+",
-    default=["all"],
+    default="default_value",
 )
 
 parser.add_argument(
@@ -2674,7 +2531,25 @@ PROVIDERS = {
 }
 ```
 
-#### Step 7: Add to Config
+#### Step 7: Register in the list of providers
+
+**Explanation:**
+This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
+
+**File:** `prowler/providers/common/provider.py`
+
+```python
+elif "your_tool_provider" in provider_class_name.lower():
+    provider_class(
+        # Add your tool-specific arguments here
+        scan_path=arguments.scan_path,
+        tool_specific_arg=arguments.tool_specific_arg,
+        config_path=arguments.config_file,
+        fixer_config=fixer_config,
+    )
+```
+
+#### Step 8: Add to Config
 
 **Explanation:**
 Configuration registration ensures your tool provider is recognized by Prowler's configuration system. This enables proper handling of provider-specific settings and defaults.
@@ -2694,7 +2569,7 @@ class Provider(str, Enum):
     YOUR_TOOL_PROVIDER = "your_tool_provider"  # Add your tool provider here
 ```
 
-#### Step 8: Create Compliance Files
+#### Step 9: Create Compliance Files
 
 **Explanation:**
 Compliance files define the security checks and standards that your tool provider supports. These JSON files map security controls to specific checks and provide remediation guidance.
@@ -2735,7 +2610,7 @@ Compliance files define the security checks and standards that your tool provide
 }
 ```
 
-#### Step 9: Add Output Support
+#### Step 10: Add Output Support
 
 **Explanation:**
 Output support ensures that your tool provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
@@ -2757,7 +2632,7 @@ PROVIDER_SUMMARY_TABLE = {
 }
 ```
 
-#### Step 10: Add the Check Report Model
+#### Step 11: Add the Check Report Model
 
 **Explanation:**
 Add the provider to the generic models, this is needed to be able to use the provider in the generic checks.
@@ -2779,7 +2654,7 @@ class CheckReportYourTool(CheckReport):
         self.resource_id = resource.id
 ```
 
-#### Step 11: Create Tests
+#### Step 12: Create Tests
 
 **Explanation:**
 Testing ensures that your tool provider works correctly and maintains compatibility as Prowler evolves. Comprehensive tests cover tool execution, output parsing, and provider-specific functionality.
@@ -2805,13 +2680,11 @@ class TestYourToolProvider:
         assert provider.identity == "prowler"
         assert provider.scan_path == "."
 
-    def test_provider_initialization_with_repository(self):
-        """Test provider initialization with repository URL."""
-        provider = YourToolProvider(
-            scan_repository_url="https://github.com/test/repo",
-            frameworks=["framework1"]
-        )
-        assert provider.scan_repository_url == "https://github.com/test/repo"
+    def test_tool_execution(self):
+        """Test tool execution and output parsing."""
+        provider = YourToolProvider(scan_path=".")
+        # Mock the subprocess call and test output parsing
+        # This will depend on your specific tool's output format
 
     def test_argument_validation(self):
         """Test argument validation."""
@@ -2822,19 +2695,12 @@ class TestYourToolProvider:
         # Valid arguments
         class MockArgs:
             scan_path = "."
-            scan_repository_url = None
+            tool_specific_arg = "value"
 
         is_valid, message = validate_arguments(MockArgs())
         assert is_valid is True
 
-        # Invalid arguments (both scan_path and scan_repository_url)
-        class MockArgsInvalid:
-            scan_path = "/custom/path"
-            scan_repository_url = "https://github.com/test/repo"
-
-        is_valid, message = validate_arguments(MockArgsInvalid())
-        assert is_valid is False
-        assert "mutually exclusive" in message
+        # Add more test cases as needed for your specific tool provider
 
     def test_print_credentials(self):
         """Test print_credentials method."""
@@ -2846,7 +2712,7 @@ class TestYourToolProvider:
         provider.print_credentials()
 ```
 
-#### Step 12: Update Documentation
+#### Step 13: Update Documentation
 
 **Explanation:**
 Documentation updates ensure that users can find information about your tool provider in Prowler's documentation. This includes examples, configuration guides, and troubleshooting information.
@@ -2855,58 +2721,6 @@ Update the provider documentation to include your new tool provider in the examp
 
 ---
 
-**Example Skeleton:**
-
-```python
-import json
-import subprocess
-import tempfile
-from typing import List
-from prowler.providers.common.provider import Provider
-from prowler.providers.common.models import Audit_Metadata
-
-class IacProvider(Provider):
-    _type: str = "iac"
-    audit_metadata: Audit_Metadata
-
-    def __init__(self, scan_path=".", scan_repository_url=None, frameworks=["all"], ...):
-        logger.info("Instantiating IAC Provider...")
-
-        # Store tool-specific parameters
-        self.scan_path = scan_path
-        self.scan_repository_url = scan_repository_url
-        self.frameworks = frameworks
-        self.region = "global"
-        self.audited_account = "local-iac"
-        self._session = None
-        self._identity = "prowler"
-        self._auth_method = "No auth"
-
-        # Handle repository authentication if needed
-        if scan_repository_url:
-            # Authentication logic for repository access
-            pass
-
-        # Set audit metadata
-        self.audit_metadata = Audit_Metadata(...)
-
-    def run(self) -> List[CheckReportIAC]:
-        """Main execution method that handles repository cloning and tool execution."""
-        # Implementation for tool execution
-        pass
-
-    def run_scan(self, directory: str, frameworks: list[str], exclude_path: list[str]) -> List[CheckReportIAC]:
-        """Execute the external tool and parse its output."""
-        # Implementation for tool execution and output parsing
-        pass
-
-    def print_credentials(self):
-        """Display scan information with color formatting"""
-        # Implementation using colorama for formatting
-        pass
-```
-
----
 
 ### Step 2: Integrate the Provider in the API
 
@@ -3078,14 +2892,14 @@ TBD
 
 ### Provider Implementation Guidance
 
-Use existing providers as templates:
+Use existing providers as templates, this will help you to understand better the structure and the implementation will be easier:
 
 - [AWS (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_provider.py)
 - [Azure (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/azure_provider.py)
 - [GCP (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/gcp_provider.py)
 - [Kubernetes (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
 - [M365 (SDK/Wrapper)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/m365/m365_provider.py)
-- [GitHub (API)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/github/github_provider.py)
+- [GitHub (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/github/github_provider.py)
 - [NHN (API)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/nhn/nhn_provider.py)
 - [IAC (Tool)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/iac/iac_provider.py)
 
@@ -3093,11 +2907,101 @@ Use existing providers as templates:
 
 ### Best Practices
 
-TBD
+- **Code Quality & Documentation**
+
+    - **Comprehensive Docstrings**: Every class, method, and function should have detailed docstrings following Prowler's format
+    ```python
+    def method_name(self, param: str) -> str:
+        """
+        Brief description of what the method does.
+
+        Args:
+            param: Description of the parameter
+
+        Returns:
+            Description of the return value
+
+        Raises:
+            ExceptionType: When and why this exception occurs
+        """
+    ```
+
+    - **Type Hints**: Use type hints for all function parameters and return values
+    ```python
+    from typing import Optional, List, Dict, Any
+    ```
+
+    - **Logging**: Implement proper logging using Prowler's logger
+    ```python
+    from prowler.lib.logger import logger
+
+    logger.info("Operation completed successfully")
+    logger.warning("Something to be aware of")
+    logger.error("Something went wrong")
+    logger.critical("Critical error that may cause failure")
+    ```
+
+- **Error Handling & Validation**
+
+    - **Custom Exceptions**: Create provider-specific exceptions for better error handling
+    - **Input Validation**: Validate all inputs and provide clear error messages
+    - **Graceful Degradation**: Handle errors gracefully without crashing the entire scan
+    - **Raise on Exception**: Use `raise_on_exception` parameter for test methods
+
+- **Testing & Quality Assurance**
+
+    - **Comprehensive Test Coverage**: Aim for >80% test coverage
+    - **Test Naming**: Use descriptive test names: `test_method_name_scenario`
+    - **Test Organization**: Group related tests in test classes
+    - **Mock External Dependencies**: Mock external API calls and services
+    - **Test Edge Cases**: Include tests for error conditions and edge cases
+    - **End-to-End Testing**: Test the provider on real infrastructure
+
+- **Performance & Security**
+
+    - **Session Management**: Reuse sessions when possible, don't create new ones unnecessarily
+    - **Rate Limiting**: Implement rate limiting for API calls to avoid hitting limits
+    - **Resource Cleanup**: Ensure proper cleanup of temporary resources
+    - **Authentication Security**: Never log sensitive credentials or tokens
+
+- **Code Organization**
+
+    - **Single Responsibility**: Each method should have one clear purpose
+    - **Consistent Naming**: Follow Prowler's naming conventions
+    - **Modular Design**: Break complex functionality into smaller, testable methods
+    - **Configuration Management**: Use configuration files for provider-specific settings
+
+- **Documentation & Maintenance**
+
+    - **README Updates**: Update provider-specific documentation
+    - **Changelog**: Document changes and new features
+    - **Examples**: Provide usage examples and common scenarios
+    - **Troubleshooting**: Include common issues and solutions
+    - **Documentation**: Update the provider documentation to include your new tool provider in the examples and implementation guidance.
+
+- **Integration Standards**
+
+    - **CLI Consistency**: Follow Prowler's CLI argument patterns
+    - **Output Format**: Ensure outputs are compatible with Prowler's reporting system
+    - **Compliance Mapping**: Map provider checks to relevant compliance frameworks
+    - **Backward Compatibility**: Maintain compatibility when possible
+
+- **AI-Assisted Development**
+
+    - **Use Rules**: Use rules to ensure the code generated by AI is following the way of working in Prowler.
 
 ### Checklist for New Providers
 
 #### CLI Integration Only
+
+**Phase 1: Research & Planning**
+
+- [ ] Soft research completed
+- [ ] Spike date scheduled
+- [ ] Deeper research completed
+- [ ] Action plan created
+
+**Phase 2: Implementation**
 
 - [ ] Folder and files created in `prowler/providers/<name>`
 - [ ] Provider class implemented and inherits from `Provider`
@@ -3106,6 +3010,14 @@ TBD
 - [ ] Outputs and metadata standardized
 - [ ] Registered in the CLI
 - [ ] Minimal usage example provided
+
+**Phase 3: Delivery**
+
+- [ ] PoC delivered
+- [ ] MVP delivered
+- [ ] Version 1 completed
+- [ ] QA and documentation completed
+- [ ] GA release ready
 
 #### API Integration
 
