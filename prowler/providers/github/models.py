@@ -21,7 +21,7 @@ class GithubIdentityInfo(BaseModel):
 
 class GithubAppIdentityInfo(BaseModel):
     app_id: str
-    app_name: Optional[str] = None
+    app_name: str
 
 
 class GithubOutputOptions(ProviderOutputOptions):

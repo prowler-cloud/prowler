@@ -583,7 +583,7 @@ class HTML(Output):
                                 <b>GitHub App ID:</b> {provider.identity.app_id}
                             </li>
                             <li class="list-group-item">
-                                <b>GitHub App Name:</b> {provider.identity.app_name}
+                                <b>GitHub App:</b> {provider.identity.app_name}
                             </li>'''
             }
                         </ul>
