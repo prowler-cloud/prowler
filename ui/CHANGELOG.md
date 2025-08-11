@@ -11,6 +11,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Disable `See Compliance` button until scan completes [(#8487)](https://github.com/prowler-cloud/prowler/pull/8487)
+
 ### 🐞 Fixed
 
 ### ❌ Removed
