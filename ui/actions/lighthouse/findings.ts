@@ -8,6 +8,7 @@ export const getLighthouseFindings = async ({
   query = "",
   sort = "",
   filters = {},
+  fields = [],
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -21,6 +22,9 @@ export const getLighthouseFindings = async ({
 
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
+  if (fields.length > 0) {
+    url.searchParams.append("fields[findings]", fields.join(","));
+  }
 
   Object.entries(filters).forEach(([key, value]) => {
     url.searchParams.append(key, String(value));

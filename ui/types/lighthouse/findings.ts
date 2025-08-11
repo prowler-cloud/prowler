@@ -213,6 +213,31 @@ export const getFindingsSchema = z.object({
     .describe(
       "The filters to apply. Default is {}. Only add necessary filters and ignore others. Generate the filters object **only** with non-empty values included.",
     ),
+  fields: z
+    .array(
+      z.enum([
+        "uid",
+        "delta",
+        "status",
+        "status_extended",
+        "severity",
+        "check_id",
+        "check_metadata",
+        "raw_result",
+        "inserted_at",
+        "updated_at",
+        "first_seen_at",
+        "muted",
+        "muted_reason",
+        "url",
+        "scan",
+        "resources",
+      ]),
+    )
+    .optional()
+    .describe(
+      "List of fields to include in the response. Use only available fields.",
+    ),
 });
 
 // Get Metadata Info Schema
