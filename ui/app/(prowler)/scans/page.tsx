@@ -96,7 +96,7 @@ export default async function Scans({
         />
         <Spacer y={8} />
         <div className="flex items-center justify-end gap-4">
-          <MutedFindingsConfigButton isDisabled={thereIsNoProvidersConnected} />
+          <MutedFindingsConfigButton />
         </div>
         <Spacer y={8} />
         <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>

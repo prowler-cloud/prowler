@@ -1,5 +1,7 @@
 import os
+import uuid
 import zipfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -127,14 +129,26 @@ class TestOutputs:
         _upload_to_s3("tenant", str(zip_path), "scan")
         mock_logger.assert_called()
 
-    def test_generate_output_directory_creates_paths(self, tmpdir):
-        from prowler.config.config import output_file_timestamp
+    @patch("tasks.jobs.export.rls_transaction")
+    @patch("tasks.jobs.export.Scan")
+    def test_generate_output_directory_creates_paths(
+        self, mock_scan, mock_rls_transaction, tmpdir
+    ):
+        # Mock the scan object with a started_at timestamp
+        mock_scan_instance = MagicMock()
+        mock_scan_instance.started_at = datetime(2023, 6, 15, 10, 30, 45)
+        mock_scan.objects.get.return_value = mock_scan_instance
+
+        # Mock rls_transaction as a context manager
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock(return_value=False)
 
         base_tmp = Path(str(tmpdir.mkdir("generate_output")))
         base_dir = str(base_tmp)
-        tenant_id = "t1"
-        scan_id = "s1"
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
         provider = "aws"
+        expected_timestamp = "20230615103045"
 
         path, compliance = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
@@ -143,17 +157,29 @@ class TestOutputs:
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
 
-        assert path.endswith(f"{provider}-{output_file_timestamp}")
-        assert compliance.endswith(f"{provider}-{output_file_timestamp}")
+        assert path.endswith(f"{provider}-{expected_timestamp}")
+        assert compliance.endswith(f"{provider}-{expected_timestamp}")
 
-    def test_generate_output_directory_invalid_character(self, tmpdir):
-        from prowler.config.config import output_file_timestamp
+    @patch("tasks.jobs.export.rls_transaction")
+    @patch("tasks.jobs.export.Scan")
+    def test_generate_output_directory_invalid_character(
+        self, mock_scan, mock_rls_transaction, tmpdir
+    ):
+        # Mock the scan object with a started_at timestamp
+        mock_scan_instance = MagicMock()
+        mock_scan_instance.started_at = datetime(2023, 6, 15, 10, 30, 45)
+        mock_scan.objects.get.return_value = mock_scan_instance
+
+        # Mock rls_transaction as a context manager
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock(return_value=False)
 
         base_tmp = Path(str(tmpdir.mkdir("generate_output")))
         base_dir = str(base_tmp)
-        tenant_id = "t1"
-        scan_id = "s1"
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
         provider = "aws/test@check"
+        expected_timestamp = "20230615103045"
 
         path, compliance = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
@@ -162,5 +188,5 @@ class TestOutputs:
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
 
-        assert path.endswith(f"aws-test-check-{output_file_timestamp}")
-        assert compliance.endswith(f"aws-test-check-{output_file_timestamp}")
+        assert path.endswith(f"aws-test-check-{expected_timestamp}")
+        assert compliance.endswith(f"aws-test-check-{expected_timestamp}")
