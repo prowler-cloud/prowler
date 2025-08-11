@@ -9,13 +9,14 @@ import {
 import { getFindingsSchema, getMetadataInfoSchema } from "@/types/lighthouse";
 
 export const getFindingsTool = tool(
-  async ({ page, pageSize, query, sort, filters }) => {
+  async ({ page, pageSize, query, sort, filters, fields }) => {
     return await getLighthouseFindings({
       page,
       pageSize,
       query,
       sort,
       filters,
+      fields,
     });
   },
   {
