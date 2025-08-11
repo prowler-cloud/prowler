@@ -38,25 +38,15 @@ export const getProviderHelpText = (provider: string) => {
   }
 };
 
-export const getAWSCredentialsTemplateScanLinks = (externalId: string) => {
-  return {
-    cloudformation:
-      "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml",
-    cloudformationQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=ProwlerScanRole&param_ExternalId=${externalId}`,
-    terraform:
-      "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/main.tf",
-  };
-};
-
-export const getAWSCredentialsTemplateBucketLinks = (
-  bucketName: string,
+export const getAWSCredentialsTemplateLinks = (
   externalId: string,
+  bucketName?: string,
 ) => {
   return {
     cloudformation:
       "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml",
-    cloudformationQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role-with-s3-integration.yml&stackName=ProwlerScanS3Integration&param_AccountId=232136659152&param_IAMPrincipal=role%2Fprowler*&param_ExternalId=${externalId}&param_S3IntegrationBucketName=${bucketName}`,
+    cloudformationQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_ExternalId=${externalId}${bucketName ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` : ""}`,
     terraform:
-      "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/main.tf",
+      "https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform",
   };
 };

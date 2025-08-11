@@ -1266,6 +1266,14 @@ class Test_Parser:
         assert parsed.provider == "gcp"
         assert parsed.impersonate_service_account == service_account
 
+    def test_parser_gcp_retries_max_attempts(self):
+        argument = "--gcp-retries-max-attempts"
+        max_retries = "10"
+        command = [prowler_command, "gcp", argument, max_retries]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert parsed.gcp_retries_max_attempts == int(max_retries)
+
     def test_parser_kubernetes_auth_kubeconfig_file(self):
         argument = "--kubeconfig-file"
         file = "config"

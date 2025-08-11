@@ -1,0 +1,30 @@
+# =============================================================================
+# Prowler Terraform Configuration
+# =============================================================================
+
+# REQUIRED: External ID from your Prowler App
+external_id = "your-unique-external-id-here"
+
+# =============================================================================
+# Optional Variables (uncomment and modify as needed)
+# =============================================================================
+
+# Prowler Cloud Service Account (leave default unless using self-hosted)
+# account_id = "232136659152"
+
+# IAM Principal Pattern (leave default unless using self-hosted)
+# iam_principal = "role/prowler*"
+
+# =============================================================================
+# S3 Integration Configuration
+# =============================================================================
+# Uncomment the following lines to enable S3 integration for storing scan reports
+
+# Enable S3 integration
+# enable_s3_integration = true
+
+# S3 bucket name where reports will be stored
+# s3_integration_bucket_name = "my-prowler-reports-bucket"
+
+# AWS Account ID that owns the S3 bucket (usually your account)
+# s3_integration_bucket_account_id = "123456789012"

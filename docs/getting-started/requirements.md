@@ -209,7 +209,7 @@ Refer to the [Create Prowler Service Principal](../tutorials/microsoft365/gettin
 If the external API permissions described in the mentioned section above are not added only checks that work through MS Graph will be executed. This means that the full provider will not be executed.
 
 ???+ note
-    In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [Needed permissions](/docs/tutorials/microsoft365/getting-started-m365.md#needed-permissions) section for more information.
+    In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [External API Permissions Assignment](../tutorials/microsoft365/getting-started-m365.md#grant-powershell-modules-permissions) section for more information.
 
 ### Service Principal and User Credentials Authentication
 
