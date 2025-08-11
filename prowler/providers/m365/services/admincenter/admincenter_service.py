@@ -81,12 +81,12 @@ class AdminCenter(M365Service):
             users.update({})
             for user in users_list.value:
                 license_details = await self.client.users.by_user_id(
-                    getattr(user, "id", "")
+                    user.id
                 ).license_details.get()
                 users.update(
                     {
-                        getattr(user, "id", ""): User(
-                            id=getattr(user, "id", ""),
+                        user.id: User(
+                            id=user.id,
                             name=getattr(user, "display_name", ""),
                             license=(
                                 getattr(
@@ -114,7 +114,7 @@ class AdminCenter(M365Service):
             for directory_role in directory_roles.value:
                 directory_role_members = (
                     await self.client.directory_roles.by_directory_role_id(
-                        getattr(directory_role, "id", "")
+                        directory_role.id
                     ).members.get()
                 )
                 members_with_roles = []
@@ -126,9 +126,9 @@ class AdminCenter(M365Service):
 
                 directory_roles_with_members.update(
                     {
-                        getattr(directory_role, "display_name", ""): DirectoryRole(
-                            id=getattr(directory_role, "id", ""),
-                            name=getattr(directory_role, "display_name", ""),
+                        directory_role.display_name: DirectoryRole(
+                            id=directory_role.id,
+                            name=directory_role.display_name,
                             members=members_with_roles,
                         )
                     }
@@ -149,8 +149,8 @@ class AdminCenter(M365Service):
             for group in groups_list.value:
                 groups.update(
                     {
-                        getattr(group, "id", ""): Group(
-                            id=getattr(group, "id", ""),
+                        group.id: Group(
+                            id=group.id,
                             name=getattr(group, "display_name", ""),
                             visibility=getattr(group, "visibility", ""),
                         )
@@ -179,8 +179,8 @@ class AdminCenter(M365Service):
 
                     domains.update(
                         {
-                            getattr(domain, "id", ""): Domain(
-                                id=getattr(domain, "id", ""),
+                            domain.id: Domain(
+                                id=domain.id,
                                 password_validity_period=password_validity_period,
                             )
                         }
