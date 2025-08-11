@@ -29,6 +29,13 @@ export default auth((req: NextRequest & { auth: any }) => {
     if (pathname.startsWith("/billing") && !permissions.manage_billing) {
       return NextResponse.redirect(new URL("/profile", req.url));
     }
+
+    if (
+      pathname.startsWith("/integrations") &&
+      !permissions.manage_integrations
+    ) {
+      return NextResponse.redirect(new URL("/profile", req.url));
+    }
   }
 
   return NextResponse.next();
