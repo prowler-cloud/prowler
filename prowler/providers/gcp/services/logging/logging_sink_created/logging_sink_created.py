@@ -26,6 +26,11 @@ class logging_sink_created(Check):
                     metadata=self.metadata(),
                     resource=projects_with_logging_sink[project],
                     location=logging_client.region,
+                    resource_name=(
+                        projects_with_logging_sink[project].name
+                        if projects_with_logging_sink[project].name
+                        else "Logging Sink"
+                    ),
                 )
                 report.status = "PASS"
                 report.status_extended = f"Sink {projects_with_logging_sink[project].name} is enabled exporting copies of all the log entries in project {project}."
