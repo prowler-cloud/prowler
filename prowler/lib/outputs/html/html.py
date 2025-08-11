@@ -41,7 +41,7 @@ class HTML(Output):
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
                             <td>{finding.metadata.ServiceName}</td>
-                            <td>{":".join([finding.resource_metadata['file_path'], "-".join(map(str, finding.resource_metadata['file_line_range']))]) if finding.metadata.Provider == "iac" else finding.region.lower()}</td>
+                            <td>{":".join([finding.resource_metadata["file_path"], "-".join(map(str, finding.resource_metadata["file_line_range"]))]) if finding.metadata.Provider == "iac" else finding.region.lower()}</td>
                             <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
                             <td>{finding.metadata.CheckTitle}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
@@ -571,9 +571,21 @@ class HTML(Output):
                         </div>
                         <ul class="list-group
                         list-group-flush">
-                            <li class="list-group-item">
+                            {
+                f'''<li class="list-group-item">
                                 <b>GitHub account:</b> {account_display}
                             </li>
+                            <li class="list-group-item">
+                                <b>GitHub account email:</b> {provider.identity.account_email}
+                            </li>'''
+                if provider.identity.account_email
+                else f'''<li class="list-group-item">
+                                <b>GitHub App ID:</b> {provider.identity.app_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>GitHub App Name:</b> {provider.identity.app_name}
+                            </li>'''
+            }
                         </ul>
                     </div>
                 </div>
@@ -585,7 +597,9 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>GitHub authentication method:</b> {provider.auth_method}
+                                <b>GitHub authentication method:</b> {
+                provider.auth_method
+            }
                             </li>
                         </ul>
                     </div>

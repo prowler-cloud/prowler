@@ -344,10 +344,12 @@ class GithubProvider(Provider):
                 auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
                 try:
+                    user = g.get_user()
                     identity = GithubIdentityInfo(
-                        account_id=g.get_user().id,
-                        account_name=g.get_user().login,
-                        account_url=g.get_user().url,
+                        account_id=user.id,
+                        account_name=user.login,
+                        account_url=user.url,
+                        account_email=user.get_emails()[0].email,
                     )
                     return identity
 
@@ -360,7 +362,11 @@ class GithubProvider(Provider):
                 auth = Auth.AppAuth(session.id, session.key)
                 gi = GithubIntegration(auth=auth, retry=retry_config)
                 try:
-                    identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
+                    app = gi.get_app()
+                    identity = GithubAppIdentityInfo(
+                        app_id=app.id,
+                        app_name=app.name,
+                    )
                     return identity
 
                 except Exception as error:
