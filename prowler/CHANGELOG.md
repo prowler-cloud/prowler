@@ -2,9 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
-
 ## [v5.11.0] (Prowler UNRELEASED)
 
 ### Added
@@ -22,7 +19,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> 760723874 (fix(prowler-threatscore): order the requirements by id (#8495))
 ## [v5.10.1] (Prowler v5.10.1)
 
 ### Fixed
