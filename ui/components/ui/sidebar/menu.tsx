@@ -17,6 +17,9 @@ import {
 import { useAuth } from "@/hooks";
 import { getMenuList } from "@/lib/menu-list";
 import { cn } from "@/lib/utils";
+import { useUIStore } from "@/store/ui/store";
+import { GroupProps } from "@/types";
+import { RolePermissionAttributes } from "@/types/users";
 
 import { Button } from "../button/button";
 import { CustomButton } from "../custom/custom-button";
@@ -24,7 +27,7 @@ import { ScrollArea } from "../scroll-area/scroll-area";
 
 interface MenuHideRule {
   label: string;
-  condition: (permissions: any) => boolean;
+  condition: (permissions: RolePermissionAttributes) => boolean;
 }
 
 // Configuration for hiding menu items based on permissions
@@ -48,16 +51,16 @@ const MENU_HIDE_RULES: MenuHideRule[] = [
   // },
 ];
 
-const hideMenuItems = (menuGroups: any[], labelsToHide: string[]) => {
+const hideMenuItems = (menuGroups: GroupProps[], labelsToHide: string[]) => {
   return menuGroups.map((group) => ({
     ...group,
     menus: group.menus
-      .filter((menu: any) => !labelsToHide.includes(menu.label))
-      .map((menu: any) => ({
+      .filter((menu) => !labelsToHide.includes(menu.label))
+      .map((menu) => ({
         ...menu,
         submenus:
           menu.submenus?.filter(
-            (submenu: any) => !labelsToHide.includes(submenu.label),
+            (submenu) => !labelsToHide.includes(submenu.label),
           ) || [],
       })),
   }));
@@ -66,7 +69,12 @@ const hideMenuItems = (menuGroups: any[], labelsToHide: string[]) => {
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  const menuList = getMenuList(pathname);
+  const { hasProviders, openMutelistModal } = useUIStore();
+  const menuList = getMenuList({
+    pathname,
+    hasProviders,
+    openMutelistModal,
+  });
 
   const labelsToHide = MENU_HIDE_RULES.filter((rule) =>
     rule.condition(permissions),
@@ -122,7 +130,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 ) : (
                   <p className="pb-2"></p>
                 )}
-                {menus.map((menu: any, index: number) => {
+                {menus.map((menu, index) => {
                   const {
                     href,
                     label,

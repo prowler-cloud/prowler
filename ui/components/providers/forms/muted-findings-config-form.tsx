@@ -28,10 +28,12 @@ import {
 
 interface MutedFindingsConfigFormProps {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
+  onCancel?: () => void;
 }
 
 export const MutedFindingsConfigForm = ({
   setIsOpen,
+  onCancel,
 }: MutedFindingsConfigFormProps) => {
   const [config, setConfig] = useState<ProcessorData | null>(null);
   const [configText, setConfigText] = useState("");
@@ -237,6 +239,7 @@ export const MutedFindingsConfigForm = ({
       <div className="flex flex-col space-y-4">
         <FormButtons
           setIsOpen={setIsOpen}
+          onCancel={onCancel}
           submitText={config ? "Update" : "Save"}
           isDisabled={!yamlValidation.isValid || !configText.trim()}
         />
