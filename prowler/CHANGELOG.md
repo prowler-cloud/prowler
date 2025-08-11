@@ -2,15 +2,43 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.10.0] (Prowler UNRELEASED)
+
+## [v5.11.0] (Prowler UNRELEASED)
+
+### Added
+
+### Changed
+
+### Fixed
+
+---
+
+## [v5.10.2] (Prowler UNRELEASED)
+
+### Fixed
+- Order requirements by ID in Prowler ThreatScore AWS compliance framework [(#8495)](https://github.com/prowler-cloud/prowler/pull/8495)
+
+---
+
+## [v5.10.1] (Prowler v5.10.1)
+
+### Fixed
+- Remove invalid requirements from CIS 1.0 for GitHub provider [(#8472)](https://github.com/prowler-cloud/prowler/pull/8472)
+
+---
+
+## [v5.10.0] (Prowler v5.10.0)
 
 ### Added
 - `bedrock_api_key_no_administrative_privileges` check for AWS provider [(#8321)](https://github.com/prowler-cloud/prowler/pull/8321)
+- `bedrock_api_key_no_long_term_credentials` check for AWS provider [(#8396)](https://github.com/prowler-cloud/prowler/pull/8396)
 - Support App Key Content in GitHub provider [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - CIS 4.0 for the Azure provider [(#7782)](https://github.com/prowler-cloud/prowler/pull/7782)
 - `vm_desired_sku_size` check for Azure provider [(#8191)](https://github.com/prowler-cloud/prowler/pull/8191)
 - `vm_scaleset_not_empty` check for Azure provider [(#8192)](https://github.com/prowler-cloud/prowler/pull/8192)
 - GitHub repository and organization scoping support with `--repository/respositories` and `--organization/organizations` flags [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
+- GCP provider retry configuration [(#8412)](https://github.com/prowler-cloud/prowler/pull/8412)
+- `s3_bucket_shadow_resource_vulnerability` check for AWS provider [(#8398)](https://github.com/prowler-cloud/prowler/pull/8398)
 
 ### Changed
 - Handle some AWS errors as warnings instead of errors [(#8347)](https://github.com/prowler-cloud/prowler/pull/8347)
@@ -21,17 +49,21 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - False positives in SQS encryption check for ephemeral queues [(#8330)](https://github.com/prowler-cloud/prowler/pull/8330)
 - Add protocol validation check in security group checks to ensure proper protocol matching [(#8374)](https://github.com/prowler-cloud/prowler/pull/8374)
 - Add missing audit evidence for controls 1.1.4 and 2.5.5 for ISMS-P compliance. [(#8386)](https://github.com/prowler-cloud/prowler/pull/8386)
-
----
-
-## [v5.9.3] (Prowler UNRELEASED)
-
-### Fixed
+- Use the correct @staticmethod decorator for `set_identity` and `set_session_config` methods in AwsProvider [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+- Use the correct default value for `role_session_name` and `session_duration` in AwsSetUpSession [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+- Use the correct default value for `role_session_name` and `session_duration` in S3 [(#8417)](https://github.com/prowler-cloud/prowler/pull/8417)
+- GitHub App authentication fails to generate output files and HTML header sections [(#8423)](https://github.com/prowler-cloud/prowler/pull/8423)
+- S3 `test_connection` uses AWS S3 API `HeadBucket` instead of `GetBucketLocation` [(#8456)](https://github.com/prowler-cloud/prowler/pull/8456)
 - Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
 - `sns_topics_not_publicly_accessible` false positive with `aws:SourceArn` conditions [(#8326)](https://github.com/prowler-cloud/prowler/issues/8326)
 - Validation errors in Azure and M365 providers [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
 - Remove typo from description req 1.2.3 - Prowler ThreatScore m365 [(#8384)](https://github.com/prowler-cloud/prowler/pull/8384)
 - Way of counting FAILED/PASS reqs from `kisa_isms_p_2023_aws` table [(#8382)](https://github.com/prowler-cloud/prowler/pull/8382)
+- Use default tenant domain instead of first domain in list for Azure and M365 providers [(#8402)](https://github.com/prowler-cloud/prowler/pull/8402)
+- Avoid multiple module error calls in M365 provider [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
+- Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
+- Tweaks from Prowler ThreatScore in order to handle the correct reqs [(#8401)](https://github.com/prowler-cloud/prowler/pull/8401)
+- Make `setup_assumed_session` static for the AWS provider [(#8419)](https://github.com/prowler-cloud/prowler/pull/8419)
 
 ---
 

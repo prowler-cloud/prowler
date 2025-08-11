@@ -25,6 +25,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your Kubernetes cluster?",
         link: "https://goto.prowler.com/provider-k8s",
       };
+    case "github":
+      return {
+        text: "Need help connecting your GitHub account?",
+        link: "https://goto.prowler.com/provider-github",
+      };
     default:
       return {
         text: "How to setup a provider?",
@@ -33,13 +38,15 @@ export const getProviderHelpText = (provider: string) => {
   }
 };
 
-export const getAWSCredentialsTemplateLinks = () => {
+export const getAWSCredentialsTemplateLinks = (
+  externalId: string,
+  bucketName?: string,
+) => {
   return {
     cloudformation:
       "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml",
-    cloudformationQuickLink:
-      "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=ProwlerScanRole&param_ExternalId=",
+    cloudformationQuickLink: `https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_ExternalId=${externalId}${bucketName ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` : ""}`,
     terraform:
-      "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/main.tf",
+      "https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform",
   };
 };

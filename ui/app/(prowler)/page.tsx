@@ -8,6 +8,7 @@ import {
   getProvidersOverview,
 } from "@/actions/overview/overview";
 import { FilterControls } from "@/components/filters";
+import { LighthouseBanner } from "@/components/lighthouse";
 import {
   FindingsBySeverityChart,
   FindingsByStatusChart,
@@ -196,6 +197,9 @@ const SSRDataNewFindingsTable = async ({
         </div>
       </div>
       <Spacer y={4} />
+
+      <LighthouseBanner />
+
       <DataTable
         columns={ColumnNewFindingsToDate}
         data={expandedResponse?.data || []}

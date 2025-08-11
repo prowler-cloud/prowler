@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  AlertCircle,
   Bookmark,
   CloudCog,
   Cog,
   Group,
   LayoutGrid,
   Mail,
-  Package,
+  Puzzle,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -18,6 +17,7 @@ import {
   User,
   UserCog,
   Users,
+  VolumeX,
   Warehouse,
 } from "lucide-react";
 
@@ -28,6 +28,7 @@ import {
   CircleHelpIcon,
   DocIcon,
   GCPIcon,
+  GithubIcon,
   KubernetesIcon,
   LighthouseIcon,
   M365Icon,
@@ -35,7 +36,17 @@ import {
 } from "@/components/icons/Icons";
 import { GroupProps } from "@/types";
 
-export const getMenuList = (pathname: string): GroupProps[] => {
+interface MenuListOptions {
+  pathname: string;
+  hasProviders?: boolean;
+  openMutelistModal?: () => void;
+}
+
+export const getMenuList = ({
+  pathname,
+  hasProviders,
+  openMutelistModal,
+}: MenuListOptions): GroupProps[] => {
   return [
     {
       groupLabel: "",
@@ -81,11 +92,6 @@ export const getMenuList = (pathname: string): GroupProps[] => {
           icon: Bookmark,
           submenus: [
             {
-              href: "/findings?filter[status__in]=FAIL&sort=severity,-inserted_at",
-              label: "Misconfigurations",
-              icon: AlertCircle,
-            },
-            {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac&sort=-inserted_at",
               label: "IAM Issues",
               icon: ShieldCheck,
@@ -123,6 +129,11 @@ export const getMenuList = (pathname: string): GroupProps[] => {
               label: "Kubernetes",
               icon: KubernetesIcon,
             },
+            {
+              href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=github&sort=severity,-inserted_at",
+              label: "Github",
+              icon: GithubIcon,
+            },
           ],
           defaultOpen: false,
         },
@@ -137,17 +148,9 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
-          href: "",
+          href: "/resources",
           label: "Resources",
           icon: Warehouse,
-          submenus: [
-            {
-              href: "/resources",
-              label: "Browse all resources",
-              icon: Package,
-            },
-          ],
-          defaultOpen: true,
         },
       ],
     },
@@ -160,8 +163,17 @@ export const getMenuList = (pathname: string): GroupProps[] => {
           icon: Settings,
           submenus: [
             { href: "/providers", label: "Cloud Providers", icon: CloudCog },
+            {
+              // Use trailing slash to prevent both menu items from being active at /providers
+              href: "/providers/",
+              label: "Mutelist",
+              icon: VolumeX,
+              disabled: hasProviders === false,
+              onClick: openMutelistModal,
+            },
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
+            { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },
             { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
           ],
@@ -174,7 +186,7 @@ export const getMenuList = (pathname: string): GroupProps[] => {
       menus: [
         {
           href: "",
-          label: "Memberships",
+          label: "Organization",
           icon: Users,
           submenus: [
             { href: "/users", label: "Users", icon: User },

@@ -556,6 +556,13 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            if hasattr(provider.identity, "account_name"):
+                # GithubIdentityInfo (Personal Access Token, OAuth)
+                account_display = provider.identity.account_name
+            elif hasattr(provider.identity, "app_id"):
+                # GithubAppIdentityInfo (GitHub App)
+                account_display = f"app-{provider.identity.app_id}"
+
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -565,7 +572,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>GitHub account:</b> {provider.identity.account_name}
+                                <b>GitHub account:</b> {account_display}
                             </li>
                         </ul>
                     </div>

@@ -36,8 +36,8 @@ dependencies = [
   "azure-mgmt-subscription==3.1.1",
   "azure-mgmt-web==8.0.0",
   "azure-storage-blob==12.24.1",
-  "boto3==1.39.14",
-  "botocore==1.39.14",
+  "boto3==1.39.15",
+  "botocore==1.39.15",
   "colorama==0.4.6",
   "cryptography==44.0.1",
   "dash==3.1.1",
@@ -70,7 +70,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">3.9.1,<3.13"
-version = "5.10.0"
+version = "5.11.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"

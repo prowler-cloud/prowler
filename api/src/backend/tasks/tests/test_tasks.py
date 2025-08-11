@@ -1,9 +1,15 @@
 import uuid
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from tasks.tasks import _perform_scan_complete_tasks, generate_outputs_task
+from tasks.tasks import (
+    _perform_scan_complete_tasks,
+    check_integrations_task,
+    generate_outputs_task,
+    s3_integration_task,
+)
+
+from api.models import Integration
 
 
 # TODO Move this to outputs/reports jobs
@@ -27,7 +33,6 @@ class TestGenerateOutputs:
             assert result == {"upload": False}
             mock_filter.assert_called_once_with(scan_id=self.scan_id)
 
-    @patch("tasks.tasks.rmtree")
     @patch("tasks.tasks._upload_to_s3")
     @patch("tasks.tasks._compress_output_files")
     @patch("tasks.tasks.get_compliance_frameworks")
@@ -46,7 +51,6 @@ class TestGenerateOutputs:
         mock_get_available_frameworks,
         mock_compress,
         mock_upload,
-        mock_rmtree,
     ):
         mock_scan_summary_filter.return_value.exists.return_value = True
 
@@ -96,6 +100,7 @@ class TestGenerateOutputs:
                 return_value=("out-dir", "comp-dir"),
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
+            patch("tasks.tasks.rmtree"),
         ):
             mock_compress.return_value = "/tmp/zipped.zip"
             mock_upload.return_value = "s3://bucket/zipped.zip"
@@ -109,9 +114,6 @@ class TestGenerateOutputs:
             assert result == {"upload": True}
             mock_scan_update.return_value.update.assert_called_once_with(
                 output_location="s3://bucket/zipped.zip"
-            )
-            mock_rmtree.assert_called_once_with(
-                Path("/tmp/zipped.zip").parent, ignore_errors=True
             )
 
     def test_generate_outputs_fails_upload(self):
@@ -144,6 +146,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks._compress_output_files", return_value="/tmp/compressed"),
             patch("tasks.tasks._upload_to_s3", return_value=None),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
+            patch("tasks.tasks.rmtree"),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -153,7 +156,7 @@ class TestGenerateOutputs:
 
             result = generate_outputs_task(
                 scan_id="scan",
-                provider_id="provider",
+                provider_id=self.provider_id,
                 tenant_id=self.tenant_id,
             )
 
@@ -185,6 +188,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks._compress_output_files", return_value="/tmp/compressed"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/f.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
+            patch("tasks.tasks.rmtree"),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -255,8 +259,8 @@ class TestGenerateOutputs:
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
-            patch("tasks.tasks.rmtree"),
             patch("tasks.tasks.Scan.all_objects.filter"),
+            patch("tasks.tasks.rmtree"),
             patch(
                 "tasks.tasks.batched",
                 return_value=[
@@ -333,13 +337,13 @@ class TestGenerateOutputs:
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
-            patch("tasks.tasks.rmtree"),
             patch(
                 "tasks.tasks.Scan.all_objects.filter",
                 return_value=MagicMock(update=lambda **kw: None),
             ),
             patch("tasks.tasks.batched", return_value=two_batches),
             patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
+            patch("tasks.tasks.rmtree"),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
                 {"aws": [(lambda name: True, TrackingComplianceWriter)]},
@@ -358,6 +362,7 @@ class TestGenerateOutputs:
         assert writer.transform_calls == [([raw2], compliance_obj, "cis")]
         assert result == {"upload": True}
 
+    # TODO: We need to add a periodic task to delete old output files
     def test_generate_outputs_logs_rmtree_exception(self, caplog):
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
@@ -415,6 +420,56 @@ class TestGenerateOutputs:
                     )
                     assert "Error deleting output files" in caplog.text
 
+    @patch("tasks.tasks.rls_transaction")
+    @patch("tasks.tasks.Integration.objects.filter")
+    def test_generate_outputs_filters_enabled_s3_integrations(
+        self, mock_integration_filter, mock_rls
+    ):
+        """Test that generate_outputs_task only processes enabled S3 integrations."""
+        with (
+            patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
+            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.initialize_prowler_provider"),
+            patch("tasks.tasks.Compliance.get_bulk"),
+            patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
+            patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
+            patch(
+                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+            ),
+            patch("tasks.tasks.FindingOutput._transform_findings_stats"),
+            patch("tasks.tasks.FindingOutput.transform_api_finding"),
+            patch("tasks.tasks._compress_output_files", return_value="/tmp/compressed"),
+            patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/file.zip"),
+            patch("tasks.tasks.Scan.all_objects.filter"),
+            patch("tasks.tasks.rmtree"),
+            patch("tasks.tasks.s3_integration_task.apply_async") as mock_s3_task,
+        ):
+            mock_summary.return_value.exists.return_value = True
+            mock_findings.return_value.order_by.return_value.iterator.return_value = [
+                [MagicMock()],
+                True,
+            ]
+            mock_integration_filter.return_value = [MagicMock()]
+            mock_rls.return_value.__enter__.return_value = None
+
+            with (
+                patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
+                patch("tasks.tasks.COMPLIANCE_CLASS_MAP", {"aws": []}),
+            ):
+                generate_outputs_task(
+                    scan_id=self.scan_id,
+                    provider_id=self.provider_id,
+                    tenant_id=self.tenant_id,
+                )
+
+            # Verify the S3 integrations filters
+            mock_integration_filter.assert_called_once_with(
+                integrationproviderrelationship__provider_id=self.provider_id,
+                integration_type=Integration.IntegrationChoices.AMAZON_S3,
+                enabled=True,
+            )
+            mock_s3_task.assert_called_once()
+
 
 class TestScanCompleteTasks:
     @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
@@ -435,4 +490,111 @@ class TestScanCompleteTasks:
             scan_id="scan-id",
             provider_id="provider-id",
             tenant_id="tenant-id",
+        )
+
+
+@pytest.mark.django_db
+class TestCheckIntegrationsTask:
+    def setup_method(self):
+        self.scan_id = str(uuid.uuid4())
+        self.provider_id = str(uuid.uuid4())
+        self.tenant_id = str(uuid.uuid4())
+        self.output_directory = "/tmp/some-output-dir"
+
+    @patch("tasks.tasks.rls_transaction")
+    @patch("tasks.tasks.Integration.objects.filter")
+    def test_check_integrations_no_integrations(
+        self, mock_integration_filter, mock_rls
+    ):
+        mock_integration_filter.return_value.exists.return_value = False
+        # Ensure rls_transaction is mocked
+        mock_rls.return_value.__enter__.return_value = None
+
+        result = check_integrations_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+        )
+
+        assert result == {"integrations_processed": 0}
+        mock_integration_filter.assert_called_once_with(
+            integrationproviderrelationship__provider_id=self.provider_id,
+            enabled=True,
+        )
+
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.rls_transaction")
+    @patch("tasks.tasks.Integration.objects.filter")
+    def test_check_integrations_s3_success(
+        self, mock_integration_filter, mock_rls, mock_group
+    ):
+        # Mock that we have some integrations
+        mock_integration_filter.return_value.exists.return_value = True
+        # Ensure rls_transaction is mocked
+        mock_rls.return_value.__enter__.return_value = None
+
+        # Since the current implementation doesn't actually create tasks yet (TODO comment),
+        # we test that no tasks are created but the function returns the correct count
+        result = check_integrations_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+        )
+
+        assert result == {"integrations_processed": 0}
+        mock_integration_filter.assert_called_once_with(
+            integrationproviderrelationship__provider_id=self.provider_id,
+            enabled=True,
+        )
+        # group should not be called since no integration tasks are created yet
+        mock_group.assert_not_called()
+
+    @patch("tasks.tasks.rls_transaction")
+    @patch("tasks.tasks.Integration.objects.filter")
+    def test_check_integrations_disabled_integrations_ignored(
+        self, mock_integration_filter, mock_rls
+    ):
+        """Test that disabled integrations are not processed."""
+        mock_integration_filter.return_value.exists.return_value = False
+        mock_rls.return_value.__enter__.return_value = None
+
+        result = check_integrations_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+        )
+
+        assert result == {"integrations_processed": 0}
+        mock_integration_filter.assert_called_once_with(
+            integrationproviderrelationship__provider_id=self.provider_id,
+            enabled=True,
+        )
+
+    @patch("tasks.tasks.upload_s3_integration")
+    def test_s3_integration_task_success(self, mock_upload):
+        mock_upload.return_value = True
+        output_directory = "/tmp/prowler_api_output/test"
+
+        result = s3_integration_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+            output_directory=output_directory,
+        )
+
+        assert result is True
+        mock_upload.assert_called_once_with(
+            self.tenant_id, self.provider_id, output_directory
+        )
+
+    @patch("tasks.tasks.upload_s3_integration")
+    def test_s3_integration_task_failure(self, mock_upload):
+        mock_upload.return_value = False
+        output_directory = "/tmp/prowler_api_output/test"
+
+        result = s3_integration_task(
+            tenant_id=self.tenant_id,
+            provider_id=self.provider_id,
+            output_directory=output_directory,
+        )
+
+        assert result is False
+        mock_upload.assert_called_once_with(
+            self.tenant_id, self.provider_id, output_directory
         )

@@ -1,10 +1,16 @@
 import { FilterType } from "@/types/filters";
+import { PROVIDER_TYPES } from "@/types/providers";
 
 export const filterProviders = [
   {
     key: "connected",
     labelCheckboxGroup: "Connection",
     values: ["false", "true"],
+  },
+  {
+    key: "provider__in",
+    labelCheckboxGroup: "Cloud Provider",
+    values: [...PROVIDER_TYPES],
   },
   // Add more filter categories as needed
 ];
@@ -13,7 +19,7 @@ export const filterScans = [
   {
     key: "provider_type__in",
     labelCheckboxGroup: "Cloud Provider",
-    values: ["aws", "azure", "m365", "gcp", "kubernetes"],
+    values: [...PROVIDER_TYPES],
     index: 0,
   },
   {
@@ -55,7 +61,7 @@ export const filterFindings = [
   {
     key: FilterType.PROVIDER_TYPE,
     labelCheckboxGroup: "Cloud Provider",
-    values: ["aws", "azure", "m365", "gcp", "kubernetes"],
+    values: [...PROVIDER_TYPES],
     index: 5,
   },
   {
