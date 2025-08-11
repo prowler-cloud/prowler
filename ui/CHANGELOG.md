@@ -14,6 +14,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Disable `See Compliance` button until scan completes [(#8487)](https://github.com/prowler-cloud/prowler/pull/8487)
 
 ### 🐞 Fixed
+- DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
 
 ### ❌ Removed
 
