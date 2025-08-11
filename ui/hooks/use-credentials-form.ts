@@ -66,7 +66,7 @@ export const useCredentialsForm = ({
     if (providerType === "aws" && via === "role") {
       return {
         ...baseDefaults,
-        [ProviderCredentialFields.CREDENTIALS_TYPE]: "aws-sdk-default",
+        [ProviderCredentialFields.CREDENTIALS_TYPE]: "access-secret-key",
         [ProviderCredentialFields.ROLE_ARN]: "",
         [ProviderCredentialFields.EXTERNAL_ID]: session?.tenantId || "",
         [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",
