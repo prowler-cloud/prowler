@@ -112,8 +112,10 @@ class RecoveryBackup(AzureService):
                         item_properties.policy_id if item_properties else None
                     ),
                 )
-        except Exception as e:
-            logger.error(f"Recovery - Error getting backup protected items: {e}")
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         return backup_protected_items_dict
 
     def _get_backup_policies(
@@ -156,6 +158,8 @@ class RecoveryBackup(AzureService):
                         None,
                     ),
                 )
-        except Exception as e:
-            logger.error(f"Recovery - Error getting backup policies: {e}")
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         return backup_policies_dict
