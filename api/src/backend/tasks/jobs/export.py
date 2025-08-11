@@ -8,11 +8,12 @@ from botocore.exceptions import ClientError, NoCredentialsError, ParamValidation
 from celery.utils.log import get_task_logger
 from django.conf import settings
 
+from api.db_utils import rls_transaction
+from api.models import Scan
 from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
     json_ocsf_file_suffix,
-    output_file_timestamp,
 )
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
@@ -171,7 +172,7 @@ def get_s3_client():
     return s3_client
 
 
-def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
+def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
     """
     Upload the specified ZIP file to an S3 bucket.
     If the S3 bucket environment variables are not configured,
@@ -188,7 +189,7 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     """
     bucket = base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET
     if not bucket:
-        return None
+        return
 
     try:
         s3 = get_s3_client()
@@ -248,15 +249,19 @@ def _generate_output_directory(
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
 
+    with rls_transaction(tenant_id):
+        started_at = Scan.objects.get(id=scan_id).started_at
+
+    timestamp = started_at.strftime("%Y%m%d%H%M%S")
     path = (
         f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
-        f"{prowler_provider_sanitized}-{output_file_timestamp}"
+        f"{prowler_provider_sanitized}-{timestamp}"
     )
     os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
 
     compliance_path = (
         f"{output_directory}/{tenant_id}/{scan_id}/compliance/prowler-output-"
-        f"{prowler_provider_sanitized}-{output_file_timestamp}"
+        f"{prowler_provider_sanitized}-{timestamp}"
     )
     os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
 

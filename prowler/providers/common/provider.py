@@ -192,6 +192,7 @@ class Provider(ABC):
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
+                        retries_max_attempts=arguments.gcp_retries_max_attempts,
                         organization_id=arguments.organization_id,
                         project_ids=arguments.project_id,
                         excluded_project_ids=arguments.excluded_project_id,
@@ -242,6 +243,8 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
+                        repositories=arguments.repository,
+                        organizations=arguments.organization,
                     )
                 elif "iac" in provider_class_name.lower():
                     provider_class(
