@@ -414,7 +414,10 @@ const findingsAgentPrompt = `You are Prowler's Findings Agent, specializing in s
 
 ## Tool Calling Guidelines
 
-- Mentioning all keys in the function call is mandatory. Don't skip any keys.`;
+- Mentioning all keys in the function call is mandatory. Don't skip any keys.
+- Don't add empty filters in the function call.
+- Use only available filters and sort options. Ensure you enclose filter with \`filter[]\`.
+- When user asks for a particular check, use getProviderChecksTool tool to get the correct check ID. Only pass check IDs selected from the tool output to subsequent tools.`;
 
 const overviewAgentPrompt = `You are Prowler's Overview Agent, specializing in high-level security status information across providers and findings.
 
