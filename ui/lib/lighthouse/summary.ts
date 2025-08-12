@@ -1,30 +1,60 @@
 import { getLighthouseCheckDetails } from "@/actions/lighthouse/checks";
 import { getLighthouseFindings } from "@/actions/lighthouse/findings";
+import { getProviders } from "@/actions/providers/providers";
 import { getScans } from "@/actions/scans/scans";
 import { CheckDetails, FindingSummary } from "@/types/lighthouse/summary";
 
 import { getNewFailedFindingsSummary } from "./tools/findings";
 
-export const getCompletedScansLast24h = async (): Promise<string[]> => {
-  const twentyFourHoursAgo = new Date();
-  twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+export const getLatestCompletedScansPerProvider = async (): Promise<
+  string[]
+> => {
+  try {
+    const providersResponse = await getProviders({
+      pageSize: 100,
+    });
 
-  const scansResponse = await getScans({
-    page: 1,
-    pageSize: 50,
-    filters: {
-      "fields[scans]": "completed_at",
-      "filter[state]": "completed",
-      "filter[started_at__gte]": twentyFourHoursAgo.toISOString(),
-    },
-    sort: "-updated_at",
-  });
+    if (!providersResponse?.data || providersResponse.data.length === 0) {
+      return [];
+    }
 
-  if (!scansResponse?.data || scansResponse.data.length === 0) {
+    const providersWithScans = await Promise.all(
+      providersResponse.data.map(async (provider: any) => {
+        try {
+          const scansData = await getScans({
+            page: 1,
+            sort: "-inserted_at",
+            filters: {
+              "filter[provider]": provider.id,
+              "filter[state]": "completed",
+            },
+          });
+
+          // If scans exist, return the latest scan ID
+          if (scansData && scansData.data && scansData.data.length > 0) {
+            const latestScan = scansData.data[0];
+            return latestScan.id;
+          }
+
+          return null;
+        } catch (error) {
+          console.error(
+            `Error fetching scans for provider ${provider.id}:`,
+            error,
+          );
+          return null;
+        }
+      }),
+    );
+
+    // Filter out null results and return scan IDs
+    return providersWithScans.filter(
+      (scanId): scanId is string => scanId !== null,
+    );
+  } catch (error) {
+    console.error("Error fetching latest completed scans per provider:", error);
     return [];
   }
-
-  return scansResponse.data.map((scan: any) => scan.id);
 };
 
 export const compareProcessedScanIds = (
@@ -266,7 +296,7 @@ export const generateSecurityScanSummary = async (
     if (scanIds.length === 1) {
       summaryText += `# Scan ID: ${scanIds[0]}\n\n`;
     } else {
-      summaryText += `# Scans processed (${scanIds.length} scans from last 24h)\n`;
+      summaryText += `# Completed scans (${scanIds.length} across providers)\n`;
       summaryText += `**Scan IDs:** ${scanIds.join(", ")}\n\n`;
     }
 

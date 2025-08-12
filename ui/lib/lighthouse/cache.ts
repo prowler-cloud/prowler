@@ -11,7 +11,7 @@ import { suggestedActions } from "./suggested-actions";
 import {
   compareProcessedScanIds,
   generateSecurityScanSummary,
-  getCompletedScansLast24h,
+  getLatestCompletedScansPerProvider,
 } from "./summary";
 
 let valkeyClient: Valkey | null = null;
@@ -141,7 +141,7 @@ export class CacheService {
           await this.setProcessedScanIds(scanIds);
 
           // Generate and cache recommendations asynchronously
-          this.generateAndCacheRecommendations(scanSummary).catch((error) => {
+          this.generateAndCacheRecommendations(scanIds).catch((error) => {
             console.error(
               "Background recommendation generation failed:",
               error,
@@ -231,7 +231,7 @@ export class CacheService {
     }
   }
 
-  static async generateAndCacheRecommendations(scanSummary: string): Promise<{
+  static async generateAndCacheRecommendations(scanIds: string[]): Promise<{
     success: boolean;
     data?: string;
   }> {
@@ -277,8 +277,9 @@ export class CacheService {
         }
 
         // Generate detailed recommendation first
-        const detailedRecommendation =
-          await generateDetailedRecommendation(scanSummary);
+        const detailedRecommendation = await generateDetailedRecommendation({
+          scanIds,
+        });
 
         if (!detailedRecommendation.trim()) {
           return { success: true, data: "" };
@@ -388,11 +389,11 @@ export async function initializeTenantCache(): Promise<{
   scanSummary?: string;
 }> {
   try {
-    // Check if there are any scans in the last 24h
-    const currentScanIds = await getCompletedScansLast24h();
+    // Check if there are any completed scans per provider
+    const currentScanIds = await getLatestCompletedScansPerProvider();
 
     if (currentScanIds.length === 0) {
-      // No scans in last 24h, return existing cached data if any
+      // No latest completed scans found, return existing cached data if any
       const existingSummary = await CacheService.get("scan-summary");
       return {
         success: true,
