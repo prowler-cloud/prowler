@@ -34,9 +34,6 @@ const renderBanner = ({ message, href, gradient }: BannerConfig) => (
 // If recommendation is being processed, returns a banner with a different message
 export const LighthouseBanner = async () => {
   try {
-    // Triggers a background job to process the scans and generate recommendations
-    await initializeTenantCache();
-
     const lighthouseConfig = await getLighthouseConfig();
 
     if (!lighthouseConfig) {
@@ -46,6 +43,11 @@ export const LighthouseBanner = async () => {
         gradient:
           "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
       });
+    }
+
+    // If lighthouse is active, trigger background job to process the scans and generate recommendations
+    if (lighthouseConfig.attributes.is_active) {
+      await initializeTenantCache();
     }
 
     // Check if recommendation is being processed
