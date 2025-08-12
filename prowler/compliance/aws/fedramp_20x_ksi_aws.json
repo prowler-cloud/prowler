@@ -1,0 +1,310 @@
+{
+  "Framework": "FedRAMP-20x-KSI",
+  "Version": "25.05C",
+  "Provider": "AWS",
+  "Description": "FedRAMP 20x Key Security Indicators (KSIs) represent core security indicators for cloud service providers, focusing on automation, continuous monitoring, and cloud-native security principles per FedRAMP 20x Phase One pilot requirements.",
+  "Requirements": [
+    {
+      "Id": "ksi-ced",
+      "Name": "KSI-CED: Cybersecurity Education",
+      "Description": "A secure cloud service provider will continuously educate their employees on cybersecurity measures, testing them regularly",
+      "Attributes": [
+        {
+          "ItemId": "ksi-ced",
+          "Section": "Cybersecurity Education",
+          "NistControls": "at-2, at-2.2, at-2.3, at-4",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_securityaudit_role_created",
+        "iam_support_role_created",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-cmt",
+      "Name": "KSI-CMT: Change Management",
+      "Description": "A secure cloud service provider will ensure that all system changes are properly documented and configuration baselines are updated accordingly",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cmt",
+          "Section": "Change Management",
+          "NistControls": "au-2, cm-2, cm-3, cm-4, cm-5, cm-6, cm-7, cm-8, cm-9, si-2, si-3",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "config_recorder_all_regions_enabled",
+        "ec2_instance_managed_by_ssm",
+        "ec2_instance_older_than_specific_days",
+        "ssm_managed_compliant_patching",
+        "ssm_managed_instance_compliance_association_compliant",
+        "ssm_managed_instance_compliance_patch_compliant"
+      ]
+    },
+    {
+      "Id": "ksi-cna",
+      "Name": "KSI-CNA: Cloud Native Architecture",
+      "Description": "A secure cloud service offering will use cloud native architecture and design principles to enforce and enhance the Confidentiality, Integrity and Availability of the system",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna",
+          "Section": "Cloud Native Architecture",
+          "NistControls": "ac-17.3, ca-9, cm-2, sc-5, sc-7",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "autoscaling_group_multiple_az",
+        "autoscaling_group_multiple_instance_types",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_tables_deletion_protection_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "elb_cross_zone_load_balancing_enabled",
+        "elbv2_alb_multi_az_scheme",
+        "elbv2_waf_acl_attached",
+        "rds_instance_multi_az",
+        "rds_cluster_multi_az",
+        "vpc_subnet_auto_assign_public_ip_disabled",
+        "vpc_default_security_group_restricts_traffic",
+        "vpc_peering_connection_routing_tables_with_least_privilege"
+      ]
+    },
+    {
+      "Id": "ksi-iam",
+      "Name": "KSI-IAM: Identity and Access Management",
+      "Description": "A secure cloud service offering will protect user data, control access, and apply zero trust principles",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam",
+          "Section": "Identity and Access Management",
+          "NistControls": "ac-2, ac-3, ac-4, ac-6, ia-2, ia-5, ia-8",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_administrator_access_with_mfa",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_no_root_access_key",
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_two_active_access_key",
+        "organizations_scp_check_deny_regions",
+        "organizations_opt_out_ai_services_policy"
+      ]
+    },
+    {
+      "Id": "ksi-inr",
+      "Name": "KSI-INR: Incident Reporting",
+      "Description": "A secure cloud service offering will document, report, and analyze security incidents to ensure regulatory compliance and continuous security improvement",
+      "Attributes": [
+        {
+          "ItemId": "ksi-inr",
+          "Section": "Incident Reporting",
+          "NistControls": "ir-4, ir-6",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "guardduty_s3_protection_enabled",
+        "guardduty_eks_protection_enabled",
+        "guardduty_rds_protection_enabled",
+        "guardduty_lambda_protection_enabled",
+        "guardduty_malware_protection_enabled",
+        "securityhub_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-mla",
+      "Name": "KSI-MLA: Monitoring, Logging, and Auditing",
+      "Description": "A secure cloud service offering will monitor, log, and audit all important events, activity, and changes",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla",
+          "Section": "Monitoring, Logging, and Auditing",
+          "NistControls": "au-2, ca-7, ra-5",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "ecs_cluster_container_insights_enabled",
+        "eks_cluster_control_plane_audit_logging_enabled",
+        "elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "inspector2_is_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "rds_instance_enhanced_monitoring_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "vpc_flow_logs_enabled",
+        "wafv2_webacl_logging_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-piy",
+      "Name": "KSI-PIY: Policy and Inventory",
+      "Description": "A secure cloud service offering will have intentional, organized, universal guidance for how every information resource, including personnel, is secured",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy",
+          "Section": "Policy and Inventory",
+          "NistControls": "cm-8, pl-2",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "ec2_instance_managed_by_ssm",
+        "organizations_account_part_of_organizations",
+        "organizations_scp_check_deny_regions",
+        "resourceexplorer_indexes_found",
+        "ssm_managed_instance_compliance_association_compliant",
+        "trustedadvisor_premium_support_plan_subscribed"
+      ]
+    },
+    {
+      "Id": "ksi-rpl",
+      "Name": "KSI-RPL: Recovery Planning",
+      "Description": "A secure cloud service offering will define, maintain, and test incident response plan(s) and recovery capabilities to ensure minimal service disruption and data loss",
+      "Attributes": [
+        {
+          "ItemId": "ksi-rpl",
+          "Section": "Recovery Planning",
+          "NistControls": "cp-2, cp-9, cp-10",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_reportplans_exist",
+        "backup_vaults_exist",
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "backup_recovery_point_manual_deletion_disabled",
+        "backup_recovery_point_minimum_retention_days",
+        "dlm_ebs_snapshot_lifecycle_policy_exists",
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_tables_deletion_protection_enabled",
+        "efs_have_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups",
+        "rds_instance_backup_enabled",
+        "rds_instance_backup_retention_policy",
+        "rds_instance_deletion_protection",
+        "rds_cluster_deletion_protection",
+        "rds_snapshots_encrypted",
+        "redshift_cluster_automated_snapshot"
+      ]
+    },
+    {
+      "Id": "ksi-svc",
+      "Name": "KSI-SVC: Service Configuration",
+      "Description": "A secure cloud service offering will follow FedRAMP encryption policies, continuously verify information resource integrity, and restrict access to third-party information resources",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc",
+          "Section": "Service Configuration",
+          "NistControls": "sc-7, sc-13, cm-6",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "apigateway_restapi_cache_encrypted",
+        "cloudtrail_kms_encryption_enabled",
+        "dax_cluster_encryption_enabled",
+        "dynamodb_table_encryption_enabled",
+        "dynamodb_table_encryption_uses_cmks",
+        "ebs_volume_encryption_enabled",
+        "ec2_ebs_default_encryption",
+        "ec2_instance_ebs_optimized",
+        "efs_encryption_at_rest_enabled",
+        "eks_cluster_envelope_encryption_enabled",
+        "elasticache_redis_cluster_encryption_at_rest_enabled",
+        "elasticache_redis_cluster_encryption_at_transit_enabled",
+        "elbv2_ssl_listeners",
+        "fsx_file_system_encryption_at_rest_enabled",
+        "kinesis_stream_encrypted_at_rest",
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_not_scheduled_for_deletion",
+        "kms_key_not_publicly_accessible",
+        "rds_instance_storage_encrypted",
+        "rds_instance_storage_encrypted_with_cmk",
+        "rds_cluster_storage_encrypted",
+        "redshift_cluster_encryption_at_rest",
+        "redshift_cluster_encryption_in_transit",
+        "s3_bucket_server_side_encryption_enabled",
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "sqs_queue_server_side_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-tpr",
+      "Name": "KSI-TPR: Third-Party Information Resources",
+      "Description": "A secure cloud service offering will understand, monitor, and manage supply chain risks from third-party information resources",
+      "Attributes": [
+        {
+          "ItemId": "ksi-tpr",
+          "Section": "Third-Party Information Resources",
+          "NistControls": "sa-9, ra-5",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ecr_repositories_scan_vulnerabilities_in_latest_image",
+        "ecr_repositories_scan_on_push_enabled",
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
+        "awslambda_function_using_supported_runtimes",
+        "ssm_managed_compliant_patching",
+        "trustedadvisor_premium_support_plan_subscribed"
+      ]
+    }
+  ]
+}

@@ -29,7 +29,7 @@ In order to see which compliance frameworks are covered by Prowler, you can use 
 prowler <provider> --list-compliance
 ```
 
-### AWS (36 frameworks)
+### AWS (37 frameworks)
 
 - `aws_account_security_onboarding_aws`
 - `aws_audit_manager_control_tower_guardrails_aws`
@@ -45,6 +45,7 @@ prowler <provider> --list-compliance
 - `cis_5.0_aws`
 - `cisa_aws`
 - `ens_rd2022_aws`
+- `fedramp_20x_ksi_aws`
 - `fedramp_low_revision_4_aws`
 - `fedramp_moderate_revision_4_aws`
 - `ffiec_aws`
@@ -68,12 +69,14 @@ prowler <provider> --list-compliance
 - `rbi_cyber_security_framework_aws`
 - `soc2_aws`
 
-### Azure (10 frameworks)
+### Azure (11 frameworks)
 
 - `cis_2.0_azure`
 - `cis_2.1_azure`
 - `cis_3.0_azure`
+- `cis_4.0_azure`
 - `ens_rd2022_azure`
+- `fedramp_20x_ksi_azure`
 - `iso27001_2022_azure`
 - `mitre_attack_azure`
 - `nis2_azure`
@@ -81,12 +84,13 @@ prowler <provider> --list-compliance
 - `prowler_threatscore_azure`
 - `soc2_azure`
 
-### GCP (10 frameworks)
+### GCP (11 frameworks)
 
 - `cis_2.0_gcp`
 - `cis_3.0_gcp`
 - `cis_4.0_gcp`
 - `ens_rd2022_gcp`
+- `fedramp_20x_ksi_gcp`
 - `iso27001_2022_gcp`
 - `mitre_attack_gcp`
 - `nis2_gcp`
