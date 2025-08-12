@@ -219,7 +219,7 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
 
 - Select `Personal Access Token` and enter your `Personal Access Token`:
 
-<img src="../../img/github-pat-credentials.png" alt="GitHub Personal Access Token Credentials" width="700"/>
+<img src="../img/github-pat-credentials.png" alt="GitHub Personal Access Token Credentials" width="700"/>
 
 ???+ note
     For detailed instructions on creating a Personal Access Token and the exact permissions required, check the [GitHub provider requirements](./github/getting-started-github.md#personal-access-token-pat).
@@ -230,7 +230,7 @@ OAuth Apps enable applications to act on behalf of users with explicit consent.
 
 - Select `OAuth App Token` and enter your `OAuth App Token`:
 
-<img src="../../img/github-oauth-credentials.png" alt="GitHub OAuth App Credentials" width="700"/>
+<img src="../img/github-oauth-credentials.png" alt="GitHub OAuth App Credentials" width="700"/>
 
 ???+ note
     To create an OAuth App, go to GitHub Settings → Developer settings → OAuth Apps → New OAuth App. You'll need to exchange an authorization code for an access token using the OAuth flow.
@@ -241,12 +241,10 @@ GitHub Apps provide the recommended integration method for accessing multiple re
 
 - Select `GitHub App` and enter your `GitHub App ID` and `GitHub App Private Key`:
 
-    <img src="../../img/github-app-credentials.png" alt="GitHub App Credentials" width="700"/>
+    <img src="../img/github-app-credentials.png" alt="GitHub App Credentials" width="700"/>
 
 ???+ note
     To create a GitHub App, go to GitHub Settings → Developer settings → GitHub Apps → New GitHub App. Configure the necessary permissions and generate a private key. Install the app to your account or organization and provide the App ID and private key content.
-
-<img src="../../img/github-credentials.png" alt="Prowler Cloud GitHub Credentials" width="700"/>
 
 ## **Step 5: Test Connection**
 
