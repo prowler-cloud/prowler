@@ -296,7 +296,7 @@ class Test_app_http_logs_enabled:
             assert result[0].resource_id == "resource_id3"
             assert (
                 result[0].status_extended
-                == f"App app_id-3 has All Logs category group which includes HTTP Logs enabled in diagnostic setting name_diagnostic_setting3 in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"App app_id-3 has allLogs category group which includes HTTP Logs enabled in diagnostic setting name_diagnostic_setting3 in subscription {AZURE_SUBSCRIPTION_ID}"
             )
 
     def test_diagnostic_setting_with_all_logs_category_group_disabled(self):
