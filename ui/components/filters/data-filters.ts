@@ -7,6 +7,11 @@ export const filterProviders = [
     labelCheckboxGroup: "Connection",
     values: ["false", "true"],
   },
+  {
+    key: "provider__in",
+    labelCheckboxGroup: "Cloud Provider",
+    values: [...PROVIDER_TYPES],
+  },
   // Add more filter categories as needed
 ];
 

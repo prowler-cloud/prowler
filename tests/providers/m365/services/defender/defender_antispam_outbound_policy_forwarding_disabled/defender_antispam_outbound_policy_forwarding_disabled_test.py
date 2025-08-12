@@ -32,7 +32,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             defender_client.outbound_spam_policies = {
                 "Default": OutboundSpamPolicy(
                     name="Default",
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     notify_limit_exceeded=True,
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
@@ -86,7 +86,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             defender_client.outbound_spam_policies = {
                 "Default": OutboundSpamPolicy(
                     name="Default",
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     notify_limit_exceeded=True,
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
@@ -95,7 +95,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
                 ),
                 "Policy1": OutboundSpamPolicy(
                     name="Policy1",
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     notify_limit_exceeded=True,
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
@@ -172,7 +172,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             defender_client.outbound_spam_policies = {
                 "Default": OutboundSpamPolicy(
                     name="Default",
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     notify_limit_exceeded=True,
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
@@ -181,7 +181,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
                 ),
                 "Policy1": OutboundSpamPolicy(
                     name="Policy1",
-                    auto_forwarding_mode=True,
+                    auto_forwarding_mode="On",
                     notify_limit_exceeded=False,
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
@@ -258,7 +258,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             defender_client.outbound_spam_policies = {
                 "Default": OutboundSpamPolicy(
                     name="Default",
-                    auto_forwarding_mode=True,
+                    auto_forwarding_mode="On",
                     notify_limit_exceeded=False,
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
@@ -267,7 +267,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
                 ),
                 "Policy1": OutboundSpamPolicy(
                     name="Policy1",
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     notify_limit_exceeded=True,
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
@@ -343,7 +343,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             defender_client.outbound_spam_policies = {
                 "Default": OutboundSpamPolicy(
                     name="Default",
-                    auto_forwarding_mode=True,
+                    auto_forwarding_mode="On",
                     notify_limit_exceeded=False,
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
@@ -397,7 +397,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
             defender_client.outbound_spam_policies = {
                 "Default": OutboundSpamPolicy(
                     name="Default",
-                    auto_forwarding_mode=True,
+                    auto_forwarding_mode="On",
                     notify_limit_exceeded=False,
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
@@ -406,7 +406,7 @@ class Test_defender_antispam_outbound_policy_forwarding_disabled:
                 ),
                 "Policy1": OutboundSpamPolicy(
                     name="Policy1",
-                    auto_forwarding_mode=True,
+                    auto_forwarding_mode="On",
                     notify_limit_exceeded=False,
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
