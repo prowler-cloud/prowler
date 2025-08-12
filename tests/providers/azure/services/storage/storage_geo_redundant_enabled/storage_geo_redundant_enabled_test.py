@@ -4,7 +4,6 @@ from uuid import uuid4
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
     NetworkRuleSet,
-    ReplicationSettings,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -39,6 +38,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account GRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Standard_GRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -56,7 +56,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.STANDARD_GRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -81,7 +81,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_GRS enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage {replication_setting} enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -92,6 +92,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account RAGRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Standard_RAGRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -109,7 +110,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.STANDARD_RAGRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -134,7 +135,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_RAGRS enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage {replication_setting} enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -145,6 +146,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account GZRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Standard_GZRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -162,7 +164,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.STANDARD_GZRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -187,7 +189,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_GZRS enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage {replication_setting} enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -198,6 +200,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account RAGZRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Standard_RAGZRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -215,7 +218,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.STANDARD_RAGZRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -240,7 +243,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_RAGZRS enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage {replication_setting} enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -251,6 +254,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account LRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Standard_LRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -268,7 +272,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.STANDARD_LRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -293,7 +297,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Standard_LRS instead."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has {replication_setting} instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -304,6 +308,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account ZRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Standard_ZRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -321,7 +326,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.STANDARD_ZRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -346,7 +351,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Standard_ZRS instead."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has {replication_setting} instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -357,6 +362,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account Premium LRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Premium_LRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -374,7 +380,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.PREMIUM_LRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -399,7 +405,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Premium_LRS instead."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has {replication_setting} instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -410,6 +416,7 @@ class Test_storage_geo_redundant_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account Premium ZRS"
         storage_client = mock.MagicMock()
+        replication_setting = "Premium_ZRS"
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -427,7 +434,7 @@ class Test_storage_geo_redundant_enabled:
                     private_endpoint_connections=[],
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    replication_settings=ReplicationSettings.PREMIUM_ZRS,
+                    replication_settings=replication_setting,
                 )
             ]
         }
@@ -452,7 +459,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Premium_ZRS instead."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has {replication_setting} instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
