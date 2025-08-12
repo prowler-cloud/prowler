@@ -1,56 +1,144 @@
 import { ChatOpenAI } from "@langchain/openai";
 
 import { getAIKey, getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import { getCurrentDataSection } from "@/lib/lighthouse/data";
 
 import { type SuggestedAction } from "./suggested-actions";
 import { initLighthouseWorkflow } from "./workflow";
 
-export const generateDetailedRecommendation = async (): Promise<string> => {
+export const generateDetailedRecommendation = async ({
+  scanIds,
+}: {
+  scanIds: string[];
+}): Promise<string> => {
   try {
     const apiKey = await getAIKey();
     if (!apiKey) {
       return "";
     }
 
+    const currentDataSection = await getCurrentDataSection();
+
     const lighthouseConfig = await getLighthouseConfig();
     if (!lighthouseConfig?.attributes) {
       return "";
     }
+    const businessContext =
+      lighthouseConfig?.data?.attributes?.business_context;
 
     const workflow = await initLighthouseWorkflow();
     const response = await workflow.invoke({
       messages: [
         {
+          id: "business-context",
+          role: "assistant",
+          content: `Business Context Information:\n${businessContext}`,
+        },
+        {
+          id: "providers",
+          role: "assistant",
+          content: `${currentDataSection}`,
+        },
+        {
+          id: "scan-ids",
           role: "user",
-          content: `Create focused and actionable recommendations to Security Engineering Manager based on findings from all recent completed scans.
+          content: `Scan IDs in focus: ${scanIds}`,
+        },
+        {
+          role: "user",
+          content: `Based on findings from mentioned scans AND business context (if available), provide detailed recommendations about issues that need to be fixed first along with remediation steps. Call all necessary tools and give actionable next steps.
 
-Your output should include both an overview of recent scans and your analysis about the findings. Your analysis should include the most urgent bug that needs to be fixed first (even if there are multiple bugs with different severities).
+## Core Principles
 
-Your output should contain the following:
-- Overview of the recent scans and findings
-- Comprehensive analysis of finding/pattern that users need to fix immediately
+1. **Data-Driven Analysis Only**: Base all recommendations solely on verified findings from tool calls
+2. **No Assumptions**: If data is unavailable or insufficient, clearly state this limitation
+3. **Factual Reporting**: Report only what tools return - no speculation or gap-filling
 
-When you're talking about any issue, be clear. For example:
+## Required Process
 
-- When talking about findings, give the details of resources, account IDs, etc instead of just providing UUIDs of findings, resources, etc.
-- When giving issue description, convey what exactly is the problem and the reason you think why it should be fixed first.
-- When finding patterns, convey if users must focus on a particular bug class or particular cloud service or they must focus on a particular finding to improve their cloud security posture.
-- When mentioning the affected resources, try to give the names of resources and account IDs instead of just providing UUIDs of findings, resources, etc.
-- When giving business impact, tell the actual security risks of findings and potential consequences (possible bruteforce attacks on resources, compliance violation, etc)
-- When giving remediation steps, give clear step-by-step instructions and any gotcha's they need to check before fix (if applicable).
-- Be specific with numbers (e.g., "affects 12 S3 buckets", "resolves 15 findings"). Focus on actionable guidance that will have the biggest security improvement.
+You MUST follow all the following steps in order. Do NOT skip any step.
 
-Guidelines for checking findings:
-- Go by the severity: critical, high, medium, low
-- When fetching findings, order by severity
-- Ignore muted findings
+### Step 1: Overview Agent gives Overview
+- Fetch overview of findings across scans using overview agent to get high level view of security posture
+- Overview agent must provide the high level overview of findings based on tools getProvidersOverviewTool, getFindingsByStatusTool and getFindingsBySeverityTool
+- Strictly use overview agent only for overview and findings agent for specific findings
+- Overview agent must not provide any information apart from overview. Example, it must not provide data about checks, check IDs and individual findings.
 
-Guidelines for writing the output:
-- Use a formal yet casual tone.
-- Don't make it look like a report. The output is read by humans.
-- The output need not contain subheadings like issue description, affected resources, etc.
-- First, give a few sentence overview about the recent scans and findings, then dig deeper into the critical top findings that user must focus on.
-- Don't burden the user with too many findings. Evaluate the findings and tell them what they should focus on.`,
+### Step 2: Findings Agent gives Findings
+- Fetch newly detected findings in the previous scans (if any)
+- Fetch failed findings sorted by severity - critical, high and medium. Paginate to fetch all findings
+- Ensure you went through all failed findings
+- Group findings to find patterns (if any). For example: multiple findings for the same check ID
+
+### Step 3: Resource Agent gives Resource Information (Optional)
+- If the findings data doesn't contain sufficient information about resources, use resource agent to get the resource information
+- Verify that findings data is complete and actionable
+- Confirm that severity levels and resource details are available
+
+### Step 4: Output
+- Based on information from previous steps, give a detailed recommendation about issues that need to be fixed first along with remediation steps.
+- This is the final summary recommendation. Do NOT add any other information about agents or tools.
+
+## Report Structure (Conditional)
+
+Generate a report ONLY if you have verified findings:
+
+### Format Requirements
+- Use markdown formatting
+- No bullet points except for Resource Details sections
+- No emojis or decorative elements
+- Keep sentences concise - use 1-2 sentences maximum per concept
+- Strip any unnecessary descriptive language that doesn't add value
+
+### Required Sections
+
+- Opening Statement: Single sentence stating you analyzed the environment and found X vulnerabilities
+- Two sentences maximum giving executive summary of the findings and impact
+- First Focus: (H2 heading) - Name the specific vulnerability type, not severity levels
+- Second Focus: (H2 heading) - Name the specific vulnerability type, not severity levels
+- Immediate Actions Required: (H2 heading) - Implementation guidance
+
+### Content Structure for Each Vulnerability
+
+- Start with 1-2 sentences explaining what's wrong and why it matters
+- Include "Resource Details:" section with exactly these bullet points:
+  - Resource name/identifier
+  - Service
+  - Account
+  - Severity level
+  - Impact description
+- Always prefer using the accurate resource information from tool output instead of adding placeholder
+- Mention the account alias (if available) along with account ID in account section. If there's no account alias, only mention the account ID.
+- Include "Remediation:" section with the exact CLI command in a code block along with other ways to remediate (example: terraform)
+- Use technical language, avoid storytelling or dramatic descriptions
+
+## Failure Conditions
+
+If any of these conditions occur, DO NOT generate a standard report:
+
+- Overview agent returns no data or errors
+- Findings agent returns empty results
+- Tool calls fail or timeout
+- Data is incomplete or unclear
+
+Instead, provide a brief status explaining:
+- What data collection was attempted
+- What information is missing or unavailable
+- What steps are needed to obtain the required data
+
+## Style Guidelines
+
+- Direct, technical, professional
+- No detective stories, narratives, or analogies
+- Focus on facts and actionable information
+- Assume technical audience familiar with AWS
+- Keep it clean and scannable
+
+## Output Length
+
+- Approximately 400-500 words total
+- Each vulnerability section should be roughly equal length
+- Adjust length based on actual findings complexity`,
         },
       ],
     });
