@@ -12,6 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Disable `See Compliance` button until scan completes [(#8487)](https://github.com/prowler-cloud/prowler/pull/8487)
+- Cloud providers page connection filter labels from `true/false` to `connected/disconnected` [(#8505)](https://github.com/prowler-cloud/prowler/pull/8505)
 
 ### 🐞 Fixed
 - DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
