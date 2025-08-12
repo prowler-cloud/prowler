@@ -17,6 +17,7 @@ class logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes
                     metadata=self.metadata(),
                     resource=metric,
                     location=logging_client.region,
+                    resource_name=metric.name if metric.name else "Log Metric Filter",
                 )
                 projects_with_metric.add(metric.project_id)
                 report.status = "FAIL"

@@ -1,4 +1,4 @@
-import { Divider, Select, SelectItem, Switch } from "@nextui-org/react";
+import { Chip, Divider, Select, SelectItem, Switch } from "@nextui-org/react";
 import { useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
@@ -24,13 +24,20 @@ export const AWSRoleCredentialsForm = ({
   };
   type?: "providers" | "s3-integration";
 }) => {
-  const [showRoleSection, setShowRoleSection] = useState(type === "providers");
-
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const defaultCredentialsType = isCloudEnv
+    ? "aws-sdk-default"
+    : "access-secret-key";
   const credentialsType = useWatch({
     control,
     name: ProviderCredentialFields.CREDENTIALS_TYPE,
-    defaultValue: "access-secret-key",
+    defaultValue: defaultCredentialsType,
   });
+  const [showOptionalRole, setShowOptionalRole] = useState(false);
+  const showRoleSection =
+    type === "providers" ||
+    (isCloudEnv && credentialsType === "aws-sdk-default") ||
+    showOptionalRole;
 
   return (
     <>
@@ -50,7 +57,7 @@ export const AWSRoleCredentialsForm = ({
         name={ProviderCredentialFields.CREDENTIALS_TYPE}
         label="Authentication Method"
         placeholder="Select credentials type"
-        defaultSelectedKeys={["access-secret-key"]}
+        defaultSelectedKeys={[defaultCredentialsType]}
         className="mb-4"
         variant="bordered"
         onSelectionChange={(keys) =>
@@ -60,8 +67,32 @@ export const AWSRoleCredentialsForm = ({
           )
         }
       >
-        <SelectItem key="aws-sdk-default">AWS SDK default</SelectItem>
-        <SelectItem key="access-secret-key">Access & Secret Key</SelectItem>
+        <SelectItem
+          key="aws-sdk-default"
+          textValue={
+            isCloudEnv
+              ? "Prowler Cloud will assume your IAM role"
+              : "AWS SDK Default"
+          }
+        >
+          <div className="flex w-full items-center justify-between">
+            <span>
+              {isCloudEnv
+                ? "Prowler Cloud will assume your IAM role"
+                : "AWS SDK Default"}
+            </span>
+            {isCloudEnv && (
+              <Chip size="sm" variant="flat" color="success" className="ml-2">
+                Recommended
+              </Chip>
+            )}
+          </div>
+        </SelectItem>
+        <SelectItem key="access-secret-key" textValue="Access & Secret Key">
+          <div className="flex w-full items-center justify-between">
+            <span>Access & Secret Key</span>
+          </div>
+        </SelectItem>
       </Select>
 
       {credentialsType === "access-secret-key" && (
@@ -120,12 +151,15 @@ export const AWSRoleCredentialsForm = ({
       ) : (
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-default-500">
-            Optionally add a role
+            {isCloudEnv && credentialsType === "aws-sdk-default"
+              ? "Adding a role is required"
+              : "Optionally add a role"}
           </span>
           <Switch
             size="sm"
             isSelected={showRoleSection}
-            onValueChange={setShowRoleSection}
+            onValueChange={setShowOptionalRole}
+            isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
           />
         </div>
       )}
