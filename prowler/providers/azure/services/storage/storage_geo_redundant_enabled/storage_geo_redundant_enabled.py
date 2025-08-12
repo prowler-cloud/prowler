@@ -37,10 +37,10 @@ class storage_geo_redundant_enabled(Check):
                     == ReplicationSettings.STANDARD_RAGZRS
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has Geo-redundant storage (GRS) enabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has Geo-redundant storage {storage_account.replication_settings.value} enabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not have Geo-redundant storage (GRS) enabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not have Geo-redundant storage enabled, it has {storage_account.replication_settings.value} instead."
 
                 findings.append(report)
 

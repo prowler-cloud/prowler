@@ -81,7 +81,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_GRS enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -134,7 +134,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_RAGRS enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -187,7 +187,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_GZRS enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -240,7 +240,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has Geo-redundant storage Standard_RAGZRS enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -293,7 +293,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Standard_LRS instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -346,7 +346,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Standard_ZRS instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -399,7 +399,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Premium_LRS instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -452,7 +452,7 @@ class Test_storage_geo_redundant_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage (GRS) enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have Geo-redundant storage enabled, it has Premium_ZRS instead."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
