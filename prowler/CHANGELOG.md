@@ -23,7 +23,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Validation errors in Azure and M365 providers [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
 - Azure `storage_geo_redundant_enabled` check false positives [(#8504)](https://github.com/prowler-cloud/prowler/pull/8504)
 
-
 ---
 
 ## [v5.10.1] (Prowler v5.10.1)
