@@ -1,0 +1,342 @@
+{
+  "Framework": "FedRAMP-20x-KSI",
+  "Version": "25.05C",
+  "Provider": "Azure",
+  "Description": "FedRAMP 20x Key Security Indicators (KSIs) represent core security indicators for cloud service providers, focusing on automation, continuous monitoring, and cloud-native security principles per FedRAMP 20x Phase One pilot requirements.",
+  "Requirements": [
+    {
+      "Id": "ksi-ced",
+      "Name": "KSI-CED: Cybersecurity Education",
+      "Description": "A secure cloud service provider will continuously educate their employees on cybersecurity measures, testing them regularly",
+      "Attributes": [
+        {
+          "ItemId": "ksi-ced",
+          "Section": "Cybersecurity Education",
+          "NistControls": "at-2, at-2.2, at-2.3, at-4",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_mcas_is_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-cmt",
+      "Name": "KSI-CMT: Change Management",
+      "Description": "A secure cloud service provider will ensure that all system changes are properly documented and configuration baselines are updated accordingly",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cmt",
+          "Section": "Change Management",
+          "NistControls": "au-2, cm-2, cm-3, cm-4, cm-5, cm-6, cm-7, cm-8, cm-9, si-2, si-3",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "monitor_activity_log_alert_cmk_delete",
+        "monitor_activity_log_alert_create_policy_assignment",
+        "monitor_activity_log_alert_create_update_delete_network_sg",
+        "monitor_activity_log_alert_create_update_delete_network_sg_rule",
+        "monitor_activity_log_alert_create_update_delete_sql_server_fw_rule",
+        "monitor_activity_log_alert_create_update_nsg",
+        "monitor_activity_log_alert_create_update_public_ip_address",
+        "monitor_activity_log_alert_create_update_security_solution",
+        "monitor_activity_log_alert_delete_nsg",
+        "monitor_activity_log_alert_delete_policy_assignment",
+        "monitor_activity_log_alert_delete_public_ip_address",
+        "monitor_activity_log_alert_delete_security_solution",
+        "monitor_log_profile_all_categories",
+        "monitor_log_profile_all_regions",
+        "vm_agent_installed",
+        "vm_antimalware_solution_installed",
+        "vm_endpoint_protection_installed",
+        "vm_guest_configuration_installed",
+        "vm_guest_configuration_with_no_managed_identity",
+        "vm_guest_configuration_with_user_identity"
+      ]
+    },
+    {
+      "Id": "ksi-cna",
+      "Name": "KSI-CNA: Cloud Native Architecture",
+      "Description": "A secure cloud service offering will use cloud native architecture and design principles to enforce and enhance the Confidentiality, Integrity and Availability of the system",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna",
+          "Section": "Cloud Native Architecture",
+          "NistControls": "ac-17.3, ca-9, cm-2, sc-5, sc-7",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "aks_clusters_created_with_private_nodes",
+        "aks_clusters_public_access_disabled",
+        "aks_network_policy_enabled",
+        "app_function_vnet_integration_enabled",
+        "app_function_not_publicly_accessible",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "cosmosdb_account_use_private_endpoints",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "databricks_workspace_vnet_injection_enabled",
+        "keyvault_access_only_through_private_endpoints",
+        "keyvault_private_endpoints",
+        "network_bastion_host_exists",
+        "network_flow_logs_enabled",
+        "network_security_group_not_empty",
+        "network_sg_ssh_access_restricted",
+        "network_sg_rdp_access_restricted",
+        "network_sg_open_all_ports_to_any_source",
+        "network_watcher_enabled",
+        "postgresql_flexible_server_public_network_access_disabled",
+        "sqlserver_public_network_access_disabled",
+        "storage_default_network_access_rule_set_to_deny",
+        "vm_availability_zones_enabled",
+        "vm_availability_set_deployed"
+      ]
+    },
+    {
+      "Id": "ksi-iam",
+      "Name": "KSI-IAM: Identity and Access Management",
+      "Description": "A secure cloud service offering will protect user data, control access, and apply zero trust principles",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam",
+          "Section": "Identity and Access Management",
+          "NistControls": "ac-2, ac-3, ac-4, ac-6, ia-2, ia-5, ia-8",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_non_privileged_user_has_mfa",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_trusted_named_locations_exists",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "iam_subscription_roles_owner_custom_not_created",
+        "keyvault_rbac_enabled",
+        "app_function_identity_is_configured",
+        "app_function_identity_without_admin_privileges",
+        "app_ensure_auth_is_set_up",
+        "app_register_with_identity",
+        "vm_managed_identity_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-inr",
+      "Name": "KSI-INR: Incident Reporting",
+      "Description": "A secure cloud service offering will document, report, and analyze security incidents to ensure regulatory compliance and continuous security improvement",
+      "Attributes": [
+        {
+          "ItemId": "ksi-inr",
+          "Section": "Incident Reporting",
+          "NistControls": "ir-4, ir-6",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "defender_attack_path_notifications_properly_configured",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_wdatp_is_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-mla",
+      "Name": "KSI-MLA: Monitoring, Logging, and Auditing",
+      "Description": "A secure cloud service offering will monitor, log, and audit all important events, activity, and changes",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla",
+          "Section": "Monitoring, Logging, and Auditing",
+          "NistControls": "au-2, ca-7, ra-5",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "app_function_application_insights_enabled",
+        "app_http_logs_enabled",
+        "appinsights_ensure_is_configured",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "keyvault_logging_enabled",
+        "monitor_activity_log_retention_policy_set",
+        "monitor_diagnostic_logs_categories",
+        "monitor_diagnostic_setting_deployed_for_all_resources",
+        "monitor_diagnostic_settings_captures_proper_categories",
+        "monitor_log_profile_all_categories",
+        "monitor_log_profile_all_regions",
+        "monitor_log_profile_captures_all_activities",
+        "monitor_log_profile_retention_policy_at_least_365",
+        "network_flow_logs_enabled",
+        "network_flow_log_retention_policy_at_least_90",
+        "network_watcher_enabled",
+        "postgresql_flexible_server_audit_logs_enabled",
+        "postgresql_flexible_server_log_checkpoints_enabled",
+        "postgresql_flexible_server_log_connections_enabled",
+        "postgresql_flexible_server_log_disconnections_enabled",
+        "sqlserver_auditing_on",
+        "sqlserver_auditing_retention_90_days",
+        "storage_storage_account_logging_queue_read_write_delete_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-piy",
+      "Name": "KSI-PIY: Policy and Inventory",
+      "Description": "A secure cloud service offering will have intentional, organized, universal guidance for how every information resource, including personnel, is secured",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy",
+          "Section": "Policy and Inventory",
+          "NistControls": "cm-8, pl-2",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "policy_ensure_asc_for_aks_is_enabled",
+        "policy_ensure_asc_for_app_services_is_enabled",
+        "policy_ensure_asc_for_azure_sql_is_enabled",
+        "policy_ensure_asc_for_key_vault_is_enabled",
+        "policy_ensure_asc_for_servers_is_enabled",
+        "policy_ensure_asc_for_sql_servers_is_enabled",
+        "policy_ensure_asc_for_storage_is_enabled",
+        "policy_ensure_allowed_extensions_are_installed",
+        "policy_ensure_allowed_locations_is_enabled",
+        "policy_ensure_allowed_resource_types_is_enabled",
+        "policy_ensure_audit_diagnostic_log_enabled_for_all_services",
+        "policy_ensure_not_allowed_resource_types_is_enabled",
+        "vm_guest_configuration_installed",
+        "vm_guest_configuration_with_no_managed_identity",
+        "vm_guest_configuration_with_user_identity"
+      ]
+    },
+    {
+      "Id": "ksi-rpl",
+      "Name": "KSI-RPL: Recovery Planning",
+      "Description": "A secure cloud service offering will define, maintain, and test incident response plan(s) and recovery capabilities to ensure minimal service disruption and data loss",
+      "Attributes": [
+        {
+          "ItemId": "ksi-rpl",
+          "Section": "Recovery Planning",
+          "NistControls": "cp-2, cp-9, cp-10",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "mysql_flexible_server_retain_backup_35_days",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_backup_retention_period_35_days",
+        "recovery_services_vault_uses_private_link",
+        "recovery_services_vault_uses_private_link_for_backup",
+        "sqlserver_database_long_term_geo_redundant_backup",
+        "sqlserver_database_retention_policy_exceeds_90_days",
+        "storage_default_storage_account_encrypted_with_cmk_not_stored_in_storage_account",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_soft_delete_containers_enabled",
+        "storage_soft_delete_enabled",
+        "vm_backup_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-svc",
+      "Name": "KSI-SVC: Service Configuration",
+      "Description": "A secure cloud service offering will follow FedRAMP encryption policies, continuously verify information resource integrity, and restrict access to third-party information resources",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc",
+          "Section": "Service Configuration",
+          "NistControls": "sc-7, sc-13, cm-6",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "app_client_certificates_on",
+        "app_ensure_http_is_redirected_to_https",
+        "app_minimum_tls_version_12",
+        "containerregistry_admin_user_disabled",
+        "cosmosdb_account_use_aad_and_rbac",
+        "databricks_workspace_cmk_encryption_enabled",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "mysql_flexible_server_encrypted_at_rest_using_cmk",
+        "mysql_flexible_server_encrypted_in_transit",
+        "mysql_flexible_server_minimum_tls_version_tls12",
+        "postgresql_flexible_server_encrypted_at_rest_using_cmk",
+        "postgresql_flexible_server_encrypted_in_transit",
+        "postgresql_flexible_server_minimum_tls_version_tls12",
+        "sqlserver_advanced_data_security_enabled",
+        "sqlserver_database_encryption_with_cmk",
+        "sqlserver_database_tde_encryption_enabled",
+        "sqlserver_minimum_tls_version_12",
+        "storage_secure_transfer_required_enabled",
+        "storage_default_storage_account_encrypted_with_cmk",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_storage_account_encrypted_with_cmk",
+        "storage_storage_account_minimum_tls_version_tls12",
+        "vm_encrypted_at_host",
+        "vm_data_disks_encrypted_with_cmk",
+        "vm_managed_disks_encrypted_with_cmk",
+        "vm_os_disk_are_encrypted_with_cmk",
+        "vm_temporary_disks_and_cache_encrypted"
+      ]
+    },
+    {
+      "Id": "ksi-tpr",
+      "Name": "KSI-TPR: Third-Party Information Resources",
+      "Description": "A secure cloud service offering will understand, monitor, and manage supply chain risks from third-party information resources",
+      "Attributes": [
+        {
+          "ItemId": "ksi-tpr",
+          "Section": "Third-Party Information Resources",
+          "NistControls": "sa-9, ra-5",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_function_latest_runtime_version",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_system_updates_are_applied",
+        "vm_agent_installed",
+        "vm_antimalware_solution_installed",
+        "vm_endpoint_protection_installed",
+        "vm_os_update_system_updates",
+        "vm_security_patch_assessment"
+      ]
+    }
+  ]
+}
