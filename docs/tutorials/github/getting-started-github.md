@@ -15,6 +15,11 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
 
 #### How to Create a Personal Access Token
 
+???+ warning "Classic Tokens Deprecated"
+    GitHub has deprecated Personal Access Tokens (classic) in favor of fine-grained Personal Access Tokens. We recommend using fine-grained tokens as they provide better security through more granular permissions and resource-specific access control.
+
+##### **Option 1: Fine-Grained Personal Access Token (Recommended)**
+
 1. **Navigate to GitHub Settings**
     - Open [GitHub](https://github.com) and sign in
     - Click the profile picture in the top right corner
@@ -24,18 +29,62 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Scroll down the left sidebar
     - Click "Developer settings"
 
-3. **Generate New Token**
+3. **Generate Fine-Grained Token**
+    - Click "Personal access tokens"
+    - Select "Fine-grained tokens"
+    - Click "Generate new token"
+
+4. **Configure Token Settings**
+    - **Token name**: Give your token a descriptive name (e.g., "Prowler Security Scanner")
+    - **Expiration**: Set an appropriate expiration date (recommended: 90 days or less)
+    - **Repository access**: Choose "All repositories" or "Only select repositories" based on your needs
+
+5. **Configure Token Permissions**
+    To enable Prowler functionality, configure the following permissions:
+
+    **Repository permissions:**
+    - **Contents**: Read-only access
+    - **Metadata**: Read-only access
+    - **Pull requests**: Read-only access
+    - **Security events**: Read-only access
+    - **Statuses**: Read-only access
+
+    **Organization permissions:**
+    - **Members**: Read-only access
+
+    **Account permissions:**
+    - **Email addresses**: Read-only access
+
+6. **Copy and Store the Token**
+    - Copy the generated token immediately (GitHub displays tokens only once)
+    - Store tokens securely using environment variables
+
+##### **Option 2: Classic Personal Access Token (Not Recommended)**
+
+???+ warning "Security Risk"
+    Classic tokens provide broad permissions that may exceed what Prowler actually needs. Use fine-grained tokens instead for better security.
+
+1. **Navigate to GitHub Settings**
+    - Open [GitHub](https://github.com) and sign in
+    - Click the profile picture in the top right corner
+    - Select "Settings" from the dropdown menu
+
+2. **Access Developer Settings**
+    - Scroll down the left sidebar
+    - Click "Developer settings"
+
+3. **Generate Classic Token**
     - Click "Personal access tokens"
     - Select "Tokens (classic)"
     - Click "Generate new token"
 
 4. **Configure Token Permissions**
     To enable Prowler functionality, configure the following scopes:
-    - `repo`: Full control of private repositories
+    - `repo`: Full control of private repositories (includes `repo:status` and `repo:contents`)
     - `read:org`: Read organization and team membership
     - `read:user`: Read user profile data
-    - `read:discussion`: Read discussions
-    - `read:enterprise`: Read enterprise data (if applicable)
+    - `security_events`: Access security events (secret scanning and Dependabot alerts)
+    - `read:enterprise`: Read enterprise data (if using GitHub Enterprise)
 
 5. **Copy and Store the Token**
     - Copy the generated token immediately (GitHub displays tokens only once)
