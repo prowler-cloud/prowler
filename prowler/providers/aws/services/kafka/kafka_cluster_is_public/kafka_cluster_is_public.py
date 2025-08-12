@@ -10,13 +10,13 @@ class kafka_cluster_is_public(Check):
             report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "FAIL"
             report.status_extended = (
-                f"Kafka cluster '{cluster.name}' is publicly accessible."
+                f"Kafka cluster {cluster.name} is publicly accessible."
             )
 
             if not cluster.public_access:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Kafka cluster '{cluster.name}' is not publicly accessible."
+                    f"Kafka cluster {cluster.name} is not publicly accessible."
                 )
 
             findings.append(report)
