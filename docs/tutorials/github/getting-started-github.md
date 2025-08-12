@@ -13,12 +13,10 @@ This guide explains how to set up authentication with GitHub for Prowler. The do
 
 Personal Access Tokens provide the simplest GitHub authentication method and support individual user authentication or testing scenarios.
 
-#### How to Create a Personal Access Token
-
 ???+ warning "Classic Tokens Deprecated"
     GitHub has deprecated Personal Access Tokens (classic) in favor of fine-grained Personal Access Tokens. We recommend using fine-grained tokens as they provide better security through more granular permissions and resource-specific access control.
 
-##### **Option 1: Fine-Grained Personal Access Token (Recommended)**
+#### **Option 1: Create a Fine-Grained Personal Access Token (Recommended)**
 
 1. **Navigate to GitHub Settings**
     - Open [GitHub](https://github.com) and sign in
@@ -59,7 +57,7 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Copy the generated token immediately (GitHub displays tokens only once)
     - Store tokens securely using environment variables
 
-##### **Option 2: Classic Personal Access Token (Not Recommended)**
+#### **Option 2: Create a Classic Personal Access Token (Not Recommended)**
 
 ???+ warning "Security Risk"
     Classic tokens provide broad permissions that may exceed what Prowler actually needs. Use fine-grained tokens instead for better security.

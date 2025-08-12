@@ -209,7 +209,7 @@ For GitHub, you must enter your Provider ID (username or organization name) and 
 - **GitHub App** (Recommended for organizations and production use)
 
 ???+ note
-    For full setup instructions and requirements, check the [GitHub Personal Access Token tutorial](./github/getting-started-github.md#personal-access-token-pat).
+    For full setup instructions and requirements, check the [GitHub provider requirements](./github/getting-started-github.md).
 
 <img src="../img/github-auth-methods.png" alt="GitHub Authentication Methods" width="700"/>
 
@@ -222,7 +222,7 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
 <img src="../img/github-pat-credentials.png" alt="GitHub Personal Access Token Credentials" width="700"/>
 
 ???+ note
-    For detailed instructions on creating a Personal Access Token and the exact permissions required, check the [GitHub provider requirements](./github/getting-started-github.md#personal-access-token-pat).
+    For detailed instructions on creating a Personal Access Token and the exact permissions required, check the [GitHub Personal Access Token tutorial](./github/getting-started-github.md#1-personal-access-token-pat).
 
 #### **Step 4.6.2: OAuth App Token**
 
