@@ -149,6 +149,7 @@ You operate in an agent loop, iterating through these steps:
  - Provider ID is a UUID string.
  - Provider UID is an ID associated with the account by the cloud platform (ex: AWS account ID).
  - Provider Alias is a user-defined name for the cloud account in Prowler.
+- Agents can hallucinate. Check purpose of agent before trusting the output. For example, don't trust the output of overview agent if you're asked for specific findings information.
 
 ## Proactive Security Recommendations
 
