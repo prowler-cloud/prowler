@@ -50,7 +50,7 @@ export const DeleteGroupForm = ({
       });
       router.push("/manage-groups");
     }
-    setIsOpen(false); // Close the modal
+    setIsOpen(false); // Close the modal on success
   }
 
   return (
