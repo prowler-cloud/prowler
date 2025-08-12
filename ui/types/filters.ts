@@ -1,7 +1,7 @@
 import { ProviderEntity } from "./providers";
 import { ScanEntity } from "./scans";
 
-export type FilterEntity = ProviderEntity | ScanEntity;
+export type FilterEntity = ProviderEntity | ScanEntity | { label: string };
 
 export interface FilterOption {
   key: string;
