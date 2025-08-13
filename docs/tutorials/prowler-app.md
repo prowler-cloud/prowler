@@ -201,6 +201,51 @@ For full setup instructions and requirements, check the [Microsoft 365 provider 
 
 <img src="../../img/m365-credentials.png" alt="Prowler Cloud M365 Credentials" width="700"/>
 
+### **Step 4.6: GitHub Credentials**
+For GitHub, you must enter your Provider ID (username or organization name) and choose the authentication method you want to use:
+
+- **Personal Access Token** (Recommended for individual users)
+- **OAuth App Token** (For applications requiring user consent)
+- **GitHub App** (Recommended for organizations and production use)
+
+???+ note
+    For full setup instructions and requirements, check the [GitHub provider requirements](./github/getting-started-github.md).
+
+<img src="../img/github-auth-methods.png" alt="GitHub Authentication Methods" width="700"/>
+
+#### **Step 4.6.1: Personal Access Token**
+
+Personal Access Tokens provide the simplest GitHub authentication method and support individual user authentication or testing scenarios.
+
+- Select `Personal Access Token` and enter your `Personal Access Token`:
+
+<img src="../img/github-pat-credentials.png" alt="GitHub Personal Access Token Credentials" width="700"/>
+
+???+ note
+    For detailed instructions on creating a Personal Access Token and the exact permissions required, check the [GitHub Personal Access Token tutorial](./github/getting-started-github.md#1-personal-access-token-pat).
+
+#### **Step 4.6.2: OAuth App Token**
+
+OAuth Apps enable applications to act on behalf of users with explicit consent.
+
+- Select `OAuth App Token` and enter your `OAuth App Token`:
+
+<img src="../img/github-oauth-credentials.png" alt="GitHub OAuth App Credentials" width="700"/>
+
+???+ note
+    To create an OAuth App, go to GitHub Settings → Developer settings → OAuth Apps → New OAuth App. You'll need to exchange an authorization code for an access token using the OAuth flow.
+
+#### **Step 4.6.3: GitHub App**
+
+GitHub Apps provide the recommended integration method for accessing multiple repositories or organizations.
+
+- Select `GitHub App` and enter your `GitHub App ID` and `GitHub App Private Key`:
+
+    <img src="../img/github-app-credentials.png" alt="GitHub App Credentials" width="700"/>
+
+???+ note
+    To create a GitHub App, go to GitHub Settings → Developer settings → GitHub Apps → New GitHub App. Configure the necessary permissions and generate a private key. Install the app to your account or organization and provide the App ID and private key content.
+
 ## **Step 5: Test Connection**
 
 After adding your credentials of your cloud account, click the `Launch` button to verify that Prowler App can successfully connect to your provider:
