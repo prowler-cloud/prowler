@@ -10,13 +10,14 @@ import sys
 file_name = sys.argv[1]
 
 # read the CSV file rows and use the column fields to form the Prowler compliance JSON file 'cis_1.0_github.json'
-output = {"Framework": "CIS-GitHub", "Version": "1.5", "Requirements": []}
+output = {"Framework": "CIS-GitHub", "Version": "1.0", "Requirements": []}
 with open(file_name, newline="", encoding="utf-8") as f:
-    reader = csv.reader(f, delimiter=",")
+    reader = csv.reader(f, delimiter=";")
     for row in reader:
         attribute = {
-            "Section": row[3],
-            "Profile": row[4],
+            "Section": row[0],
+            "Subsection": row[1],
+            "Profile": row[3],
             "AssessmentStatus": row[5],
             "Description": row[6],
             "RationaleStatement": row[7],
@@ -24,16 +25,18 @@ with open(file_name, newline="", encoding="utf-8") as f:
             "RemediationProcedure": row[9],
             "AuditProcedure": row[10],
             "AdditionalInformation": row[11],
-            "References": row[12],
+            "References": row[25],
+            "DefaultValue": row[26],
         }
         output["Requirements"].append(
             {
-                "Id": row[0],
-                "Description": row[1],
-                "Checks": list(map(str.strip, row[2].split(","))),
+                "Id": row[2],
+                "Description": row[6],
+                "Checks": [],
                 "Attributes": [attribute],
             }
         )
+
 
 # Write the output Prowler compliance JSON file 'cis_1.0_github.json' locally
 with open("cis_1.0_github.json", "w", encoding="utf-8") as outfile:
