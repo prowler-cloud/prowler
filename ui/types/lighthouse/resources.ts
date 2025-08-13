@@ -11,6 +11,7 @@ const resourceFieldsEnum = z.enum([
   "tags",
   "provider",
   "findings",
+  "failed_findings_count",
   "url",
   "type",
 ]);
@@ -129,6 +130,10 @@ export const getResourcesSchema = z.object({
         .optional()
         .describe("Filter by multiple tags separated by commas."),
       "filter[type]": z.string().optional().describe("Filter by type."),
+      "filter[type__icontains]": z
+        .string()
+        .optional()
+        .describe("Filter by substring."),
       "filter[type__in]": z
         .string()
         .optional()
@@ -138,18 +143,15 @@ export const getResourcesSchema = z.object({
         .string()
         .optional()
         .describe("Filter by substring."),
-      "filter[updated_at]": z
-        .string()
-        .optional()
-        .describe("The uid to filter by."),
+      "filter[updated_at]": z.string().optional().describe("Filter by date."),
       "filter[updated_at__gte]": z
         .string()
         .optional()
-        .describe("The uid to filter by."),
+        .describe("Filter by date greater than or equal to."),
       "filter[updated_at__lte]": z
         .string()
         .optional()
-        .describe("The uid to filter by."),
+        .describe("Filter by date less than or equal to."),
     })
     .optional()
     .describe("The filters to apply to the resources."),
