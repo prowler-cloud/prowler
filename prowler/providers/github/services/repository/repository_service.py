@@ -65,7 +65,7 @@ class Repository(GithubService):
         query = """
         {
           viewer {
-            repositories(first: 100, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]) {
+            repositories(first: 100, affiliations: [OWNER, ORGANIZATION_MEMBER]) {
               nodes {
                 nameWithOwner
               }

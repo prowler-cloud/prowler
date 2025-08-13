@@ -37,8 +37,8 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - **Expiration**: Set an appropriate expiration date (recommended: 90 days or less)
     - **Repository access**: Choose "All repositories" or "Only select repositories" based on your needs
 
-    ???+ note "Even if you select 'Only select repositories', the token will have access to the public repositories."
-        Even if you select 'Only select repositories', the token will have access to the public repositories.
+    ???+ note "Public repositories"
+        Even if you select 'Only select repositories', the token will have access to the public repositories that you own or are a member of.
 
 5. **Configure Token Permissions**
     To enable Prowler functionality, configure the following permissions:
@@ -60,7 +60,7 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Copy the generated token immediately (GitHub displays tokens only once)
     - Store tokens securely using environment variables
 
-<img src="../img/github-pat-permissions.png" alt="GitHub Personal Access Token Permissions" width="700"/>
+<img src="img/github-pat-permissions.png" alt="GitHub Personal Access Token Permissions" width="700"/>
 
 #### **Option 2: Create a Classic Personal Access Token (Not Recommended)**
 
