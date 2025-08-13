@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_jit_access_enabled` check for Azure provider [(#8202)](https://github.com/prowler-cloud/prowler/pull/8202)
 
 ### Changed
+- Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
 
 ### Fixed
 
