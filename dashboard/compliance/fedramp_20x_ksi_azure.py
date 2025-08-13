@@ -34,9 +34,10 @@ def get_table(data):
     }
     
     # Replace long descriptions with short names - use contains for partial matching
-    for long_desc, short_name in ksi_short_names.items():
-        mask = aux["REQUIREMENTS_DESCRIPTION"].str.contains(long_desc[:50], na=False, regex=False)
-        aux.loc[mask, "REQUIREMENTS_DESCRIPTION"] = short_name
+    if not aux.empty:
+        for long_desc, short_name in ksi_short_names.items():
+            mask = aux["REQUIREMENTS_DESCRIPTION"].str.contains(long_desc[:50], na=False, regex=False)
+            aux.loc[mask, "REQUIREMENTS_DESCRIPTION"] = short_name
 
     return get_section_containers_cis(
         aux, "REQUIREMENTS_ID", "REQUIREMENTS_ATTRIBUTES_SECTION"
