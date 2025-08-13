@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Validation errors in Azure and M365 providers [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
 - Azure `app_http_logs_enabled` check false positives [(#8507)](https://github.com/prowler-cloud/prowler/pull/8507)
 - Azure `storage_geo_redundant_enabled` check false positives [(#8504)](https://github.com/prowler-cloud/prowler/pull/8504)
+- AWS `kafka_cluster_is_public` check false positives [(#8514)](https://github.com/prowler-cloud/prowler/pull/8514)
 
 ---
 
