@@ -29,7 +29,6 @@ import {
   ProviderEntity,
   ScanEntity,
 } from "@/types";
-import { ProviderConnectionStatus } from "@/types/providers";
 
 export const CustomDropdownFilter = ({
   filter,
