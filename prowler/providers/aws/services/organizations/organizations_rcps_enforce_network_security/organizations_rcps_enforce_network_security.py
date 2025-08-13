@@ -49,8 +49,33 @@ class organizations_rcps_enforce_network_security(Check):
 
         return findings
 
+    def _is_rcp_full_aws_access(self, policy):
+        """Check if the policy is the default RCPFullAWSAccess policy"""
+        # RCPFullAWSAccess typically has an ID containing "FullAWSAccess" and allows all actions
+        if policy.id and "FullAWSAccess" in policy.id:
+            return True
+        
+        # Check if policy content allows all actions without restrictions
+        statements = policy.content.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+        
+        for statement in statements:
+            # If there's an Allow statement with "*" action and no conditions, it's likely RCPFullAWSAccess
+            if (statement.get("Effect") == "Allow" and
+                statement.get("Action") == "*" and
+                statement.get("Resource") == "*" and
+                not statement.get("Condition")):
+                return True
+        
+        return False
+    
     def _policy_enforces_network_security(self, policy):
         """Check if a policy enforces network security controls"""
+        # Skip RCPFullAWSAccess as it doesn't enforce anything
+        if self._is_rcp_full_aws_access(policy):
+            return False
+        
         # Get policy statements
         statements = policy.content.get("Statement", [])
         if not isinstance(statements, list):
@@ -132,9 +157,28 @@ class organizations_rcps_enforce_network_security(Check):
 
                 action_str = str(actions).lower()
 
-                # Check for network-related services in actions
-                for service in network_services:
-                    if service.lower() in action_str:
+                # Check for network-related services in actions or wildcard actions
+                is_network_related = False
+                if "*" in action_str:  # Wildcard actions affect all services including network
+                    is_network_related = True
+                else:
+                    for service in network_services:
+                        if service.lower() in action_str:
+                            is_network_related = True
+                            break
+                
+                if is_network_related:
+                    # Check for specific network actions or wildcard
+                    if "*" in action_str:
+                        # Wildcard action - check conditions for network security
+                        condition = statement.get("Condition", {})
+                        if condition:
+                            condition_str = str(condition).lower()
+                            # Check for network security conditions
+                            for net_condition in network_conditions:
+                                if net_condition.lower() in condition_str:
+                                    return True
+                    else:
                         # Check for specific network actions that should be denied
                         for network_action in network_actions:
                             if network_action.lower() in action_str:
@@ -160,6 +204,7 @@ class organizations_rcps_enforce_network_security(Check):
                         "aws:sourcevpc",
                         "aws:sourcevpce",
                         "aws:sourceip",
+                        "aws:securetransport",
                         "vpc-",
                         "vpce-",
                         "tls1.0",
@@ -180,14 +225,13 @@ class organizations_rcps_enforce_network_security(Check):
                 # Look for conditions that enforce secure network configurations
                 secure_network_indicators = [
                     "aws:securetransport",
-                    "true",
                     "aws:vpce",
                     "aws:sourcevpc",
                     "ec2:requireimdsv2",
-                    "true",
                     "ec2:isrestrictedmanagementport",
                     "tls1.2",
                     "tls1.3",
+                    "true",  # Common boolean value in conditions
                 ]
 
                 # Count how many secure network indicators are present

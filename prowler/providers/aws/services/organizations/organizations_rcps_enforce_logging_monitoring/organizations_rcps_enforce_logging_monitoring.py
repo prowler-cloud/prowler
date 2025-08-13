@@ -49,8 +49,33 @@ class organizations_rcps_enforce_logging_monitoring(Check):
 
         return findings
 
+    def _is_rcp_full_aws_access(self, policy):
+        """Check if the policy is the default RCPFullAWSAccess policy"""
+        # RCPFullAWSAccess typically has an ID containing "FullAWSAccess" and allows all actions
+        if policy.id and "FullAWSAccess" in policy.id:
+            return True
+        
+        # Check if policy content allows all actions without restrictions
+        statements = policy.content.get("Statement", [])
+        if not isinstance(statements, list):
+            statements = [statements]
+        
+        for statement in statements:
+            # If there's an Allow statement with "*" action and no conditions, it's likely RCPFullAWSAccess
+            if (statement.get("Effect") == "Allow" and
+                statement.get("Action") == "*" and
+                statement.get("Resource") == "*" and
+                not statement.get("Condition")):
+                return True
+        
+        return False
+    
     def _policy_enforces_logging_monitoring(self, policy):
         """Check if a policy enforces logging and monitoring controls"""
+        # Skip RCPFullAWSAccess as it doesn't enforce anything
+        if self._is_rcp_full_aws_access(policy):
+            return False
+        
         # Get policy statements
         statements = policy.content.get("Statement", [])
         if not isinstance(statements, list):
