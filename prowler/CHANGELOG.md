@@ -26,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure `storage_geo_redundant_enabled` check false positives [(#8504)](https://github.com/prowler-cloud/prowler/pull/8504)
 - AWS `kafka_cluster_is_public` check false positives [(#8514)](https://github.com/prowler-cloud/prowler/pull/8514)
 - List all accessible repositories in GitHub [(#8522)](https://github.com/prowler-cloud/prowler/pull/8522)
+- GitHub CIS 1.0 Compliance Reports [(#8519)](https://github.com/prowler-cloud/prowler/pull/8519)
 
 ---
 
