@@ -18,7 +18,7 @@ def get_table(data):
             "RESOURCEID",
         ]
     ].copy()
-    
+
     # Shorten the long FedRAMP KSI descriptions for better display
     ksi_short_names = {
         "A secure cloud service offering will protect user data, control access, and apply zero trust principles": "Identity and Access Management",
@@ -30,13 +30,15 @@ def get_table(data):
         "A secure cloud service offering will have intentional, organized, universal guidance for how every information resource, including personnel, is secured": "Policy and Inventory",
         "A secure cloud service offering will define, maintain, and test incident response plan(s) and recovery capabilities to ensure minimal service disruption and data loss": "Recovery Planning",
         "A secure cloud service offering will follow FedRAMP encryption policies, continuously verify information resource integrity, and restrict access to third-party information resources": "Service Configuration",
-        "A secure cloud service offering will understand, monitor, and manage supply chain risks from third-party information resources": "Third-Party Information Resources"
+        "A secure cloud service offering will understand, monitor, and manage supply chain risks from third-party information resources": "Third-Party Information Resources",
     }
-    
+
     # Replace long descriptions with short names - use contains for partial matching
     if not aux.empty:
         for long_desc, short_name in ksi_short_names.items():
-            mask = aux["REQUIREMENTS_DESCRIPTION"].str.contains(long_desc[:50], na=False, regex=False)
+            mask = aux["REQUIREMENTS_DESCRIPTION"].str.contains(
+                long_desc[:50], na=False, regex=False
+            )
             aux.loc[mask, "REQUIREMENTS_DESCRIPTION"] = short_name
 
     return get_section_containers_cis(
