@@ -24,7 +24,56 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Scroll down the left sidebar
     - Click "Developer settings"
 
-3. **Generate New Token**
+3. **Generate Fine-Grained Token**
+    - Click "Personal access tokens"
+    - Select "Fine-grained tokens"
+    - Click "Generate new token"
+
+4. **Configure Token Settings**
+    - **Token name**: Give your token a descriptive name (e.g., "Prowler Security Scanner")
+    - **Expiration**: Set an appropriate expiration date (recommended: 90 days or less)
+    - **Repository access**: Choose "All repositories" or "Only select repositories" based on your needs
+
+    ???+ note "Public repositories"
+        Even if you select 'Only select repositories', the token will have access to the public repositories that you own or are a member of.
+
+5. **Configure Token Permissions**
+    To enable Prowler functionality, configure the following permissions:
+
+    - **Repository permissions:**
+        - **Contents**: Read-only access
+        - **Metadata**: Read-only access
+        - **Pull requests**: Read-only access
+        - **Security advisories**: Read-only access
+        - **Statuses**: Read-only access
+
+    - **Organization permissions:**
+        - **Members**: Read-only access
+
+    - **Account permissions:**
+        - **Email addresses**: Read-only access
+
+6. **Copy and Store the Token**
+    - Copy the generated token immediately (GitHub displays tokens only once)
+    - Store tokens securely using environment variables
+
+![GitHub Personal Access Token Permissions](./img/github-pat-permissions.png)
+
+#### **Option 2: Create a Classic Personal Access Token (Not Recommended)**
+
+???+ warning "Security Risk"
+    Classic tokens provide broad permissions that may exceed what Prowler actually needs. Use fine-grained tokens instead for better security.
+
+1. **Navigate to GitHub Settings**
+    - Open [GitHub](https://github.com) and sign in
+    - Click the profile picture in the top right corner
+    - Select "Settings" from the dropdown menu
+
+2. **Access Developer Settings**
+    - Scroll down the left sidebar
+    - Click "Developer settings"
+
+3. **Generate Classic Token**
     - Click "Personal access tokens"
     - Select "Tokens (classic)"
     - Click "Generate new token"
