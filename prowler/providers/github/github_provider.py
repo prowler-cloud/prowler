@@ -133,6 +133,12 @@ class GithubProvider(Provider):
         """
         logger.info("Instantiating GitHub Provider...")
 
+        # Mute GitHub library logs to reduce noise since it is already handled by the Prowler logger
+        import logging
+
+        logging.getLogger("github").setLevel(logging.CRITICAL)
+        logging.getLogger("github.GithubRetry").setLevel(logging.CRITICAL)
+
         # Set repositories and organizations for scoping
         self._repositories = repositories or []
         self._organizations = organizations or []
