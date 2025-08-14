@@ -52,7 +52,6 @@ class Test_PrivilegeEscalation:
         assert "iam:Put*" in result
         assert "iam:AddUserToGroup" in result
         assert "iam:AttachRolePolicy" in result
-        assert "iam:PassRole" in result
         assert "iam:CreateLoginProfile" in result
         assert "iam:CreateAccessKey" in result
         assert "iam:AttachGroupPolicy" in result
@@ -78,7 +77,7 @@ class Test_PrivilegeEscalation:
             ],
         }
         result = check_privilege_escalation(policy)
-        assert "iam:PassRole" in result
+        assert result == ""
 
     def test_check_privilege_escalation_priv_escalation_iam_PassRole_using_wildcard(
         self,
@@ -88,13 +87,17 @@ class Test_PrivilegeEscalation:
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "Action": ["iam:*Role"],  # Should expand to include PassRole
+                    "Action": [
+                        "iam:*"
+                    ],  # Should expand to include multiple IAM actions
                     "Resource": ["*"],
                 }
             ],
         }
         result = check_privilege_escalation(policy)
-        assert "iam:PassRole" in result
+        # iam:* should expand to include UpdateAssumeRolePolicy and other privilege escalation actions
+        assert "iam:UpdateAssumeRolePolicy" in result
+        assert "iam:CreateAccessKey" in result
 
     def test_check_privilege_escalation_priv_escalation_not_action(
         self,
@@ -117,7 +120,6 @@ class Test_PrivilegeEscalation:
         assert "'iam:PutGroupPolicy'" not in result
         assert "iam:AddUserToGroup" in result
         assert "iam:AttachRolePolicy" in result
-        assert "iam:PassRole" in result
         assert "iam:CreateLoginProfile" in result
         assert "iam:CreateAccessKey" in result
         assert "iam:AttachGroupPolicy" in result

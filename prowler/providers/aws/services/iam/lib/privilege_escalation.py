@@ -24,7 +24,6 @@ privilege_escalation_policies_combination = {
     "IAMPut": {"iam:Put*"},
     "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
     "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
-    "iam:PassRole": {"iam:PassRole"},
     "PassRole+EC2": {
         "iam:PassRole",
         "ec2:RunInstances",
@@ -69,6 +68,21 @@ privilege_escalation_policies_combination = {
     },
     "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
     "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
+    "lambda:UpdateFunctionConfiguration": {"lambda:UpdateFunctionConfiguration"},
+    "PassRole+CodeStar": {
+        "iam:PassRole",
+        "codestar:CreateProject",
+    },
+    "PassRole+CreateAutoScaling": {
+        "iam:PassRole",
+        "autoscaling:CreateAutoScalingGroup",
+        "autoscaling:CreateLaunchConfiguration",
+    },
+    "PassRole+UpdateAutoScaling": {
+        "iam:PassRole",
+        "autoscaling:UpdateAutoScalingGroup",
+        "autoscaling:CreateLaunchConfiguration",
+    },
     "iam:CreateAccessKey": {"iam:CreateAccessKey"},
     "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
     "iam:UpdateLoginProfile": {"iam:UpdateLoginProfile"},
