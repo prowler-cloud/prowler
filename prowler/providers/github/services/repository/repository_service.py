@@ -6,7 +6,6 @@ from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.github.lib.service.service import GithubService
-from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 class Repository(GithubService):
@@ -110,24 +109,8 @@ class Repository(GithubService):
                                     error, "processing organization", org_name
                                 )
                 else:
-                    if isinstance(self.provider.identity, GithubIdentityInfo):
-                        repos = client.get_user().get_repos()
-                        if repos.totalCount > 0:
-                            for repo in repos:
-                                self._process_repository(repo, repos)
-                        else:
-                            logger.warning(
-                                "No repositories found for the user, skipping repository checks"
-                            )
-                    elif isinstance(self.provider.identity, GithubAppIdentityInfo):
-                        repos = client.get_repos()
-                        if repos.totalCount > 0:
-                            for repo in repos:
-                                self._process_repository(repo, repos)
-                        else:
-                            logger.warning(
-                                "No repositories found for the app, skipping repository checks"
-                            )
+                    for repo in client.get_user().get_repos():
+                        self._process_repository(repo, repos)
         except github.RateLimitExceededException as error:
             logger.error(f"GitHub API rate limit exceeded: {error}")
             raise  # Re-raise rate limit errors as they need special handling
