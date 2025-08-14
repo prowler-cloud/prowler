@@ -86,14 +86,12 @@ export async function POST(req: Request) {
           }
           controller.close();
         } catch (error) {
-          const errorName =
-            error instanceof Error ? error.constructor.name : "UnknownError";
           const errorMessage =
             error instanceof Error ? error.message : String(error);
           controller.enqueue({
             id: "error-" + Date.now(),
             role: "assistant",
-            content: `[LIGHTHOUSE_ANALYST_ERROR]: ${errorName}: ${errorMessage}`,
+            content: `[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`,
           });
           controller.close();
         }

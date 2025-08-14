@@ -459,6 +459,9 @@ azure:
       "Standard_DS3_v2",
       "Standard_D4s_v3",
     ]
+  # Azure VM Backup Configuration
+  # azure.vm_sufficient_daily_backup_retention_period
+  vm_backup_min_daily_retention_days: 7
 
 # GCP Configuration
 gcp:
