@@ -60,7 +60,7 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Copy the generated token immediately (GitHub displays tokens only once)
     - Store tokens securely using environment variables
 
-<img src="./img/github-pat-permissions.png" alt="GitHub Personal Access Token Permissions" width="700"/>
+![GitHub Personal Access Token Permissions](./img/github-pat-permissions.png)
 
 #### **Option 2: Create a Classic Personal Access Token (Not Recommended)**
 
