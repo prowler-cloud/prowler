@@ -2,17 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.11.0] (Prowler UNRELEASED)
-
-### Added
-
-### Changed
-
-### Fixed
-
----
-
-## [v5.10.2] (Prowler UNRELEASED)
+## [v5.10.2] (Prowler 5.10.2)
 
 ### Fixed
 - Order requirements by ID in Prowler ThreatScore AWS compliance framework [(#8495)](https://github.com/prowler-cloud/prowler/pull/8495)
