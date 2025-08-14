@@ -254,10 +254,11 @@ class Finding(BaseModel):
                     # GithubIdentityInfo (Personal Access Token, OAuth)
                     output_data["account_name"] = provider.identity.account_name
                     output_data["account_uid"] = provider.identity.account_id
+                    output_data["account_email"] = provider.identity.account_email
                 elif hasattr(provider.identity, "app_id"):
                     # GithubAppIdentityInfo (GitHub App)
                     # TODO: Get Github App name
-                    output_data["account_name"] = f"app-{provider.identity.app_id}"
+                    output_data["account_name"] = provider.identity.app_name
                     output_data["account_uid"] = provider.identity.app_id
 
                 output_data["region"] = check_output.owner
