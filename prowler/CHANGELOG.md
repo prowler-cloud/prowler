@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_jit_access_enabled` check for Azure provider [(#8202)](https://github.com/prowler-cloud/prowler/pull/8202)
 
 ### Changed
+- Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
 
 ### Fixed
 
@@ -21,6 +22,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Order requirements by ID in Prowler ThreatScore AWS compliance framework [(#8495)](https://github.com/prowler-cloud/prowler/pull/8495)
 - Add explicit resource name to GCP and Azure Defender checks [(#8352)](https://github.com/prowler-cloud/prowler/pull/8352)
 - Validation errors in Azure and M365 providers [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
+- Azure `app_http_logs_enabled` check false positives [(#8507)](https://github.com/prowler-cloud/prowler/pull/8507)
+- Azure `storage_geo_redundant_enabled` check false positives [(#8504)](https://github.com/prowler-cloud/prowler/pull/8504)
+- AWS `kafka_cluster_is_public` check false positives [(#8514)](https://github.com/prowler-cloud/prowler/pull/8514)
+- List all accessible repositories in GitHub [(#8522)](https://github.com/prowler-cloud/prowler/pull/8522)
+- GitHub CIS 1.0 Compliance Reports [(#8519)](https://github.com/prowler-cloud/prowler/pull/8519)
 
 ---
 
