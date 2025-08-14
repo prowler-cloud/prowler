@@ -6,7 +6,6 @@ from prowler.providers.azure.services.storage.storage_service import (
     DeleteRetentionPolicy,
     FileServiceProperties,
     NetworkRuleSet,
-    ReplicationSettings,
     SMBProtocolSettings,
     Storage,
 )
@@ -53,7 +52,7 @@ def mock_storage_get_storage_accounts(_):
                 location="westeurope",
                 blob_properties=blob_properties,
                 default_to_entra_authorization=True,
-                replication_settings=ReplicationSettings.STANDARD_LRS,
+                replication_settings="Standard_LRS",
                 allow_cross_tenant_replication=True,
                 allow_shared_key_access=True,
                 file_service_properties=file_service_properties,
@@ -150,7 +149,7 @@ class Test_Storage_Service:
         ].default_to_entra_authorization
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].replication_settings
-            == ReplicationSettings.STANDARD_LRS
+            == "Standard_LRS"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
