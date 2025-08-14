@@ -24,9 +24,6 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Scroll down the left sidebar
     - Click "Developer settings"
 
-<<<<<<< HEAD
-3. **Generate New Token**
-=======
 3. **Generate Fine-Grained Token**
     - Click "Personal access tokens"
     - Select "Fine-grained tokens"
@@ -77,7 +74,6 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Click "Developer settings"
 
 3. **Generate Classic Token**
->>>>>>> dfdd45e4d (fix(github): list all accessible repositories (#8522))
     - Click "Personal access tokens"
     - Select "Tokens (classic)"
     - Click "Generate new token"
