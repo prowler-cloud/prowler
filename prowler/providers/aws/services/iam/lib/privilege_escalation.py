@@ -86,6 +86,12 @@ privilege_escalation_policies_combination = {
         "sts:AssumeRole",
         "iam:UpdateAssumeRolePolicy",
     },
+    # AgentCore privilege escalation patterns
+    "PassRole+AgentCoreCreateInterpreter+InvokeInterpreter": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateCodeInterpreter",
+        "bedrock-agentcore:InvokeCodeInterpreter",
+    },
     # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
     # "sts:AssumeRole": {"sts:AssumeRole"},
 }
