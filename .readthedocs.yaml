@@ -11,7 +11,15 @@ build:
     python: "3.11"
   jobs:
     post_create_environment:
-      - pip install -r docs/requirements.txt
+      # Install poetry
+      # https://python-poetry.org/docs/#installing-manually
+      - python -m pip install poetry
+    post_install:
+      # Install dependencies with 'docs' dependency group
+      # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
+      # VIRTUAL_ENV needs to be set manually for now.
+      # See https://github.com/readthedocs/readthedocs.org/pull/11152/
+      - VIRTUAL_ENV=${READTHEDOCS_VIRTUALENV_PATH} python -m poetry install --only=docs
 
 mkdocs:
   configuration: mkdocs.yml
