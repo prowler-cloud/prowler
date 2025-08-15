@@ -7,6 +7,7 @@ from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.github.lib.service.service import GithubService
+from prowler.providers.github.models import GithubAppIdentityInfo
 
 
 class Repository(GithubService):
@@ -102,12 +103,23 @@ class Repository(GithubService):
     def _list_repositories(self):
         """
         List repositories based on provider scoping configuration.
+        If the provider is a GitHub App, it will list repositories in the organizations that the GitHub App is installed in.
+        If the provider is a user, it will list repositories where the user is a member or owner.
+        If input repositories are provided, it will list repositories that match the input repositories.
+        If input organizations are provided, it will list repositories in the organizations that match the input organizations.
         """
         logger.info("Repository - Listing Repositories...")
         repos = {}
         try:
             for client in self.clients:
-                if self.provider.repositories or self.provider.organizations:
+                if (
+                    self.provider.repositories
+                    or self.provider.organizations
+                    or (
+                        isinstance(self.provider.identity, GithubAppIdentityInfo)
+                        and self.provider.identity.installations
+                    )
+                ):
                     if self.provider.repositories:
                         logger.info(
                             f"Filtering for specific repositories: {self.provider.repositories}"
@@ -131,6 +143,24 @@ class Repository(GithubService):
                             f"Filtering for repositories in organizations: {self.provider.organizations}"
                         )
                         for org_name in self.provider.organizations:
+                            try:
+                                repos_list, _ = self._get_repositories_from_owner(
+                                    client, org_name
+                                )
+                                for repo in repos_list:
+                                    self._process_repository(repo, repos)
+                            except Exception as error:
+                                self._handle_github_api_error(
+                                    error, "processing organization", org_name
+                                )
+                    if (
+                        isinstance(self.provider.identity, GithubAppIdentityInfo)
+                        and self.provider.identity.installations
+                    ):
+                        logger.info(
+                            f"Filtering for repositories in the organizations or accounts that the GitHub App is installed in: {', '.join(self.provider.identity.installations)}"
+                        )
+                        for org_name in self.provider.identity.installations:
                             try:
                                 repos_list, _ = self._get_repositories_from_owner(
                                     client, org_name
