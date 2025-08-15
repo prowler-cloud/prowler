@@ -1,7 +1,10 @@
-import { ProviderEntity } from "./providers";
+import { ProviderConnectionStatus, ProviderEntity } from "./providers";
 import { ScanEntity } from "./scans";
 
-export type FilterEntity = ProviderEntity | ScanEntity;
+export type FilterEntity =
+  | ProviderEntity
+  | ScanEntity
+  | ProviderConnectionStatus;
 
 export interface FilterOption {
   key: string;
