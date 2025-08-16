@@ -196,6 +196,8 @@ export const CustomDropdownFilter = ({
           (entity as ScanEntity).providerInfo?.uid ||
           value
         );
+      } else if ("label" in entity) {
+        return entity.label;
       } else {
         return (
           (entity as ProviderEntity).alias ||
@@ -206,6 +208,32 @@ export const CustomDropdownFilter = ({
     },
     [filter.valueLabelMapping],
   );
+
+  const renderEntity = (entity: FilterEntity | undefined, value: string) => {
+    if (!entity) return value;
+
+    if (isScanEntity(entity as ScanEntity)) {
+      return <ComplianceScanInfo scan={entity as ScanEntity} />;
+    }
+
+    const maybeProvider = entity as ProviderEntity;
+    if ("provider" in maybeProvider) {
+      return (
+        <EntityInfoShort
+          cloudProvider={maybeProvider.provider}
+          entityAlias={maybeProvider.alias ?? undefined}
+          entityId={maybeProvider.uid}
+          hideCopyButton
+        />
+      );
+    }
+
+    if ("label" in entity) {
+      return <span>{entity.label}</span>;
+    }
+
+    return value;
+  };
 
   return (
     <div className="flex w-full flex-col gap-2">
@@ -319,24 +347,7 @@ export const CustomDropdownFilter = ({
                         key={value}
                         value={value}
                       >
-                        {entity ? (
-                          isScanEntity(entity as ScanEntity) ? (
-                            <ComplianceScanInfo scan={entity as ScanEntity} />
-                          ) : (
-                            <EntityInfoShort
-                              cloudProvider={
-                                (entity as ProviderEntity).provider
-                              }
-                              entityAlias={
-                                (entity as ProviderEntity).alias ?? undefined
-                              }
-                              entityId={(entity as ProviderEntity).uid}
-                              hideCopyButton
-                            />
-                          )
-                        ) : (
-                          value
-                        )}
+                        {renderEntity(entity, value)}
                       </Checkbox>
                     );
                   })}

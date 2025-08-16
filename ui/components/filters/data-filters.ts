@@ -6,6 +6,12 @@ export const filterProviders = [
     key: "connected",
     labelCheckboxGroup: "Connection",
     values: ["false", "true"],
+    valueLabelMapping: [
+      {
+        false: { label: "Disconnected" },
+        true: { label: "Connected" },
+      },
+    ],
   },
   {
     key: "provider__in",
