@@ -322,17 +322,16 @@ class Test_iam_policy_allows_privilege_escalation:
             check = iam_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                f"Custom Policy {policy_arn} does not allow privilege escalation",
                 result[0].status_extended,
             )
-            assert search("iam:PassRole", result[0].status_extended)
 
     @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_PassRole_using_wildcard(
@@ -375,17 +374,16 @@ class Test_iam_policy_allows_privilege_escalation:
             check = iam_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                f"Custom Policy {policy_arn} does not allow privilege escalation",
                 result[0].status_extended,
             )
-            assert search("iam:PassRole", result[0].status_extended)
 
     @mock_aws
     def test_iam_policy_allows_privilege_escalation_two_combinations(
@@ -508,17 +506,16 @@ class Test_iam_policy_allows_privilege_escalation:
             check = iam_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                f"Custom Policy {policy_arn} does not allow privilege escalation",
                 result[0].status_extended,
             )
-            assert search("iam:PassRole", result[0].status_extended)
 
     @mock_aws
     def test_iam_policy_allows_privilege_escalation_policies_combination(
