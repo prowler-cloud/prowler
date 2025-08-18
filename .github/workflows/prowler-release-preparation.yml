@@ -123,24 +123,6 @@ jobs:
           echo "ℹ No API changes detected for version $API_VERSION"
         fi
 
-        # Check if UI changelog has content (for potential future use)
-        if [ -s "ui_changelog.md" ]; then
-          echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
-          echo "✓ UI changes detected for version $UI_VERSION"
-        else
-          echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
-          echo "ℹ No UI changes detected for version $UI_VERSION"
-        fi
-
-        # Check if SDK changelog has content (for potential future use)
-        if [ -s "prowler_changelog.md" ]; then
-          echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
-          echo "✓ SDK changes detected for version $PROWLER_VERSION"
-        else
-          echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
-          echo "ℹ No SDK changes detected for version $PROWLER_VERSION"
-        fi
-
         # Combine changelogs in order: UI, API, SDK
         > combined_changelog.md
 
