@@ -586,7 +586,7 @@ class TestFinding:
         provider.type = "github"
         # GitHub App identity only has app_id, not account_name/account_id
         provider.identity = GithubAppIdentityInfo(
-            app_id=APP_ID, installations=["test-org"]
+            app_id=APP_ID, app_name="test-app", installations=["test-org"]
         )
         provider.auth_method = "GitHub App Token"
 
@@ -634,8 +634,8 @@ class TestFinding:
 
         # Assert account information for GitHub App - this is the core of the bug fix
         # Before the fix, this would fail because GithubAppIdentityInfo doesn't have account_name
-        # After the fix, it should use app_id with "app-" prefix
-        assert finding_output.account_name == f"app-{APP_ID}"
+        # After the fix, it should use app_name
+        assert finding_output.account_name == "test-app"
         assert finding_output.account_uid == APP_ID
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
