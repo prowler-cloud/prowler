@@ -102,12 +102,6 @@ jobs:
           python -m pip install --upgrade pip
           pipx install poetry==2.1.1
 
-      - name: Update poetry.lock after the branch name change
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry lock
-
       - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push'
@@ -125,18 +119,18 @@ jobs:
           echo "Updated resolved_reference:"
           grep -A2 -B2 "resolved_reference" poetry.lock
 
+      - name: Update poetry.lock
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry lock
+
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
-
-      - name: Install system dependencies for xmlsec
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
 
       - name: Install dependencies
         working-directory: ./api
