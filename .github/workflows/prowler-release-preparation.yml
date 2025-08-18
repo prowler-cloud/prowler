@@ -233,7 +233,7 @@ jobs:
         fi
 
     - name: Prepare prowler dependency update for minor release
-      if: ${{ env.PATCH_VERSION == '0' && env.HAS_API_CHANGES == 'true' }}
+      if: ${{ env.PATCH_VERSION == '0' }}
       run: |
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
         BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
@@ -271,7 +271,7 @@ jobs:
         echo "✓ Prepared prowler dependency update to: $UPDATED_PROWLER_REF"
 
     - name: Create Pull Request against release branch
-      if: ${{ env.PATCH_VERSION == '0' && env.HAS_API_CHANGES == 'true' }}
+      if: ${{ env.PATCH_VERSION == '0' }}
       uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
       with:
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
