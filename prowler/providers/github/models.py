@@ -22,6 +22,7 @@ class GithubIdentityInfo(BaseModel):
 class GithubAppIdentityInfo(BaseModel):
     app_id: str
     app_name: str
+    installations: list[str]
 
 
 class GithubOutputOptions(ProviderOutputOptions):

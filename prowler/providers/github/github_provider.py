@@ -367,11 +367,17 @@ class GithubProvider(Provider):
             elif session.id != 0 and session.key:
                 auth = Auth.AppAuth(session.id, session.key)
                 gi = GithubIntegration(auth=auth, retry=retry_config)
+                installations = []
+                for installation in gi.get_installations():
+                    installations.append(
+                        installation.raw_data.get("account", {}).get("login")
+                    )
                 try:
                     app = gi.get_app()
                     identity = GithubAppIdentityInfo(
                         app_id=app.id,
                         app_name=app.name,
+                        installations=installations,
                     )
                     return identity
 
