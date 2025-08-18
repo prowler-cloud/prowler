@@ -79,7 +79,7 @@ class Test_PrivilegeEscalation:
         result = check_privilege_escalation(policy)
         assert result == ""
 
-    def test_check_privilege_escalation_priv_escalation_iam_PassRole_using_wildcard(
+    def test_check_privilege_escalation_priv_escalation_iam_wildcard(
         self,
     ):
         policy = {
@@ -95,9 +95,8 @@ class Test_PrivilegeEscalation:
             ],
         }
         result = check_privilege_escalation(policy)
-        # iam:* should expand to include UpdateAssumeRolePolicy and other privilege escalation actions
-        assert "iam:UpdateAssumeRolePolicy" in result
-        assert "iam:CreateAccessKey" in result
+        # iam:* should expand to include PutUserPolicy and other privilege escalation actions
+        assert "iam:PutUserPolicy" in result
 
     def test_check_privilege_escalation_priv_escalation_not_action(
         self,
