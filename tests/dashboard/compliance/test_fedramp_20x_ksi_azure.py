@@ -161,7 +161,7 @@ class TestFedRAMP20xKSIAzure:
     def test_get_table_incident_reporting(self):
         test_data = pd.DataFrame(
             {
-                "REQUIREMENTS_ID": ["ksi-inc"],
+                "REQUIREMENTS_ID": ["ksi-inr"],
                 "REQUIREMENTS_DESCRIPTION": [
                     "A secure cloud service offering will document, report, and analyze security incidents to ensure regulatory compliance and continuous security improvement"
                 ],
