@@ -121,7 +121,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
   return (
     <Card className="h-full dark:bg-prowler-blue-400">
       <CardBody>
-        <div className="flex h-full flex-col items-center justify-between">
+        <div className="flex h-full flex-col items-center justify-around">
           <ChartContainer
             config={chartConfig}
             className="aspect-square w-[250px] min-w-[250px]"

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     // Get AI configuration to access business context
     const aiConfig = await getLighthouseConfig();
-    const businessContext = aiConfig?.data?.attributes?.business_context;
+    const businessContext = aiConfig?.attributes?.business_context;
 
     // Get current user data
     const currentData = await getCurrentDataSection();
@@ -86,14 +86,12 @@ export async function POST(req: Request) {
           }
           controller.close();
         } catch (error) {
-          const errorName =
-            error instanceof Error ? error.constructor.name : "UnknownError";
           const errorMessage =
             error instanceof Error ? error.message : String(error);
           controller.enqueue({
             id: "error-" + Date.now(),
             role: "assistant",
-            content: `[LIGHTHOUSE_ANALYST_ERROR]: ${errorName}: ${errorMessage}`,
+            content: `[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`,
           });
           controller.close();
         }

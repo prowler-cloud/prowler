@@ -133,6 +133,12 @@ class GithubProvider(Provider):
         """
         logger.info("Instantiating GitHub Provider...")
 
+        # Mute GitHub library logs to reduce noise since it is already handled by the Prowler logger
+        import logging
+
+        logging.getLogger("github").setLevel(logging.CRITICAL)
+        logging.getLogger("github.GithubRetry").setLevel(logging.CRITICAL)
+
         # Set repositories and organizations for scoping
         self._repositories = repositories or []
         self._organizations = organizations or []
@@ -359,8 +365,16 @@ class GithubProvider(Provider):
             elif session.id != 0 and session.key:
                 auth = Auth.AppAuth(session.id, session.key)
                 gi = GithubIntegration(auth=auth, retry=retry_config)
+                installations = []
+                for installation in gi.get_installations():
+                    installations.append(
+                        installation.raw_data.get("account", {}).get("login")
+                    )
                 try:
-                    identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
+                    identity = GithubAppIdentityInfo(
+                        app_id=gi.get_app().id,
+                        installations=installations,
+                    )
                     return identity
 
                 except Exception as error:
