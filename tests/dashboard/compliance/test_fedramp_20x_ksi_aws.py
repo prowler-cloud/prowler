@@ -72,7 +72,7 @@ class TestFedRAMP20xKSIAWS:
     def test_get_table_partial_ksi_descriptions(self):
         test_data = pd.DataFrame(
             {
-                "REQUIREMENTS_ID": ["ksi-pol", "ksi-rec"],
+                "REQUIREMENTS_ID": ["ksi-piy", "ksi-rpl"],
                 "REQUIREMENTS_DESCRIPTION": [
                     "A secure cloud service offering will have intentional, organized, universal guidance for how every information resource, including personnel, is secured",
                     "A secure cloud service offering will define, maintain, and test incident response plan(s) and recovery capabilities to ensure minimal service disruption and data loss",
@@ -106,7 +106,7 @@ class TestFedRAMP20xKSIAWS:
     def test_get_table_mixed_statuses(self):
         test_data = pd.DataFrame(
             {
-                "REQUIREMENTS_ID": ["ksi-mon", "ksi-mon", "ksi-mon"],
+                "REQUIREMENTS_ID": ["ksi-mla", "ksi-mla", "ksi-mla"],
                 "REQUIREMENTS_DESCRIPTION": [
                     "A secure cloud service offering will monitor, log, and audit all important events, activity, and changes",
                     "A secure cloud service offering will monitor, log, and audit all important events, activity, and changes",
