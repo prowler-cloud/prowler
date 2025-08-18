@@ -569,16 +569,16 @@ class HTML(Output):
                     and provider.identity.account_email
                 ):
                     account_info_items += f"""
-                            <li class="list-group-item">
-                                <b>GitHub account email:</b> {provider.identity.account_email}
-                            </li>"""
+                                <li class="list-group-item">
+                                    <b>GitHub account email:</b> {provider.identity.account_email}
+                                </li>"""
             elif hasattr(provider.identity, "app_id"):
                 # GithubAppIdentityInfo (GitHub App)
                 # Assessment items: App Name and Installations
                 account_info_items = f"""
-                            <li class="list-group-item">
-                                <b>GitHub App Name:</b> {provider.identity.app_name}
-                            </li>"""
+                                <li class="list-group-item">
+                                    <b>GitHub App Name:</b> {provider.identity.app_name}
+                                </li>"""
                 # Add installations if available
                 if (
                     hasattr(provider.identity, "installations")
