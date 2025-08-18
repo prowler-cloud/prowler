@@ -231,11 +231,12 @@ github_personal_access_token_html_assessment_summary = """
                         <div class="card-header">
                             GitHub Assessment Summary
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
+                        <ul class="list-group list-group-flush">
+
                             <li class="list-group-item">
                                 <b>GitHub account:</b> account-name
                             </li>
+
                         </ul>
                     </div>
                 </div>
@@ -244,8 +245,8 @@ github_personal_access_token_html_assessment_summary = """
                         <div class="card-header">
                             GitHub Credentials
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
+                        <ul class="list-group list-group-flush">
+
                             <li class="list-group-item">
                                 <b>GitHub authentication method:</b> Personal Access Token
                             </li>
@@ -259,10 +260,13 @@ github_app_html_assessment_summary = """
                         <div class="card-header">
                             GitHub Assessment Summary
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
+                        <ul class="list-group list-group-flush">
+
                             <li class="list-group-item">
-                                <b>GitHub account:</b> app-app-id
+                                <b>GitHub App Name:</b> test-app
+                            </li>
+                            <li class="list-group-item">
+                                <b>Installations:</b> test-org
                             </li>
                         </ul>
                     </div>
@@ -272,10 +276,13 @@ github_app_html_assessment_summary = """
                         <div class="card-header">
                             GitHub Credentials
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
+                        <ul class="list-group list-group-flush">
+
                             <li class="list-group-item">
                                 <b>GitHub authentication method:</b> GitHub App Token
+                            </li>
+                            <li class="list-group-item">
+                                <b>GitHub App ID:</b> app-id
                             </li>
                         </ul>
                     </div>
@@ -673,7 +680,9 @@ class TestHTML:
 
         provider = set_mocked_github_provider(
             auth_method="GitHub App Token",
-            identity=GithubAppIdentityInfo(app_id=APP_ID, installations=["test-org"]),
+            identity=GithubAppIdentityInfo(
+                app_id=APP_ID, app_name="test-app", installations=["test-org"]
+            ),
         )
 
         summary = output.get_assessment_summary(provider)
