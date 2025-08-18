@@ -63,7 +63,12 @@ class Test_Organization_Scoping:
 
         mock_client = MagicMock()
         mock_user = MagicMock()
-        mock_user.get_orgs.return_value = [self.mock_org1, self.mock_org2]
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 2
+        mock_orgs.__iter__ = MagicMock(
+            return_value=iter([self.mock_org1, self.mock_org2])
+        )
+        mock_user.get_orgs.return_value = mock_orgs
         mock_client.get_user.return_value = mock_user
 
         with patch(
