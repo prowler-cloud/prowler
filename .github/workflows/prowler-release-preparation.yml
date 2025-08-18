@@ -78,6 +78,98 @@ jobs:
           exit 1
         fi
 
+    - name: Extract changelog entries
+      run: |
+        set -e
+
+        # Function to extract changelog for a specific version
+        extract_changelog() {
+          local file="$1"
+          local version="$2"
+          local output_file="$3"
+
+          if [ ! -f "$file" ]; then
+            echo "Warning: $file not found, skipping..."
+            touch "$output_file"
+            return
+          fi
+
+          # Extract changelog section for this version
+          awk -v version="$version" '
+            /^## \[v?'"$version"'\]/ { found=1; next }
+            found && /^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]/ { found=0 }
+            found && !/^## \[v?'"$version"'\]/ { print }
+          ' "$file" > "$output_file"
+
+          # Remove --- separators
+          sed -i '/^---$/d' "$output_file"
+
+          # Remove trailing empty lines
+          sed -i '/^$/d' "$output_file"
+        }
+
+        # Extract changelogs
+        echo "Extracting changelog entries..."
+        extract_changelog "prowler/CHANGELOG.md" "$PROWLER_VERSION" "prowler_changelog.md"
+        extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
+        extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
+
+        # Check if API changelog has content (indicating API changes for this release)
+        if [ -s "api_changelog.md" ]; then
+          echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ API changes detected for version $API_VERSION"
+        else
+          echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No API changes detected for version $API_VERSION"
+        fi
+
+        # Check if UI changelog has content (for potential future use)
+        if [ -s "ui_changelog.md" ]; then
+          echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ UI changes detected for version $UI_VERSION"
+        else
+          echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No UI changes detected for version $UI_VERSION"
+        fi
+
+        # Check if SDK changelog has content (for potential future use)
+        if [ -s "prowler_changelog.md" ]; then
+          echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ SDK changes detected for version $PROWLER_VERSION"
+        else
+          echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No SDK changes detected for version $PROWLER_VERSION"
+        fi
+
+        # Combine changelogs in order: UI, API, SDK
+        > combined_changelog.md
+
+        if [ -s "ui_changelog.md" ]; then
+          echo "## UI" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat ui_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        fi
+
+        if [ -s "api_changelog.md" ]; then
+          echo "## API" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat api_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        elif [ "$HAS_API_CHANGES" = "false" ]; then
+          echo "ℹ Skipping API changelog (no changes for version $API_VERSION)"
+        fi
+
+        if [ -s "prowler_changelog.md" ]; then
+          echo "## SDK" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat prowler_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        fi
+
+        echo "Combined changelog preview:"
+        cat combined_changelog.md
+
     - name: Checkout existing branch for patch release
       if: ${{ env.PATCH_VERSION != '0' }}
       run: |
@@ -114,6 +206,7 @@ jobs:
         echo "✓ prowler/config/config.py version: $CURRENT_VERSION"
 
     - name: Verify version in api/pyproject.toml
+      if: ${{ env.HAS_API_CHANGES == 'true' }}
       run: |
         CURRENT_API_VERSION=$(grep '^version = ' api/pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
         API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
@@ -124,7 +217,7 @@ jobs:
         echo "✓ api/pyproject.toml version: $CURRENT_API_VERSION"
 
     - name: Verify prowler dependency in api/pyproject.toml
-      if: ${{ env.PATCH_VERSION != '0' }}
+      if: ${{ env.PATCH_VERSION != '0' && env.HAS_API_CHANGES == 'true' }}
       run: |
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
         BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
@@ -135,6 +228,7 @@ jobs:
         echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
 
     - name: Verify version in api/src/backend/api/v1/views.py
+      if: ${{ env.HAS_API_CHANGES == 'true' }}
       run: |
         CURRENT_API_VERSION=$(grep 'spectacular_settings.VERSION = ' api/src/backend/api/v1/views.py | sed -E 's/.*spectacular_settings.VERSION = "([^"]+)".*/\1/' | tr -d '[:space:]')
         API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
@@ -157,7 +251,7 @@ jobs:
         fi
 
     - name: Prepare prowler dependency update for minor release
-      if: ${{ env.PATCH_VERSION == '0' }}
+      if: ${{ env.PATCH_VERSION == '0' && env.HAS_API_CHANGES == 'true' }}
       run: |
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
         BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
@@ -195,7 +289,7 @@ jobs:
         echo "✓ Prepared prowler dependency update to: $UPDATED_PROWLER_REF"
 
     - name: Create Pull Request against release branch
-      if: ${{ env.PATCH_VERSION == '0' }}
+      if: ${{ env.PATCH_VERSION == '0' && env.HAS_API_CHANGES == 'true' }}
       uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
       with:
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
@@ -220,69 +314,6 @@ jobs:
         labels: |
           component/api
           no-changelog
-
-    - name: Extract changelog entries
-      run: |
-        set -e
-
-        # Function to extract changelog for a specific version
-        extract_changelog() {
-          local file="$1"
-          local version="$2"
-          local output_file="$3"
-
-          if [ ! -f "$file" ]; then
-            echo "Warning: $file not found, skipping..."
-            touch "$output_file"
-            return
-          fi
-
-          # Extract changelog section for this version
-          awk -v version="$version" '
-            /^## \[v?'"$version"'\]/ { found=1; next }
-            found && /^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]/ { found=0 }
-            found && !/^## \[v?'"$version"'\]/ { print }
-          ' "$file" > "$output_file"
-
-          # Remove --- separators
-          sed -i '/^---$/d' "$output_file"
-
-          # Remove trailing empty lines
-          sed -i '/^$/d' "$output_file"
-        }
-
-        # Extract changelogs
-        echo "Extracting changelog entries..."
-        extract_changelog "prowler/CHANGELOG.md" "$PROWLER_VERSION" "prowler_changelog.md"
-        extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
-        extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
-
-        # Combine changelogs in order: UI, API, SDK
-        > combined_changelog.md
-
-        if [ -s "ui_changelog.md" ]; then
-          echo "## UI" >> combined_changelog.md
-          echo "" >> combined_changelog.md
-          cat ui_changelog.md >> combined_changelog.md
-          echo "" >> combined_changelog.md
-        fi
-
-        if [ -s "api_changelog.md" ]; then
-          echo "## API" >> combined_changelog.md
-          echo "" >> combined_changelog.md
-          cat api_changelog.md >> combined_changelog.md
-          echo "" >> combined_changelog.md
-        fi
-
-        if [ -s "prowler_changelog.md" ]; then
-          echo "## SDK" >> combined_changelog.md
-          echo "" >> combined_changelog.md
-          cat prowler_changelog.md >> combined_changelog.md
-          echo "" >> combined_changelog.md
-        fi
-
-        echo "Combined changelog preview:"
-        cat combined_changelog.md
 
     - name: Create draft release
       uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
