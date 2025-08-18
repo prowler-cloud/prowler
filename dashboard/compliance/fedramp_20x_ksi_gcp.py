@@ -37,7 +37,7 @@ def get_table(data):
     if not aux.empty:
         for long_desc, short_name in ksi_short_names.items():
             mask = aux["REQUIREMENTS_DESCRIPTION"].str.contains(
-                long_desc[:50], na=False, regex=False
+                long_desc, na=False, regex=False
             )
             aux.loc[mask, "REQUIREMENTS_DESCRIPTION"] = short_name
 
