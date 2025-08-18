@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_sufficient_daily_backup_retention_period` check for Azure provider [(#8200)](https://github.com/prowler-cloud/prowler/pull/8200)
 - `vm_jit_access_enabled` check for Azure provider [(#8202)](https://github.com/prowler-cloud/prowler/pull/8202)
 - Bedrock AgentCore privilege escalation combination for AWS provider [(#8526)](https://github.com/prowler-cloud/prowler/pull/8526)
+- GitHub reports extended information [(#8501)](https://github.com/prowler-cloud/prowler/pull/8501)
 
 ### Changed
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
