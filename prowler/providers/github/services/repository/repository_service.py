@@ -7,7 +7,7 @@ from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.github.lib.service.service import GithubService
-from prowler.providers.github.models import GithubAppIdentityInfo
+from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 class Repository(GithubService):
@@ -172,35 +172,24 @@ class Repository(GithubService):
                                     error, "processing organization", org_name
                                 )
                 else:
-                    logger.info(
-                        "No repository or organization specified, discovering accessible repositories via GraphQL API..."
-                    )
-                    accessible_repo_names = self._get_accessible_repos_graphql()
-
-                    if not accessible_repo_names:
-                        logger.warning(
-                            "Could not find any accessible repositories with the provided token."
-                        )
-
-                    for repo_name in accessible_repo_names:
-                        try:
-                            repo = client.get_repo(repo_name)
-                            logger.info(
-                                f"Processing repository found via GraphQL: {repo.full_name}"
+                    if isinstance(self.provider.identity, GithubIdentityInfo):
+                        repos = client.get_user().get_repos()
+                        if repos.totalCount > 0:
+                            for repo in repos:
+                                self._process_repository(repo, repos)
+                        else:
+                            logger.warning(
+                                "No repositories found for the user, skipping repository checks"
                             )
-                            self._process_repository(repo, repos)
-                        except Exception as error:
-                            if hasattr(self, "_handle_github_api_error"):
-                                self._handle_github_api_error(
-                                    error,
-                                    "accessing repository discovered via GraphQL",
-                                    repo_name,
-                                )
-                            else:
-                                logger.error(
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-
+                    elif isinstance(self.provider.identity, GithubAppIdentityInfo):
+                        repos = client.get_repos()
+                        if repos.totalCount > 0:
+                            for repo in repos:
+                                self._process_repository(repo, repos)
+                        else:
+                            logger.warning(
+                                "No repositories found for the app, skipping repository checks"
+                            )
         except github.RateLimitExceededException as error:
             logger.error(f"GitHub API rate limit exceeded: {error}")
             raise

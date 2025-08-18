@@ -5,6 +5,7 @@ from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.github.lib.service.service import GithubService
+from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 class Organization(GithubService):
@@ -110,11 +111,28 @@ class Organization(GithubService):
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
+
                 elif not self.provider.repositories:
                     # Default behavior: get all organizations the user is a member of
                     # Only when no repositories are specified
-                    for org in client.get_user().get_orgs():
-                        self._process_organization(org, organizations)
+                    if isinstance(self.provider.identity, GithubIdentityInfo):
+                        orgs = client.get_user().get_orgs()
+                        if orgs.totalCount > 0:
+                            for org in orgs:
+                                self._process_organization(org, organizations)
+                        else:
+                            logger.warning(
+                                "No organizations found for the user, skipping organization checks"
+                            )
+                    elif isinstance(self.provider.identity, GithubAppIdentityInfo):
+                        orgs = client.get_organizations()
+                        if orgs.totalCount > 0:
+                            for org in orgs:
+                                self._process_organization(org, organizations)
+                        else:
+                            logger.warning(
+                                "No organizations found for the app, skipping organization checks"
+                            )
 
         except github.RateLimitExceededException as error:
             logger.error(f"GitHub API rate limit exceeded: {error}")
