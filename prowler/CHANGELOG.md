@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
 
 ### Fixed
+- Call error in app context for Github organization [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
 
 ---
 
