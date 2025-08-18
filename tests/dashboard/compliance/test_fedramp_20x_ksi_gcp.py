@@ -114,7 +114,7 @@ class TestFedRAMP20xKSIGCP:
     def test_get_table_monitoring_logging_auditing(self):
         test_data = pd.DataFrame(
             {
-                "REQUIREMENTS_ID": ["ksi-mon", "ksi-mon", "ksi-mon"],
+                "REQUIREMENTS_ID": ["ksi-mla", "ksi-mla", "ksi-mla"],
                 "REQUIREMENTS_DESCRIPTION": [
                     "A secure cloud service offering will monitor, log, and audit all important events, activity, and changes",
                     "A secure cloud service offering will monitor, log, and audit all important events, activity, and changes",
@@ -153,7 +153,7 @@ class TestFedRAMP20xKSIGCP:
     def test_get_table_policy_and_inventory(self):
         test_data = pd.DataFrame(
             {
-                "REQUIREMENTS_ID": ["ksi-pol", "ksi-pol"],
+                "REQUIREMENTS_ID": ["ksi-piy", "ksi-piy"],
                 "REQUIREMENTS_DESCRIPTION": [
                     "A secure cloud service offering will have intentional, organized, universal guidance for how every information resource, including personnel, is secured",
                     "A secure cloud service offering will have intentional, organized, universal guidance for how every information resource, including personnel, is secured",
@@ -189,7 +189,7 @@ class TestFedRAMP20xKSIGCP:
     def test_get_table_recovery_planning(self):
         test_data = pd.DataFrame(
             {
-                "REQUIREMENTS_ID": ["ksi-rec"],
+                "REQUIREMENTS_ID": ["ksi-rpl"],
                 "REQUIREMENTS_DESCRIPTION": [
                     "A secure cloud service offering will define, maintain, and test incident response plan(s) and recovery capabilities to ensure minimal service disruption and data loss"
                 ],
