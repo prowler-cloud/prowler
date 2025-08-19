@@ -6,8 +6,7 @@ Bulk-provision cloud providers in Prowler Cloud/App via REST API.
 - Reads YAML / JSON / CSV input listing provider entries
 - Builds provider-specific payloads
 - POSTs to the providers endpoint with concurrency and retries
-- Optionally supports a "raw" passthrough mode for future/advanced payloads:
-  Each item may specify: {"endpoint": "/custom/path", "payload": {...}} to send as-is.
+- Tests provider connections after creation (optional)
 
 Environment:
   PROWLER_API_BASE   (default: https://api.prowler.com/api/v1)
@@ -119,20 +118,16 @@ def read_text_file(path: Optional[str]) -> Optional[str]:
     return p.read_text(encoding="utf-8")
 
 
-def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[Dict[str, Any]]]:
+def build_payload(
+    item: Dict[str, Any]
+) -> Tuple[str, Dict[str, Any], Optional[Dict[str, Any]]]:
     """
     Returns (endpoint_path, provider_payload, secret_payload) to POST.
-    
+
     The API requires two steps:
     1. Create provider with minimal info
     2. Create secret linked to the provider
-    
-    If the item includes 'endpoint' and 'payload', passthrough these directly.
     """
-    # Passthrough mode for advanced users / future endpoints
-    if "endpoint" in item and "payload" in item:
-        return str(item["endpoint"]), dict(item["payload"]), None
-
     provider = str(item.get("provider", "")).strip().lower()
     uid = item.get("uid")  # account id / subscription id / project id / etc.
     alias = item.get("alias")
@@ -150,24 +145,26 @@ def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[D
                 "provider": provider,
                 "uid": uid,
                 "alias": alias,
-            }
+            },
         }
     }
-    
+
     # Step 2: Build secret creation payload if credentials are provided
     secret_payload: Optional[Dict[str, Any]] = None
-    
+
     if auth_method and creds:
         # Determine secret_type based on auth_method
         secret_type = "role" if auth_method == "role" else "static"
         secret_data: Dict[str, Any] = {}
-        
+
         if provider == "aws":
             if auth_method == "role":
                 # external_id is required by the API
                 external_id = creds.get("external_id")
                 if not external_id:
-                    raise ValueError("AWS role authentication requires 'external_id' in credentials")
+                    raise ValueError(
+                        "AWS role authentication requires 'external_id' in credentials"
+                    )
                 secret_data = {
                     "role_arn": creds.get("role_arn"),
                     "external_id": external_id,
@@ -180,7 +177,9 @@ def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[D
                 if creds.get("access_key_id"):
                     secret_data["aws_access_key_id"] = creds.get("access_key_id")
                 if creds.get("secret_access_key"):
-                    secret_data["aws_secret_access_key"] = creds.get("secret_access_key")
+                    secret_data["aws_secret_access_key"] = creds.get(
+                        "secret_access_key"
+                    )
                 if creds.get("session_token"):
                     secret_data["aws_session_token"] = creds.get("session_token")
             elif auth_method == "credentials":
@@ -212,6 +211,7 @@ def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[D
                     if inline_content:
                         try:
                             import json
+
                             inline = json.loads(inline_content)
                         except json.JSONDecodeError:
                             raise ValueError(
@@ -220,6 +220,7 @@ def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[D
                 elif inline and isinstance(inline, str):
                     try:
                         import json
+
                         inline = json.loads(inline)
                     except json.JSONDecodeError:
                         raise ValueError("Invalid JSON in inline_json credential")
@@ -275,7 +276,7 @@ def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[D
                     pk = read_text_file(creds.get("private_key_path"))
                 secret_data = {
                     "github_app_id": int(creds.get("app_id", 0)),
-                    "github_app_key": pk
+                    "github_app_key": pk,
                 }
             else:
                 raise ValueError(
@@ -298,10 +299,10 @@ def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[D
                     "provider": {
                         "data": {
                             "type": "providers",
-                            "id": None  # Will be filled after provider creation
+                            "id": None,  # Will be filled after provider creation
                         }
                     }
-                }
+                },
             }
         }
 
@@ -340,6 +341,16 @@ class ApiClient:
             verify=self.verify_ssl,
         )
 
+    def get(self, path: str) -> requests.Response:
+        """Make GET request to API endpoint."""
+        url = f"{self.base_url}{path}"
+        return requests.get(
+            url,
+            headers=self._headers(),
+            timeout=self.timeout,
+            verify=self.verify_ssl,
+        )
+
 
 def with_retries(
     func, *, retries=4, base_delay=1.25, exceptions=(requests.RequestException,)
@@ -363,10 +374,11 @@ def with_retries(
 
 @with_retries
 def create_one(
-    client: ApiClient, 
-    provider_endpoint: str, 
+    client: ApiClient,
+    provider_endpoint: str,
     provider_payload: Dict[str, Any],
-    secret_payload: Optional[Dict[str, Any]] = None
+    secret_payload: Optional[Dict[str, Any]] = None,
+    test_connection: bool = False,
 ) -> Tuple[bool, Dict[str, Any]]:
     """Create a single provider with optional secret using two-step process."""
     # Step 1: Create provider
@@ -375,39 +387,91 @@ def create_one(
         data = resp.json()
     except ValueError:
         data = {"text": resp.text}
-    
+
     if not (200 <= resp.status_code < 300):
         return False, {"status": resp.status_code, "body": data, "step": "provider"}
-    
+
     provider_id = data.get("data", {}).get("id")
     if not provider_id:
         return False, {"error": "No provider ID returned", "body": data}
-    
+
     result = {"provider": data}
-    
+
     # Step 2: Create secret if provided
     if secret_payload:
         # Update the provider ID in the secret payload
         secret_payload["data"]["relationships"]["provider"]["data"]["id"] = provider_id
-        
+
         # POST to /providers/secrets endpoint
         secret_resp = client.post("/providers/secrets", secret_payload)
         try:
             secret_data = secret_resp.json()
         except ValueError:
             secret_data = {"text": secret_resp.text}
-        
+
         if not (200 <= secret_resp.status_code < 300):
             # Provider was created but secret failed
             result["secret_error"] = {
-                "status": secret_resp.status_code, 
-                "body": secret_data
+                "status": secret_resp.status_code,
+                "body": secret_data,
             }
             return False, result
-        
+
         result["secret"] = secret_data
-    
+
+    # Step 3: Test connection if requested
+    if test_connection:
+        connection_result = test_provider_connection(client, provider_id)
+        result["connection_test"] = connection_result
+
     return True, result
+
+
+def test_provider_connection(client: ApiClient, provider_id: str) -> Dict[str, Any]:
+    """Test connection for a provider."""
+    try:
+        # Trigger connection test
+        resp = client.post(f"/providers/{provider_id}/connection", {})
+        if resp.status_code in [200, 202]:
+            # Wait a bit for the connection test to complete
+            time.sleep(2)
+
+            # Check the connection status
+            status_resp = client.get(f"/providers/{provider_id}")
+            if status_resp.status_code == 200:
+                provider_data = status_resp.json()
+                connection = (
+                    provider_data.get("data", {})
+                    .get("attributes", {})
+                    .get("connection", {})
+                )
+                return {
+                    "success": True,
+                    "connected": connection.get("connected"),
+                    "last_checked_at": connection.get("last_checked_at"),
+                }
+
+        return {
+            "success": False,
+            "error": f"Connection test failed with status {resp.status_code}",
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def find_existing_provider(client: ApiClient, provider: str, uid: str) -> Optional[str]:
+    """Find an existing provider by provider type and UID."""
+    try:
+        # Query for the specific provider
+        resp = client.get(f"/providers?filter[provider]={provider}&filter[uid]={uid}")
+        if resp.status_code == 200:
+            data = resp.json()
+            providers = data.get("data", [])
+            if providers:
+                return providers[0].get("id")
+    except Exception:
+        pass
+    return None
 
 
 # ----------------------------- main ---------------------------------------- #
@@ -446,6 +510,16 @@ def main():
         action="store_true",
         help="Print what would be sent without calling the API.",
     )
+    parser.add_argument(
+        "--test-connection",
+        action="store_true",
+        help="Test connection after creating each provider.",
+    )
+    parser.add_argument(
+        "--test-only",
+        action="store_true",
+        help="Only test connections for existing providers (skip creation).",
+    )
     args = parser.parse_args()
 
     token = env_or_arg(args.token)
@@ -463,7 +537,52 @@ def main():
         timeout=args.timeout,
     )
 
-    requests_to_send: List[Tuple[int, str, Dict[str, Any], Optional[Dict[str, Any]]]] = []
+    # Handle test-only mode
+    if args.test_only:
+        print(
+            "Running in test-only mode: checking connections for existing providers..."
+        )
+        tested, connected, failed = 0, 0, 0
+
+        for idx, item in enumerate(items, start=1):
+            provider = str(item.get("provider", "")).strip().lower()
+            uid = item.get("uid")
+            alias = item.get("alias", "")
+
+            if not provider or not uid:
+                print(f"[{idx}] ❌ Skipping: missing provider or uid")
+                continue
+
+            # Find existing provider
+            provider_id = find_existing_provider(client, provider, uid)
+            if not provider_id:
+                print(f"[{idx}] ⚠️  Provider not found: {provider}/{uid} ({alias})")
+                continue
+
+            print(f"[{idx}] Testing connection for {provider}/{uid} ({alias})...")
+            result = test_provider_connection(client, provider_id)
+            tested += 1
+
+            if result.get("success"):
+                if result.get("connected"):
+                    connected += 1
+                    print(f"[{idx}] ✅ Connected successfully")
+                else:
+                    failed += 1
+                    print(f"[{idx}] ❌ Connection failed")
+            else:
+                failed += 1
+                print(f"[{idx}] ❌ Test failed: {result.get('error')}")
+
+        print(
+            f"\nConnection Test Results: Tested: {tested}, Connected: {connected}, Failed: {failed}"
+        )
+        return
+
+    # Regular mode: create providers
+    requests_to_send: List[
+        Tuple[int, str, Dict[str, Any], Optional[Dict[str, Any]]]
+    ] = []
     for idx, item in enumerate(items, start=1):
         try:
             endpoint, provider_payload, secret_payload = build_payload(item)
@@ -482,7 +601,10 @@ def main():
             if secret_payload:
                 print(f"\n  Then Secret Creation:")
                 print(f"  POST {base_url}/providers/secrets")
-                print(f"  {json.dumps(secret_payload, indent=2)}\n")
+                print(f"  {json.dumps(secret_payload, indent=2)}")
+            if args.test_connection:
+                print(f"\n  Then Test Connection")
+            print()
         else:
             requests_to_send.append((idx, endpoint, provider_payload, secret_payload))
 
@@ -496,7 +618,14 @@ def main():
 
     with ThreadPoolExecutor(max_workers=max(1, args.concurrency)) as executor:
         futures = {
-            executor.submit(create_one, client, endpoint, provider_payload, secret_payload): idx
+            executor.submit(
+                create_one,
+                client,
+                endpoint,
+                provider_payload,
+                secret_payload,
+                args.test_connection,
+            ): idx
             for (idx, endpoint, provider_payload, secret_payload) in requests_to_send
         }
         for fut in as_completed(futures):
@@ -511,6 +640,16 @@ def main():
                     if "secret" in data:
                         secret_id = data.get("secret", {}).get("data", {}).get("id")
                         print(f"[{idx}] ✅ Created secret (id={secret_id})")
+                    if "connection_test" in data:
+                        conn = data["connection_test"]
+                        if conn.get("success") and conn.get("connected"):
+                            print(f"[{idx}] ✅ Connection test: Connected")
+                        elif conn.get("success"):
+                            print(f"[{idx}] ⚠️  Connection test: Not connected")
+                        else:
+                            print(
+                                f"[{idx}] ❌ Connection test failed: {conn.get('error')}"
+                            )
                 else:
                     failures += 1
                     if "secret_error" in data:
