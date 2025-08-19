@@ -243,6 +243,21 @@ class Provider(RowLevelSecurityProtectedModel):
             )
 
     @staticmethod
+    def validate_m365_certificate_content(value):
+        """Validate that M365 certificate content is valid base64 encoded data."""
+        if value:
+            import base64
+
+            try:
+                base64.b64decode(value)
+            except Exception as e:
+                raise ModelValidationError(
+                    detail=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+                    code="m365-certificate-content",
+                    pointer="/data/attributes/secret/certificate_content",
+                )
+
+    @staticmethod
     def validate_gcp_uid(value):
         if not re.match(r"^[a-z][a-z0-9-]{5,29}$", value):
             raise ModelValidationError(
