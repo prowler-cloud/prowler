@@ -137,6 +137,7 @@ nav:
           - Integration Tests: developer-guide/integration-testing.md
         - Debugging: developer-guide/debugging.md
         - Configurable Checks: developer-guide/configurable-checks.md
+        - Check Metadata Writting Guidelines: developer-guide/check-metadata-guidelines.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md

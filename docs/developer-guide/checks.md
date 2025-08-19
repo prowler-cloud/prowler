@@ -269,27 +269,9 @@ The unique identifier for the check inside the provider. This field **must** mat
 
 The `CheckTitle` field must clearly and succinctly define **the best practice being evaluated and which resource(s) each finding applies to**. The title should be specific, concise (no more than 150 characters), and reference the relevant resource(s) involved.
 
-**Always write the `CheckTitle` to describe the PASS case**, the desired secure or compliant state of the resource(s). This helps ensure that findings are easy to interpret and that the title always reflects the best practice being met. For example, if the check assesses whether multi-factor authentication (MFA) is enabled for each user, the title should be: *"User has multi-factor authentication enabled."* (PASS case), rather than focusing on the absence of the control.
+**Always write the `CheckTitle` to describe the *PASS* case**, the desired secure or compliant state of the resource(s). This helps ensure that findings are easy to interpret and that the title always reflects the best practice being met.
 
-For most checks, which produce one finding per resource, the `CheckTitle` should mention the individual resource and the secure state. If a finding covers multiple resources at once, the `CheckTitle` should indicate this scope and the exact set of resources involved, such as: *"All users have multi-factor authentication enabled."* or *"No S3 buckets are publicly accessible."* This ensures clarity about the number or group of resources being evaluated in a single finding.
-
-Avoid generic or action-oriented phrases like "Check" or "Ensure." Instead, use a descriptive format that states the resource and the best practice in the PASS case, while also making clear whether the finding applies to a single resource or a group.
-
-**Good Examples (PASS case, clear resource scope):**
-
-- `"EC2 AMI is not public"` – Clear, specific, states the resource and best practice in the secure state.
-- `"Security group does not allow ingress from 0.0.0.0/0 to SSH port 22"` – Specific about the resource and security requirement.
-- `"IAM user has multi-factor authentication enabled"` – States the resource and security best practice.
-- `"EBS volume is encrypted"` – Concise, clear about the resource and requirement.
-- `"Kubernetes pod does not run as root user"` – Specific about the resource and security best practice.
-
-**Examples to Avoid:**
-
-- `"Check if EC2 instances are encrypted"` – Uses "Check" action verb, totally unnecessary because we already know the check is checking.
-- `"Ensure security groups are properly configured"` – Too generic, doesn't specify what "properly" means.
-- `"Verify encryption settings"` – Too vague, doesn't identify specific resources.
-- `"Monitor access controls"` – Generic, doesn't specify what to monitor.
-- `"All users do not have multi-factor authentication enabled"` – Focuses on the FAIL case; instead, phrase in terms of the PASS case.
+For detailed guidelines on writing effective check titles, including how to determine singular vs. plural scope and common mistakes to avoid, see [CheckTitle Guidelines](./check-metadata-guidelines.md#checktitle-guidelines).
 
 #### CheckType
 
@@ -297,6 +279,8 @@ Avoid generic or action-oriented phrases like "Check" or "Ensure." Instead, use 
     This field is only applicable to the AWS provider.
 
 It follows the [AWS Security Hub Types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types) format using the pattern `namespace/category/classifier`.
+
+For the complete AWS Security Hub selection guidelines, see [CheckType Guidelines](./check-metadata-guidelines.md#checktype-guidelines-aws-only).
 
 #### ServiceName
 
@@ -322,15 +306,19 @@ The type of resource being audited. This field helps categorize and organize fin
 - **Azure**: Use types from [Azure Resource Graph](https://learn.microsoft.com/en-us/azure/governance/resource-graph/reference/supported-tables-resources), for example: `Microsoft.Storage/storageAccounts`.
 - **Google Cloud**: Use [Cloud Asset Inventory asset types](https://cloud.google.com/asset-inventory/docs/asset-types), for example: `compute.googleapis.com/Instance`.
 - **Kubernetes**: Use types shown under `KIND` from `kubectl api-resources`.
-- **M365 / GitHub**: Leave empty due to lack of standardized types in API responses.
+- **M365 / GitHub**: Leave empty due to lack of standardized types.
 
 #### Description
 
 A concise, natural language explanation that **clearly describes what the finding means**, focusing on clarity and context rather than technical implementation details. Use simple paragraphs with line breaks if needed, but avoid sections, code blocks, or complex formatting. This field is limited to maximum 400 characters.
 
+For detailed writing guidelines and common mistakes to avoid, see [Description Guidelines](./check-metadata-guidelines.md#description-guidelines).
+
 #### Risk
 
 A clear, natural language explanation of **why this finding poses a cybersecurity risk**. Focus on how it may impact confidentiality, integrity, or availability. If those do not apply, describe any relevant operational or financial risks. Use simple paragraphs with line breaks if needed, but avoid sections, code blocks, or complex formatting. Limit your explanation to 400 characters.
+
+For detailed writing guidelines and common mistakes to avoid, see [Risk Guidelines](./check-metadata-guidelines.md#risk-guidelines).
 
 #### RelatedUrl
 
@@ -338,56 +326,39 @@ A string containing one or more official documentation URLs for further reading,
 
 #### Remediation
 
-- **Code**
-    - **CLI**: Use Markdown format to provide multiple commands or code blocks where applicable.
-    - **NativeIaC / Terraform**: Provide actual code blocks when possible. Use line breaks for readability.
-    - **Other**: Natural language, step-by-step remediation in Markdown format using native web interfaces (e.g., AWS Console, Azure Portal) or other tool that is not any of the other options.
+Provides both code examples and best practice recommendations for addressing the security issue.
+
+- **Code**: Contains remediation examples in different formats:
+    - **CLI**: Command-line interface commands to make the finding compliant in runtime.
+    - **NativeIaC**: Native Infrastructure as Code templates with an example of a compliant configuration. For now it applies to:
+        - **AWS**: CloudFormation YAML formatted code (do not use JSON format).
+        - **Azure**: Bicep formatted code (do not use ARM templates).
+    - **Terraform**: HashiCorp Configuration Language (HCL) code with an example of a compliant configuration.
+    - **Other**: Manual steps through web interfaces or other tools to make the finding compliant.
+
+    For detailed guidelines on writing remediation code, see [Remediation Code Guidelines](./check-metadata-guidelines.md#remediation-code-guidelines).
+
 - **Recommendation**
-    - **Text**: Explanation in natural language using Markdown format, explaining the best practice in general terms that is usually used to avoid the check to fail.
-      For example:
-        - *"Avoid exposing sensitive resources directly to the Internet; configure access controls to limit exposure."*
-        - *"Apply the principle of least privilege when assigning permissions to users and services."*
-        - *"Regularly review and update your security configurations to align with current best practices."*
+    - **Text**: Generic best practice guidance in natural language using Markdown format (maximum 400 characters). For writing guidelines, see [Recommendation Guidelines](./check-metadata-guidelines.md#recommendation-guidelines).
     - **Url**: *Deprecated*. Use `RelatedUrl` instead.
 
 #### Categories
 
-One or more functional groupings used for execution filtering (e.g., `internet-exposed`). You can define new categories just by adding to this field. Here are all the categories already defined in Prowler:
+One or more functional groupings used for execution filtering (e.g., `internet-exposed`). You can define new categories just by adding to this field.
 
-| Category                | Definition                                                                                                                                                                                                                                 |
-|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| encryption              | Ensure data is encrypted in transit and/or at rest, including key management practices.                                                                                                   |
-| internet-exposed        | Checks that limit or flag public access to services, APIs, or assets from the Internet.                                                                                                              |
-| logging                 | Ensures appropriate logging of events, activities, and system interactions for traceability.                                                                                                       |
-| secrets                 | Manages and protects credentials, API keys, tokens, and other sensitive information.                                                                                                               |
-| resilience              | Ensures systems can maintain availability and recover from disruptions, failures, or degradation. Includes redundancy, fault-tolerance, auto-scaling, backup, disaster recovery, and failover strategies. |
-| threat-detection        | Identifies suspicious activity or behaviors using IDS, malware scanning, or anomaly detection.                                                                                                      |
-| trust-boundaries        | Enforces isolation or segmentation between different trust levels (e.g., VPCs, tenants, network zones).                                                                                            |
-| vulnerabilities         | Detects or remediates known software, infrastructure, or config vulnerabilities (e.g., CVEs).                                                                                                      |
-| cluster-security        | Secures Kubernetes cluster components such as API server, etcd, and role-based access.                                                                                                             |
-| container-security      | Ensures container images and runtimes follow security best practices.                                                                                        |
-| node-security           | Secures nodes running containers or services.                                                                                                        |
-| gen-ai                  | Checks related to safe and secure use of generative AI services or models.                                                                                                                        |
-| ci-cd                   | Ensures secure configurations in CI/CD pipelines.                                                                                                         |
-| identity-access         | Governs user and service identities, including least privilege, MFA, and permission boundaries.                                                                                                    |
-| email-security          | Ensures detection and protection against phishing, spam, spoofing, etc.                                                                                                                            |
-| forensics-ready         | Ensures systems are instrumented to support post-incident investigations. Any digital trace or evidence (logs, volume snapshots, memory dumps, network captures, etc.) preserved immutably and accompanied by integrity guarantees, which can be used in a forensic analysis. |
-| software-supply-chain   | Detects or prevents tampering, unauthorized packages, or third-party risks in software supply chain.                                                                                               |
-| e3                      | M365-specific controls enabled by or dependent on an E3 license (e.g., baseline security policies, conditional access).                                                                            |
-| e5                      | M365-specific controls enabled by or dependent on an E5 license (e.g., advanced threat protection, audit, DLP, and eDiscovery).                                                                    |
+For the complete list of available categories, see [Categories Guidelines](./check-metadata-guidelines.md#categories-guidelines).
 
 #### DependsOn
 
-Specifies checks that if they are PASS, this check will be a PASS too or it is not going to give any finding.
+List of check IDs of checks that if are compliant, this check will be a compliant too or it is not going to give any finding.
 
 #### RelatedTo
 
-Specifies checks that are conceptually related, even if they do not share a technical dependency.
+List of check IDs of checks that are conceptually related, even if they do not share a technical dependency.
 
 #### Notes
 
 Any additional information not covered in the above fields.
-
 
 ### Python Model Reference
 
