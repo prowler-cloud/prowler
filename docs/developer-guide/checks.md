@@ -235,10 +235,7 @@ Below is a generic example of a check metadata file. **Do not include comments i
   "ResourceType": "Other",
   "Description": "This check verifies that the service resource has the required **security setting** enabled to protect against potential vulnerabilities.\n\nIt ensures that the resource follows security best practices and maintains proper access controls. The check evaluates whether the security configuration is properly implemented and active.",
   "Risk": "Without proper security settings, the resource may be vulnerable to:\n\n- **Unauthorized access** - Malicious actors could gain entry\n- **Data breaches** - Sensitive information could be compromised\n- **Security threats** - Various attack vectors could be exploited\n\nThis could result in compliance violations and potential financial or reputational damage.",
-  "RelatedUrl": [
-    "https://example.com/security-documentation",
-    "https://example.com/best-practices"
-  ],
+  "RelatedUrl": "https://example.com/security-documentation;https://example.com/best-practices",
   "Remediation": {
     "Code": {
       "CLI": "provider-cli service enable-security-setting --resource-id resource-123",
@@ -337,7 +334,7 @@ A clear, natural language explanation of **why this finding poses a cybersecurit
 
 #### RelatedUrl
 
-A list of one or more official documentation URLs for further reading. These should be authoritative sources that provide additional context, best practices, or detailed information about the security control being checked. Prefer official provider documentation, security standards, or well-established security resources. Avoid third-party blogs or unofficial sources unless they are highly reputable and directly relevant.
+A string containing one or more official documentation URLs for further reading, separated by semicolons (;). These should be authoritative sources that provide additional context, best practices, or detailed information about the security control being checked. Prefer official provider documentation, security standards, or well-established security resources. Avoid third-party blogs or unofficial sources unless they are highly reputable and directly relevant.
 
 #### Remediation
 
