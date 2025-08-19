@@ -94,7 +94,7 @@ def read_text_file(path: Optional[str]) -> Optional[str]:
 
 
 def build_payload(
-    item: Dict[str, Any]
+    item: Dict[str, Any],
 ) -> Tuple[str, Dict[str, Any], Optional[Dict[str, Any]]]:
     """
     Returns (endpoint_path, provider_payload, secret_payload) to POST.
