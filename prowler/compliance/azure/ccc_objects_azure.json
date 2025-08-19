@@ -631,9 +631,6 @@
         }
       ],
       "Checks": [
-        "s3_bucket_object_versioning",
-        "dynamodb_tables_pitr_enabled",
-        "backup_recovery_point_encrypted",
         "storage_ensure_soft_delete_is_enabled",
         "keyvault_recoverable"
       ]
@@ -693,9 +690,6 @@
         }
       ],
       "Checks": [
-        "s3_bucket_object_versioning",
-        "kinesis_stream_data_retention_period",
-        "kms_cmk_not_deleted_unintentionally",
         "storage_ensure_soft_delete_is_enabled",
         "keyvault_recoverable"
       ]
@@ -755,9 +749,6 @@
         }
       ],
       "Checks": [
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_logs_s3_bucket_access_logging_enabled",
-        "s3_bucket_server_access_logging_enabled",
         "monitor_storage_account_with_activity_logs_is_private"
       ]
     },
