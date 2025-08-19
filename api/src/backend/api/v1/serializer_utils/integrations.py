@@ -55,6 +55,14 @@ class S3ConfigSerializer(BaseValidateSerializer):
 class SecurityHubConfigSerializer(BaseValidateSerializer):
     send_only_fails = serializers.BooleanField(default=False)
     skip_archive_previous = serializers.BooleanField(default=False)
+    regions = serializers.DictField(default=dict, read_only=True)
+    provider_id = serializers.CharField(read_only=True, required=False)
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+        # Always initialize regions as empty dict
+        validated_data["regions"] = {}
+        return validated_data
 
     class Meta:
         resource_name = "integrations"
