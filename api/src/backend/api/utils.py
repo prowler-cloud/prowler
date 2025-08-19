@@ -218,32 +218,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
 
         # Only save regions if connection is successful
         if connection.is_connected:
-            # Get available SecurityHub regions
-            security_hub_regions = (
-                prowler_provider.get_available_aws_service_regions(
-                    "securityhub",
-                    prowler_provider.identity.partition,
-                    prowler_provider.identity.audited_regions,
-                )
-                if not prowler_provider.identity.audited_regions
-                else prowler_provider.identity.audited_regions
-            )
-
-            # Create SecurityHub instance to get enabled regions
-            security_hub = SecurityHub(
-                aws_account_id=prowler_provider.identity.account,
-                aws_partition=prowler_provider.identity.partition,
-                aws_session=prowler_provider.session.current_session,
-                findings=[],
-                send_only_fails=False,
-                aws_security_hub_available_regions=security_hub_regions,
-            )
-
-            enabled_regions = set(security_hub._enabled_regions.keys())
-            all_security_hub_regions = set(security_hub_regions)
-            regions_status = {}
-            for region in all_security_hub_regions:
-                regions_status[region] = region in enabled_regions
+            regions_status = {r: True for r in connection.enabled_regions}
+            regions_status.update({r: False for r in connection.disabled_regions})
 
             # Save regions information in the integration configuration
             integration.configuration["regions"] = regions_status
