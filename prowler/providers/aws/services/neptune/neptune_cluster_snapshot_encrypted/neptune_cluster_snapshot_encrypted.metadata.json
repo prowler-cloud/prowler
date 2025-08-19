@@ -14,10 +14,7 @@
   "ResourceType": "AwsRdsDbClusterSnapshot",
   "Description": "*Neptune DB cluster snapshot* is encryoted at rest. The evaluation looks at whether each snapshot’s encrypted attribute is enabled, confirming that the data is protected while stored.",
   "Risk": "**Unencrypted Neptune snapshots** undermine data confidentiality. If accessed or shared due to compromised credentials or misconfiguration, attackers can restore or download snapshot contents, enabling **data exfiltration**, and exposure of sensitive records. This weakens overall data protection posture.",
-  "RelatedUrl": [
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-6",
-"https://docs.aws.amazon.com/neptune/latest/userguide/backup-restore-share-snapshot.html",
-  ],
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-6;https://docs.aws.amazon.com/neptune/latest/userguide/backup-restore-share-snapshot.html",
   "Remediation": {
     "Code": {
       "CLI": "aws rds copy-db-cluster-snapshot --source-db-cluster-snapshot-identifier <source-snapshot> --target-db-cluster-snapshot-identifier <encrypted-snapshot> --kms-key-id <kms-key-id>",

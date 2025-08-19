@@ -12,12 +12,7 @@
   "ResourceType": "AwsRdsDbCluster",
   "Description": "*Neptune DB cluster* is configured to copy all tags to snapshots when snapshots are created.",
   "Risk": "**Missing snapshot tags** weakens governance across confidentiality, integrity, and availability.\n\n- **Access control**: tag-based IAM conditions may not apply to snapshots, enabling unauthorized restore or copy\n- **Operational**: recovery, retention, and cost tracking can fail due to unidentifiable or orphaned snapshots",
-  "RelatedUrl": [
-    "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview",
-    "https://www.cloudanix.com/docs/aws/audit/rdsmonitoring/rules/neptune_cluster_copy_tags_to_snapshot_enabled",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-8",
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-2-60",
-  ],
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview;https://www.cloudanix.com/docs/aws/audit/rdsmonitoring/rules/neptune_cluster_copy_tags_to_snapshot_enabled;https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-8;https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-2-60",
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --copy-tags-to-snapshot --apply-immediately",
@@ -30,8 +25,7 @@
       "Url": ""
     }
   },
-  "Categories": [
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
