@@ -11,22 +11,18 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "*Neptune DB cluster* is evaluated for **encryption at rest**. The check inspects the cluster's `encrypted` flag and **passes** when storage is encrypted; it **fails** when the `encrypted` attribute is false or missing, indicating the cluster's underlying storage is not encrypted.",
-  "Risk": "**Unencrypted Neptune storage** reduces confidentiality of stored data and metadata and increases attack surface.\n\nPossible impacts:\n- Unauthorized access or data exfiltration from underlying volumes or snapshots\n- Regulatory non‑compliance\n- Greater blast radius from leaked or shared snapshots",
+  "Description": "*Neptune DB cluster* is evaluated for **encryption at rest**. Indicating the cluster's underlying storage is not encrypted.",
+  "Risk": "**Unencrypted Neptune storage** reduces confidentiality of stored data and metadata and increases attack surface.\n\nPossible impacts:\n- Unauthorized access or data exfiltration from underlying volumes or snapshots\n- Greater blast radius from leaked or shared snapshots",
   "RelatedUrl": [
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1",
-    "https://docs.datadoghq.com/security/default_rules/aws-neptune-cluster-neptune-db-clusters-should-be-encrypted-at-rest/",
-    "https://docs.prowler.com/checks/aws/general-policies/general_18/",
     "https://docs.aws.amazon.com/neptune/latest/userguide/encrypt.html",
-    "https://docs.prowler.com/checks/aws/general-policies/general_18#terraform"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws neptune create-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --engine neptune --storage-encrypted true",
-      "NativeIaC": "```yaml\nResources:\n  EncryptedNeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: !Sub ${DBClusterIdentifier}\n      Engine: neptune\n      StorageEncrypted: true\n```",
-      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"encrypted\" {\n  cluster_identifier = \"<cluster-id>\"\n  storage_encrypted  = true\n}\n```",
-      "Other": "1. Sign in to the AWS Management Console and open the Amazon Neptune console\n2. Click Create DB cluster\n3. On the Specify DB details page set Enable encryption to Yes\n4. Click Create DB cluster"
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  EncryptedNeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: !Sub ${DBClusterIdentifier}\n      StorageEncrypted: true\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier = \"<cluster-id>\"\n  storage_encrypted  = true\n}\n```",
+      "Other": ""
     },
     "Recommendation": {
       "Text": "Provision all new *Neptune DB clusters* with **encryption at rest** and prefer **Customer‑Managed Keys (CMK)** for key ownership and auditability.\n\nEnforce **least privilege** on KMS keys, implement key lifecycle practices (rotation, revocation) and ensure backups/snapshots remain encrypted to prevent exposure.",

@@ -15,18 +15,15 @@
   "Description": "*Amazon Neptune DB clusters* are evaluated for `Multi-AZ` deployment by checking whether the cluster has read-replica instances distributed across multiple Availability Zones.\n\nA failing result indicates the cluster is deployed in a single AZ and lacks read-replicas that enable automatic promotion and cross‑AZ failover.",
   "Risk": "**Single‑AZ deployment** creates a clear availability single point of failure.\n\n- **Availability**: AZ outage or maintenance can cause prolonged downtime until the primary is rebuilt.\n- **Integrity/Recovery**: Manual recovery increases risk of configuration errors and longer RTOs, impacting operations and compliance.",
   "RelatedUrl": [
-    "https://answers.microsoft.com/en-us/outlook_com/forum/all/why-is-outlook-blocking-emails-without-my-concent/30cee3c9-99a6-40b7-8061-bd9ca3ef51bc",
-    "https://answers.microsoft.com/en-us/windows/forum/all/installing-pc-health-check/91799fd2-61a2-4878-a7b2-06e106c1988c",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-9",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/multi-az.html#",
-    "https://answers.microsoft.com/en-us/msoffice/forum/all/devices-in-hybrid-azuread-environment-no-longer/92d85af8-30b5-4fa1-b560-3ae6e2c4a1ed"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws neptune create-db-instance --db-instance-identifier <REPLICA_ID> --db-instance-class <DB_INSTANCE_CLASS> --db-cluster-identifier <CLUSTER_ID> --availability-zone <AZ>",
-      "NativeIaC": "```yaml\nResources:\n  NeptuneReplica:\n    Type: AWS::Neptune::DBInstance\n    Properties:\n      DBInstanceIdentifier: <REPLICA_ID>\n      DBInstanceClass: <DB_INSTANCE_CLASS>\n      DBClusterIdentifier: <CLUSTER_ID>\n      AvailabilityZone: <AZ>\n```",
-      "Terraform": "```hcl\nresource \"aws_neptune_db_instance\" \"replica\" {\n  identifier         = \"<REPLICA_ID>\"\n  instance_class     = \"<DB_INSTANCE_CLASS>\"\n  cluster_identifier = \"<CLUSTER_ID>\"\n  availability_zone  = \"<AZ>\"\n}\n```",
-      "Other": "1. Sign in to the AWS Management Console and open Amazon Neptune\n2. In Clusters, select the target cluster (<CLUSTER_ID>)\n3. Click Actions > Add reader\n4. Set Instance class to the desired <DB_INSTANCE_CLASS> and Availability Zone to a different AZ than the primary\n5. Click Add reader"
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n NeptuneCluster:\n Type: AWS::Neptune::DBCluster\n Properties:\n DBClusterIdentifier: \"<DB_CLUSTER_IDENTIFIER>\"\n # Important: Specify multiple Availability Zones\n AvailabilityZones:\n - \"<AZ_1>\"\n - \"<AZ_2>\"\n - \"<AZ_3>\"\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example\" {\n cluster_identifier = \"<db_cluster_identifier>\"\n availability_zones = [\"<AZ_1>\", \"<AZ_2>\", \"<AZ_3>\"]\n}\n```",
+      "Other": ""
     },
     "Recommendation": {
       "Text": "Adopt a **high availability** deployment model for production *Neptune* clusters by placing read‑replicas in separate Availability Zones to avoid single points of failure.\n\nRegularly test automated failover and combine HA with robust backup and recovery practices as part of a defense‑in‑depth strategy.",

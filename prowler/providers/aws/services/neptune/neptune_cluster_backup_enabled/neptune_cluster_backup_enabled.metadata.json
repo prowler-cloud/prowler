@@ -10,20 +10,19 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "*Neptune DB cluster* automated backups and retention are evaluated: a **PASS** means automated backups are enabled with a retention period >= configured minimum (default `7` days); a **FAIL** means backups are disabled (`0`) or retention is below the required threshold. The finding reports the cluster name and `backup_retention_period`.",
+  "Description": "*Neptune DB cluster* automated backup is enabled and retention days are more than the required minimum retention period (default to 7 days).",
   "Risk": "**Insufficient backup retention** reduces the ability to recover from data corruption, accidental deletion, or ransomware, impacting **availability** and **integrity**.\n\n- Prevents point-in-time recovery to required dates\n- Increases downtime, irreversible data loss, and compliance violations",
   "RelatedUrl": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html",
     "https://support.icompaas.com/support/solutions/articles/62000233327-check-for-neptune-clusters-backup-retention-period",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html#",
     "https://asecure.cloud/a/p_configrule_neptune_cluster_backup_retention_check/"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7 --apply-immediately",
       "NativeIaC": "```yaml\nParameters:\n  DBClusterId:\n    Type: String\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: !Ref DBClusterId\n      BackupRetentionPeriod: 7\n```",
-      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"this\" {\n  cluster_identifier      = var.cluster_id\n  backup_retention_period = 7\n}\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier      = var.cluster_id\n  backup_retention_period = 7\n}\n```",
       "Other": "1. Sign in to the AWS Management Console\n2. Services → Amazon Neptune → Databases\n3. Select the DB cluster and click Modify\n4. In Backup retention period set the value to 7 (or higher)\n5. Choose Apply immediately and click Modify cluster"
     },
     "Recommendation": {

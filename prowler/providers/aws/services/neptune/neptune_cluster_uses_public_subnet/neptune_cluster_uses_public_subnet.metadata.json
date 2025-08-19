@@ -10,19 +10,18 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Other",
-  "Description": "*Neptune cluster* is associated with one or more **public subnets**. The check identifies DB instances located in subnets marked as `public` and enumerates the impacted subnet IDs.\n\nIt reports a PASS when no public subnets are used and a FAIL when any cluster subnet is public.",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "*Neptune cluster* is associated with one or more **public subnets**.",
   "Risk": "A *Neptune cluster* in a **public subnet** increases exposure across the CIA triad:\n\n- **Confidentiality**: direct access enables credential attacks and data exfiltration\n- **Integrity**: attackers may modify or inject graph data\n- **Availability**: public reachability allows DDoS or remote exploitation, causing downtime",
   "RelatedUrl": [
     "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html",
     "https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html",
-    "https://docs.bridgecrew.io/docs/bc_aws_general_42"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "```yaml\nResources:\n  NeptuneSubnetGroup:\n    Type: AWS::Neptune::DBSubnetGroup\n    Properties:\n      DBSubnetGroupDescription: \"Private subnets for Neptune\"\n      SubnetIds:\n        - <PRIVATE_SUBNET_ID_1>\n        - <PRIVATE_SUBNET_ID_2>\n```",
-      "Terraform": "```hcl\nresource \"aws_neptune_subnet_group\" \"neptune\" {\n  name       = \"neptune-private-subnets\"\n  subnet_ids = [\"<PRIVATE_SUBNET_ID_1>\", \"<PRIVATE_SUBNET_ID_2>\"]\n}\n```",
+      "NativeIaC": "```yaml\nResources:\n  NeptuneSubnetGroup:\n    Type: AWS::Neptune::DBSubnetGroup\n    Properties:\n      DBSubnetGroupDescription: \"Private subnets for Neptune\"\n      SubnetIds:\n        - <PRIVATE_SUBNET_ID_1>\n        - <PRIVATE_SUBNET_ID_2>\n\n  NeptuneDBCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBSubnetGroupName: !Ref NeptuneSubnetGroup\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_subnet_group\" \"neptune\" {\n  name       = \"neptune-private-subnets\"\n  subnet_ids = [\"<PRIVATE_SUBNET_ID_1>\", \"<PRIVATE_SUBNET_ID_2>\"]\n}\n\nresource \"aws_neptune_cluster\" \"example_cluster\" {\n  neptune_subnet_group_name = aws_neptune_subnet_group.neptune.name\n}\n```",
       "Other": "1. Open the AWS Console and go to Amazon Neptune > Subnet groups\n2. Click Create DB Subnet Group\n3. Enter a name and description, select the VPC, and add only private subnet IDs (at least two)\n4. Click Create\n5. Go to Amazon Neptune > DB clusters > Select the cluster > Actions > Modify\n6. Set DB subnet group to the newly created subnet group and save (Apply immediately if required)\n7. Verify the cluster subnet group now lists only private subnets"
     },
     "Recommendation": {
