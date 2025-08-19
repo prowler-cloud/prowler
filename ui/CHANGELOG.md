@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - `Cloud Provider` type filter to providers page [(#8473)](https://github.com/prowler-cloud/prowler/pull/8473)
 - New menu item under Configuration section for quick access to the Mutelist [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
+- Resource agent to Lighthouse for querying resource information [(#8509)](https://github.com/prowler-cloud/prowler/pull/8509)
 
 ### 🔄 Changed
 
@@ -15,6 +16,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Provider connection filter now shows "Connected/Disconnected" instead of "true/false" for better UX [(#8520)](https://github.com/prowler-cloud/prowler/pull/8520)
 
 ### 🐞 Fixed
+
 - DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
 
 ### ❌ Removed
@@ -29,7 +31,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - `GitHub` submenu to High Risk Findings [(#8488)](https://github.com/prowler-cloud/prowler/pull/8488)
 - Improved Overview chart `Findings by Severity` spacing [(#8491)](https://github.com/prowler-cloud/prowler/pull/8491)
 
-  
 ## [1.10.0] (Prowler v5.10.0)
 
 ### 🚀 Added
