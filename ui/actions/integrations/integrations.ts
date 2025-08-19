@@ -10,6 +10,7 @@ import {
 } from "@/lib";
 
 import { getTask } from "../task";
+import { IntegrationType } from "../../types/integrations";
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -26,6 +27,7 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
 
     if (response.ok) {
       const data = await response.json();
+      console.log(JSON.stringify(data, null, 2));
       return parseStringify(data);
     }
 
@@ -87,6 +89,8 @@ export const createIntegration = async (
       },
     };
 
+    console.log(integrationData);
+
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
@@ -96,6 +100,13 @@ export const createIntegration = async (
     if (response.ok) {
       const responseData = await response.json();
       const integrationId = responseData.data.id;
+
+      // Revalidate the appropriate page based on integration type
+      if (integration_type === "amazon_s3") {
+        revalidatePath("/integrations/s3");
+      } else if (integration_type === "aws_security_hub") {
+        revalidatePath("/integrations/securityhub");
+      }
 
       const testResult = await testIntegrationConnection(integrationId);
 
@@ -108,7 +119,7 @@ export const createIntegration = async (
     const errorData = await response.json().catch(() => ({}));
     const errorMessage =
       errorData.errors?.[0]?.detail ||
-      `Unable to create S3 integration: ${response.statusText}`;
+      `Unable to create integration: ${response.statusText}`;
     return { error: errorMessage };
   } catch (error) {
     return handleApiError(error);
@@ -172,7 +183,12 @@ export const updateIntegration = async (id: string, formData: FormData) => {
     });
 
     if (response.ok) {
-      revalidatePath("/integrations/s3");
+      // Revalidate the appropriate page based on integration type
+      if (integration_type === "amazon_s3") {
+        revalidatePath("/integrations/s3");
+      } else if (integration_type === "aws_security_hub") {
+        revalidatePath("/integrations/securityhub");
+      }
 
       // Only test connection if credentials or configuration were updated
       if (credentials || configuration) {
@@ -191,14 +207,17 @@ export const updateIntegration = async (id: string, formData: FormData) => {
     const errorData = await response.json().catch(() => ({}));
     const errorMessage =
       errorData.errors?.[0]?.detail ||
-      `Unable to update S3 integration: ${response.statusText}`;
+      `Unable to update integration: ${response.statusText}`;
     return { error: errorMessage };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
-export const deleteIntegration = async (id: string) => {
+export const deleteIntegration = async (
+  id: string,
+  integration_type: IntegrationType,
+) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}`);
 
@@ -206,14 +225,20 @@ export const deleteIntegration = async (id: string) => {
     const response = await fetch(url.toString(), { method: "DELETE", headers });
 
     if (response.ok) {
-      revalidatePath("/integrations/s3");
+      // Revalidate the appropriate page based on integration type
+      if (integration_type === "amazon_s3") {
+        revalidatePath("/integrations/s3");
+      } else if (integration_type === "aws_security_hub") {
+        revalidatePath("/integrations/securityhub");
+      }
+
       return { success: "Integration deleted successfully!" };
     }
 
     const errorData = await response.json().catch(() => ({}));
     const errorMessage =
       errorData.errors?.[0]?.detail ||
-      `Unable to delete S3 integration: ${response.statusText}`;
+      `Unable to delete integration: ${response.statusText}`;
     return { error: errorMessage };
   } catch (error) {
     return handleApiError(error);

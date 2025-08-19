@@ -78,7 +78,7 @@ export const S3IntegrationsManager = ({
   const handleDeleteIntegration = async (id: string) => {
     setIsDeleting(id);
     try {
-      const result = await deleteIntegration(id);
+      const result = await deleteIntegration(id, "amazon_s3");
 
       if (result.success) {
         toast({

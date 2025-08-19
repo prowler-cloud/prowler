@@ -191,18 +191,9 @@ export const SecurityHubIntegrationForm = ({
       }
 
       formData.append("enabled", JSON.stringify(values.enabled ?? true));
-
-      const relationships = {
-        providers: {
-          data: [
-            {
-              id: values.provider_id,
-              type: "providers",
-            },
-          ],
-        },
-      };
-      formData.append("relationships", JSON.stringify(relationships));
+      
+      // Send provider_id as an array for consistency with the action
+      formData.append("providers", JSON.stringify([values.provider_id]));
     }
 
     return formData;

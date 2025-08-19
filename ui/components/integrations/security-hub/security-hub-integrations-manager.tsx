@@ -78,7 +78,7 @@ export const SecurityHubIntegrationsManager = ({
   const handleDeleteIntegration = async (id: string) => {
     setIsDeleting(id);
     try {
-      const result = await deleteIntegration(id);
+      const result = await deleteIntegration(id, "aws_security_hub");
 
       if (result.success) {
         toast({
