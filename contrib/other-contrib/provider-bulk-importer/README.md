@@ -101,9 +101,9 @@ Create a configuration file (YAML recommended) listing the providers to add:
 - provider: gcp
   uid: "my-gcp-project-id"         # Project ID
   alias: "gcp-prod"
-  auth_method: service_account_json
+  auth_method: service_account     # Service Account authentication
   credentials:
-    service_account_key_json_path: "./gcp-key.json"  # or inline_json: '{...}'
+    service_account_key_json_path: "./gcp-key.json"
 
 - provider: kubernetes
   uid: "my-eks-context"            # kubeconfig context name
@@ -237,16 +237,40 @@ python bulk_provision_prowler.py providers.yaml \
 
 ### GCP Authentication
 
-#### Service Account JSON
+The Prowler API supports the following authentication methods for GCP:
+
+#### Method 1: Service Account JSON (Recommended)
 ```yaml
 - provider: gcp
   uid: "project-id"
   alias: "gcp-prod"
-  auth_method: service_account_json
+  auth_method: service_account  # or 'service_account_json'
   credentials:
     service_account_key_json_path: "/path/to/key.json"
-    # OR
-    # inline_json: '{"type": "service_account", ...}'
+    # OR inline:
+    # inline_json:
+    #   type: "service_account"
+    #   project_id: "your-project"
+    #   private_key_id: "key-id"
+    #   private_key: "-----BEGIN PRIVATE KEY-----\n..."
+    #   client_email: "service-account@project.iam.gserviceaccount.com"
+    #   client_id: "1234567890"
+    #   auth_uri: "https://accounts.google.com/o/oauth2/auth"
+    #   token_uri: "https://oauth2.googleapis.com/token"
+    #   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
+    #   client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/..."
+```
+
+#### Method 2: OAuth2 Credentials
+```yaml
+- provider: gcp
+  uid: "project-id"
+  alias: "gcp-prod"
+  auth_method: oauth2  # or 'adc' for Application Default Credentials
+  credentials:
+    client_id: "123456789012345678901.apps.googleusercontent.com"
+    client_secret: "GOCSPX-xxxxxxxxxxxxxxxxx"
+    refresh_token: "1//0exxxxxxxxxxxxxxxxx"
 ```
 
 ### Kubernetes Authentication
@@ -347,17 +371,6 @@ This is useful for:
 ```
 
 ## Advanced Features
-
-### Passthrough Mode
-
-For custom API endpoints or advanced payloads:
-
-```yaml
-- endpoint: "/custom/endpoint"
-  payload:
-    custom_field: "value"
-    another_field: 123
-```
 
 ### Dry Run Mode
 

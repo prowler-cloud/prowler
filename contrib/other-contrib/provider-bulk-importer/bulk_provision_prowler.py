@@ -1,29 +1,4 @@
 #!/usr/bin/env python3
-"""
-Bulk-provision cloud providers in Prowler Cloud/App via REST API.
-
-- Supports providers: aws, azure, gcp, kubernetes, m365, github
-- Reads YAML / JSON / CSV input listing provider entries
-- Builds provider-specific payloads
-- POSTs to the providers endpoint with concurrency and retries
-- Tests provider connections after creation (optional)
-
-Environment:
-  PROWLER_API_BASE   (default: https://api.prowler.com/api/v1)
-  PROWLER_API_TOKEN  (required unless --token is provided)
-
-Usage:
-  python bulk_provision_prowler.py providers.yaml \
-    --base-url https://api.prowler.com/api/v1 \
-    --providers-endpoint /providers \
-    --concurrency 6
-
-Notes:
-  * Check your Prowler API docs at /api/v1/docs for the exact fields accepted by your version.
-  * For self-hosted Prowler App, base URL is typically http://localhost:8080/api/v1
-
-Author: Prowler Contributors ✨
-"""
 
 from __future__ import annotations
 
@@ -153,13 +128,20 @@ def build_payload(
     secret_payload: Optional[Dict[str, Any]] = None
 
     if auth_method and creds:
-        # Determine secret_type based on auth_method
-        secret_type = "role" if auth_method == "role" else "static"
+        # Determine secret_type based on auth_method and provider
+        if auth_method == "role":
+            secret_type = "role"
+        elif provider == "gcp" and auth_method in [
+            "service_account",
+            "service_account_json",
+        ]:
+            secret_type = "service_account"
+        else:
+            secret_type = "static"
         secret_data: Dict[str, Any] = {}
 
         if provider == "aws":
             if auth_method == "role":
-                # external_id is required by the API
                 external_id = creds.get("external_id")
                 if not external_id:
                     raise ValueError(
@@ -203,40 +185,70 @@ def build_payload(
             }
 
         elif provider == "gcp":
-            if auth_method == "service_account_json":
+            # GCP supports 3 authentication methods
+            if (
+                auth_method == "service_account"
+                or auth_method == "service_account_json"
+            ):
+                # Method 1: Service Account JSON key
                 inline = creds.get("inline_json")
                 path = creds.get("service_account_key_json_path")
+
+                # Load the service account JSON
+                sa_data = None
                 if path and not inline:
                     inline_content = read_text_file(path)
                     if inline_content:
                         try:
                             import json
 
-                            inline = json.loads(inline_content)
-                        except json.JSONDecodeError:
-                            raise ValueError(
-                                f"Invalid JSON in service account key file: {path}"
-                            )
-                elif inline and isinstance(inline, str):
-                    try:
-                        import json
+                            sa_data = json.loads(inline_content)
+                        except:
+                            # If parsing fails, try sending as string
+                            sa_data = {"private_key": inline_content}
+                elif inline:
+                    if isinstance(inline, dict):
+                        sa_data = inline
+                    else:
+                        try:
+                            import json
 
-                        inline = json.loads(inline)
-                    except json.JSONDecodeError:
-                        raise ValueError("Invalid JSON in inline_json credential")
-                # For GCP service account, this would be a custom type
-                # We might need to handle this differently
-                secret_data = {"service_account_key": inline}
-            elif auth_method == "adc":
-                # Application Default Credentials
+                            sa_data = json.loads(inline)
+                        except:
+                            sa_data = {"private_key": inline}
+
+                # The API expects the service account JSON wrapped in a service_account_key field
+                if sa_data and isinstance(sa_data, dict):
+                    # Wrap the service account JSON in the service_account_key field
+                    secret_data = {"service_account_key": sa_data}
+                else:
+                    raise ValueError("Could not parse service account JSON")
+
+            elif auth_method == "oauth2" or auth_method == "adc":
+                # Method 2: OAuth2 credentials (Application Default Credentials)
                 secret_data = {
                     "client_id": creds.get("client_id"),
                     "client_secret": creds.get("client_secret"),
                     "refresh_token": creds.get("refresh_token"),
                 }
+            elif (
+                auth_method == "workload_identity"
+                or auth_method == "workload_identity_federation"
+            ):
+                # Method 3: Workload Identity Federation
+                secret_data = {
+                    "type": creds.get("type", "external_account"),
+                    "audience": creds.get("audience"),
+                    "subject_token_type": creds.get("subject_token_type"),
+                    "service_account_impersonation_url": creds.get(
+                        "service_account_impersonation_url"
+                    ),
+                    "token_url": creds.get("token_url"),
+                    "credential_source": creds.get("credential_source"),
+                }
             else:
                 raise ValueError(
-                    "GCP 'auth_method' must be 'service_account_json' or 'adc'."
+                    "GCP 'auth_method' must be 'service_account', 'oauth2', or 'workload_identity'."
                 )
 
         elif provider == "kubernetes":
@@ -264,7 +276,6 @@ def build_payload(
                 secret_data["password"] = creds.get("password")
 
         elif provider == "github":
-            # GitHub is not in the API schema, might need special handling
             if auth_method == "personal_access_token":
                 secret_data = {"personal_access_token": creds.get("token")}
             elif auth_method == "oauth_app_token":
