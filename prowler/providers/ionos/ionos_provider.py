@@ -100,26 +100,26 @@ class IonosProvider(Provider):
             self._password = ionos_password
             logger.info("Using static credentials authentication")
 
-        temp_identity = IonosIdentityInfo(
-            username=self._username,
-            password=self._password,
-            datacenter_id="",
-            token=self._token,
-        )
-
-        self._session = self.setup_session(
-            identity=temp_identity,
-        )
-
-        if not self.test_connection():
-            logger.critical("Failed to establish connection with IONOS Cloud API, please check your credentials.")
-            sys.exit(1)
-
+        # Setup identity first with final credentials
         self._identity = self.setup_identity(
             username=self._username,
             password=self._password,
             datacenter_id="",
         )
+
+        # Setup session using the identity
+        self._session = self.setup_session(
+            identity=self._identity,
+        )
+
+        if not self._identity.username:
+            self._identity.username = self.get_ionos_username()
+
+        self._identity.datacenter_id = self.get_datacenter_id(self._datacenter_name)
+
+        if not self.test_connection():
+            logger.critical("Failed to establish connection with IONOS Cloud API, please check your credentials.")
+            sys.exit(1)
 
         if config_path is None:
             self._audit_config = {}
@@ -378,11 +378,6 @@ class IonosProvider(Provider):
             datacenter_id=datacenter_id,
             token=self._token,
         )
-
-        if not identity.username:
-            identity.username = self.get_ionos_username()
-
-        identity.datacenter_id = self.get_datacenter_id(self._datacenter_name)
 
         return identity
 
