@@ -10,6 +10,7 @@ from tasks.jobs.integrations import (
 
 from api.models import Integration
 from api.utils import prowler_integration_connection_test
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.common.models import Connection
 
 
@@ -469,19 +470,30 @@ class TestProwlerIntegrationConnectionTest:
         mock_prowler_provider.session.current_session = MagicMock()
         mock_initialize_provider.return_value = mock_prowler_provider
 
-        # Mock successful SecurityHub connection
-        mock_connection = Connection(is_connected=True)
+        # Mock successful SecurityHub connection with regions
+        mock_connection = SecurityHubConnection(
+            is_connected=True,
+            error=None,
+            enabled_regions={"us-east-1", "us-west-2", "eu-west-1"},
+            disabled_regions={"us-east-2", "eu-west-2"},
+        )
         mock_security_hub_class.test_connection.return_value = mock_connection
 
         result = prowler_integration_connection_test(integration)
 
         assert result.is_connected is True
         mock_security_hub_class.test_connection.assert_called_once_with(
-            aws_account_id="123456789012",
-            aws_partition="aws",
-            session=mock_prowler_provider.session.current_session,
+            aws_access_key_id="AKIA...",
+            aws_secret_access_key="SECRET",
             raise_on_exception=False,
         )
+        # Verify regions were saved
+        assert integration.configuration["regions"]["us-east-1"] is True
+        assert integration.configuration["regions"]["us-west-2"] is True
+        assert integration.configuration["regions"]["eu-west-1"] is True
+        assert integration.configuration["regions"]["us-east-2"] is False
+        assert integration.configuration["regions"]["eu-west-2"] is False
+        integration.save.assert_called_once()
 
     @patch("api.utils.SecurityHub")
     @patch("api.utils.initialize_prowler_provider")
@@ -515,13 +527,72 @@ class TestProwlerIntegrationConnectionTest:
 
         # Mock failed SecurityHub connection
         test_exception = Exception("SecurityHub not enabled")
-        mock_connection = Connection(is_connected=False, error=test_exception)
+        mock_connection = SecurityHubConnection(
+            is_connected=False,
+            error=test_exception,
+            enabled_regions=set(),
+            disabled_regions=set(),
+        )
         mock_security_hub_class.test_connection.return_value = mock_connection
 
         result = prowler_integration_connection_test(integration)
 
         assert result.is_connected is False
         assert result.error == test_exception
+        # Verify regions were not saved when connection failed
+        integration.save.assert_not_called()
+
+    @patch("api.utils.SecurityHub")
+    @patch("api.utils.initialize_prowler_provider")
+    def test_aws_security_hub_integration_with_provider_credentials(
+        self, mock_initialize_provider, mock_security_hub_class
+    ):
+        """Test AWS Security Hub integration using provider credentials."""
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
+        integration.credentials = None  # No custom credentials
+        integration.configuration = {"send_only_fails": True}
+
+        # Mock integration provider relationship
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock prowler provider
+        mock_prowler_provider = MagicMock()
+        mock_prowler_provider.identity.account = "123456789012"
+        mock_prowler_provider.identity.partition = "aws"
+        mock_prowler_provider.session.current_session = MagicMock()
+        mock_initialize_provider.return_value = mock_prowler_provider
+
+        # Mock successful SecurityHub connection with regions
+        mock_connection = SecurityHubConnection(
+            is_connected=True,
+            error=None,
+            enabled_regions={"us-east-1", "eu-central-1"},
+            disabled_regions={"ap-south-1"},
+        )
+        mock_security_hub_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected
+        # Should use provider credentials
+        mock_security_hub_class.test_connection.assert_called_once_with(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            session=mock_prowler_provider.session.current_session,
+            raise_on_exception=False,
+        )
+        # Verify regions were saved
+        assert integration.configuration["regions"]["us-east-1"]
+        assert integration.configuration["regions"]["eu-central-1"]
+        assert not integration.configuration["regions"]["ap-south-1"]
+        integration.save.assert_called_once()
 
     def test_unsupported_integration_type(self):
         """Test unsupported integration type raises ValueError."""

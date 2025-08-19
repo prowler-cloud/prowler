@@ -204,17 +204,25 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
                 is_connected=False, error="No provider associated with this integration"
             )
 
-        provider_obj = provider_relationship.provider
+        # Check if integration has custom credentials
+        if integration.credentials:
+            # Use custom credentials directly
+            connection = SecurityHub.test_connection(
+                **integration.credentials,
+                raise_on_exception=False,
+            )
+        else:
+            # Initialize prowler provider to get aws_account_id and aws_partition
+            prowler_provider = initialize_prowler_provider(
+                provider_relationship.provider
+            )
 
-        # Initialize prowler provider to get aws_account_id and aws_partition
-        prowler_provider = initialize_prowler_provider(provider_obj)
-
-        connection = SecurityHub.test_connection(
-            aws_account_id=prowler_provider.identity.account,
-            aws_partition=prowler_provider.identity.partition,
-            raise_on_exception=False,
-            session=prowler_provider.session.current_session,
-        )
+            connection = SecurityHub.test_connection(
+                aws_account_id=prowler_provider.identity.account,
+                aws_partition=prowler_provider.identity.partition,
+                raise_on_exception=False,
+                session=prowler_provider.session.current_session,
+            )
 
         # Only save regions if connection is successful
         if connection.is_connected:
