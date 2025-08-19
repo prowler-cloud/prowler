@@ -8,6 +8,7 @@ import {
   findingsAgentPrompt,
   overviewAgentPrompt,
   providerAgentPrompt,
+  resourcesAgentPrompt,
   rolesAgentPrompt,
   scansAgentPrompt,
   supervisorPrompt,
@@ -35,6 +36,11 @@ import {
   getProvidersTool,
   getProviderTool,
 } from "@/lib/lighthouse/tools/providers";
+import {
+  getLatestResourcesTool,
+  getResourcesTool,
+  getResourceTool,
+} from "@/lib/lighthouse/tools/resources";
 import { getRolesTool, getRoleTool } from "@/lib/lighthouse/tools/roles";
 import { getScansTool, getScanTool } from "@/lib/lighthouse/tools/scans";
 import {
@@ -127,6 +133,13 @@ export async function initLighthouseWorkflow() {
     prompt: rolesAgentPrompt,
   });
 
+  const resourcesAgent = createReactAgent({
+    llm: llm,
+    tools: [getResourceTool, getResourcesTool, getLatestResourcesTool],
+    name: "resources_agent",
+    prompt: resourcesAgentPrompt,
+  });
+
   const agents = [
     userInfoAgent,
     providerAgent,
@@ -135,6 +148,7 @@ export async function initLighthouseWorkflow() {
     complianceAgent,
     findingsAgent,
     rolesAgent,
+    resourcesAgent,
   ];
 
   // Create supervisor workflow

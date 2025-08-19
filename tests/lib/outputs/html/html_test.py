@@ -673,7 +673,7 @@ class TestHTML:
 
         provider = set_mocked_github_provider(
             auth_method="GitHub App Token",
-            identity=GithubAppIdentityInfo(app_id=APP_ID),
+            identity=GithubAppIdentityInfo(app_id=APP_ID, installations=["test-org"]),
         )
 
         summary = output.get_assessment_summary(provider)
