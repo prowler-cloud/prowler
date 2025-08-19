@@ -2895,25 +2895,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
-  /api/v1/integrations/securityhub/{provider_id}:
-    get:
-      operationId: integrations_securityhub_retrieve
-      description: Retrieve the active SecurityHub regions for a specific provider
-      summary: Get SecurityHub regions for provider
-      parameters:
-      - in: path
-        name: provider_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - Integration
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
@@ -8937,6 +8918,19 @@ components:
                     default: output
                 required:
                 - bucket_name
+              - type: object
+                title: AWS Security Hub
+                properties:
+                  send_only_fails:
+                    type: boolean
+                    default: false
+                    description: If true, only findings with status 'FAILED' will
+                      be sent to Security Hub.
+                  skip_archive_previous:
+                    type: boolean
+                    default: false
+                    description: If true, skips archiving previous findings in Security
+                      Hub.
             credentials:
               oneOf:
               - type: object
@@ -9083,6 +9077,19 @@ components:
                         default: output
                     required:
                     - bucket_name
+                  - type: object
+                    title: AWS Security Hub
+                    properties:
+                      send_only_fails:
+                        type: boolean
+                        default: false
+                        description: If true, only findings with status 'FAILED' will
+                          be sent to Security Hub.
+                      skip_archive_previous:
+                        type: boolean
+                        default: false
+                        description: If true, skips archiving previous findings in
+                          Security Hub.
                 credentials:
                   oneOf:
                   - type: object
@@ -9244,6 +9251,19 @@ components:
                     default: output
                 required:
                 - bucket_name
+              - type: object
+                title: AWS Security Hub
+                properties:
+                  send_only_fails:
+                    type: boolean
+                    default: false
+                    description: If true, only findings with status 'FAILED' will
+                      be sent to Security Hub.
+                  skip_archive_previous:
+                    type: boolean
+                    default: false
+                    description: If true, skips archiving previous findings in Security
+                      Hub.
             credentials:
               oneOf:
               - type: object
@@ -10603,6 +10623,19 @@ components:
                         default: output
                     required:
                     - bucket_name
+                  - type: object
+                    title: AWS Security Hub
+                    properties:
+                      send_only_fails:
+                        type: boolean
+                        default: false
+                        description: If true, only findings with status 'FAILED' will
+                          be sent to Security Hub.
+                      skip_archive_previous:
+                        type: boolean
+                        default: false
+                        description: If true, skips archiving previous findings in
+                          Security Hub.
                 credentials:
                   oneOf:
                   - type: object
