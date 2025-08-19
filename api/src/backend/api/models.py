@@ -249,7 +249,7 @@ class Provider(RowLevelSecurityProtectedModel):
             import base64
 
             try:
-                base64.b64decode(value)
+                base64.b64decode(value, validate=True)
             except Exception as e:
                 raise ModelValidationError(
                     detail=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
