@@ -1,3 +1,4 @@
+export * from "../providers/enhanced-provider-selector";
 export * from "../providers/provider-selector";
 export * from "./s3/s3-integration-card";
 export * from "./s3/s3-integration-form";
@@ -5,3 +6,7 @@ export * from "./s3/s3-integrations-manager";
 export * from "./s3/skeleton-s3-integration-card";
 export * from "./saml/saml-config-form";
 export * from "./saml/saml-integration-card";
+export * from "./security-hub/security-hub-integration-card";
+export * from "./security-hub/security-hub-integration-form";
+export * from "./security-hub/security-hub-integrations-manager";
+export * from "./security-hub/skeleton-security-hub-integration-card";
