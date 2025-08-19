@@ -585,7 +585,9 @@ class TestFinding:
         provider = MagicMock()
         provider.type = "github"
         # GitHub App identity only has app_id, not account_name/account_id
-        provider.identity = GithubAppIdentityInfo(app_id=APP_ID)
+        provider.identity = GithubAppIdentityInfo(
+            app_id=APP_ID, installations=["test-org"]
+        )
         provider.auth_method = "GitHub App Token"
 
         # Mock check result

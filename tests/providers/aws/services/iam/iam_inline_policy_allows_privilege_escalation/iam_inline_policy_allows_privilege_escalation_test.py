@@ -362,17 +362,16 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
+                f"Inline policy {policy_name} attached to role {role_name} does not allow privilege escalation",
                 result[0].status_extended,
             )
-            assert search("iam:PassRole", result[0].status_extended)
 
     @mock_aws
     def test_iam_inline_policy_allows_privilege_escalation_two_combinations(
@@ -511,17 +510,16 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             check = iam_inline_policy_allows_privilege_escalation()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert result[0].resource_id == f"test_role/{policy_name}"
             assert result[0].resource_arn == role_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
-                f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
+                f"Inline policy {policy_name} attached to role {role_name} does not allow privilege escalation",
                 result[0].status_extended,
             )
-            assert search("iam:PassRole", result[0].status_extended)
 
     @mock_aws
     def test_iam_inline_policy_allows_privilege_escalation_policies_combination(
@@ -1219,3 +1217,75 @@ class Test_iam_inline_policy_allows_privilege_escalation:
                         f"Inline Policy '{policy_name}' attached to role {role_arn} allows privilege escalation using the following actions:",
                         finding.status_extended,
                     )
+
+    @mock_aws
+    def test_iam_inline_role_policy_allows_privilege_escalation_agentcore(self):
+        """Test detection of AWS Bedrock AgentCore privilege escalation in inline role policy."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        # Create IAM Role
+        role_name = "agentcore_test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
+        # Put Role Policy with AgentCore privilege escalation permissions
+        policy_name = "agentcore_policy"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:PassRole",
+                        "bedrock-agentcore:CreateCodeInterpreter",
+                        "bedrock-agentcore:InvokeCodeInterpreter",
+                    ],
+                    "Resource": "*",
+                }
+            ],
+        }
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_inline_policy_allows_privilege_escalation.iam_inline_policy_allows_privilege_escalation import (
+                iam_inline_policy_allows_privilege_escalation,
+            )
+
+            check = iam_inline_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_id == f"{role_name}/{policy_name}"
+            assert result[0].resource_arn == role_arn
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == []
+
+            assert search(
+                f"Inline policy {policy_name} attached to role {role_name} allows privilege escalation using the following actions: ",
+                result[0].status_extended,
+            )
+            assert search("iam:PassRole", result[0].status_extended)
+            assert search(
+                "bedrock-agentcore:CreateCodeInterpreter", result[0].status_extended
+            )
+            assert search(
+                "bedrock-agentcore:InvokeCodeInterpreter", result[0].status_extended
+            )
