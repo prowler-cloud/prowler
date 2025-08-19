@@ -1192,13 +1192,6 @@ class FindingDynamicFilterSerializer(serializers.Serializer):
         resource_name = "finding-dynamic-filters"
 
 
-class SecurityHubRegionsSerializer(serializers.Serializer):
-    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
-
-    class Meta:
-        resource_name = "securityhub-regions"
-
-
 class FindingMetadataSerializer(serializers.Serializer):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
@@ -2006,6 +1999,13 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
         # Apply the validated (and potentially transformed) data back to configuration
         configuration.update(serializer_instance.validated_data)
 
+        # For SecurityHub, add provider_id to configuration to ensure uniqueness (avoid custom model for SecurityHub due to the constraint configuration-tenant)
+        if (
+            integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+            and providers
+        ):
+            configuration["provider_id"] = str(providers[0].id)
+
         for cred_serializer in credentials_serializers:
             try:
                 cred_serializer(data=credentials).is_valid(raise_exception=True)
@@ -2146,13 +2146,14 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
-        super().validate(attrs)
-        integration_type = self.instance.integration_type
-        providers = attrs.get("providers")
-        configuration = attrs.get("configuration") or self.instance.configuration
-        credentials = attrs.get("credentials") or self.instance.credentials
-
         validated_attrs = super().validate(attrs)
+        integration_type = self.instance.integration_type
+        providers = validated_attrs.get("providers")
+        configuration = (
+            validated_attrs.get("configuration") or self.instance.configuration
+        )
+        credentials = validated_attrs.get("credentials") or self.instance.credentials
+
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
