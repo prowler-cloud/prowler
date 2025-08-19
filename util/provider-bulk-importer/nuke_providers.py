@@ -186,7 +186,7 @@ def delete_provider(client: ApiClient, provider_id: str) -> Tuple[bool, Dict[str
                             "id": provider_id,
                             "task": data,
                         }
-            except:
+            except (json.JSONDecodeError, ValueError, KeyError):
                 pass
 
             return True, {"status": "deleted", "id": provider_id}
@@ -403,7 +403,7 @@ def main():
     if successes > 0 and failures == 0:
         # Nuclear explosion ASCII art
         print(
-            """
+            r"""
                 _.-^^---....,,--
             _--                  --_
             <                        >)

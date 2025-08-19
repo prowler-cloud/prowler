@@ -203,7 +203,7 @@ def build_payload(
                             import json
 
                             sa_data = json.loads(inline_content)
-                        except:
+                        except (json.JSONDecodeError, ValueError):
                             # If parsing fails, try sending as string
                             sa_data = {"private_key": inline_content}
                 elif inline:
@@ -214,7 +214,7 @@ def build_payload(
                             import json
 
                             sa_data = json.loads(inline)
-                        except:
+                        except (json.JSONDecodeError, ValueError):
                             sa_data = {"private_key": inline}
 
                 # The API expects the service account JSON wrapped in a service_account_key field
@@ -610,11 +610,11 @@ def main():
             print(f"  POST {base_url}{endpoint}")
             print(f"  {json.dumps(provider_payload, indent=2)}")
             if secret_payload:
-                print(f"\n  Then Secret Creation:")
+                print("\n  Then Secret Creation:")
                 print(f"  POST {base_url}/providers/secrets")
                 print(f"  {json.dumps(secret_payload, indent=2)}")
             if args.test_connection:
-                print(f"\n  Then Test Connection")
+                print("\n  Then Test Connection")
             print()
         else:
             requests_to_send.append((idx, endpoint, provider_payload, secret_payload))
