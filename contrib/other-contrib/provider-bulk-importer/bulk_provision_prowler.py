@@ -119,17 +119,19 @@ def read_text_file(path: Optional[str]) -> Optional[str]:
     return p.read_text(encoding="utf-8")
 
 
-def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[Dict[str, Any]]]:
     """
-    Returns (endpoint_path, payload) to POST.
-
+    Returns (endpoint_path, provider_payload, secret_payload) to POST.
+    
+    The API requires two steps:
+    1. Create provider with minimal info
+    2. Create secret linked to the provider
+    
     If the item includes 'endpoint' and 'payload', passthrough these directly.
-
-    Otherwise, build a standardized payload for POST /providers (default).
     """
     # Passthrough mode for advanced users / future endpoints
     if "endpoint" in item and "payload" in item:
-        return str(item["endpoint"]), dict(item["payload"])
+        return str(item["endpoint"]), dict(item["payload"]), None
 
     provider = str(item.get("provider", "")).strip().lower()
     uid = item.get("uid")  # account id / subscription id / project id / etc.
@@ -140,145 +142,171 @@ def build_payload(item: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
     if not provider or not uid:
         raise ValueError("Each item must include 'provider' and 'uid'.")
 
-    # Provider-specific credential mapping based on actual API schema
-    credentials_payload: Dict[str, Any] = {}
-
-    if provider == "aws":
-        if auth_method == "role":
-            credentials_payload.update(
-                {
+    # Step 1: Build provider creation payload (minimal)
+    provider_payload: Dict[str, Any] = {
+        "data": {
+            "type": "providers",
+            "attributes": {
+                "provider": provider,
+                "uid": uid,
+                "alias": alias,
+            }
+        }
+    }
+    
+    # Step 2: Build secret creation payload if credentials are provided
+    secret_payload: Optional[Dict[str, Any]] = None
+    
+    if auth_method and creds:
+        # Determine secret_type based on auth_method
+        secret_type = "role" if auth_method == "role" else "static"
+        secret_data: Dict[str, Any] = {}
+        
+        if provider == "aws":
+            if auth_method == "role":
+                # external_id is required by the API
+                external_id = creds.get("external_id")
+                if not external_id:
+                    raise ValueError("AWS role authentication requires 'external_id' in credentials")
+                secret_data = {
                     "role_arn": creds.get("role_arn"),
-                    "external_id": creds.get("external_id"),
-                    "role_session_name": creds.get("session_name"),
-                    "session_duration": creds.get("duration_seconds", 3600),
-                    # Optional: keys used to assume the role
+                    "external_id": external_id,
+                }
+                # Optional fields for role
+                if creds.get("session_name"):
+                    secret_data["role_session_name"] = creds.get("session_name")
+                if creds.get("duration_seconds"):
+                    secret_data["session_duration"] = creds.get("duration_seconds")
+                if creds.get("access_key_id"):
+                    secret_data["aws_access_key_id"] = creds.get("access_key_id")
+                if creds.get("secret_access_key"):
+                    secret_data["aws_secret_access_key"] = creds.get("secret_access_key")
+                if creds.get("session_token"):
+                    secret_data["aws_session_token"] = creds.get("session_token")
+            elif auth_method == "credentials":
+                secret_type = "static"
+                secret_data = {
                     "aws_access_key_id": creds.get("access_key_id"),
                     "aws_secret_access_key": creds.get("secret_access_key"),
-                    "aws_session_token": creds.get("session_token"),
                 }
-            )
-        elif auth_method == "credentials":
-            credentials_payload.update(
-                {
-                    "aws_access_key_id": creds.get("access_key_id"),
-                    "aws_secret_access_key": creds.get("secret_access_key"),
-                    "aws_session_token": creds.get("session_token"),
-                }
-            )
-        else:
-            raise ValueError("AWS 'auth_method' must be 'role' or 'credentials'.")
+                if creds.get("session_token"):
+                    secret_data["aws_session_token"] = creds.get("session_token")
+            else:
+                raise ValueError("AWS 'auth_method' must be 'role' or 'credentials'.")
 
-    elif provider == "azure":
-        if auth_method != "service_principal":
-            raise ValueError("Azure 'auth_method' must be 'service_principal'.")
-        credentials_payload.update(
-            {
+        elif provider == "azure":
+            if auth_method != "service_principal":
+                raise ValueError("Azure 'auth_method' must be 'service_principal'.")
+            secret_data = {
                 "tenant_id": creds.get("tenant_id"),
                 "client_id": creds.get("client_id"),
                 "client_secret": creds.get("client_secret"),
             }
-        )
 
-    elif provider == "gcp":
-        if auth_method == "service_account_json":
-            inline = creds.get("inline_json")
-            path = creds.get("service_account_key_json_path")
-            if path and not inline:
-                inline_content = read_text_file(path)
-                if inline_content:
+        elif provider == "gcp":
+            if auth_method == "service_account_json":
+                inline = creds.get("inline_json")
+                path = creds.get("service_account_key_json_path")
+                if path and not inline:
+                    inline_content = read_text_file(path)
+                    if inline_content:
+                        try:
+                            import json
+                            inline = json.loads(inline_content)
+                        except json.JSONDecodeError:
+                            raise ValueError(
+                                f"Invalid JSON in service account key file: {path}"
+                            )
+                elif inline and isinstance(inline, str):
                     try:
                         import json
-
-                        inline = json.loads(inline_content)
+                        inline = json.loads(inline)
                     except json.JSONDecodeError:
-                        raise ValueError(
-                            f"Invalid JSON in service account key file: {path}"
-                        )
-            elif inline and isinstance(inline, str):
-                try:
-                    import json
-
-                    inline = json.loads(inline)
-                except json.JSONDecodeError:
-                    raise ValueError("Invalid JSON in inline_json credential")
-            credentials_payload.update({"service_account_key": inline})
-        elif auth_method == "adc":
-            # Application Default Credentials
-            credentials_payload.update(
-                {
+                        raise ValueError("Invalid JSON in inline_json credential")
+                # For GCP service account, this would be a custom type
+                # We might need to handle this differently
+                secret_data = {"service_account_key": inline}
+            elif auth_method == "adc":
+                # Application Default Credentials
+                secret_data = {
                     "client_id": creds.get("client_id"),
                     "client_secret": creds.get("client_secret"),
                     "refresh_token": creds.get("refresh_token"),
                 }
-            )
-        else:
-            raise ValueError(
-                "GCP 'auth_method' must be 'service_account_json' or 'adc'."
-            )
+            else:
+                raise ValueError(
+                    "GCP 'auth_method' must be 'service_account_json' or 'adc'."
+                )
 
-    elif provider == "kubernetes":
-        if auth_method != "kubeconfig":
-            raise ValueError("Kubernetes 'auth_method' must be 'kubeconfig'.")
-        inline = creds.get("kubeconfig_inline")
-        path = creds.get("kubeconfig_path")
-        if path and not inline:
-            inline = read_text_file(path)
-        credentials_payload.update({"kubeconfig_content": inline})
+        elif provider == "kubernetes":
+            if auth_method != "kubeconfig":
+                raise ValueError("Kubernetes 'auth_method' must be 'kubeconfig'.")
+            inline = creds.get("kubeconfig_inline")
+            path = creds.get("kubeconfig_path")
+            if path and not inline:
+                inline = read_text_file(path)
+            secret_data = {"kubeconfig_content": inline}
 
-    elif provider == "m365":
-        if auth_method != "service_principal":
-            raise ValueError("M365 'auth_method' must be 'service_principal'.")
-        credentials_payload.update(
-            {
+        elif provider == "m365":
+            # M365 is not in the API schema, might need special handling
+            if auth_method != "service_principal":
+                raise ValueError("M365 'auth_method' must be 'service_principal'.")
+            secret_data = {
                 "tenant_id": creds.get("tenant_id"),
                 "client_id": creds.get("client_id"),
                 "client_secret": creds.get("client_secret"),
-                "user": creds.get("username"),
-                "password": creds.get("password"),
             }
-        )
+            # User/password might be additional fields
+            if creds.get("username"):
+                secret_data["user"] = creds.get("username")
+            if creds.get("password"):
+                secret_data["password"] = creds.get("password")
 
-    elif provider == "github":
-        if auth_method == "personal_access_token":
-            credentials_payload.update({"personal_access_token": creds.get("token")})
-        elif auth_method == "oauth_app_token":
-            credentials_payload.update({"oauth_app_token": creds.get("oauth_token")})
-        elif auth_method == "github_app":
-            # Accept inline PK or path
-            pk = creds.get("private_key_inline")
-            if not pk and creds.get("private_key_path"):
-                pk = read_text_file(creds.get("private_key_path"))
-            credentials_payload.update(
-                {"github_app_id": int(creds.get("app_id", 0)), "github_app_key": pk}
-            )
+        elif provider == "github":
+            # GitHub is not in the API schema, might need special handling
+            if auth_method == "personal_access_token":
+                secret_data = {"personal_access_token": creds.get("token")}
+            elif auth_method == "oauth_app_token":
+                secret_data = {"oauth_app_token": creds.get("oauth_token")}
+            elif auth_method == "github_app":
+                # Accept inline PK or path
+                pk = creds.get("private_key_inline")
+                if not pk and creds.get("private_key_path"):
+                    pk = read_text_file(creds.get("private_key_path"))
+                secret_data = {
+                    "github_app_id": int(creds.get("app_id", 0)),
+                    "github_app_key": pk
+                }
+            else:
+                raise ValueError(
+                    "GitHub 'auth_method' must be personal_access_token | oauth_app_token | github_app."
+                )
+
         else:
-            raise ValueError(
-                "GitHub 'auth_method' must be personal_access_token | oauth_app_token | github_app."
-            )
+            raise ValueError(f"Unsupported provider: {provider}")
 
-    else:
-        raise ValueError(f"Unsupported provider: {provider}")
-
-    # Standardized provider creation payload for POST /providers
-    # The credentials are sent as direct attributes, not under 'secret'
-    attributes = {
-        "provider": provider,
-        "uid": uid,
-        "alias": alias,
-    }
-    
-    # Add credentials directly to attributes
-    attributes.update(credentials_payload)
-    
-    payload: Dict[str, Any] = {
-        "data": {
-            "type": "providers",
-            "attributes": attributes,
+        # Build secret payload
+        secret_payload = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "secret_type": secret_type,
+                    "secret": secret_data,
+                    "name": alias,  # Use alias as the secret name
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": None  # Will be filled after provider creation
+                        }
+                    }
+                }
+            }
         }
-    }
 
-    # Return default endpoint
-    return "/providers", payload
+    # Return both payloads
+    return "/providers", provider_payload, secret_payload
 
 
 # ----------------------------- HTTP client --------------------------------- #
@@ -335,18 +363,51 @@ def with_retries(
 
 @with_retries
 def create_one(
-    client: ApiClient, endpoint: str, payload: Dict[str, Any]
+    client: ApiClient, 
+    provider_endpoint: str, 
+    provider_payload: Dict[str, Any],
+    secret_payload: Optional[Dict[str, Any]] = None
 ) -> Tuple[bool, Dict[str, Any]]:
-    """Create a single provider with retry logic."""
-    resp = client.post(endpoint, payload)
+    """Create a single provider with optional secret using two-step process."""
+    # Step 1: Create provider
+    resp = client.post(provider_endpoint, provider_payload)
     try:
         data = resp.json()
     except ValueError:
         data = {"text": resp.text}
-    if 200 <= resp.status_code < 300:
-        return True, data
-    else:
-        return False, {"status": resp.status_code, "body": data}
+    
+    if not (200 <= resp.status_code < 300):
+        return False, {"status": resp.status_code, "body": data, "step": "provider"}
+    
+    provider_id = data.get("data", {}).get("id")
+    if not provider_id:
+        return False, {"error": "No provider ID returned", "body": data}
+    
+    result = {"provider": data}
+    
+    # Step 2: Create secret if provided
+    if secret_payload:
+        # Update the provider ID in the secret payload
+        secret_payload["data"]["relationships"]["provider"]["data"]["id"] = provider_id
+        
+        # POST to /providers/secrets endpoint
+        secret_resp = client.post("/providers/secrets", secret_payload)
+        try:
+            secret_data = secret_resp.json()
+        except ValueError:
+            secret_data = {"text": secret_resp.text}
+        
+        if not (200 <= secret_resp.status_code < 300):
+            # Provider was created but secret failed
+            result["secret_error"] = {
+                "status": secret_resp.status_code, 
+                "body": secret_data
+            }
+            return False, result
+        
+        result["secret"] = secret_data
+    
+    return True, result
 
 
 # ----------------------------- main ---------------------------------------- #
@@ -402,10 +463,10 @@ def main():
         timeout=args.timeout,
     )
 
-    requests_to_send: List[Tuple[int, str, Dict[str, Any]]] = []
+    requests_to_send: List[Tuple[int, str, Dict[str, Any], Optional[Dict[str, Any]]]] = []
     for idx, item in enumerate(items, start=1):
         try:
-            endpoint, payload = build_payload(item)
+            endpoint, provider_payload, secret_payload = build_payload(item)
         except Exception as e:
             print(f"[{idx}] ❌ Skipping item due to build error: {e}")
             continue
@@ -415,11 +476,15 @@ def main():
             endpoint = args.providers_endpoint
 
         if args.dry_run:
-            print(
-                f"[{idx}] DRY-RUN → POST {base_url}{endpoint}\n{json.dumps(payload, indent=2)}\n"
-            )
+            print(f"[{idx}] DRY-RUN → Provider Creation")
+            print(f"  POST {base_url}{endpoint}")
+            print(f"  {json.dumps(provider_payload, indent=2)}")
+            if secret_payload:
+                print(f"\n  Then Secret Creation:")
+                print(f"  POST {base_url}/providers/secrets")
+                print(f"  {json.dumps(secret_payload, indent=2)}\n")
         else:
-            requests_to_send.append((idx, endpoint, payload))
+            requests_to_send.append((idx, endpoint, provider_payload, secret_payload))
 
     if args.dry_run or not requests_to_send:
         if not requests_to_send:
@@ -431,8 +496,8 @@ def main():
 
     with ThreadPoolExecutor(max_workers=max(1, args.concurrency)) as executor:
         futures = {
-            executor.submit(create_one, client, endpoint, payload): idx
-            for (idx, endpoint, payload) in requests_to_send
+            executor.submit(create_one, client, endpoint, provider_payload, secret_payload): idx
+            for (idx, endpoint, provider_payload, secret_payload) in requests_to_send
         }
         for fut in as_completed(futures):
             idx = futures[fut]
@@ -441,11 +506,18 @@ def main():
                 results.append((idx, ok, data))
                 if ok:
                     successes += 1
-                    provider_id = data.get("id") or data.get("provider_id")
+                    provider_id = data.get("provider", {}).get("data", {}).get("id")
                     print(f"[{idx}] ✅ Created provider (id={provider_id})")
+                    if "secret" in data:
+                        secret_id = data.get("secret", {}).get("data", {}).get("id")
+                        print(f"[{idx}] ✅ Created secret (id={secret_id})")
                 else:
                     failures += 1
-                    print(f"[{idx}] ❌ API error: {json.dumps(data, indent=2)}")
+                    if "secret_error" in data:
+                        print(f"[{idx}] ⚠️  Provider created but secret failed:")
+                        print(f"     {json.dumps(data['secret_error'], indent=2)}")
+                    else:
+                        print(f"[{idx}] ❌ API error: {json.dumps(data, indent=2)}")
             except Exception as e:
                 failures += 1
                 print(f"[{idx}] ❌ Request failed: {e}")
