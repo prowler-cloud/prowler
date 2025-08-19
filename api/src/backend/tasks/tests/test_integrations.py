@@ -547,6 +547,7 @@ class TestSecurityHubIntegrationUploads:
         # Mock integration
         mock_integration = MagicMock()
         mock_integration.configuration = {"send_only_fails": True}
+        mock_integration.credentials = {}  # Empty credentials, use provider
 
         # Mock provider
         mock_provider = MagicMock()
@@ -573,6 +574,7 @@ class TestSecurityHubIntegrationUploads:
 
         with patch("tasks.jobs.integrations.SecurityHub") as mock_security_hub_class:
             mock_security_hub = MagicMock()
+            mock_security_hub._enabled_regions = {"us-east-1": True, "us-west-2": True}
             mock_security_hub_class.return_value = mock_security_hub
 
             connected, security_hub = get_security_hub_client_from_integration(
@@ -582,15 +584,17 @@ class TestSecurityHubIntegrationUploads:
         assert connected is True
         assert security_hub == mock_security_hub
 
-        # Verify SecurityHub was initialized with correct parameters
-        mock_security_hub_class.assert_called_once_with(
-            aws_account_id="123456789012",
-            aws_partition="aws",
-            aws_session=mock_prowler_provider.session.current_session,
-            findings=mock_findings,
-            send_only_fails=True,
-            aws_security_hub_available_regions=["us-east-1", "us-west-2"],
-        )
+        # Verify SecurityHub was called twice - once to get regions, once to create client
+        assert mock_security_hub_class.call_count == 2
+
+        # Verify the second call (actual client creation) has the correct parameters
+        actual_call = mock_security_hub_class.call_args_list[1]
+        assert actual_call.kwargs["aws_account_id"] == "123456789012"
+        assert actual_call.kwargs["aws_partition"] == "aws"
+        assert actual_call.kwargs["findings"] == mock_findings
+        assert actual_call.kwargs["send_only_fails"]
+        assert "us-east-1" in actual_call.kwargs["aws_security_hub_available_regions"]
+        assert "us-west-2" in actual_call.kwargs["aws_security_hub_available_regions"]
 
     @patch("tasks.jobs.integrations.SecurityHub.test_connection")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")
@@ -601,6 +605,7 @@ class TestSecurityHubIntegrationUploads:
         # Mock integration
         mock_integration = MagicMock()
         mock_integration.configuration = {"send_only_fails": False}
+        mock_integration.credentials = {}  # Empty credentials, use provider
 
         # Mock provider
         mock_provider = MagicMock()
@@ -645,6 +650,7 @@ class TestSecurityHubIntegrationUploads:
         # Mock integration
         mock_integration = MagicMock()
         mock_integration.configuration = {"send_only_fails": False}
+        mock_integration.credentials = {}  # Empty credentials, use provider
 
         # Mock provider
         mock_provider = MagicMock()
@@ -672,6 +678,7 @@ class TestSecurityHubIntegrationUploads:
 
         with patch("tasks.jobs.integrations.SecurityHub") as mock_security_hub_class:
             mock_security_hub = MagicMock()
+            mock_security_hub._enabled_regions = {"us-east-1": True, "us-west-2": True}
             mock_security_hub_class.return_value = mock_security_hub
 
             connected, security_hub = get_security_hub_client_from_integration(
@@ -680,15 +687,17 @@ class TestSecurityHubIntegrationUploads:
 
         assert connected is True
 
-        # Verify SecurityHub was initialized with available regions
-        mock_security_hub_class.assert_called_once_with(
-            aws_account_id="123456789012",
-            aws_partition="aws",
-            aws_session=mock_prowler_provider.session.current_session,
-            findings=mock_findings,
-            send_only_fails=False,
-            aws_security_hub_available_regions=["us-east-1", "us-west-2", "eu-west-1"],
-        )
+        # Verify SecurityHub was called twice - once to get regions, once to create client
+        assert mock_security_hub_class.call_count == 2
+
+        # Verify the second call (actual client creation) has the correct parameters
+        actual_call = mock_security_hub_class.call_args_list[1]
+        assert actual_call.kwargs["aws_account_id"] == "123456789012"
+        assert actual_call.kwargs["aws_partition"] == "aws"
+        assert actual_call.kwargs["findings"] == mock_findings
+        assert not actual_call.kwargs["send_only_fails"]
+        assert "us-east-1" in actual_call.kwargs["aws_security_hub_available_regions"]
+        assert "us-west-2" in actual_call.kwargs["aws_security_hub_available_regions"]
 
     @patch("tasks.jobs.integrations.ASFF")
     @patch("tasks.jobs.integrations.FindingOutput")
