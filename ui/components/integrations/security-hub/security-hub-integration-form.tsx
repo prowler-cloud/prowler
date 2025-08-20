@@ -141,27 +141,16 @@ export const SecurityHubIntegrationForm = ({
     const configuration: any = {};
 
     if (!isPartial) {
+      // For creation - include all fields
       configuration.send_only_fails = values.send_only_fails ?? true;
       configuration.skip_archive_previous =
         values.skip_archive_previous ?? false;
-      configuration.regions = {};
       configuration.provider_id = values.provider_id;
     } else {
-      const originalSendOnlyFails =
-        integration?.attributes.configuration.send_only_fails ?? true;
-      const originalSkipArchive =
-        integration?.attributes.configuration.skip_archive_previous ?? false;
-
-      const sendOnlyFailsChanged =
-        values.send_only_fails !== originalSendOnlyFails;
-      const skipArchiveChanged =
-        values.skip_archive_previous !== originalSkipArchive;
-
-      if (sendOnlyFailsChanged || skipArchiveChanged) {
-        configuration.send_only_fails = values.send_only_fails ?? true;
-        configuration.skip_archive_previous =
-          values.skip_archive_previous ?? false;
-      }
+      // For PATCH updates - only send the two checkbox fields
+      configuration.send_only_fails = values.send_only_fails ?? true;
+      configuration.skip_archive_previous =
+        values.skip_archive_previous ?? false;
     }
 
     return configuration;
@@ -176,9 +165,11 @@ export const SecurityHubIntegrationForm = ({
       if (Object.keys(configuration).length > 0) {
         formData.append("configuration", JSON.stringify(configuration));
       }
+      // Don't send providers when editing configuration only
     } else if (isEditingCredentials) {
       const credentials = buildCredentials(values);
       formData.append("credentials", JSON.stringify(credentials));
+      // Don't send providers when editing credentials only
     } else {
       const configuration = buildConfiguration(values);
       formData.append("configuration", JSON.stringify(configuration));
@@ -191,7 +182,7 @@ export const SecurityHubIntegrationForm = ({
       }
 
       formData.append("enabled", JSON.stringify(values.enabled ?? true));
-      
+
       // Send provider_id as an array for consistency with the action
       formData.append("providers", JSON.stringify([values.provider_id]));
     }

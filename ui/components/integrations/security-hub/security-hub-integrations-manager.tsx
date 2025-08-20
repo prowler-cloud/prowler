@@ -187,9 +187,16 @@ export const SecurityHubIntegrationsManager = ({
   const getProviderDetails = (integration: IntegrationProps) => {
     const providerId = integration.attributes.configuration.provider_id;
     const provider = providers.find((p) => p.id === providerId);
-    return provider
-      ? provider.attributes.alias || provider.attributes.uid
-      : "Unknown Account";
+    
+    if (!provider) {
+      return { displayName: "Unknown Account", accountId: null };
+    }
+    
+    return {
+      displayName: provider.attributes.alias || provider.attributes.uid,
+      accountId: provider.attributes.uid,
+      alias: provider.attributes.alias,
+    };
   };
 
   const getEnabledRegions = (integration: IntegrationProps) => {
@@ -298,7 +305,7 @@ export const SecurityHubIntegrationsManager = ({
           <div className="grid gap-4">
             {integrations.map((integration) => {
               const enabledRegions = getEnabledRegions(integration);
-              const accountDisplay = getProviderDetails(integration);
+              const providerDetails = getProviderDetails(integration);
 
               return (
                 <Card key={integration.id} className="dark:bg-gray-800">
@@ -308,10 +315,12 @@ export const SecurityHubIntegrationsManager = ({
                         <AWSSecurityHubIcon size={32} />
                         <div>
                           <h4 className="text-md font-semibold">
-                            {accountDisplay}
+                            {providerDetails.displayName}
                           </h4>
                           <p className="text-xs text-gray-500 dark:text-gray-300">
-                            AWS Security Hub Integration
+                            {providerDetails.accountId && providerDetails.alias 
+                              ? `Account ID: ${providerDetails.accountId}`
+                              : "AWS Security Hub Integration"}
                           </p>
                         </div>
                       </div>
@@ -349,14 +358,11 @@ export const SecurityHubIntegrationsManager = ({
 
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-xs text-gray-500 dark:text-gray-300">
-                          {integration.attributes
-                            .connection_last_checked_at && (
+                          {integration.attributes.updated_at && (
                             <p>
-                              <span className="font-medium">Last checked:</span>{" "}
+                              <span className="font-medium">Last updated:</span>{" "}
                               {format(
-                                new Date(
-                                  integration.attributes.connection_last_checked_at,
-                                ),
+                                new Date(integration.attributes.updated_at),
                                 "yyyy/MM/dd",
                               )}
                             </p>
