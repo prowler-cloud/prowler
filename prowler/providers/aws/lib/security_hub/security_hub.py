@@ -10,7 +10,10 @@ from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.asff.asff import AWSSecurityFindingFormat
 from prowler.providers.aws.aws_provider import AwsProvider
-from prowler.providers.aws.config import ROLE_SESSION_NAME
+from prowler.providers.aws.config import (
+    AWS_STS_GLOBAL_ENDPOINT_REGION,
+    ROLE_SESSION_NAME,
+)
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
     AWSArgumentTypeValidationError,
@@ -393,9 +396,9 @@ class SecurityHub:
         regions: set = None,
         raise_on_exception: bool = True,
         profile: str = None,
-        aws_region: str = None,
+        aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
         role_arn: str = None,
-        role_session_name: str = None,
+        role_session_name: str = ROLE_SESSION_NAME,
         session_duration: int = 3600,
         external_id: str = None,
         mfa_enabled: bool = False,
