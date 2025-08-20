@@ -116,18 +116,13 @@ class Organization(GithubService):
                     # Only when no repositories are specified
                     if isinstance(self.provider.identity, GithubIdentityInfo):
                         orgs = client.get_user().get_orgs()
-                        if orgs.totalCount > 0:
-                            for org in orgs:
-                                self._process_organization(org, organizations)
-                        else:
-                            logger.warning("No organizations found for the user.")
+                        for org in orgs:
+                            self._process_organization(org, organizations)
                     elif isinstance(self.provider.identity, GithubAppIdentityInfo):
                         orgs = client.get_organizations()
                         if orgs.totalCount > 0:
                             for org in orgs:
                                 self._process_organization(org, organizations)
-                        else:
-                            logger.warning("No organizations found for the app.")
 
         except github.RateLimitExceededException as error:
             logger.error(f"GitHub API rate limit exceeded: {error}")
