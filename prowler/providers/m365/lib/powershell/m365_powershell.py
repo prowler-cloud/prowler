@@ -982,6 +982,20 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
 
+    def get_user_account_status(self) -> dict:
+        """
+        Get User Account Status.
+
+        Retrieves the current user account status settings for Exchange Online.
+
+        Returns:
+            dict: User account status settings in JSON format.
+        """
+        return self.execute(
+            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json",
+            json_parse=True,
+        )
+
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
 def initialize_m365_powershell_modules():
