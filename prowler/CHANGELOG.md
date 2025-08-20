@@ -15,7 +15,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
 
 ### Fixed
-- Call error in app context for Github organization [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
 
 ---
 
@@ -24,6 +23,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - AWS resource-arn filtering [(#8533)](https://github.com/prowler-cloud/prowler/pull/8533)
 - GitHub App authentication for GitHub provider [(#8529)](https://github.com/prowler-cloud/prowler/pull/8529)
+- List all accessible organizations in GitHub provider [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
 
 ---
 
