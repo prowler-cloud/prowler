@@ -89,7 +89,7 @@ class SecurityHub:
     def __init__(
         self,
         aws_account_id: str,
-        aws_partition: str,
+        aws_partition: str = None,
         aws_session: Session = None,
         findings: list[AWSSecurityFindingFormat] = [],
         aws_security_hub_available_regions: list[str] = [],
@@ -146,6 +146,10 @@ class SecurityHub:
             )
             self._session = aws_setup_session._session
         self._aws_account_id = aws_account_id
+        if not aws_partition:
+            aws_partition = AwsProvider.validate_credentials(
+                self._session.current_session, AWS_STS_GLOBAL_ENDPOINT_REGION
+            ).arn.partition
         self._aws_partition = aws_partition
 
         self._enabled_regions = None
