@@ -350,10 +350,12 @@ class GithubProvider(Provider):
                 auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
                 try:
+                    user = g.get_user()
                     identity = GithubIdentityInfo(
-                        account_id=g.get_user().id,
-                        account_name=g.get_user().login,
-                        account_url=g.get_user().url,
+                        account_id=user.id,
+                        account_name=user.login,
+                        account_url=user.url,
+                        account_email=user.get_emails()[0].email,
                     )
                     return identity
 
@@ -371,8 +373,10 @@ class GithubProvider(Provider):
                         installation.raw_data.get("account", {}).get("login")
                     )
                 try:
+                    app = gi.get_app()
                     identity = GithubAppIdentityInfo(
-                        app_id=gi.get_app().id,
+                        app_id=app.id,
+                        app_name=app.name,
                         installations=installations,
                     )
                     return identity
@@ -401,11 +405,13 @@ class GithubProvider(Provider):
             report_lines = [
                 f"GitHub Account: {Fore.YELLOW}{self.identity.account_name}{Style.RESET_ALL}",
                 f"GitHub Account ID: {Fore.YELLOW}{self.identity.account_id}{Style.RESET_ALL}",
+                f"GitHub Account Email: {Fore.YELLOW}{self.identity.account_email}{Style.RESET_ALL}",
                 f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
         elif isinstance(self.identity, GithubAppIdentityInfo):
             report_lines = [
                 f"GitHub App ID: {Fore.YELLOW}{self.identity.app_id}{Style.RESET_ALL}",
+                f"GitHub App Name: {Fore.YELLOW}{self.identity.app_name}{Style.RESET_ALL}",
                 f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
         report_title = (
