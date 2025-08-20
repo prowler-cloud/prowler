@@ -12,7 +12,7 @@ The official supported providers right now are:
 - **Github**
 - **IaC**
 
-Unofficially, Prowler supports: NHN
+Unofficially, Prowler supports: NHN.
 
 Prowler supports **auditing, incident response, continuous monitoring, hardening, forensic readiness, and remediation**.
 
@@ -20,5 +20,5 @@ Prowler supports **auditing, incident response, continuous monitoring, hardening
 
 - **Prowler CLI** (Command Line Interface)
 - **Prowler App** (Web Application)
-- [**Prowler Cloud**](https://prowler.com) – A managed service built on top of Prowler App.
-- [**Prowler Hub**](https://hub.prowler.com) – A public library of versioned checks, cloud service artifacts, and compliance frameworks
+- [**Prowler Cloud**](https://cloud.prowler.com) – A managed service built on top of Prowler App.
+- [**Prowler Hub**](https://hub.prowler.com) – A public library of versioned checks, cloud service artifacts, and compliance frameworks.

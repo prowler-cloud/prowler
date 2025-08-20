@@ -48,9 +48,9 @@ nav:
   - Getting Started:
     - Overview:
       - What is Prowler?: index.md
-      - Components:
-          - Prowler App: components/prowler-app.md
-          - Prowler CLI: components/prowler-cli.md
+      - Products:
+          - Prowler App: products/prowler-app.md
+          - Prowler CLI: products/prowler-cli.md
           - Prowler Cloud: https://cloud.prowler.com
           - Prowler Hub: https://hub.prowler.com
     - Installation:
