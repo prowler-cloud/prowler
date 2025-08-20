@@ -158,13 +158,13 @@ aws,123456789012,prod-root,role,"{\"role_arn\": \"arn:aws:iam::123456789012:role
 ### Basic Usage
 
 ```bash
-python bulk_provision_prowler.py providers.yaml
+python prowler_bulk_provisioning.py providers.yaml
 ```
 
 ### Advanced Usage
 
 ```bash
-python bulk_provision_prowler.py providers.yaml \
+python prowler_bulk_provisioning.py providers.yaml \
   --base-url https://api.prowler.com/api/v1 \
   --providers-endpoint /providers \
   --concurrency 6 \
@@ -183,15 +183,15 @@ python bulk_provision_prowler.py providers.yaml \
 | `--timeout` | Per-request timeout in seconds | `60` |
 | `--insecure` | Disable TLS verification | `False` |
 | `--dry-run` | Print payloads without sending | `False` |
-| `--test-connection` | Test connection after creating each provider | `False` |
-| `--test-only` | Only test connections for existing providers (skip creation) | `False` |
+| `--test-provider` | Test connection after creating each provider (true/false) | `true` (enabled by default) |
+| `--test-provider-only` | Only test connections for existing providers (skip creation) | `False` |
 
 ### Self-hosted Prowler App
 
 For self-hosted installations:
 
 ```bash
-python bulk_provision_prowler.py providers.yaml \
+python prowler_bulk_provisioning.py providers.yaml \
   --base-url http://localhost:8080/api/v1
 ```
 
@@ -330,12 +330,10 @@ The Prowler API supports the following authentication methods for GCP:
 
 The script includes built-in connection testing to verify that providers can successfully authenticate with their respective cloud services.
 
-### Test During Creation
-
-Test connections immediately after creating providers:
+By default, the script tests connections immediately after creating providers:
 
 ```bash
-python bulk_provision_prowler.py providers.yaml --test-connection
+python prowler_bulk_provisioning.py providers.yaml
 ```
 
 This will:
@@ -344,12 +342,18 @@ This will:
 3. Test the connection
 4. Report connection status
 
+To skip connection testing, use:
+
+```bash
+python prowler_bulk_provisioning.py providers.yaml --test-provider false
+```
+
 ### Test Existing Providers
 
 Test connections for already existing providers without creating new ones:
 
 ```bash
-python bulk_provision_prowler.py providers.yaml --test-only
+python prowler_bulk_provisioning.py providers.yaml --test-provider-only
 ```
 
 This is useful for:
@@ -377,7 +381,7 @@ This is useful for:
 Test your configuration without making API calls:
 
 ```bash
-python bulk_provision_prowler.py providers.yaml --dry-run
+python prowler_bulk_provisioning.py providers.yaml --dry-run
 ```
 
 ## Error Handling
@@ -431,7 +435,7 @@ The script provides detailed error reporting:
 Enable verbose output by using dry-run mode to inspect payloads:
 
 ```bash
-python bulk_provision_prowler.py providers.yaml --dry-run
+python prowler_bulk_provisioning.py providers.yaml --dry-run
 ```
 
 ## Examples

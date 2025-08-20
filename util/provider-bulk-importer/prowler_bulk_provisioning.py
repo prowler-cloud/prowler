@@ -389,7 +389,7 @@ def create_one(
     provider_endpoint: str,
     provider_payload: Dict[str, Any],
     secret_payload: Optional[Dict[str, Any]] = None,
-    test_connection: bool = False,
+    test_provider: bool = False,
 ) -> Tuple[bool, Dict[str, Any]]:
     """Create a single provider with optional secret using two-step process."""
     # Step 1: Create provider
@@ -431,7 +431,7 @@ def create_one(
         result["secret"] = secret_data
 
     # Step 3: Test connection if requested
-    if test_connection:
+    if test_provider:
         connection_result = test_provider_connection(client, provider_id)
         result["connection_test"] = connection_result
 
@@ -522,12 +522,13 @@ def main():
         help="Print what would be sent without calling the API.",
     )
     parser.add_argument(
-        "--test-connection",
-        action="store_true",
-        help="Test connection after creating each provider.",
+        "--test-provider",
+        type=lambda x: x.lower() in ["true", "1", "yes"],
+        default=True,
+        help="Test provider connection after creating each provider (default: true). Use --test-provider false to disable.",
     )
     parser.add_argument(
-        "--test-only",
+        "--test-provider-only",
         action="store_true",
         help="Only test connections for existing providers (skip creation).",
     )
@@ -549,7 +550,7 @@ def main():
     )
 
     # Handle test-only mode
-    if args.test_only:
+    if args.test_provider_only:
         print(
             "Running in test-only mode: checking connections for existing providers..."
         )
@@ -613,7 +614,7 @@ def main():
                 print("\n  Then Secret Creation:")
                 print(f"  POST {base_url}/providers/secrets")
                 print(f"  {json.dumps(secret_payload, indent=2)}")
-            if args.test_connection:
+            if args.test_provider:
                 print("\n  Then Test Connection")
             print()
         else:
@@ -635,7 +636,7 @@ def main():
                 endpoint,
                 provider_payload,
                 secret_payload,
-                args.test_connection,
+                args.test_provider,
             ): idx
             for (idx, endpoint, provider_payload, secret_payload) in requests_to_send
         }
