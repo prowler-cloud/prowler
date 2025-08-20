@@ -2003,18 +2003,19 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
             config_serializer = S3ConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
         elif integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
-            if len(providers) > 1:
-                raise serializers.ValidationError(
-                    {
-                        "providers": "Only one provider is supported for the Security Hub integration."
-                    }
-                )
-            if providers[0].provider != Provider.ProviderChoices.AWS:
-                raise serializers.ValidationError(
-                    {
-                        "providers": "The provider must be AWS type for the Security Hub integration."
-                    }
-                )
+            if providers:
+                if len(providers) > 1:
+                    raise serializers.ValidationError(
+                        {
+                            "providers": "Only one provider is supported for the Security Hub integration."
+                        }
+                    )
+                if providers[0].provider != Provider.ProviderChoices.AWS:
+                    raise serializers.ValidationError(
+                        {
+                            "providers": "The provider must be AWS type for the Security Hub integration."
+                        }
+                    )
             config_serializer = SecurityHubConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
         else:
@@ -2115,6 +2116,13 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         providers = attrs.get("providers")
         configuration = attrs.get("configuration")
         credentials = attrs.get("credentials")
+
+        if not providers:
+            raise serializers.ValidationError(
+                {
+                    "providers": "At least one provider is required for the Security Hub integration."
+                }
+            )
 
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
