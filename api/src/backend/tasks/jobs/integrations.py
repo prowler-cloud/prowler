@@ -176,101 +176,86 @@ def get_security_hub_client_from_integration(
         tuple[bool, SecurityHub | Connection]: A tuple containing a boolean indicating
         if the connection was successful and the SecurityHub client or connection object.
     """
+    # Initialize prowler provider to get aws_account_id and aws_partition
+    prowler_provider = initialize_prowler_provider(provider)
+
     # Check if integration has credentials
     if integration.credentials:
         # Use integration credentials directly
         connection = SecurityHub.test_connection(
-            **integration.credentials,
+            aws_account_id=prowler_provider.identity.account,
+            aws_partition=prowler_provider.identity.partition,
             raise_on_exception=False,
+            **integration.credentials,
         )
-
-        if connection.is_connected:
-            # Get regions from configuration if available
-            regions_config = integration.configuration.get("regions", None)
-
-            # Extract only enabled regions (where value is True)
-            aws_security_hub_available_regions = None
-            if regions_config and isinstance(regions_config, dict):
-                aws_security_hub_available_regions = [
-                    region for region, enabled in regions_config.items() if enabled
-                ]
-
-            # Create SecurityHub client with integration credentials and regions
-            security_hub = SecurityHub(
-                **integration.credentials,
-                findings=findings,
-                send_only_fails=integration.configuration.get("send_only_fails", False),
-                aws_security_hub_available_regions=aws_security_hub_available_regions,
-            )
-            return True, security_hub
     else:
-        # Initialize prowler provider to get aws_account_id and aws_partition
-        prowler_provider = initialize_prowler_provider(provider)
-
+        credentials = prowler_provider.session.current_session.get_credentials()
         connection = SecurityHub.test_connection(
             aws_account_id=prowler_provider.identity.account,
             aws_partition=prowler_provider.identity.partition,
-            session=prowler_provider.session.current_session,
+            aws_access_key_id=credentials.access_key,
+            aws_secret_access_key=credentials.secret_key,
+            aws_session_token=credentials.token,
             raise_on_exception=False,
         )
 
-        if connection.is_connected:
-            # Check if regions are already saved in configuration
-            regions_config = integration.configuration.get("regions", None)
+    if connection.is_connected:
+        # Check if regions are already saved in configuration
+        regions_config = integration.configuration.get("regions", None)
 
-            if not regions_config:
-                # If not saved, calculate them
-                all_security_hub_regions = (
-                    prowler_provider.get_available_aws_service_regions(
-                        "securityhub",
-                        prowler_provider.identity.partition,
-                        prowler_provider.identity.audited_regions,
-                    )
-                    if not prowler_provider.identity.audited_regions
-                    else prowler_provider.identity.audited_regions
+        if not regions_config:
+            # If not saved, calculate them
+            all_security_hub_regions = (
+                prowler_provider.get_available_aws_service_regions(
+                    "securityhub",
+                    prowler_provider.identity.partition,
+                    prowler_provider.identity.audited_regions,
                 )
+                if not prowler_provider.identity.audited_regions
+                else prowler_provider.identity.audited_regions
+            )
 
-                # Create temporary SecurityHub instance to get enabled regions
-                temp_security_hub = SecurityHub(
-                    aws_account_id=prowler_provider.identity.account,
-                    aws_partition=prowler_provider.identity.partition,
-                    aws_session=prowler_provider.session.current_session,
-                    findings=[],
-                    send_only_fails=False,
-                    aws_security_hub_available_regions=all_security_hub_regions,
-                )
-
-                # Get enabled regions as a set
-                enabled_regions = set(temp_security_hub._enabled_regions.keys())
-                all_regions_set = set(all_security_hub_regions)
-
-                # Create regions status dictionary
-                regions_status = {}
-                for region in all_regions_set:
-                    regions_status[region] = region in enabled_regions
-
-                # Save regions information in the integration configuration
-                integration.configuration["regions"] = regions_status
-                integration.save()
-
-                # Use only enabled regions for SecurityHub client
-                security_hub_regions = list(enabled_regions)
-            else:
-                # Extract only enabled regions from the saved configuration
-                security_hub_regions = [
-                    region for region, enabled in regions_config.items() if enabled
-                ]
-
-            # Create SecurityHub client with all necessary parameters
-            security_hub = SecurityHub(
+            # Create temporary SecurityHub instance to get enabled regions
+            temp_security_hub = SecurityHub(
                 aws_account_id=prowler_provider.identity.account,
                 aws_partition=prowler_provider.identity.partition,
                 aws_session=prowler_provider.session.current_session,
-                findings=findings,
-                send_only_fails=integration.configuration.get("send_only_fails", False),
-                aws_security_hub_available_regions=security_hub_regions,
+                findings=[],
+                send_only_fails=False,
+                aws_security_hub_available_regions=all_security_hub_regions,
             )
-            return True, security_hub
+
+            # Get enabled regions as a set
+            enabled_regions = set(temp_security_hub._enabled_regions.keys())
+            all_regions_set = set(all_security_hub_regions)
+
+            # Create regions status dictionary
+            regions_status = {}
+            for region in all_regions_set:
+                regions_status[region] = region in enabled_regions
+
+            # Save regions information in the integration configuration
+            integration.configuration["regions"] = regions_status
+            integration.save()
+
+            # Use only enabled regions for SecurityHub client
+            security_hub_regions = list(enabled_regions)
+        else:
+            # Extract only enabled regions from the saved configuration
+            security_hub_regions = [
+                region for region, enabled in regions_config.items() if enabled
+            ]
+
+        # Create SecurityHub client with all necessary parameters
+        security_hub = SecurityHub(
+            aws_account_id=prowler_provider.identity.account,
+            aws_partition=prowler_provider.identity.partition,
+            aws_session=prowler_provider.session.current_session,
+            findings=findings,
+            send_only_fails=integration.configuration.get("send_only_fails", False),
+            aws_security_hub_available_regions=security_hub_regions,
+        )
+        return True, security_hub
 
     return False, connection
 
