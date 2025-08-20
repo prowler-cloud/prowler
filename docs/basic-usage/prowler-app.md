@@ -1,6 +1,6 @@
-## Access the App
+## Access Prowler App
 
-Go to [http://localhost:3000](http://localhost:3000) after installing the app (see [Quick Start](../index.md#prowler-app-installation)). Sign up with your email and password.
+After [installation](../installation/prowler-app.md), navigate to [http://localhost:3000](http://localhost:3000) and sign up with email and password.
 
 <img src="../img/sign-up-button.png" alt="Sign Up Button" width="320"/>
 <img src="../img/sign-up.png" alt="Sign Up" width="285"/>
@@ -21,22 +21,22 @@ Go to [http://localhost:3000](http://localhost:3000) after installing the app (s
 
 ## Log In
 
-Log in using your **email and password** to access the Prowler App.
+Access Prowler App by logging in with **email and password**.
 
 <img src="../img/log-in.png" alt="Log In" width="285"/>
 
-## Add a Cloud Provider
+## Add Cloud Provider
 
-To configure a cloud provider for scanning:
+Configure a cloud provider for scanning:
 
 1. Navigate to `Settings > Cloud Providers` and click `Add Account`.
-2. Select the cloud provider you wish to scan (**AWS, GCP, Azure, Kubernetes**).
+2. Select the cloud provider.
 3. Enter the provider's identifier (Optional: Add an alias):
     - **AWS**: Account ID
     - **GCP**: Project ID
     - **Azure**: Subscription ID
     - **Kubernetes**: Cluster ID
-    - **M36**: Domain ID
+    - **M365**: Domain ID
 4. Follow the guided instructions to add and authenticate your credentials.
 
 ## Start a Scan
@@ -47,7 +47,7 @@ Click `Go to Scans` to monitor progress.
 
 ## View Results
 
-While the scan is running, you can review findings in the following sections:
+Review findings during scan execution in the following sections:
 
 - **Overview** – Provides a high-level summary of your scans.
   <img src="../img/overview.png" alt="Overview" width="700"/>

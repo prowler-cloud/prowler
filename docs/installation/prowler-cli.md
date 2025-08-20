@@ -1,11 +1,11 @@
 
 ## Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/). Consequently, it can be installed as Python package with `Python >= 3.9, <= 3.12`:
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/). Install it as a Python package with `Python >= 3.9, <= 3.12`:
 
 === "pipx"
 
-    [pipx](https://pipx.pypa.io/stable/) is a tool to install Python applications in isolated environments. It is recommended to use `pipx` for a global installation.
+    [pipx](https://pipx.pypa.io/stable/) installs Python applications in isolated environments. Use `pipx` for global installation.
 
     _Requirements_:
 
@@ -20,7 +20,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/). 
     prowler -v
     ```
 
-    To upgrade Prowler to the latest version, run:
+    Upgrade Prowler to the latest version:
 
     ``` bash
     pipx upgrade prowler
@@ -29,7 +29,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/). 
 === "pip"
 
     ???+ warning
-        This method is not recommended because it will modify the environment which you choose to install. Consider using [pipx](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) for a global installation.
+        This method modifies the chosen installation environment. Consider using [pipx](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) for global installation.
 
     _Requirements_:
 
@@ -44,7 +44,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/). 
     prowler -v
     ```
 
-    To upgrade Prowler to the latest version, run:
+    Upgrade Prowler to the latest version:
 
     ``` bash
     pip install --upgrade prowler

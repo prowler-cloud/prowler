@@ -1,6 +1,6 @@
 ## Running Prowler
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `m365`, `github` or `kubernetes`):
+Running Prowler requires specifying the provider (e.g `aws`, `gcp`, `azure`, `m365`, `github` or `kubernetes`):
 
 ???+ note
     If no provider is specified, AWS is used by default for backward compatibility with Prowler v2.
@@ -30,7 +30,7 @@ The HTML report is saved in the output directory, alongside other reports. It wi
 
 ## Listing Available Checks and Services
 
-To view all available checks or services within a provider:, use `-l`/`--list-checks` or `--list-services`.
+List all available checks or services within a provider using `-l`/`--list-checks` or `--list-services`.
 
 ```console
 prowler <provider> --list-checks
@@ -60,7 +60,7 @@ prowler kubernetes --excluded-services controllermanager
 
 Explore more advanced time-saving execution methods in the [Miscellaneous](../tutorials/misc.md) section.
 
-To access the help menu and view all available options, use: `-h`/`--help`:
+Access the help menu and view all available options with `-h`/`--help`:
 
 ```console
 prowler --help
@@ -68,7 +68,7 @@ prowler --help
 
 ## AWS
 
-Use a custom AWS profile with `-p`/`--profile` and/or the AWS regions you want to audit with `-f`/`--filter-region`:
+Use a custom AWS profile with `-p`/`--profile` and/or specific AWS regions with `-f`/`--filter-region`:
 
 ```console
 prowler aws --profile custom-profile -f us-east-1 eu-south-2
@@ -99,7 +99,7 @@ prowler azure --managed-identity-auth
 
 See more details about Azure Authentication in [Requirements](../getting-started/requirements.md#azure)
 
-By default, Prowler scans all the subscriptions for which it has permissions. To scan a single or various specific subscription you can use the following flag (using az cli auth as example):
+By default, Prowler scans all accessible subscriptions. Scan specific subscriptions using the following flag (using az cli auth as example):
 
 ```console
 prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription ID 2> ... <subscription ID N>
@@ -108,7 +108,7 @@ prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription
 
 - **User Account Credentials**
 
-    By default, Prowler uses **User Account credentials**. You can configure your account using:
+    By default, Prowler uses **User Account credentials**. Configure accounts using:
 
     - `gcloud init` – Set up a new account.
     - `gcloud config set account <account>` – Switch to an existing account.
@@ -129,7 +129,7 @@ prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription
 
 - **Scanning Specific GCP Projects**
 
-    By default, Prowler scans all accessible GCP projects. To scan specific projects, use the `--project-ids` flag:
+    By default, Prowler scans all accessible GCP projects. Scan specific projects with the `--project-ids` flag:
 
     ```console
     prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
@@ -137,7 +137,7 @@ prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription
 
 - **GCP Retry Configuration**
 
-    To configure the maximum number of retry attempts for Google Cloud SDK API calls, use the `--gcp-retries-max-attempts` flag:
+    Configure the maximum number of retry attempts for Google Cloud SDK API calls with the `--gcp-retries-max-attempts` flag:
 
     ```console
     prowler gcp --gcp-retries-max-attempts 5

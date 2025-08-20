@@ -108,20 +108,20 @@ Refer to the [Prowler App Tutorial](../tutorials/prowler-app.md) for detailed us
         Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
 
 
-### Update
+### Update Prowler App
 
-You have two options to upgrade your Prowler App installation:
+Upgrade Prowler App installation using one of two options:
 
-#### Option 1: Change env file with the following values
+#### Option 1: Update Environment File
 
-Edit your `.env` file and change the version values:
+Edit the `.env` file and change version values:
 
 ```env
 PROWLER_UI_VERSION="5.9.0"
 PROWLER_API_VERSION="5.9.0"
 ```
 
-#### Option 2: Run the following command
+#### Option 2: Use Docker Compose Pull
 
 ```bash
 docker compose pull --policy always
@@ -131,7 +131,6 @@ The `--policy always` flag ensures that Docker pulls the latest images even if t
 
 
 ???+ note "What Gets Preserved During Upgrade"
-
     Everything is preserved, nothing will be deleted after the update.
 
 ### Troubleshooting

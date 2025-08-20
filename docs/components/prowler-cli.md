@@ -1,4 +1,4 @@
-Prowler CLI is a command line interface that allows you to run Prowler scans from your terminal.
+Prowler CLI is a command-line interface for running Prowler scans from the terminal.
 
 ```console
 prowler <provider>
