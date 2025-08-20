@@ -18,6 +18,72 @@ import requests
 # ----------------------------- CLI / I/O utils ----------------------------- #
 
 
+def sanitize_sensitive_data(data: Any, depth: int = 0) -> Any:
+    """
+    Recursively sanitize sensitive data in dictionaries and lists.
+    Replaces sensitive field values with masked versions.
+    """
+    if depth > 10:  # Prevent infinite recursion
+        return data
+
+    # List of sensitive field names to mask
+    sensitive_fields = {
+        "password",
+        "secret",
+        "token",
+        "key",
+        "credentials",
+        "client_secret",
+        "refresh_token",
+        "access_key_id",
+        "secret_access_key",
+        "session_token",
+        "private_key",
+        "api_key",
+        "apikey",
+        "auth",
+        "authorization",
+        "private_key_id",
+        "client_id",
+        "tenant_id",
+        "service_account_key",
+        "kubeconfig",
+        "role_arn",
+        "external_id",
+    }
+
+    if isinstance(data, dict):
+        sanitized = {}
+        for key, value in data.items():
+            # Check if the key name suggests sensitive data
+            key_lower = key.lower()
+            if any(sensitive in key_lower for sensitive in sensitive_fields):
+                if isinstance(value, str) and value:
+                    # Mask the value but show first few chars for debugging
+                    if len(value) > 8:
+                        sanitized[key] = (
+                            f"{value[:4]}...{value[-2:]}" if len(value) > 6 else "***"
+                        )
+                    else:
+                        sanitized[key] = "***"
+                elif isinstance(value, (dict, list)):
+                    # Still recurse into nested structures
+                    sanitized[key] = sanitize_sensitive_data(value, depth + 1)
+                else:
+                    sanitized[key] = "***" if value else value
+            else:
+                # Recurse into non-sensitive fields
+                if isinstance(value, (dict, list)):
+                    sanitized[key] = sanitize_sensitive_data(value, depth + 1)
+                else:
+                    sanitized[key] = value
+        return sanitized
+    elif isinstance(data, list):
+        return [sanitize_sensitive_data(item, depth + 1) for item in data]
+    else:
+        return data
+
+
 def load_items(path: Path) -> List[Dict[str, Any]]:
     """Load provider items from YAML, JSON, or CSV file."""
     ext = path.suffix.lower()
@@ -609,11 +675,15 @@ def main():
         if args.dry_run:
             print(f"[{idx}] DRY-RUN → Provider Creation")
             print(f"  POST {base_url}{endpoint}")
-            print(f"  {json.dumps(provider_payload, indent=2)}")
+            # Sanitize provider payload (usually safe but might contain some sensitive data)
+            sanitized_provider = sanitize_sensitive_data(provider_payload)
+            print(f"  {json.dumps(sanitized_provider, indent=2)}")
             if secret_payload:
                 print("\n  Then Secret Creation:")
                 print(f"  POST {base_url}/providers/secrets")
-                print(f"  {json.dumps(secret_payload, indent=2)}")
+                # Always sanitize secret payload as it contains credentials
+                sanitized_secret = sanitize_sensitive_data(secret_payload)
+                print(f"  {json.dumps(sanitized_secret, indent=2)}")
             if args.test_provider:
                 print("\n  Then Test Connection")
             print()
@@ -666,9 +736,15 @@ def main():
                     failures += 1
                     if "secret_error" in data:
                         print(f"[{idx}] ⚠️  Provider created but secret failed:")
-                        print(f"     {json.dumps(data['secret_error'], indent=2)}")
+                        # Sanitize error data which might contain sensitive information
+                        sanitized_error = sanitize_sensitive_data(data["secret_error"])
+                        print(f"     {json.dumps(sanitized_error, indent=2)}")
                     else:
-                        print(f"[{idx}] ❌ API error: {json.dumps(data, indent=2)}")
+                        # Sanitize general error data
+                        sanitized_data = sanitize_sensitive_data(data)
+                        print(
+                            f"[{idx}] ❌ API error: {json.dumps(sanitized_data, indent=2)}"
+                        )
             except Exception as e:
                 failures += 1
                 print(f"[{idx}] ❌ Request failed: {e}")

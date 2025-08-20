@@ -393,7 +393,15 @@ def main():
                     failures += 1
                     print(f"❌ Failed: {alias} ({provider_type}/{provider_id})")
                     if "body" in data:
-                        print(f"   Error: {json.dumps(data['body'], indent=2)}")
+                        # Sanitize error data to avoid printing sensitive information
+                        error_body = data["body"]
+                        # Simple sanitization - just show error messages without full details
+                        if isinstance(error_body, dict) and "errors" in error_body:
+                            print(
+                                f"   Error: {error_body.get('errors', 'Unknown error')}"
+                            )
+                        else:
+                            print("   Error: API request failed")
 
             except Exception as e:
                 failures += 1
