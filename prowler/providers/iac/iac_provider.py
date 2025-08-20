@@ -393,7 +393,9 @@ class IacProvider(Provider):
 
         except Exception as error:
             if "No such file or directory: 'trivy'" in str(error):
-                logger.critical("Please, install trivy using 'pip install trivy'")
+                logger.critical(
+                    "Trivy binary not found. Please install Trivy from https://trivy.dev/latest/getting-started/installation/ or use your system package manager (e.g., 'brew install trivy' on macOS, 'apt-get install trivy' on Ubuntu)"
+                )
                 sys.exit(1)
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
