@@ -392,7 +392,7 @@ class SecurityHub:
     @staticmethod
     def test_connection(
         aws_account_id: str,
-        aws_partition: str,
+        aws_partition: str = None,
         regions: set = None,
         raise_on_exception: bool = True,
         profile: str = None,
@@ -445,6 +445,10 @@ class SecurityHub:
                 aws_secret_access_key=aws_secret_access_key,
                 aws_session_token=aws_session_token,
             )
+            if not aws_partition:
+                aws_partition = AwsProvider.validate_credentials(
+                    session, aws_region
+                ).arn.partition
 
             # Handle role assumption if role_arn is provided
             if role_arn:
