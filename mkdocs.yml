@@ -46,8 +46,20 @@ repo_name: prowler-cloud/prowler
 
 nav:
   - Getting Started:
-      - Overview: index.md
-      - Requirements: getting-started/requirements.md
+    - Overview:
+      - What is Prowler?: index.md
+      - Components:
+          - Prowler App: components/prowler-app.md
+          - Prowler CLI: components/prowler-cli.md
+          - Prowler Cloud: https://cloud.prowler.com
+          - Prowler Hub: https://hub.prowler.com
+    - Installation:
+        - Prowler App: installation/prowler-app.md
+        - Prowler CLI: installation/prowler-cli.md
+    - Basic Usage:
+        - Prowler App: basic-usage/prowler-app.md
+        - Prowler CLI: basic-usage/prowler-cli.md
+    - Requirements: getting-started/requirements.md
   - Tutorials:
       - Prowler App:
           - Getting Started: tutorials/prowler-app.md
