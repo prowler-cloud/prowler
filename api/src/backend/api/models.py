@@ -1372,10 +1372,6 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
-            models.UniqueConstraint(
-                fields=("configuration", "tenant"),
-                name="unique_configuration_per_tenant",
-            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",

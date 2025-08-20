@@ -1952,12 +1952,43 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
     def validate(self, attrs):
-        if Integration.objects.filter(
-            configuration=attrs.get("configuration")
-        ).exists():
+        if (
+            attrs.get("integration_type") == Integration.IntegrationChoices.AMAZON_S3
+            and Integration.objects.filter(
+                configuration=attrs.get("configuration")
+            ).exists()
+        ):
             raise serializers.ValidationError(
-                {"name": "This integration already exists."}
+                {"configuration": "This integration already exists."}
             )
+
+        # Check if any provider already has a SecurityHub integration
+        integration_type = attrs.get("integration_type")
+        if hasattr(self, "instance") and self.instance and not integration_type:
+            integration_type = self.instance.integration_type
+
+        if (
+            integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+            and "providers" in attrs
+        ):
+            providers = attrs.get("providers", [])
+            tenant_id = self.context.get("tenant_id")
+            for provider in providers:
+                # For updates, exclude the current instance from the check
+                query = IntegrationProviderRelationship.objects.filter(
+                    provider=provider,
+                    integration__integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                    tenant_id=tenant_id,
+                )
+                if hasattr(self, "instance") and self.instance:
+                    query = query.exclude(integration=self.instance)
+
+                if query.exists():
+                    raise serializers.ValidationError(
+                        {
+                            "providers": f"Provider {provider.id} already has a Security Hub integration. Only one Security Hub integration is allowed per provider."
+                        }
+                    )
 
         return super().validate(attrs)
 
@@ -1998,13 +2029,6 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
 
         # Apply the validated (and potentially transformed) data back to configuration
         configuration.update(serializer_instance.validated_data)
-
-        # For SecurityHub, add provider_id to configuration to ensure uniqueness (avoid custom model for SecurityHub due to the constraint configuration-tenant)
-        if (
-            integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
-            and providers
-        ):
-            configuration["provider_id"] = str(providers[0].id)
 
         for cred_serializer in credentials_serializers:
             try:
