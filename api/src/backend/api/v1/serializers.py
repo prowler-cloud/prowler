@@ -1795,6 +1795,7 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
     version = serializers.CharField()
     description = serializers.CharField()
     status = serializers.ChoiceField(choices=StatusChoices.choices)
+    score = serializers.FloatField(required=False, allow_null=True)
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-details"

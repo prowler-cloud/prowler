@@ -189,6 +189,7 @@ export interface RequirementItemData {
     version: string;
     description: string;
     status: RequirementStatus;
+    score?: number;
   };
 }
 

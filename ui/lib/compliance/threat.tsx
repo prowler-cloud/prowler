@@ -53,8 +53,8 @@ export const mapComplianceData = (
     const attributeDescription = attrs.AttributeDescription;
     const additionalInformation = attrs.AdditionalInformation;
 
-    // Calculate score: if PASS = levelOfRisk * weight, if FAIL = 0
-    const score = status === "PASS" ? levelOfRisk * weight : 0;
+    // Score should come calculated from the API
+    const score = requirementData.attributes.score || 0;
 
     // Find or create framework using common helper
     const framework = findOrCreateFramework(frameworks, frameworkName);
