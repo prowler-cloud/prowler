@@ -13,7 +13,7 @@
   "ResourceType": "AwsRdsDbCluster",
   "Description": "*Neptune cluster* is associated with one or more **public subnets**.",
   "Risk": "A *Neptune cluster* in a **public subnet** increases exposure across the CIA triad:\n\n- **Confidentiality**: direct access enables credential attacks and data exfiltration\n- **Integrity**: attackers may modify or inject graph data\n- **Availability**: public reachability allows DDoS or remote exploitation, causing downtime",
-  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html;https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html,https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html",
   "Remediation": {
     "Code": {
       "CLI": "",

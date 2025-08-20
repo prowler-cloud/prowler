@@ -13,7 +13,7 @@
   "ResourceType": "Other",
   "Description": "*Neptune DB cluster* is inspected for CloudWatch export of **audit** events. The finding indicates whether the cluster publishes `audit` logs to CloudWatch; a *FAIL* means the `audit` export is not enabled and audit records are not being forwarded to CloudWatch for centralized logging and review.",
   "Risk": "Missing **audit logs** reduces **detectability** and **accountability**: \n\n- investigators cannot reconstruct queries, client origins, or timeline\n- unauthorized queries, data exfiltration, or privilege misuse may go undetected\n\nThis degrades confidentiality and integrity and slows incident response.",
-  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/auditing.html;https://docs.aws.amazon.com/neptune/latest/userguide/cloudwatch-logs.html;https://cloudanix.com/docs/aws/audit/rdsmonitoring/rules/neptune_cluster_cloudwatch_log_export_enabled_remediation;https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-2",
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/auditing.html,https://docs.aws.amazon.com/neptune/latest/userguide/cloudwatch-logs.html,https://cloudanix.com/docs/aws/audit/rdsmonitoring/rules/neptune_cluster_cloudwatch_log_export_enabled_remediation,https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-2",
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_IDENTIFIER> --cloudwatch-logs-export-configuration '{\"EnableLogTypes\":[\"audit\"]}'",
