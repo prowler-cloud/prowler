@@ -3,7 +3,7 @@
 import { Card, CardBody, Divider } from "@nextui-org/react";
 
 import { DateWithTime, InfoField, SnippetChip } from "@/components/ui/entities";
-import { UserDataWithRoles } from "@/types/users/users";
+import { UserDataWithRoles } from "@/types/users";
 
 import { ProwlerShort } from "../../icons";
 
@@ -50,7 +50,11 @@ export const UserBasicInfoCard = ({
           </div>
           <div className="flex flex-col gap-2">
             <InfoField label="Organization ID" variant="transparent">
-              <TenantIdCopy id={tenantId} />
+              {tenantId ? (
+                <TenantIdCopy id={tenantId} />
+              ) : (
+                <span className="text-xs font-light">No organization</span>
+              )}
             </InfoField>
           </div>
         </div>

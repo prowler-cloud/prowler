@@ -3,6 +3,10 @@
 
 apply_migrations() {
   echo "Applying database migrations..."
+
+  # Fix Inconsistent migration history after adding sites app
+  poetry run python manage.py check_and_fix_socialaccount_sites_migration --database admin
+
   poetry run python manage.py migrate --database admin
 }
 
@@ -28,7 +32,7 @@ start_prod_server() {
 
 start_worker() {
   echo "Starting the worker..."
-  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans,scan-reports,deletion,backfill -E --max-tasks-per-child 1
+  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans,scan-reports,deletion,backfill,overview,integrations -E --max-tasks-per-child 1
 }
 
 start_worker_beat() {

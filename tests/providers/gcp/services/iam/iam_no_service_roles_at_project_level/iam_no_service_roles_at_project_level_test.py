@@ -212,3 +212,49 @@ class Test_iam_no_service_roles_at_project_level:
             assert result[0].resource_name == binding.role
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == cloudresourcemanager_client.region
+
+    def test_iam_no_bindings_empty_project_name(self):
+        cloudresourcemanager_client = mock.MagicMock()
+        cloudresourcemanager_client.bindings = []
+        cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
+        cloudresourcemanager_client.region = "global"
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+                new=cloudresourcemanager_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
+                iam_no_service_roles_at_project_level,
+            )
+
+            check = iam_no_service_roles_at_project_level()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert search(
+                "No IAM Users assigned to service roles at project level",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].resource_name == GCP_PROJECT_ID
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == cloudresourcemanager_client.region

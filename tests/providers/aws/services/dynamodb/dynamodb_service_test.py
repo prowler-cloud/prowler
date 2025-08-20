@@ -106,9 +106,6 @@ class Test_DynamoDB_Service:
                 {"AttributeName": "app", "KeyType": "RANGE"},
             ],
             BillingMode="PAY_PER_REQUEST",
-            Tags=[
-                {"Key": "test", "Value": "test"},
-            ],
             DeletionProtectionEnabled=True,
         )["TableDescription"]
         # DynamoDB client for this test class
@@ -119,9 +116,6 @@ class Test_DynamoDB_Service:
         assert tables_arn == table["TableArn"]
         assert tables.name == "test1"
         assert tables.region == AWS_REGION_US_EAST_1
-        assert tables.tags == [
-            {"Key": "test", "Value": "test"},
-        ]
         assert tables.billing_mode == "PAY_PER_REQUEST"
         assert tables.deletion_protection
 

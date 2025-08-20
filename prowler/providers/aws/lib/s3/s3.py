@@ -1,12 +1,39 @@
+import os
 import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
-from botocore import exceptions
+from boto3.session import Session
+from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Output
+from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.config import (
+    AWS_STS_GLOBAL_ENDPOINT_REGION,
+    ROLE_SESSION_NAME,
+)
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSAccessKeyIDInvalidError,
+    AWSArgumentTypeValidationError,
+    AWSAssumeRoleError,
+    AWSIAMRoleARNEmptyResourceError,
+    AWSIAMRoleARNInvalidAccountIDError,
+    AWSIAMRoleARNInvalidResourceTypeError,
+    AWSIAMRoleARNPartitionEmptyError,
+    AWSIAMRoleARNRegionNotEmtpyError,
+    AWSIAMRoleARNServiceNotIAMnorSTSError,
+    AWSNoCredentialsError,
+    AWSProfileNotFoundError,
+    AWSSecretAccessKeyInvalidError,
+    AWSSessionTokenExpiredError,
+    AWSSetUpSessionError,
+)
+from prowler.providers.aws.lib.arguments.arguments import (
+    validate_role_session_name,
+    validate_session_duration,
+)
 from prowler.providers.aws.lib.s3.exceptions.exceptions import (
     S3BucketAccessDeniedError,
     S3ClientError,
@@ -14,8 +41,11 @@ from prowler.providers.aws.lib.s3.exceptions.exceptions import (
     S3InvalidBucketNameError,
     S3TestConnectionError,
 )
-from prowler.providers.aws.lib.session.aws_set_up_session import AwsSetUpSession
-from prowler.providers.aws.models import AWSIdentityInfo, AWSSession
+from prowler.providers.aws.lib.session.aws_set_up_session import (
+    AwsSetUpSession,
+    parse_iam_credentials_arn,
+)
+from prowler.providers.aws.models import AWSAssumeRoleInfo, AWSIdentityInfo, AWSSession
 from prowler.providers.common.models import Connection
 
 
@@ -46,9 +76,9 @@ class S3:
         output_directory: str,
         session: AWSSession = None,
         role_arn: str = None,
-        session_duration: int = None,
+        session_duration: int = 3600,
         external_id: str = None,
-        role_session_name: str = None,
+        role_session_name: str = ROLE_SESSION_NAME,
         mfa: bool = None,
         profile: str = None,
         aws_access_key_id: str = None,
@@ -95,7 +125,10 @@ class S3:
                 retries_max_attempts=retries_max_attempts,
                 regions=regions,
             )
-            self._session = aws_setup_session._session
+            self._session = aws_setup_session._session.current_session.client(
+                __class__.__name__.lower(),
+                config=aws_setup_session._session.session_config,
+            )
 
         self._bucket_name = bucket_name
         self._output_directory = output_directory
@@ -220,7 +253,18 @@ class S3:
 
     @staticmethod
     def test_connection(
-        session, bucket_name: str, raise_on_exception: bool = True
+        bucket_name: str,
+        profile: str = None,
+        aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
+        role_arn: str = None,
+        role_session_name: str = ROLE_SESSION_NAME,
+        session_duration: int = 3600,
+        external_id: str = None,
+        mfa_enabled: bool = False,
+        raise_on_exception: bool = True,
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: Optional[str] = None,
     ) -> Connection:
         """
         Test the connection to the S3 bucket.
@@ -236,7 +280,39 @@ class S3:
         Raises:
         - Exception: An exception indicating that the connection test failed.
         """
+        # TODO: Refactor this method, the AWSProvider.test_connection() and the SecurityHubProvider.test_connection() are similar.
         try:
+            session = AwsProvider.setup_session(
+                mfa=mfa_enabled,
+                profile=profile,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+            )
+
+            if role_arn:
+                session_duration = validate_session_duration(session_duration)
+                role_session_name = validate_role_session_name(role_session_name)
+                role_arn = parse_iam_credentials_arn(role_arn)
+                assumed_role_information = AWSAssumeRoleInfo(
+                    role_arn=role_arn,
+                    session_duration=session_duration,
+                    external_id=external_id,
+                    mfa_enabled=mfa_enabled,
+                    role_session_name=role_session_name,
+                )
+                assumed_role_credentials = AwsProvider.assume_role(
+                    session,
+                    assumed_role_information,
+                )
+                session = Session(
+                    aws_access_key_id=assumed_role_credentials.aws_access_key_id,
+                    aws_secret_access_key=assumed_role_credentials.aws_secret_access_key,
+                    aws_session_token=assumed_role_credentials.aws_session_token,
+                    region_name=aws_region,
+                    profile_name=profile,
+                )
+
             s3_client = session.client(__class__.__name__.lower())
             if "s3://" in bucket_name:
                 bucket_name = bucket_name.removeprefix("s3://")
@@ -273,7 +349,125 @@ class S3:
             )
             return Connection(is_connected=True)
 
-        except exceptions.ClientError as client_error:
+        except AWSSetUpSessionError as setup_session_error:
+            logger.error(
+                f"{setup_session_error.__class__.__name__}[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
+            if raise_on_exception:
+                raise setup_session_error
+            return Connection(error=setup_session_error)
+
+        except AWSArgumentTypeValidationError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
+            if raise_on_exception:
+                raise validation_error
+            return Connection(error=validation_error)
+
+        except AWSIAMRoleARNRegionNotEmtpyError as arn_region_not_empty_error:
+            logger.error(
+                f"{arn_region_not_empty_error.__class__.__name__}[{arn_region_not_empty_error.__traceback__.tb_lineno}]: {arn_region_not_empty_error}"
+            )
+            if raise_on_exception:
+                raise arn_region_not_empty_error
+            return Connection(error=arn_region_not_empty_error)
+
+        except AWSIAMRoleARNPartitionEmptyError as arn_partition_empty_error:
+            logger.error(
+                f"{arn_partition_empty_error.__class__.__name__}[{arn_partition_empty_error.__traceback__.tb_lineno}]: {arn_partition_empty_error}"
+            )
+            if raise_on_exception:
+                raise arn_partition_empty_error
+            return Connection(error=arn_partition_empty_error)
+
+        except AWSIAMRoleARNServiceNotIAMnorSTSError as arn_service_not_iam_sts_error:
+            logger.error(
+                f"{arn_service_not_iam_sts_error.__class__.__name__}[{arn_service_not_iam_sts_error.__traceback__.tb_lineno}]: {arn_service_not_iam_sts_error}"
+            )
+            if raise_on_exception:
+                raise arn_service_not_iam_sts_error
+            return Connection(error=arn_service_not_iam_sts_error)
+
+        except AWSIAMRoleARNInvalidAccountIDError as arn_invalid_account_id_error:
+            logger.error(
+                f"{arn_invalid_account_id_error.__class__.__name__}[{arn_invalid_account_id_error.__traceback__.tb_lineno}]: {arn_invalid_account_id_error}"
+            )
+            if raise_on_exception:
+                raise arn_invalid_account_id_error
+            return Connection(error=arn_invalid_account_id_error)
+
+        except AWSIAMRoleARNInvalidResourceTypeError as arn_invalid_resource_type_error:
+            logger.error(
+                f"{arn_invalid_resource_type_error.__class__.__name__}[{arn_invalid_resource_type_error.__traceback__.tb_lineno}]: {arn_invalid_resource_type_error}"
+            )
+            if raise_on_exception:
+                raise arn_invalid_resource_type_error
+            return Connection(error=arn_invalid_resource_type_error)
+
+        except AWSIAMRoleARNEmptyResourceError as arn_empty_resource_error:
+            logger.error(
+                f"{arn_empty_resource_error.__class__.__name__}[{arn_empty_resource_error.__traceback__.tb_lineno}]: {arn_empty_resource_error}"
+            )
+            if raise_on_exception:
+                raise arn_empty_resource_error
+            return Connection(error=arn_empty_resource_error)
+
+        except AWSAssumeRoleError as assume_role_error:
+            logger.error(
+                f"{assume_role_error.__class__.__name__}[{assume_role_error.__traceback__.tb_lineno}]: {assume_role_error}"
+            )
+            if raise_on_exception:
+                raise assume_role_error
+            return Connection(error=assume_role_error)
+
+        except ProfileNotFound as profile_not_found_error:
+            logger.error(
+                f"AWSProfileNotFoundError[{profile_not_found_error.__traceback__.tb_lineno}]: {profile_not_found_error}"
+            )
+            if raise_on_exception:
+                raise AWSProfileNotFoundError(
+                    file=os.path.basename(__file__),
+                    original_exception=profile_not_found_error,
+                ) from profile_not_found_error
+            return Connection(error=profile_not_found_error)
+
+        except NoCredentialsError as no_credentials_error:
+            logger.error(
+                f"AWSNoCredentialsError[{no_credentials_error.__traceback__.tb_lineno}]: {no_credentials_error}"
+            )
+            if raise_on_exception:
+                raise AWSNoCredentialsError(
+                    file=os.path.basename(__file__),
+                    original_exception=no_credentials_error,
+                ) from no_credentials_error
+            return Connection(error=no_credentials_error)
+
+        except AWSAccessKeyIDInvalidError as access_key_id_invalid_error:
+            logger.error(
+                f"{access_key_id_invalid_error.__class__.__name__}[{access_key_id_invalid_error.__traceback__.tb_lineno}]: {access_key_id_invalid_error}"
+            )
+            if raise_on_exception:
+                raise access_key_id_invalid_error
+            return Connection(error=access_key_id_invalid_error)
+
+        except AWSSecretAccessKeyInvalidError as secret_access_key_invalid_error:
+            logger.error(
+                f"{secret_access_key_invalid_error.__class__.__name__}[{secret_access_key_invalid_error.__traceback__.tb_lineno}]: {secret_access_key_invalid_error}"
+            )
+            if raise_on_exception:
+                raise secret_access_key_invalid_error
+            return Connection(error=secret_access_key_invalid_error)
+
+        except AWSSessionTokenExpiredError as session_token_expired:
+            logger.error(
+                f"{session_token_expired.__class__.__name__}[{session_token_expired.__traceback__.tb_lineno}]: {session_token_expired}"
+            )
+            if raise_on_exception:
+                raise session_token_expired
+            return Connection(error=session_token_expired)
+
+        except ClientError as client_error:
             if raise_on_exception:
                 if (
                     "specified bucket does not exist"
@@ -291,9 +485,9 @@ class S3:
                     raise S3BucketAccessDeniedError(original_exception=client_error)
                 else:
                     raise S3ClientError(original_exception=client_error)
-            return Connection(is_connected=False, error=client_error)
+            return Connection(error=client_error)
 
         except Exception as error:
             if raise_on_exception:
                 raise S3TestConnectionError(original_exception=error)
-            return False
+            return Connection(is_connected=False, error=error)

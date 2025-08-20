@@ -17,6 +17,8 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         # Link existing accounts with the same email address
         email = sociallogin.account.extra_data.get("email")
+        if sociallogin.provider.id == "saml":
+            email = sociallogin.user.email
         if email:
             existing_user = self.get_user_by_email(email)
             if existing_user:
@@ -29,33 +31,41 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         """
         with transaction.atomic(using=MainRouter.admin_db):
             user = super().save_user(request, sociallogin, form)
-            user.save(using=MainRouter.admin_db)
-            social_account_name = sociallogin.account.extra_data.get("name")
-            if social_account_name:
-                user.name = social_account_name
-                user.save(using=MainRouter.admin_db)
+            provider = sociallogin.provider.id
+            extra = sociallogin.account.extra_data
 
-            tenant = Tenant.objects.using(MainRouter.admin_db).create(
-                name=f"{user.email.split('@')[0]} default tenant"
-            )
-            with rls_transaction(str(tenant.id)):
-                Membership.objects.using(MainRouter.admin_db).create(
-                    user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
+            if provider != "saml":
+                # Handle other providers (e.g., GitHub, Google)
+                user.save(using=MainRouter.admin_db)
+                social_account_name = extra.get("name")
+                if social_account_name:
+                    user.name = social_account_name
+                    user.save(using=MainRouter.admin_db)
+
+                tenant = Tenant.objects.using(MainRouter.admin_db).create(
+                    name=f"{user.email.split('@')[0]} default tenant"
                 )
-                role = Role.objects.using(MainRouter.admin_db).create(
-                    name="admin",
-                    tenant_id=tenant.id,
-                    manage_users=True,
-                    manage_account=True,
-                    manage_billing=True,
-                    manage_providers=True,
-                    manage_integrations=True,
-                    manage_scans=True,
-                    unlimited_visibility=True,
-                )
-                UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                    user=user,
-                    role=role,
-                    tenant_id=tenant.id,
-                )
+                with rls_transaction(str(tenant.id)):
+                    Membership.objects.using(MainRouter.admin_db).create(
+                        user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
+                    )
+                    role = Role.objects.using(MainRouter.admin_db).create(
+                        name="admin",
+                        tenant_id=tenant.id,
+                        manage_users=True,
+                        manage_account=True,
+                        manage_billing=True,
+                        manage_providers=True,
+                        manage_integrations=True,
+                        manage_scans=True,
+                        unlimited_visibility=True,
+                    )
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                        user=user,
+                        role=role,
+                        tenant_id=tenant.id,
+                    )
+            else:
+                request.session["saml_user_created"] = str(user.id)
+
         return user

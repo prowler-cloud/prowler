@@ -1,7 +1,7 @@
 from asyncio import gather, get_event_loop
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -11,15 +11,13 @@ from prowler.providers.m365.m365_provider import M365Provider
 class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
-        if self.powershell:
-            self.powershell.close()
 
         self.organization_config = None
         self.sharing_policy = None
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.organization_config = self._get_organization_config()
-            self.sharing_policy = self._get_sharing_policy()
+            if self.powershell.connect_exchange_online():
+                self.organization_config = self._get_organization_config()
+                self.sharing_policy = self._get_sharing_policy()
             self.powershell.close()
 
         loop = get_event_loop()
@@ -203,7 +201,7 @@ class DirectoryRole(BaseModel):
 class Group(BaseModel):
     id: str
     name: str
-    visibility: str
+    visibility: Optional[str]
 
 
 class Domain(BaseModel):

@@ -1,15 +1,17 @@
 import React, { Suspense } from "react";
 
+import { getSamlConfig } from "@/actions/integrations/saml";
 import { getAllTenants } from "@/actions/users/tenants";
 import { getUserInfo } from "@/actions/users/users";
 import { getUserMemberships } from "@/actions/users/users";
+import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
 import { ContentLayout } from "@/components/ui";
 import { UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
 import { isUserOwnerAndHasManageAccount } from "@/lib/permissions";
-import { RoleDetail, TenantDetailData } from "@/types/users/users";
+import { RoleDetail, TenantDetailData } from "@/types/users";
 
 export default async function Profile() {
   return (
@@ -22,6 +24,7 @@ export default async function Profile() {
 }
 
 const SSRDataUser = async () => {
+  const samlConfig = await getSamlConfig();
   const userProfile = await getUserInfo();
   if (!userProfile?.data) {
     return null;
@@ -69,17 +72,20 @@ const SSRDataUser = async () => {
   return (
     <div className="flex w-full flex-col gap-6">
       <UserBasicInfoCard user={userProfile?.data} tenantId={userTenant?.id} />
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
+      <div className="flex flex-col gap-6 xl:flex-row">
+        <div className="w-full lg:w-2/3 xl:w-1/2">
           <RolesCard roles={roleDetails || []} roleDetails={roleDetailsMap} />
         </div>
-        <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
+        <div className="w-full lg:w-2/3 xl:w-1/2">
           <MembershipsCard
             memberships={memberships?.data || []}
             tenantsMap={tenantsMap}
             isOwner={isOwner}
           />
         </div>
+      </div>
+      <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
+        <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
       </div>
     </div>
   );

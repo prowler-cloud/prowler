@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from rest_framework_json_api.exceptions import exception_handler
 from rest_framework_json_api.serializers import ValidationError
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 
 class ModelValidationError(ValidationError):
@@ -32,6 +32,36 @@ class InvitationTokenExpiredException(APIException):
     default_code = "token_expired"
 
 
+# Task Management Exceptions (non-HTTP)
+class TaskManagementError(Exception):
+    """Base exception for task management errors."""
+
+    def __init__(self, task=None):
+        self.task = task
+        super().__init__()
+
+
+class TaskFailedException(TaskManagementError):
+    """Raised when a task has failed."""
+
+
+class TaskNotFoundException(TaskManagementError):
+    """Raised when a task is not found."""
+
+
+class TaskInProgressException(TaskManagementError):
+    """Raised when a task is running but there's no related Task object to return."""
+
+    def __init__(self, task_result=None):
+        self.task_result = task_result
+        super().__init__()
+
+
+# Provider connection errors
+class ProviderConnectionError(Exception):
+    """Base exception for provider connection errors."""
+
+
 def custom_exception_handler(exc, context):
     if isinstance(exc, django_validation_error):
         if hasattr(exc, "error_dict"):
@@ -39,7 +69,30 @@ def custom_exception_handler(exc, context):
         else:
             exc = ValidationError(detail=exc.messages[0], code=exc.code)
     elif isinstance(exc, (TokenError, InvalidToken)):
-        exc.detail["messages"] = [
-            message_item["message"] for message_item in exc.detail["messages"]
-        ]
+        if (
+            hasattr(exc, "detail")
+            and isinstance(exc.detail, dict)
+            and "messages" in exc.detail
+        ):
+            exc.detail["messages"] = [
+                message_item["message"] for message_item in exc.detail["messages"]
+            ]
     return exception_handler(exc, context)
+
+
+class ConflictException(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = "A conflict occurred. The resource already exists."
+    default_code = "conflict"
+
+    def __init__(self, detail=None, code=None, pointer=None):
+        error_detail = {
+            "detail": detail or self.default_detail,
+            "status": self.status_code,
+            "code": self.default_code,
+        }
+
+        if pointer:
+            error_detail["source"] = {"pointer": pointer}
+
+        super().__init__(detail=[error_detail])

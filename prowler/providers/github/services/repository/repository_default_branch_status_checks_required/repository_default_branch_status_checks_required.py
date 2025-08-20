@@ -22,16 +22,14 @@ class repository_default_branch_status_checks_required(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            if repo.status_checks is not None:
-                report = CheckReportGithub(
-                    self.metadata(), resource=repo, owner=repo.name
-                )
+            if repo.default_branch.status_checks is not None:
+                report = CheckReportGithub(self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Repository {repo.name} does not enforce status checks."
                 )
 
-                if repo.status_checks:
+                if repo.default_branch.status_checks:
                     report.status = "PASS"
                     report.status_extended = (
                         f"Repository {repo.name} does enforce status checks."

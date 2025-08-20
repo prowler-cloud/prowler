@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "iam_role_user_access_admin_restricted",
+  "CheckTitle": "Ensure 'User Access Administrator' role is restricted",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AzureIAMRoleassignment",
+  "Description": "Checks for active assignments of the highly privileged 'User Access Administrator' role in Azure subscriptions.",
+  "Risk": "Persistent assignment of this role can lead to privilege escalation and unauthorized access, increasing the risk of security breaches.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator",
+  "Remediation": {
+    "Code": {
+      "CLI": "az role assignment delete --role 'User Access Administrator' --scope '/subscriptions/<subscription_id>'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove 'User Access Administrator' role assignments immediately after use to minimize security risks.",
+      "Url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin?tabs=azure-portal%2Centra-audit-logs"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

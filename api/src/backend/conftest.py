@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+from allauth.socialaccount.models import SocialLogin
 from django.conf import settings
 from django.db import connection as django_connection
 from django.db import connections as django_connections
@@ -15,20 +16,27 @@ from tasks.jobs.backfill import backfill_resource_scan_summaries
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     IntegrationProviderRelationship,
     Invitation,
+    LighthouseConfiguration,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderSecret,
     Resource,
     ResourceTag,
+    ResourceTagMapping,
     Role,
+    SAMLConfiguration,
+    SAMLDomainIndex,
     Scan,
     ScanSummary,
     StateChoices,
+    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -38,10 +46,17 @@ from api.v1.serializers import TokenSerializer
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 
+TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
 TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
+
+
+def today_after_n_days(n_days: int) -> str:
+    return datetime.strftime(
+        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -375,8 +390,27 @@ def providers_fixture(tenants_fixture):
         tenant_id=tenant.id,
         scanner_args={"key1": "value1", "key2": {"key21": "value21"}},
     )
+    provider6 = Provider.objects.create(
+        provider="m365",
+        uid="m365.test.com",
+        alias="m365_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5
+    return provider1, provider2, provider3, provider4, provider5, provider6
+
+
+@pytest.fixture
+def processor_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+    processor = Processor.objects.create(
+        tenant_id=tenant.id,
+        processor_type="mutelist",
+        configuration="Mutelist:\n  Accounts:\n    *:\n      Checks:\n        iam_user_hardware_mfa_enabled:\n         "
+        " Regions:\n            - *\n          Resources:\n            - *",
+    )
+
+    return processor
 
 
 @pytest.fixture
@@ -628,6 +662,7 @@ def findings_fixture(scans_fixture, resources_fixture):
         check_metadata={
             "CheckId": "test_check_id",
             "Description": "test description apple sauce",
+            "servicename": "ec2",
         },
         first_seen_at="2024-01-02T00:00:00Z",
     )
@@ -654,6 +689,7 @@ def findings_fixture(scans_fixture, resources_fixture):
         check_metadata={
             "CheckId": "test_check_id",
             "Description": "test description orange juice",
+            "servicename": "s3",
         },
         first_seen_at="2024-01-02T00:00:00Z",
         muted=True,
@@ -775,6 +811,131 @@ def compliance_overviews_fixture(scans_fixture, tenants_fixture):
 
     # Return the created compliance overviews
     return compliance_overview1, compliance_overview2
+
+
+@pytest.fixture
+def compliance_requirements_overviews_fixture(scans_fixture, tenants_fixture):
+    """Fixture for ComplianceRequirementOverview objects used by the new ComplianceOverviewViewSet."""
+    tenant = tenants_fixture[0]
+    scan1, scan2, scan3 = scans_fixture
+
+    # Create ComplianceRequirementOverview objects for scan1
+    requirement_overview1 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-1",
+        requirement_id="requirement1",
+        requirement_status=StatusChoices.PASS,
+        passed_checks=2,
+        failed_checks=0,
+        total_checks=2,
+    )
+
+    requirement_overview2 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-1",
+        requirement_id="requirement2",
+        requirement_status=StatusChoices.PASS,
+        passed_checks=2,
+        failed_checks=0,
+        total_checks=2,
+    )
+
+    requirement_overview3 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-2",
+        requirement_id="requirement1",
+        requirement_status=StatusChoices.PASS,
+        passed_checks=2,
+        failed_checks=0,
+        total_checks=2,
+    )
+
+    requirement_overview4 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-2",
+        requirement_id="requirement2",
+        requirement_status=StatusChoices.FAIL,
+        passed_checks=1,
+        failed_checks=1,
+        total_checks=2,
+    )
+
+    requirement_overview5 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding (MANUAL)",
+        region="eu-west-2",
+        requirement_id="requirement3",
+        requirement_status=StatusChoices.MANUAL,
+        passed_checks=0,
+        failed_checks=0,
+        total_checks=0,
+    )
+
+    # Create a different compliance framework for testing
+    requirement_overview6 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="cis_1.4_aws",
+        framework="CIS-1.4-AWS",
+        version="1.4",
+        description="CIS AWS Foundations Benchmark v1.4.0",
+        region="eu-west-1",
+        requirement_id="cis_requirement1",
+        requirement_status=StatusChoices.FAIL,
+        passed_checks=0,
+        failed_checks=3,
+        total_checks=3,
+    )
+
+    # Create another compliance framework for testing MITRE ATT&CK
+    requirement_overview7 = ComplianceRequirementOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="mitre_attack_aws",
+        framework="MITRE-ATTACK",
+        version="1.0",
+        description="MITRE ATT&CK",
+        region="eu-west-1",
+        requirement_id="mitre_requirement1",
+        requirement_status=StatusChoices.FAIL,
+        passed_checks=0,
+        failed_checks=0,
+        total_checks=0,
+    )
+
+    return (
+        requirement_overview1,
+        requirement_overview2,
+        requirement_overview3,
+        requirement_overview4,
+        requirement_overview5,
+        requirement_overview6,
+        requirement_overview7,
+    )
 
 
 def get_api_tokens(
@@ -904,7 +1065,7 @@ def integrations_fixture(providers_fixture):
         enabled=True,
         connected=True,
         integration_type="amazon_s3",
-        configuration={"key": "value"},
+        configuration={"key": "value1"},
         credentials={"psswd": "1234"},
     )
     IntegrationProviderRelationship.objects.create(
@@ -927,6 +1088,20 @@ def backfill_scan_metadata_fixture(scans_fixture, findings_fixture):
         tenant_id = scan_instance.tenant_id
         scan_id = scan_instance.id
         backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@pytest.fixture
+def lighthouse_config_fixture(authenticated_client, tenants_fixture):
+    return LighthouseConfiguration.objects.create(
+        tenant_id=tenants_fixture[0].id,
+        name="OpenAI",
+        api_key_decoded="sk-test1234567890T3BlbkFJtest1234567890",
+        model="gpt-4o",
+        temperature=0,
+        max_tokens=4000,
+        business_context="Test business context",
+        is_active=True,
+    )
 
 
 @pytest.fixture(scope="function")
@@ -968,6 +1143,127 @@ def latest_scan_finding(authenticated_client, providers_fixture, resources_fixtu
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
     return finding
+
+
+@pytest.fixture(scope="function")
+def latest_scan_resource(authenticated_client, providers_fixture):
+    provider = providers_fixture[0]
+    tenant_id = str(providers_fixture[0].tenant_id)
+    scan = Scan.objects.create(
+        name="latest completed scan for resource",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    resource = Resource.objects.create(
+        tenant_id=tenant_id,
+        provider=provider,
+        uid="latest_resource_uid",
+        name="Latest Resource",
+        region="us-east-1",
+        service="ec2",
+        type="instance",
+        metadata='{"test": "metadata"}',
+        details='{"test": "details"}',
+    )
+
+    resource_tag = ResourceTag.objects.create(
+        tenant_id=tenant_id,
+        key="environment",
+        value="test",
+    )
+    ResourceTagMapping.objects.create(
+        tenant_id=tenant_id,
+        resource=resource,
+        tag=resource_tag,
+    )
+
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid="test_finding_uid_latest",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status extended ",
+        impact=Severity.critical,
+        impact_extended="test impact extended",
+        severity=Severity.critical,
+        raw_result={
+            "status": Status.FAIL,
+            "impact": Severity.critical,
+            "severity": Severity.critical,
+        },
+        tags={"test": "latest"},
+        check_id="test_check_id_latest",
+        check_metadata={
+            "CheckId": "test_check_id_latest",
+            "Description": "test description latest",
+        },
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    return resource
+
+
+@pytest.fixture
+def saml_setup(tenants_fixture):
+    tenant_id = tenants_fixture[0].id
+    domain = "prowler.com"
+
+    SAMLDomainIndex.objects.create(email_domain=domain, tenant_id=tenant_id)
+
+    metadata_xml = """<?xml version='1.0' encoding='UTF-8'?>
+    <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
+    <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
+        <md:KeyDescriptor use='signing'>
+        <ds:KeyInfo xmlns:ds='http://www.w3.org/2000/09/xmldsig#'>
+            <ds:X509Data>
+            <ds:X509Certificate>TEST</ds:X509Certificate>
+            </ds:X509Data>
+        </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+        <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST' Location='https://TEST/sso/saml'/>
+        <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
+    </md:IDPSSODescriptor>
+    </md:EntityDescriptor>
+    """
+    SAMLConfiguration.objects.create(
+        tenant_id=str(tenant_id),
+        email_domain=domain,
+        metadata_xml=metadata_xml,
+    )
+
+    return {
+        "email": f"user@{domain}",
+        "domain": domain,
+        "tenant_id": tenant_id,
+    }
+
+
+@pytest.fixture
+def saml_sociallogin(users_fixture):
+    user = users_fixture[0]
+    user.email = "samlsso@acme.com"
+    extra_data = {
+        "firstName": ["Test"],
+        "lastName": ["User"],
+        "organization": ["Prowler"],
+        "userType": ["member"],
+    }
+
+    account = MagicMock()
+    account.provider = "saml"
+    account.extra_data = extra_data
+
+    sociallogin = MagicMock(spec=SocialLogin)
+    sociallogin.account = account
+    sociallogin.user = user
+
+    return sociallogin
 
 
 def get_authorization_header(access_token: str) -> dict:

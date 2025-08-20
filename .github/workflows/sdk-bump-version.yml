@@ -12,7 +12,6 @@ env:
 jobs:
   bump-version:
     name: Bump Version
-    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -97,6 +96,7 @@ jobs:
             commit-message: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
             branch: "version-bump-to-v${{ env.BUMP_VERSION_TO }}"
             title: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
+            labels: no-changelog
             body: |
               ### Description
 
@@ -135,6 +135,7 @@ jobs:
             commit-message: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
             branch: "version-bump-to-v${{ env.PATCH_VERSION_TO }}"
             title: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
+            labels: no-changelog
             body: |
               ### Description
 

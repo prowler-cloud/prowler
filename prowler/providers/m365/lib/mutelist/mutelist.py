@@ -7,9 +7,10 @@ class M365Mutelist(Mutelist):
     def is_finding_muted(
         self,
         finding: CheckReportM365,
+        tenant_id: str,
     ) -> bool:
         return self.is_muted(
-            finding.tenant_id,
+            tenant_id,
             finding.check_metadata.CheckID,
             finding.location,
             finding.resource_name,

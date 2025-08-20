@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -21,15 +21,15 @@ class Exchange(M365Service):
         self.mailbox_audit_properties = []
 
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.organization_config = self._get_organization_config()
-            self.mailboxes_config = self._get_mailbox_audit_config()
-            self.external_mail_config = self._get_external_mail_config()
-            self.transport_rules = self._get_transport_rules()
-            self.transport_config = self._get_transport_config()
-            self.mailbox_policy = self._get_mailbox_policy()
-            self.role_assignment_policies = self._get_role_assignment_policies()
-            self.mailbox_audit_properties = self._get_mailbox_audit_properties()
+            if self.powershell.connect_exchange_online():
+                self.organization_config = self._get_organization_config()
+                self.mailboxes_config = self._get_mailbox_audit_config()
+                self.external_mail_config = self._get_external_mail_config()
+                self.transport_rules = self._get_transport_rules()
+                self.transport_config = self._get_transport_config()
+                self.mailbox_policy = self._get_mailbox_policy()
+                self.role_assignment_policies = self._get_role_assignment_policies()
+                self.mailbox_audit_properties = self._get_mailbox_audit_properties()
             self.powershell.close()
 
     def _get_organization_config(self):
@@ -260,7 +260,7 @@ class ExternalMailConfig(BaseModel):
 class TransportRule(BaseModel):
     name: str
     scl: Optional[int]
-    sender_domain_is: list[str]
+    sender_domain_is: Optional[list[str]]
     redirect_message_to: Optional[list[str]]
 
 

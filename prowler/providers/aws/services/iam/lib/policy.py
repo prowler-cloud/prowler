@@ -1,57 +1,328 @@
-from ipaddress import ip_address, ip_network
 import re
+from ipaddress import ip_address, ip_network
+from typing import Optional, Tuple
+
+from py_iam_expand.actions import InvalidActionHandling, expand_actions
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
 
 
+def _get_patterns_from_standard_value(value):
+    """
+    Helper function to process standard action/notaction values.
+    Accepts a string or list of strings and returns a set of string patterns.
+    """
+    patterns = set()
+    if isinstance(value, str):
+        patterns.add(value)
+    elif isinstance(value, list):
+        patterns.update(item for item in value if isinstance(item, str))
+    return patterns
+
+
+def get_effective_actions(policy: dict) -> set[str]:
+    """
+    Calculates the set of effectively allowed IAM actions from a policy document.
+
+    This function considers Allow/Deny effects, Action/NotAction fields,
+    expands wildcards, handles invalid NotAction patterns correctly,
+    and applies the Deny > Allow precedence. Assumes standard AWS policy
+    format where Action/NotAction is a string or a list of strings.
+
+    Args:
+        policy (dict): The IAM policy document.
+
+    Returns:
+        set[str]: A set of effectively allowed IAM action strings.
+    """
+    if not policy or "Statement" not in policy:
+        return set()
+
+    directly_allowed_actions = set()
+    directly_denied_actions = set()
+    allow_not_action_exclusions = set()
+    deny_not_action_exclusions = set()
+    has_allow_not_action_statement = False
+    has_deny_not_action_statement = False
+
+    statements = policy.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
+
+    for statement in statements:
+        effect = statement.get("Effect", "")
+        if not isinstance(effect, str):
+            continue
+        effect = effect.strip().lower()
+
+        if effect not in ["allow", "deny"]:
+            continue
+
+        actions = statement.get("Action")
+        not_actions = statement.get("NotAction")
+
+        action_patterns_to_expand = _get_patterns_from_standard_value(actions)
+        if action_patterns_to_expand:
+            expanded = set()
+            for pattern in action_patterns_to_expand:
+                expanded.update(
+                    expand_actions(
+                        pattern,
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
+            if effect == "allow":
+                directly_allowed_actions.update(expanded)
+            else:  # deny
+                directly_denied_actions.update(expanded)
+
+        not_action_patterns_to_expand = _get_patterns_from_standard_value(not_actions)
+        if not_action_patterns_to_expand:
+            expanded_exclusions = set()
+            for pattern in not_action_patterns_to_expand:
+                expanded_exclusions.update(
+                    expand_actions(
+                        pattern,
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
+            if effect == "allow":
+                allow_not_action_exclusions.update(expanded_exclusions)
+                has_allow_not_action_statement = True
+            else:  # deny
+                deny_not_action_exclusions.update(expanded_exclusions)
+                has_deny_not_action_statement = True
+
+    all_actions = None
+
+    # Actions allowed by "Allow Action" statements
+    potentially_allowed = directly_allowed_actions
+
+    # Actions allowed by "Allow NotAction" statements
+    if has_allow_not_action_statement:
+        if all_actions is None:
+            all_actions = set(
+                expand_actions(
+                    "*",
+                    InvalidActionHandling.REMOVE,
+                )
+            )
+        allowed_by_not_action = all_actions.difference(allow_not_action_exclusions)
+        potentially_allowed.update(allowed_by_not_action)
+
+    # Actions denied by "Deny Action" statements
+    potentially_denied = directly_denied_actions
+
+    # Actions denied by "Deny NotAction" statements
+    if has_deny_not_action_statement:
+        if all_actions is None:
+            all_actions = set(
+                expand_actions(
+                    "*",
+                    InvalidActionHandling.REMOVE,
+                )
+            )
+        denied_by_not_action = all_actions.difference(deny_not_action_exclusions)
+        potentially_denied.update(denied_by_not_action)
+
+    effective_actions = potentially_allowed.difference(potentially_denied)
+
+    return effective_actions
+
+
 def check_full_service_access(service: str, policy: dict) -> bool:
     """
-    check_full_service_access checks if the policy allows full access to a service.
+    Determines if a policy grants full access to a specific AWS service
+    on all resources ("*").
+
     Args:
-        service (str): The service to check.
-        policy (dict): The policy to check.
+        service (str): The AWS service name (e.g., 's3', 'ec2', or '*' for admin).
+        policy (dict): The IAM policy document.
+
     Returns:
-        bool: True if the policy allows full access to the service, False otherwise.
+        bool: True if full access on all resources is granted, False otherwise.
     """
+    if not policy or "Statement" not in policy:
+        return False
 
-    full_access = False
+    service_wildcard = f"{service}:*" if service != "*" else "*"
+    all_target_service_actions = set(
+        expand_actions(
+            service_wildcard,
+            InvalidActionHandling.REMOVE,
+        )
+    )
 
-    if policy:
-        policy_statements = policy.get("Statement", [])
+    effective_allowed_actions = get_effective_actions(policy)
 
-        if not isinstance(policy_statements, list):
-            policy_statements = [policy["Statement"]]
+    if not all_target_service_actions.issubset(effective_allowed_actions):
+        return False
 
-        for statement in policy_statements:
-            if statement.get("Effect", "") == "Allow":
-                resources = statement.get("Resource", [])
+    actions_allowed_on_all_resources = set()
+    statements = policy.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
 
-                if not isinstance(resources, list):
-                    resources = [statement.get("Resource", [])]
+    all_aws_actions_for_inversion = None
 
-                if "*" in resources:
-                    if "Action" in statement:
-                        actions = statement.get("Action", [])
+    for statement in statements:
+        effect = statement.get("Effect", "")
+        resources = statement.get("Resource", [])
 
-                        if not isinstance(actions, list):
-                            actions = [actions]
+        if not isinstance(effect, str) or effect.strip().lower() != "allow":
+            continue
+        if isinstance(resources, str):
+            resources = [resources]
+        if "*" not in resources:
+            continue
 
-                        if f"{service}:*" in actions:
-                            full_access = True
-                            break
+        actions = statement.get("Action")
+        not_actions = statement.get("NotAction")
+        statement_specific_allowed = set()
 
-                    elif "NotAction" in statement:
-                        not_actions = statement.get("NotAction", [])
+        # Use the shared helper function instead of the duplicated one
+        action_patterns = _get_patterns_from_standard_value(actions)
+        for pattern in action_patterns:
+            statement_specific_allowed.update(
+                expand_actions(
+                    pattern,
+                    InvalidActionHandling.REMOVE,
+                )
+            )
 
-                        if not isinstance(not_actions, list):
-                            not_actions = [not_actions]
+        not_action_patterns = _get_patterns_from_standard_value(not_actions)
+        if not_action_patterns:
+            if all_aws_actions_for_inversion is None:
+                all_aws_actions_for_inversion = set(
+                    expand_actions(
+                        "*",
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
 
-                        if f"{service}:*" not in not_actions:
-                            full_access = True
-                            break
+            statement_exclusions = set()
+            for pattern in not_action_patterns:
+                statement_exclusions.update(
+                    expand_actions(
+                        pattern,
+                        InvalidActionHandling.REMOVE,
+                    )
+                )
+            # Actions allowed by THIS NotAction statement
+            statement_specific_allowed.update(
+                all_aws_actions_for_inversion.difference(statement_exclusions)
+            )
 
-    return full_access
+        actions_allowed_on_all_resources.update(
+            action
+            for action in statement_specific_allowed
+            if action in all_target_service_actions
+        )
+
+    return all_target_service_actions.issubset(actions_allowed_on_all_resources)
+
+
+def has_public_principal(statement: dict) -> bool:
+    """
+    Check if a policy statement has a public principal.
+
+    Args:
+        statement (dict): IAM policy statement
+
+    Returns:
+        bool: True if the statement has a public principal, False otherwise
+    """
+    principal = statement.get("Principal", "")
+    return (
+        "*" in principal
+        or "arn:aws:iam::*:root" in principal
+        or (
+            isinstance(principal, dict)
+            and (
+                "*" in principal.get("AWS", "")
+                or "arn:aws:iam::*:root" in principal.get("AWS", "")
+                or (
+                    isinstance(principal.get("AWS"), list)
+                    and (
+                        "*" in principal["AWS"]
+                        or "arn:aws:iam::*:root" in principal["AWS"]
+                    )
+                )
+                or "*" in principal.get("CanonicalUser", "")
+                or "arn:aws:iam::*:root" in principal.get("CanonicalUser", "")
+            )
+        )
+    )
+
+
+def has_restrictive_source_arn_condition(
+    statement: dict, source_account: str = ""
+) -> bool:
+    """
+    Check if a policy statement has a restrictive aws:SourceArn condition.
+
+    A SourceArn condition is considered restrictive if:
+    1. It doesn't contain overly permissive wildcards (like "*" or "arn:aws:s3:::*")
+    2. When source_account is provided, the ARN either contains no account field (like S3 buckets)
+       or contains the source_account
+
+    Args:
+        statement (dict): IAM policy statement
+        source_account (str): The account to check restrictions for (optional)
+
+    Returns:
+        bool: True if the statement has a restrictive aws:SourceArn condition, False otherwise
+    """
+    if "Condition" not in statement:
+        return False
+
+    for condition_operator in statement["Condition"]:
+        for condition_key, condition_value in statement["Condition"][
+            condition_operator
+        ].items():
+            if condition_key.lower() == "aws:sourcearn":
+                arn_values = (
+                    condition_value
+                    if isinstance(condition_value, list)
+                    else [condition_value]
+                )
+
+                for arn_value in arn_values:
+                    if (
+                        arn_value == "*"  # Global wildcard
+                        or arn_value.count("*")
+                        >= 3  # Too many wildcards (e.g., arn:aws:*:*:*:*)
+                        or (
+                            isinstance(arn_value, str)
+                            and (
+                                arn_value.endswith(
+                                    ":::*"
+                                )  # Service-wide wildcard (e.g., arn:aws:s3:::*)
+                                or arn_value.endswith(
+                                    ":*"
+                                )  # Resource wildcard (e.g., arn:aws:sns:us-east-1:123456789012:*)
+                            )
+                        )
+                    ):
+                        return False
+
+                    if source_account:
+                        arn_parts = arn_value.split(":")
+                        if len(arn_parts) > 4 and arn_parts[4] and arn_parts[4] != "*":
+                            if arn_parts[4].isdigit():
+                                if source_account not in arn_value:
+                                    return False
+                            else:
+                                if arn_parts[4] != source_account:
+                                    return False
+                        elif len(arn_parts) > 4 and arn_parts[4] == "*":
+                            return False
+                        # else: ARN doesn't contain account field (like S3 bucket), so it's restrictive
+
+                return True
+
+    return False
 
 
 def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
@@ -134,61 +405,49 @@ def is_policy_public(
         for statement in policy.get("Statement", []):
             # Only check allow statements
             if statement["Effect"] == "Allow":
+                has_public_access = has_public_principal(statement)
+
                 principal = statement.get("Principal", "")
-                if (
-                    "*" in principal
-                    or "arn:aws:iam::*:root" in principal
-                    or (
-                        isinstance(principal, dict)
-                        and (
-                            "*" in principal.get("AWS", "")
-                            or "arn:aws:iam::*:root" in principal.get("AWS", "")
-                            or (
-                                isinstance(principal.get("AWS"), str)
-                                and source_account
-                                and not is_cross_account_allowed
-                                and source_account not in principal.get("AWS", "")
-                            )
-                            or (
-                                isinstance(principal.get("AWS"), list)
-                                and (
-                                    "*" in principal["AWS"]
-                                    or "arn:aws:iam::*:root" in principal["AWS"]
-                                    or (
-                                        source_account
-                                        and not is_cross_account_allowed
-                                        and not any(
-                                            source_account in principal_aws
-                                            for principal_aws in principal["AWS"]
-                                        )
-                                    )
-                                )
-                            )
-                            or "*" in principal.get("CanonicalUser", "")
-                            or "arn:aws:iam::*:root"
-                            in principal.get("CanonicalUser", "")
-                            or check_cross_service_confused_deputy
-                            and (
-                                # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
-                                (
-                                    ".amazonaws.com" in principal.get("Service", "")
-                                    or ".amazon.com" in principal.get("Service", "")
-                                    or "*" in principal.get("Service", "")
-                                )
-                                and (
-                                    "secretsmanager.amazonaws.com"
-                                    not in principal.get(
-                                        "Service", ""
-                                    )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
-                                    or "eks.amazonaws.com"
-                                    not in principal.get(
-                                        "Service", ""
-                                    )  # AWS ensures that resources called by EKS are executed in the same AWS account
-                                )
-                            )
+                if not has_public_access and isinstance(principal, dict):
+                    # Check for cross-account access when not allowed
+                    if (
+                        isinstance(principal.get("AWS"), str)
+                        and source_account
+                        and not is_cross_account_allowed
+                        and source_account not in principal.get("AWS", "")
+                    ) or (
+                        isinstance(principal.get("AWS"), list)
+                        and source_account
+                        and not is_cross_account_allowed
+                        and not any(
+                            source_account in principal_aws
+                            for principal_aws in principal["AWS"]
                         )
-                    )
-                ) and (
+                    ):
+                        has_public_access = True
+
+                    # Check for cross-service confused deputy
+                    if check_cross_service_confused_deputy and (
+                        # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
+                        (
+                            ".amazonaws.com" in principal.get("Service", "")
+                            or ".amazon.com" in principal.get("Service", "")
+                            or "*" in principal.get("Service", "")
+                        )
+                        and (
+                            "secretsmanager.amazonaws.com"
+                            not in principal.get(
+                                "Service", ""
+                            )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
+                            or "eks.amazonaws.com"
+                            not in principal.get(
+                                "Service", ""
+                            )  # AWS ensures that resources called by EKS are executed in the same AWS account
+                        )
+                    ):
+                        has_public_access = True
+
+                if has_public_access and (
                     not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
                     or (
                         statement.get(
@@ -329,9 +588,29 @@ def is_condition_block_restrictive(
                                     "aws:sourcevpc" != value
                                     and "aws:sourcevpce" != value
                                 ):
-                                    if source_account not in item:
-                                        is_condition_key_restrictive = False
-                                        break
+                                    if value == "aws:sourcearn":
+                                        # Use the specialized function to properly validate SourceArn restrictions
+                                        # Create a minimal statement to test with our function
+                                        test_statement = {
+                                            "Condition": {
+                                                condition_operator: {
+                                                    value: condition_statement[
+                                                        condition_operator
+                                                    ][value]
+                                                }
+                                            }
+                                        }
+                                        is_condition_key_restrictive = (
+                                            has_restrictive_source_arn_condition(
+                                                test_statement, source_account
+                                            )
+                                        )
+                                        if not is_condition_key_restrictive:
+                                            break
+                                    else:
+                                        if source_account not in item:
+                                            is_condition_key_restrictive = False
+                                            break
 
                         if is_condition_key_restrictive:
                             is_condition_valid = True
@@ -347,11 +626,31 @@ def is_condition_block_restrictive(
                             if is_cross_account_allowed:
                                 is_condition_valid = True
                             else:
-                                if (
-                                    source_account
-                                    in condition_statement[condition_operator][value]
-                                ):
-                                    is_condition_valid = True
+                                if value == "aws:sourcearn":
+                                    # Use the specialized function to properly validate SourceArn restrictions
+                                    # Create a minimal statement to test with our function
+                                    test_statement = {
+                                        "Condition": {
+                                            condition_operator: {
+                                                value: condition_statement[
+                                                    condition_operator
+                                                ][value]
+                                            }
+                                        }
+                                    }
+                                    is_condition_valid = (
+                                        has_restrictive_source_arn_condition(
+                                            test_statement, source_account
+                                        )
+                                    )
+                                else:
+                                    if (
+                                        source_account
+                                        in condition_statement[condition_operator][
+                                            value
+                                        ]
+                                    ):
+                                        is_condition_valid = True
 
     return is_condition_valid
 
@@ -570,3 +869,75 @@ def is_valid_aws_service(service):
     if service in read_aws_regions_file()["services"]:
         return True
     return False
+
+
+def is_codebuild_using_allowed_github_org(
+    trust_policy: dict, github_repo_url: str, allowed_organizations: list
+) -> Tuple[bool, Optional[str]]:
+    """
+    Checks if the trust policy allows codebuild.amazonaws.com as a trusted principal and if the GitHub organization
+    in the repo URL is in the allowed organizations list.
+    Returns (is_allowed: bool, org_name: str or None)
+    """
+    try:
+        if not trust_policy or not github_repo_url:
+            return False, None
+
+        if not has_codebuild_trusted_principal(trust_policy):
+            return False, None
+
+        # Extract org name from GitHub repo URL
+        org_name = (
+            github_repo_url.split("/")[3]
+            if len(github_repo_url.split("/")) > 3
+            else None
+        )
+        if not org_name:
+            raise ValueError(f"Malformed GitHub repo URL: {github_repo_url}")
+        if org_name in allowed_organizations:
+            return True, org_name
+        return False, org_name
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        return False, None
+
+
+def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
+    """
+    Returns True if the trust policy allows codebuild.amazonaws.com as a trusted principal, otherwise False.
+    """
+    if not trust_policy:
+        return False
+    statements = trust_policy.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
+    return any(
+        s.get("Effect") == "Allow"
+        and "Principal" in s
+        and (
+            (
+                isinstance(s["Principal"], dict)
+                and (
+                    (
+                        isinstance(s["Principal"].get("Service"), str)
+                        and s["Principal"].get("Service") == "codebuild.amazonaws.com"
+                    )
+                    or (
+                        isinstance(s["Principal"].get("Service"), list)
+                        and "codebuild.amazonaws.com" in s["Principal"].get("Service")
+                    )
+                )
+            )
+            or (
+                isinstance(s["Principal"], str)
+                and s["Principal"] == "codebuild.amazonaws.com"
+            )
+            or (
+                isinstance(s["Principal"], list)
+                and "codebuild.amazonaws.com" in s["Principal"]
+            )
+        )
+        for s in statements
+    )
