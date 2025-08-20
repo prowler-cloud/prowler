@@ -405,11 +405,13 @@ class GithubProvider(Provider):
             report_lines = [
                 f"GitHub Account: {Fore.YELLOW}{self.identity.account_name}{Style.RESET_ALL}",
                 f"GitHub Account ID: {Fore.YELLOW}{self.identity.account_id}{Style.RESET_ALL}",
+                f"GitHub Account Email: {Fore.YELLOW}{self.identity.account_email}{Style.RESET_ALL}",
                 f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
         elif isinstance(self.identity, GithubAppIdentityInfo):
             report_lines = [
                 f"GitHub App ID: {Fore.YELLOW}{self.identity.app_id}{Style.RESET_ALL}",
+                f"GitHub App Name: {Fore.YELLOW}{self.identity.app_name}{Style.RESET_ALL}",
                 f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
         report_title = (

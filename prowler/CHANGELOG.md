@@ -9,7 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `vm_sufficient_daily_backup_retention_period` check for Azure provider [(#8200)](https://github.com/prowler-cloud/prowler/pull/8200)
 - `vm_jit_access_enabled` check for Azure provider [(#8202)](https://github.com/prowler-cloud/prowler/pull/8202)
 - Bedrock AgentCore privilege escalation combination for AWS provider [(#8526)](https://github.com/prowler-cloud/prowler/pull/8526)
-- GitHub reports extended information [(#8501)](https://github.com/prowler-cloud/prowler/pull/8501)
+- Add User Email and APP name/installations information in GitHub provider [(#8501)](https://github.com/prowler-cloud/prowler/pull/8501)
 - Remove standalone iam:PassRole from privesc detection and add missing patterns [(#8530)](https://github.com/prowler-cloud/prowler/pull/8530)
 - `eks_cluster_deletion_protection_enabled` check for AWS provider [(#8536)](https://github.com/prowler-cloud/prowler/pull/8536)
 - ECS privilege escalation patterns (StartTask and RunTask) for AWS provider [(#8541)](https://github.com/prowler-cloud/prowler/pull/8541)
