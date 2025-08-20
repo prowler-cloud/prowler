@@ -124,6 +124,15 @@ export const ChatbotConfig = ({
                 >
                   GPT-4o Mini
                 </SelectItem>
+                <SelectItem key="gpt-5-2025-08-07" value="gpt-5-2025-08-07">
+                  GPT-5
+                </SelectItem>
+                <SelectItem
+                  key="gpt-5-mini-2025-08-07"
+                  value="gpt-5-mini-2025-08-07"
+                >
+                  GPT-5 Mini
+                </SelectItem>
               </Select>
             )}
           />
