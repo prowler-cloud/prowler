@@ -60,7 +60,7 @@ export const SecurityHubIntegrationForm = ({
     ),
     defaultValues: {
       integration_type: "aws_security_hub" as const,
-      provider_id: integration?.attributes.configuration.provider_id || "",
+      provider_id: integration?.relationships?.providers?.data?.[0]?.id || "",
       send_only_fails:
         integration?.attributes.configuration.send_only_fails ?? true,
       skip_archive_previous:
@@ -137,21 +137,11 @@ export const SecurityHubIntegrationForm = ({
     return credentials;
   };
 
-  const buildConfiguration = (values: any, isPartial = false) => {
+  const buildConfiguration = (values: any) => {
     const configuration: any = {};
 
-    if (!isPartial) {
-      // For creation - include all fields
-      configuration.send_only_fails = values.send_only_fails ?? true;
-      configuration.skip_archive_previous =
-        values.skip_archive_previous ?? false;
-      configuration.provider_id = values.provider_id;
-    } else {
-      // For PATCH updates - only send the two checkbox fields
-      configuration.send_only_fails = values.send_only_fails ?? true;
-      configuration.skip_archive_previous =
-        values.skip_archive_previous ?? false;
-    }
+    configuration.send_only_fails = values.send_only_fails ?? true;
+    configuration.skip_archive_previous = values.skip_archive_previous ?? false;
 
     return configuration;
   };
@@ -161,7 +151,7 @@ export const SecurityHubIntegrationForm = ({
     formData.append("integration_type", values.integration_type);
 
     if (isEditingConfig) {
-      const configuration = buildConfiguration(values, true);
+      const configuration = buildConfiguration(values);
       if (Object.keys(configuration).length > 0) {
         formData.append("configuration", JSON.stringify(configuration));
       }
@@ -195,6 +185,7 @@ export const SecurityHubIntegrationForm = ({
 
     try {
       let result;
+      
       if (isEditing && integration) {
         result = await updateIntegration(integration.id, formData);
       } else {
@@ -268,22 +259,25 @@ export const SecurityHubIntegrationForm = ({
     if (isEditingConfig || currentStep === 0) {
       return (
         <>
-          <div className="space-y-4">
-            <EnhancedProviderSelector
-              control={form.control}
-              name="provider_id"
-              providers={providers}
-              label="AWS Provider"
-              placeholder="Search and select an AWS provider"
-              isInvalid={!!form.formState.errors.provider_id}
-              selectionMode="single"
-              providerType="aws"
-              enableSearch={true}
-              disabledProviderIds={disabledProviderIds}
-            />
-          </div>
-
-          <Divider />
+          {!isEditingConfig && (
+            <>
+              <div className="space-y-4">
+                <EnhancedProviderSelector
+                  control={form.control}
+                  name="provider_id"
+                  providers={providers}
+                  label="AWS Provider"
+                  placeholder="Search and select an AWS provider"
+                  isInvalid={!!form.formState.errors.provider_id}
+                  selectionMode="single"
+                  providerType="aws"
+                  enableSearch={true}
+                  disabledProviderIds={disabledProviderIds}
+                />
+              </div>
+              <Divider />
+            </>
+          )}
 
           <div className="flex flex-col gap-3">
             <FormField

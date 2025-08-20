@@ -9,8 +9,8 @@ import {
   parseStringify,
 } from "@/lib";
 
-import { getTask } from "../task";
-import { IntegrationType } from "../../types/integrations";
+import { getTask } from "@/actions/task";
+import { IntegrationType } from "@/types/integrations";
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -27,7 +27,6 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
 
     if (response.ok) {
       const data = await response.json();
-      console.log(JSON.stringify(data, null, 2));
       return parseStringify(data);
     }
 
@@ -88,8 +87,6 @@ export const createIntegration = async (
         },
       },
     };
-
-    console.log(integrationData);
 
     const response = await fetch(url.toString(), {
       method: "POST",

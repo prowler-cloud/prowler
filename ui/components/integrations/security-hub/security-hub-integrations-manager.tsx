@@ -185,13 +185,20 @@ export const SecurityHubIntegrationsManager = ({
   };
 
   const getProviderDetails = (integration: IntegrationProps) => {
-    const providerId = integration.attributes.configuration.provider_id;
+    const providerRelationships = integration.relationships?.providers?.data;
+
+    if (!providerRelationships || providerRelationships.length === 0) {
+      return { displayName: "Unknown Account", accountId: null };
+    }
+
+    // Security Hub should only have one provider
+    const providerId = providerRelationships[0].id;
     const provider = providers.find((p) => p.id === providerId);
-    
+
     if (!provider) {
       return { displayName: "Unknown Account", accountId: null };
     }
-    
+
     return {
       displayName: provider.attributes.alias || provider.attributes.uid,
       accountId: provider.attributes.uid,
@@ -318,7 +325,7 @@ export const SecurityHubIntegrationsManager = ({
                             {providerDetails.displayName}
                           </h4>
                           <p className="text-xs text-gray-500 dark:text-gray-300">
-                            {providerDetails.accountId && providerDetails.alias 
+                            {providerDetails.accountId && providerDetails.alias
                               ? `Account ID: ${providerDetails.accountId}`
                               : "AWS Security Hub Integration"}
                           </p>
@@ -452,4 +459,3 @@ export const SecurityHubIntegrationsManager = ({
     </>
   );
 };
-
