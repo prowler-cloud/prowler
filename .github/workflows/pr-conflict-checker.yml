@@ -1,4 +1,4 @@
-name: PR Conflict Checker
+name: Prowler - PR Conflict Checker
 
 on:
   pull_request:
