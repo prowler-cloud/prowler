@@ -57,6 +57,7 @@ nav:
           - Mute findings: tutorials/prowler-app-mute-findings.md
           - Amazon S3 Integration: tutorials/prowler-app-s3-integration.md
           - Lighthouse: tutorials/prowler-app-lighthouse.md
+          - Bulk Provider Provisioning: tutorials/bulk-provider-provisioning.md
       - CLI:
           - Miscellaneous: tutorials/misc.md
           - Reporting: tutorials/reporting.md
