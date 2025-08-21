@@ -1,4 +1,4 @@
-name: Check Changelog
+name: Prowler - Check Changelog
 
 on:
   pull_request:
