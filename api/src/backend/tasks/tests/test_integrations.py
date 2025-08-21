@@ -634,6 +634,7 @@ class TestSecurityHubIntegrationUploads:
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.partition = "aws"
+        mock_connection.enabled_regions = {"us-east-1": True, "us-west-2": True}
         mock_test_connection.return_value = mock_connection
 
         # Mock AwsProvider.get_available_aws_service_regions
@@ -649,6 +650,8 @@ class TestSecurityHubIntegrationUploads:
             mock_security_hub = MagicMock()
             mock_security_hub._enabled_regions = {"us-east-1": True, "us-west-2": True}
             mock_security_hub_class.return_value = mock_security_hub
+            # Configure the test_connection to return our mock_connection
+            mock_security_hub_class.test_connection = mock_test_connection
 
             connected, security_hub = get_security_hub_client_from_integration(
                 mock_integration, tenant_id, mock_findings
@@ -657,16 +660,19 @@ class TestSecurityHubIntegrationUploads:
         assert connected is True
         assert security_hub == mock_security_hub
 
-        # Verify SecurityHub was called twice - once to get regions, once to create client
-        assert mock_security_hub_class.call_count == 2
+        # Verify SecurityHub was called once to create the client
+        assert mock_security_hub_class.call_count == 1
 
-        # Verify the second call (actual client creation) has the correct parameters
-        actual_call = mock_security_hub_class.call_args_list[1]
+        # Verify the call has the correct parameters
+        actual_call = mock_security_hub_class.call_args_list[0]
         assert actual_call.kwargs["aws_account_id"] == "123456789012"
         assert actual_call.kwargs["findings"] == mock_findings
         assert actual_call.kwargs["send_only_fails"]
-        assert "us-east-1" in actual_call.kwargs["aws_security_hub_available_regions"]
-        assert "us-west-2" in actual_call.kwargs["aws_security_hub_available_regions"]
+        # Check that enabled_regions dict was passed correctly
+        assert (
+            actual_call.kwargs["aws_security_hub_enabled_regions"]
+            == mock_connection.enabled_regions
+        )
 
     @patch("tasks.jobs.integrations.SecurityHub.test_connection")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")
@@ -764,6 +770,7 @@ class TestSecurityHubIntegrationUploads:
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.partition = "aws"
+        mock_connection.enabled_regions = {"us-east-1": True, "us-west-2": True}
         mock_test_connection.return_value = mock_connection
 
         # Mock AwsProvider.get_available_aws_service_regions
@@ -780,6 +787,8 @@ class TestSecurityHubIntegrationUploads:
             mock_security_hub = MagicMock()
             mock_security_hub._enabled_regions = {"us-east-1": True, "us-west-2": True}
             mock_security_hub_class.return_value = mock_security_hub
+            # Configure the test_connection to return our mock_connection
+            mock_security_hub_class.test_connection = mock_test_connection
 
             connected, security_hub = get_security_hub_client_from_integration(
                 mock_integration, tenant_id, mock_findings
@@ -787,16 +796,19 @@ class TestSecurityHubIntegrationUploads:
 
         assert connected is True
 
-        # Verify SecurityHub was called twice - once to get regions, once to create client
-        assert mock_security_hub_class.call_count == 2
+        # Verify SecurityHub was called once to create the client
+        assert mock_security_hub_class.call_count == 1
 
-        # Verify the second call (actual client creation) has the correct parameters
-        actual_call = mock_security_hub_class.call_args_list[1]
+        # Verify the call has the correct parameters
+        actual_call = mock_security_hub_class.call_args_list[0]
         assert actual_call.kwargs["aws_account_id"] == "123456789012"
         assert actual_call.kwargs["findings"] == mock_findings
         assert not actual_call.kwargs["send_only_fails"]
-        assert "us-east-1" in actual_call.kwargs["aws_security_hub_available_regions"]
-        assert "us-west-2" in actual_call.kwargs["aws_security_hub_available_regions"]
+        # Check that enabled_regions dict was passed correctly
+        assert (
+            actual_call.kwargs["aws_security_hub_enabled_regions"]
+            == mock_connection.enabled_regions
+        )
 
     @patch("tasks.jobs.integrations.ASFF")
     @patch("tasks.jobs.integrations.FindingOutput")

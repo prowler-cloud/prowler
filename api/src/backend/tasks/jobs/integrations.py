@@ -187,23 +187,14 @@ def get_security_hub_client_from_integration(
         provider_uid = provider_relationship.provider.uid
         provider_secret = provider_relationship.provider.secret.secret
 
-    credentials = {}
-    # Check if integration has credentials
-    if integration.credentials:
-        # Use integration credentials directly
-        connection = SecurityHub.test_connection(
-            aws_account_id=provider_uid,
-            raise_on_exception=False,
-            **integration.credentials,
-        )
-        credentials = integration.credentials
-    else:
-        connection = SecurityHub.test_connection(
-            aws_account_id=provider_uid,
-            raise_on_exception=False,
-            **provider_secret,
-        )
-        credentials = provider_secret
+    credentials = (
+        integration.credentials if integration.credentials else provider_secret
+    )
+    connection = SecurityHub.test_connection(
+        aws_account_id=provider_uid,
+        raise_on_exception=False,
+        **credentials,
+    )
 
     if connection.is_connected:
         # If not saved, calculate them
@@ -211,17 +202,8 @@ def get_security_hub_client_from_integration(
             "securityhub", connection.partition
         )
 
-        # Create temporary SecurityHub instance to get enabled regions
-        temp_security_hub = SecurityHub(
-            aws_account_id=provider_uid,
-            findings=[],
-            send_only_fails=False,
-            aws_security_hub_available_regions=all_security_hub_regions,
-            **credentials,
-        )
-
         # Get enabled regions as a set
-        enabled_regions = set(temp_security_hub._enabled_regions.keys())
+        enabled_regions = set(connection.enabled_regions.keys())
         all_regions_set = set(all_security_hub_regions)
 
         # Create regions status dictionary
@@ -239,7 +221,7 @@ def get_security_hub_client_from_integration(
             aws_account_id=provider_uid,
             findings=findings,
             send_only_fails=integration.configuration.get("send_only_fails", False),
-            aws_security_hub_available_regions=list(enabled_regions),
+            aws_security_hub_enabled_regions=connection.enabled_regions,
             **credentials,
         )
         return True, security_hub
