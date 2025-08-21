@@ -25,13 +25,8 @@ export async function POST(req: Request) {
     const processedMessages = [...messages];
 
     // Get AI configuration to access business context
-<<<<<<< HEAD
-    const aiConfig = await getLighthouseConfig();
-    const businessContext = aiConfig?.data?.attributes?.business_context;
-=======
     const lighthouseConfig = await getLighthouseConfig();
     const businessContext = lighthouseConfig.business_context;
->>>>>>> d54e3b25d (fix: Refactor getting lighthouse config (#8546))
 
     // Get current user data
     const currentData = await getCurrentDataSection();
