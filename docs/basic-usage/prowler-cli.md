@@ -282,4 +282,4 @@ prowler mongodbatlas --atlas-organization-id <organization_id>
 prowler mongodbatlas --atlas-project-id <project_id>
 ```
 
-See more details about MongoDB Atlas Authentication in [Requirements](getting-started/requirements.md#mongodb-atlas)
+See more details about MongoDB Atlas Authentication in [Requirements](../getting-started/requirements.md#mongodb-atlas)
