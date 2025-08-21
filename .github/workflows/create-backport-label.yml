@@ -1,4 +1,4 @@
-name: Prowler Create Backport Label
+name: Prowler - Create Backport Label
 
 on:
   release:
