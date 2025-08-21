@@ -22,6 +22,7 @@ The Bulk Provider Provisioning tool automates the creation of cloud providers in
 
 * Python 3.7 or higher
 * Prowler API token (from Prowler Cloud or self-hosted Prowler App)
+    * For self-hosted Prowler App, remember to [point to your API base URL](#custom-api-endpoints)
 * Authentication credentials for target cloud providers
 
 ### Installation
