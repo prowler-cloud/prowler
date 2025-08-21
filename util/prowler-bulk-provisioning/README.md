@@ -1,6 +1,6 @@
 # Prowler Provider Bulk Provisioning
 
-A Python script to bulk-provision cloud providers in Prowler Cloud/App via REST API. This tool streamlines the process of adding multiple cloud providers to Prowler by reading configuration from YAML, JSON, or CSV files and making API calls with concurrency and retry support.
+A Python script to bulk-provision cloud providers in Prowler Cloud/App via REST API. This tool streamlines the process of adding multiple cloud providers to Prowler by reading configuration from YAML and making API calls with concurrency and retry support.
 
 ## Supported Providers
 
@@ -13,7 +13,6 @@ A Python script to bulk-provision cloud providers in Prowler Cloud/App via REST 
 
 ## Features
 
-- **Multiple Input Formats:** Supports YAML, JSON, and CSV input files
 - **Concurrent Processing:** Configurable concurrency for faster bulk operations
 - **Retry Logic:** Built-in retry mechanism for handling temporary API failures
 - **Dry-Run Mode:** Test configuration without making actual API calls
@@ -75,7 +74,7 @@ This two-step approach follows the Prowler API design where providers and their 
 
 ```bash
 export PROWLER_API_TOKEN="your-prowler-token"
-export PROWLER_API_BASE="https://api.prowler.com/api/v1"  # Optional, defaults to SaaS
+export PROWLER_API_BASE="https://api.prowler.com/api/v1"  # Optional, defaults to Prowler Cloud
 ```
 
 ### Provider Configuration Files
@@ -145,30 +144,6 @@ Create a configuration file (YAML recommended) listing the providers to add:
     token: "ghp_..."
 ```
 
-#### JSON Format
-
-```json
-[
-  {
-    "provider": "aws",
-    "uid": "123456789012",
-    "alias": "prod-root",
-    "auth_method": "role",
-    "credentials": {
-      "role_arn": "arn:aws:iam::123456789012:role/ProwlerScan",
-      "external_id": "ext-abc123"
-    }
-  }
-]
-```
-
-#### CSV Format
-
-```csv
-provider,uid,alias,auth_method,credentials
-aws,123456789012,prod-root,role,"{\"role_arn\": \"arn:aws:iam::123456789012:role/ProwlerScan\"}"
-```
-
 ## Usage
 
 ### Basic Usage
@@ -191,7 +166,7 @@ python prowler_bulk_provisioning.py providers.yaml \
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `input_file` | YAML/JSON/CSV file with provider entries | Required |
+| `input_file` | YAML file with provider entries | Required |
 | `--base-url` | API base URL | `https://api.prowler.com/api/v1` |
 | `--token` | Bearer token | `PROWLER_API_TOKEN` env var |
 | `--providers-endpoint` | Providers API endpoint | `/providers` |
