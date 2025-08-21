@@ -47,27 +47,28 @@ import {
   getMyProfileInfoTool,
   getUsersTool,
 } from "@/lib/lighthouse/tools/users";
+import { getModelParams } from "@/lib/lighthouse/utils";
 
 export async function initLighthouseWorkflow() {
   const apiKey = await getAIKey();
   const lighthouseConfig = await getLighthouseConfig();
 
+  const modelParams = getModelParams(lighthouseConfig.model, lighthouseConfig);
+
   // Initialize models without API keys
   const llm = new ChatOpenAI({
     model: lighthouseConfig.model,
-    temperature: lighthouseConfig.temperature,
-    maxTokens: lighthouseConfig.max_tokens,
     apiKey: apiKey,
     tags: ["agent"],
+    ...modelParams,
   });
 
   const supervisorllm = new ChatOpenAI({
     model: lighthouseConfig.model,
-    temperature: lighthouseConfig.temperature,
-    maxTokens: lighthouseConfig.max_tokens,
     apiKey: apiKey,
     streaming: true,
     tags: ["supervisor"],
+    ...modelParams,
   });
 
   const providerAgent = createReactAgent({
