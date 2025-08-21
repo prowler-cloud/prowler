@@ -120,8 +120,8 @@ def load_items(path: Path) -> List[Dict[str, Any]]:
                 if creds:
                     try:
                         row["credentials"] = json.loads(creds)
-                    except Exception as e:
-                        sys.exit(f"Invalid JSON in 'credentials' column: {e}")
+                    except Exception:
+                        sys.exit("Invalid JSON in 'credentials' column")
                 # Normalize empty strings to None
                 for k, v in list(row.items()):
                     if isinstance(v, str) and v.strip() == "":
@@ -650,7 +650,22 @@ def main():
                     print(f"[{idx}] ❌ Connection failed")
             else:
                 failed += 1
-                print(f"[{idx}] ❌ Test failed: {result.get('error')}")
+                # Sanitize error message to avoid potential sensitive data
+                error = str(result.get("error", "Unknown error"))
+                if any(
+                    word in error.lower()
+                    for word in [
+                        "key",
+                        "secret",
+                        "token",
+                        "password",
+                        "credential",
+                        "bearer",
+                    ]
+                ):
+                    print(f"[{idx}] ❌ Test failed: Authentication error")
+                else:
+                    print(f"[{idx}] ❌ Test failed: {error}")
 
         print(
             f"\nConnection Test Results: Tested: {tested}, Connected: {connected}, Failed: {failed}"
@@ -665,7 +680,17 @@ def main():
         try:
             endpoint, provider_payload, secret_payload = build_payload(item)
         except Exception as e:
-            print(f"[{idx}] ❌ Skipping item due to build error: {e}")
+            # Sanitize exception message to avoid leaking sensitive data
+            error_msg = str(e)
+            if any(
+                word in error_msg.lower()
+                for word in ["key", "secret", "token", "password", "credential"]
+            ):
+                print(
+                    f"[{idx}] ❌ Skipping item due to build error: Invalid credentials format"
+                )
+            else:
+                print(f"[{idx}] ❌ Skipping item due to build error: {error_msg}")
             continue
 
         # Allow overriding endpoint path globally (for standard creation)
@@ -729,9 +754,24 @@ def main():
                         elif conn.get("success"):
                             print(f"[{idx}] ⚠️  Connection test: Not connected")
                         else:
-                            print(
-                                f"[{idx}] ❌ Connection test failed: {conn.get('error')}"
-                            )
+                            # Sanitize error message to avoid potential sensitive data
+                            error = str(conn.get("error", "Unknown error"))
+                            if any(
+                                word in error.lower()
+                                for word in [
+                                    "key",
+                                    "secret",
+                                    "token",
+                                    "password",
+                                    "credential",
+                                    "bearer",
+                                ]
+                            ):
+                                print(
+                                    f"[{idx}] ❌ Connection test failed: Authentication error"
+                                )
+                            else:
+                                print(f"[{idx}] ❌ Connection test failed: {error}")
                 else:
                     failures += 1
                     if "secret_error" in data:
@@ -747,7 +787,22 @@ def main():
                         )
             except Exception as e:
                 failures += 1
-                print(f"[{idx}] ❌ Request failed: {e}")
+                # Sanitize exception message to avoid leaking sensitive data
+                error_msg = str(e)
+                if any(
+                    word in error_msg.lower()
+                    for word in [
+                        "key",
+                        "secret",
+                        "token",
+                        "password",
+                        "credential",
+                        "bearer",
+                    ]
+                ):
+                    print(f"[{idx}] ❌ Request failed: Authentication or network error")
+                else:
+                    print(f"[{idx}] ❌ Request failed: {error_msg}")
 
     print(f"\nDone. Success: {successes}  Failures: {failures}")
 
