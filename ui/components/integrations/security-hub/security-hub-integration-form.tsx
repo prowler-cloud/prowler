@@ -26,6 +26,7 @@ import { ProviderProps } from "@/types/providers";
 interface SecurityHubIntegrationFormProps {
   integration?: IntegrationProps | null;
   providers: ProviderProps[];
+  existingIntegrations?: IntegrationProps[];
   onSuccess: () => void;
   onCancel: () => void;
   editMode?: "configuration" | "credentials" | null;
@@ -34,6 +35,7 @@ interface SecurityHubIntegrationFormProps {
 export const SecurityHubIntegrationForm = ({
   integration,
   providers,
+  existingIntegrations = [],
   onSuccess,
   onCancel,
   editMode = null,
@@ -49,8 +51,23 @@ export const SecurityHubIntegrationForm = ({
   const isEditingCredentials = editMode === "credentials";
 
   const disabledProviderIds = useMemo(() => {
-    return [];
-  }, []);
+    // When editing, no providers should be disabled since we're not changing it
+    if (isEditing) {
+      return [];
+    }
+
+    // When creating, disable providers that are already used by other Security Hub integrations
+    const usedProviderIds: string[] = [];
+    existingIntegrations.forEach((existingIntegration) => {
+      const providerRelationships =
+        existingIntegration.relationships?.providers?.data;
+      if (providerRelationships && providerRelationships.length > 0) {
+        usedProviderIds.push(providerRelationships[0].id);
+      }
+    });
+
+    return usedProviderIds;
+  }, [isEditing, existingIntegrations]);
 
   const form = useForm({
     resolver: zodResolver(
@@ -155,11 +172,9 @@ export const SecurityHubIntegrationForm = ({
       if (Object.keys(configuration).length > 0) {
         formData.append("configuration", JSON.stringify(configuration));
       }
-      // Don't send providers when editing configuration only
     } else if (isEditingCredentials) {
       const credentials = buildCredentials(values);
       formData.append("credentials", JSON.stringify(credentials));
-      // Don't send providers when editing credentials only
     } else {
       const configuration = buildConfiguration(values);
       formData.append("configuration", JSON.stringify(configuration));
@@ -185,7 +200,7 @@ export const SecurityHubIntegrationForm = ({
 
     try {
       let result;
-      
+
       if (isEditing && integration) {
         result = await updateIntegration(integration.id, formData);
       } else {

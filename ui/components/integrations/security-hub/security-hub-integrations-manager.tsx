@@ -275,6 +275,7 @@ export const SecurityHubIntegrationsManager = ({
         <SecurityHubIntegrationForm
           integration={editingIntegration}
           providers={providers}
+          existingIntegrations={integrations}
           onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
           editMode={editMode}
