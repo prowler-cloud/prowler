@@ -19,9 +19,16 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
-- Lighthouse using default config instead of backend config [(#8546)](https://github.com/prowler-cloud/prowler/pull/8546)
 
 ### ❌ Removed
+
+---
+
+## [1.10.2] (Prowler v5.10.3)
+
+### 🐞 Fixed
+
+- Lighthouse using default config instead of backend config [(#8546)](https://github.com/prowler-cloud/prowler/pull/8546)
 
 ---
 
