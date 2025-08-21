@@ -50,22 +50,21 @@ import {
 
 export async function initLighthouseWorkflow() {
   const apiKey = await getAIKey();
-  const aiConfig = await getLighthouseConfig();
-  const modelConfig = aiConfig?.data?.attributes;
+  const lighthouseConfig = await getLighthouseConfig();
 
   // Initialize models without API keys
   const llm = new ChatOpenAI({
-    model: modelConfig?.model || "gpt-4o",
-    temperature: modelConfig?.temperature || 0,
-    maxTokens: modelConfig?.max_tokens || 4000,
+    model: lighthouseConfig.model,
+    temperature: lighthouseConfig.temperature,
+    maxTokens: lighthouseConfig.max_tokens,
     apiKey: apiKey,
     tags: ["agent"],
   });
 
   const supervisorllm = new ChatOpenAI({
-    model: modelConfig?.model || "gpt-4o",
-    temperature: modelConfig?.temperature || 0,
-    maxTokens: modelConfig?.max_tokens || 4000,
+    model: lighthouseConfig.model,
+    temperature: lighthouseConfig.temperature,
+    maxTokens: lighthouseConfig.max_tokens,
     apiKey: apiKey,
     streaming: true,
     tags: ["supervisor"],
