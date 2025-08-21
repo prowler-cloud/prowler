@@ -6,18 +6,43 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 - Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
+- `vm_sufficient_daily_backup_retention_period` check for Azure provider [(#8200)](https://github.com/prowler-cloud/prowler/pull/8200)
+- `vm_jit_access_enabled` check for Azure provider [(#8202)](https://github.com/prowler-cloud/prowler/pull/8202)
+- Bedrock AgentCore privilege escalation combination for AWS provider [(#8526)](https://github.com/prowler-cloud/prowler/pull/8526)
+- Add User Email and APP name/installations information in GitHub provider [(#8501)](https://github.com/prowler-cloud/prowler/pull/8501)
+- Remove standalone iam:PassRole from privesc detection and add missing patterns [(#8530)](https://github.com/prowler-cloud/prowler/pull/8530)
+- `eks_cluster_deletion_protection_enabled` check for AWS provider [(#8536)](https://github.com/prowler-cloud/prowler/pull/8536)
+- ECS privilege escalation patterns (StartTask and RunTask) for AWS provider [(#8541)](https://github.com/prowler-cloud/prowler/pull/8541)
+
 
 ### Changed
+- Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
 
 ### Fixed
 
 ---
 
-## [v5.10.2] (Prowler UNRELEASED)
+## [v5.10.3] (Prowler UNRELEASED)
+
+### Fixed
+- AWS resource-arn filtering [(#8533)](https://github.com/prowler-cloud/prowler/pull/8533)
+- GitHub App authentication for GitHub provider [(#8529)](https://github.com/prowler-cloud/prowler/pull/8529)
+- List all accessible organizations in GitHub provider [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
+- Only evaluate enabled accounts in `entra_users_mfa_capable` check [(#8544)](https://github.com/prowler-cloud/prowler/pull/8544)
+
+---
+
+## [v5.10.2] (Prowler v5.10.2)
 
 ### Fixed
 - Order requirements by ID in Prowler ThreatScore AWS compliance framework [(#8495)](https://github.com/prowler-cloud/prowler/pull/8495)
+- Add explicit resource name to GCP and Azure Defender checks [(#8352)](https://github.com/prowler-cloud/prowler/pull/8352)
 - Validation errors in Azure and M365 providers [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
+- Azure `app_http_logs_enabled` check false positives [(#8507)](https://github.com/prowler-cloud/prowler/pull/8507)
+- Azure `storage_geo_redundant_enabled` check false positives [(#8504)](https://github.com/prowler-cloud/prowler/pull/8504)
+- AWS `kafka_cluster_is_public` check false positives [(#8514)](https://github.com/prowler-cloud/prowler/pull/8514)
+- List all accessible repositories in GitHub [(#8522)](https://github.com/prowler-cloud/prowler/pull/8522)
+- GitHub CIS 1.0 Compliance Reports [(#8519)](https://github.com/prowler-cloud/prowler/pull/8519)
 
 ---
 
