@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Optional
 
 from azure.mgmt.storage import StorageManagementClient
@@ -35,7 +34,6 @@ class Storage(AzureService):
                         key_expiration_period_in_days = int(
                             storage_account.key_policy.key_expiration_period_in_days
                         )
-                    replication_settings = ReplicationSettings(storage_account.sku.name)
                     storage_accounts[subscription].append(
                         Account(
                             id=storage_account.id,
@@ -70,17 +68,44 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
-                            default_to_entra_authorization=getattr(
-                                storage_account,
-                                "default_to_o_auth_authentication",
-                                False,
+                            default_to_entra_authorization=(
+                                False
+                                if getattr(
+                                    storage_account,
+                                    "default_to_o_auth_authentication",
+                                    False,
+                                )
+                                is None
+                                else getattr(
+                                    storage_account,
+                                    "default_to_o_auth_authentication",
+                                    False,
+                                )
                             ),
-                            replication_settings=replication_settings,
-                            allow_cross_tenant_replication=getattr(
-                                storage_account, "allow_cross_tenant_replication", True
+                            replication_settings=storage_account.sku.name,
+                            allow_cross_tenant_replication=(
+                                True
+                                if getattr(
+                                    storage_account,
+                                    "allow_cross_tenant_replication",
+                                    True,
+                                )
+                                is None
+                                else getattr(
+                                    storage_account,
+                                    "allow_cross_tenant_replication",
+                                    True,
+                                )
                             ),
-                            allow_shared_key_access=getattr(
-                                storage_account, "allow_shared_key_access", True
+                            allow_shared_key_access=(
+                                True
+                                if getattr(
+                                    storage_account, "allow_shared_key_access", True
+                                )
+                                is None
+                                else getattr(
+                                    storage_account, "allow_shared_key_access", True
+                                )
                             ),
                         )
                     )
@@ -246,17 +271,6 @@ class PrivateEndpointConnection(BaseModel):
     type: str
 
 
-class ReplicationSettings(Enum):
-    STANDARD_LRS = "Standard_LRS"
-    STANDARD_GRS = "Standard_GRS"
-    STANDARD_RAGRS = "Standard_RAGRS"
-    STANDARD_ZRS = "Standard_ZRS"
-    PREMIUM_LRS = "Premium_LRS"
-    PREMIUM_ZRS = "Premium_ZRS"
-    STANDARD_GZRS = "Standard_GZRS"
-    STANDARD_RAGZRS = "Standard_RAGZRS"
-
-
 class SMBProtocolSettings(BaseModel):
     channel_encryption: list[str]
     supported_versions: list[str]
@@ -283,7 +297,7 @@ class Account(BaseModel):
     minimum_tls_version: str
     private_endpoint_connections: list[PrivateEndpointConnection]
     key_expiration_period_in_days: Optional[int] = None
-    replication_settings: ReplicationSettings = ReplicationSettings.STANDARD_LRS
+    replication_settings: str = "Standard_LRS"
     allow_cross_tenant_replication: bool = True
     allow_shared_key_access: bool = True
     blob_properties: Optional[BlobProperties] = None

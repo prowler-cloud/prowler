@@ -41,7 +41,7 @@ class HTML(Output):
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
                             <td>{finding.metadata.ServiceName}</td>
-                            <td>{":".join([finding.resource_metadata['file_path'], "-".join(map(str, finding.resource_metadata['file_line_range']))]) if finding.metadata.Provider == "iac" else finding.region.lower()}</td>
+                            <td>{":".join([finding.resource_metadata["file_path"], "-".join(map(str, finding.resource_metadata["file_line_range"]))]) if finding.metadata.Provider == "iac" else finding.region.lower()}</td>
                             <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
                             <td>{finding.metadata.CheckTitle}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
@@ -556,17 +556,76 @@ class HTML(Output):
             str: the HTML assessment summary
         """
         try:
+            if hasattr(provider.identity, "account_name"):
+                # GithubIdentityInfo (Personal Access Token, OAuth)
+                account_info_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub account:</b> {provider.identity.account_name}
+                            </li>
+                            """
+                # Add email if available
+                if (
+                    hasattr(provider.identity, "account_email")
+                    and provider.identity.account_email
+                ):
+                    account_info_items += f"""
+                                <li class="list-group-item">
+                                    <b>GitHub account email:</b> {provider.identity.account_email}
+                                </li>"""
+            elif hasattr(provider.identity, "app_id"):
+                # GithubAppIdentityInfo (GitHub App)
+                # Assessment items: App Name and Installations
+                account_info_items = f"""
+                                <li class="list-group-item">
+                                    <b>GitHub App Name:</b> {provider.identity.app_name}
+                                </li>"""
+                # Add installations if available
+                if (
+                    hasattr(provider.identity, "installations")
+                    and provider.identity.installations
+                ):
+                    installations_display = ", ".join(provider.identity.installations)
+                    account_info_items += f"""
+                            <li class="list-group-item">
+                                <b>Installations:</b> {installations_display}
+                            </li>"""
+                else:
+                    account_info_items += """
+                            <li class="list-group-item">
+                                <b>Installations:</b> No installations found
+                            </li>"""
+
+                # Credentials items: Authentication method and App ID
+                credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> {provider.auth_method}
+                            </li>
+                            <li class="list-group-item">
+                                <b>GitHub App ID:</b> {provider.identity.app_id}
+                            </li>"""
+            else:
+                # Fallback for other identity types
+                account_info_items = ""
+                credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> {provider.auth_method}
+                            </li>"""
+
+            # For PAT/OAuth, use default credentials structure
+            if hasattr(provider.identity, "account_name"):
+                credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> {provider.auth_method}
+                            </li>"""
+
             return f"""
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
                             GitHub Assessment Summary
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
-                            <li class="list-group-item">
-                                <b>GitHub account:</b> {provider.identity.account_name}
-                            </li>
+                        <ul class="list-group list-group-flush">
+                            {account_info_items}
                         </ul>
                     </div>
                 </div>
@@ -575,11 +634,8 @@ class HTML(Output):
                         <div class="card-header">
                             GitHub Credentials
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
-                            <li class="list-group-item">
-                                <b>GitHub authentication method:</b> {provider.auth_method}
-                            </li>
+                        <ul class="list-group list-group-flush">
+                            {credentials_items}
                         </ul>
                     </div>
                 </div>"""

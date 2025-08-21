@@ -894,9 +894,10 @@ class AzureProvider(Provider):
                     client = GraphServiceClient(credentials=credentials)
 
                     domain_result = await client.domains.get()
-                    if getattr(domain_result, "value"):
-                        if getattr(domain_result.value[0], "id"):
-                            identity.tenant_domain = domain_result.value[0].id
+                    for domain in getattr(domain_result, "value", []):
+                        if getattr(domain, "is_default"):
+                            identity.tenant_domain = domain.id
+                            break
 
                 except HttpResponseError as error:
                     logger.error(

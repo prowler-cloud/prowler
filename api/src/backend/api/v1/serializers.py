@@ -1217,6 +1217,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GITHUB.value:
+                serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
@@ -1291,6 +1293,16 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
 
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class GithubProviderSecret(serializers.Serializer):
+    personal_access_token = serializers.CharField(required=False)
+    oauth_app_token = serializers.CharField(required=False)
+    github_app_id = serializers.IntegerField(required=False)
+    github_app_key_content = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1938,6 +1950,16 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
+    def validate(self, attrs):
+        if Integration.objects.filter(
+            configuration=attrs.get("configuration")
+        ).exists():
+            raise serializers.ValidationError(
+                {"name": "This integration already exists."}
+            )
+
+        return super().validate(attrs)
+
     @staticmethod
     def validate_integration_data(
         integration_type: str,
@@ -1945,7 +1967,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
         configuration: dict,
         credentials: dict,
     ):
-        if integration_type == Integration.IntegrationChoices.S3:
+        if integration_type == Integration.IntegrationChoices.AMAZON_S3:
             config_serializer = S3ConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
             # TODO: This will be required for AWS Security Hub
@@ -1963,7 +1985,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 }
             )
 
-        config_serializer(data=configuration).is_valid(raise_exception=True)
+        serializer_instance = config_serializer(data=configuration)
+        serializer_instance.is_valid(raise_exception=True)
+
+        # Apply the validated (and potentially transformed) data back to configuration
+        configuration.update(serializer_instance.validated_data)
 
         for cred_serializer in credentials_serializers:
             try:
@@ -2042,7 +2068,6 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "connected": {"read_only": True},
-            "enabled": {"read_only": True},
             "connection_last_checked_at": {"read_only": True},
         }
 
@@ -2052,10 +2077,10 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         configuration = attrs.get("configuration")
         credentials = attrs.get("credentials")
 
-        validated_attrs = super().validate(attrs)
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
+        validated_attrs = super().validate(attrs)
         return validated_attrs
 
     def create(self, validated_data):
@@ -2106,6 +2131,7 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
+        super().validate(attrs)
         integration_type = self.instance.integration_type
         providers = attrs.get("providers")
         configuration = attrs.get("configuration") or self.instance.configuration

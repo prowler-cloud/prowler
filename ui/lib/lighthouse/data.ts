@@ -77,9 +77,12 @@ Email: ${userData.email}
 Company: ${userData.company}
 
 **CURRENT PROVIDER DATA:**
-${providersWithScans
-  .map(
-    (provider, index) => `
+${
+  providersWithScans.length === 0
+    ? "No Providers Connected"
+    : providersWithScans
+        .map(
+          (provider, index) => `
 Provider ${index + 1}:
 - Name: ${provider.name}
 - Type: ${provider.provider_type}
@@ -94,8 +97,9 @@ ${
     : "- No completed scans found"
 }
 `,
-  )
-  .join("\n")}
+        )
+        .join("\n")
+}
 `;
   } catch (error) {
     console.error("Failed to retrieve current data:", error);

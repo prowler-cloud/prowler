@@ -82,6 +82,8 @@ class GithubProvider(Provider):
         _audit_config (dict): The audit configuration for the provider.
         _fixer_config (dict): The fixer configuration for the provider.
         _mutelist (Mutelist): The mutelist for the provider.
+        _repositories (list): List of repository names to scan in 'owner/repo-name' format.
+        _organizations (list): List of organization or user names to scan repositories for.
         audit_metadata (Audit_Metadata): The audit metadata for the provider.
     """
 
@@ -91,6 +93,8 @@ class GithubProvider(Provider):
     _identity: GithubIdentityInfo
     _audit_config: dict
     _mutelist: Mutelist
+    _repositories: list
+    _organizations: list
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -99,6 +103,7 @@ class GithubProvider(Provider):
         personal_access_token: str = "",
         oauth_app_token: str = "",
         github_app_key: str = "",
+        github_app_key_content: str = "",
         github_app_id: int = 0,
         # Provider configuration
         config_path: str = None,
@@ -106,6 +111,8 @@ class GithubProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = None,
+        repositories: list = None,
+        organizations: list = None,
     ):
         """
         GitHub Provider constructor
@@ -114,20 +121,34 @@ class GithubProvider(Provider):
             personal_access_token (str): GitHub personal access token.
             oauth_app_token (str): GitHub OAuth App token.
             github_app_key (str): GitHub App key.
+            github_app_key_content (str): GitHub App key content.
             github_app_id (int): GitHub App ID.
             config_path (str): Path to the audit configuration file.
             config_content (dict): Audit configuration content.
             fixer_config (dict): Fixer configuration content.
             mutelist_path (str): Path to the mutelist file.
             mutelist_content (dict): Mutelist content.
+            repositories (list): List of repository names to scan in 'owner/repo-name' format.
+            organizations (list): List of organization or user names to scan repositories for.
         """
         logger.info("Instantiating GitHub Provider...")
+
+        # Mute GitHub library logs to reduce noise since it is already handled by the Prowler logger
+        import logging
+
+        logging.getLogger("github").setLevel(logging.CRITICAL)
+        logging.getLogger("github.GithubRetry").setLevel(logging.CRITICAL)
+
+        # Set repositories and organizations for scoping
+        self._repositories = repositories or []
+        self._organizations = organizations or []
 
         self._session = GithubProvider.setup_session(
             personal_access_token,
             oauth_app_token,
             github_app_id,
             github_app_key,
+            github_app_key_content,
         )
 
         # Set the authentication method
@@ -209,6 +230,20 @@ class GithubProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
+
+    @property
+    def repositories(self) -> list:
+        """
+        repositories method returns the provider's repository list for scoping.
+        """
+        return self._repositories
+
+    @property
+    def organizations(self) -> list:
+        """
+        organizations method returns the provider's organization list for scoping.
+        """
+        return self._organizations
 
     @staticmethod
     def setup_session(
@@ -292,7 +327,7 @@ class GithubProvider(Provider):
 
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise GithubSetUpSessionError(
                 original_exception=error,
@@ -315,10 +350,12 @@ class GithubProvider(Provider):
                 auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
                 try:
+                    user = g.get_user()
                     identity = GithubIdentityInfo(
-                        account_id=g.get_user().id,
-                        account_name=g.get_user().login,
-                        account_url=g.get_user().url,
+                        account_id=user.id,
+                        account_name=user.login,
+                        account_url=user.url,
+                        account_email=user.get_emails()[0].email,
                     )
                     return identity
 
@@ -330,8 +367,18 @@ class GithubProvider(Provider):
             elif session.id != 0 and session.key:
                 auth = Auth.AppAuth(session.id, session.key)
                 gi = GithubIntegration(auth=auth, retry=retry_config)
+                installations = []
+                for installation in gi.get_installations():
+                    installations.append(
+                        installation.raw_data.get("account", {}).get("login")
+                    )
                 try:
-                    identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
+                    app = gi.get_app()
+                    identity = GithubAppIdentityInfo(
+                        app_id=app.id,
+                        app_name=app.name,
+                        installations=installations,
+                    )
                     return identity
 
                 except Exception as error:
@@ -341,7 +388,7 @@ class GithubProvider(Provider):
 
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise GithubSetUpIdentityError(
                 original_exception=error,
@@ -358,11 +405,13 @@ class GithubProvider(Provider):
             report_lines = [
                 f"GitHub Account: {Fore.YELLOW}{self.identity.account_name}{Style.RESET_ALL}",
                 f"GitHub Account ID: {Fore.YELLOW}{self.identity.account_id}{Style.RESET_ALL}",
+                f"GitHub Account Email: {Fore.YELLOW}{self.identity.account_email}{Style.RESET_ALL}",
                 f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
         elif isinstance(self.identity, GithubAppIdentityInfo):
             report_lines = [
                 f"GitHub App ID: {Fore.YELLOW}{self.identity.app_id}{Style.RESET_ALL}",
+                f"GitHub App Name: {Fore.YELLOW}{self.identity.app_name}{Style.RESET_ALL}",
                 f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
         report_title = (

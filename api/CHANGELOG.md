@@ -2,6 +2,29 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.12.0] (Prowler 5.11.0 - UNRELEASED)
+
+### Added
+- Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
+
+## [1.11.0] (Prowler 5.10.0)
+
+### Added
+- Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
+- Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+
+### Fixed
+- Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
+
+---
+
+## [1.10.2] (Prowler v5.9.2)
+
+### Changed
+- Optimized queries for resources views [(#8336)](https://github.com/prowler-cloud/prowler/pull/8336)
+
+---
+
 ## [v1.10.1] (Prowler v5.9.1)
 
 ### Fixed

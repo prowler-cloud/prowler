@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 
 export const getAIKey = async (): Promise<string> => {
@@ -80,6 +82,7 @@ export const createLighthouseConfig = async (config: {
     if (data?.data?.id) {
       checkLighthouseConnection(data.data.id);
     }
+    revalidatePath("/");
 
     return data;
   } catch (error) {
@@ -101,7 +104,7 @@ export const getLighthouseConfig = async () => {
 
     // Check if data array exists and has at least one item
     if (data?.data && data.data.length > 0) {
-      return data.data[0];
+      return data.data[0].attributes;
     }
 
     return undefined;
@@ -163,7 +166,7 @@ export const updateLighthouseConfig = async (config: {
     if (updateData?.data?.id || configId) {
       checkLighthouseConnection(configId);
     }
-
+    revalidatePath("/");
     return updateData;
   } catch (error) {
     console.error("[Server] Error in updateLighthouseConfig:", error);

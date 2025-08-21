@@ -13,6 +13,7 @@ on:
       - "master"
       - "v5.*"
     paths:
+      - ".github/workflows/api-pull-request.yml"
       - "api/**"
 
 env:
@@ -81,7 +82,9 @@ jobs:
         id: are-non-ignored-files-changed
         uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
         with:
-          files: api/**
+          files: |
+            api/**
+            .github/workflows/api-pull-request.yml
           files_ignore: ${{ env.IGNORE_FILES }}
 
       - name: Replace @master with current branch in pyproject.toml
@@ -104,6 +107,23 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry lock
+
+      - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push'
+        run: |
+          # Get the latest commit hash from the prowler-cloud/prowler repository
+          LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+          echo "Latest commit hash: $LATEST_COMMIT"
+
+          # Update the resolved_reference specifically for prowler-cloud/prowler repository
+          sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+            s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+          }' poetry.lock
+
+          # Verify the change was made
+          echo "Updated resolved_reference:"
+          grep -A2 -B2 "resolved_reference" poetry.lock
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -164,8 +184,9 @@ jobs:
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
+        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
         run: |
-          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323
+          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
 
       - name: Vulture
         working-directory: ./api

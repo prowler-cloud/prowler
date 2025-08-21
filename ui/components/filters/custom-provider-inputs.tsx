@@ -4,6 +4,7 @@ import {
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
+  GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
 } from "../icons/providers-badge";
@@ -49,6 +50,15 @@ export const CustomProviderInputKubernetes = () => {
     <div className="flex items-center gap-x-2">
       <KS8ProviderBadge width={25} height={25} />
       <p className="text-sm">Kubernetes</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputGitHub = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <GitHubProviderBadge width={25} height={25} />
+      <p className="text-sm">GitHub</p>
     </div>
   );
 };

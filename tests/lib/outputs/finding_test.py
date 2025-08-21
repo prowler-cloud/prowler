@@ -14,7 +14,14 @@ from prowler.lib.check.models import (
 )
 from prowler.lib.outputs.common import Status
 from prowler.lib.outputs.finding import Finding
+from prowler.providers.github.models import GithubAppIdentityInfo
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
+from tests.providers.github.github_fixtures import (
+    ACCOUNT_ID,
+    ACCOUNT_NAME,
+    ACCOUNT_URL,
+    APP_ID,
+)
 
 
 def mock_check_metadata(provider):
@@ -505,6 +512,142 @@ class TestFinding:
         assert finding_output.metadata.RelatedTo == ["check1", "check2"]
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
+
+    def test_generate_output_github_personal_access_token(self):
+        """Test GitHub output generation with Personal Access Token authentication."""
+        # Mock provider using Personal Access Token
+        provider = MagicMock()
+        provider.type = "github"
+        # Use the actual GithubIdentityInfo for Personal Access Token
+        from prowler.providers.github.models import GithubIdentityInfo
+
+        provider.identity = GithubIdentityInfo(
+            account_name=ACCOUNT_NAME, account_id=ACCOUNT_ID, account_url=ACCOUNT_URL
+        )
+        provider.auth_method = "Personal Access Token"
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.resource_id = "test_repository"
+        check_output.resource_name = "test_repository"
+        check_output.resource_details = "GitHub repository test_repository"
+        check_output.resource_tags = {"topic": "security"}
+        check_output.owner = "test-owner"  # GitHub uses owner for region
+        check_output.status = Status.PASS
+        check_output.status_extended = "Repository has security features enabled"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="github")
+        check_output.resource = {"url": "https://github.com/owner/test_repository"}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
+        }
+
+        # Mock output options
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        # Generate the finding
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        # Assert basic finding properties
+        assert isinstance(finding_output, Finding)
+        assert finding_output.provider == "github"
+        assert finding_output.auth_method == "Personal Access Token"
+        assert finding_output.resource_name == "test_repository"
+        assert finding_output.resource_uid == "test_repository"
+        assert finding_output.region == "test-owner"
+        assert finding_output.status == Status.PASS
+        assert (
+            finding_output.status_extended == "Repository has security features enabled"
+        )
+        assert finding_output.muted is False
+        assert finding_output.resource_tags == {"topic": "security"}
+
+        # Assert account information for Personal Access Token
+        assert finding_output.account_name == ACCOUNT_NAME
+        assert finding_output.account_uid == ACCOUNT_ID
+        assert finding_output.account_email is None
+        assert finding_output.account_organization_uid is None
+        assert finding_output.account_organization_name is None
+        assert finding_output.account_tags == {}
+
+        # Metadata checks
+        assert finding_output.metadata.Provider == "github"
+        assert finding_output.metadata.CheckID == "service_check_id"
+        assert finding_output.metadata.ServiceName == "service"
+        assert finding_output.metadata.Severity == Severity.high
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
+
+    def test_generate_output_github_app_authentication(self):
+        """Test GitHub output generation with GitHub App authentication."""
+        # Mock provider using GitHub App authentication - this is the key test case for the bug fix
+        provider = MagicMock()
+        provider.type = "github"
+        # GitHub App identity only has app_id, not account_name/account_id
+        provider.identity = GithubAppIdentityInfo(
+            app_id=APP_ID, app_name="test-app", installations=["test-org"]
+        )
+        provider.auth_method = "GitHub App Token"
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.resource_id = "test_repository"
+        check_output.resource_name = "test_repository"
+        check_output.resource_details = "GitHub repository test_repository"
+        check_output.resource_tags = {"language": "python"}
+        check_output.owner = "test-owner"  # GitHub provider uses owner for region
+        check_output.status = Status.FAIL
+        check_output.status_extended = (
+            "Repository lacks required security configuration"
+        )
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="github")
+        check_output.resource = {"url": "https://github.com/org/test_repository"}
+        check_output.compliance = {
+            "CIS-2.0": ["1.12"],
+            "MITRE-ATTACK": ["T1098"],
+        }
+
+        # Mock output options
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        # Generate the finding - this was failing before the fix
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        # Assert basic finding properties
+        assert isinstance(finding_output, Finding)
+        assert finding_output.provider == "github"
+        assert finding_output.auth_method == "GitHub App Token"
+        assert finding_output.resource_name == "test_repository"
+        assert finding_output.resource_uid == "test_repository"
+        assert finding_output.region == "test-owner"
+        assert finding_output.status == Status.FAIL
+        assert (
+            finding_output.status_extended
+            == "Repository lacks required security configuration"
+        )
+        assert finding_output.muted is False
+        assert finding_output.resource_tags == {"language": "python"}
+        assert isinstance(finding_output.timestamp, int)
+
+        # Assert account information for GitHub App - this is the core of the bug fix
+        # Before the fix, this would fail because GithubAppIdentityInfo doesn't have account_name
+        # After the fix, it should use app_name
+        assert finding_output.account_name == "test-app"
+        assert finding_output.account_uid == APP_ID
+        assert finding_output.account_email is None
+        assert finding_output.account_organization_uid is None
+        assert finding_output.account_organization_name is None
+        assert finding_output.account_tags == {}
+
+        # Metadata checks
+        assert finding_output.metadata.Provider == "github"
+        assert finding_output.metadata.CheckID == "service_check_id"
+        assert finding_output.metadata.ServiceName == "service"
+        assert finding_output.metadata.Severity == Severity.high
+        assert finding_output.metadata.ResourceType == "mock_resource_type"
 
     def test_generate_output_iac_remote(self):
         # Mock provider

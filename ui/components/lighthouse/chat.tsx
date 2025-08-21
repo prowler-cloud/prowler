@@ -1,12 +1,12 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
 import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 
 interface SuggestedAction {
@@ -25,20 +25,54 @@ interface ChatFormData {
 }
 
 export const Chat = ({ hasConfig, isActive }: ChatProps) => {
-  const { messages, handleSubmit, handleInputChange, append, status } = useChat(
-    {
-      api: "/api/lighthouse/analyst",
-      credentials: "same-origin",
-      experimental_throttle: 100,
-      sendExtraMessageFields: true,
-      onFinish: () => {
-        // Handle chat completion
-      },
-      onError: (error) => {
-        console.error("Chat error:", error);
-      },
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const {
+    messages,
+    handleSubmit,
+    handleInputChange,
+    append,
+    status,
+    error,
+    setMessages,
+  } = useChat({
+    api: "/api/lighthouse/analyst",
+    credentials: "same-origin",
+    experimental_throttle: 100,
+    sendExtraMessageFields: true,
+    onFinish: (message) => {
+      // There is no specific way to output the error message from langgraph supervisor
+      // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
+      // Detect error messages sent from backend using specific prefix and display the error
+      if (message.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")) {
+        const errorText = message.content
+          .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
+          .trim();
+        setErrorMessage(errorText);
+        // Remove error message from chat history
+        setMessages((prev) =>
+          prev.filter(
+            (m) => !m.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:"),
+          ),
+        );
+      }
     },
-  );
+    onError: (error) => {
+      console.error("Chat error:", error);
+
+      if (
+        error?.message?.includes("<html>") &&
+        error?.message?.includes("<title>403 Forbidden</title>")
+      ) {
+        setErrorMessage("403 Forbidden");
+        return;
+      }
+
+      setErrorMessage(
+        error?.message || "An error occurred. Please retry your message.",
+      );
+    },
+  });
 
   const form = useForm<ChatFormData>({
     defaultValues: {
@@ -49,6 +83,30 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const messageValue = form.watch("message");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
+  const messageValueRef = useRef<string>("");
+
+  // Keep ref in sync with current value
+  messageValueRef.current = messageValue;
+
+  // Restore last user message to input when any error occurs
+  useEffect(() => {
+    if (errorMessage) {
+      // Capture current messages to avoid dependency issues
+      setMessages((currentMessages) => {
+        const lastUserMessage = currentMessages
+          .filter((m) => m.role === "user")
+          .pop();
+
+        if (lastUserMessage) {
+          form.setValue("message", lastUserMessage.content);
+          // Remove the last user message from history since it's now in the input
+          return currentMessages.slice(0, -1);
+        }
+
+        return currentMessages;
+      });
+    }
+  }, [errorMessage, form, setMessages]);
 
   // Sync form value with chat input
   useEffect(() => {
@@ -67,6 +125,8 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
 
   const onFormSubmit = form.handleSubmit((data) => {
     if (data.message.trim()) {
+      // Clear error on new submission
+      setErrorMessage(null);
       handleSubmit();
     }
   });
@@ -138,17 +198,66 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 ? "Please configure your OpenAI API key to use Lighthouse AI."
                 : "OpenAI API key is invalid. Please update your key to use Lighthouse AI."}
             </p>
-            <Link
+            <CustomLink
               href="/lighthouse/config"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              target="_self"
+              size="sm"
             >
               Configure API Key
-            </Link>
+            </CustomLink>
           </div>
         </div>
       )}
 
-      {messages.length === 0 ? (
+      {/* Error Banner */}
+      {(error || errorMessage) && (
+        <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                Error
+              </h3>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                {errorMessage ||
+                  error?.message ||
+                  "An error occurred. Please retry your message."}
+              </p>
+              {/* Original error details for native errors */}
+              {error && (error as any).status && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  Status: {(error as any).status}
+                </p>
+              )}
+              {error && (error as any).body && (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                    Show details
+                  </summary>
+                  <pre className="mt-1 max-h-20 overflow-auto rounded bg-red-100 p-2 text-xs text-red-800 dark:bg-red-900/30 dark:text-red-200">
+                    {JSON.stringify((error as any).body, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {messages.length === 0 && !errorMessage && !error ? (
         <div className="flex flex-1 items-center justify-center p-4">
           <div className="w-full max-w-2xl">
             <h2 className="mb-4 text-center font-sans text-xl">Suggestions</h2>
@@ -232,7 +341,11 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 control={form.control}
                 name="message"
                 label=""
-                placeholder="Type your message..."
+                placeholder={
+                  error || errorMessage
+                    ? "Edit your message and try again..."
+                    : "Type your message..."
+                }
                 variant="bordered"
                 minRows={1}
                 maxRows={6}

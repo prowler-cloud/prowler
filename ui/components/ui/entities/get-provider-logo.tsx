@@ -4,6 +4,7 @@ import {
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
+  GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
 } from "@/components/icons/providers-badge";
@@ -21,6 +22,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <KS8ProviderBadge width={35} height={35} />;
     case "m365":
       return <M365ProviderBadge width={35} height={35} />;
+    case "github":
+      return <GitHubProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -38,6 +41,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Kubernetes";
     case "m365":
       return "Microsoft 365";
+    case "github":
+      return "GitHub";
     default:
       return "Unknown Provider";
   }

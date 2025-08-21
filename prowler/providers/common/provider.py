@@ -192,6 +192,7 @@ class Provider(ABC):
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
+                        retries_max_attempts=arguments.gcp_retries_max_attempts,
                         organization_id=arguments.organization_id,
                         project_ids=arguments.project_id,
                         excluded_project_ids=arguments.excluded_project_id,
@@ -221,6 +222,8 @@ class Provider(ABC):
                         env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
+                        certificate_auth=arguments.certificate_auth,
+                        certificate_path=arguments.certificate_path,
                         tenant_id=arguments.tenant_id,
                         init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
@@ -242,6 +245,8 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
+                        repositories=arguments.repository,
+                        organizations=arguments.organization,
                     )
                 elif "iac" in provider_class_name.lower():
                     provider_class(

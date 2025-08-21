@@ -1,4 +1,4 @@
-name: Check Changelog
+name: Prowler - Check Changelog
 
 on:
   pull_request:
@@ -55,29 +55,20 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: '<!-- changelog-check -->'
 
-      - name: Comment on PR if changelog is missing
-        if: github.event.pull_request.head.repo.full_name == github.repository && steps.check_folders.outputs.missing_changelogs != ''
+      - name: Update PR comment with changelog status
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          edit-mode: replace
           body: |
             <!-- changelog-check -->
-            ⚠️ **Changes detected in the following folders without a corresponding update to the `CHANGELOG.md`:**
+            ${{ steps.check_folders.outputs.missing_changelogs != '' && format('⚠️ **Changes detected in the following folders without a corresponding update to the `CHANGELOG.md`:**
 
-            ${{ steps.check_folders.outputs.missing_changelogs }}
+            {0}
 
-            Please add an entry to the corresponding `CHANGELOG.md` file to maintain a clear history of changes.
-
-      - name: Comment on PR if all changelogs are present
-        if: github.event.pull_request.head.repo.full_name == github.repository && steps.check_folders.outputs.missing_changelogs == ''
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-id: ${{ steps.find_comment.outputs.comment-id }}
-          body: |
-            <!-- changelog-check -->
-            ✅ All necessary `CHANGELOG.md` files have been updated. Great job! 🎉
+            Please add an entry to the corresponding `CHANGELOG.md` file to maintain a clear history of changes.', steps.check_folders.outputs.missing_changelogs) || '✅ All necessary `CHANGELOG.md` files have been updated. Great job! 🎉' }}
 
       - name: Fail if changelog is missing
         if: steps.check_folders.outputs.missing_changelogs != ''
