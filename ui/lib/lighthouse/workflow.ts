@@ -53,7 +53,7 @@ export async function initLighthouseWorkflow() {
   const apiKey = await getAIKey();
   const lighthouseConfig = await getLighthouseConfig();
 
-  const modelParams = getModelParams(lighthouseConfig.model, lighthouseConfig);
+  const modelParams = getModelParams(lighthouseConfig);
 
   // Initialize models without API keys
   const llm = new ChatOpenAI({

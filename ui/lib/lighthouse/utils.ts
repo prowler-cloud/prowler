@@ -49,7 +49,9 @@ export const convertLangChainMessageToVercelMessage = (
   }
 };
 
-export const getModelParams = (modelId: string, config: any): ModelParams => {
+export const getModelParams = (config: any): ModelParams => {
+  const modelId = config.model;
+
   const params: ModelParams = {
     maxTokens: config.max_tokens,
     temperature: config.temperature,
