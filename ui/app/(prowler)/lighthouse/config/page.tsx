@@ -5,12 +5,12 @@ import { ContentLayout } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 export default async function ChatbotConfigPage() {
-  const response = await getLighthouseConfig();
-  const initialValues = response?.attributes
+  const lighthouseConfig = await getLighthouseConfig();
+  const initialValues = lighthouseConfig
     ? {
-        model: response.attributes.model,
-        apiKey: response.attributes.api_key || "",
-        businessContext: response.attributes.business_context || "",
+        model: lighthouseConfig.model,
+        apiKey: lighthouseConfig.api_key || "",
+        businessContext: lighthouseConfig.business_context || "",
       }
     : {
         model: "gpt-4o",
@@ -18,7 +18,7 @@ export default async function ChatbotConfigPage() {
         businessContext: "",
       };
 
-  const configExists = !!response;
+  const configExists = !!lighthouseConfig;
 
   return (
     <ContentLayout title="Configure Lighthouse AI" icon="lucide:settings">
