@@ -162,7 +162,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ✅ **Conflict Markers Resolved**
-            
+
             All conflict markers have been successfully resolved in this pull request.
-            
+
             The `has-conflicts` label has been automatically removed.
