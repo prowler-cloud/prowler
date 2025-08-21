@@ -201,7 +201,9 @@ export const deleteProviderGroup = async (formData: FormData) => {
   const providerGroupId = formData.get("id");
 
   if (!providerGroupId) {
-    return { error: "Provider Group ID is required" };
+    return {
+      errors: [{ detail: "Provider Group ID is required." }],
+    };
   }
 
   const url = new URL(`${apiBaseUrl}/provider-groups/${providerGroupId}`);
@@ -233,6 +235,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Error deleting provider group:", error);
-    return { error: getErrorMessage(error) };
+    const message = await getErrorMessage(error);
+    return { errors: [{ detail: message }] };
   }
 };

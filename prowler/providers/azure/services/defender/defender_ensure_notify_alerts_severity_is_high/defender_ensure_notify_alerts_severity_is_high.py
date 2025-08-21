@@ -14,6 +14,11 @@ class defender_ensure_notify_alerts_severity_is_high(Check):
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=contact_configuration
                 )
+                report.resource_name = (
+                    contact_configuration.name
+                    if contact_configuration.name
+                    else "Security Contact"
+                )
                 report.subscription = subscription_name
                 report.status = "FAIL"
                 report.status_extended = f"Notifications are not enabled for alerts with a minimum severity of high or lower in subscription {subscription_name}."

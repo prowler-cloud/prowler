@@ -60,6 +60,11 @@ export interface ProviderEntity {
   alias: string | null;
 }
 
+export interface ProviderConnectionStatus {
+  label: string;
+  value: string;
+}
+
 export interface ProviderOverviewProps {
   data: {
     type: "provider-overviews";
