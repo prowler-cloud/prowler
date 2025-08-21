@@ -50,8 +50,24 @@ This two-step approach follows the Prowler API design where providers and their 
    ```
 
 3. Get your Prowler API token:
-   - **Prowler Cloud (SaaS):** Generate token at https://app.prowler.com
+   - **Prowler Cloud:** Generate token at https://api.prowler.com
    - **Self-hosted Prowler App:** Generate token in your local instance
+
+  ```bash
+  export PROWLER_API_TOKEN=$(curl --location 'https://api.prowler.com/api/v1/tokens' \
+    --header 'Content-Type: application/vnd.api+json' \
+    --header 'Accept: application/vnd.api+json' \
+    --data-raw '{
+      "data": {
+        "type": "tokens",
+        "attributes": {
+          "email": "your@email.com",
+          "password": "your-password"
+        }
+      }
+    }' | jq -r .data.attributes.access)
+  ```
+
 
 ## Configuration
 
@@ -384,24 +400,6 @@ Test your configuration without making API calls:
 python prowler_bulk_provisioning.py providers.yaml --dry-run
 ```
 
-## Error Handling
-
-The script provides detailed error reporting:
-
-- **Validation Errors:** Invalid provider configurations
-- **API Errors:** HTTP errors with status codes and response bodies
-- **Network Errors:** Connection timeouts and network issues
-- **Authentication Errors:** Invalid or expired tokens
-
-## Security Considerations
-
-- **Never commit credentials to version control**
-- **Use environment variables for sensitive data**
-- **Prefer IAM roles over access keys for AWS**
-- **Use service principals for Azure and M365**
-- **Store private keys securely for GitHub Apps**
-- **Use TLS verification in production** (avoid `--insecure`)
-
 ## Troubleshooting
 
 ### Common Issues
@@ -430,28 +428,11 @@ The script provides detailed error reporting:
    Solution: Check file paths for credentials files (JSON keys, kubeconfig, etc.)
    ```
 
-### Debug Mode
-
-Enable verbose output by using dry-run mode to inspect payloads:
-
-```bash
-python prowler_bulk_provisioning.py providers.yaml --dry-run
-```
-
 ## Examples
 
 See the `examples/` directory for sample configuration files:
 
 - `examples/simple-providers.yaml` - Basic example with minimal configuration
-
-## Contributing
-
-When contributing to this tool:
-
-1. Follow Python best practices and type hints
-2. Add tests for new provider authentication methods
-3. Update documentation for new features
-4. Ensure backward compatibility
 
 ## Support
 
@@ -464,45 +445,3 @@ For issues and questions:
 ## License
 
 This tool is part of the Prowler project and follows the same licensing terms.
-
-## Appendix
-
-### Obtaining API Token via Command Line
-
-You can obtain a Prowler API token programmatically using curl:
-
-```bash
-curl --location 'https://api.prowler.com/api/v1/tokens' \
-  --header 'Content-Type: application/vnd.api+json' \
-  --header 'Accept: application/vnd.api+json' \
-  --data-raw '{
-    "data": {
-      "type": "tokens",
-      "attributes": {
-        "email": "your@email.com",
-        "password": "your-password"
-      }
-    }
-  }' | jq .data.attributes.access
-```
-
-This will return the access token that you can use with the `--token` parameter or export as `PROWLER_API_TOKEN`.
-
-#### Example: Set token directly from curl
-
-```bash
-export PROWLER_API_TOKEN=$(curl --location 'https://api.prowler.com/api/v1/tokens' \
-  --header 'Content-Type: application/vnd.api+json' \
-  --header 'Accept: application/vnd.api+json' \
-  --data-raw '{
-    "data": {
-      "type": "tokens",
-      "attributes": {
-        "email": "your@email.com",
-        "password": "your-password"
-      }
-    }
-  }' | jq -r .data.attributes.access)
-```
-
-**Note:** Store your credentials securely and never commit them to version control.
