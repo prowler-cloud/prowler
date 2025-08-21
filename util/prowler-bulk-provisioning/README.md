@@ -1,4 +1,4 @@
-# Prowler Provider Bulk Importer
+# Prowler Provider Bulk Provisioning
 
 A Python script to bulk-provision cloud providers in Prowler Cloud/App via REST API. This tool streamlines the process of adding multiple cloud providers to Prowler by reading configuration from YAML, JSON, or CSV files and making API calls with concurrency and retry support.
 
