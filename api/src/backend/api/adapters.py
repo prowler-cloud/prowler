@@ -5,6 +5,7 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.models import Membership, Role, Tenant, User, UserRoleRelationship
 
+
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
     @staticmethod
     def get_user_by_email(email: str):
