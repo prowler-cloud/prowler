@@ -28,12 +28,15 @@ export const AWSRoleCredentialsForm = ({
   const defaultCredentialsType = isCloudEnv
     ? "aws-sdk-default"
     : "access-secret-key";
+
   const credentialsType = useWatch({
     control,
     name: ProviderCredentialFields.CREDENTIALS_TYPE,
     defaultValue: defaultCredentialsType,
   });
+
   const [showOptionalRole, setShowOptionalRole] = useState(false);
+
   const showRoleSection =
     type === "providers" ||
     (isCloudEnv && credentialsType === "aws-sdk-default") ||
@@ -57,7 +60,7 @@ export const AWSRoleCredentialsForm = ({
         name={ProviderCredentialFields.CREDENTIALS_TYPE}
         label="Authentication Method"
         placeholder="Select credentials type"
-        defaultSelectedKeys={[defaultCredentialsType]}
+        selectedKeys={[credentialsType || defaultCredentialsType]}
         className="mb-4"
         variant="bordered"
         onSelectionChange={(keys) =>
@@ -182,7 +185,7 @@ export const AWSRoleCredentialsForm = ({
             labelPlacement="inside"
             placeholder="Enter the Role ARN"
             variant="bordered"
-            isRequired={type === "providers"}
+            isRequired={true}
             isInvalid={
               !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
             }
