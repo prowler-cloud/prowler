@@ -99,7 +99,7 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 #### Implementation Complexity
 
 - **SDK Providers**: Low complexity, you have mature examples like AWS, Azure, GCP, Kubernetes, M365, etc. that you can leverage to implement your provider.
-- **API Providers**: Medium complexity, you need to implement the authentication and session management, and the API calls to the provider, but you now have Github as example to follow.
+- **API Providers**: Medium complexity, you need to implement the authentication and session management, and the API calls to the provider, but you now have NHN as example to follow.
 - **Tool/Wrapper Providers**: High complexity, you need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have, but you now have IAC and the PowerShell wrapper as example to follow.
 
 ### Determining Regional vs Non-Regional Architecture
@@ -1928,8 +1928,8 @@ Update the provider documentation to include your new API provider in the exampl
 
 **Definition:**
 
-- Integrate third-party tools as libraries or subprocesses (e.g., Checkov for IaC).
-- Examples: IaC (Checkov).
+- Integrate third-party tools as libraries or subprocesses (e.g., Trivy for IaC).
+- Examples: IaC (Trivy).
 
 **Typical Use Cases:**
 
@@ -1941,14 +1941,14 @@ Update the provider documentation to include your new API provider in the exampl
 **Key Characteristics:**
 
 - No session/identity management required (tool handles this internally).
-- Arguments: `scan_path`, `frameworks`, `exclude_path`, `scan_repository_url`, etc.
+- Arguments: specific to the tool, but for example: `scan_path`, `frameworks`, `exclude_path`, `scan_repository_url`, etc.
 - Outputs: Tool-specific output formats that need to be parsed and converted.
 - Tool execution and output parsing.
 - Configuration file mapping and argument translation.
 
 **Implementation Details:**
 
-- Tool providers typically execute external tools as subprocesses (e.g., `checkov` command).
+- Tool providers typically execute external tools as subprocesses (e.g., `pwsh` or `trivy` command).
 - They require mapping between Prowler's interface and the tool's arguments.
 - Output parsing and conversion to Prowler's standard format is crucial.
 - Tool-specific configuration files and validation.
@@ -3418,4 +3418,4 @@ Use existing providers as templates, this will help you to understand better the
 
 - [How to add a new Service](./services.md)
 - [How to add new Checks](./checks.md)
-- [How to contribute](../contributing.md)
+- [How to contribute](./introduction.md/#contributing-to-prowler)
