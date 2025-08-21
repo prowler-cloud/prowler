@@ -8,7 +8,7 @@ def is_resource_filtered(resource: str, audit_resources: list) -> bool:
     Returns True if it is filtered and False if it does not match the input filters
     """
     try:
-        if resource in str(audit_resources):
+        if resource in audit_resources:
             return True
         return False
     except Exception as error:
