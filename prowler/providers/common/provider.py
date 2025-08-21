@@ -260,6 +260,16 @@ class Provider(ABC):
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
                     )
+                elif "ionos" in provider_class_name.lower():
+                    provider_class(
+                        ionos_username=arguments.ionos_username,
+                        ionos_password=arguments.ionos_password,
+                        ionos_datacenter_name=arguments.ionos_datacenter_name,
+                        mutelist_path=arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                        use_ionosctl=arguments.ionosctl,
+                        use_env_vars=arguments.ionos_user_env_vars,
+                    )
 
         except TypeError as error:
             logger.critical(

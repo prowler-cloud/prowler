@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import sys
 from os import environ
 
@@ -100,6 +99,7 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
+from prowler.providers.ionos.models import IonosOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
@@ -300,12 +300,16 @@ def prowler():
         output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "iac":
+        output_options = IACOutputOptions(args, bulk_checks_metadata)
     elif provider == "nhn":
         output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
-    elif provider == "iac":
-        output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "ionos":
+        output_options = IonosOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
