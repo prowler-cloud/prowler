@@ -54,10 +54,12 @@ class SecurityHubConnection(Connection):
     Attributes:
         enabled_regions (set): Set of regions where Security Hub is enabled.
         disabled_regions (set): Set of regions where Security Hub is disabled.
+        partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
     """
 
     enabled_regions: set = None
     disabled_regions: set = None
+    partition: str = ""
 
 
 class SecurityHub:
@@ -158,7 +160,7 @@ class SecurityHub:
         if aws_security_hub_available_regions:
             self._enabled_regions = self.verify_enabled_per_region(
                 aws_security_hub_available_regions,
-                aws_session,
+                self._session.current_session,
                 aws_account_id,
                 aws_partition,
             )
@@ -516,6 +518,7 @@ class SecurityHub:
                         error=None,
                         enabled_regions=enabled_regions,
                         disabled_regions=disabled_regions,
+                        partition=aws_partition,
                     )
 
             if len(enabled_regions) == 0:
@@ -543,6 +546,7 @@ class SecurityHub:
                     error=None,
                     enabled_regions=enabled_regions,
                     disabled_regions=disabled_regions,
+                    partition=aws_partition,
                 )
 
         except AWSSetUpSessionError as setup_session_error:
