@@ -121,7 +121,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: '⚠️ **Conflict Markers Detected**'
+          body-regex: '(⚠️ \*\*Conflict Markers Detected\*\*|✅ \*\*Conflict Markers Resolved\*\*)'
 
       - name: Create or update conflict comment
         if: steps.conflict-check.outputs.has_conflicts == 'true'
@@ -129,6 +129,7 @@ jobs:
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
           body: |
             ⚠️ **Conflict Markers Detected**
 
@@ -152,7 +153,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: '⚠️ **Conflict Markers Detected**'
+          body-regex: '(⚠️ \*\*Conflict Markers Detected\*\*|✅ \*\*Conflict Markers Resolved\*\*)'
 
       - name: Update comment when conflicts resolved
         if: steps.conflict-check.outputs.has_conflicts == 'false' && steps.find-resolved-comment.outputs.comment-id != ''
@@ -160,6 +161,7 @@ jobs:
         with:
           comment-id: ${{ steps.find-resolved-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
           body: |
             ✅ **Conflict Markers Resolved**
 
