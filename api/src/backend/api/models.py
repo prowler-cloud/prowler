@@ -1221,6 +1221,7 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
     passed_checks = models.IntegerField(default=0)
     failed_checks = models.IntegerField(default=0)
     total_checks = models.IntegerField(default=0)
+    score = models.FloatField(null=True, blank=True)
 
     scan = models.ForeignKey(
         Scan,

@@ -22,7 +22,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, Prefetch, Q, Subquery, Sum
+from django.db.models import Avg, Count, F, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -3330,6 +3330,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             .annotate(
                 total_instances=Count("id"),
                 manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+                avg_score=Avg("score"),
             )
         )
 
@@ -3363,6 +3364,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     "version": requirement["version"],
                     "description": requirement["description"],
                     "status": requirement_status,
+                    "score": requirement.get("avg_score"),
                 }
             )
 
