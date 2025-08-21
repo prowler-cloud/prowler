@@ -14,6 +14,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding as FindingOutput
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
+from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
@@ -162,98 +163,84 @@ def upload_s3_integration(
 
 
 def get_security_hub_client_from_integration(
-    integration: Integration, provider: Provider, findings: list
+    integration: Integration, tenant_id: str, findings: list
 ) -> tuple[bool, SecurityHub | Connection]:
     """
     Create and return a SecurityHub client using AWS credentials from an integration.
 
     Args:
         integration (Integration): The integration to get the Security Hub client from.
-        provider (Provider): The provider object containing account info.
+        tenant_id (str): The tenant identifier.
         findings (list): List of findings in ASFF format to send to Security Hub.
 
     Returns:
         tuple[bool, SecurityHub | Connection]: A tuple containing a boolean indicating
         if the connection was successful and the SecurityHub client or connection object.
     """
-    # Initialize prowler provider to get aws_account_id and aws_partition
-    prowler_provider = initialize_prowler_provider(provider)
+    # Get the provider associated with this integration
+    with rls_transaction(tenant_id):
+        provider_relationship = integration.integrationproviderrelationship_set.first()
+        if not provider_relationship:
+            return Connection(
+                is_connected=False, error="No provider associated with this integration"
+            )
+        provider_uid = provider_relationship.provider.uid
+        provider_secret = provider_relationship.provider.secret.secret
 
+    credentials = {}
     # Check if integration has credentials
     if integration.credentials:
         # Use integration credentials directly
         connection = SecurityHub.test_connection(
-            aws_account_id=prowler_provider.identity.account,
-            aws_partition=prowler_provider.identity.partition,
+            aws_account_id=provider_uid,
             raise_on_exception=False,
             **integration.credentials,
         )
+        credentials = integration.credentials
     else:
-        credentials = prowler_provider.session.current_session.get_credentials()
         connection = SecurityHub.test_connection(
-            aws_account_id=prowler_provider.identity.account,
-            aws_partition=prowler_provider.identity.partition,
-            aws_access_key_id=credentials.access_key,
-            aws_secret_access_key=credentials.secret_key,
-            aws_session_token=credentials.token,
+            aws_account_id=provider_uid,
             raise_on_exception=False,
+            **provider_secret,
         )
+        credentials = provider_secret
 
     if connection.is_connected:
-        # Check if regions are already saved in configuration
-        regions_config = integration.configuration.get("regions", None)
+        # If not saved, calculate them
+        all_security_hub_regions = AwsProvider.get_available_aws_service_regions(
+            "securityhub", connection.partition
+        )
 
-        if not regions_config:
-            # If not saved, calculate them
-            all_security_hub_regions = (
-                prowler_provider.get_available_aws_service_regions(
-                    "securityhub",
-                    prowler_provider.identity.partition,
-                    prowler_provider.identity.audited_regions,
-                )
-                if not prowler_provider.identity.audited_regions
-                else prowler_provider.identity.audited_regions
-            )
+        # Create temporary SecurityHub instance to get enabled regions
+        temp_security_hub = SecurityHub(
+            aws_account_id=provider_uid,
+            findings=[],
+            send_only_fails=False,
+            aws_security_hub_available_regions=all_security_hub_regions,
+            **credentials,
+        )
 
-            # Create temporary SecurityHub instance to get enabled regions
-            temp_security_hub = SecurityHub(
-                aws_account_id=prowler_provider.identity.account,
-                aws_partition=prowler_provider.identity.partition,
-                aws_session=prowler_provider.session.current_session,
-                findings=[],
-                send_only_fails=False,
-                aws_security_hub_available_regions=all_security_hub_regions,
-            )
+        # Get enabled regions as a set
+        enabled_regions = set(temp_security_hub._enabled_regions.keys())
+        all_regions_set = set(all_security_hub_regions)
 
-            # Get enabled regions as a set
-            enabled_regions = set(temp_security_hub._enabled_regions.keys())
-            all_regions_set = set(all_security_hub_regions)
+        # Create regions status dictionary
+        regions_status = {}
+        for region in all_regions_set:
+            regions_status[region] = region in enabled_regions
 
-            # Create regions status dictionary
-            regions_status = {}
-            for region in all_regions_set:
-                regions_status[region] = region in enabled_regions
-
-            # Save regions information in the integration configuration
+        # Save regions information in the integration configuration
+        with rls_transaction(tenant_id):
             integration.configuration["regions"] = regions_status
             integration.save()
 
-            # Use only enabled regions for SecurityHub client
-            security_hub_regions = list(enabled_regions)
-        else:
-            # Extract only enabled regions from the saved configuration
-            security_hub_regions = [
-                region for region, enabled in regions_config.items() if enabled
-            ]
-
         # Create SecurityHub client with all necessary parameters
         security_hub = SecurityHub(
-            aws_account_id=prowler_provider.identity.account,
-            aws_partition=prowler_provider.identity.partition,
-            aws_session=prowler_provider.session.current_session,
+            aws_account_id=provider_uid,
             findings=findings,
             send_only_fails=integration.configuration.get("send_only_fails", False),
-            aws_security_hub_available_regions=security_hub_regions,
+            aws_security_hub_available_regions=list(enabled_regions),
+            **credentials,
         )
         return True, security_hub
 
@@ -339,27 +326,9 @@ def upload_security_hub_integration(
         integration_executions = 0
         for integration in integrations:
             try:
-                # Filter findings based on send_only_fails configuration for this integration
-                send_only_fails = integration.configuration.get(
-                    "send_only_fails", False
-                )
-
-                if send_only_fails:
-                    logger.info(
-                        f"Filtering to only send FAILED findings for integration {integration.id}"
-                    )
-                    # Filter the already transformed ASFF findings to only include FAILED status
-                    filtered_asff_findings = [
-                        finding
-                        for finding in asff_findings
-                        if finding.Compliance.Status == "FAILED"
-                    ]
-                else:
-                    filtered_asff_findings = asff_findings
-
                 # Create Security Hub client with integration credentials
                 connected, security_hub = get_security_hub_client_from_integration(
-                    integration, provider, filtered_asff_findings
+                    integration, tenant_id, asff_findings
                 )
 
                 if not connected:
@@ -373,8 +342,11 @@ def upload_security_hub_integration(
                     continue
 
                 # Send findings to Security Hub
+                send_only_fails = integration.configuration.get(
+                    "send_only_fails", False
+                )
                 logger.info(
-                    f"Sending {len(filtered_asff_findings)} findings to Security Hub via integration {integration.id}"
+                    f"Sending {'all' if not send_only_fails else 'failed'} findings to Security Hub via integration {integration.id}"
                 )
                 findings_sent = security_hub.batch_send_to_security_hub()
 
