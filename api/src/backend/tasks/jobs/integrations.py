@@ -361,7 +361,7 @@ def upload_security_hub_integration(
                     )
 
                 # Archive previous findings if configured to do so
-                if not integration.configuration.get("skip_archive_previous", False):
+                if integration.configuration.get("archive_previous_findings", False):
                     logger.info(
                         f"Archiving previous findings in Security Hub via integration {integration.id}"
                     )

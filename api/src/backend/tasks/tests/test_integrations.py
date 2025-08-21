@@ -20,8 +20,8 @@ class TestS3IntegrationUploads:
     def test_get_s3_client_from_integration_success(self, mock_s3_class):
         mock_integration = MagicMock()
         mock_integration.credentials = {
-            "aws_access_key_id": "AKIA...",
-            "aws_secret_access_key": "SECRET",
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
         }
         mock_integration.configuration = {
             "bucket_name": "test-bucket",
@@ -339,8 +339,8 @@ class TestS3IntegrationUploads:
         """Test that S3 client uses output_directory correctly when generating object paths."""
         mock_integration = MagicMock()
         mock_integration.credentials = {
-            "aws_access_key_id": "AKIA...",
-            "aws_secret_access_key": "SECRET",
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
         }
         mock_integration.configuration = {
             "bucket_name": "test-bucket",
@@ -372,8 +372,8 @@ class TestProwlerIntegrationConnectionTest:
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AMAZON_S3
         integration.credentials = {
-            "aws_access_key_id": "AKIA...",
-            "aws_secret_access_key": "SECRET",
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
         }
         integration.configuration = {"bucket_name": "test-bucket"}
 
@@ -395,8 +395,8 @@ class TestProwlerIntegrationConnectionTest:
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AMAZON_S3
         integration.credentials = {
-            "aws_access_key_id": "invalid",
-            "aws_secret_access_key": "credentials",
+            "aws_access_key_id": "invalid_key",
+            "aws_secret_access_key": "invalid_secret",
         }
         integration.configuration = {"bucket_name": "test-bucket"}
 
@@ -409,8 +409,8 @@ class TestProwlerIntegrationConnectionTest:
         assert result.is_connected is False
         assert result.error == test_exception
         mock_s3_class.test_connection.assert_called_once_with(
-            aws_access_key_id="invalid",
-            aws_secret_access_key="credentials",
+            aws_access_key_id="invalid_key",
+            aws_secret_access_key="invalid_secret",
             bucket_name="test-bucket",
             raise_on_exception=False,
         )
@@ -422,8 +422,8 @@ class TestProwlerIntegrationConnectionTest:
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AMAZON_S3
         integration.credentials = {
-            "aws_access_key_id": "AKIA...",
-            "aws_secret_access_key": "SECRET",
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
         }
         integration.configuration = {"bucket_name": "test-bucket"}
 
@@ -441,34 +441,26 @@ class TestProwlerIntegrationConnectionTest:
         assert str(result.error) == "Bucket not found"
 
     @patch("api.utils.SecurityHub")
-    @patch("api.utils.initialize_prowler_provider")
     def test_aws_security_hub_integration_connection_success(
-        self, mock_initialize_provider, mock_security_hub_class
+        self, mock_security_hub_class
     ):
         """Test successful AWS Security Hub integration connection."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
         integration.credentials = {
-            "aws_access_key_id": "AKIA...",
-            "aws_secret_access_key": "SECRET",
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
         }
         integration.configuration = {"send_only_fails": True}
 
         # Mock integration provider relationship
         mock_provider = MagicMock()
-        mock_provider.provider = "aws"
+        mock_provider.uid = "123456789012"
         mock_relationship = MagicMock()
         mock_relationship.provider = mock_provider
         integration.integrationproviderrelationship_set.first.return_value = (
             mock_relationship
         )
-
-        # Mock prowler provider
-        mock_prowler_provider = MagicMock()
-        mock_prowler_provider.identity.account = "123456789012"
-        mock_prowler_provider.identity.partition = "aws"
-        mock_prowler_provider.session.current_session = MagicMock()
-        mock_initialize_provider.return_value = mock_prowler_provider
 
         # Mock successful SecurityHub connection with regions
         mock_connection = SecurityHubConnection(
@@ -483,9 +475,10 @@ class TestProwlerIntegrationConnectionTest:
 
         assert result.is_connected is True
         mock_security_hub_class.test_connection.assert_called_once_with(
-            aws_access_key_id="AKIA...",
-            aws_secret_access_key="SECRET",
+            aws_account_id="123456789012",
             raise_on_exception=False,
+            aws_access_key_id="test_key_id",
+            aws_secret_access_key="test_secret_key",
         )
         # Verify regions were saved
         assert integration.configuration["regions"]["us-east-1"] is True
@@ -496,34 +489,26 @@ class TestProwlerIntegrationConnectionTest:
         integration.save.assert_called_once()
 
     @patch("api.utils.SecurityHub")
-    @patch("api.utils.initialize_prowler_provider")
     def test_aws_security_hub_integration_connection_failure(
-        self, mock_initialize_provider, mock_security_hub_class
+        self, mock_security_hub_class
     ):
         """Test AWS Security Hub integration connection failure."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
         integration.credentials = {
-            "aws_access_key_id": "INVALID",
-            "aws_secret_access_key": "CREDENTIALS",
+            "aws_access_key_id": "invalid_key",
+            "aws_secret_access_key": "invalid_secret",
         }
         integration.configuration = {"send_only_fails": False}
 
         # Mock integration provider relationship
         mock_provider = MagicMock()
-        mock_provider.provider = "aws"
+        mock_provider.uid = "123456789012"
         mock_relationship = MagicMock()
         mock_relationship.provider = mock_provider
         integration.integrationproviderrelationship_set.first.return_value = (
             mock_relationship
         )
-
-        # Mock prowler provider
-        mock_prowler_provider = MagicMock()
-        mock_prowler_provider.identity.account = "123456789012"
-        mock_prowler_provider.identity.partition = "aws"
-        mock_prowler_provider.session.current_session = MagicMock()
-        mock_initialize_provider.return_value = mock_prowler_provider
 
         # Mock failed SecurityHub connection
         test_exception = Exception("SecurityHub not enabled")
@@ -543,9 +528,8 @@ class TestProwlerIntegrationConnectionTest:
         integration.save.assert_not_called()
 
     @patch("api.utils.SecurityHub")
-    @patch("api.utils.initialize_prowler_provider")
     def test_aws_security_hub_integration_with_provider_credentials(
-        self, mock_initialize_provider, mock_security_hub_class
+        self, mock_security_hub_class
     ):
         """Test AWS Security Hub integration using provider credentials."""
         integration = MagicMock()
@@ -555,19 +539,16 @@ class TestProwlerIntegrationConnectionTest:
 
         # Mock integration provider relationship
         mock_provider = MagicMock()
-        mock_provider.provider = "aws"
+        mock_provider.uid = "123456789012"
+        mock_provider.secret.secret = {
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
+        }
         mock_relationship = MagicMock()
         mock_relationship.provider = mock_provider
         integration.integrationproviderrelationship_set.first.return_value = (
             mock_relationship
         )
-
-        # Mock prowler provider
-        mock_prowler_provider = MagicMock()
-        mock_prowler_provider.identity.account = "123456789012"
-        mock_prowler_provider.identity.partition = "aws"
-        mock_prowler_provider.session.current_session = MagicMock()
-        mock_initialize_provider.return_value = mock_prowler_provider
 
         # Mock successful SecurityHub connection with regions
         mock_connection = SecurityHubConnection(
@@ -584,9 +565,9 @@ class TestProwlerIntegrationConnectionTest:
         # Should use provider credentials
         mock_security_hub_class.test_connection.assert_called_once_with(
             aws_account_id="123456789012",
-            aws_partition="aws",
-            session=mock_prowler_provider.session.current_session,
             raise_on_exception=False,
+            aws_access_key_id="test_key_id",
+            aws_secret_access_key="test_secret_key",
         )
         # Verify regions were saved
         assert integration.configuration["regions"]["us-east-1"]
@@ -609,10 +590,11 @@ class TestProwlerIntegrationConnectionTest:
 
 @pytest.mark.django_db
 class TestSecurityHubIntegrationUploads:
+    @patch("tasks.jobs.integrations.AwsProvider")
     @patch("tasks.jobs.integrations.SecurityHub.test_connection")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")
     def test_get_security_hub_client_from_integration_success(
-        self, mock_initialize_provider, mock_test_connection
+        self, mock_initialize_provider, mock_test_connection, mock_aws_provider
     ):
         """Test successful SecurityHub client creation."""
         # Mock integration
@@ -620,8 +602,21 @@ class TestSecurityHubIntegrationUploads:
         mock_integration.configuration = {"send_only_fails": True}
         mock_integration.credentials = {}  # Empty credentials, use provider
 
-        # Mock provider
+        # Mock tenant_id
+        tenant_id = "550e8400-e29b-41d4-a716-446655440000"  # Valid UUID
+
+        # Mock provider relationship
         mock_provider = MagicMock()
+        mock_provider.uid = "123456789012"
+        mock_provider.secret.secret = {
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
+        }
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        mock_integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
 
         # Mock prowler provider
         mock_prowler_provider = MagicMock()
@@ -635,10 +630,17 @@ class TestSecurityHubIntegrationUploads:
         ]
         mock_initialize_provider.return_value = mock_prowler_provider
 
-        # Mock successful connection
+        # Mock successful connection with SecurityHub-specific attributes
         mock_connection = MagicMock()
         mock_connection.is_connected = True
+        mock_connection.partition = "aws"
         mock_test_connection.return_value = mock_connection
+
+        # Mock AwsProvider.get_available_aws_service_regions
+        mock_aws_provider.get_available_aws_service_regions.return_value = [
+            "us-east-1",
+            "us-west-2",
+        ]
 
         # Mock findings
         mock_findings = [{"finding": "test"}]
@@ -649,7 +651,7 @@ class TestSecurityHubIntegrationUploads:
             mock_security_hub_class.return_value = mock_security_hub
 
             connected, security_hub = get_security_hub_client_from_integration(
-                mock_integration, mock_provider, mock_findings
+                mock_integration, tenant_id, mock_findings
             )
 
         assert connected is True
@@ -661,7 +663,6 @@ class TestSecurityHubIntegrationUploads:
         # Verify the second call (actual client creation) has the correct parameters
         actual_call = mock_security_hub_class.call_args_list[1]
         assert actual_call.kwargs["aws_account_id"] == "123456789012"
-        assert actual_call.kwargs["aws_partition"] == "aws"
         assert actual_call.kwargs["findings"] == mock_findings
         assert actual_call.kwargs["send_only_fails"]
         assert "us-east-1" in actual_call.kwargs["aws_security_hub_available_regions"]
@@ -678,15 +679,21 @@ class TestSecurityHubIntegrationUploads:
         mock_integration.configuration = {"send_only_fails": False}
         mock_integration.credentials = {}  # Empty credentials, use provider
 
-        # Mock provider
-        mock_provider = MagicMock()
+        # Mock tenant_id
+        tenant_id = "550e8400-e29b-41d4-a716-446655440000"  # Valid UUID
 
-        # Mock prowler provider
-        mock_prowler_provider = MagicMock()
-        mock_prowler_provider.identity.account = "123456789012"
-        mock_prowler_provider.identity.partition = "aws"
-        mock_prowler_provider.session.current_session = MagicMock()
-        mock_initialize_provider.return_value = mock_prowler_provider
+        # Mock provider relationship
+        mock_provider = MagicMock()
+        mock_provider.uid = "123456789012"
+        mock_provider.secret.secret = {
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
+        }
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        mock_integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
 
         # Mock failed connection
         mock_connection = MagicMock()
@@ -698,7 +705,7 @@ class TestSecurityHubIntegrationUploads:
         mock_findings = [{"finding": "test"}]
 
         connected, connection = get_security_hub_client_from_integration(
-            mock_integration, mock_provider, mock_findings
+            mock_integration, tenant_id, mock_findings
         )
 
         assert connected is False
@@ -707,15 +714,16 @@ class TestSecurityHubIntegrationUploads:
         # Verify test_connection was called with correct parameters
         mock_test_connection.assert_called_once_with(
             aws_account_id="123456789012",
-            aws_partition="aws",
-            session=mock_prowler_provider.session.current_session,
             raise_on_exception=False,
+            aws_access_key_id="test_key_id",
+            aws_secret_access_key="test_secret_key",
         )
 
+    @patch("tasks.jobs.integrations.AwsProvider")
     @patch("tasks.jobs.integrations.SecurityHub.test_connection")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")
     def test_get_security_hub_client_from_integration_no_audited_regions(
-        self, mock_initialize_provider, mock_test_connection
+        self, mock_initialize_provider, mock_test_connection, mock_aws_provider
     ):
         """Test SecurityHub client creation when no audited regions are specified."""
         # Mock integration
@@ -723,8 +731,21 @@ class TestSecurityHubIntegrationUploads:
         mock_integration.configuration = {"send_only_fails": False}
         mock_integration.credentials = {}  # Empty credentials, use provider
 
-        # Mock provider
+        # Mock tenant_id
+        tenant_id = "550e8400-e29b-41d4-a716-446655440000"  # Valid UUID
+
+        # Mock provider relationship
         mock_provider = MagicMock()
+        mock_provider.uid = "123456789012"
+        mock_provider.secret.secret = {
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
+        }
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        mock_integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
 
         # Mock prowler provider with no audited regions
         mock_prowler_provider = MagicMock()
@@ -739,10 +760,18 @@ class TestSecurityHubIntegrationUploads:
         ]
         mock_initialize_provider.return_value = mock_prowler_provider
 
-        # Mock successful connection
+        # Mock successful connection with SecurityHub-specific attributes
         mock_connection = MagicMock()
         mock_connection.is_connected = True
+        mock_connection.partition = "aws"
         mock_test_connection.return_value = mock_connection
+
+        # Mock AwsProvider.get_available_aws_service_regions
+        mock_aws_provider.get_available_aws_service_regions.return_value = [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1",
+        ]
 
         # Mock findings
         mock_findings = [{"finding": "test"}]
@@ -753,7 +782,7 @@ class TestSecurityHubIntegrationUploads:
             mock_security_hub_class.return_value = mock_security_hub
 
             connected, security_hub = get_security_hub_client_from_integration(
-                mock_integration, mock_provider, mock_findings
+                mock_integration, tenant_id, mock_findings
             )
 
         assert connected is True
@@ -764,7 +793,6 @@ class TestSecurityHubIntegrationUploads:
         # Verify the second call (actual client creation) has the correct parameters
         actual_call = mock_security_hub_class.call_args_list[1]
         assert actual_call.kwargs["aws_account_id"] == "123456789012"
-        assert actual_call.kwargs["aws_partition"] == "aws"
         assert actual_call.kwargs["findings"] == mock_findings
         assert not actual_call.kwargs["send_only_fails"]
         assert "us-east-1" in actual_call.kwargs["aws_security_hub_available_regions"]
@@ -801,7 +829,7 @@ class TestSecurityHubIntegrationUploads:
         integration.id = "integration-1"
         integration.configuration = {
             "send_only_fails": True,
-            "skip_archive_previous": False,
+            "archive_previous_findings": True,
         }
         mock_integration_model.objects.filter.return_value = [integration]
 
@@ -1017,17 +1045,17 @@ class TestSecurityHubIntegrationUploads:
         mock_finding_output,
         mock_asff,
     ):
-        """Test SecurityHub upload with skip_archive_previous enabled."""
+        """Test SecurityHub upload with archive_previous_findings disabled."""
         tenant_id = "tenant-id"
         provider_id = "provider-id"
         scan_id = "scan-123"
 
-        # Mock integration with skip_archive_previous enabled
+        # Mock integration with archive_previous_findings disabled
         integration = MagicMock()
         integration.id = "integration-1"
         integration.configuration = {
             "send_only_fails": False,
-            "skip_archive_previous": True,
+            "archive_previous_findings": False,
         }
         mock_integration_model.objects.filter.return_value = [integration]
 
@@ -1102,7 +1130,7 @@ class TestSecurityHubIntegrationUploads:
         integration.id = "integration-1"
         integration.configuration = {
             "send_only_fails": False,
-            "skip_archive_previous": False,
+            "archive_previous_findings": True,
         }
         mock_integration_model.objects.filter.return_value = [integration]
 
@@ -1203,7 +1231,7 @@ class TestSecurityHubIntegrationUploads:
         integration.id = "integration-1"
         integration.configuration = {
             "send_only_fails": True,
-            "skip_archive_previous": False,
+            "archive_previous_findings": True,
         }
         mock_integration_model.objects.filter.return_value = [integration]
 
@@ -1250,16 +1278,19 @@ class TestSecurityHubIntegrationUploads:
 
         assert result is True
 
-        # Verify SecurityHub client was created with only FAILED findings
-        # The filtered_asff_findings should only contain the FAILED finding
+        # Verify SecurityHub client was created with ALL findings (both FAILED and PASSED)
+        # The SecurityHub client internally filters based on send_only_fails configuration
         mock_get_security_hub.assert_called_once()
         call_args = mock_get_security_hub.call_args[0]
-        filtered_findings = call_args[2]  # Third argument is the findings list
+        all_findings = call_args[2]  # Third argument is the findings list
 
-        # Should only contain FAILED findings
-        assert len(filtered_findings) == 1
-        assert filtered_findings[0].Compliance.Status == "FAILED"
+        # Should contain both FAILED and PASSED findings
+        assert len(all_findings) == 2
+        assert any(f.Compliance.Status == "FAILED" for f in all_findings)
+        assert any(f.Compliance.Status == "PASSED" for f in all_findings)
 
+        # The SecurityHub client should have been configured with send_only_fails=True
+        # and will filter internally when sending
         mock_security_hub.batch_send_to_security_hub.assert_called_once()
         mock_security_hub.archive_previous_findings.assert_called_once()
 
@@ -1294,7 +1325,7 @@ class TestSecurityHubIntegrationUploads:
         integration.id = "integration-1"
         integration.configuration = {
             "send_only_fails": False,
-            "skip_archive_previous": False,
+            "archive_previous_findings": True,
         }
         mock_integration_model.objects.filter.return_value = [integration]
 
