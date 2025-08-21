@@ -144,8 +144,6 @@ jobs:
             3. Removing all conflict markers
             4. Committing and pushing the changes
 
-            The `has-conflicts` label will be automatically removed once all conflict markers are resolved.
-
       - name: Find existing conflict comment when resolved
         if: steps.conflict-check.outputs.has_conflicts == 'false'
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
@@ -166,5 +164,3 @@ jobs:
             ✅ **Conflict Markers Resolved**
 
             All conflict markers have been successfully resolved in this pull request.
-
-            The `has-conflicts` label has been automatically removed.
