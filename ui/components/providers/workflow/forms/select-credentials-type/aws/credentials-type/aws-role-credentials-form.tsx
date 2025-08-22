@@ -1,5 +1,5 @@
 import { Chip, Divider, Select, SelectItem, Switch } from "@nextui-org/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
@@ -41,6 +41,21 @@ export const AWSRoleCredentialsForm = ({
     type === "providers" ||
     (isCloudEnv && credentialsType === "aws-sdk-default") ||
     showOptionalRole;
+
+  // Track role section visibility and ensure external_id is set
+  useEffect(() => {
+    // Set show_role_section for validation
+    setValue("show_role_section" as any, showRoleSection);
+
+    // When role section is shown, ensure external_id is set
+    // This handles both initial mount and when the section becomes visible
+    if (showRoleSection && externalId) {
+      setValue(ProviderCredentialFields.EXTERNAL_ID, externalId, {
+        shouldValidate: false,
+        shouldDirty: false,
+      });
+    }
+  }, [showRoleSection, setValue, externalId]);
 
   return (
     <>
@@ -127,6 +142,9 @@ export const AWSRoleCredentialsForm = ({
             isInvalid={
               !!control._formState.errors[
                 ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
+              ] ||
+              !!control._formState.errors[
+                ProviderCredentialFields.AWS_ACCESS_KEY_ID
               ]
             }
           />
@@ -185,7 +203,7 @@ export const AWSRoleCredentialsForm = ({
             labelPlacement="inside"
             placeholder="Enter the Role ARN"
             variant="bordered"
-            isRequired={true}
+            isRequired={showRoleSection}
             isInvalid={
               !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
             }

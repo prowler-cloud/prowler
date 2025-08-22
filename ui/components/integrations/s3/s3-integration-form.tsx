@@ -49,6 +49,11 @@ export const S3IntegrationForm = ({
   const isEditingConfig = editMode === "configuration";
   const isEditingCredentials = editMode === "credentials";
 
+  const defaultCredentialsType =
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+      ? "aws-sdk-default"
+      : "access-secret-key";
+
   const form = useForm({
     resolver: zodResolver(
       // For credentials editing, use creation schema (all fields required)
@@ -66,7 +71,7 @@ export const S3IntegrationForm = ({
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
       enabled: integration?.attributes.enabled ?? true,
-      credentials_type: "access-secret-key" as const,
+      credentials_type: defaultCredentialsType,
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
@@ -81,6 +86,7 @@ export const S3IntegrationForm = ({
         "",
       role_session_name: "",
       session_duration: "",
+      show_role_section: false,
     },
   });
 
@@ -115,6 +121,9 @@ export const S3IntegrationForm = ({
   // Helper function to build credentials object
   const buildCredentials = (values: any) => {
     const credentials: any = {};
+
+    // Don't include credentials_type in the API payload - it's a UI-only field
+    // The backend determines credential type based on which fields are present
 
     // Only include role-related fields if role_arn is provided
     if (values.role_arn && values.role_arn.trim() !== "") {
@@ -170,28 +179,33 @@ export const S3IntegrationForm = ({
 
   // Helper function to build FormData based on edit mode
   const buildFormData = (values: any) => {
+    // Remove UI-only fields before processing
+    const { credentials_type, show_role_section, ...apiValues } = values;
+
     const formData = new FormData();
-    formData.append("integration_type", values.integration_type);
+    formData.append("integration_type", apiValues.integration_type);
 
     if (isEditingConfig) {
-      const configuration = buildConfiguration(values, true);
+      const configuration = buildConfiguration(apiValues, true);
       if (Object.keys(configuration).length > 0) {
         formData.append("configuration", JSON.stringify(configuration));
       }
       // Always send providers array, even if empty, to update relationships
-      formData.append("providers", JSON.stringify(values.providers || []));
+      formData.append("providers", JSON.stringify(apiValues.providers || []));
     } else if (isEditingCredentials) {
+      // Pass the full values object to buildCredentials so it can check credentials_type
       const credentials = buildCredentials(values);
       formData.append("credentials", JSON.stringify(credentials));
     } else {
       // Creation mode - send everything
-      const configuration = buildConfiguration(values);
+      const configuration = buildConfiguration(apiValues);
+      // Pass the full values object to buildCredentials so it can check credentials_type
       const credentials = buildCredentials(values);
 
       formData.append("configuration", JSON.stringify(configuration));
       formData.append("credentials", JSON.stringify(credentials));
-      formData.append("providers", JSON.stringify(values.providers));
-      formData.append("enabled", JSON.stringify(values.enabled ?? true));
+      formData.append("providers", JSON.stringify(apiValues.providers));
+      formData.append("enabled", JSON.stringify(apiValues.enabled ?? true));
     }
 
     return formData;
