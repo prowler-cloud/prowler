@@ -12,6 +12,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### ❌ Removed
 
+---
+
+## [1.10.2] (Prowler v5.10.3)
+
+### 🐞 Fixed
+
+- Lighthouse using default config instead of backend config [(#8546)](https://github.com/prowler-cloud/prowler/pull/8546)
 
 ---
 
