@@ -1796,7 +1796,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    "checks_to_execute": ["accessanalyzer_enabled"],
+                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
             )
 

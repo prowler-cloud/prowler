@@ -668,11 +668,11 @@ class TestSecurityHubIntegrationUploads:
         assert actual_call.kwargs["aws_account_id"] == "123456789012"
         assert actual_call.kwargs["findings"] == mock_findings
         assert actual_call.kwargs["send_only_fails"]
-        # Check that enabled_regions dict was passed correctly
-        assert (
-            actual_call.kwargs["aws_security_hub_enabled_regions"]
-            == mock_connection.enabled_regions
-        )
+        # Check that available_regions list was passed correctly
+        assert actual_call.kwargs["aws_security_hub_available_regions"] == [
+            "us-east-1",
+            "us-west-2",
+        ]
 
     @patch("tasks.jobs.integrations.SecurityHub.test_connection")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")
@@ -804,11 +804,11 @@ class TestSecurityHubIntegrationUploads:
         assert actual_call.kwargs["aws_account_id"] == "123456789012"
         assert actual_call.kwargs["findings"] == mock_findings
         assert not actual_call.kwargs["send_only_fails"]
-        # Check that enabled_regions dict was passed correctly
-        assert (
-            actual_call.kwargs["aws_security_hub_enabled_regions"]
-            == mock_connection.enabled_regions
-        )
+        # Check that available_regions list was passed correctly
+        assert actual_call.kwargs["aws_security_hub_available_regions"] == [
+            "us-east-1",
+            "us-west-2",
+        ]
 
     @patch("tasks.jobs.integrations.ASFF")
     @patch("tasks.jobs.integrations.FindingOutput")

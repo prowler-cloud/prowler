@@ -202,14 +202,10 @@ def get_security_hub_client_from_integration(
             "securityhub", connection.partition
         )
 
-        # Get enabled regions as a set
-        enabled_regions = set(connection.enabled_regions.keys())
-        all_regions_set = set(all_security_hub_regions)
-
         # Create regions status dictionary
         regions_status = {}
-        for region in all_regions_set:
-            regions_status[region] = region in enabled_regions
+        for region in set(all_security_hub_regions):
+            regions_status[region] = region in connection.enabled_regions
 
         # Save regions information in the integration configuration
         with rls_transaction(tenant_id):
@@ -221,7 +217,7 @@ def get_security_hub_client_from_integration(
             aws_account_id=provider_uid,
             findings=findings,
             send_only_fails=integration.configuration.get("send_only_fails", False),
-            aws_security_hub_enabled_regions=connection.enabled_regions,
+            aws_security_hub_available_regions=list(connection.enabled_regions),
             **credentials,
         )
         return True, security_hub
