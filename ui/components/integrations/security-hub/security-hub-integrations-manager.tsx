@@ -339,7 +339,9 @@ export const SecurityHubIntegrationsManager = ({
                           color="default"
                           className="text-xs"
                         >
-                          {integration.attributes.configuration.send_only_fails ? "Failed Only" : "All Findings"}
+                          {integration.attributes.configuration.send_only_fails
+                            ? "Failed Only"
+                            : "All Findings"}
                         </Chip>
                         <Chip
                           size="sm"
@@ -347,7 +349,10 @@ export const SecurityHubIntegrationsManager = ({
                           color="default"
                           className="text-xs"
                         >
-                          {integration.attributes.configuration.archive_previous_findings ? "Archive Previous" : "Keep Previous"}
+                          {integration.attributes.configuration
+                            .archive_previous_findings
+                            ? "Archive Previous"
+                            : "Keep Previous"}
                         </Chip>
                         <Chip
                           size="sm"
