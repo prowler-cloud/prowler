@@ -180,32 +180,30 @@ export const S3IntegrationForm = ({
   // Helper function to build FormData based on edit mode
   const buildFormData = (values: any) => {
     // Remove UI-only fields before processing
-    const { credentials_type, show_role_section, ...apiValues } = values;
-
     const formData = new FormData();
-    formData.append("integration_type", apiValues.integration_type);
+    formData.append("integration_type", values.integration_type);
 
     if (isEditingConfig) {
-      const configuration = buildConfiguration(apiValues, true);
+      const configuration = buildConfiguration(values, true);
       if (Object.keys(configuration).length > 0) {
         formData.append("configuration", JSON.stringify(configuration));
       }
       // Always send providers array, even if empty, to update relationships
-      formData.append("providers", JSON.stringify(apiValues.providers || []));
+      formData.append("providers", JSON.stringify(values.providers || []));
     } else if (isEditingCredentials) {
       // Pass the full values object to buildCredentials so it can check credentials_type
       const credentials = buildCredentials(values);
       formData.append("credentials", JSON.stringify(credentials));
     } else {
       // Creation mode - send everything
-      const configuration = buildConfiguration(apiValues);
+      const configuration = buildConfiguration(values);
       // Pass the full values object to buildCredentials so it can check credentials_type
       const credentials = buildCredentials(values);
 
       formData.append("configuration", JSON.stringify(configuration));
       formData.append("credentials", JSON.stringify(credentials));
-      formData.append("providers", JSON.stringify(apiValues.providers));
-      formData.append("enabled", JSON.stringify(apiValues.enabled ?? true));
+      formData.append("providers", JSON.stringify(values.providers));
+      formData.append("enabled", JSON.stringify(values.enabled ?? true));
     }
 
     return formData;
