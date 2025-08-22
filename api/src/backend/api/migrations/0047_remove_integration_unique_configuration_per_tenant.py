@@ -5,7 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0045_alter_scan_output_location"),
+        ("api", "0046_lighthouse_gpt5"),
     ]
 
     operations = [
