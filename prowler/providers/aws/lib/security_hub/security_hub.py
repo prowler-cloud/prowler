@@ -146,11 +146,11 @@ class SecurityHub:
                 retries_max_attempts=retries_max_attempts,
                 regions=regions,
             )
-            self._session = aws_setup_session._session
+            self._session = aws_setup_session._session.current_session
         self._aws_account_id = aws_account_id
         if not aws_partition:
             aws_partition = AwsProvider.validate_credentials(
-                self._session.current_session, AWS_STS_GLOBAL_ENDPOINT_REGION
+                self._session, AWS_STS_GLOBAL_ENDPOINT_REGION
             ).arn.partition
         self._aws_partition = aws_partition
 
@@ -160,7 +160,7 @@ class SecurityHub:
         if aws_security_hub_available_regions:
             self._enabled_regions = self.verify_enabled_per_region(
                 aws_security_hub_available_regions,
-                self._session.current_session,
+                self._session,
                 aws_account_id,
                 aws_partition,
             )
