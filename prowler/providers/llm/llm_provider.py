@@ -233,8 +233,6 @@ class LlmProvider(Provider):
                 for line in json_lines:
                     try:
                         finding = json.loads(line)
-                        print(finding)
-                        break
                         if finding.get("status") == "FAIL":
                             report = self._process_check(finding, finding, "FAIL")
                             if report:
