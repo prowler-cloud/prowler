@@ -41,7 +41,7 @@ class HTML(Output):
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
                             <td>{finding.metadata.ServiceName}</td>
-                            <td>{":".join([finding.resource_metadata["file_path"], "-".join(map(str, finding.resource_metadata["file_line_range"]))]) if finding.metadata.Provider == "iac" else finding.region.lower()}</td>
+                            <td>{finding.region.lower()}</td>
                             <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
                             <td>{finding.metadata.CheckTitle}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
@@ -204,7 +204,7 @@ class HTML(Output):
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
                     <th scope="col">Service Name</th>
-                    <th scope="col">{"File" if provider.type == "iac" else "Region"}</th>
+                    <th scope="col">{"Line Range" if provider.type == "iac" else "Region"}</th>
                     <th style="width:20%" scope="col">Check ID</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>

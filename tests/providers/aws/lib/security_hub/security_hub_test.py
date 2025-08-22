@@ -412,14 +412,12 @@ class TestSecurityHub:
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_security_hub_test_connection_success(self):
-        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
 
         # Test successful connection
         connection = SecurityHub.test_connection(
-            session=session_mock,
-            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
+            regions={AWS_REGION_EU_WEST_1},
             raise_on_exception=False,
         )
 
@@ -444,14 +442,11 @@ class TestSecurityHub:
             error_response, operation_name
         )
 
-        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
-
         # Test connection failure due to invalid access
         connection = SecurityHub.test_connection(
-            session=session_mock,
-            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
+            regions={AWS_REGION_EU_WEST_1},
             raise_on_exception=False,
         )
 
@@ -468,14 +463,11 @@ class TestSecurityHub:
             "ProductSubscriptions": []
         }
 
-        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
-
         # Test connection failure due to missing Prowler subscription
         connection = SecurityHub.test_connection(
-            session=session_mock,
-            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
+            regions={AWS_REGION_EU_WEST_1},
             raise_on_exception=False,
         )
 
@@ -489,14 +481,11 @@ class TestSecurityHub:
         # Mock unexpected exception
         mock_security_hub_client.side_effect = Exception("Unexpected error")
 
-        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
-
         # Test connection failure due to an unexpected exception
         connection = SecurityHub.test_connection(
-            session=session_mock,
-            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
+            regions={AWS_REGION_EU_WEST_1},
             raise_on_exception=False,
         )
 
@@ -510,11 +499,8 @@ class TestSecurityHub:
         # Mock unexpected exception
         mock_security_hub_client.side_effect = Exception("Unexpected error")
 
-        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
-
         # Test connection failure due to an unexpected exception
         connection = SecurityHub.test_connection(
-            session=session_mock,
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
             raise_on_exception=False,
@@ -566,3 +552,734 @@ class TestSecurityHub:
             str(e.value)
             == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
         )
+
+    # Tests for new test_connection functionality - AWS Credential Management
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_with_profile(
+        self, mock_verify_enabled, mock_get_regions, mock_setup_session
+    ):
+        # Mock session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection with profile
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            profile="test-profile",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        mock_setup_session.assert_called_once_with(
+            mfa=False,
+            profile="test-profile",
+            aws_access_key_id=None,
+            aws_secret_access_key=None,
+            aws_session_token=None,
+        )
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_with_access_keys(
+        self, mock_verify_enabled, mock_get_regions, mock_setup_session
+    ):
+        # Mock session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection with access keys
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            aws_access_key_id="test-key",
+            aws_secret_access_key="test-secret",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        mock_setup_session.assert_called_once_with(
+            mfa=False,
+            profile=None,
+            aws_access_key_id="test-key",
+            aws_secret_access_key="test-secret",
+            aws_session_token=None,
+        )
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_with_session_token(
+        self, mock_verify_enabled, mock_get_regions, mock_setup_session
+    ):
+        # Mock session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection with session token
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            aws_session_token="test-token",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        mock_setup_session.assert_called_once_with(
+            mfa=False,
+            profile=None,
+            aws_access_key_id=None,
+            aws_secret_access_key=None,
+            aws_session_token="test-token",
+        )
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_with_mfa(
+        self, mock_verify_enabled, mock_get_regions, mock_setup_session
+    ):
+        # Mock session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection with MFA enabled
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            mfa_enabled=True,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        mock_setup_session.assert_called_once_with(
+            mfa=True,
+            profile=None,
+            aws_access_key_id=None,
+            aws_secret_access_key=None,
+            aws_session_token=None,
+        )
+
+    # Tests for Role Assumption functionality
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.assume_role")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_with_role_arn(
+        self,
+        mock_verify_enabled,
+        mock_get_regions,
+        mock_assume_role,
+        mock_setup_session,
+    ):
+        # Mock initial session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock assumed role credentials
+        from datetime import datetime, timezone
+
+        from prowler.providers.aws.models import AWSCredentials
+
+        mock_credentials = AWSCredentials(
+            aws_access_key_id="assumed-key",
+            aws_secret_access_key="assumed-secret",
+            aws_session_token="assumed-token",
+            expiration=datetime.now(timezone.utc),
+        )
+        mock_assume_role.return_value = mock_credentials
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection with role ARN
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            role_arn="arn:aws:iam::123456789012:role/test-role",
+            external_id="test-external-id",
+            session_duration=7200,
+            role_session_name="test-session",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        mock_assume_role.assert_called_once()
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.assume_role")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_with_role_arn_default_values(
+        self,
+        mock_verify_enabled,
+        mock_get_regions,
+        mock_assume_role,
+        mock_setup_session,
+    ):
+        # Mock initial session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock assumed role credentials
+        from datetime import datetime, timezone
+
+        from prowler.providers.aws.models import AWSCredentials
+
+        mock_credentials = AWSCredentials(
+            aws_access_key_id="assumed-key",
+            aws_secret_access_key="assumed-secret",
+            aws_session_token="assumed-token",
+            expiration=datetime.now(timezone.utc),
+        )
+        mock_assume_role.return_value = mock_credentials
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection with role ARN using default values
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            role_arn="arn:aws:iam::123456789012:role/test-role",
+            external_id="test-external-id",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        mock_assume_role.assert_called_once()
+
+    # Tests for Error Handling - Session Setup Errors
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_setup_session_error(self, mock_setup_session):
+        from prowler.providers.aws.exceptions.exceptions import AWSSetUpSessionError
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSSetUpSessionError(
+            file="test_file.py", original_exception=Exception("Session setup failed")
+        )
+
+        # Test connection failure due to session setup error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSSetUpSessionError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_setup_session_error_raise(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import AWSSetUpSessionError
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSSetUpSessionError(
+            file="test_file.py", original_exception=Exception("Session setup failed")
+        )
+
+        # Test that error is raised when raise_on_exception=True
+        with pytest.raises(AWSSetUpSessionError):
+            SecurityHub.test_connection(
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+                raise_on_exception=True,
+            )
+
+    # Tests for Error Handling - Argument Validation Errors
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_argument_validation_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSArgumentTypeValidationError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSArgumentTypeValidationError(
+            file="test_file.py", original_exception=ValueError("Invalid argument")
+        )
+
+        # Test connection failure due to argument validation error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSArgumentTypeValidationError)
+
+    # Tests for Error Handling - Role ARN Validation Errors
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_role_arn_region_not_empty_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSIAMRoleARNRegionNotEmtpyError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSIAMRoleARNRegionNotEmtpyError(
+            file="test_file.py"
+        )
+
+        # Test connection failure due to role ARN region validation error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSIAMRoleARNRegionNotEmtpyError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_role_arn_partition_empty_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSIAMRoleARNPartitionEmptyError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSIAMRoleARNPartitionEmptyError(
+            file="test_file.py"
+        )
+
+        # Test connection failure due to role ARN partition validation error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSIAMRoleARNPartitionEmptyError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_role_arn_service_not_iam_sts_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSIAMRoleARNServiceNotIAMnorSTSError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSIAMRoleARNServiceNotIAMnorSTSError(
+            file="test_file.py"
+        )
+
+        # Test connection failure due to role ARN service validation error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSIAMRoleARNServiceNotIAMnorSTSError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_role_arn_invalid_account_id_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSIAMRoleARNInvalidAccountIDError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSIAMRoleARNInvalidAccountIDError(
+            file="test_file.py"
+        )
+
+        # Test connection failure due to role ARN account ID validation error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSIAMRoleARNInvalidAccountIDError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_role_arn_invalid_resource_type_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSIAMRoleARNInvalidResourceTypeError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSIAMRoleARNInvalidResourceTypeError(
+            file="test_file.py"
+        )
+
+        # Test connection failure due to role ARN resource type validation error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSIAMRoleARNInvalidResourceTypeError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_role_arn_empty_resource_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSIAMRoleARNEmptyResourceError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSIAMRoleARNEmptyResourceError(
+            file="test_file.py"
+        )
+
+        # Test connection failure due to role ARN empty resource validation error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSIAMRoleARNEmptyResourceError)
+
+    # Tests for Error Handling - Role Assumption Errors
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_assume_role_error(self, mock_setup_session):
+        from prowler.providers.aws.exceptions.exceptions import AWSAssumeRoleError
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSAssumeRoleError(
+            file="test_file.py", original_exception=Exception("Role assumption failed")
+        )
+
+        # Test connection failure due to role assumption error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSAssumeRoleError)
+
+    # Tests for Error Handling - Profile and Credential Errors
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_profile_not_found_error(
+        self, mock_setup_session
+    ):
+        from botocore.exceptions import ProfileNotFound
+
+        # Mock session setup error
+        mock_setup_session.side_effect = ProfileNotFound(profile="test-profile")
+
+        # Test connection failure due to profile not found error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            profile="test-profile",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, ProfileNotFound)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_profile_not_found_error_raise(
+        self, mock_setup_session
+    ):
+        from botocore.exceptions import ProfileNotFound
+
+        from prowler.providers.aws.exceptions.exceptions import AWSProfileNotFoundError
+
+        # Mock session setup error
+        mock_setup_session.side_effect = ProfileNotFound(profile="test-profile")
+
+        # Test that error is raised when raise_on_exception=True
+        with pytest.raises(AWSProfileNotFoundError):
+            SecurityHub.test_connection(
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+                profile="test-profile",
+                raise_on_exception=True,
+            )
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_no_credentials_error(
+        self, mock_setup_session
+    ):
+        from botocore.exceptions import NoCredentialsError
+
+        # Mock session setup error
+        mock_setup_session.side_effect = NoCredentialsError()
+
+        # Test connection failure due to no credentials error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, NoCredentialsError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_no_credentials_error_raise(
+        self, mock_setup_session
+    ):
+        from botocore.exceptions import NoCredentialsError
+
+        from prowler.providers.aws.exceptions.exceptions import AWSNoCredentialsError
+
+        # Mock session setup error
+        mock_setup_session.side_effect = NoCredentialsError()
+
+        # Test that error is raised when raise_on_exception=True
+        with pytest.raises(AWSNoCredentialsError):
+            SecurityHub.test_connection(
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+                raise_on_exception=True,
+            )
+
+    # Tests for Error Handling - Access Key and Secret Key Errors
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_access_key_id_invalid_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSAccessKeyIDInvalidError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSAccessKeyIDInvalidError(
+            file="test_file.py", original_exception=ValueError("Invalid access key ID")
+        )
+
+        # Test connection failure due to invalid access key ID error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSAccessKeyIDInvalidError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_secret_access_key_invalid_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSSecretAccessKeyInvalidError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSSecretAccessKeyInvalidError(
+            file="test_file.py",
+            original_exception=ValueError("Invalid secret access key"),
+        )
+
+        # Test connection failure due to invalid secret access key error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSSecretAccessKeyInvalidError)
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_session_token_expired_error(
+        self, mock_setup_session
+    ):
+        from prowler.providers.aws.exceptions.exceptions import (
+            AWSSessionTokenExpiredError,
+        )
+
+        # Mock session setup error
+        mock_setup_session.side_effect = AWSSessionTokenExpiredError(
+            file="test_file.py", original_exception=ValueError("Session token expired")
+        )
+
+        # Test connection failure due to session token expired error
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AWSSessionTokenExpiredError)
+
+    # Tests for Error Handling - Generic Exception
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_generic_exception(self, mock_setup_session):
+        # Mock session setup error
+        mock_setup_session.side_effect = Exception("Generic error")
+
+        # Test connection failure due to generic exception
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, Exception)
+        assert str(connection.error) == "Generic error"
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    def test_security_hub_test_connection_generic_exception_raise(
+        self, mock_setup_session
+    ):
+        # Mock session setup error
+        mock_setup_session.side_effect = Exception("Generic error")
+
+        # Test that error is raised when raise_on_exception=True
+        with pytest.raises(Exception) as exc_info:
+            SecurityHub.test_connection(
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+                raise_on_exception=True,
+            )
+
+        assert str(exc_info.value) == "Generic error"
+
+    # Tests for Edge Cases and Parameter Validation
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_with_aws_region(
+        self, mock_verify_enabled, mock_get_regions, mock_setup_session
+    ):
+        # Mock session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection with specific AWS region
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            aws_region=AWS_REGION_EU_WEST_1,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        assert AWS_REGION_EU_WEST_1 in connection.enabled_regions
+        assert AWS_REGION_EU_WEST_2 in connection.disabled_regions
+
+    @patch("prowler.providers.aws.aws_provider.AwsProvider.setup_session")
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.get_available_aws_service_regions"
+    )
+    @patch(
+        "prowler.providers.aws.lib.security_hub.security_hub.SecurityHub.verify_enabled_per_region"
+    )
+    def test_security_hub_test_connection_no_regions_specified(
+        self, mock_verify_enabled, mock_get_regions, mock_setup_session
+    ):
+        # Mock session setup
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        mock_setup_session.return_value = mock_session
+
+        # Mock available regions
+        mock_get_regions.return_value = [AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+
+        # Mock enabled regions
+        mock_verify_enabled.return_value = {AWS_REGION_EU_WEST_1: mock_session}
+
+        # Test connection without specifying regions
+        connection = SecurityHub.test_connection(
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+        assert len(connection.enabled_regions) == 1
+        assert len(connection.disabled_regions) == 1
