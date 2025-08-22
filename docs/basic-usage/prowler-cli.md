@@ -275,9 +275,6 @@ prowler mongodbatlas
 You can filter scans to specific organizations or projects:
 
 ```console
-# Scan specific organization
-prowler mongodbatlas --atlas-organization-id <organization_id>
-
 # Scan specific project
 prowler mongodbatlas --atlas-project-id <project_id>
 ```

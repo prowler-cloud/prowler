@@ -635,7 +635,6 @@ MongoDB Atlas API keys require appropriate permissions to perform security check
 
 ### Configuration Options
 
-- `--atlas-organization-id`: Filter results to specific organization
 - `--atlas-project-id`: Filter results to specific project
 
 For more details about MongoDB Atlas authentication, see the [MongoDB Atlas Tutorial](../tutorials/mongodbatlas/getting-started-mongodbatlas.md).
