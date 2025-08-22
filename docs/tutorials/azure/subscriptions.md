@@ -76,7 +76,7 @@ Navigate to the subscription you want to audit with Prowler.
 
 Some read-only permissions required for specific security checks are not included in the built-in Reader role. To support these checks, Prowler utilizes a custom role, defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Once created, this role can be assigned following the same process as the `Reader` role.
 
-The checks requiring this `ProwlerRole` can be found in the [requirements section](../../getting-started/requirements.md#checks-that-require-prowlerrole).
+The checks requiring this `ProwlerRole` can be found in this [section](../../tutorials/azure/authentication.md#checks-requiring-prowlerrole).
 
 #### Create ProwlerRole via Azure Portal
 
