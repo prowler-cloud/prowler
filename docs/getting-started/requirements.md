@@ -561,7 +561,7 @@ These options provide flexibility for scanning and analyzing your GitHub account
 
 ## Infrastructure as Code (IaC)
 
-Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks and requires no cloud authentication for local scans.
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Trivy](https://trivy.dev/). This provider supports a wide range of IaC frameworks and requires no cloud authentication for local scans.
 
 ### Authentication
 
@@ -571,21 +571,11 @@ Prowler's Infrastructure as Code (IaC) provider enables you to scan local or rem
     - [**GitHub OAuth App Token**](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
     - [**Git URL**](https://git-scm.com/docs/git-clone#_git_urls)
 
-### Supported Frameworks
+### Supported Scanners
 
-The IaC provider leverages Checkov to support multiple frameworks, including:
+The IaC provider leverages Trivy to support multiple scanners, including:
 
-- Terraform
-- CloudFormation
-- Kubernetes
-- ARM (Azure Resource Manager)
-- Serverless
-- Dockerfile
-- YAML/JSON (generic IaC)
-- Bicep
-- Helm
-- GitHub Actions, GitLab CI, Bitbucket Pipelines, Azure Pipelines, CircleCI, Argo Workflows
-- Ansible
-- Kustomize
-- OpenAPI
-- SAST, SCA (Software Composition Analysis)
+- Vulnerability
+- Misconfiguration
+- Secret
+- License

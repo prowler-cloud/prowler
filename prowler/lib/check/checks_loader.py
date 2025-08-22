@@ -20,7 +20,7 @@ def load_checks_to_execute(
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for IAC provider since it uses Checkov directly
+        # Bypass check loading for IAC provider since it uses Trivy directly
         if provider == "iac":
             return set()
 
