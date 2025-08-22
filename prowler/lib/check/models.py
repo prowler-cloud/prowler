@@ -166,11 +166,11 @@ class CheckMetadata(BaseModel):
         return service_name
 
     @validator("CheckID", pre=True, always=True)
-    def valid_check_id(cls, check_id):
+    def valid_check_id(cls, check_id, values):
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if check_id:
+        if check_id and values.get("Provider") != "iac":
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
@@ -550,9 +550,7 @@ class Check_Report_GCP(Check_Report):
             or ""
         )
         self.resource_name = (
-            resource_name
-            or getattr(resource, "name", "")
-            or getattr(resource, "id", "")
+            resource_name or getattr(resource, "name", "") or "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (
@@ -650,25 +648,34 @@ class CheckReportM365(Check_Report):
 
 @dataclass
 class CheckReportIAC(Check_Report):
-    """Contains the IAC Check's finding information using Checkov."""
+    """Contains the IAC Check's finding information using Trivy."""
 
     resource_name: str
-    resource_path: str
     resource_line_range: str
 
-    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+    def __init__(
+        self, metadata: dict = {}, finding: dict = {}, file_path: str = ""
+    ) -> None:
         """
-        Initialize the IAC Check's finding information from a Checkov failed_check dict.
+        Initialize the IAC Check's finding information from a Trivy misconfiguration dict.
 
         Args:
             metadata (Dict): Optional check metadata (can be None).
-            failed_check (dict): A single failed_check result from Checkov's JSON output.
+            finding (dict): A single misconfiguration result from Trivy's JSON output.
         """
         super().__init__(metadata, finding)
 
-        self.resource_name = getattr(finding, "resource", "")
-        self.resource_path = getattr(finding, "file_path", "")
-        self.resource_line_range = getattr(finding, "file_line_range", "")
+        self.resource = finding
+        self.resource_name = file_path
+        self.resource_line_range = (
+            (
+                str(finding.get("CauseMetadata", {}).get("StartLine", ""))
+                + ":"
+                + str(finding.get("CauseMetadata", {}).get("EndLine", ""))
+            )
+            if finding.get("CauseMetadata", {}).get("StartLine", "")
+            else ""
+        )
 
 
 @dataclass

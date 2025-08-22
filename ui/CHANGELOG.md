@@ -8,17 +8,37 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - `Cloud Provider` type filter to providers page [(#8473)](https://github.com/prowler-cloud/prowler/pull/8473)
 - New menu item under Configuration section for quick access to the Mutelist [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
-
+- Resource agent to Lighthouse for querying resource information [(#8509)](https://github.com/prowler-cloud/prowler/pull/8509)
+- Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
 
 ### 🔄 Changed
 
+- Disable `See Compliance` button until scan completes [(#8487)](https://github.com/prowler-cloud/prowler/pull/8487)
+- Provider connection filter now shows "Connected/Disconnected" instead of "true/false" for better UX [(#8520)](https://github.com/prowler-cloud/prowler/pull/8520)
+
 ### 🐞 Fixed
 
-- Field for `Assume Role` in AWS role credentials form shown again [(#8484)](https://github.com/prowler-cloud/prowler/pull/8484)
+- DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
 
 ### ❌ Removed
 
 ---
+
+## [1.10.2] (Prowler v5.10.3)
+
+### 🐞 Fixed
+
+- Lighthouse using default config instead of backend config [(#8546)](https://github.com/prowler-cloud/prowler/pull/8546)
+
+---
+
+## [1.10.1] (Prowler v5.10.1)
+
+### 🐞 Fixed
+
+- Field for `Assume Role` in AWS role credentials form shown again [(#8484)](https://github.com/prowler-cloud/prowler/pull/8484)
+- `GitHub` submenu to High Risk Findings [(#8488)](https://github.com/prowler-cloud/prowler/pull/8488)
+- Improved Overview chart `Findings by Severity` spacing [(#8491)](https://github.com/prowler-cloud/prowler/pull/8491)
 
 ## [1.10.0] (Prowler v5.10.0)
 
@@ -72,6 +92,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Error message when launching a scan if user has no permissions [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
 - Include compliance in the download button tooltip [(#8307)](https://github.com/prowler-cloud/prowler/pull/8307)
+- Redirection and error handling issues after deleting a provider groups [(#8389)](https://github.com/prowler-cloud/prowler/pull/8389)
 
 ---
 

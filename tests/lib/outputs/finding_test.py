@@ -585,7 +585,9 @@ class TestFinding:
         provider = MagicMock()
         provider.type = "github"
         # GitHub App identity only has app_id, not account_name/account_id
-        provider.identity = GithubAppIdentityInfo(app_id=APP_ID)
+        provider.identity = GithubAppIdentityInfo(
+            app_id=APP_ID, app_name="test-app", installations=["test-org"]
+        )
         provider.auth_method = "GitHub App Token"
 
         # Mock check result
@@ -632,8 +634,8 @@ class TestFinding:
 
         # Assert account information for GitHub App - this is the core of the bug fix
         # Before the fix, this would fail because GithubAppIdentityInfo doesn't have account_name
-        # After the fix, it should use app_id with "app-" prefix
-        assert finding_output.account_name == f"app-{APP_ID}"
+        # After the fix, it should use app_name
+        assert finding_output.account_name == "test-app"
         assert finding_output.account_uid == APP_ID
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
@@ -659,7 +661,7 @@ class TestFinding:
         check_output.file_path = "/path/to/iac/file.tf"
         check_output.resource_name = "aws_s3_bucket.example"
         check_output.resource_path = "/path/to/iac/file.tf"
-        check_output.file_line_range = [1, 5]
+        check_output.resource_line_range = "1:5"
         check_output.resource = {
             "resource": "aws_s3_bucket.example",
             "value": {},
@@ -683,7 +685,7 @@ class TestFinding:
         assert finding_output.auth_method == "No auth"
         assert finding_output.resource_name == "aws_s3_bucket.example"
         assert finding_output.resource_uid == "aws_s3_bucket.example"
-        assert finding_output.region == "/path/to/iac/file.tf"
+        assert finding_output.region == "1:5"
         assert finding_output.status == Status.PASS
         assert finding_output.status_extended == "mock_status_extended"
         assert finding_output.muted is False

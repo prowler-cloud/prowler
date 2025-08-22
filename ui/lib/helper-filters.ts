@@ -1,4 +1,6 @@
 import { ProviderProps, ProvidersApiResponse, ScanProps } from "@/types";
+import { FilterEntity } from "@/types/filters";
+import { ProviderConnectionStatus } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
 /**
@@ -125,3 +127,28 @@ export const createScanDetailsMapping = (
 
   return scanMappings;
 };
+
+// Helper to check if entity is a ProviderConnectionStatus (simple label/value object)
+export const isConnectionStatus = (
+  entity: FilterEntity,
+): entity is ProviderConnectionStatus => {
+  return !!(entity && "label" in entity && "value" in entity);
+};
+
+/**
+ * Connection status mapping for provider filters.
+ * Maps boolean string values to user-friendly labels.
+ */
+export const CONNECTION_STATUS_MAPPING: Array<{
+  [key: string]: FilterEntity;
+}> = [
+  {
+    true: { label: "Connected", value: "true" } as ProviderConnectionStatus,
+  },
+  {
+    false: {
+      label: "Disconnected",
+      value: "false",
+    } as ProviderConnectionStatus,
+  },
+];

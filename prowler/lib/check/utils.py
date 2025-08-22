@@ -14,7 +14,7 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        # Bypass check loading for IAC provider since it uses Checkov directly
+        # Bypass check loading for IAC provider since it uses Trivy directly
         if provider == "iac" or provider == "llm":
             return []
 
@@ -63,7 +63,7 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
     Returns a set of checks from the given services
     """
     try:
-        # Bypass check loading for IAC provider since it uses Checkov directly
+        # Bypass check loading for IAC provider since it uses Trivy directly
         if provider == "iac":
             return set()
 
