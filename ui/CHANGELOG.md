@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - New menu item under Configuration section for quick access to the Mutelist [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
 - Resource agent to Lighthouse for querying resource information [(#8509)](https://github.com/prowler-cloud/prowler/pull/8509)
 - Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
+- Link to the configured S3 bucket and folder in each integration [(#8554)](https://github.com/prowler-cloud/prowler/pull/8554)
 
 ### 🔄 Changed
 
