@@ -225,6 +225,8 @@ class IacProvider(Provider):
         Clone a git repository to a temporary directory, supporting GitHub authentication.
         """
         try:
+            original_url = repository_url
+
             if github_username and personal_access_token:
                 repository_url = repository_url.replace(
                     "https://github.com/",
@@ -238,7 +240,7 @@ class IacProvider(Provider):
 
             temporary_directory = tempfile.mkdtemp()
             logger.info(
-                f"Cloning repository {repository_url} into {temporary_directory}..."
+                f"Cloning repository {original_url} into {temporary_directory}..."
             )
             with alive_bar(
                 ctrl_c=False,
@@ -248,7 +250,7 @@ class IacProvider(Provider):
                 enrich_print=False,
             ) as bar:
                 try:
-                    bar.title = f"-> Cloning {repository_url}..."
+                    bar.title = f"-> Cloning {original_url}..."
                     porcelain.clone(repository_url, temporary_directory, depth=1)
                     bar.title = "-> Repository cloned successfully!"
                 except Exception as clone_error:
