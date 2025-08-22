@@ -15,7 +15,7 @@ def recover_checks_from_provider(
     """
     try:
         # Bypass check loading for IAC provider since it uses Checkov directly
-        if provider == "iac":
+        if provider == "iac" or provider == "llm":
             return []
 
         checks = []

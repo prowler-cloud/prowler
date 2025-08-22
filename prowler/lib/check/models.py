@@ -672,6 +672,29 @@ class CheckReportIAC(Check_Report):
 
 
 @dataclass
+class CheckReportLLM(Check_Report):
+    """Contains the LLM Check's finding information."""
+
+    resource_name: str
+    resource_path: str
+    resource_line_range: str
+
+    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+        """
+        Initialize the LLM Check's finding information from a Garak finding dict.
+
+        Args:
+            metadata (Dict): Optional check metadata (can be None).
+            finding (dict): A single finding result from Garak's JSON output.
+        """
+        super().__init__(metadata, finding)
+
+        self.resource_name = getattr(finding, "resource", "")
+        self.resource_path = getattr(finding, "file_path", "")
+        self.resource_line_range = getattr(finding, "file_line_range", "")
+
+
+@dataclass
 class CheckReportNHN(Check_Report):
     """Contains the NHN Check's finding information."""
 

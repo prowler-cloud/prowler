@@ -258,6 +258,14 @@ class Provider(ABC):
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
                     )
+                elif "llm" in provider_class_name.lower():
+                    provider_class(
+                        model_type=arguments.model_type,
+                        model_name=arguments.model_name,
+                        probes=arguments.probes,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(

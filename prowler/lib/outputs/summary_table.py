@@ -61,6 +61,9 @@ def display_summary_table(
             else:
                 entity_type = "Directory"
                 audited_entities = provider.scan_path
+        elif provider.type == "llm":
+            entity_type = "LLM"
+            audited_entities = f"{provider.model_type}:{provider.model_name}"
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
