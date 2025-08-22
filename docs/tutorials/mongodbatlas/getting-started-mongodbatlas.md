@@ -15,27 +15,15 @@ To create MongoDB Atlas API keys:
 1. **Log into MongoDB Atlas**: Access the MongoDB Atlas console
 2. **Navigate to Access Manager**: Go to the organization access management section:
 
-    - If you are in the organization page, you can click on the "Access Manager" or "Applications" button in the left sidebar
+    - Click on Access Manager and Organization Access:
 
-        ![Organization Access](./img/access-manager.png)
+        ![Organization Access](./img/organization-access.png)
 
-        Or it can appear like this:
+    - After that click on the Applications tab inside the Access Manager:
 
-        ![Access Manager](./img/applications-tab.png)
+        ![Project Access](./img/access-manager.png)
 
-    - If you are in the project page, you can click on the "Organization access" button in the top right corner
-
-        ![Project Access](./img/organization-access.png)
-
-        After that just click on the Access Manager/Applications button in the left sidebar
-
-        ![Organization Access](./img/access-manager.png)
-
-        Or it can appear like this:
-
-        ![Access Manager](./img/applications-tab.png)
-
-3. **Select API Keys Tab**: Click on the "API Keys" tab that appears in the images above
+3. **Select API Keys Tab**: Click on the "API Keys" tab that appears in the image above
 
 4. **Create API Key**: Click "Create API Key" and provide a description
 
