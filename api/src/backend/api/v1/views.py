@@ -1507,6 +1507,9 @@ class ProviderViewSet(BaseRLSViewSet):
                 description="PDF file containing the threatscore report"
             ),
             202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
             403: OpenApiResponse(description="There is a problem with credentials"),
             404: OpenApiResponse(
                 description="The scan has no threatscore reports, or the threatscore report generation task has not started yet"

@@ -348,13 +348,22 @@ export const getThreatscoreReport = async (scanId: string) => {
       );
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const filename = `scan-${scanId}-threatscore.pdf`;
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
     return {
       success: true,
-      data: base64,
-      filename: `scan-${scanId}-threatscore.pdf`,
+      data: url,
+      filename,
     };
   } catch (error) {
     return {
