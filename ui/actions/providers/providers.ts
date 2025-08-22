@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import yaml from "js-yaml";
 
 import {
   apiBaseUrl,
@@ -307,3 +308,223 @@ export const deleteProvider = async (formData: FormData) => {
     return { error: getErrorMessage(error) };
   }
 };
+
+// Bulk provider import functionality
+export const bulkImportProviders = async (formData: FormData) => {
+  const headers = await getAuthHeaders({ contentType: true });
+  const yamlContent = formData.get("yamlContent") as string;
+
+  if (!yamlContent) {
+    return { error: "YAML content is required" };
+  }
+
+  try {
+    
+    const providers = yaml.load(yamlContent);
+
+    if (!Array.isArray(providers)) {
+      return { error: "YAML content must be an array of provider configurations" };
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < providers.length; i++) {
+      const provider = providers[i];
+      const providerNum = i + 1;
+
+      try {
+        // Step 1: Create provider
+        const providerResponse = await fetch(`${apiBaseUrl}/providers`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            data: {
+              type: "providers",
+              attributes: {
+                provider: provider.provider,
+                uid: provider.uid,
+                ...(provider.alias && { alias: provider.alias }),
+              },
+            },
+          }),
+        });
+
+        const providerData = await providerResponse.json();
+        
+        if (!providerResponse.ok) {
+          errors.push({
+            provider: providerNum,
+            step: "provider_creation",
+            error: providerData,
+          });
+          continue;
+        }
+
+        const providerId = providerData.data.id;
+        results.push({
+          provider: providerNum,
+          providerId,
+          providerData,
+        });
+
+        // Step 2: Create credentials if provided
+        if (provider.auth_method && provider.credentials) {
+          try {
+            const { secretType, secret } = buildCredentialsFromYaml(provider);
+            
+            const secretResponse = await fetch(`${apiBaseUrl}/providers/secrets`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                data: {
+                  type: "provider-secrets",
+                  attributes: { 
+                    secret_type: secretType, 
+                    secret,
+                    name: provider.alias || `${provider.provider}-${provider.uid}`,
+                  },
+                  relationships: {
+                    provider: {
+                      data: { id: providerId, type: "providers" },
+                    },
+                  },
+                },
+              }),
+            });
+
+            const secretData = await secretResponse.json();
+            
+            if (!secretResponse.ok) {
+              errors.push({
+                provider: providerNum,
+                step: "credentials_creation",
+                error: secretData,
+              });
+            } else {
+              results[results.length - 1].secretData = secretData;
+            }
+          } catch (credError) {
+            errors.push({
+              provider: providerNum,
+              step: "credentials_processing",
+              error: getErrorMessage(credError),
+            });
+          }
+        }
+      } catch (error) {
+        errors.push({
+          provider: providerNum,
+          step: "general",
+          error: getErrorMessage(error),
+        });
+      }
+    }
+
+    revalidatePath("/providers");
+    return parseStringify({
+      success: true,
+      results,
+      errors,
+      summary: {
+        total: providers.length,
+        successful: results.length,
+        failed: errors.length,
+      },
+    });
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+// Helper function to build credentials from YAML provider config
+function buildCredentialsFromYaml(provider: any) {
+  const { provider: providerType, auth_method: authMethod, credentials } = provider;
+  
+  let secretType = "static";
+  let secret: any = {};
+
+  if (providerType === "aws") {
+    if (authMethod === "role") {
+      secretType = "role";
+      secret = {
+        role_arn: credentials.role_arn,
+        external_id: credentials.external_id,
+        ...(credentials.session_name && { role_session_name: credentials.session_name }),
+        ...(credentials.duration_seconds && { session_duration: credentials.duration_seconds }),
+        ...(credentials.access_key_id && { aws_access_key_id: credentials.access_key_id }),
+        ...(credentials.secret_access_key && { aws_secret_access_key: credentials.secret_access_key }),
+        ...(credentials.session_token && { aws_session_token: credentials.session_token }),
+      };
+    } else if (authMethod === "credentials") {
+      secretType = "static";
+      secret = {
+        aws_access_key_id: credentials.access_key_id,
+        aws_secret_access_key: credentials.secret_access_key,
+        ...(credentials.session_token && { aws_session_token: credentials.session_token }),
+      };
+    }
+  } else if (providerType === "azure") {
+    if (authMethod === "service_principal") {
+      secretType = "static";
+      secret = {
+        tenant_id: credentials.tenant_id,
+        client_id: credentials.client_id,
+        client_secret: credentials.client_secret,
+      };
+    }
+  } else if (providerType === "gcp") {
+    if (authMethod === "service_account" || authMethod === "service_account_json") {
+      secretType = "service_account";
+      if (credentials.inline_json) {
+        secret = { service_account_key: credentials.inline_json };
+      } else if (credentials.service_account_key_json_path) {
+        // For file paths, we can't read the file in the browser
+        throw new Error("File path credentials are not supported in bulk import. Use inline_json instead.");
+      }
+    } else if (authMethod === "oauth2" || authMethod === "adc") {
+      secretType = "static";
+      secret = {
+        client_id: credentials.client_id,
+        client_secret: credentials.client_secret,
+        refresh_token: credentials.refresh_token,
+      };
+    }
+  } else if (providerType === "kubernetes") {
+    if (authMethod === "kubeconfig") {
+      secretType = "static";
+      secret = {
+        kubeconfig_content: credentials.kubeconfig_inline || credentials.kubeconfig_content,
+      };
+    }
+  } else if (providerType === "m365") {
+    if (authMethod === "service_principal") {
+      secretType = "static";
+      secret = {
+        tenant_id: credentials.tenant_id,
+        client_id: credentials.client_id,
+        client_secret: credentials.client_secret,
+        ...(credentials.username && { user: credentials.username }),
+        ...(credentials.password && { password: credentials.password }),
+      };
+    }
+  } else if (providerType === "github") {
+    if (authMethod === "personal_access_token") {
+      secretType = "static";
+      secret = { personal_access_token: credentials.token };
+    } else if (authMethod === "oauth_app_token") {
+      secretType = "static";
+      secret = { oauth_app_token: credentials.oauth_token };
+    } else if (authMethod === "github_app") {
+      secretType = "static";
+      secret = {
+        github_app_id: parseInt(credentials.app_id, 10),
+        github_app_key_content: credentials.private_key_inline || credentials.private_key,
+      };
+    }
+  }
+
+  return { secretType, secret };
+}
