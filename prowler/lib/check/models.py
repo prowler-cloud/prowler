@@ -550,9 +550,7 @@ class Check_Report_GCP(Check_Report):
             or ""
         )
         self.resource_name = (
-            resource_name
-            or getattr(resource, "name", "")
-            or getattr(resource, "id", "")
+            resource_name or getattr(resource, "name", "") or "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (

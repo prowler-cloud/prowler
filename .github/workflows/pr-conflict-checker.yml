@@ -1,0 +1,166 @@
+name: Prowler - PR Conflict Checker
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - "master"
+      - "v5.*"
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - "master"
+      - "v5.*"
+
+jobs:
+  conflict-checker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            **
+
+      - name: Check for conflict markers
+        id: conflict-check
+        run: |
+          echo "Checking for conflict markers in changed files..."
+
+          CONFLICT_FILES=""
+          HAS_CONFLICTS=false
+
+          # Check each changed file for conflict markers
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [ -f "$file" ]; then
+              echo "Checking file: $file"
+
+              # Look for conflict markers
+              if grep -l "^<<<<<<<\|^=======\|^>>>>>>>" "$file" 2>/dev/null; then
+                echo "Conflict markers found in: $file"
+                CONFLICT_FILES="$CONFLICT_FILES$file "
+                HAS_CONFLICTS=true
+              fi
+            fi
+          done
+
+          if [ "$HAS_CONFLICTS" = true ]; then
+            echo "has_conflicts=true" >> $GITHUB_OUTPUT
+            echo "conflict_files=$CONFLICT_FILES" >> $GITHUB_OUTPUT
+            echo "Conflict markers detected in files: $CONFLICT_FILES"
+          else
+            echo "has_conflicts=false" >> $GITHUB_OUTPUT
+            echo "No conflict markers found in changed files"
+          fi
+
+      - name: Add conflict label
+        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const hasConflictLabel = labels.some(label => label.name === 'has-conflicts');
+
+            if (!hasConflictLabel) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['has-conflicts']
+              });
+              console.log('Added has-conflicts label');
+            } else {
+              console.log('has-conflicts label already exists');
+            }
+
+      - name: Remove conflict label
+        if: steps.conflict-check.outputs.has_conflicts == 'false'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'has-conflicts'
+              });
+              console.log('Removed has-conflicts label');
+            } catch (error) {
+              if (error.status === 404) {
+                console.log('has-conflicts label was not present');
+              } else {
+                throw error;
+              }
+            }
+
+      - name: Find existing conflict comment
+        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-regex: '(⚠️ \*\*Conflict Markers Detected\*\*|✅ \*\*Conflict Markers Resolved\*\*)'
+
+      - name: Create or update conflict comment
+        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            ⚠️ **Conflict Markers Detected**
+
+            This pull request contains unresolved conflict markers in the following files:
+            ```
+            ${{ steps.conflict-check.outputs.conflict_files }}
+            ```
+
+            Please resolve these conflicts by:
+            1. Locating the conflict markers: `<<<<<<<`, `=======`, and `>>>>>>>`
+            2. Manually editing the files to resolve the conflicts
+            3. Removing all conflict markers
+            4. Committing and pushing the changes
+
+      - name: Find existing conflict comment when resolved
+        if: steps.conflict-check.outputs.has_conflicts == 'false'
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        id: find-resolved-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-regex: '(⚠️ \*\*Conflict Markers Detected\*\*|✅ \*\*Conflict Markers Resolved\*\*)'
+
+      - name: Update comment when conflicts resolved
+        if: steps.conflict-check.outputs.has_conflicts == 'false' && steps.find-resolved-comment.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          comment-id: ${{ steps.find-resolved-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            ✅ **Conflict Markers Resolved**
+
+            All conflict markers have been successfully resolved in this pull request.

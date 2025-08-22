@@ -35,7 +35,9 @@ export const AWSRoleCredentialsForm = ({
   });
   const [showOptionalRole, setShowOptionalRole] = useState(false);
   const showRoleSection =
-    (isCloudEnv && credentialsType === "aws-sdk-default") || showOptionalRole;
+    type === "providers" ||
+    (isCloudEnv && credentialsType === "aws-sdk-default") ||
+    showOptionalRole;
 
   return (
     <>
