@@ -123,10 +123,11 @@ nav:
           - Authentication: tutorials/microsoft365/authentication.md
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
       - GitHub:
-          - Authentication: tutorials/github/authentication.md
           - Getting Started: tutorials/github/getting-started-github.md
+          - Authentication: tutorials/github/authentication.md
       - IaC:
           - Getting Started: tutorials/iac/getting-started-iac.md
+          - Authentication: tutorials/iac/authentication.md
   - Developer Guide:
       - General Concepts:
         - Introduction: developer-guide/introduction.md
