@@ -264,7 +264,6 @@ class Provider(ABC):
                     provider_class(
                         atlas_public_key=arguments.atlas_public_key,
                         atlas_private_key=arguments.atlas_private_key,
-                        atlas_organization_id=arguments.atlas_organization_id,
                         atlas_project_id=arguments.atlas_project_id,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,

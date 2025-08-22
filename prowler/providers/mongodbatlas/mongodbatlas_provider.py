@@ -53,7 +53,6 @@ class MongodbatlasProvider(Provider):
         mutelist_path: str = None,
         mutelist_content: dict = None,
         # Optional filters
-        atlas_organization_id: str = None,
         atlas_project_id: str = None,
     ):
         """
@@ -67,7 +66,6 @@ class MongodbatlasProvider(Provider):
             fixer_config: Fixer configuration content
             mutelist_path: Path to the mutelist file
             mutelist_content: Mutelist content
-            atlas_organization_id: Organization ID to filter
             atlas_project_id: Project ID to filter
         """
         logger.info("Instantiating MongoDB Atlas Provider...")
@@ -80,7 +78,6 @@ class MongodbatlasProvider(Provider):
         self._identity = MongodbatlasProvider.setup_identity(self._session)
 
         # Store filter options
-        self._organization_id = atlas_organization_id
         self._project_id = atlas_project_id
 
         # Audit Config
@@ -137,11 +134,6 @@ class MongodbatlasProvider(Provider):
     def mutelist(self) -> MongoDBAtlasMutelist:
         """Returns the mutelist for the MongoDB Atlas provider"""
         return self._mutelist
-
-    @property
-    def organization_id(self):
-        """Returns the organization ID filter"""
-        return self._organization_id
 
     @property
     def project_id(self):
@@ -284,11 +276,6 @@ class MongodbatlasProvider(Provider):
         report_lines = [
             f"MongoDB Atlas Organization ID: {Fore.YELLOW}{self.identity.organization_id}{Style.RESET_ALL}",
         ]
-
-        if self.organization_id:
-            report_lines.append(
-                f"Organization ID Filter: {Fore.YELLOW}{self.organization_id}{Style.RESET_ALL}"
-            )
 
         if self.project_id:
             report_lines.append(

@@ -23,27 +23,20 @@ class Organizations(MongoDBAtlasService):
 
     def _list_organizations(self) -> Dict[str, Organization]:
         """
-        List all MongoDB Atlas organizations
+        List MongoDB Atlas organization for the authenticated API key
 
         Returns:
-            Dict[str, Organization]: Dictionary of organizations indexed by organization ID
+            Dict[str, Organization]: Dictionary containing the organization indexed by organization ID
         """
-        logger.info("Organizations - Listing MongoDB Atlas organizations...")
+        logger.info("Organizations - Listing MongoDB Atlas organization...")
         organizations = {}
 
         try:
-            # If organization_id filter is set, only get that organization
-            if self.provider.organization_id:
-                org_data = self._make_request(
-                    "GET", f"/orgs/{self.provider.organization_id}"
-                )
-                organizations[org_data["id"]] = self._process_organization(org_data)
-            else:
-                # Get all organizations with pagination
-                all_orgs = self._paginate_request("/orgs")
+            # Get the organization associated with the API key
+            all_orgs = self._paginate_request("/orgs")
 
-                for org_data in all_orgs:
-                    organizations[org_data["id"]] = self._process_organization(org_data)
+            for org_data in all_orgs:
+                organizations[org_data["id"]] = self._process_organization(org_data)
 
         except Exception as error:
             logger.error(

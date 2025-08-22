@@ -31,14 +31,6 @@ def init_parser(self):
     )
 
     mongodbatlas_filters_subparser.add_argument(
-        "--atlas-organization-id",
-        nargs="?",
-        help="MongoDB Atlas Organization ID to filter scans to a specific organization",
-        default=None,
-        metavar="ATLAS_ORGANIZATION_ID",
-    )
-
-    mongodbatlas_filters_subparser.add_argument(
         "--atlas-project-id",
         nargs="?",
         help="MongoDB Atlas Project ID to filter scans to a specific project",

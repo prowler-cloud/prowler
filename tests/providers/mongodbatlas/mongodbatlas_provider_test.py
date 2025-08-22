@@ -196,12 +196,10 @@ class TestMongodbatlasProvider:
             provider = MongodbatlasProvider(
                 atlas_public_key=ATLAS_PUBLIC_KEY,
                 atlas_private_key=ATLAS_PRIVATE_KEY,
-                atlas_organization_id="test_org",
                 atlas_project_id="test_project",
             )
 
             assert provider.type == "mongodbatlas"
-            assert provider.organization_id == "test_org"
             assert provider.project_id == "test_project"
             assert provider.session.public_key == ATLAS_PUBLIC_KEY
             assert provider.identity.organization_name == ORGANIZATION_NAME

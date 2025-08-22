@@ -49,11 +49,6 @@ class Projects(MongoDBAtlasService):
                 all_projects = self._paginate_request("/groups")
 
                 for project_data in all_projects:
-                    # Filter by organization if specified
-                    if self.provider.organization_id:
-                        if project_data.get("orgId") != self.provider.organization_id:
-                            continue
-
                     projects[project_data["id"]] = self._process_project(project_data)
 
         except Exception as error:
