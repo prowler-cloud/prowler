@@ -2117,7 +2117,10 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         configuration = attrs.get("configuration")
         credentials = attrs.get("credentials")
 
-        if not providers:
+        if (
+            not providers
+            and integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+        ):
             raise serializers.ValidationError(
                 {
                     "providers": "At least one provider is required for the Security Hub integration."
@@ -2178,17 +2181,25 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
-        validated_attrs = super().validate(attrs)
         integration_type = self.instance.integration_type
-        providers = validated_attrs.get("providers")
-        configuration = (
-            validated_attrs.get("configuration") or self.instance.configuration
-        )
-        credentials = validated_attrs.get("credentials") or self.instance.credentials
+        providers = attrs.get("providers")
+        configuration = attrs.get("configuration") or self.instance.configuration
+        credentials = attrs.get("credentials") or self.instance.credentials
+
+        if (
+            not providers
+            and integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+        ):
+            raise serializers.ValidationError(
+                {
+                    "providers": "At least one provider is required for the Security Hub integration."
+                }
+            )
 
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
+        validated_attrs = super().validate(attrs)
         return validated_attrs
 
     def update(self, instance, validated_data):
