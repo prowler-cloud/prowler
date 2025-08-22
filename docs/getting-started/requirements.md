@@ -1,58 +1,6 @@
 # Prowler Requirements
 
-Prowler is built in Python and utilizes the following SDKs:
 
-- [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#)
-- [Azure SDK](https://azure.github.io/azure-sdk-for-python/)
-- [GCP API Python Client](https://github.com/googleapis/google-api-python-client/)
-- [Kubernetes SDK](https://github.com/kubernetes-client/python)
-- [M365 Graph SDK](https://github.com/microsoftgraph/msgraph-sdk-python)
-- [Github REST API SDK](https://github.com/PyGithub/PyGithub)
-
-## AWS
-
-Prowler requires AWS credentials to function properly. You can authenticate using any method outlined in the [AWS CLI configuration guide](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence).
-
-### Authentication Steps
-
-Ensure your AWS CLI is correctly configured with valid credentials and region settings. You can achieve this via:
-
-```console
-aws configure
-```
-
-or
-
-```console
-export AWS_ACCESS_KEY_ID="ASXXXXXXX"
-export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
-export AWS_SESSION_TOKEN="XXXXXXXXX"
-```
-
-#### Required IAM Permissions
-
-The credentials used must be associated with a user or role that has appropriate permissions for security checks. Attach the following AWS managed policies to ensure access:
-
-  - `arn:aws:iam::aws:policy/SecurityAudit`
-  - `arn:aws:iam::aws:policy/job-function/ViewOnlyAccess`
-
-#### Additional Permissions
-
-For certain checks, additional read-only permissions are required. Attach the following custom policy to your role:
-
-[prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json)
-
-If you intend to send findings to
-[AWS Security Hub](https://aws.amazon.com/security-hub), attach the following custom policy:
-
-[prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
-
-### Multi-Factor Authentication (MFA)
-
-If your IAM entity requires Multi-Factor Authentication (MFA), you can use the `--mfa` flag. Prowler will prompt you to enter the following values to initiate a new session:
-
-- **ARN of your MFA device**
-- **TOTP (Time-Based One-Time Password)**
 
 ## Azure
 
