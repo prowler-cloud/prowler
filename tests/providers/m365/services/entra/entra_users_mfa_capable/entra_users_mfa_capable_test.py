@@ -34,6 +34,7 @@ class Test_entra_users_mfa_capable:
                     on_premises_sync_enabled=False,
                     directory_roles_ids=[],
                     is_mfa_capable=False,
+                    account_enabled=True,
                 )
             }
 
@@ -75,6 +76,7 @@ class Test_entra_users_mfa_capable:
                     on_premises_sync_enabled=False,
                     directory_roles_ids=[],
                     is_mfa_capable=True,
+                    account_enabled=True,
                 )
             }
 
@@ -117,6 +119,7 @@ class Test_entra_users_mfa_capable:
                     on_premises_sync_enabled=False,
                     directory_roles_ids=[],
                     is_mfa_capable=True,
+                    account_enabled=True,
                 ),
                 user2_id: User(
                     id=user2_id,
@@ -124,6 +127,7 @@ class Test_entra_users_mfa_capable:
                     on_premises_sync_enabled=False,
                     directory_roles_ids=[],
                     is_mfa_capable=False,
+                    account_enabled=True,
                 ),
             }
 
@@ -143,3 +147,93 @@ class Test_entra_users_mfa_capable:
             assert result[1].resource == entra_client.users[user2_id]
             assert result[1].resource_name == "Test User 2"
             assert result[1].resource_id == user2_id
+
+    def test_disabled_user_not_checked(self):
+        """Disabled user should not be checked: expected no results."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            user_id = str(uuid4())
+            entra_client.users = {
+                user_id: User(
+                    id=user_id,
+                    name="Disabled User",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=False,  # Disabled user
+                )
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            # No results should be returned for disabled users
+            assert len(result) == 0
+
+    def test_mixed_enabled_disabled_users(self):
+        """Mix of enabled and disabled users: only enabled users should be checked."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            enabled_user_id = str(uuid4())
+            disabled_user_id = str(uuid4())
+            entra_client.users = {
+                enabled_user_id: User(
+                    id=enabled_user_id,
+                    name="Enabled User",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=True,
+                    account_enabled=True,  # Enabled user
+                ),
+                disabled_user_id: User(
+                    id=disabled_user_id,
+                    name="Disabled User",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=False,  # Disabled user
+                ),
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            # Only the enabled user should be checked
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].status_extended == "User Enabled User is MFA capable."
+            assert result[0].resource == entra_client.users[enabled_user_id]
+            assert result[0].resource_name == "Enabled User"
+            assert result[0].resource_id == enabled_user_id
