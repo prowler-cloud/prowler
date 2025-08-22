@@ -14,7 +14,7 @@ Prowler for Microsoft 365 (M365) supports the following authentication methods:
 
 **Authentication flag:** `--sp-env-auth`
 
-To enable Prowler to authenticate as the **Service Principal Application**, configure the following environment variables:
+Enable Prowler authentication as the **Service Principal Application** by configuring the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -53,10 +53,7 @@ These two new environment variables are **required** in this authentication meth
 - `M365_USER` should be your Microsoft account email using the **assigned domain in the tenant**. This means it must look like `example@YourCompany.onmicrosoft.com` or `example@YourCompany.com`, but it must be the exact domain assigned to that user in the tenant.
 
     ???+ warning
-        If the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
-
-    ???+ warning
-        If the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
+        Newly created users must sign in with the account first, as Microsoft prompts for password change. Without completing this step, user authentication fails because Microsoft marks the initial password as expired.
 
     ???+ warning
         The user must not be MFA capable. Microsoft does not allow MFA capable users to authenticate programmatically. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-desktop-acquire-token-username-password?tabs=dotnet) for more information.
@@ -64,14 +61,14 @@ These two new environment variables are **required** in this authentication meth
     ???+ warning
         Using a tenant domain other than the one assigned — even if it belongs to the same tenant — will cause Prowler to fail, as Microsoft authentication will not succeed.
 
-    Ensure you are using the right domain for the user you are trying to authenticate with.
+    Ensure the correct domain is used for the authenticating user.
 
     ![User Domains](img/user-domains.png)
 
 - `M365_PASSWORD` must be the user password.
 
     ???+ note
-        Before we asked for a encrypted password, but now we ask for the user password directly. Prowler will now handle the password encryption for you.
+        Previously an encrypted password was required, but now the user password is accepted directly. Prowler handles the password encryption.
 
 
 
@@ -79,9 +76,9 @@ These two new environment variables are **required** in this authentication meth
 
 **Authentication flag:** `--browser-auth`
 
-This authentication method requires the user to authenticate against Azure using the default browser to start the scan. The `--tenant-id` flag is also required.
+This authentication method requires authentication against Azure using the default browser to start the scan. The `--tenant-id` flag is also required.
 
-With these credentials, you will only be able to run checks that rely on Microsoft Graph. This means you won't be able to run the entire provider. To perform a full M365 security scan, use the **recommended authentication method**.
+These credentials only enable checks that rely on Microsoft Graph. The entire provider cannot be run with this method. To perform a full M365 security scan, use the **recommended authentication method**.
 
 Since this is a **delegated permission** authentication method, necessary permissions should be assigned to the user rather than the application.
 
@@ -91,7 +88,7 @@ To run the full Prowler provider, including PowerShell checks, two types of perm
 
 #### Service Principal Authentication (`--sp-env-auth`) - Recommended
 
-When using service principal authentication, you need to add the following **Application Permissions** configured to:
+When using service principal authentication, add the following **Application Permissions**:
 
 **Microsoft Graph API Permissions:**
 

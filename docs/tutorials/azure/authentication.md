@@ -11,7 +11,7 @@ Prowler for Azure supports multiple authentication types. To use a specific meth
 
 ### Service Principal Application Authentication
 
-To allow Prowler to authenticate using a Service Principal Application, set up the following environment variables:
+Enable Prowler authentication using a Service Principal Application by setting up the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -19,7 +19,7 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 export AZURE_CLIENT_SECRET="XXXXXXX"
 ```
 
-If you execute Prowler with the `--sp-env-auth` flag and these variables are not set or exported, execution will fail.
+Execution with the `--sp-env-auth` flag fails if these variables are not set or exported.
 
 Refer to the [Create Prowler Service Principal](create-prowler-service-principal.md#how-to-create-prowler-service-principal-application) guide for detailed setup instructions.
 
@@ -46,7 +46,7 @@ Required permissions:
 - `UserAuthenticationMethod.Read.All` (used for Entra multifactor authentication checks)
 
     ???+ note
-        You can replace `Directory.Read.All` with `Domain.Read.All` that is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
+        Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permissions. Note that Entra checks related to DirectoryRoles and GetUsers will not run with this permission.
 
 
 #### Subscription Scope Permissions

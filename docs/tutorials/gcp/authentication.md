@@ -4,10 +4,10 @@
 
 Prowler for Google Cloud requires the following permissions:
 
-#### IAM Roles
+### IAM Roles
 - **Reader (`roles/reader`)** – Must be granted at the **project, folder, or organization** level to allow scanning of target projects.
 
-#### Project-Level Settings
+### Project-Level Settings
 
 At least one project must have the following configurations:
 
@@ -54,9 +54,9 @@ Prowler follows the same credential search process as [Google authentication lib
 
 
 
-## Using an access token
+## Using an Access Token
 
-If you already have an access token (e.g., generated with `gcloud auth print-access-token`), you can run Prowler with:
+For existing access tokens (e.g., generated with `gcloud auth print-access-token`), run Prowler with:
 
 ```bash
 export CLOUDSDK_AUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
@@ -64,7 +64,7 @@ prowler gcp --project-ids <project-id>
 ```
 
 ???+ note
-    If using this method, it's recommended to also set the default project explicitly:
+    When using this method, also set the default project explicitly:
     ```bash
     export GOOGLE_CLOUD_PROJECT=<project-id>
     ```
