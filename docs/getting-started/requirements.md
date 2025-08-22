@@ -3,52 +3,6 @@
 
 
 
-## Google Cloud
-
-### Authentication
-
-Prowler follows the same credential discovery process as the [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
-
-1. **Environment Variable Authentication** – Uses the [`GOOGLE_APPLICATION_CREDENTIALS` environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC).
-2. **Google Cloud CLI Credentials** – Uses credentials configured via the [Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal).
-3. **Service Account Authentication** – Retrieves the attached service account credentials from the metadata server. More details [here](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa).
-
-### Required Permissions
-
-Prowler for Google Cloud requires the following permissions:
-
-#### IAM Roles
-- **Reader (`roles/reader`)** – Must be granted at the **project, folder, or organization** level to allow scanning of target projects.
-
-#### Project-Level Settings
-
-At least one project must have the following configurations:
-
-- **Identity and Access Management (IAM) API (`iam.googleapis.com`)** – Must be enabled via:
-
-    - The [Google Cloud API UI](https://console.cloud.google.com/apis/api/iam.googleapis.com/metrics), or
-    - The `gcloud` CLI:
-    ```sh
-    gcloud services enable iam.googleapis.com --project <your-project-id>
-    ```
-
-- **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)** IAM Role – Required for resource scanning.
-
-- **Quota Project Setting** – Define a quota project using either:
-
-    - The `gcloud` CLI:
-    ```sh
-    gcloud auth application-default set-quota-project <project-id>
-    ```
-    - Setting an environment variable:
-    ```sh
-    export GOOGLE_CLOUD_QUOTA_PROJECT=<project-id>
-    ```
-
-### Default Project Scanning
-
-By default, Prowler scans **all accessible GCP projects**. To limit the scan to specific projects, use the `--project-ids` flag.
-
 ## Microsoft 365
 
 Prowler for Microsoft 365 (M365) supports the following authentication methods:
