@@ -281,10 +281,10 @@ class Finding(BaseModel):
             elif provider.type == "mongodbatlas":
                 output_data["auth_method"] = "api_key"
                 output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.user_id"
+                    provider, "identity.organization_id"
                 )
                 output_data["account_name"] = get_nested_attribute(
-                    provider, "identity.username"
+                    provider, "identity.organization_name"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id

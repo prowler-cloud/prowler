@@ -240,15 +240,32 @@ class MongodbatlasProvider(Provider):
                 )
 
             response.raise_for_status()
-            response.json()
+            organizations_data = response.json()
 
-            # Since we can't get user profile from API, we'll use the API key identifier as user info
-            # The organizations response confirms the API key works
-            identity = MongoDBAtlasIdentityInfo(
-                user_id=session.public_key,  # Use public key as identifier
-                username=f"api-key-{session.public_key[:8]}",  # Create a username from public key
-                roles=["API_KEY"],  # Indicate this is an API key authentication
-            )
+            # Extract organization information from the response
+            if (
+                organizations_data
+                and "results" in organizations_data
+                and len(organizations_data["results"]) > 0
+            ):
+                org = organizations_data["results"][0]
+                org_id = org.get("id", "")
+                org_name = org.get("name", "Unknown Organization")
+
+                identity = MongoDBAtlasIdentityInfo(
+                    organization_id=org_id,  # Use organization ID as user_id
+                    organization_name=org_name,  # Use organization name as username
+                    roles=[
+                        "ORGANIZATION_ADMIN"
+                    ],  # Indicate this is an organization-level access
+                )
+            else:
+                # Use public key as identifier and create a username from public key if no organizations found
+                identity = MongoDBAtlasIdentityInfo(
+                    organization_id=session.public_key,  # Use public key as identifier
+                    organization_name=f"api-key-{session.public_key[:8]}",  # Create a username from public key
+                    roles=["API_KEY"],  # Indicate this is an API key authentication
+                )
 
             return identity
 
@@ -265,7 +282,7 @@ class MongodbatlasProvider(Provider):
     def print_credentials(self):
         """Print the MongoDB Atlas credentials"""
         report_lines = [
-            f"MongoDB Atlas User ID: {Fore.YELLOW}{self.identity.user_id}{Style.RESET_ALL}",
+            f"MongoDB Atlas Organization ID: {Fore.YELLOW}{self.identity.organization_id}{Style.RESET_ALL}",
         ]
 
         if self.organization_id:

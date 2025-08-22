@@ -17,8 +17,8 @@ class MongoDBAtlasSession(BaseModel):
 class MongoDBAtlasIdentityInfo(BaseModel):
     """MongoDB Atlas identity information model"""
 
-    user_id: str
-    username: str
+    organization_id: str
+    organization_name: str
     roles: Optional[List[str]] = []
 
 
@@ -33,7 +33,7 @@ class MongoDBAtlasOutputOptions(ProviderOutputOptions):
             or arguments.output_filename is None
         ):
             self.output_filename = (
-                f"prowler-output-{identity.username}-{output_file_timestamp}"
+                f"prowler-output-{identity.organization_id}-{output_file_timestamp}"
             )
         else:
             self.output_filename = arguments.output_filename

@@ -18,8 +18,8 @@ from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
     ATLAS_PRIVATE_KEY,
     ATLAS_PUBLIC_KEY,
     MOCK_ORGS_RESPONSE,
-    USER_ID,
-    USERNAME,
+    ORGANIZATION_ID,
+    ORGANIZATION_NAME,
 )
 
 
@@ -38,8 +38,8 @@ class TestMongodbatlasProvider:
             patch(
                 "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_identity",
                 return_value=MongoDBAtlasIdentityInfo(
-                    user_id=USER_ID,
-                    username=USERNAME,
+                    organization_id=ORGANIZATION_ID,
+                    organization_name=ORGANIZATION_NAME,
                     roles=["API_KEY"],
                 ),
             ),
@@ -52,7 +52,7 @@ class TestMongodbatlasProvider:
             assert provider.type == "mongodbatlas"
             assert provider.session.public_key == ATLAS_PUBLIC_KEY
             assert provider.session.private_key == ATLAS_PRIVATE_KEY
-            assert provider.identity.username == USERNAME
+            assert provider.identity.organization_name == ORGANIZATION_NAME
 
     def test_setup_session_with_credentials(self):
         """Test session setup with provided credentials"""
@@ -100,9 +100,9 @@ class TestMongodbatlasProvider:
 
         identity = MongodbatlasProvider.setup_identity(session)
 
-        assert identity.user_id == USER_ID
-        assert identity.username == USERNAME
-        assert identity.roles == ["API_KEY"]
+        assert identity.organization_id == MOCK_ORGS_RESPONSE["results"][0]["id"]
+        assert identity.organization_name == MOCK_ORGS_RESPONSE["results"][0]["name"]
+        assert identity.roles == ["ORGANIZATION_ADMIN"]
 
     @patch("requests.get")
     def test_setup_identity_authentication_error(self, mock_get):
@@ -148,9 +148,9 @@ class TestMongodbatlasProvider:
             patch(
                 "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_identity",
                 return_value=MongoDBAtlasIdentityInfo(
-                    user_id=USER_ID,
-                    username=USERNAME,
-                    roles=["API_KEY"],
+                    organization_id=ORGANIZATION_ID,
+                    organization_name=ORGANIZATION_NAME,
+                    roles=["ORGANIZATION_ADMIN"],
                 ),
             ),
         ):
@@ -187,9 +187,9 @@ class TestMongodbatlasProvider:
             patch(
                 "prowler.providers.mongodbatlas.mongodbatlas_provider.MongodbatlasProvider.setup_identity",
                 return_value=MongoDBAtlasIdentityInfo(
-                    user_id=USER_ID,
-                    username=USERNAME,
-                    roles=["API_KEY"],
+                    organization_id=ORGANIZATION_ID,
+                    organization_name=ORGANIZATION_NAME,
+                    roles=["ORGANIZATION_ADMIN"],
                 ),
             ),
         ):
@@ -204,4 +204,4 @@ class TestMongodbatlasProvider:
             assert provider.organization_id == "test_org"
             assert provider.project_id == "test_project"
             assert provider.session.public_key == ATLAS_PUBLIC_KEY
-            assert provider.identity.username == USERNAME
+            assert provider.identity.organization_name == ORGANIZATION_NAME

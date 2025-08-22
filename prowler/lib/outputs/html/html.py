@@ -766,7 +766,7 @@ class HTML(Output):
                         <ul class="list-group
                         list-group-flush">
                             <li class="list-group-item">
-                                <b>MongoDB Atlas user:</b> {provider.identity.username}
+                                <b>MongoDB Atlas organization:</b> {provider.identity.organization_name}
                             </li>
                         </ul>
                     </div>
