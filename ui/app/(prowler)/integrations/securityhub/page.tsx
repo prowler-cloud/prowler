@@ -51,8 +51,7 @@ export default async function SecurityHubIntegrations({
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Configure AWS Security Hub integration to automatically send your
-            security findings to Security Hub for centralized monitoring and
-            compliance.
+            security findings for centralized monitoring and compliance.
           </p>
 
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -62,7 +61,7 @@ export default async function SecurityHubIntegrations({
             <ul className="grid grid-cols-1 gap-2 text-sm text-gray-600 dark:text-gray-300 md:grid-cols-2">
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                Automated findings export to Security Hub
+                Automated findings export
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
@@ -70,7 +69,7 @@ export default async function SecurityHubIntegrations({
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                Filter failed findings only
+                Send failed findings only
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />

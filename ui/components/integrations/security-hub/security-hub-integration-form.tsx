@@ -80,8 +80,9 @@ export const SecurityHubIntegrationForm = ({
       provider_id: integration?.relationships?.providers?.data?.[0]?.id || "",
       send_only_fails:
         integration?.attributes.configuration.send_only_fails ?? true,
-      skip_archive_previous:
-        integration?.attributes.configuration.skip_archive_previous ?? false,
+      archive_previous_findings:
+        integration?.attributes.configuration.archive_previous_findings ??
+        false,
       use_custom_credentials: false,
       enabled: integration?.attributes.enabled ?? true,
       credentials_type: "access-secret-key" as const,
@@ -158,7 +159,8 @@ export const SecurityHubIntegrationForm = ({
     const configuration: any = {};
 
     configuration.send_only_fails = values.send_only_fails ?? true;
-    configuration.skip_archive_previous = values.skip_archive_previous ?? false;
+    configuration.archive_previous_findings =
+      values.archive_previous_findings ?? false;
 
     return configuration;
   };
@@ -313,7 +315,7 @@ export const SecurityHubIntegrationForm = ({
 
             <FormField
               control={form.control}
-              name="skip_archive_previous"
+              name="archive_previous_findings"
               render={({ field }) => (
                 <FormControl>
                   <Checkbox

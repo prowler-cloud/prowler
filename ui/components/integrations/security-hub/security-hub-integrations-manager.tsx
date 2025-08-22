@@ -332,19 +332,37 @@ export const SecurityHubIntegrationsManager = ({
                           </p>
                         </div>
                       </div>
-                      <Chip
-                        size="sm"
-                        color={
-                          integration.attributes.connected
-                            ? "success"
-                            : "danger"
-                        }
-                        variant="flat"
-                      >
-                        {integration.attributes.connected
-                          ? "Connected"
-                          : "Disconnected"}
-                      </Chip>
+                      <div className="flex items-center gap-2">
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          color="default"
+                          className="text-xs"
+                        >
+                          {integration.attributes.configuration.send_only_fails ? "Failed Only" : "All Findings"}
+                        </Chip>
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          color="default"
+                          className="text-xs"
+                        >
+                          {integration.attributes.configuration.archive_previous_findings ? "Archive Previous" : "Keep Previous"}
+                        </Chip>
+                        <Chip
+                          size="sm"
+                          color={
+                            integration.attributes.connected
+                              ? "success"
+                              : "danger"
+                          }
+                          variant="flat"
+                        >
+                          {integration.attributes.connected
+                            ? "Connected"
+                            : "Disconnected"}
+                        </Chip>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardBody className="pt-0">

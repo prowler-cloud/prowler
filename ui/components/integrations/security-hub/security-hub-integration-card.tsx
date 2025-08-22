@@ -49,8 +49,7 @@ export const SecurityHubIntegrationCard = () => {
         <div className="flex flex-col gap-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Configure and manage your AWS Security Hub integrations to
-            automatically send security findings to Security Hub for centralized
-            monitoring.
+            automatically send security findings for centralized monitoring.
           </p>
         </div>
       </CardBody>

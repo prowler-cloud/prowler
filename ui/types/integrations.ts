@@ -147,7 +147,7 @@ const baseSecurityHubIntegrationSchema = z.object({
   integration_type: z.literal("aws_security_hub"),
   provider_id: z.string().min(1, "AWS Provider is required"),
   send_only_fails: z.boolean().optional(),
-  skip_archive_previous: z.boolean().optional(),
+  archive_previous_findings: z.boolean().optional(),
   use_custom_credentials: z.boolean().optional(),
   credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]),
   aws_access_key_id: z.string().optional(),
@@ -236,7 +236,7 @@ export const securityHubIntegrationFormSchema = baseSecurityHubIntegrationSchema
   .extend({
     enabled: z.boolean().default(true),
     send_only_fails: z.boolean().default(true),
-    skip_archive_previous: z.boolean().default(false),
+    archive_previous_findings: z.boolean().default(false),
     use_custom_credentials: z.boolean().default(false),
     credentials_type: z
       .enum(["aws-sdk-default", "access-secret-key"])
@@ -249,7 +249,7 @@ export const editSecurityHubIntegrationFormSchema =
     .extend({
       provider_id: z.string().optional(),
       send_only_fails: z.boolean().optional(),
-      skip_archive_previous: z.boolean().optional(),
+      archive_previous_findings: z.boolean().optional(),
       credentials_type: z
         .enum(["aws-sdk-default", "access-secret-key"])
         .optional(),
