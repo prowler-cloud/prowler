@@ -179,7 +179,6 @@ export const S3IntegrationForm = ({
 
   // Helper function to build FormData based on edit mode
   const buildFormData = (values: any) => {
-    // Remove UI-only fields before processing
     const formData = new FormData();
     formData.append("integration_type", values.integration_type);
 
@@ -191,13 +190,11 @@ export const S3IntegrationForm = ({
       // Always send providers array, even if empty, to update relationships
       formData.append("providers", JSON.stringify(values.providers || []));
     } else if (isEditingCredentials) {
-      // Pass the full values object to buildCredentials so it can check credentials_type
       const credentials = buildCredentials(values);
       formData.append("credentials", JSON.stringify(credentials));
     } else {
       // Creation mode - send everything
       const configuration = buildConfiguration(values);
-      // Pass the full values object to buildCredentials so it can check credentials_type
       const credentials = buildCredentials(values);
 
       formData.append("configuration", JSON.stringify(configuration));
