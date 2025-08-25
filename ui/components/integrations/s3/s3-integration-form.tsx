@@ -27,7 +27,7 @@ import { ProviderProps } from "@/types/providers";
 interface S3IntegrationFormProps {
   integration?: IntegrationProps | null;
   providers: ProviderProps[];
-  onSuccess: () => void;
+  onSuccess: (integrationId?: string, shouldTestConnection?: boolean) => void;
   onCancel: () => void;
   editMode?: "configuration" | "credentials" | null; // null means creating new
 }
@@ -211,35 +211,26 @@ export const S3IntegrationForm = ({
 
     try {
       let result;
+      let shouldTestConnection = false;
+      
       if (isEditing && integration) {
         result = await updateIntegration(integration.id, formData);
+        // Test connection if we're editing credentials or configuration (S3 needs both)
+        shouldTestConnection = isEditingCredentials || isEditingConfig;
       } else {
         result = await createIntegration(formData);
+        // Always test connection for new integrations
+        shouldTestConnection = true;
       }
-
+      
       if ("success" in result) {
         toast({
           title: "Success!",
           description: `S3 integration ${isEditing ? "updated" : "created"} successfully.`,
         });
 
-        if ("testConnection" in result) {
-          if (result.testConnection.success) {
-            toast({
-              title: "Connection test started!",
-              description:
-                "Connection test started. It may take some time to complete.",
-            });
-          } else if (result.testConnection.error) {
-            toast({
-              variant: "destructive",
-              title: "Connection test failed",
-              description: result.testConnection.error,
-            });
-          }
-        }
-
-        onSuccess();
+        // Pass the integration ID and whether to test connection to the success callback
+        onSuccess(result.integrationId, shouldTestConnection);
       } else if ("error" in result) {
         const errorMessage = result.error;
 

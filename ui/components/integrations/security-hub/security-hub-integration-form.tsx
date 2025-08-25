@@ -27,7 +27,7 @@ interface SecurityHubIntegrationFormProps {
   integration?: IntegrationProps | null;
   providers: ProviderProps[];
   existingIntegrations?: IntegrationProps[];
-  onSuccess: () => void;
+  onSuccess: (integrationId?: string, shouldTestConnection?: boolean) => void;
   onCancel: () => void;
   editMode?: "configuration" | "credentials" | null;
 }
@@ -209,11 +209,16 @@ export const SecurityHubIntegrationForm = ({
 
     try {
       let result;
+      let shouldTestConnection = false;
 
       if (isEditing && integration) {
         result = await updateIntegration(integration.id, formData);
+        // Test connection ONLY if we're editing credentials (Security Hub doesn't need test for config changes)
+        shouldTestConnection = isEditingCredentials;
       } else {
         result = await createIntegration(formData);
+        // Always test connection for new integrations
+        shouldTestConnection = true;
       }
 
       if ("success" in result) {
@@ -222,23 +227,8 @@ export const SecurityHubIntegrationForm = ({
           description: `Security Hub integration ${isEditing ? "updated" : "created"} successfully.`,
         });
 
-        if ("testConnection" in result) {
-          if (result.testConnection.success) {
-            toast({
-              title: "Connection test started!",
-              description:
-                "Connection test started. It may take some time to complete.",
-            });
-          } else if (result.testConnection.error) {
-            toast({
-              variant: "destructive",
-              title: "Connection test failed",
-              description: result.testConnection.error,
-            });
-          }
-        }
-
-        onSuccess();
+        // Pass the integration ID and whether to test connection to the success callback
+        onSuccess(result.integrationId, shouldTestConnection);
       } else if ("error" in result) {
         const errorMessage = result.error;
 

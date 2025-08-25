@@ -11,6 +11,7 @@ import {
   updateIntegration,
 } from "@/actions/integrations";
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
+import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import {
   IntegrationActionButtons,
   IntegrationCardHeader,
@@ -171,11 +172,19 @@ export const S3IntegrationsManager = ({
     setEditMode(null);
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = async (
+    integrationId?: string,
+    shouldTestConnection?: boolean,
+  ) => {
+    // Close the modal immediately
     setIsModalOpen(false);
     setEditingIntegration(null);
     setEditMode(null);
     setIsOperationLoading(true);
+
+    // Trigger test connection if needed
+    triggerTestConnectionWithDelay(integrationId, shouldTestConnection, "s3", toast);
+
     // Reset loading state after a short delay to show the skeleton briefly
     setTimeout(() => {
       setIsOperationLoading(false);
