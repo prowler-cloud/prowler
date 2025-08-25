@@ -51,8 +51,8 @@ nav:
       - Products:
           - Prowler App: products/prowler-app.md
           - Prowler CLI: products/prowler-cli.md
-          - Prowler Cloud: https://cloud.prowler.com
-          - Prowler Hub: https://hub.prowler.com
+          - Prowler Cloud 🔗: https://cloud.prowler.com
+          - Prowler Hub 🔗: https://hub.prowler.com
     - Installation:
         - Prowler App: installation/prowler-app.md
         - Prowler CLI: installation/prowler-cli.md
@@ -156,7 +156,7 @@ nav:
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
   - About: about.md
-  - Prowler Cloud: https://prowler.com
+  - Release Notes 🔗: https://github.com/prowler-cloud/prowler/releases
 
 # Customization
 extra:
