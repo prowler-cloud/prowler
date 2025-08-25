@@ -197,7 +197,6 @@ def get_security_hub_client_from_integration(
     )
 
     if connection.is_connected:
-        # If not saved, calculate them
         all_security_hub_regions = AwsProvider.get_available_aws_service_regions(
             "securityhub", connection.partition
         )
