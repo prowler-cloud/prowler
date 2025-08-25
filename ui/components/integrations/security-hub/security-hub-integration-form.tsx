@@ -266,7 +266,7 @@ export const SecurityHubIntegrationForm = ({
       return (
         <div className="space-y-4">
           <RadioGroup
-            label="Credential Type"
+            size="sm"
             value={useCustomCredentials ? "custom" : "provider"}
             onValueChange={(value) => {
               form.setValue("use_custom_credentials", value === "custom", {
