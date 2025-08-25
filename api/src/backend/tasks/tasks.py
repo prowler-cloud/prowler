@@ -327,6 +327,16 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         ScanSummary.objects.filter(scan_id=scan_id)
     )
 
+    # Check if we need to generate ASFF output for AWS providers with SecurityHub integration
+    generate_asff = False
+    if provider_type == "aws":
+        security_hub_integrations = Integration.objects.filter(
+            integrationproviderrelationship__provider_id=provider_id,
+            integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+            enabled=True,
+        )
+        generate_asff = security_hub_integrations.exists()
+
     qs = (
         Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
         .order_by("uid")
@@ -337,6 +347,10 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
         # Outputs
         for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+            # Skip ASFF generation if not needed
+            if mode == "json-asff" and not generate_asff:
+                continue
+
             cls = cfg["class"]
             suffix = cfg["suffix"]
             extra = cfg.get("kwargs", {}).copy()
