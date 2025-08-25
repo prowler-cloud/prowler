@@ -2,14 +2,7 @@
 
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { format } from "date-fns";
-import {
-  LockIcon,
-  PlusIcon,
-  Power,
-  SettingsIcon,
-  TestTube,
-  Trash2Icon,
-} from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -18,6 +11,10 @@ import {
   updateIntegration,
 } from "@/actions/integrations";
 import { AWSSecurityHubIcon } from "@/components/icons/services/IconServices";
+import {
+  IntegrationActionButtons,
+  IntegrationCardHeader,
+} from "@/components/integrations/shared";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
@@ -319,57 +316,31 @@ export const SecurityHubIntegrationsManager = ({
               return (
                 <Card key={integration.id} className="dark:bg-gray-800">
                   <CardHeader className="pb-2">
-                    <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-3">
-                        <AWSSecurityHubIcon size={32} />
-                        <div>
-                          <h4 className="text-md font-semibold">
-                            {providerDetails.displayName}
-                          </h4>
-                          <p className="text-xs text-gray-500 dark:text-gray-300">
-                            {providerDetails.accountId && providerDetails.alias
-                              ? `Account ID: ${providerDetails.accountId}`
-                              : "AWS Security Hub Integration"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Chip
-                          size="sm"
-                          variant="flat"
-                          color="default"
-                          className="text-xs"
-                        >
-                          {integration.attributes.configuration.send_only_fails
+                    <IntegrationCardHeader
+                      icon={<AWSSecurityHubIcon size={32} />}
+                      title={providerDetails.displayName}
+                      subtitle={
+                        providerDetails.accountId && providerDetails.alias
+                          ? `Account ID: ${providerDetails.accountId}`
+                          : "AWS Security Hub Integration"
+                      }
+                      chips={[
+                        {
+                          label: integration.attributes.configuration.send_only_fails
                             ? "Failed Only"
-                            : "All Findings"}
-                        </Chip>
-                        <Chip
-                          size="sm"
-                          variant="flat"
-                          color="default"
-                          className="text-xs"
-                        >
-                          {integration.attributes.configuration
+                            : "All Findings",
+                        },
+                        {
+                          label: integration.attributes.configuration
                             .archive_previous_findings
                             ? "Archive Previous"
-                            : "Keep Previous"}
-                        </Chip>
-                        <Chip
-                          size="sm"
-                          color={
-                            integration.attributes.connected
-                              ? "success"
-                              : "danger"
-                          }
-                          variant="flat"
-                        >
-                          {integration.attributes.connected
-                            ? "Connected"
-                            : "Disconnected"}
-                        </Chip>
-                      </div>
-                    </div>
+                            : "Keep Previous",
+                        },
+                      ]}
+                      connectionStatus={{
+                        connected: integration.attributes.connected,
+                      }}
+                    />
                   </CardHeader>
                   <CardBody className="pt-0">
                     <div className="flex flex-col gap-3">
@@ -400,72 +371,15 @@ export const SecurityHubIntegrationsManager = ({
                             </p>
                           )}
                         </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                          <CustomButton
-                            size="sm"
-                            variant="bordered"
-                            startContent={<TestTube size={14} />}
-                            onPress={() => handleTestConnection(integration.id)}
-                            isLoading={isTesting === integration.id}
-                            isDisabled={!integration.attributes.enabled}
-                            ariaLabel="Test connection"
-                            className="w-full sm:w-auto"
-                          >
-                            Test
-                          </CustomButton>
-                          <CustomButton
-                            size="sm"
-                            variant="bordered"
-                            startContent={<SettingsIcon size={14} />}
-                            onPress={() => handleEditConfiguration(integration)}
-                            ariaLabel="Edit configuration"
-                            className="w-full sm:w-auto"
-                          >
-                            Config
-                          </CustomButton>
-                          <CustomButton
-                            size="sm"
-                            variant="bordered"
-                            startContent={<LockIcon size={14} />}
-                            onPress={() => handleEditCredentials(integration)}
-                            ariaLabel="Edit credentials"
-                            className="w-full sm:w-auto"
-                          >
-                            Credentials
-                          </CustomButton>
-                          <CustomButton
-                            size="sm"
-                            variant="bordered"
-                            color={
-                              integration.attributes.enabled
-                                ? "warning"
-                                : "primary"
-                            }
-                            startContent={<Power size={14} />}
-                            onPress={() => handleToggleEnabled(integration)}
-                            ariaLabel={
-                              integration.attributes.enabled
-                                ? "Disable integration"
-                                : "Enable integration"
-                            }
-                            className="w-full sm:w-auto"
-                          >
-                            {integration.attributes.enabled
-                              ? "Disable"
-                              : "Enable"}
-                          </CustomButton>
-                          <CustomButton
-                            size="sm"
-                            color="danger"
-                            variant="bordered"
-                            startContent={<Trash2Icon size={14} />}
-                            onPress={() => handleOpenDeleteModal(integration)}
-                            ariaLabel="Delete integration"
-                            className="w-full sm:w-auto"
-                          >
-                            Delete
-                          </CustomButton>
-                        </div>
+                        <IntegrationActionButtons
+                          integration={integration}
+                          onTestConnection={handleTestConnection}
+                          onEditConfiguration={handleEditConfiguration}
+                          onEditCredentials={handleEditCredentials}
+                          onToggleEnabled={handleToggleEnabled}
+                          onDelete={handleOpenDeleteModal}
+                          isTesting={isTesting === integration.id}
+                        />
                       </div>
                     </div>
                   </CardBody>
