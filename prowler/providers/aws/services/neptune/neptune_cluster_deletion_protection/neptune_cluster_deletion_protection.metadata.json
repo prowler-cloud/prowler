@@ -14,7 +14,10 @@
   "ResourceType": "Other",
   "Description": "*Neptune DB cluster* has **deletion protection** enabled.",
   "Risk": "Absence of **deletion protection** weakens *availability* and *integrity*: clusters can be removed by accidental admin actions, rogue automation, or compromised credentials.\n\nCluster deletion causes immediate service outage, potential permanent data loss, and extended recovery time if backups or restores are insufficient.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-4",
+  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_deletion_protection",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-4"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_IDENTIFIER> --deletion-protection --apply-immediately",

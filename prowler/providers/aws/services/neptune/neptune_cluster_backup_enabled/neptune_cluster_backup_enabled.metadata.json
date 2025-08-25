@@ -12,7 +12,13 @@
   "ResourceType": "AwsRdsDbCluster",
   "Description": "*Neptune DB cluster* automated backup is enabled and retention days are more than the required minimum retention period (default to 7 days).",
   "Risk": "**Insufficient backup retention** reduces the ability to recover from data corruption, accidental deletion, or ransomware, impacting **availability** and **integrity**.\n\n- Prevents point-in-time recovery to required dates\n- Increases downtime, irreversible data loss, and compliance violations",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5,https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html,https://support.icompaas.com/support/solutions/articles/62000233327-check-for-neptune-clusters-backup-retention-period,https://asecure.cloud/a/p_configrule_neptune_cluster_backup_retention_check/",
+  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_backup_enabled",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5",
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233327-check-for-neptune-clusters-backup-retention-period",
+    "https://asecure.cloud/a/p_configrule_neptune_cluster_backup_retention_check/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7 --apply-immediately",
