@@ -22,7 +22,7 @@ export const AWSRoleCredentialsForm = ({
     cloudformationQuickLink: string;
     terraform: string;
   };
-  type?: "providers" | "s3-integration";
+  type?: "providers" | "integrations";
 }) => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const defaultCredentialsType = isCloudEnv

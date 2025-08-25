@@ -11,7 +11,7 @@ interface CredentialsRoleHelperProps {
     cloudformationQuickLink: string;
     terraform: string;
   };
-  type?: "providers" | "s3-integration";
+  type?: "providers" | "integrations";
 }
 
 export const CredentialsRoleHelper = ({
@@ -24,7 +24,7 @@ export const CredentialsRoleHelper = ({
       <div className="flex flex-col gap-4">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           A <strong>read-only IAM role</strong> must be manually created
-          {type === "s3-integration" ? " or updated" : ""}.
+          {type === "integrations" ? " or updated" : ""}.
         </p>
 
         <CustomButton
