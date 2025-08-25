@@ -2,7 +2,7 @@
 
 This page details the [Kubernetes](https://kubernetes.io/) provider implementation in Prowler.
 
-By default, Prowler will audit all namespaces in the Kubernetes cluster accessible by the configured context. To configure it, follow the [getting started](../index.md#kubernetes) page.
+By default, Prowler will audit all namespaces in the Kubernetes cluster accessible by the configured context. To configure it, see the [In-Cluster Execution](../tutorials/kubernetes/in-cluster.md) or [Non In-Cluster Execution](../tutorials/kubernetes/outside-cluster.md) guides.
 
 ## Kubernetes Provider Classes Architecture
 
