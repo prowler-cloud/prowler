@@ -48,6 +48,8 @@ const baseS3IntegrationSchema = z.object({
   external_id: z.string().optional(),
   role_session_name: z.string().optional(),
   session_duration: z.string().optional(),
+  // Hidden field to track if role section is shown
+  show_role_section: z.boolean().optional(),
 });
 
 const s3IntegrationValidation = (data: any, ctx: z.RefinementCtx) => {
@@ -71,12 +73,19 @@ const s3IntegrationValidation = (data: any, ctx: z.RefinementCtx) => {
     }
   }
 
-  // If role_arn is provided, external_id is required
-  if (data.role_arn && data.role_arn.trim() !== "") {
+  // When role section is shown, both role_arn and external_id are required
+  if (data.show_role_section === true) {
+    if (!data.role_arn || data.role_arn.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Role ARN is required",
+        path: ["role_arn"],
+      });
+    }
     if (!data.external_id || data.external_id.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "External ID is required when using Role ARN",
+        message: "External ID is required",
         path: ["external_id"],
       });
     }
@@ -108,12 +117,19 @@ const s3IntegrationEditValidation = (data: any, ctx: z.RefinementCtx) => {
     }
   }
 
-  // If role_arn is provided, external_id is required
-  if (data.role_arn && data.role_arn.trim() !== "") {
-    if (!data.external_id || data.external_id.trim() === "") {
+  // When role section is shown (editing credentials with role), both fields are required
+  if (data.show_role_section === true) {
+    if (data.role_arn && data.role_arn.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "External ID is required when using Role ARN",
+        message: "Role ARN is required",
+        path: ["role_arn"],
+      });
+    }
+    if (data.external_id && data.external_id.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "External ID is required",
         path: ["external_id"],
       });
     }

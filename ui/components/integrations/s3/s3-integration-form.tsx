@@ -49,6 +49,11 @@ export const S3IntegrationForm = ({
   const isEditingConfig = editMode === "configuration";
   const isEditingCredentials = editMode === "credentials";
 
+  const defaultCredentialsType =
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+      ? "aws-sdk-default"
+      : "access-secret-key";
+
   const form = useForm({
     resolver: zodResolver(
       // For credentials editing, use creation schema (all fields required)
@@ -66,7 +71,7 @@ export const S3IntegrationForm = ({
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
       enabled: integration?.attributes.enabled ?? true,
-      credentials_type: "access-secret-key" as const,
+      credentials_type: defaultCredentialsType,
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
@@ -81,6 +86,7 @@ export const S3IntegrationForm = ({
         "",
       role_session_name: "",
       session_duration: "",
+      show_role_section: false,
     },
   });
 
@@ -115,6 +121,9 @@ export const S3IntegrationForm = ({
   // Helper function to build credentials object
   const buildCredentials = (values: any) => {
     const credentials: any = {};
+
+    // Don't include credentials_type in the API payload - it's a UI-only field
+    // The backend determines credential type based on which fields are present
 
     // Only include role-related fields if role_arn is provided
     if (values.role_arn && values.role_arn.trim() !== "") {
