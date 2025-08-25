@@ -5,6 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.11.0] (Prowler UNRELEASED)
 
 ### Added
+- FedRAMP 20x Key Security Indicators (KSI) compliance framework for AWS, Azure, and GCP providers [(#8512)](https://github.com/prowler-cloud/prowler/pull/8512)
 - Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
 - `vm_sufficient_daily_backup_retention_period` check for Azure provider [(#8200)](https://github.com/prowler-cloud/prowler/pull/8200)
 - `vm_jit_access_enabled` check for Azure provider [(#8202)](https://github.com/prowler-cloud/prowler/pull/8202)
