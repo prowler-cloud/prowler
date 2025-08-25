@@ -605,6 +605,369 @@ class TestCheckIntegrationsTask:
             enabled=True,
         )
 
+    @patch("tasks.tasks.s3_integration_task")
+    @patch("tasks.tasks.Integration.objects.filter")
+    @patch("tasks.tasks.ScanSummary.objects.filter")
+    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.initialize_prowler_provider")
+    @patch("tasks.tasks.Compliance.get_bulk")
+    @patch("tasks.tasks.get_compliance_frameworks")
+    @patch("tasks.tasks.Finding.all_objects.filter")
+    @patch("tasks.tasks._generate_output_directory")
+    @patch("tasks.tasks.FindingOutput._transform_findings_stats")
+    @patch("tasks.tasks.FindingOutput.transform_api_finding")
+    @patch("tasks.tasks._compress_output_files")
+    @patch("tasks.tasks._upload_to_s3")
+    @patch("tasks.tasks.Scan.all_objects.filter")
+    @patch("tasks.tasks.rmtree")
+    def test_generate_outputs_with_asff_for_aws_with_security_hub(
+        self,
+        mock_rmtree,
+        mock_scan_update,
+        mock_upload,
+        mock_compress,
+        mock_transform_finding,
+        mock_transform_stats,
+        mock_generate_dir,
+        mock_findings,
+        mock_get_frameworks,
+        mock_compliance_bulk,
+        mock_initialize_provider,
+        mock_provider_get,
+        mock_scan_summary,
+        mock_integration_filter,
+        mock_s3_task,
+    ):
+        """Test that ASFF output is generated for AWS providers with SecurityHub integration."""
+        # Setup
+        mock_scan_summary_qs = MagicMock()
+        mock_scan_summary_qs.exists.return_value = True
+        mock_scan_summary.return_value = mock_scan_summary_qs
+
+        # Mock AWS provider
+        mock_provider = MagicMock()
+        mock_provider.uid = "aws-account-123"
+        mock_provider.provider = "aws"
+        mock_provider_get.return_value = mock_provider
+
+        # Mock SecurityHub integration exists
+        mock_security_hub_integrations = MagicMock()
+        mock_security_hub_integrations.exists.return_value = True
+        mock_integration_filter.return_value = mock_security_hub_integrations
+
+        # Mock s3_integration_task
+        mock_s3_task.apply_async.return_value.get.return_value = True
+
+        # Mock other necessary components
+        mock_initialize_provider.return_value = MagicMock()
+        mock_compliance_bulk.return_value = {}
+        mock_get_frameworks.return_value = []
+        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_transform_stats.return_value = {"stats": "data"}
+
+        # Mock findings
+        mock_finding = MagicMock()
+        mock_findings.return_value.order_by.return_value.iterator.return_value = [
+            [mock_finding],
+            True,
+        ]
+        mock_transform_finding.return_value = MagicMock(compliance={})
+
+        # Track which output formats were created
+        created_writers = {}
+
+        def track_writer_creation(cls_type):
+            def factory(*args, **kwargs):
+                writer = MagicMock()
+                writer._data = []
+                writer.transform = MagicMock()
+                writer.batch_write_data_to_file = MagicMock()
+                created_writers[cls_type] = writer
+                return writer
+
+            return factory
+
+        # Mock OUTPUT_FORMATS_MAPPING with tracking
+        with patch(
+            "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+            {
+                "csv": {
+                    "class": track_writer_creation("csv"),
+                    "suffix": ".csv",
+                    "kwargs": {},
+                },
+                "json-asff": {
+                    "class": track_writer_creation("asff"),
+                    "suffix": ".asff.json",
+                    "kwargs": {},
+                },
+                "json-ocsf": {
+                    "class": track_writer_creation("ocsf"),
+                    "suffix": ".ocsf.json",
+                    "kwargs": {},
+                },
+            },
+        ):
+            mock_compress.return_value = "/tmp/compressed.zip"
+            mock_upload.return_value = "s3://bucket/file.zip"
+
+            # Execute
+            result = generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+            # Verify ASFF was created for AWS with SecurityHub
+            assert "asff" in created_writers, "ASFF writer should be created"
+            assert "csv" in created_writers, "CSV writer should be created"
+            assert "ocsf" in created_writers, "OCSF writer should be created"
+
+            # Verify SecurityHub integration was checked
+            assert mock_integration_filter.call_count == 2
+            mock_integration_filter.assert_any_call(
+                integrationproviderrelationship__provider_id=self.provider_id,
+                integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                enabled=True,
+            )
+
+            assert result == {"upload": True}
+
+    @patch("tasks.tasks.s3_integration_task")
+    @patch("tasks.tasks.Integration.objects.filter")
+    @patch("tasks.tasks.ScanSummary.objects.filter")
+    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.initialize_prowler_provider")
+    @patch("tasks.tasks.Compliance.get_bulk")
+    @patch("tasks.tasks.get_compliance_frameworks")
+    @patch("tasks.tasks.Finding.all_objects.filter")
+    @patch("tasks.tasks._generate_output_directory")
+    @patch("tasks.tasks.FindingOutput._transform_findings_stats")
+    @patch("tasks.tasks.FindingOutput.transform_api_finding")
+    @patch("tasks.tasks._compress_output_files")
+    @patch("tasks.tasks._upload_to_s3")
+    @patch("tasks.tasks.Scan.all_objects.filter")
+    @patch("tasks.tasks.rmtree")
+    def test_generate_outputs_no_asff_for_aws_without_security_hub(
+        self,
+        mock_rmtree,
+        mock_scan_update,
+        mock_upload,
+        mock_compress,
+        mock_transform_finding,
+        mock_transform_stats,
+        mock_generate_dir,
+        mock_findings,
+        mock_get_frameworks,
+        mock_compliance_bulk,
+        mock_initialize_provider,
+        mock_provider_get,
+        mock_scan_summary,
+        mock_integration_filter,
+        mock_s3_task,
+    ):
+        """Test that ASFF output is NOT generated for AWS providers without SecurityHub integration."""
+        # Setup
+        mock_scan_summary_qs = MagicMock()
+        mock_scan_summary_qs.exists.return_value = True
+        mock_scan_summary.return_value = mock_scan_summary_qs
+
+        # Mock AWS provider
+        mock_provider = MagicMock()
+        mock_provider.uid = "aws-account-123"
+        mock_provider.provider = "aws"
+        mock_provider_get.return_value = mock_provider
+
+        # Mock NO SecurityHub integration
+        mock_security_hub_integrations = MagicMock()
+        mock_security_hub_integrations.exists.return_value = False
+        mock_integration_filter.return_value = mock_security_hub_integrations
+
+        # Mock other necessary components
+        mock_initialize_provider.return_value = MagicMock()
+        mock_compliance_bulk.return_value = {}
+        mock_get_frameworks.return_value = []
+        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_transform_stats.return_value = {"stats": "data"}
+
+        # Mock findings
+        mock_finding = MagicMock()
+        mock_findings.return_value.order_by.return_value.iterator.return_value = [
+            [mock_finding],
+            True,
+        ]
+        mock_transform_finding.return_value = MagicMock(compliance={})
+
+        # Track which output formats were created
+        created_writers = {}
+
+        def track_writer_creation(cls_type):
+            def factory(*args, **kwargs):
+                writer = MagicMock()
+                writer._data = []
+                writer.transform = MagicMock()
+                writer.batch_write_data_to_file = MagicMock()
+                created_writers[cls_type] = writer
+                return writer
+
+            return factory
+
+        # Mock OUTPUT_FORMATS_MAPPING with tracking
+        with patch(
+            "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+            {
+                "csv": {
+                    "class": track_writer_creation("csv"),
+                    "suffix": ".csv",
+                    "kwargs": {},
+                },
+                "json-asff": {
+                    "class": track_writer_creation("asff"),
+                    "suffix": ".asff.json",
+                    "kwargs": {},
+                },
+                "json-ocsf": {
+                    "class": track_writer_creation("ocsf"),
+                    "suffix": ".ocsf.json",
+                    "kwargs": {},
+                },
+            },
+        ):
+            mock_compress.return_value = "/tmp/compressed.zip"
+            mock_upload.return_value = "s3://bucket/file.zip"
+
+            # Execute
+            result = generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+            # Verify ASFF was NOT created when no SecurityHub integration
+            assert "asff" not in created_writers, "ASFF writer should NOT be created"
+            assert "csv" in created_writers, "CSV writer should be created"
+            assert "ocsf" in created_writers, "OCSF writer should be created"
+
+            # Verify SecurityHub integration was checked
+            assert mock_integration_filter.call_count == 2
+            mock_integration_filter.assert_any_call(
+                integrationproviderrelationship__provider_id=self.provider_id,
+                integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                enabled=True,
+            )
+
+            assert result == {"upload": True}
+
+    @patch("tasks.tasks.ScanSummary.objects.filter")
+    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.initialize_prowler_provider")
+    @patch("tasks.tasks.Compliance.get_bulk")
+    @patch("tasks.tasks.get_compliance_frameworks")
+    @patch("tasks.tasks.Finding.all_objects.filter")
+    @patch("tasks.tasks._generate_output_directory")
+    @patch("tasks.tasks.FindingOutput._transform_findings_stats")
+    @patch("tasks.tasks.FindingOutput.transform_api_finding")
+    @patch("tasks.tasks._compress_output_files")
+    @patch("tasks.tasks._upload_to_s3")
+    @patch("tasks.tasks.Scan.all_objects.filter")
+    @patch("tasks.tasks.rmtree")
+    def test_generate_outputs_no_asff_for_non_aws_provider(
+        self,
+        mock_rmtree,
+        mock_scan_update,
+        mock_upload,
+        mock_compress,
+        mock_transform_finding,
+        mock_transform_stats,
+        mock_generate_dir,
+        mock_findings,
+        mock_get_frameworks,
+        mock_compliance_bulk,
+        mock_initialize_provider,
+        mock_provider_get,
+        mock_scan_summary,
+    ):
+        """Test that ASFF output is NOT generated for non-AWS providers (e.g., Azure, GCP)."""
+        # Setup
+        mock_scan_summary_qs = MagicMock()
+        mock_scan_summary_qs.exists.return_value = True
+        mock_scan_summary.return_value = mock_scan_summary_qs
+
+        # Mock Azure provider (non-AWS)
+        mock_provider = MagicMock()
+        mock_provider.uid = "azure-subscription-123"
+        mock_provider.provider = "azure"  # Non-AWS provider
+        mock_provider_get.return_value = mock_provider
+
+        # Mock other necessary components
+        mock_initialize_provider.return_value = MagicMock()
+        mock_compliance_bulk.return_value = {}
+        mock_get_frameworks.return_value = []
+        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_transform_stats.return_value = {"stats": "data"}
+
+        # Mock findings
+        mock_finding = MagicMock()
+        mock_findings.return_value.order_by.return_value.iterator.return_value = [
+            [mock_finding],
+            True,
+        ]
+        mock_transform_finding.return_value = MagicMock(compliance={})
+
+        # Track which output formats were created
+        created_writers = {}
+
+        def track_writer_creation(cls_type):
+            def factory(*args, **kwargs):
+                writer = MagicMock()
+                writer._data = []
+                writer.transform = MagicMock()
+                writer.batch_write_data_to_file = MagicMock()
+                created_writers[cls_type] = writer
+                return writer
+
+            return factory
+
+        # Mock OUTPUT_FORMATS_MAPPING with tracking
+        with patch(
+            "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+            {
+                "csv": {
+                    "class": track_writer_creation("csv"),
+                    "suffix": ".csv",
+                    "kwargs": {},
+                },
+                "json-asff": {
+                    "class": track_writer_creation("asff"),
+                    "suffix": ".asff.json",
+                    "kwargs": {},
+                },
+                "json-ocsf": {
+                    "class": track_writer_creation("ocsf"),
+                    "suffix": ".ocsf.json",
+                    "kwargs": {},
+                },
+            },
+        ):
+            mock_compress.return_value = "/tmp/compressed.zip"
+            mock_upload.return_value = "s3://bucket/file.zip"
+
+            # Execute
+            result = generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+            # Verify ASFF was NOT created for non-AWS provider
+            assert (
+                "asff" not in created_writers
+            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "csv" in created_writers, "CSV writer should be created"
+            assert "ocsf" in created_writers, "OCSF writer should be created"
+
+            assert result == {"upload": True}
+
     @patch("tasks.tasks.upload_s3_integration")
     def test_s3_integration_task_success(self, mock_upload):
         mock_upload.return_value = True
