@@ -118,7 +118,7 @@ class SecurityHub:
         - aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov) where SecurityHub is deployed.
         - findings (list[AWSSecurityFindingFormat]): List of findings to filter and send to Security Hub.
         - aws_security_hub_available_regions (list[str]): List of regions where Security Hub is available.
-        - send_only_fails (bool): Flag indicating whether to send only findings with status 'FAILED'.
+        - send_only_fails (bool): Flag indicating whether to send only findings with status 'FAIL'.
         - role_arn: The ARN of the IAM role to assume.
         - session_duration: The duration of the session in seconds, between 900 and 43200.
         - external_id: The external ID to use when assuming the IAM role.

@@ -8924,7 +8924,7 @@ components:
                   send_only_fails:
                     type: boolean
                     default: false
-                    description: If true, only findings with status 'FAILED' will
+                    description: If true, only findings with status 'FAIL' will
                       be sent to Security Hub.
                   archive_previous_findings:
                     type: boolean
@@ -9083,7 +9083,7 @@ components:
                       send_only_fails:
                         type: boolean
                         default: false
-                        description: If true, only findings with status 'FAILED' will
+                        description: If true, only findings with status 'FAIL' will
                           be sent to Security Hub.
                       archive_previous_findings:
                         type: boolean
@@ -9257,7 +9257,7 @@ components:
                   send_only_fails:
                     type: boolean
                     default: false
-                    description: If true, only findings with status 'FAILED' will
+                    description: If true, only findings with status 'FAIL' will
                       be sent to Security Hub.
                   archive_previous_findings:
                     type: boolean
@@ -10661,7 +10661,7 @@ components:
                       send_only_fails:
                         type: boolean
                         default: false
-                        description: If true, only findings with status 'FAILED' will
+                        description: If true, only findings with status 'FAIL' will
                           be sent to Security Hub.
                       archive_previous_findings:
                         type: boolean

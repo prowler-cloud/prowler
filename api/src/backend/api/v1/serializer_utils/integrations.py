@@ -168,7 +168,7 @@ class IntegrationCredentialField(serializers.JSONField):
                     "send_only_fails": {
                         "type": "boolean",
                         "default": False,
-                        "description": "If true, only findings with status 'FAILED' will be sent to Security Hub.",
+                        "description": "If true, only findings with status 'FAIL' will be sent to Security Hub.",
                     },
                     "archive_previous_findings": {
                         "type": "boolean",
