@@ -31,31 +31,12 @@ aws:
   max_ec2_instance_age_in_days: 180
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_any_port
   # allowed network interface types for security groups open to the Internet
-  ec2_allowed_interface_types:
-    [
-        "api_gateway_managed",
-        "vpc_endpoint",
-    ]
+  ec2_allowed_interface_types: ["api_gateway_managed", "vpc_endpoint"]
   # allowed network interface owners for security groups open to the Internet
-  ec2_allowed_instance_owners:
-    [
-        "amazon-elb"
-    ]
+  ec2_allowed_instance_owners: ["amazon-elb"]
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
   ec2_high_risk_ports:
-    [
-        25,
-        110,
-        135,
-        143,
-        445,
-        3000,
-        4333,
-        5000,
-        5500,
-        8080,
-        8088,
-    ]
+    [25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088]
 
   # AWS ECS Configuration
   # aws.ecs_service_fargate_latest_platform_version
@@ -422,6 +403,81 @@ aws:
   codebuild_github_allowed_organizations:
     [
     ]
+
+  # AWS Check Validation Configuration
+  # Valid CheckType values for AWS provider based on AWS Security Hub ASFF format
+  # Reference: https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types
+  # Supports partial paths: namespace, namespace/category, or namespace/category/classifier
+  valid_check_types:
+    "Software and Configuration Checks":
+      "Vulnerabilities":
+        "CVE": ""
+      "AWS Security Best Practices":
+        "Network Reachability": ""
+        "Runtime Behavior Analysis": ""
+      "Industry and Regulatory Standards":
+        "AWS Foundational Security Best Practices": ""
+        "CIS Host Hardening Benchmarks": ""
+        "CIS AWS Foundations Benchmark": ""
+        "PCI-DSS": ""
+        "Cloud Security Alliance Controls": ""
+        "ISO 90001 Controls": ""
+        "ISO 27001 Controls": ""
+        "ISO 27017 Controls": ""
+        "ISO 27018 Controls": ""
+        "SOC 1": ""
+        "SOC 2": ""
+        "HIPAA Controls (USA)": ""
+        "NIST 800-53 Controls (USA)": ""
+        "NIST CSF Controls (USA)": ""
+        "IRAP Controls (Australia)": ""
+        "K-ISMS Controls (Korea)": ""
+        "MTCS Controls (Singapore)": ""
+        "FISC Controls (Japan)": ""
+        "My Number Act Controls (Japan)": ""
+        "ENS Controls (Spain)": ""
+        "Cyber Essentials Plus Controls (UK)": ""
+        "G-Cloud Controls (UK)": ""
+        "C5 Controls (Germany)": ""
+        "IT-Grundschutz Controls (Germany)": ""
+        "GDPR Controls (Europe)": ""
+        "TISAX Controls (Europe)": ""
+      "Patch Management": ""
+    "TTPs":
+      "Initial Access": ""
+      "Execution": ""
+      "Persistence": ""
+      "Privilege Escalation": ""
+      "Defense Evasion": ""
+      "Credential Access": ""
+      "Discovery": ""
+      "Lateral Movement": ""
+      "Collection": ""
+      "Command and Control": ""
+    "Effects":
+      "Data Exposure": ""
+      "Data Exfiltration": ""
+      "Data Destruction": ""
+      "Denial of Service": ""
+      "Resource Consumption": ""
+    "Unusual Behaviors":
+      "Application": ""
+      "Network Flow": ""
+      "IP address": ""
+      "User": ""
+      "VM": ""
+      "Container": ""
+      "Serverless": ""
+      "Process": ""
+      "Database": ""
+      "Data": ""
+    "Sensitive Data Identifications":
+      "PII": ""
+      "Passwords": ""
+      "Legal": ""
+      "Financial": ""
+      "Security": ""
+      "Business": ""
 
 # Azure Configuration
 azure:
