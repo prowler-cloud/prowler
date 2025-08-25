@@ -20,7 +20,6 @@ import {
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
