@@ -72,9 +72,10 @@ When using Infrastructure as Code (IaC), Terraform is recommended to manage this
 - **Use the official CloudFormation template** provided by Prowler.
 - Target specific Organizational Units (OUs) or the entire Organization.
 
-> ℹ️ A detailed community article this implementation is based on is available here:
-> [Deploy IAM Roles Across an AWS Organization as Code (Unicrons)](https://unicrons.cloud/en/2024/10/14/deploy-iam-roles-across-an-aws-organization-as-code/)
-> This guide has been adapted with permission and aligned with Prowler’s IAM role requirements.
+???+ note
+    A detailed community article this implementation is based on is available here:
+    [Deploy IAM Roles Across an AWS Organization as Code (Unicrons)](https://unicrons.cloud/en/2024/10/14/deploy-iam-roles-across-an-aws-organization-as-code/)
+    This guide has been adapted with permission and aligned with Prowler’s IAM role requirements.
 
 ---
 
