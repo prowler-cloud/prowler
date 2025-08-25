@@ -327,7 +327,11 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         ScanSummary.objects.filter(scan_id=scan_id)
     )
 
-    qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+    qs = (
+        Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        .order_by("uid")
+        .iterator()
+    )
     for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
         fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
 

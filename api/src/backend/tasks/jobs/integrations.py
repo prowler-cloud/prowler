@@ -272,7 +272,11 @@ def upload_security_hub_integration(
             asff_findings = []
 
             # Process findings in batches to avoid memory issues
-            qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+            qs = (
+                Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+                .order_by("uid")
+                .iterator()
+            )
             for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
                 # Transform findings using the same method as the report generation
                 transformed_findings = [
