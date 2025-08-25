@@ -14,7 +14,7 @@
   "ResourceType": "AwsRdsDbCluster",
   "Description": "*Amazon Neptune DB clusters* are evaluated for `Multi-AZ` deployment by checking whether the cluster has read-replica instances distributed across multiple Availability Zones.\n\nA failing result indicates the cluster is deployed in a single AZ and lacks read-replicas that enable automatic promotion and cross‑AZ failover.",
   "Risk": "**Single-AZ deployment** creates a clear availability single point of failure.\n\n- **Availability**: AZ outage or maintenance can cause prolonged downtime until the primary is rebuilt.\n- **Integrity/Recovery**: Manual recovery increases risk of configuration errors and longer RTOs, impacting operations and compliance.",
-  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_multi_az",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-9",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/multi-az.html#"
@@ -28,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Adopt a **high availability** deployment model for production *Neptune* clusters by placing read‑replicas in separate Availability Zones to avoid single points of failure.\n\nRegularly test automated failover and combine HA with robust backup and recovery practices as part of a defense‑in‑depth strategy.",
-      "Url": ""
+      "Url": "https://hub.prowler.com/check/neptune_cluster_multi_az"
     }
   },
   "Categories": [

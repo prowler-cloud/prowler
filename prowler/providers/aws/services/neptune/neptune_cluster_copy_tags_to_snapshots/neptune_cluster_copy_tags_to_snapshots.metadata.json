@@ -12,7 +12,7 @@
   "ResourceType": "AwsRdsDbCluster",
   "Description": "*Neptune DB cluster* is configured to copy all tags to snapshots when snapshots are created.",
   "Risk": "**Missing snapshot tags** weakens governance across confidentiality, integrity, and availability.\n\n- **Access control**: tag-based IAM conditions may not apply to snapshots, enabling unauthorized restore or copy\n- **Operational**: recovery, retention, and cost tracking can fail due to unidentifiable or orphaned snapshots",
-  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_copy_tags_to_snapshots",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview",
     "https://www.cloudanix.com/docs/aws/audit/rdsmonitoring/rules/neptune_cluster_copy_tags_to_snapshot_enabled",
@@ -28,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Preserve metadata by enabling tag inheritance for snapshots and enforcing a consistent tagging strategy.\n\n- Adopt a standardized tag taxonomy\n- Use tag-based access controls and apply least privilege\n- Automate tagging and policy checks in provisioning to prevent untagged snapshots",
-      "Url": ""
+      "Url": "https://hub.prowler.com/check/neptune_cluster_copy_tags_to_snapshots"
     }
   },
   "Categories": [],

@@ -13,7 +13,7 @@
   "ResourceType": "AwsRdsDbCluster",
   "Description": "*Neptune cluster* is associated with one or more **public subnets**.",
   "Risk": "A *Neptune cluster* in a **public subnet** increases exposure across the CIA triad:\n\n- **Confidentiality**: direct access enables credential attacks and data exfiltration\n- **Integrity**: attackers may modify or inject graph data\n- **Availability**: public reachability allows DDoS or remote exploitation, causing downtime",
-  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_uses_public_subnet",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html",
     "https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html"
@@ -27,7 +27,7 @@
     },
     "Recommendation": {
       "Text": "Place *Neptune clusters* in **private subnets** and remove public routability to reduce attack surface.\n\n- Apply **least privilege** and network segmentation\n- Restrict inbound access with scoped network controls and minimal trusted paths\n- Enforce logging, monitoring, and private connectivity for administrative and application access",
-      "Url": ""
+      "Url": "https://hub.prowler.com/check/neptune_cluster_uses_public_subnet"
     }
   },
   "Categories": [

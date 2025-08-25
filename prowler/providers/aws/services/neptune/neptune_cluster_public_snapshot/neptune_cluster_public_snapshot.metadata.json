@@ -14,7 +14,7 @@
   "ResourceType": "AwsRdsDbClusterSnapshot",
   "Description": "*Neptune DB manual cluster snapshot* is evaluated to determine if its restore attributes allow access to *all AWS accounts* (public).\n\nA **FAIL** means the snapshot is publicly shared and can be copied or restored by any AWS account; **PASS** means it is not shared publicly.",
   "Risk": "**Public snapshots** compromise confidentiality of stored data and metadata.\n\nAttackers or third parties can:\n- Copy or restore snapshots to external accounts.\n- Access sensitive data contained in the snapshot.",
-  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_public_snapshot",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-3",
     "https://docs.aws.amazon.com/config/latest/developerguide/neptune-cluster-snapshot-public-prohibited.html"
@@ -28,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Avoid public sharing and apply **least privilege** when granting snapshot access: share only with specific AWS accounts or roles.\n\nUse **encryption**, enforce automated policies and regular audits, and apply **separation of duties** and tagging to control and track snapshot access.",
-      "Url": ""
+      "Url": "https://hub.prowler.com/check/neptune_cluster_public_snapshot"
     }
   },
   "Categories": [

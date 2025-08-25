@@ -13,7 +13,7 @@
   "ResourceType": "Other",
   "Description": "*Neptune DB cluster* is evaluated for **encryption at rest**. Indicating the cluster's underlying storage is not encrypted.",
   "Risk": "**Unencrypted Neptune storage** reduces confidentiality of stored data and metadata and increases attack surface.\n\nPossible impacts:\n- Unauthorized access or data exfiltration from underlying volumes or snapshots\n- Greater blast radius from leaked or shared snapshots",
-  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_storage_encrypted",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1",
     "https://docs.aws.amazon.com/neptune/latest/userguide/encrypt.html"
@@ -27,7 +27,7 @@
     },
     "Recommendation": {
       "Text": "Provision all new *Neptune DB clusters* with **encryption at rest** and prefer **Customer‑Managed Keys (CMK)** for key ownership and auditability.\n\nEnforce **least privilege** on KMS keys, implement key lifecycle practices (rotation, revocation) and ensure backups/snapshots remain encrypted to prevent exposure.",
-      "Url": ""
+      "Url": "https://hub.prowler.com/check/neptune_cluster_storage_encrypted"
     }
   },
   "Categories": [

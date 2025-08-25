@@ -12,7 +12,7 @@
   "ResourceType": "AwsRdsDbCluster",
   "Description": "*Neptune DB cluster* automated backup is enabled and retention days are more than the required minimum retention period (default to 7 days).",
   "Risk": "**Insufficient backup retention** reduces the ability to recover from data corruption, accidental deletion, or ransomware, impacting **availability** and **integrity**.\n\n- Prevents point-in-time recovery to required dates\n- Increases downtime, irreversible data loss, and compliance violations",
-  "RelatedUrl": "https://hub.prowler.com/check/neptune_cluster_backup_enabled",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html",
@@ -28,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Ensure automated backups are enabled and retention aligns with your **RPO/RTO** and regulatory requirements (at least `7` days).\n\n- Define backup lifecycle and storage retention policies\n- Regularly test restore procedures and monitor backup health\n- Incorporate backups into Disaster Recovery and retention governance",
-      "Url": ""
+      "Url": "https://hub.prowler.com/check/neptune_cluster_backup_enabled"
     }
   },
   "Categories": [
