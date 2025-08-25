@@ -1,8 +1,43 @@
 import { pollConnectionTestStatus, testIntegrationConnection } from "@/actions/integrations";
 
+// Integration configuration type
+export interface IntegrationMessages {
+  testingMessage: string;
+  successMessage: string;
+  errorMessage: string;
+}
+
+// Configuration map for integration-specific messages
+const INTEGRATION_CONFIG: Record<string, IntegrationMessages> = {
+  s3: {
+    testingMessage: "Testing connection to S3 bucket...",
+    successMessage: "Successfully connected to S3 bucket.",
+    errorMessage: "Failed to connect to S3 bucket.",
+  },
+  security_hub: {
+    testingMessage: "Testing connection to AWS Security Hub...",
+    successMessage: "Successfully connected to AWS Security Hub.",
+    errorMessage: "Failed to connect to AWS Security Hub.",
+  },
+  // Add new integrations here as needed
+};
+
+// Helper function to register new integration types
+export const registerIntegrationType = (
+  type: string,
+  messages: IntegrationMessages
+): void => {
+  INTEGRATION_CONFIG[type] = messages;
+};
+
+// Helper function to get supported integration types
+export const getSupportedIntegrationTypes = (): string[] => {
+  return Object.keys(INTEGRATION_CONFIG);
+};
+
 interface TestConnectionOptions {
   integrationId: string;
-  integrationType: "s3" | "security_hub";
+  integrationType: string;
   onSuccess?: (message: string) => void;
   onError?: (message: string) => void;
   onStart?: () => void;
@@ -41,14 +76,12 @@ export const runTestConnection = async ({
     const pollResult = await pollConnectionTestStatus(result.taskId);
     
     if (pollResult.success) {
-      const defaultMessage = integrationType === "s3" 
-        ? "Successfully connected to S3 bucket."
-        : "Successfully connected to AWS Security Hub.";
+      const config = INTEGRATION_CONFIG[integrationType];
+      const defaultMessage = config?.successMessage || `Successfully connected to ${integrationType}.`;
       onSuccess?.(pollResult.message || defaultMessage);
     } else {
-      const defaultError = integrationType === "s3"
-        ? "Failed to connect to S3 bucket."
-        : "Failed to connect to AWS Security Hub.";
+      const config = INTEGRATION_CONFIG[integrationType];
+      const defaultError = config?.errorMessage || `Failed to connect to ${integrationType}.`;
       onError?.(pollResult.error || defaultError);
     }
   } catch (error) {
@@ -59,7 +92,7 @@ export const runTestConnection = async ({
 export const triggerTestConnectionWithDelay = (
   integrationId: string | undefined,
   shouldTestConnection: boolean | undefined,
-  integrationType: "s3" | "security_hub",
+  integrationType: string,
   toast: any,
   delay = 200,
 ) => {
@@ -72,9 +105,8 @@ export const triggerTestConnectionWithDelay = (
       integrationId,
       integrationType,
       onStart: () => {
-        const description = integrationType === "s3"
-          ? "Testing connection to S3 bucket..."
-          : "Testing connection to AWS Security Hub...";
+        const config = INTEGRATION_CONFIG[integrationType];
+        const description = config?.testingMessage || `Testing connection to ${integrationType}...`;
         toast({
           title: "Connection test started!",
           description,
