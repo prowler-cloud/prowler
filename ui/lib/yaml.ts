@@ -149,6 +149,93 @@ export const parseYamlValidation = (
 };
 
 /**
+ * Validates if a YAML string contains valid bulk provider configurations
+ */
+export const validateBulkProviderYaml = (
+  val: string,
+): { isValid: boolean; error?: string; providers?: any[] } => {
+  try {
+    const parsed = yaml.load(val);
+
+    if (!Array.isArray(parsed)) {
+      return { 
+        isValid: false, 
+        error: "YAML content must be an array of provider configurations" 
+      };
+    }
+
+    if (parsed.length === 0) {
+      return { 
+        isValid: false, 
+        error: "At least one provider configuration is required" 
+      };
+    }
+
+    // Validate each provider entry
+    for (let i = 0; i < parsed.length; i++) {
+      const item = parsed[i];
+      const providerNum = i + 1;
+
+      if (!item || typeof item !== 'object') {
+        return { 
+          isValid: false, 
+          error: `Provider ${providerNum}: Must be an object` 
+        };
+      }
+
+      if (!item.provider || typeof item.provider !== 'string') {
+        return { 
+          isValid: false, 
+          error: `Provider ${providerNum}: 'provider' field is required and must be a string` 
+        };
+      }
+
+      const validProviders = ['aws', 'azure', 'gcp', 'kubernetes', 'm365', 'github'];
+      if (!validProviders.includes(item.provider)) {
+        return { 
+          isValid: false, 
+          error: `Provider ${providerNum}: Invalid provider type '${item.provider}'. Must be one of: ${validProviders.join(', ')}` 
+        };
+      }
+
+      if (!item.uid || typeof item.uid !== 'string') {
+        return { 
+          isValid: false, 
+          error: `Provider ${providerNum}: 'uid' field is required and must be a string` 
+        };
+      }
+
+      if (item.alias && typeof item.alias !== 'string') {
+        return { 
+          isValid: false, 
+          error: `Provider ${providerNum}: 'alias' field must be a string` 
+        };
+      }
+
+      if (item.auth_method && typeof item.auth_method !== 'string') {
+        return { 
+          isValid: false, 
+          error: `Provider ${providerNum}: 'auth_method' field must be a string` 
+        };
+      }
+
+      if (item.credentials && typeof item.credentials !== 'object') {
+        return { 
+          isValid: false, 
+          error: `Provider ${providerNum}: 'credentials' field must be an object` 
+        };
+      }
+    }
+
+    return { isValid: true, providers: parsed };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown YAML parsing error";
+    return { isValid: false, error: errorMessage };
+  }
+};
+
+/**
  * Converts a configuration (string or object) to YAML format
  */
 export const convertToYaml = (config: string | object): string => {

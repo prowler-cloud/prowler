@@ -1,4 +1,5 @@
 import { z } from "zod";
+import yaml from "js-yaml";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
@@ -408,4 +409,97 @@ export const mutedFindingsConfigFormSchema = z.object({
       }
     }),
   id: z.string().optional(),
+});
+
+export const bulkProviderImportFormSchema = z.object({
+  yamlContent: z
+    .string()
+    .trim()
+    .min(1, { message: "YAML content is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+        return;
+      }
+
+      try {
+        const parsed = yaml.load(val);
+        
+        if (!Array.isArray(parsed)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "YAML content must be an array of provider configurations",
+          });
+          return;
+        }
+
+        if (parsed.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "At least one provider configuration is required",
+          });
+          return;
+        }
+
+        // Validate each provider entry
+        parsed.forEach((item: any, index: number) => {
+          if (!item || typeof item !== 'object') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Provider ${index + 1}: Must be an object`,
+            });
+            return;
+          }
+
+          if (!item.provider || typeof item.provider !== 'string') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Provider ${index + 1}: 'provider' field is required and must be a string`,
+            });
+          } else if (!PROVIDER_TYPES.includes(item.provider as ProviderType)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Provider ${index + 1}: Invalid provider type '${item.provider}'. Must be one of: ${PROVIDER_TYPES.join(', ')}`,
+            });
+          }
+
+          if (!item.uid || typeof item.uid !== 'string') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Provider ${index + 1}: 'uid' field is required and must be a string`,
+            });
+          }
+
+          if (item.alias && typeof item.alias !== 'string') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Provider ${index + 1}: 'alias' field must be a string`,
+            });
+          }
+
+          if (item.auth_method && typeof item.auth_method !== 'string') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Provider ${index + 1}: 'auth_method' field must be a string`,
+            });
+          }
+
+          if (item.credentials && typeof item.credentials !== 'object') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Provider ${index + 1}: 'credentials' field must be an object`,
+            });
+          }
+        });
+      } catch (error) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Error parsing YAML: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      }
+    }),
 });
