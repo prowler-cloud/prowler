@@ -1,12 +1,12 @@
 # AWS Organizations in Prowler
 
-Prowler can integrate with AWS Organizations to allow you to manage the visibility and onboarding of accounts centrally.
+Prowler can integrate with AWS Organizations to manage the visibility and onboarding of accounts centrally.
 
-If you enable trusted access with your Organization, Prowler can discover accounts as they are created and even automate deployment of the Prowler Scan IAM Role.
+When trusted access is enabled with the Organization, Prowler can discover accounts as they are created and even automate deployment of the Prowler Scan IAM Role.
 
-> ℹ️ You can enable trusted access in your Management Account from the AWS Console under **AWS Organizations → Settings → Trusted access for AWS CloudFormation StackSets**.
+> ℹ️ Trusted access can be enabled in the Management Account from the AWS Console under **AWS Organizations → Settings → Trusted access for AWS CloudFormation StackSets**.
 
-If you are not using StackSets or Prowler, and just want to scan AWS Organization accounts using the CLI, you can assume a role in each account manually, or automate that logic with your own scripts.
+When not using StackSets or Prowler and only needing to scan AWS Organization accounts using the CLI, it is possible to assume a role in each account manually or automate that logic with custom scripts.
 
 ## Retrieving AWS Account Details
 
@@ -61,9 +61,9 @@ The additional fields in CSV header output are as follows:
 
 ## Deploying Prowler IAM Roles Across AWS Organizations
 
-When onboarding multiple AWS accounts into Prowler Cloud, it’s important to deploy the Prowler Scan IAM Role in each account. The most efficient way to do this across an AWS Organization is by leveraging AWS CloudFormation StackSets, which allows you to roll out infrastructure—like IAM roles—to all accounts centrally from your Management or Delegated Admin account.
+When onboarding multiple AWS accounts into Prowler Cloud, it is important to deploy the Prowler Scan IAM Role in each account. The most efficient way to do this across an AWS Organization is by leveraging AWS CloudFormation StackSets, which rolls out infrastructure—like IAM roles—to all accounts centrally from the Management or Delegated Admin account.
 
-If you're using Infrastructure as Code (IaC), we recommend using Terraform to manage this deployment systematically.
+When using Infrastructure as Code (IaC), Terraform is recommended to manage this deployment systematically.
 
 ### Recommended Approach
 
@@ -72,15 +72,15 @@ If you're using Infrastructure as Code (IaC), we recommend using Terraform to ma
 - **Use the official CloudFormation template** provided by Prowler.
 - Target specific Organizational Units (OUs) or the entire Organization.
 
-> ℹ️ A detailed community-driven article we based this implementation on is available here:
+> ℹ️ A detailed community article this implementation is based on is available here:
 > [Deploy IAM Roles Across an AWS Organization as Code (Unicrons)](https://unicrons.cloud/en/2024/10/14/deploy-iam-roles-across-an-aws-organization-as-code/)
 > This guide has been adapted with permission and aligned with Prowler’s IAM role requirements.
 
 ---
 
-### Step-by-Step Using Terraform
+### Step-by-Step Guide Using Terraform
 
-Below is a ready-to-use Terraform snippet that deploys the [Prowler Scan IAM Role CloudFormation template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml) across your AWS Organization using StackSets:
+Below is a ready Terraform snippet that deploys the [Prowler Scan IAM Role CloudFormation template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml) across the AWS Organization using StackSets:
 
 #### `main.tf`
 
@@ -97,27 +97,27 @@ module "prowler-scan-role" {
   template_path         = "${path.root}/prowler-scan-role.yaml"
 
   template_parameters = {
-    ExternalId = "<< external ID >>"  # Replace with the actual External ID provided by Prowler Cloud
+    ExternalId = "<< external ID >>"  # Replace with the External ID provided by Prowler Cloud
   }
 
-  # You can also specify specific OU IDs instead of root
+  # Specific OU IDs can be specified instead of root
   organizational_unit_ids = [data.aws_organizations_organization.this.roots[0].id]
 }
 ```
 
 #### `prowler-scan-role.yaml`
 
-You can download or reference the official CloudFormation template directly from GitHub:
+Download or reference the official CloudFormation template directly from GitHub:
 
 - [prowler-scan-role.yml](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml)
 
-You may store this file locally and reference it in `template_path`, or download it dynamically.
+Store this file locally and reference it in `template_path`, or download it dynamically.
 
 ---
 
 ### IAM Role: External ID Support
 
-Make sure to include the `ExternalId` parameter in your StackSet if required by your organization’s Prowler Cloud setup. This ensures secure cross-account access for scanning.
+Include the `ExternalId` parameter in the StackSet if required by the organization's Prowler Cloud setup. This ensures secure cross-account access for scanning.
 
 ---
 
@@ -130,7 +130,7 @@ After deployment:
 
 ---
 
-If you encounter issues during deployment or need to target specific OUs or environments (e.g. dev/staging/prod), feel free to reach out to the Prowler team via [Slack Community](https://prowler.com/slack) or Support.
+When encountering issues during deployment or needing to target specific OUs or environments (e.g., dev/staging/prod), reach out to the Prowler team via [Slack Community](https://prowler.com/slack) or Support.
 
 ## Extra: Run Prowler across all accounts in AWS Organizations by assuming roles
 
