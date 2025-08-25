@@ -250,6 +250,7 @@ export const editSecurityHubIntegrationFormSchema =
       provider_id: z.string().optional(),
       send_only_fails: z.boolean().optional(),
       archive_previous_findings: z.boolean().optional(),
+      use_custom_credentials: z.boolean().optional(),
       credentials_type: z
         .enum(["aws-sdk-default", "access-secret-key"])
         .optional(),

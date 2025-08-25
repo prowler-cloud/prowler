@@ -3,6 +3,7 @@
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { format } from "date-fns";
 import {
+  LockIcon,
   PlusIcon,
   Power,
   SettingsIcon,
@@ -318,7 +319,7 @@ export const SecurityHubIntegrationsManager = ({
               return (
                 <Card key={integration.id} className="dark:bg-gray-800">
                   <CardHeader className="pb-2">
-                    <div className="flex w-full items-center justify-between">
+                    <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
                         <AWSSecurityHubIcon size={32} />
                         <div>
@@ -332,7 +333,7 @@ export const SecurityHubIntegrationsManager = ({
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Chip
                           size="sm"
                           variant="flat"
@@ -425,7 +426,7 @@ export const SecurityHubIntegrationsManager = ({
                           <CustomButton
                             size="sm"
                             variant="bordered"
-                            startContent={<SettingsIcon size={14} />}
+                            startContent={<LockIcon size={14} />}
                             onPress={() => handleEditCredentials(integration)}
                             ariaLabel="Edit credentials"
                             className="w-full sm:w-auto"

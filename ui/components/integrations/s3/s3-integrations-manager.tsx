@@ -3,6 +3,7 @@
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { format } from "date-fns";
 import {
+  LockIcon,
   PlusIcon,
   Power,
   SettingsIcon,
@@ -283,7 +284,7 @@ export const S3IntegrationsManager = ({
             {integrations.map((integration) => (
               <Card key={integration.id} className="dark:bg-gray-800">
                 <CardHeader className="pb-2">
-                  <div className="flex w-full items-center justify-between">
+                  <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                       <AmazonS3Icon size={32} />
                       <div>
@@ -306,6 +307,7 @@ export const S3IntegrationsManager = ({
                         integration.attributes.connected ? "success" : "danger"
                       }
                       variant="flat"
+                      className="self-end sm:self-center"
                     >
                       {integration.attributes.connected
                         ? "Connected"
@@ -354,7 +356,7 @@ export const S3IntegrationsManager = ({
                       <CustomButton
                         size="sm"
                         variant="bordered"
-                        startContent={<SettingsIcon size={14} />}
+                        startContent={<LockIcon size={14} />}
                         onPress={() => handleEditCredentials(integration)}
                         ariaLabel="Edit credentials"
                         className="w-full sm:w-auto"

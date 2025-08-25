@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider } from "@nextui-org/react";
+import { Checkbox, Divider, RadioGroup, Radio } from "@nextui-org/react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
@@ -175,8 +175,15 @@ export const SecurityHubIntegrationForm = ({
         formData.append("configuration", JSON.stringify(configuration));
       }
     } else if (isEditingCredentials) {
-      const credentials = buildCredentials(values);
-      formData.append("credentials", JSON.stringify(credentials));
+      // When editing credentials, check if using custom credentials
+      if (!values.use_custom_credentials) {
+        // Use provider credentials - send empty object
+        formData.append("credentials", JSON.stringify({}));
+      } else {
+        // Use custom credentials
+        const credentials = buildCredentials(values);
+        formData.append("credentials", JSON.stringify(credentials));
+      }
     } else {
       const configuration = buildConfiguration(values);
       formData.append("configuration", JSON.stringify(configuration));
@@ -254,7 +261,50 @@ export const SecurityHubIntegrationForm = ({
   };
 
   const renderStepContent = () => {
-    if (isEditingCredentials || (currentStep === 1 && useCustomCredentials)) {
+    if (isEditingCredentials) {
+      // When editing credentials, show the credential type selector first
+      return (
+        <div className="space-y-4">
+          <RadioGroup
+            label="Credential Type"
+            value={useCustomCredentials ? "custom" : "provider"}
+            onValueChange={(value) => {
+              form.setValue("use_custom_credentials", value === "custom", { 
+                shouldValidate: true,
+                shouldDirty: true 
+              });
+            }}
+          >
+            <Radio value="provider">
+              <span className="text-sm">Use provider credentials</span>
+            </Radio>
+            <Radio value="custom">
+              <span className="text-sm">Use custom credentials</span>
+            </Radio>
+          </RadioGroup>
+
+          {useCustomCredentials && (
+            <>
+              <Divider />
+              <AWSRoleCredentialsForm
+                control={form.control as unknown as Control<AWSCredentialsRole>}
+                setValue={form.setValue as any}
+                externalId={
+                  form.getValues("external_id") || session?.tenantId || ""
+                }
+                templateLinks={getAWSCredentialsTemplateLinks(
+                  form.getValues("external_id") || session?.tenantId || "",
+                  "SecurityHub",
+                )}
+                type="integrations"
+              />
+            </>
+          )}
+        </div>
+      );
+    }
+
+    if (currentStep === 1 && useCustomCredentials) {
       const externalId =
         form.getValues("external_id") || session?.tenantId || "";
       const templateLinks = getAWSCredentialsTemplateLinks(

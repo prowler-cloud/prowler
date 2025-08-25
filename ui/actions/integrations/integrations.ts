@@ -188,7 +188,7 @@ export const updateIntegration = async (id: string, formData: FormData) => {
       }
 
       // Only test connection if credentials or configuration were updated
-      if (credentials || configuration) {
+      if (credentials || (configuration && integration_type === "amazon_s3")) {
         const testResult = await testIntegrationConnection(id);
         return {
           success: "Integration updated successfully!",
