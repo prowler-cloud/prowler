@@ -337,7 +337,11 @@ def upload_security_hub_integration(
                                 )
                             else:
                                 # Update findings in existing client for this batch
-                                security_hub_client.findings = batch_asff_findings
+                                security_hub_client._findings_per_region = (
+                                    security_hub_client.filter(
+                                        batch_asff_findings, send_only_fails
+                                    )
+                                )
 
                             # Send this batch to Security Hub
                             try:

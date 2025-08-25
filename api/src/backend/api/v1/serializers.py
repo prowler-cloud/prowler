@@ -2204,6 +2204,13 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
             ]
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
+        # Preserve regions field for Security Hub integrations
+        if instance.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
+            if "configuration" in validated_data:
+                # Preserve the existing regions field if it exists
+                existing_regions = instance.configuration.get("regions", {})
+                validated_data["configuration"]["regions"] = existing_regions
+
         return super().update(instance, validated_data)
 
 
