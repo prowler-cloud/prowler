@@ -646,33 +646,6 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             for compliance_id, compliance in compliance_data.items():
                 # Create an overview record for each requirement within each compliance framework
                 for requirement_id, requirement in compliance["requirements"].items():
-                    # Calculate score using the new formula for threat score
-                    score = None
-                    if compliance_id.startswith("prowler_threatscore"):
-                        total_score = 0
-                        max_possible_score = 0
-
-                        # Get attributes for this requirement to access LevelOfRisk and Weight
-                        attributes = requirement.get("attributes", [])
-
-                        for attribute in attributes:
-                            level_of_risk = attribute.get("LevelOfRisk", 0)
-                            weight = attribute.get("Weight", 0)
-                            individual_max_score = level_of_risk * weight
-                            max_possible_score += individual_max_score
-
-                            # For each check in this requirement, calculate score based on its status
-                            for check_id, check_status in requirement["checks"].items():
-                                if check_status == "PASS":
-                                    total_score += individual_max_score
-
-                        # Calculate compliance score percentage
-                        score = (
-                            (total_score / max_possible_score * 100)
-                            if max_possible_score > 0
-                            else 0
-                        )
-
                     compliance_requirement_objects.append(
                         ComplianceRequirementOverview(
                             tenant_id=tenant_id,
@@ -687,7 +660,6 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             failed_checks=requirement["checks_status"]["fail"],
                             total_checks=requirement["checks_status"]["total"],
                             requirement_status=requirement["status"],
-                            score=score,
                         )
                     )
 
