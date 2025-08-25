@@ -14,6 +14,7 @@ import { AmazonS3Icon } from "@/components/icons/services/IconServices";
 import {
   IntegrationActionButtons,
   IntegrationCardHeader,
+  IntegrationSkeleton,
 } from "@/components/integrations/shared";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
@@ -23,7 +24,6 @@ import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
 import { S3IntegrationForm } from "./s3-integration-form";
-import { S3IntegrationCardSkeleton } from "./skeleton-s3-integration-card";
 
 interface S3IntegrationsManagerProps {
   integrations: IntegrationProps[];
@@ -272,9 +272,12 @@ export const S3IntegrationsManager = ({
 
         {/* Integrations List */}
         {isOperationLoading ? (
-          <S3IntegrationCardSkeleton
+          <IntegrationSkeleton
             variant="manager"
             count={integrations.length || 1}
+            icon={<AmazonS3Icon size={32} />}
+            title="Amazon S3"
+            subtitle="Export security findings to Amazon S3 buckets."
           />
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">

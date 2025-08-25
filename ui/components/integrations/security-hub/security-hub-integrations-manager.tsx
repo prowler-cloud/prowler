@@ -14,6 +14,7 @@ import { AWSSecurityHubIcon } from "@/components/icons/services/IconServices";
 import {
   IntegrationActionButtons,
   IntegrationCardHeader,
+  IntegrationSkeleton,
 } from "@/components/integrations/shared";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
@@ -23,7 +24,6 @@ import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
 import { SecurityHubIntegrationForm } from "./security-hub-integration-form";
-import { SecurityHubIntegrationCardSkeleton } from "./skeleton-security-hub-integration-card";
 
 interface SecurityHubIntegrationsManagerProps {
   integrations: IntegrationProps[];
@@ -303,9 +303,12 @@ export const SecurityHubIntegrationsManager = ({
         </div>
 
         {isOperationLoading ? (
-          <SecurityHubIntegrationCardSkeleton
+          <IntegrationSkeleton
             variant="manager"
             count={integrations.length || 1}
+            icon={<AWSSecurityHubIcon size={32} />}
+            title="AWS Security Hub"
+            subtitle="Send security findings to AWS Security Hub."
           />
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">
