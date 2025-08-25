@@ -1302,12 +1302,14 @@ class Test_Parser:
     def test_validate_azure_region_valid_regions(self):
         expected_regions = [
             "AzureChinaCloud",
-            "AzureUSGovernment",
+            "AzureUSGovernmentL4",
+            "AzureUSGovernmentL5",
             "AzureCloud",
         ]
         input_regions = [
             "AzureChinaCloud",
-            "AzureUSGovernment",
+            "AzureUSGovernmentL4",
+            "AzureUSGovernmentL5",
             "AzureCloud",
         ]
         for region in input_regions:
@@ -1316,7 +1318,8 @@ class Test_Parser:
     def test_validate_azure_region_invalid_regions(self):
         expected_regions = [
             "AzureChinaCloud",
-            "AzureUSGovernment",
+            "AzureUSGovernmentL4",
+            "AzureUSGovernmentL5",
             "AzureCloud",
         ]
         invalid_region = "non-valid-region"

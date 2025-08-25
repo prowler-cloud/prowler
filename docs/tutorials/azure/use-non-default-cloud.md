@@ -6,7 +6,11 @@ As of this documentation's publication, the following Azure clouds are available
 
 - AzureCloud
 - AzureChinaCloud
-- AzureUSGovernment
+- AzureUSGovernmentL4
+- AzureUSGovernmentL5
+
+???+ note
+    More information about Azure US Goverment region [here](https://devblogs.microsoft.com/microsoft365dev/new-microsoft-graph-endpoints-in-us-government-cloud/)
 
 To change the default cloud, include the flag `--azure-region`. For example:
 
