@@ -15,7 +15,7 @@ By default, Prowler will audit the Microsoft Entra ID tenant and its supported s
 - **Required modules:**
     - [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0) (≥ 3.6.0)
     - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0) (≥ 6.6.0)
-- If you use Prowler Cloud or the official containers, PowerShell is pre-installed. For local or pip installations, you must install PowerShell and the modules yourself. See [Requirements: Supported PowerShell Versions](../getting-started/requirements.md#supported-powershell-versions) and [Needed PowerShell Modules](../getting-started/requirements.md#needed-powershell-modules).
+- If you use Prowler Cloud or the official containers, PowerShell is pre-installed. For local or pip installations, you must install PowerShell and the modules yourself. See [Authentication: Supported PowerShell Versions](../tutorials/microsoft365/authentication.md#supported-powershell-versions) and [Needed PowerShell Modules](../tutorials/microsoft365/authentication.md#required-powershell-modules).
 - For more details and troubleshooting, see [Use of PowerShell in M365](../tutorials/microsoft365/use-of-powershell.md).
 
 ---

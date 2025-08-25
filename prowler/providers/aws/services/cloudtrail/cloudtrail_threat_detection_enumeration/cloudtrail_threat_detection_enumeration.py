@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 )
 
 default_threat_detection_enumeration_actions = [
+    "CreateIndex",
     "DescribeAccessEntry",
     "DescribeAccountAttributes",
     "DescribeAvailabilityZones",
@@ -86,6 +87,7 @@ default_threat_detection_enumeration_actions = [
     "ListOrganizationalUnitsForParent",
     "ListOriginationNumbers",
     "ListPolicyVersions",
+    "ListResources",
     "ListRoles",
     "ListRoles",
     "ListRules",

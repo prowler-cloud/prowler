@@ -19,9 +19,18 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
+- Auth callback route checking working as expected [(#8556)](https://github.com/prowler-cloud/prowler/pull/8556)
 - DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
 
 ### ❌ Removed
+
+---
+
+## [1.10.2] (Prowler v5.10.3)
+
+### 🐞 Fixed
+
+- Lighthouse using default config instead of backend config [(#8546)](https://github.com/prowler-cloud/prowler/pull/8546)
 
 ---
 
