@@ -266,95 +266,134 @@ def upload_security_hub_integration(
             # Initialize prowler provider for finding transformation
             prowler_provider = initialize_prowler_provider(provider)
 
-            # Get findings from database and transform them to ASFF format
-            logger.info(f"Transforming findings for scan {scan_id}")
-            asff_findings = []
-
-            # Process findings in batches to avoid memory issues
-            qs = (
-                Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
-                .order_by("uid")
-                .iterator()
-            )
-            for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
-                # Transform findings using the same method as the report generation
-                transformed_findings = [
-                    FindingOutput.transform_api_finding(finding, prowler_provider)
-                    for finding in batch
-                ]
-
-                # Convert to ASFF format using the ASFF transformer
-                asff_transformer = ASFF(
-                    findings=transformed_findings,
-                    file_path="",  # Not needed for integration
-                    file_extension="json",
-                )
-                asff_transformer.transform(transformed_findings)
-
-                # Add the transformed ASFF data to our findings list
-                asff_findings.extend(asff_transformer.data)
-
-                # Clear the transformer data for memory efficiency
-                asff_transformer._data.clear()
-
-        if not asff_findings:
-            logger.info(f"No findings to send to Security Hub for scan {scan_id}")
-            return True
-
-        logger.info(f"Found {len(asff_findings)} findings to send to Security Hub")
-
         # Process each Security Hub integration
         integration_executions = 0
+        total_findings_sent = {}  # Track findings sent per integration
+
         for integration in integrations:
             try:
-                # Create Security Hub client with integration credentials
-                connected, security_hub = get_security_hub_client_from_integration(
-                    integration, tenant_id, asff_findings
-                )
-
-                if not connected:
-                    logger.error(
-                        f"Security Hub connection failed for integration {integration.id}: {security_hub.error}"
-                    )
-                    # Mark integration as disconnected
-                    with rls_transaction(tenant_id):
-                        integration.connected = False
-                        integration.save()
-                    continue
-
-                # Send findings to Security Hub
+                # Initialize Security Hub client for this integration
+                # We'll create the client once and reuse it for all batches
+                security_hub_client = None
                 send_only_fails = integration.configuration.get(
                     "send_only_fails", False
                 )
-                logger.info(
-                    f"Sending {'all' if not send_only_fails else 'failed'} findings to Security Hub via integration {integration.id}"
-                )
-                findings_sent = security_hub.batch_send_to_security_hub()
+                total_findings_sent[integration.id] = 0
 
-                if findings_sent > 0:
+                # Process findings in batches to avoid memory issues
+                has_findings = False
+                batch_number = 0
+
+                with rls_transaction(tenant_id):
+                    qs = (
+                        Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+                        .order_by("uid")
+                        .iterator()
+                    )
+
+                    for batch, _ in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+                        batch_number += 1
+                        has_findings = True
+
+                        # Transform findings for this batch
+                        transformed_findings = [
+                            FindingOutput.transform_api_finding(
+                                finding, prowler_provider
+                            )
+                            for finding in batch
+                        ]
+
+                        # Convert to ASFF format
+                        asff_transformer = ASFF(
+                            findings=transformed_findings,
+                            file_path="",
+                            file_extension="json",
+                        )
+                        asff_transformer.transform(transformed_findings)
+
+                        # Get the batch of ASFF findings
+                        batch_asff_findings = asff_transformer.data
+
+                        if batch_asff_findings:
+                            # Create Security Hub client for first batch or reuse existing
+                            if not security_hub_client:
+                                connected, security_hub = (
+                                    get_security_hub_client_from_integration(
+                                        integration, tenant_id, batch_asff_findings
+                                    )
+                                )
+
+                                if not connected:
+                                    logger.error(
+                                        f"Security Hub connection failed for integration {integration.id}: {security_hub.error}"
+                                    )
+                                    integration.connected = False
+                                    integration.save()
+                                    break  # Skip this integration
+
+                                security_hub_client = security_hub
+                                logger.info(
+                                    f"Sending {'fail' if send_only_fails else 'all'} findings to Security Hub via integration {integration.id}"
+                                )
+                            else:
+                                # Update findings in existing client for this batch
+                                security_hub_client.findings = batch_asff_findings
+
+                            # Send this batch to Security Hub
+                            try:
+                                findings_sent = (
+                                    security_hub_client.batch_send_to_security_hub()
+                                )
+                                total_findings_sent[integration.id] += findings_sent
+
+                                if findings_sent > 0:
+                                    logger.debug(
+                                        f"Sent batch {batch_number} with {findings_sent} findings to Security Hub"
+                                    )
+                            except Exception as batch_error:
+                                logger.error(
+                                    f"Failed to send batch {batch_number} to Security Hub: {str(batch_error)}"
+                                )
+
+                        # Clear memory after processing each batch
+                        asff_transformer._data.clear()
+                        del batch_asff_findings
+                        del transformed_findings
+
+                if not has_findings:
                     logger.info(
-                        f"Successfully sent {findings_sent} findings to Security Hub via integration {integration.id}"
+                        f"No findings to send to Security Hub for scan {scan_id}"
                     )
                     integration_executions += 1
-                else:
-                    logger.warning(
-                        f"No findings were sent to Security Hub via integration {integration.id}"
-                    )
-
-                # Archive previous findings if configured to do so
-                if integration.configuration.get("archive_previous_findings", False):
-                    logger.info(
-                        f"Archiving previous findings in Security Hub via integration {integration.id}"
-                    )
-                    try:
-                        findings_archived = security_hub.archive_previous_findings()
+                elif security_hub_client:
+                    if total_findings_sent[integration.id] > 0:
                         logger.info(
-                            f"Successfully archived {findings_archived} previous findings in Security Hub"
+                            f"Successfully sent {total_findings_sent[integration.id]} total findings to Security Hub via integration {integration.id}"
                         )
-                    except Exception as archive_error:
+                        integration_executions += 1
+                    else:
                         logger.warning(
-                            f"Failed to archive previous findings: {str(archive_error)}"
+                            f"No findings were sent to Security Hub via integration {integration.id}"
                         )
+
+                    # Archive previous findings if configured to do so
+                    if integration.configuration.get(
+                        "archive_previous_findings", False
+                    ):
+                        logger.info(
+                            f"Archiving previous findings in Security Hub via integration {integration.id}"
+                        )
+                        try:
+                            findings_archived = (
+                                security_hub_client.archive_previous_findings()
+                            )
+                            logger.info(
+                                f"Successfully archived {findings_archived} previous findings in Security Hub"
+                            )
+                        except Exception as archive_error:
+                            logger.warning(
+                                f"Failed to archive previous findings: {str(archive_error)}"
+                            )
 
             except Exception as e:
                 logger.error(
