@@ -3,6 +3,7 @@
 import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { format } from "date-fns";
 import {
+  ExternalLink,
   PlusIcon,
   Power,
   SettingsIcon,
@@ -287,10 +288,20 @@ export const S3IntegrationsManager = ({
                     <div className="flex items-center gap-3">
                       <AmazonS3Icon size={32} />
                       <div>
-                        <h4 className="text-md font-semibold">
-                          {integration.attributes.configuration.bucket_name ||
-                            "Unknown Bucket"}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-md font-semibold">
+                            {integration.attributes.configuration.bucket_name ||
+                              "Unknown Bucket"}
+                          </h4>
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-black dark:text-white"
+                            href={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}?prefix=${integration.attributes.configuration.output_directory}`}
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                        </div>
                         <p className="text-xs text-gray-500 dark:text-gray-300">
                           Output directory:{" "}
                           {integration.attributes.configuration
