@@ -294,12 +294,14 @@ export const S3IntegrationsManager = ({
                             {integration.attributes.configuration.bucket_name ||
                               "Unknown Bucket"}
                           </h4>
-                          <CustomLink
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-black dark:text-white"
                             href={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}?prefix=${integration.attributes.configuration.output_directory}`}
                           >
                             <ExternalLink size={16} />
-                          </CustomLink>
+                          </a>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-300">
                           Output directory:{" "}
