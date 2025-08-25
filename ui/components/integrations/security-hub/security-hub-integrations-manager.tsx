@@ -326,7 +326,8 @@ export const SecurityHubIntegrationsManager = ({
                       }
                       chips={[
                         {
-                          label: integration.attributes.configuration.send_only_fails
+                          label: integration.attributes.configuration
+                            .send_only_fails
                             ? "Failed Only"
                             : "All Findings",
                         },

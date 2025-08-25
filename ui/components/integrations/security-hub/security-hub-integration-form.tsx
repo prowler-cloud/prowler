@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, RadioGroup, Radio } from "@nextui-org/react";
+import { Checkbox, Divider, Radio, RadioGroup } from "@nextui-org/react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
@@ -269,9 +269,9 @@ export const SecurityHubIntegrationForm = ({
             label="Credential Type"
             value={useCustomCredentials ? "custom" : "provider"}
             onValueChange={(value) => {
-              form.setValue("use_custom_credentials", value === "custom", { 
+              form.setValue("use_custom_credentials", value === "custom", {
                 shouldValidate: true,
-                shouldDirty: true 
+                shouldDirty: true,
               });
             }}
           >

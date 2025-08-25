@@ -9,7 +9,13 @@ interface IntegrationCardHeaderProps {
   subtitle?: string;
   chips?: Array<{
     label: string;
-    color?: "default" | "primary" | "secondary" | "success" | "warning" | "danger";
+    color?:
+      | "default"
+      | "primary"
+      | "secondary"
+      | "success"
+      | "warning"
+      | "danger";
     variant?: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow";
   }>;
   connectionStatus?: {

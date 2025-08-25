@@ -1,6 +1,12 @@
 "use client";
 
-import { LockIcon, Power, SettingsIcon, TestTube, Trash2Icon } from "lucide-react";
+import {
+  LockIcon,
+  Power,
+  SettingsIcon,
+  TestTube,
+  Trash2Icon,
+} from "lucide-react";
 
 import { CustomButton } from "@/components/ui/custom";
 import { IntegrationProps } from "@/types/integrations";
