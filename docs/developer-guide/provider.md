@@ -14,35 +14,35 @@ A provider is any platform or service that offers resources, data, or functional
 For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.com/).
 
 ???+ important
-    There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI, the idea with this documentation is to know how to create a new provider and integrate it not only in the CLI but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+    There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI. The main purpose of this documentation is to guide you through creating a new provider and integrating it not only in the CLI, but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
 
 ---
 
 ## Provider Types in Prowler
 
-Prowler supports several types of providers, each with its own implementation pattern and use case. Understanding the differences is key to designing your provider correctly.
+Prowler supports several types of providers, each with its own implementation pattern and use case. Understanding these differences is key to designing your provider correctly.
 
-### Classifying Your Provider
+### Classifying your Provider
 
 Before implementing a new provider, you need to determine which type it belongs to. This classification will guide your implementation approach and help you choose the right patterns and libraries.
 
 #### Decision Criteria
 
-Once you have decided the provider that you want or need to add to Prowler, the next step is to study how to retrieve the data from the provider and depending on that the provider will be one of the following types: SDK, API or Tool/Wrapper (maybe in the future there will be new types but for now this are the only ones).
+Once you have decided the provider you want or need to add to Prowler, the next step is to study how to retrieve data from it. Based on that, the provider will fall into one of the following types: SDK, API or Tool/Wrapper (maybe in the future there will be new types but for now this are the only ones).
 
 **Choose SDK Provider if:**
 
 - The target platform/service has an **official Python SDK** available
-- The target platform/service has an **non-official Python SDK** available but it's been updated and maintained.
+- The target platform/service has a **non-official Python SDK** available but it's been updated and maintained
 - You need to support **multiple authentication methods** (profiles, service principals, IAM roles, etc.)
 - The SDK provides **built-in session management**, retry logic, and error handling
-- You want to leverage **SDK-specific features** like credential chaining, role assumption, etc.
+- You want to leverage **SDK-specific features** like credential chaining, role assumption, etc
 - The platform is a **major cloud provider** (AWS, Azure, GCP, etc.) or has mature SDK support
 
 **Choose API Provider if:**
 
 - The target platform has a **REST API** but **no official Python SDK**
-- The target platform has an **non-official Python SDK** available but it's not updated and maintained.
+- The target platform has a **non-official Python SDK** available but it's not updated and maintained
 - You need to implement **custom authentication flows** (OAuth, token-based, etc.)
 - The platform is a **custom or community service** without official SDK support
 - You want to use **standard HTTP libraries** like `requests` for API calls
@@ -58,7 +58,7 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 **Special Case - Hybrid Providers:**
 
 - Some providers may **combine multiple approaches** (e.g., SDK + Tool wrapper, SDK + API, etc.)
-- Example: M365 uses **msgraph SDK** for authentication and some checks and **PowerShell wrapper** for other checks that the SDK doesn't support
+- Example: M365 uses **msgraph SDK** for authentication and some checks, and **PowerShell wrapper** for other checks that the SDK doesn't support
 - These require **custom implementation patterns** that blend different provider types
 
 #### Classification Examples
@@ -69,10 +69,10 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 | Azure       | SDK    | Official azure-identity SDK, service principals, managed identity |
 | GCP         | SDK    | Official google-auth SDK, service accounts, ADC support           |
 | Kubernetes  | SDK    | Official kubernetes SDK, service accounts, ADC support            |
-| GitHub      | SDK    | Non-Official PyGithub SDK but it's been updated and maintained    |
 | NHN Cloud   | API    | Custom REST API, no official SDK, community provider              |
-| IAC         | Tool   | Third-party security tool that uses trivy, no auth needed, output conversion      |
+| IAC         | Tool   | Third-party security tool that uses trivy, no auth needed, output conversion|
 | M365        | Hybrid | Combines msgraph SDK for auth + PowerShell wrapper for operations |
+| GitHub      | Hybrid | Non-Official PyGithub SDK but it's been updated and maintained + Official graphql API requests|
 
 #### Questions to Ask Yourself
 
@@ -98,9 +98,10 @@ Once you have decided the provider that you want or need to add to Prowler, the 
 
 #### Implementation Complexity
 
-- **SDK Providers**: Low complexity, you have mature examples like AWS, Azure, GCP, Kubernetes, M365, etc. that you can leverage to implement your provider.
-- **API Providers**: Medium complexity, you need to implement the authentication and session management, and the API calls to the provider, but you now have NHN as example to follow.
-- **Tool/Wrapper Providers**: High complexity, you need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have, but you now have IAC and the PowerShell wrapper as example to follow.
+- **SDK Providers**: Low complexity. You have mature examples like AWS, Azure, GCP, Kubernetes, etc. that you can leverage to implement your provider.
+- **API Providers**: Medium complexity. You need to implement the authentication and session management, and the API calls to the provider. You now have NHN as example to follow.
+- **Tool/Wrapper Providers**: High complexity. You need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have. You now have IAC and the PowerShell wrapper as example to follow.
+- **Hybrid Providers**: High complexity. You need to "customize" your provider, mixing the other types of providers in order to achieve the desired result. You have M365 (msgraph SDK + PowerShell wrapper) and Github (PyGithub SDK + graphql API requests) as examples.
 
 ### Determining Regional vs Non-Regional Architecture
 
@@ -197,7 +198,7 @@ def get_aws_enabled_regions(self, current_session: Session) -> set:
         return set()
 ```
 
-The result of the function is a JSON file that contains the list of regions for the provider. It is used to get the list of regions for the provider and is used to validate the region that the user has provided.
+The function returns a JSON file containing the list of regions for the provider. It is used to retrieve the provider’s regions and to validate the region specified by the user.
 
 ```json
 # File: prowler/providers/aws/aws_regions_by_service.json (extract)
@@ -253,7 +254,7 @@ General aspects to consider when implementing a new SDK provider:
 **Key Characteristics:**
 
 - Authentication and session management handled by the SDK.
-- Arguments: `profile`, `region`, `tenant_id`, `client_id`, `client_secret`, etc.
+- Arguments: Depends on the provider, but for example we can have `profile`, `region`, `tenant_id`, `client_id`, `client_secret`, etc.
 - Outputs: Standardized via SDK models and responses.
 - Session objects that can be reused across multiple API calls.
 - Built-in retry logic and error handling.
@@ -261,7 +262,7 @@ General aspects to consider when implementing a new SDK provider:
 **Implementation Details:**
 
 - SDK providers typically use credential objects or session objects provided by the official SDK.
-- They often support multiple authentication methods (environment variables, configuration files, IAM roles, etc.).
+- They often support multiple authentication methods (several types of credentials, configuration files, IAM roles, etc.).
 - Session management includes token refresh, connection pooling, and retry mechanisms.
 - Resource discovery and enumeration is usually straightforward through SDK methods.
 
@@ -319,7 +320,9 @@ prowler/providers/<provider_name>/
 #### Step 2: Implement the Provider Class
 
 **Explanation:**
-The provider class is the core component that handles authentication, session management, and identity information. It inherits from Prowler's base Provider class and implements SDK-specific authentication flows. Based on the analysis of existing SDK providers, all share common patterns for session setup, identity management, and credential validation.
+The provider class is the core component that handles authentication, session management, and identity information. It inherits from Prowler's base Provider class and implements SDK-specific authentication flows. All providers must share, as far as possible, common patterns for session setup, identity management, and credential validation.
+
+Nevertheless, you may encounter changes and must adapt the implementation logic accordingly. A basic example of a common provider implementation is the following:
 
 **File:** `prowler/providers/<provider_name>/<provider_name>_provider.py`
 
@@ -422,18 +425,6 @@ class YourProvider(Provider):
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self._type)
             self._mutelist = YourProviderMutelist(mutelist_path=mutelist_path)
-
-        # Set audit metadata
-        self.audit_metadata = Audit_Metadata(
-            provider=self._type,
-            account_id=self._identity.account_id,
-            account_name=self._identity.account_name,
-            region=self._identity.region,
-            services_scanned=0,
-            expected_checks=[],
-            completed_checks=0,
-            audit_progress=0,
-        )
 
         Provider.set_global_provider(self)
 
@@ -694,27 +685,21 @@ class YourProviderIdentityInfo:
 
 class YourProviderSession:
     """
-    Session information for the provider.
+    Session object that contains the credentials and authentication details for the provider.
 
-    This class holds session-related information including
-    the SDK session object and authentication details.
+    This class holds the actual credentials and authentication information needed
+    to establish a connection with the provider's services.
     """
-    session: object  # Your SDK session object
-    auth_method: str
+    # Authentication credentials
+    access_key: str
+    secret_key: str
+    # Or for other providers:
+    # client_id: str
+    # client_secret: str
+    # tenant_id: str
+
+    # Connection details
     region: str
-    # Add other session fields as needed
-
-class YourProviderCredentials:
-    """
-    Credentials information for the provider.
-
-    This class holds credential-related information for
-    authentication and session management.
-    """
-    client_id: Optional[str] = None
-    client_secret: Optional[str] = None
-    tenant_id: Optional[str] = None
-    # Add other credential fields as needed
 ```
 
 #### Step 4: Implement Arguments
@@ -744,6 +729,16 @@ def init_parser(self):
         nargs="?",
         metavar="SERVICE_ACCOUNT",
         help="Impersonate a <provider_name> Service Account",
+    )
+    <provider_name>_parser.add_argument(
+        "--your-provider-region",
+        help="Your Provider Region",
+        type=str,
+    )
+    <provider_name>_parser.add_argument(
+        "--env-auth",
+        action="store_true",
+        help="Use User and Password environment variables authentication to log in against <provider_name>",
     )
     # More arguments for the provider.
 ```
@@ -835,10 +830,35 @@ def get_global_region() -> str:
     return "global"
 ```
 
-#### Step 7: Implement Service Base Class
+#### Step 7: Create Custom Exceptions
 
 **Explanation:**
-The service base class provides a common interface for all services within your provider. It handles common functionality like session management and error handling.
+Custom exceptions are needed to be able to handle the errors in a more specific way.
+
+**File:** `prowler/providers/<provider_name>/exceptions.py`
+
+```python
+class YourSdkProviderError(Exception):
+    """Base exception for YourSdk provider"""
+    pass
+
+class YourSdkAuthenticationError(YourSdkProviderError):
+    """Authentication failed"""
+    pass
+
+class YourSdkConnectionError(YourSdkProviderError):
+    """Connection to SDK failed"""
+    pass
+
+class YourSdkInvalidCredentialsError(YourSdkProviderError):
+    """Invalid credentials provided"""
+    pass
+```
+
+#### Step 8: Implement Service Base Class
+
+**Explanation:**
+The service base class defines a common interface for all services in your provider, since they will inherit from it. It defines the client to make requests to, the audit configuration and the fixer configuration.
 
 **File:** `prowler/providers/<provider_name>/lib/service/service.py`
 
@@ -862,70 +882,115 @@ class YourProviderService(BaseService):
         """
         self.client = provider.session.get_client(self.service_name)
         self.audit_config = provider.audit_config
+        self.fixer_config = provider.fixer_config
 
 ```
 
-#### Step 8: Register in CLI
+#### Step 9: Register in CLI
 
 **Explanation:**
-CLI registration makes your provider available through Prowler's command-line interface. This step adds the necessary argument parsing for your provider's authentication and configuration options.
+Add your provider to the available providers in the CLI.
 
 **File:** `prowler/lib/cli/parser.py`
 
 ```python
-# In the main parser setup
-parser.add_argument(
-    "--your-provider-client-id",
-    help="Your Provider Client ID",
-    type=str,
-)
+class ProwlerArgumentParser:
+    # Set the default parser
+    def __init__(self):
+        # CLI Arguments
+        self.parser = argparse.ArgumentParser(
+            prog="prowler",
+            formatter_class=RawTextHelpFormatter,
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac,your_provider} ...",
+            epilog="""
+Available Cloud Providers:
+  {aws,azure,gcp,kubernetes,m365,github,iac,nhn,your_provider}
+    aws                 AWS Provider
+    azure               Azure Provider
+    gcp                 GCP Provider
+    kubernetes          Kubernetes Provider
+    m365                Microsoft 365 Provider
+    github              GitHub Provider
+    iac                 IaC Provider (Preview)
+    nhn                 NHN Provider (Unofficial)
+    your_provider       Your Provider
 
-parser.add_argument(
-    "--your-provider-client-secret",
-    help="Your Provider Client Secret",
-    type=str,
-)
+Available components:
+    dashboard           Local dashboard
 
-parser.add_argument(
-    "--your-provider-tenant-id",
-    help="Your Provider Tenant ID",
-    type=str,
-)
+To see the different available options on a specific component, run:
+    prowler {provider|dashboard} -h|--help
 
-parser.add_argument(
-    "--your-provider-region",
-    help="Your Provider Region",
-    type=str,
-)
-
-parser.add_argument(
-    "--your-provider-profile",
-    help="Your Provider Profile",
-    type=str,
-)
+Detailed documentation at https://docs.prowler.com
+""",
 ```
 
-#### Step 9: Register in Main
+#### Step 10: Register in Main
 
 **Explanation:**
-Main registration makes your provider discoverable by Prowler's core system. This mapping allows Prowler to instantiate your provider when requested by users.
+Main registration makes your provider discoverable by Prowler's core system. It's needed to add your provider to the output options and to the compliance evaluation.
 
 **File:** `prowler/__main__.py`
 
 ```python
-# In the provider mapping section
-PROVIDERS = {
-    "aws": AwsProvider,
-    "azure": AzureProvider,
-    "gcp": GcpProvider,
-    "kubernetes": KubernetesProvider,
-    "m365": M365Provider,
-    "github": GithubProvider,
-    "your_provider": YourProvider,  # Add your provider here
-}
+# In the prowler setup output options section
+    if provider == "aws":
+        output_options = AWSOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "azure":
+        output_options = AzureOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "gcp":
+        output_options = GCPOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "kubernetes":
+        output_options = KubernetesOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "github":
+        output_options = GithubOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "m365":
+        output_options = M365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "nhn":
+        output_options = NHNOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "iac":
+        output_options = IACOutputOptions(
+            args, bulk_checks_metadata
+        )
+    elif provider == "your_provider":
+        output_options = YourProviderOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+
+
+    # Setup Compliance Options
+    elif provider == "your_provider":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object (example of compliance with CIS framework)
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = YourProviderCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
 ```
 
-#### Step 10: Register in the list of providers
+#### Step 11: Register in the list of providers
 
 **Explanation:**
 This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
@@ -944,7 +1009,7 @@ elif "your_provider" in provider_class_name.lower():
     )
 ```
 
-#### Step 11: Add to Config
+#### Step 12: Add to Config
 
 **Explanation:**
 Configuration registration ensures your provider is recognized by Prowler's configuration system. This enables proper handling of provider-specific settings and defaults.
@@ -962,10 +1027,12 @@ class Provider(str, Enum):
     YOUR_PROVIDER = "your_provider"  # Add your provider here
 ```
 
-#### Step 12: Create Compliance Files
+In some cases, you may need to create a new configuration file for your provider, for example, the AWS one that is inside `prowler/providers/aws/config.py`.
+
+#### Step 13: Create Compliance Files
 
 **Explanation:**
-Compliance files define the security checks and standards that your provider supports. These JSON files map security controls to specific checks and provide remediation guidance.
+Compliance files define the security checks and standards that your provider supports. These JSON files map security controls to specific checks and provide remediation guidance. It's needed to create the folder with an init file to ensure the provider will work, however, adding different compliance files is optional.
 
 **Folder:** `prowler/compliance/<provider_name>/`
 
@@ -974,36 +1041,20 @@ Compliance files define the security checks and standards that your provider sup
   "Framework": "CIS",
   "Version": "1.0",
   "Provider": "your_provider",
-  "Checks": [
+  "Description": "Description of the compliance framework",
+  # The requirements depends on the framework, for example, CIS has a requirements section with the checks and attributes.
+  "Requirements": [
     {
-      "CheckID": "your_provider_check_1",
-      "CheckTitle": "Your Provider Check 1",
-      "CheckType": ["Your Provider"],
-      "ServiceName": "Your Service",
-      "SubServiceName": "",
-      "ResourceIdTemplate": "",
-      "Severity": "HIGH",
-      "ResourceType": "Your Resource Type",
-      "Description": "Description of the check",
-      "Risk": "Risk description",
-      "RelatedUrl": "https://your-provider.com/docs",
-      "Remediation": {
-        "Code": {
-          "CLI": "your-provider-cli command",
-          "NativeIaC": "",
-          "Terraform": ""
-        }
-      },
-      "AuditProcedure": "How to audit this check",
-      "AdditionalInformation": "Additional information",
-      "DefaultValue": "Default value description",
-      "References": "References to standards"
+      "Id": "1.1.1",
+      "Description": "Description of the requirement",
+      "Checks": ["your_provider_check_1", "your_provider_check_2"],
+      "Attributes": []
     }
   ]
 }
 ```
 
-#### Step 13: Add Output Support
+#### Step 14: Add Output Support
 
 **Explanation:**
 Output support ensures that your provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
@@ -1011,19 +1062,92 @@ Output support ensures that your provider's results are properly formatted in Pr
 **File:** `prowler/lib/outputs/summary_table.py`
 
 ```python
-# In the provider mapping
-PROVIDER_SUMMARY_TABLE = {
-    "aws": "AWS",
-    "azure": "Azure",
-    "gcp": "GCP",
-    "kubernetes": "Kubernetes",
-    "m365": "Microsoft 365",
-    "github": "GitHub",
-    "your_provider": "Your Provider",  # Add your provider here
-}
+# Add your provider case in the display_summary_table function
+elif provider.type == "your_provider":
+    entity_type = "Your Entity Type"
+    audited_entities = provider.identity.your_entity_field
 ```
 
-#### Step 14: Add the Check Report Model
+**File:** `prowler/lib/outputs/finding.py`
+
+```python
+# Add your provider case in the fill_common_finding_data function
+elif provider.type == "your_provider":
+    output_data["auth_method"] = f"Your Auth Method: {get_nested_attribute(provider, 'identity.auth_type')}"
+    output_data["account_uid"] = get_nested_attribute(provider, "identity.account_id")
+    output_data["account_name"] = get_nested_attribute(provider, "identity.account_name")
+    output_data["resource_name"] = check_output.resource_name
+    output_data["resource_uid"] = check_output.resource_id
+    output_data["region"] = check_output.location  # or your location field
+```
+
+**File:** `prowler/lib/outputs/outputs.py`
+
+```python
+# Add your provider case in the stdout_report function
+if finding.check_metadata.Provider == "your_provider":
+    details = finding.your_location_field  # e.g., finding.location, finding.namespace, etc.
+```
+
+#### Step 15: Generate the HTML Report
+
+**Explanation:**
+The HTML file is needed to be able to generate the HTML report. This step involves adding support for your provider in the HTML output generation system to ensure proper display of assessment summaries and findings.
+
+**File:** `prowler/lib/outputs/html/html.py`
+
+```python
+@staticmethod
+def get_your_provider_assessment_summary(provider: Provider) -> str:
+    """
+    get_your_provider_assessment_summary gets the HTML assessment summary for your provider
+
+    Args:
+        provider (Provider): the provider object
+
+    Returns:
+        str: the HTML assessment summary
+    """
+    try:
+        return f"""
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        Your Provider Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Your Entity Type:</b> {provider.identity.your_entity_field}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Your Location Field:</b> {provider.identity.your_location_field}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Your Provider Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Authentication Method:</b> {provider.auth_method}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Identity ID:</b> {provider.identity.identity_id}
+                        </li>
+                    </ul>
+                </div>
+            </div>"""
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        return ""
+```
+
+#### Step 16: Add the Check Report Model
 
 **Explanation:**
 Add the provider to the generic models, this is needed to be able to use the provider in the generic checks.
@@ -1046,7 +1170,7 @@ class CheckReportYourProvider(CheckReport):
 
 ```
 
-#### Step 15: Add Dependencies
+#### Step 17: Add Dependencies
 
 **Explanation:**
 Dependencies ensure that your provider's required libraries are available when Prowler is installed. This step adds the necessary SDK or API client to Prowler's dependency management.
@@ -1060,7 +1184,7 @@ python = "^3.9"
 your-sdk-library = "^1.0.0"  # Add your SDK dependency
 ```
 
-#### Step 16: Create Tests
+#### Step 18: Create Tests
 
 **Explanation:**
 Testing ensures that your provider works correctly and maintains compatibility as Prowler evolves. Comprehensive tests cover authentication, session management, and provider-specific functionality.
@@ -1130,7 +1254,7 @@ class TestYourProvider:
             validate_your_provider_arguments()
 ```
 
-#### Step 17: Update Documentation
+#### Step 19: Update Documentation
 
 **Explanation:**
 Documentation updates ensure that users can find information about your provider in Prowler's documentation. This includes examples, configuration guides, and troubleshooting information.
@@ -1156,7 +1280,7 @@ Update the provider documentation to include your new provider in the examples a
 **Key Characteristics:**
 
 - Manual management of authentication (tokens, username/password, etc).
-- Arguments: `username`, `password`, `tenant_id`, etc.
+- Arguments: Depends on the provider, for example, `username`, `password`, `tenant_id`, etc.
 - Outputs: Dicts or custom models based on API responses.
 - Custom HTTP session management with headers and authentication.
 - Manual handling of pagination, rate limiting, and error responses.
@@ -1329,18 +1453,6 @@ class YourApiProvider(Provider):
         self._identity = YourApiIdentityInfo(
             tenant_id=self._tenant_id,
             username=self._username,
-        )
-
-        # Set audit metadata
-        self.audit_metadata = Audit_Metadata(
-            provider=self._type,
-            account_id=self._identity.tenant_id,
-            account_name=self._identity.username,
-            region="global",  # API providers often don't have regions
-            services_scanned=0,
-            expected_checks=[],
-            completed_checks=0,
-            audit_progress=0,
         )
 
         Provider.set_global_provider(self)
@@ -1615,6 +1727,18 @@ def init_parser(self):
     <provider_name>_auth_subparser.add_argument(
         "--<provider_name>-tenant-id", nargs="?", default=None, help="<Provider Name> Tenant ID"
     )
+
+    <provider_name>_parser.add_argument(
+        "--your-provider-region",
+        help="Your Provider Region",
+        type=str,
+    )
+    <provider_name>_parser.add_argument(
+        "--env-auth",
+        action="store_true",
+        help="Use User and Password environment variables authentication to log in against <provider_name>",
+    )
+    # More arguments for the provider.
 ```
 
 #### Step 5: Implement Mutelist
@@ -1653,7 +1777,65 @@ class YourApiMutelist(Mutelist):
         )
 ```
 
-#### Step 6: Create Custom Exceptions
+#### Step 6: Implement Regions
+
+**Explanation:**
+Region management is essential for cloud providers that operate across multiple geographic locations. This component handles region validation and provides region-specific functionality.
+
+???+ note
+    Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+
+**File:** `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py`
+
+```python
+from typing import List, Set
+
+def get_regions() -> List[str]:
+    """
+    Get list of available regions for the provider.
+
+    Returns:
+        List[str]: List of available region names
+    """
+    return [
+        "region1",
+        "region2",
+        "region3",
+        # ... other regions
+    ]
+
+def validate_region(region: str) -> bool:
+    """
+    Validate if a region is supported.
+
+    Args:
+        region: The region to validate
+
+    Returns:
+        bool: True if the region is valid, False otherwise
+    """
+    return region in get_regions()
+
+def get_default_region() -> str:
+    """
+    Get the default region for the provider.
+
+    Returns:
+        str: The default region name
+    """
+    return "region1"
+
+def get_global_region() -> str:
+    """
+    Get the global region for the provider.
+
+    Returns:
+        str: The global region name
+    """
+    return "global"
+```
+
+#### Step 7: Create Custom Exceptions
 
 **Explanation:**
 Custom exceptions provide specific error handling for API-related issues, making debugging and error reporting more effective.
@@ -1682,56 +1864,142 @@ class YourApiRateLimitError(YourApiProviderError):
     pass
 ```
 
-#### Step 7: Register in CLI
+#### Step 8: Implement Service Base Class
 
 **Explanation:**
-CLI registration makes your API provider available through Prowler's command-line interface. This step adds the necessary argument parsing for your provider's authentication options.
+The service base class defines a common interface for all services in your provider, since they will inherit from it. It defines the client to make requests to, the audit configuration and the fixer configuration.
+
+**File:** `prowler/providers/<provider_name>/lib/service/service.py`
+
+```python
+from prowler.providers.<provider_name>.<provider_name>_provider import <ProviderName>Provider
+
+class YourProviderService(BaseService):
+    """
+    Base service class for YourProvider services.
+
+    This class provides common functionality for all services
+    within the provider, including session management and error handling.
+    """
+
+    def __init__(self, provider: <ProviderName>Provider):
+        """
+        Initialize the service.
+
+        Args:
+            provider: The provider instance
+        """
+        self.client = provider.session.get_client(self.service_name)
+        self.audit_config = provider.audit_config
+        self.fixer_config = provider.fixer_config
+
+```
+
+#### Step 9: Register in CLI
+
+**Explanation:**
+Add your provider to the available providers in the CLI.
 
 **File:** `prowler/lib/cli/parser.py`
 
 ```python
-# In the main parser setup
-parser.add_argument(
-    "--your-api-username",
-    help="Your API Provider Username",
-    type=str,
-)
+class ProwlerArgumentParser:
+    # Set the default parser
+    def __init__(self):
+        # CLI Arguments
+        self.parser = argparse.ArgumentParser(
+            prog="prowler",
+            formatter_class=RawTextHelpFormatter,
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac,your_provider} ...",
+            epilog="""
+Available Cloud Providers:
+  {aws,azure,gcp,kubernetes,m365,github,iac,nhn,your_provider}
+    aws                 AWS Provider
+    azure               Azure Provider
+    gcp                 GCP Provider
+    kubernetes          Kubernetes Provider
+    m365                Microsoft 365 Provider
+    github              GitHub Provider
+    iac                 IaC Provider (Preview)
+    nhn                 NHN Provider (Unofficial)
+    your_provider       Your Provider
 
-parser.add_argument(
-    "--your-api-password",
-    help="Your API Provider Password",
-    type=str,
-)
+Available components:
+    dashboard           Local dashboard
 
-parser.add_argument(
-    "--your-api-tenant-id",
-    help="Your API Provider Tenant ID",
-    type=str,
-)
+To see the different available options on a specific component, run:
+    prowler {provider|dashboard} -h|--help
+
+Detailed documentation at https://docs.prowler.com
+""",
 ```
 
-#### Step 8: Register in Main
+#### Step 10: Register in Main
 
 **Explanation:**
-Main registration makes your API provider discoverable by Prowler's core system. This mapping allows Prowler to instantiate your provider when requested by users.
+Main registration makes your provider discoverable by Prowler's core system. It's needed to add your provider to the output options and to the compliance evaluation.
 
 **File:** `prowler/__main__.py`
 
 ```python
-# In the provider mapping section
-PROVIDERS = {
-    "aws": AwsProvider,
-    "azure": AzureProvider,
-    "gcp": GcpProvider,
-    "kubernetes": KubernetesProvider,
-    "m365": M365Provider,
-    "github": GithubProvider,
-    "nhn": NhnProvider,
-    "your_api_provider": YourApiProvider,  # Add your API provider here
-}
+# In the prowler setup output options section
+    if provider == "aws":
+        output_options = AWSOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "azure":
+        output_options = AzureOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "gcp":
+        output_options = GCPOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "kubernetes":
+        output_options = KubernetesOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "github":
+        output_options = GithubOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "m365":
+        output_options = M365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "nhn":
+        output_options = NHNOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "iac":
+        output_options = IACOutputOptions(
+            args, bulk_checks_metadata
+        )
+    elif provider == "your_provider":
+        output_options = YourProviderOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+
+
+    # Setup Compliance Options
+    elif provider == "your_provider":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object (example of compliance with CIS framework)
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = YourProviderCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
 ```
 
-#### Step 9: Register in the list of providers
+#### Step 11: Register in the list of providers
 
 **Explanation:**
 This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
@@ -1750,7 +2018,7 @@ elif "your_provider" in provider_class_name.lower():
     )
 ```
 
-#### Step 10: Add to Config
+#### Step 12: Add to Config
 
 **Explanation:**
 Configuration registration ensures your API provider is recognized by Prowler's configuration system. This enables proper handling of provider-specific settings and defaults.
@@ -1769,10 +2037,12 @@ class Provider(str, Enum):
     YOUR_API_PROVIDER = "your_api_provider"  # Add your API provider here
 ```
 
-#### Step 11: Create Compliance Files
+In some cases, you may need to create a new configuration file for your provider, for example, the AWS one that is inside `prowler/providers/aws/config.py`. In this case, you need to add the new provider to the `Provider` enum.
+
+#### Step 13: Create Compliance Files
 
 **Explanation:**
-Compliance files define the security checks and standards that your API provider supports. These JSON files map security controls to specific checks and provide remediation guidance.
+Compliance files define the security checks and standards that your provider supports. These JSON files map security controls to specific checks and provide remediation guidance. It's needed to create the folder with an init file to ensure the provider will work, however, adding different compliance files is optional.
 
 **Folder:** `prowler/compliance/<provider_name>/`
 
@@ -1780,58 +2050,114 @@ Compliance files define the security checks and standards that your API provider
 {
   "Framework": "CIS",
   "Version": "1.0",
-  "Provider": "your_api_provider",
-  "Checks": [
+  "Provider": "your_provider",
+  "Description": "Description of the compliance framework",
+  # The requirements depends on the framework, for example, CIS has a requirements section with the checks and attributes.
+  "Requirements": [
     {
-      "CheckID": "your_api_provider_check_1",
-      "CheckTitle": "Your API Provider Check 1",
-      "CheckType": ["Your API Provider"],
-      "ServiceName": "Your Service",
-      "SubServiceName": "",
-      "ResourceIdTemplate": "",
-      "Severity": "HIGH",
-      "ResourceType": "Your Resource Type",
-      "Description": "Description of the check",
-      "Risk": "Risk description",
-      "RelatedUrl": "https://your-api-provider.com/docs",
-      "Remediation": {
-        "Code": {
-          "CLI": "your-api-provider-cli command",
-          "NativeIaC": "",
-          "Terraform": ""
-        }
-      },
-      "AuditProcedure": "How to audit this check",
-      "AdditionalInformation": "Additional information",
-      "DefaultValue": "Default value description",
-      "References": "References to standards"
+      "Id": "1.1.1",
+      "Description": "Description of the requirement",
+      "Checks": ["your_provider_check_1", "your_provider_check_2"],
+      "Attributes": []
     }
   ]
 }
 ```
 
-#### Step 12: Add Output Support
+#### Step 14: Add Output Support
 
 **Explanation:**
-Output support ensures that your API provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
+Output support ensures that your provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
 
 **File:** `prowler/lib/outputs/summary_table.py`
 
 ```python
-# In the provider mapping
-PROVIDER_SUMMARY_TABLE = {
-    "aws": "AWS",
-    "azure": "Azure",
-    "gcp": "GCP",
-    "kubernetes": "Kubernetes",
-    "m365": "Microsoft 365",
-    "github": "GitHub",
-    "nhn": "NHN",
-    "your_api_provider": "Your API Provider",  # Add your API provider here
-}
+# Add your provider case in the display_summary_table function
+elif provider.type == "your_provider":
+    entity_type = "Your Entity Type"
+    audited_entities = provider.identity.your_entity_field
 ```
 
-#### Step 13: Add the Check Report Model
+**File:** `prowler/lib/outputs/finding.py`
+
+```python
+# Add your provider case in the fill_common_finding_data function
+elif provider.type == "your_provider":
+    output_data["auth_method"] = f"Your Auth Method: {get_nested_attribute(provider, 'identity.auth_type')}"
+    output_data["account_uid"] = get_nested_attribute(provider, "identity.account_id")
+    output_data["account_name"] = get_nested_attribute(provider, "identity.account_name")
+    output_data["resource_name"] = check_output.resource_name
+    output_data["resource_uid"] = check_output.resource_id
+    output_data["region"] = check_output.location  # or your location field
+```
+
+**File:** `prowler/lib/outputs/outputs.py`
+
+```python
+# Add your provider case in the stdout_report function
+if finding.check_metadata.Provider == "your_provider":
+    details = finding.your_location_field  # e.g., finding.location, finding.namespace, etc.
+```
+
+#### Step 15: Generate the HTML Report
+
+**Explanation:**
+The HTML file is needed to be able to generate the HTML report. This step involves adding support for your provider in the HTML output generation system to ensure proper display of assessment summaries and findings.
+
+**File:** `prowler/lib/outputs/html/html.py`
+
+```python
+@staticmethod
+def get_your_api_provider_assessment_summary(provider: Provider) -> str:
+    """
+    get_your_api_provider_assessment_summary gets the HTML assessment summary for your API provider
+
+    Args:
+        provider (Provider): the provider object
+
+    Returns:
+        str: the HTML assessment summary
+    """
+    try:
+        return f"""
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        Your API Provider Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Tenant ID:</b> {provider.identity.tenant_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Username:</b> {provider.identity.username}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Your API Provider Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Authentication Method:</b> {provider.auth_method}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Identity Type:</b> {provider.identity.identity_type}
+                        </li>
+                    </ul>
+                </div>
+            </div>"""
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        return ""
+```
+
+#### Step 16: Add the Check Report Model
 
 **Explanation:**
 Add the provider to the generic models, this is needed to be able to use the provider in the generic checks.
@@ -1853,7 +2179,7 @@ class CheckReportYourApi(CheckReport):
         self.resource_id = resource.id
 ```
 
-#### Step 14: Create Tests
+#### Step 17: Create Tests
 
 **Explanation:**
 Testing ensures that your API provider works correctly and maintains compatibility as Prowler evolves. Comprehensive tests cover authentication, session management, and API-specific functionality.
@@ -1915,7 +2241,7 @@ class TestYourApiProvider:
         assert "X-Auth-Token" in provider.session.headers
 ```
 
-#### Step 15: Update Documentation
+#### Step 18: Update Documentation
 
 **Explanation:**
 Documentation updates ensure that users can find information about your API provider in Prowler's documentation. This includes examples, configuration guides, and troubleshooting information.
@@ -2098,18 +2424,6 @@ class YourToolProvider(Provider):
 
         # Mutelist (not needed for tool providers since tools have their own mutelist logic)
         self._mutelist = None
-
-        # Set audit metadata
-        self.audit_metadata = Audit_Metadata(
-            provider=self._type,
-            account_id=self.audited_account,
-            account_name="your_tool",
-            region=self.region,
-            services_scanned=0,  # Tool providers don't use services
-            expected_checks=[],  # Tool providers don't use checks
-            completed_checks=0,  # Tool providers don't use checks
-            audit_progress=0,  # Tool providers don't use progress tracking
-        )
 
         Provider.set_global_provider(self)
 
@@ -2480,55 +2794,105 @@ def validate_arguments(arguments):
 #### Step 5: Register in CLI
 
 **Explanation:**
-CLI registration makes your tool provider available through Prowler's command-line interface. This step adds the necessary argument parsing for your provider's scan options.
+Add your provider to the available providers in the CLI.
 
 **File:** `prowler/lib/cli/parser.py`
 
 ```python
-# In the main parser setup
-parser.add_argument(
-    "--your-tool-scan-path",
-    help="Path to scan with Your Tool Provider",
-    type=str,
-    default=".",
-)
+class ProwlerArgumentParser:
+    # Set the default parser
+    def __init__(self):
+        # CLI Arguments
+        self.parser = argparse.ArgumentParser(
+            prog="prowler",
+            formatter_class=RawTextHelpFormatter,
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac,your_provider} ...",
+            epilog="""
+Available Cloud Providers:
+  {aws,azure,gcp,kubernetes,m365,github,iac,nhn,your_provider}
+    aws                 AWS Provider
+    azure               Azure Provider
+    gcp                 GCP Provider
+    kubernetes          Kubernetes Provider
+    m365                Microsoft 365 Provider
+    github              GitHub Provider
+    iac                 IaC Provider (Preview)
+    nhn                 NHN Provider (Unofficial)
+    your_provider       Your Provider
 
-parser.add_argument(
-    "--your-tool-specific-arg",
-    help="Tool-specific argument for Your Tool Provider",
-    type=str,
-    default="default_value",
-)
+Available components:
+    dashboard           Local dashboard
 
-parser.add_argument(
-    "--your-tool-exclude-path",
-    help="Paths to exclude from scan",
-    type=str,
-    nargs="+",
-    default=[],
-)
+To see the different available options on a specific component, run:
+    prowler {provider|dashboard} -h|--help
+
+Detailed documentation at https://docs.prowler.com
+""",
 ```
 
 #### Step 6: Register in Main
 
 **Explanation:**
-Main registration makes your tool provider discoverable by Prowler's core system. This mapping allows Prowler to instantiate your provider when requested by users.
+Main registration makes your provider discoverable by Prowler's core system. It's needed to add your provider to the output options and to the compliance evaluation.
 
 **File:** `prowler/__main__.py`
 
 ```python
-# In the provider mapping section
-PROVIDERS = {
-    "aws": AwsProvider,
-    "azure": AzureProvider,
-    "gcp": GcpProvider,
-    "kubernetes": KubernetesProvider,
-    "m365": M365Provider,
-    "github": GithubProvider,
-    "nhn": NhnProvider,
-    "iac": IacProvider,
-    "your_tool_provider": YourToolProvider,  # Add your tool provider here
-}
+# In the prowler setup output options section
+    if provider == "aws":
+        output_options = AWSOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "azure":
+        output_options = AzureOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "gcp":
+        output_options = GCPOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "kubernetes":
+        output_options = KubernetesOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "github":
+        output_options = GithubOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "m365":
+        output_options = M365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "nhn":
+        output_options = NHNOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "iac":
+        output_options = IACOutputOptions(
+            args, bulk_checks_metadata
+        )
+    elif provider == "your_provider":
+        output_options = YourProviderOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+
+
+    # Setup Compliance Options
+    elif provider == "your_provider":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object (example of compliance with CIS framework)
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = YourProviderCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
 ```
 
 #### Step 7: Register in the list of providers
@@ -2569,10 +2933,12 @@ class Provider(str, Enum):
     YOUR_TOOL_PROVIDER = "your_tool_provider"  # Add your tool provider here
 ```
 
+In some cases, you may need to create a new configuration file for your provider, for example, the AWS one that is inside `prowler/providers/aws/config.py`.
+
 #### Step 9: Create Compliance Files
 
 **Explanation:**
-Compliance files define the security checks and standards that your tool provider supports. These JSON files map security controls to specific checks and provide remediation guidance.
+Compliance files define the security checks and standards that your provider supports. These JSON files map security controls to specific checks and provide remediation guidance. It's needed to create the folder with an init file to ensure the provider will work, however, adding different compliance files is optional.
 
 **Folder:** `prowler/compliance/<provider_name>/`
 
@@ -2580,31 +2946,15 @@ Compliance files define the security checks and standards that your tool provide
 {
   "Framework": "CIS",
   "Version": "1.0",
-  "Provider": "your_tool_provider",
-  "Checks": [
+  "Provider": "your_provider",
+  "Description": "Description of the compliance framework",
+  # The requirements depends on the framework, for example, CIS has a requirements section with the checks and attributes.
+  "Requirements": [
     {
-      "CheckID": "your_tool_provider_check_1",
-      "CheckTitle": "Your Tool Provider Check 1",
-      "CheckType": ["Your Tool Provider"],
-      "ServiceName": "Your Service",
-      "SubServiceName": "",
-      "ResourceIdTemplate": "",
-      "Severity": "HIGH",
-      "ResourceType": "Your Resource Type",
-      "Description": "Description of the check",
-      "Risk": "Risk description",
-      "RelatedUrl": "https://your-tool-provider.com/docs",
-      "Remediation": {
-        "Code": {
-          "CLI": "your-tool-provider-cli command",
-          "NativeIaC": "",
-          "Terraform": ""
-        }
-      },
-      "AuditProcedure": "How to audit this check",
-      "AdditionalInformation": "Additional information",
-      "DefaultValue": "Default value description",
-      "References": "References to standards"
+      "Id": "1.1.1",
+      "Description": "Description of the requirement",
+      "Checks": ["your_provider_check_1", "your_provider_check_2"],
+      "Attributes": []
     }
   ]
 }
@@ -2613,26 +2963,97 @@ Compliance files define the security checks and standards that your tool provide
 #### Step 10: Add Output Support
 
 **Explanation:**
-Output support ensures that your tool provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
+Output support ensures that your provider's results are properly formatted in Prowler's various output formats (CSV, JSON, HTML, etc.). This step integrates your provider with Prowler's reporting system.
 
 **File:** `prowler/lib/outputs/summary_table.py`
 
 ```python
-# In the provider mapping
-PROVIDER_SUMMARY_TABLE = {
-    "aws": "AWS",
-    "azure": "Azure",
-    "gcp": "GCP",
-    "kubernetes": "Kubernetes",
-    "m365": "Microsoft 365",
-    "github": "GitHub",
-    "nhn": "NHN",
-    "iac": "Infrastructure as Code",
-    "your_tool_provider": "Your Tool Provider",  # Add your tool provider here
-}
+# Add your provider case in the display_summary_table function
+elif provider.type == "your_provider":
+    entity_type = "Your Entity Type"
+    audited_entities = provider.identity.your_entity_field
 ```
 
-#### Step 11: Add the Check Report Model
+**File:** `prowler/lib/outputs/finding.py`
+
+```python
+# Add your provider case in the fill_common_finding_data function
+elif provider.type == "your_provider":
+    output_data["auth_method"] = f"Your Auth Method: {get_nested_attribute(provider, 'identity.auth_type')}"
+    output_data["account_uid"] = get_nested_attribute(provider, "identity.account_id")
+    output_data["account_name"] = get_nested_attribute(provider, "identity.account_name")
+    output_data["resource_name"] = check_output.resource_name
+    output_data["resource_uid"] = check_output.resource_id
+    output_data["region"] = check_output.location  # or your location field
+```
+
+**File:** `prowler/lib/outputs/outputs.py`
+
+```python
+# Add your provider case in the stdout_report function
+if finding.check_metadata.Provider == "your_provider":
+    details = finding.your_location_field  # e.g., finding.location, finding.namespace, etc.
+```
+
+#### Step 11: Generate the HTML Report
+
+**Explanation:**
+The HTML file is needed to be able to generate the HTML report. This step involves adding support for your provider in the HTML output generation system to ensure proper display of assessment summaries and findings.
+
+**File:** `prowler/lib/outputs/html/html.py`
+
+```python
+@staticmethod
+def get_your_tool_provider_assessment_summary(provider: Provider) -> str:
+    """
+    get_your_tool_provider_assessment_summary gets the HTML assessment summary for your tool provider
+
+    Args:
+        provider (Provider): the provider object
+
+    Returns:
+        str: the HTML assessment summary
+    """
+    try:
+        return f"""
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        Your Tool Provider Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Scan Path:</b> {provider.scan_path}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Tool Specific Arg:</b> {provider.tool_specific_arg}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Your Tool Provider Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Authentication Method:</b> {provider.auth_method}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Excluded Paths:</b> {', '.join(provider.exclude_path) if provider.exclude_path else 'None'}
+                        </li>
+                    </ul>
+                </div>
+            </div>"""
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        return ""
+```
+
+#### Step 12: Add the Check Report Model
 
 **Explanation:**
 Add the provider to the generic models, this is needed to be able to use the provider in the generic checks.
@@ -2653,8 +3074,7 @@ class CheckReportYourTool(CheckReport):
         self.resource_name = resource.name
         self.resource_id = resource.id
 ```
-
-#### Step 12: Create Tests
+#### Step 13: Create Tests
 
 **Explanation:**
 Testing ensures that your tool provider works correctly and maintains compatibility as Prowler evolves. Comprehensive tests cover tool execution, output parsing, and provider-specific functionality.
@@ -2712,7 +3132,7 @@ class TestYourToolProvider:
         provider.print_credentials()
 ```
 
-#### Step 13: Update Documentation
+#### Step 14: Update Documentation
 
 **Explanation:**
 Documentation updates ensure that users can find information about your tool provider in Prowler's documentation. This includes examples, configuration guides, and troubleshooting information.
