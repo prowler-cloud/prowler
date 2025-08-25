@@ -97,6 +97,9 @@ This method grants permanent access and is the recommended setup for production 
         ![External ID](./img/prowler-cloud-external-id.png)
         ![Stack Data](./img/fill-stack-data.png)
 
+        !!! info
+            An **External ID** is required when assuming the *ProwlerScan* role to comply with AWS [confused deputy prevention](https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html).
+
     6. Acknowledge the IAM resource creation warning and proceed
 
         ![Stack Creation Second Step](./img/stack-creation-second-step.png)

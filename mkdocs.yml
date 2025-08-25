@@ -51,8 +51,8 @@ nav:
       - Products:
           - Prowler App: products/prowler-app.md
           - Prowler CLI: products/prowler-cli.md
-          - Prowler Cloud: https://cloud.prowler.com
-          - Prowler Hub: https://hub.prowler.com
+          - Prowler Cloud 🔗: https://cloud.prowler.com
+          - Prowler Hub 🔗: https://hub.prowler.com
     - Installation:
         - Prowler App: installation/prowler-app.md
         - Prowler CLI: installation/prowler-cli.md
@@ -129,7 +129,7 @@ nav:
           - Getting Started: tutorials/iac/getting-started-iac.md
           - Authentication: tutorials/iac/authentication.md
   - Developer Guide:
-      - General Concepts:
+      - Concepts:
         - Introduction: developer-guide/introduction.md
         - Providers: developer-guide/provider.md
         - Services: developer-guide/services.md
@@ -138,7 +138,7 @@ nav:
         - Integrations: developer-guide/integrations.md
         - Compliance: developer-guide/security-compliance-framework.md
         - Lighthouse: developer-guide/lighthouse.md
-      - Provider Specific Details:
+      - Providers:
         - AWS: developer-guide/aws-details.md
         - Azure: developer-guide/azure-details.md
         - Google Cloud: developer-guide/gcp-details.md
@@ -155,8 +155,8 @@ nav:
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
-  - About: about.md
-  - Prowler Cloud: https://prowler.com
+  - About 🔗: https://prowler.com/about#team
+  - Release Notes 🔗: https://github.com/prowler-cloud/prowler/releases
 
 # Customization
 extra:

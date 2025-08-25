@@ -2,7 +2,7 @@
 
 In this page you can find all the details about [Amazon Web Services (AWS)](https://aws.amazon.com/) provider implementation in Prowler.
 
-By default, Prowler will audit just one account and organization settings per scan. To configure it, follow the [getting started](../index.md#aws) page.
+By default, Prowler will audit just one account and organization settings per scan. To configure it, follow the [AWS getting started guide](../tutorials/aws/getting-started-aws.md).
 
 ## AWS Provider Classes Architecture
 

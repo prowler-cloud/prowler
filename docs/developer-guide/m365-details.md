@@ -2,7 +2,7 @@
 
 This page details the [Microsoft 365 (M365)](https://www.microsoft.com/en-us/microsoft-365) provider implementation in Prowler.
 
-By default, Prowler will audit the Microsoft Entra ID tenant and its supported services. To configure it, follow the [getting started](../index.md#microsoft-365) page.
+By default, Prowler will audit the Microsoft Entra ID tenant and its supported services. To configure it, follow the [M365 getting started guide](../tutorials/microsoft365/getting-started-m365.md).
 
 ---
 
