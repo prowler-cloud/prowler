@@ -4,10 +4,10 @@ from prowler.lib.check.models import CheckMetadata
 from tests.lib.check.compliance_check_test import custom_compliance_metadata
 
 mock_metadata = CheckMetadata(
-    Provider="aws",
+    Provider="azure",
     CheckID="accessanalyzer_enabled",
     CheckTitle="Check 1",
-    CheckType=["type1"],
+    CheckType=["TTPs"],
     ServiceName="accessanalyzer",
     SubServiceName="subservice1",
     ResourceIdTemplate="template1",
@@ -33,10 +33,10 @@ mock_metadata = CheckMetadata(
 )
 
 mock_metadata_lambda = CheckMetadata(
-    Provider="aws",
+    Provider="azure",
     CheckID="awslambda_function_url_public",
     CheckTitle="Check 1",
-    CheckType=["type1"],
+    CheckType=["TTPs"],
     ServiceName="awslambda",
     SubServiceName="subservice1",
     ResourceIdTemplate="template1",
