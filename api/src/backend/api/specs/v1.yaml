@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.11.0
+  version: 1.12.0
   description: |-
     Prowler API specification.
 
@@ -8918,6 +8918,19 @@ components:
                     default: output
                 required:
                 - bucket_name
+              - type: object
+                title: AWS Security Hub
+                properties:
+                  send_only_fails:
+                    type: boolean
+                    default: false
+                    description: If true, only findings with status 'FAIL' will
+                      be sent to Security Hub.
+                  archive_previous_findings:
+                    type: boolean
+                    default: false
+                    description: If true, archives findings that are not present in
+                      the current execution.
             credentials:
               oneOf:
               - type: object
@@ -9064,6 +9077,19 @@ components:
                         default: output
                     required:
                     - bucket_name
+                  - type: object
+                    title: AWS Security Hub
+                    properties:
+                      send_only_fails:
+                        type: boolean
+                        default: false
+                        description: If true, only findings with status 'FAIL' will
+                          be sent to Security Hub.
+                      archive_previous_findings:
+                        type: boolean
+                        default: false
+                        description: If true, archives findings that are not present
+                          in the current execution.
                 credentials:
                   oneOf:
                   - type: object
@@ -9225,6 +9251,19 @@ components:
                     default: output
                 required:
                 - bucket_name
+              - type: object
+                title: AWS Security Hub
+                properties:
+                  send_only_fails:
+                    type: boolean
+                    default: false
+                    description: If true, only findings with status 'FAIL' will
+                      be sent to Security Hub.
+                  archive_previous_findings:
+                    type: boolean
+                    default: false
+                    description: If true, archives findings that are not present in
+                      the current execution.
             credentials:
               oneOf:
               - type: object
@@ -9777,6 +9816,10 @@ components:
               - gpt-4o
               - gpt-4o-mini-2024-07-18
               - gpt-4o-mini
+              - gpt-5-2025-08-07
+              - gpt-5
+              - gpt-5-mini-2025-08-07
+              - gpt-5-mini
               type: string
               description: |-
                 Must be one of the supported model names
@@ -9787,6 +9830,10 @@ components:
                 * `gpt-4o` - GPT-4o Default
                 * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                 * `gpt-4o-mini` - GPT-4o Mini Default
+                * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                * `gpt-5` - GPT-5 Default
+                * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                * `gpt-5-mini` - GPT-5 Mini Default
             temperature:
               type: number
               format: double
@@ -9843,6 +9890,10 @@ components:
               - gpt-4o
               - gpt-4o-mini-2024-07-18
               - gpt-4o-mini
+              - gpt-5-2025-08-07
+              - gpt-5
+              - gpt-5-mini-2025-08-07
+              - gpt-5-mini
               type: string
               description: |-
                 Must be one of the supported model names
@@ -9853,6 +9904,10 @@ components:
                 * `gpt-4o` - GPT-4o Default
                 * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                 * `gpt-4o-mini` - GPT-4o Mini Default
+                * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                * `gpt-5` - GPT-5 Default
+                * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                * `gpt-5-mini` - GPT-5 Mini Default
             temperature:
               type: number
               format: double
@@ -9915,6 +9970,10 @@ components:
                   - gpt-4o
                   - gpt-4o-mini-2024-07-18
                   - gpt-4o-mini
+                  - gpt-5-2025-08-07
+                  - gpt-5
+                  - gpt-5-mini-2025-08-07
+                  - gpt-5-mini
                   type: string
                   description: |-
                     Must be one of the supported model names
@@ -9925,6 +9984,10 @@ components:
                     * `gpt-4o` - GPT-4o Default
                     * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                     * `gpt-4o-mini` - GPT-4o Mini Default
+                    * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                    * `gpt-5` - GPT-5 Default
+                    * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                    * `gpt-5-mini` - GPT-5 Mini Default
                 temperature:
                   type: number
                   format: double
@@ -9995,6 +10058,10 @@ components:
               - gpt-4o
               - gpt-4o-mini-2024-07-18
               - gpt-4o-mini
+              - gpt-5-2025-08-07
+              - gpt-5
+              - gpt-5-mini-2025-08-07
+              - gpt-5-mini
               type: string
               description: |-
                 Must be one of the supported model names
@@ -10005,6 +10072,10 @@ components:
                 * `gpt-4o` - GPT-4o Default
                 * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                 * `gpt-4o-mini` - GPT-4o Mini Default
+                * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                * `gpt-5` - GPT-5 Default
+                * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                * `gpt-5-mini` - GPT-5 Mini Default
             temperature:
               type: number
               format: double
@@ -10584,6 +10655,19 @@ components:
                         default: output
                     required:
                     - bucket_name
+                  - type: object
+                    title: AWS Security Hub
+                    properties:
+                      send_only_fails:
+                        type: boolean
+                        default: false
+                        description: If true, only findings with status 'FAIL' will
+                          be sent to Security Hub.
+                      archive_previous_findings:
+                        type: boolean
+                        default: false
+                        description: If true, archives findings that are not present
+                          in the current execution.
                 credentials:
                   oneOf:
                   - type: object
@@ -10779,6 +10863,10 @@ components:
                   - gpt-4o
                   - gpt-4o-mini-2024-07-18
                   - gpt-4o-mini
+                  - gpt-5-2025-08-07
+                  - gpt-5
+                  - gpt-5-mini-2025-08-07
+                  - gpt-5-mini
                   type: string
                   description: |-
                     Must be one of the supported model names
@@ -10789,6 +10877,10 @@ components:
                     * `gpt-4o` - GPT-4o Default
                     * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                     * `gpt-4o-mini` - GPT-4o Mini Default
+                    * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                    * `gpt-5` - GPT-5 Default
+                    * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                    * `gpt-5-mini` - GPT-5 Mini Default
                 temperature:
                   type: number
                   format: double

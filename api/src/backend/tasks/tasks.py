@@ -21,7 +21,10 @@ from tasks.jobs.export import (
     _generate_output_directory,
     _upload_to_s3,
 )
-from tasks.jobs.integrations import upload_s3_integration
+from tasks.jobs.integrations import (
+    upload_s3_integration,
+    upload_security_hub_integration,
+)
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -62,6 +65,7 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         check_integrations_task.si(
             tenant_id=tenant_id,
             provider_id=provider_id,
+            scan_id=scan_id,
         ),
     ).apply_async()
 
@@ -323,7 +327,11 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         ScanSummary.objects.filter(scan_id=scan_id)
     )
 
-    qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+    qs = (
+        Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        .order_by("uid")
+        .iterator()
+    )
     for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
         fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
 
@@ -474,17 +482,19 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
 
 
 @shared_task(name="integration-check")
-def check_integrations_task(tenant_id: str, provider_id: str):
+def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = None):
     """
     Check and execute all configured integrations for a provider.
 
     Args:
         tenant_id (str): The tenant identifier
         provider_id (str): The provider identifier
+        scan_id (str, optional): The scan identifier for integrations that need scan data
     """
     logger.info(f"Checking integrations for provider {provider_id}")
 
     try:
+        integration_tasks = []
         with rls_transaction(tenant_id):
             integrations = Integration.objects.filter(
                 integrationproviderrelationship__provider_id=provider_id,
@@ -495,7 +505,16 @@ def check_integrations_task(tenant_id: str, provider_id: str):
                 logger.info(f"No integrations configured for provider {provider_id}")
                 return {"integrations_processed": 0}
 
-        integration_tasks = []
+            # Security Hub integration
+            security_hub_integrations = integrations.filter(
+                integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB
+            )
+            if security_hub_integrations.exists():
+                integration_tasks.append(
+                    security_hub_integration_task.s(
+                        tenant_id=tenant_id, provider_id=provider_id, scan_id=scan_id
+                    )
+                )
 
         # TODO: Add other integration types here
         # slack_integrations = integrations.filter(
@@ -541,3 +560,24 @@ def s3_integration_task(
         output_directory (str): Path to the directory containing output files
     """
     return upload_s3_integration(tenant_id, provider_id, output_directory)
+
+
+@shared_task(
+    base=RLSTask,
+    name="integration-security-hub",
+    queue="integrations",
+)
+def security_hub_integration_task(
+    tenant_id: str,
+    provider_id: str,
+    scan_id: str,
+):
+    """
+    Process Security Hub integrations for a provider.
+
+    Args:
+        tenant_id (str): The tenant identifier
+        provider_id (str): The provider identifier
+        scan_id (str): The scan identifier
+    """
+    return upload_security_hub_integration(tenant_id, provider_id, scan_id)
