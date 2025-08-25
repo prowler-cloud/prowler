@@ -1,5 +1,27 @@
 # Security
 
+## Compliance and Trust
+We publish our live SOC 2 Type 2 Compliance data at [https://trust.prowler.com](https://trust.prowler.com)
+
+As an **AWS Partner**, we have passed the [AWS Foundation Technical Review (FTR)](https://aws.amazon.com/partners/foundational-technical-review/).
+
+
+### Encryption (Prowler Cloud)
+
+We use encryption everywhere possible. The data and communications used by **Prowler Cloud** are **encrypted at-rest** and **in-transit**.
+
+## Data Retention Policy (Prowler Cloud)
+
+Prowler Cloud is GDPR compliant in regards to personal data and the “right to be forgotten”. When a User deletes their account their user information will be deleted from Prowler Cloud online and backup systems within 10 calendar days.
+
+## Software Security
+
+We follow a **security-by-design approach** throughout our software development lifecycle. All changes go through automated checks at every stage, from local development to production deployment.
+
+We enforce [pre-commit](https://github.com/prowler-cloud/prowler/blob/master/.pre-commit-config.yaml) validations to catch issues early, and [our CI/CD pipelines](https://github.com/prowler-cloud/prowler/tree/master/.github) include multiple security gates to ensure code quality, secure configurations, and compliance with internal standards.
+
+Our container registries are continuously scanned for vulnerabilities, with findings automatically reported to our security team for assessment and remediation. This process evolves alongside our stack as we adopt new languages, frameworks, and technologies, ensuring our security practices remain comprehensive, proactive, and adaptable.
+
 ## Reporting Vulnerabilities
 
 At Prowler, we consider the security of our open source software and systems a top priority. But no matter how much effort we put into system security, there can still be vulnerabilities present.
