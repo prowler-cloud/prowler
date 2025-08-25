@@ -1,7 +1,7 @@
 {
   "Framework": "CCC-Objects",
   "Version": "",
-  "Provider": "Azure",
+  "Provider": "GCP",
   "Description": "The best practices for Common Cloud Controls Catalog (CCC) for AWS Object Storage controls.",
   "Requirements": [
     {
@@ -58,10 +58,8 @@
         }
       ],
       "Checks": [
-        "storage_ensure_encryption_with_customer_managed_keys",
-        "databricks_workspace_cmk_encryption_enabled",
-        "vm_ensure_attached_disks_encrypted_with_cmk",
-        "vm_ensure_unattached_disks_encrypted_with_cmk"
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
       ]
     },
     {
@@ -117,14 +115,7 @@
           ]
         }
       ],
-      "Checks": [
-        "storage_ensure_encryption_with_customer_managed_keys",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted",
-        "keyvault_rbac_enabled",
-        "keyvault_private_endpoints",
-        "keyvault_rbac_key_expiration_set",
-        "keyvault_rbac_secret_expiration_set"
-      ]
+      "Checks": []
     },
     {
       "Id": "CCC.ObjStor.C01.TR03",
@@ -182,11 +173,11 @@
         }
       ],
       "Checks": [
-        "storage_ensure_encryption_with_customer_managed_keys",
-        "storage_ensure_private_endpoints_in_storage_accounts",
-        "keyvault_rbac_enabled",
-        "keyvault_private_endpoints",
-        "keyvault_access_only_through_private_endpoints"
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "dataproc_encrypted_with_cmks_disabled"
       ]
     },
     {
@@ -245,9 +236,12 @@
         }
       ],
       "Checks": [
-        "storage_ensure_encryption_with_customer_managed_keys",
-        "databricks_workspace_cmk_encryption_enabled",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "dataproc_encrypted_with_cmks_disabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption"
       ]
     },
     {
@@ -305,8 +299,7 @@
         }
       ],
       "Checks": [
-        "storage_blob_versioning_is_enabled",
-        "storage_ensure_soft_delete_is_enabled"
+        "cloudstorage_bucket_log_retention_policy_lock"
       ]
     },
     {
@@ -363,7 +356,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
     },
     {
       "Id": "CCC.ObjStor.C04.TR01",
@@ -420,9 +415,7 @@
         }
       ],
       "Checks": [
-        "storage_blob_versioning_is_enabled",
-        "storage_ensure_soft_delete_is_enabled",
-        "storage_ensure_file_shares_soft_delete_is_enabled"
+        "cloudstorage_bucket_log_retention_policy_lock"
       ]
     },
     {
@@ -480,8 +473,7 @@
         }
       ],
       "Checks": [
-        "storage_ensure_soft_delete_is_enabled",
-        "storage_ensure_file_shares_soft_delete_is_enabled"
+        "cloudstorage_bucket_log_retention_policy_lock"
       ]
     },
     {
@@ -538,9 +530,7 @@
           ]
         }
       ],
-      "Checks": [
-        "storage_blob_versioning_is_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "CCC.ObjStor.C05.TR02",
@@ -596,9 +586,7 @@
           ]
         }
       ],
-      "Checks": [
-        "storage_blob_versioning_is_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "CCC.ObjStor.C05.TR03",
@@ -654,9 +642,7 @@
           ]
         }
       ],
-      "Checks": [
-        "storage_blob_versioning_is_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "CCC.ObjStor.C05.TR04",
@@ -712,9 +698,7 @@
           ]
         }
       ],
-      "Checks": [
-        "storage_blob_versioning_is_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "CCC.ObjStor.C06.TR01",
@@ -771,10 +755,8 @@
         }
       ],
       "Checks": [
-        "monitor_diagnostic_settings_exists",
-        "monitor_diagnostic_setting_with_appropriate_categories",
-        "monitor_storage_account_with_activity_logs_is_private",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created"
       ]
     },
     {
@@ -832,9 +814,7 @@
         }
       ],
       "Checks": [
-        "storage_blob_public_access_level_is_disabled",
-        "storage_default_network_access_rule_is_denied",
-        "storage_ensure_private_endpoints_in_storage_accounts"
+        "cloudstorage_bucket_uniform_bucket_level_access"
       ]
     },
     {
@@ -892,10 +872,7 @@
         }
       ],
       "Checks": [
-        "storage_blob_public_access_level_is_disabled",
-        "storage_account_key_access_disabled",
-        "storage_default_to_entra_authorization_enabled",
-        "storage_ensure_private_endpoints_in_storage_accounts"
+        "cloudstorage_bucket_uniform_bucket_level_access"
       ]
     }
   ]
