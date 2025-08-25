@@ -178,7 +178,7 @@ class SecurityHub:
 
         Args:
             findings (list[AWSSecurityFindingFormat]): List of findings to filter.
-            send_only_fails (bool): Flag indicating whether to send only findings with status 'FAILED'.
+            send_only_fails (bool): Flag indicating whether to send only findings with status 'FAIL'.
 
         Returns:
             dict: A dictionary containing findings per region after applying the filtering criteria.
