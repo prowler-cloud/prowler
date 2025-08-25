@@ -1,5 +1,6 @@
+from unittest.mock import MagicMock
+
 from azure.identity import DefaultAzureCredential
-from mock import MagicMock
 
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.m365.models import (
