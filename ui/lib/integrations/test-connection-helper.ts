@@ -1,4 +1,7 @@
-import { pollConnectionTestStatus, testIntegrationConnection } from "@/actions/integrations";
+import {
+  pollConnectionTestStatus,
+  testIntegrationConnection,
+} from "@/actions/integrations";
 
 // Integration configuration type
 export interface IntegrationMessages {
@@ -25,7 +28,7 @@ const INTEGRATION_CONFIG: Record<string, IntegrationMessages> = {
 // Helper function to register new integration types
 export const registerIntegrationType = (
   type: string,
-  messages: IntegrationMessages
+  messages: IntegrationMessages,
 ): void => {
   INTEGRATION_CONFIG[type] = messages;
 };
@@ -53,39 +56,44 @@ export const runTestConnection = async ({
   try {
     // Start the test without waiting for completion
     const result = await testIntegrationConnection(integrationId, false);
-    
+
     if (!result || (!result.success && !result.error)) {
       onError?.("Connection test could not be started. Please try again.");
       return;
     }
-    
+
     if (result.error) {
       onError?.(result.error);
       return;
     }
-    
+
     if (!result.taskId) {
       onError?.("Failed to start connection test. No task ID received.");
       return;
     }
-    
+
     // Notify that test has started
     onStart?.();
-    
+
     // Poll for the test completion
     const pollResult = await pollConnectionTestStatus(result.taskId);
-    
+
     if (pollResult.success) {
       const config = INTEGRATION_CONFIG[integrationType];
-      const defaultMessage = config?.successMessage || `Successfully connected to ${integrationType}.`;
+      const defaultMessage =
+        config?.successMessage ||
+        `Successfully connected to ${integrationType}.`;
       onSuccess?.(pollResult.message || defaultMessage);
     } else {
       const config = INTEGRATION_CONFIG[integrationType];
-      const defaultError = config?.errorMessage || `Failed to connect to ${integrationType}.`;
+      const defaultError =
+        config?.errorMessage || `Failed to connect to ${integrationType}.`;
       onError?.(pollResult.error || defaultError);
     }
   } catch (error) {
-    onError?.("Failed to start connection test. You can try manually using the Test Connection button.");
+    onError?.(
+      "Failed to start connection test. You can try manually using the Test Connection button.",
+    );
   }
 };
 
@@ -106,7 +114,9 @@ export const triggerTestConnectionWithDelay = (
       integrationType,
       onStart: () => {
         const config = INTEGRATION_CONFIG[integrationType];
-        const description = config?.testingMessage || `Testing connection to ${integrationType}...`;
+        const description =
+          config?.testingMessage ||
+          `Testing connection to ${integrationType}...`;
         toast({
           title: "Connection test started!",
           description,

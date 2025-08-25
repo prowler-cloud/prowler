@@ -212,7 +212,7 @@ export const S3IntegrationForm = ({
     try {
       let result;
       let shouldTestConnection = false;
-      
+
       if (isEditing && integration) {
         result = await updateIntegration(integration.id, formData);
         // Test connection if we're editing credentials or configuration (S3 needs both)
@@ -222,7 +222,7 @@ export const S3IntegrationForm = ({
         // Always test connection for new integrations
         shouldTestConnection = true;
       }
-      
+
       if ("success" in result) {
         toast({
           title: "Success!",

@@ -11,7 +11,6 @@ import {
   updateIntegration,
 } from "@/actions/integrations";
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
-import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import {
   IntegrationActionButtons,
   IntegrationCardHeader,
@@ -20,6 +19,7 @@ import {
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
+import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
@@ -183,7 +183,12 @@ export const S3IntegrationsManager = ({
     setIsOperationLoading(true);
 
     // Trigger test connection if needed
-    triggerTestConnectionWithDelay(integrationId, shouldTestConnection, "s3", toast);
+    triggerTestConnectionWithDelay(
+      integrationId,
+      shouldTestConnection,
+      "s3",
+      toast,
+    );
 
     // Reset loading state after a short delay to show the skeleton briefly
     setTimeout(() => {
