@@ -83,9 +83,7 @@ When using Infrastructure as Code (IaC), Terraform is recommended to manage this
 
 Below is a ready Terraform snippet that deploys the [Prowler Scan IAM Role CloudFormation template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml) across the AWS Organization using StackSets:
 
-#### `main.tf`
-
-```hcl
+```hcl title="main.tf"
 data "aws_caller_identity" "this" {}
 
 data "aws_organizations_organization" "this" {}
@@ -112,8 +110,6 @@ Download or reference the official CloudFormation template directly from GitHub:
 
 - [prowler-scan-role.yml](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml)
 
-Store this file locally and reference it in `template_path`, or download it dynamically.
-
 ---
 
 ### IAM Role: External ID Support
@@ -122,16 +118,7 @@ Include the `ExternalId` parameter in the StackSet if required by the organizati
 
 ---
 
-### Testing and Validation
-
-After deployment:
-- Go to the **CloudFormation Stack Instances** section in the AWS Console to validate the success in each account.
-- Ensure the IAM role exists under `prowler-scan-role` with the correct trust policy.
-- Run a scan from the Prowler Cloud console or CLI to verify access.
-
----
-
-When encountering issues during deployment or needing to target specific OUs or environments (e.g., dev/staging/prod), reach out to the Prowler team via [Slack Community](https://prowler.com/slack) or Support.
+When encountering issues during deployment or needing to target specific OUs or environments (e.g., dev/staging/prod), reach out to the Prowler team via [Slack Community](https://prowler.com/slack) or [Support](mailto:support@prowler.com).
 
 ## Extra: Run Prowler across all accounts in AWS Organizations by assuming roles
 
