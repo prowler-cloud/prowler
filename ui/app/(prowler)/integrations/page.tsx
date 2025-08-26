@@ -1,6 +1,9 @@
 import React from "react";
 
-import { S3IntegrationCard } from "@/components/integrations";
+import {
+  S3IntegrationCard,
+  SecurityHubIntegrationCard,
+} from "@/components/integrations";
 import { ContentLayout } from "@/components/ui";
 
 export default async function Integrations() {
@@ -17,6 +20,9 @@ export default async function Integrations() {
         <div className="grid gap-6">
           {/* Amazon S3 Integration */}
           <S3IntegrationCard />
+
+          {/* AWS Security Hub Integration */}
+          <SecurityHubIntegrationCard />
         </div>
       </div>
     </ContentLayout>

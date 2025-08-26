@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -10,7 +10,7 @@ import {
   testIntegrationConnection,
   updateIntegration,
 } from "@/actions/integrations";
-import { AmazonS3Icon } from "@/components/icons/services/IconServices";
+import { AWSSecurityHubIcon } from "@/components/icons/services/IconServices";
 import {
   IntegrationActionButtons,
   IntegrationCardHeader,
@@ -24,19 +24,19 @@ import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
-import { S3IntegrationForm } from "./s3-integration-form";
+import { SecurityHubIntegrationForm } from "./security-hub-integration-form";
 
-interface S3IntegrationsManagerProps {
+interface SecurityHubIntegrationsManagerProps {
   integrations: IntegrationProps[];
   providers: ProviderProps[];
   metadata?: MetaDataProps;
 }
 
-export const S3IntegrationsManager = ({
+export const SecurityHubIntegrationsManager = ({
   integrations,
   providers,
   metadata,
-}: S3IntegrationsManagerProps) => {
+}: SecurityHubIntegrationsManagerProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIntegration, setEditingIntegration] =
     useState<IntegrationProps | null>(null);
@@ -53,7 +53,7 @@ export const S3IntegrationsManager = ({
 
   const handleAddIntegration = () => {
     setEditingIntegration(null);
-    setEditMode(null); // Creation mode
+    setEditMode(null);
     setIsModalOpen(true);
   };
 
@@ -77,12 +77,12 @@ export const S3IntegrationsManager = ({
   const handleDeleteIntegration = async (id: string) => {
     setIsDeleting(id);
     try {
-      const result = await deleteIntegration(id, "amazon_s3");
+      const result = await deleteIntegration(id, "aws_security_hub");
 
       if (result.success) {
         toast({
           title: "Success!",
-          description: "S3 integration deleted successfully.",
+          description: "Security Hub integration deleted successfully.",
         });
       } else if (result.error) {
         toast({
@@ -95,7 +95,8 @@ export const S3IntegrationsManager = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete S3 integration. Please try again.",
+        description:
+          "Failed to delete Security Hub integration. Please try again.",
       });
     } finally {
       setIsDeleting(null);
@@ -150,6 +151,22 @@ export const S3IntegrationsManager = ({
           title: "Success!",
           description: `Integration ${newEnabledState ? "enabled" : "disabled"} successfully.`,
         });
+
+        // If enabling, trigger test connection automatically
+        if (newEnabledState) {
+          setIsTesting(integration.id);
+
+          triggerTestConnectionWithDelay(
+            integration.id,
+            true,
+            "security_hub",
+            toast,
+            500,
+            () => {
+              setIsTesting(null);
+            },
+          );
+        }
       } else if (result && "error" in result) {
         toast({
           variant: "destructive",
@@ -191,7 +208,7 @@ export const S3IntegrationsManager = ({
     triggerTestConnectionWithDelay(
       integrationId,
       shouldTestConnection,
-      "s3",
+      "security_hub",
       toast,
       200,
       () => {
@@ -206,13 +223,45 @@ export const S3IntegrationsManager = ({
     }, 1500);
   };
 
+  const getProviderDetails = (integration: IntegrationProps) => {
+    const providerRelationships = integration.relationships?.providers?.data;
+
+    if (!providerRelationships || providerRelationships.length === 0) {
+      return { displayName: "Unknown Account", accountId: null };
+    }
+
+    // Security Hub should only have one provider
+    const providerId = providerRelationships[0].id;
+    const provider = providers.find((p) => p.id === providerId);
+
+    if (!provider) {
+      return { displayName: "Unknown Account", accountId: null };
+    }
+
+    return {
+      displayName: provider.attributes.alias || provider.attributes.uid,
+      accountId: provider.attributes.uid,
+      alias: provider.attributes.alias,
+    };
+  };
+
+  const getEnabledRegions = (integration: IntegrationProps) => {
+    const regions = integration.attributes.configuration.regions;
+    if (!regions || typeof regions !== "object") return [];
+
+    return Object.entries(regions)
+      .filter(([_, enabled]) => enabled === true)
+      .map(([region]) => region)
+      .sort();
+  };
+
   return (
     <>
       <CustomAlertModal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        title="Delete S3 Integration"
-        description="This action cannot be undone. This will permanently delete your S3 integration."
+        title="Delete Security Hub Integration"
+        description="This action cannot be undone. This will permanently delete your Security Hub integration."
       >
         <div className="flex w-full justify-center space-x-6">
           <CustomButton
@@ -258,13 +307,14 @@ export const S3IntegrationsManager = ({
             : editMode === "credentials"
               ? "Edit Credentials"
               : editingIntegration
-                ? "Edit S3 Integration"
-                : "Add S3 Integration"
+                ? "Edit Security Hub Integration"
+                : "Add Security Hub Integration"
         }
       >
-        <S3IntegrationForm
+        <SecurityHubIntegrationForm
           integration={editingIntegration}
           providers={providers}
+          existingIntegrations={integrations}
           onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
           editMode={editMode}
@@ -272,11 +322,10 @@ export const S3IntegrationsManager = ({
       </CustomAlertModal>
 
       <div className="space-y-6">
-        {/* Header with Add Button */}
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">
-              Configured S3 Integrations
+              Configured Security Hub Integrations
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-300">
               {integrations.length === 0
@@ -294,64 +343,94 @@ export const S3IntegrationsManager = ({
           </CustomButton>
         </div>
 
-        {/* Integrations List */}
         {isOperationLoading ? (
           <IntegrationSkeleton
             variant="manager"
             count={integrations.length || 1}
-            icon={<AmazonS3Icon size={32} />}
-            title="Amazon S3"
-            subtitle="Export security findings to Amazon S3 buckets."
+            icon={<AWSSecurityHubIcon size={32} />}
+            title="AWS Security Hub"
+            subtitle="Send security findings to AWS Security Hub."
           />
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">
-            {integrations.map((integration) => (
-              <Card key={integration.id} className="dark:bg-gray-800">
-                <CardHeader className="pb-2">
-                  <IntegrationCardHeader
-                    icon={<AmazonS3Icon size={32} />}
-                    title={
-                      integration.attributes.configuration.bucket_name ||
-                      "Unknown Bucket"
-                    }
-                    subtitle={`Output directory: ${
-                      integration.attributes.configuration.output_directory ||
-                      integration.attributes.configuration.path ||
-                      "/"
-                    }`}
-                    connectionStatus={{
-                      connected: integration.attributes.connected,
-                    }}
-                  />
-                </CardHeader>
-                <CardBody className="pt-0">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-xs text-gray-500 dark:text-gray-300">
-                      {integration.attributes.connection_last_checked_at && (
-                        <p>
-                          <span className="font-medium">Last checked:</span>{" "}
-                          {format(
-                            new Date(
-                              integration.attributes.connection_last_checked_at,
-                            ),
-                            "yyyy/MM/dd",
-                          )}
-                        </p>
-                      )}
-                    </div>
-                    <IntegrationActionButtons
-                      integration={integration}
-                      onTestConnection={handleTestConnection}
-                      onEditConfiguration={handleEditConfiguration}
-                      onEditCredentials={handleEditCredentials}
-                      onToggleEnabled={handleToggleEnabled}
-                      onDelete={handleOpenDeleteModal}
-                      isTesting={isTesting === integration.id}
+            {integrations.map((integration) => {
+              const enabledRegions = getEnabledRegions(integration);
+              const providerDetails = getProviderDetails(integration);
+
+              return (
+                <Card key={integration.id} className="dark:bg-gray-800">
+                  <CardHeader className="pb-2">
+                    <IntegrationCardHeader
+                      icon={<AWSSecurityHubIcon size={32} />}
+                      title={providerDetails.displayName}
+                      subtitle={
+                        providerDetails.accountId && providerDetails.alias
+                          ? `Account ID: ${providerDetails.accountId}`
+                          : "AWS Security Hub Integration"
+                      }
+                      chips={[
+                        {
+                          label: integration.attributes.configuration
+                            .send_only_fails
+                            ? "Failed Only"
+                            : "All Findings",
+                        },
+                        {
+                          label: integration.attributes.configuration
+                            .archive_previous_findings
+                            ? "Archive Previous"
+                            : "Keep Previous",
+                        },
+                      ]}
+                      connectionStatus={{
+                        connected: integration.attributes.connected,
+                      }}
                     />
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardBody className="pt-0">
+                    <div className="flex flex-col gap-3">
+                      {enabledRegions.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {enabledRegions.map((region) => (
+                            <Chip
+                              key={region}
+                              size="sm"
+                              variant="flat"
+                              className="bg-default-100"
+                            >
+                              {region}
+                            </Chip>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-xs text-gray-500 dark:text-gray-300">
+                          {integration.attributes.updated_at && (
+                            <p>
+                              <span className="font-medium">Last updated:</span>{" "}
+                              {format(
+                                new Date(integration.attributes.updated_at),
+                                "yyyy/MM/dd",
+                              )}
+                            </p>
+                          )}
+                        </div>
+                        <IntegrationActionButtons
+                          integration={integration}
+                          onTestConnection={handleTestConnection}
+                          onEditConfiguration={handleEditConfiguration}
+                          onEditCredentials={handleEditCredentials}
+                          onToggleEnabled={handleToggleEnabled}
+                          onDelete={handleOpenDeleteModal}
+                          isTesting={isTesting === integration.id}
+                        />
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+              );
+            })}
           </div>
         ) : null}
 
