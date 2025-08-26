@@ -57,3 +57,10 @@ def init_parser(self):
         type=int,
         help="Set the maximum attempts for the Google Cloud SDK retry config (Default: 3)",
     )
+
+    gcp_config_subparser.add_argument(
+        "--scan-disabled-apis",
+        action="store_true",
+        default=False,
+        help="Assume all APIs are active and skip the active API check for each service",
+    )

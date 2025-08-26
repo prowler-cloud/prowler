@@ -86,6 +86,7 @@ class GcpProvider(Provider):
         client_secret: str = None,
         refresh_token: str = None,
         service_account_key: dict = None,
+        scan_disabled_apis: bool = False,
     ):
         """
         GCP Provider constructor
@@ -107,6 +108,7 @@ class GcpProvider(Provider):
             client_secret: str
             refresh_token: str
             service_account_key: dict
+            scan_disabled_apis: bool
 
         Raises:
             GCPNoAccesibleProjectsError if no project IDs can be accessed via Google Credentials
@@ -173,6 +175,12 @@ class GcpProvider(Provider):
 
             gcp_config.DEFAULT_RETRY_ATTEMPTS = retries_max_attempts
             logger.info(f"GCP retry attempts set to {retries_max_attempts}")
+
+        if scan_disabled_apis:
+            import prowler.providers.gcp.config as gcp_config
+
+            gcp_config.DEFAULT_SCAN_DISABLED_APIS = scan_disabled_apis
+            logger.info("Skipping API active check for each service")
 
         self._impersonated_service_account = impersonate_service_account
         # Set the GCP credentials using the provided client_id, client_secret and refresh_token

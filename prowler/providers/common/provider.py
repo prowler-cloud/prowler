@@ -202,6 +202,7 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        scan_disabled_apis=arguments.scan_disabled_apis,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
