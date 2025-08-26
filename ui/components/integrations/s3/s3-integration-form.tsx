@@ -261,6 +261,7 @@ export const S3IntegrationForm = ({
       const templateLinks = getAWSCredentialsTemplateLinks(
         externalId,
         bucketName,
+        "amazon_s3",
       );
 
       return (

@@ -1,5 +1,4 @@
 export * from "../providers/enhanced-provider-selector";
-export * from "../providers/provider-selector";
 export * from "./s3/s3-integration-card";
 export * from "./s3/s3-integration-form";
 export * from "./s3/s3-integrations-manager";

@@ -285,7 +285,8 @@ export const SecurityHubIntegrationForm = ({
                 }
                 templateLinks={getAWSCredentialsTemplateLinks(
                   form.getValues("external_id") || session?.tenantId || "",
-                  "SecurityHub",
+                  undefined,
+                  "aws_security_hub",
                 )}
                 type="integrations"
               />
@@ -300,7 +301,8 @@ export const SecurityHubIntegrationForm = ({
         form.getValues("external_id") || session?.tenantId || "";
       const templateLinks = getAWSCredentialsTemplateLinks(
         externalId,
-        "SecurityHub",
+        undefined,
+        "aws_security_hub",
       );
 
       return (
@@ -476,7 +478,7 @@ export const SecurityHubIntegrationForm = ({
               Need help configuring your AWS Security Hub integration?
             </p>
             <CustomLink
-              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/aws/securityhub/"
+              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/security-hub/"
               target="_blank"
               size="sm"
             >
