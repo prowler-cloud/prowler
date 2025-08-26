@@ -257,6 +257,7 @@ export const SecurityHubIntegrationForm = ({
         <div className="space-y-4">
           <RadioGroup
             size="sm"
+            aria-label="Credential type"
             value={useCustomCredentials ? "custom" : "provider"}
             onValueChange={(value) => {
               form.setValue("use_custom_credentials", value === "custom", {
