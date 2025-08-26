@@ -118,6 +118,33 @@ services:
       - "../docker-entrypoint.sh"
       - "beat"
 
+  check-scans:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.devel
+      - DJANGO_LOGGING_FORMATTER=${LOGGING_FORMATTER:-human_readable}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - "./api/src/backend:/home/prowler/backend"
+      - "./api/pyproject.toml:/home/prowler/pyproject.toml"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+    working_dir: /home/prowler/backend
+    entrypoint: []
+    command: ["poetry", "run", "python", "manage.py", "check_scans"]
+    profiles:
+      - tools
+
 volumes:
   outputs:
     driver: local
