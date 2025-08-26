@@ -142,9 +142,6 @@ export const AWSRoleCredentialsForm = ({
             isInvalid={
               !!control._formState.errors[
                 ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
-              ] ||
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_ACCESS_KEY_ID
               ]
             }
           />
