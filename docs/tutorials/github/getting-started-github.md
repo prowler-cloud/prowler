@@ -186,7 +186,10 @@ GitHub Apps provide the recommended integration method for accessing multiple re
     - **Account permissions**:
         - Email addresses (Read)
 
-4. **Generate Private Key**
+4. **Where can this GitHub App be installed?**
+    - Select "Any account" to be able to install the GitHub App in any organization.
+
+5. **Generate Private Key**
     - Scroll to the "Private keys" section after app creation
     - Click "Generate a private key"
     - Download the `.pem` file and store securely
