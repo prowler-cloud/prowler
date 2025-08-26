@@ -590,7 +590,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         # Get check status data by region from findings
         findings = (
             Finding.all_objects.filter(scan_id=scan_id, muted=False)
-            .only("id", "check_id", "status")
+            .only("id", "check_id", "status", "compliance")
             .prefetch_related(
                 Prefetch(
                     "resources",
@@ -601,6 +601,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             .iterator(chunk_size=1000)
         )
 
+        findings_count_by_compliance = {}
         check_status_by_region = {}
         with rls_transaction(tenant_id):
             for finding in findings:
@@ -609,6 +610,24 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                     current_status = check_status_by_region.setdefault(region, {})
                     if current_status.get(finding.check_id) != "FAIL":
                         current_status[finding.check_id] = finding.status
+
+                    for framework_id, requirements in finding.compliance.items():
+                        for requirement_id in requirements:
+                            compliance_key = findings_count_by_compliance.setdefault(
+                                region, {}
+                            ).setdefault(framework_id, {})
+                            if requirement_id not in compliance_key:
+                                compliance_key[requirement_id] = {
+                                    "total": 0,
+                                    "pass": 0,
+                                    "fail": 0,
+                                }
+
+                            compliance_key[requirement_id]["total"] += 1
+                            if finding.status == "PASS":
+                                compliance_key[requirement_id]["pass"] += 1
+                            elif finding.status == "FAIL":
+                                compliance_key[requirement_id]["fail"] += 1
 
         try:
             # Try to get regions from provider

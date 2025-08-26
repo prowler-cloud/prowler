@@ -1149,6 +1149,7 @@ class FindingSerializer(RLSSerializer):
             "muted",
             "muted_reason",
             "url",
+            "compliance",
             # Relationships
             "scan",
             "resources",
@@ -1179,6 +1180,7 @@ class FindingIncludeSerializer(RLSSerializer):
             "first_seen_at",
             "muted",
             "muted_reason",
+            "compliance",
         ]
 
 
