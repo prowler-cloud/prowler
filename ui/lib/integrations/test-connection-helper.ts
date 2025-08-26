@@ -55,6 +55,7 @@ interface TestConnectionOptions {
   onSuccess?: (message: string) => void;
   onError?: (message: string) => void;
   onStart?: () => void;
+  onComplete?: () => void;
 }
 
 export const runTestConnection = async ({
@@ -63,6 +64,7 @@ export const runTestConnection = async ({
   onSuccess,
   onError,
   onStart,
+  onComplete,
 }: TestConnectionOptions) => {
   try {
     // Start the test without waiting for completion
@@ -70,16 +72,19 @@ export const runTestConnection = async ({
 
     if (!result || (!result.success && !result.error)) {
       onError?.("Connection test could not be started. Please try again.");
+      onComplete?.();
       return;
     }
 
     if (result.error) {
       onError?.(result.error);
+      onComplete?.();
       return;
     }
 
     if (!result.taskId) {
       onError?.("Failed to start connection test. No task ID received.");
+      onComplete?.();
       return;
     }
 
@@ -105,6 +110,8 @@ export const runTestConnection = async ({
     onError?.(
       "Failed to start connection test. You can try manually using the Test Connection button.",
     );
+  } finally {
+    onComplete?.();
   }
 };
 
@@ -114,8 +121,10 @@ export const triggerTestConnectionWithDelay = (
   integrationType: string,
   toast: any,
   delay = 200,
+  onComplete?: () => void,
 ) => {
   if (!integrationId || !shouldTestConnection) {
+    onComplete?.();
     return;
   }
 
@@ -146,6 +155,7 @@ export const triggerTestConnectionWithDelay = (
           description: message,
         });
       },
+      onComplete,
     });
   }, delay);
 };

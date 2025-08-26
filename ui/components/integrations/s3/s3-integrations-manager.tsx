@@ -182,12 +182,22 @@ export const S3IntegrationsManager = ({
     setEditMode(null);
     setIsOperationLoading(true);
 
+    // Set testing state for server-triggered test connections
+    if (integrationId && shouldTestConnection) {
+      setIsTesting(integrationId);
+    }
+
     // Trigger test connection if needed
     triggerTestConnectionWithDelay(
       integrationId,
       shouldTestConnection,
       "s3",
       toast,
+      200,
+      () => {
+        // Clear testing state when server-triggered test completes
+        setIsTesting(null);
+      },
     );
 
     // Reset loading state after a short delay to show the skeleton briefly

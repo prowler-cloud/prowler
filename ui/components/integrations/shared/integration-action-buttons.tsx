@@ -40,7 +40,7 @@ export const IntegrationActionButtons = ({
         startContent={<TestTube size={14} />}
         onPress={() => onTestConnection(integration.id)}
         isLoading={isTesting}
-        isDisabled={!integration.attributes.enabled}
+        isDisabled={!integration.attributes.enabled || isTesting}
         ariaLabel="Test connection"
         className="w-full sm:w-auto"
       >
@@ -74,6 +74,7 @@ export const IntegrationActionButtons = ({
         color={integration.attributes.enabled ? "warning" : "primary"}
         startContent={<Power size={14} />}
         onPress={() => onToggleEnabled(integration)}
+        isDisabled={isTesting}
         ariaLabel={
           integration.attributes.enabled
             ? "Disable integration"

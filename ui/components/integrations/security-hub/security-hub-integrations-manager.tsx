@@ -151,6 +151,22 @@ export const SecurityHubIntegrationsManager = ({
           title: "Success!",
           description: `Integration ${newEnabledState ? "enabled" : "disabled"} successfully.`,
         });
+
+        // If enabling, trigger test connection automatically
+        if (newEnabledState) {
+          setIsTesting(integration.id);
+
+          triggerTestConnectionWithDelay(
+            integration.id,
+            true,
+            "security_hub",
+            toast,
+            500,
+            () => {
+              setIsTesting(null);
+            },
+          );
+        }
       } else if (result && "error" in result) {
         toast({
           variant: "destructive",
@@ -183,12 +199,22 @@ export const SecurityHubIntegrationsManager = ({
     setEditMode(null);
     setIsOperationLoading(true);
 
+    // Set testing state for server-triggered test connections
+    if (integrationId && shouldTestConnection) {
+      setIsTesting(integrationId);
+    }
+
     // Trigger test connection if needed
     triggerTestConnectionWithDelay(
       integrationId,
       shouldTestConnection,
       "security_hub",
       toast,
+      200,
+      () => {
+        // Clear testing state when server-triggered test completes
+        setIsTesting(null);
+      },
     );
 
     // Reset loading state after a short delay to show the skeleton briefly
