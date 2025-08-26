@@ -51,21 +51,12 @@ export const getAWSCredentialsTemplateLinks = (
 } => {
   let links = {};
 
-  if (integrationType === undefined) {
+  if (integrationType === undefined || integrationType === "aws_security_hub") {
     links = {
       cloudformation:
         "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml",
       terraform:
         "https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform",
-    };
-  }
-
-  if (integrationType === "aws_security_hub") {
-    links = {
-      cloudformation:
-        "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/",
-      terraform:
-        "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-s3-integration/#terraform",
     };
   }
 
