@@ -177,10 +177,8 @@ class GcpProvider(Provider):
             logger.info(f"GCP retry attempts set to {retries_max_attempts}")
 
         if scan_disabled_apis:
-            import prowler.providers.gcp.config as gcp_config
-
-            gcp_config.DEFAULT_SCAN_DISABLED_APIS = scan_disabled_apis
             logger.info("Skipping API active check for each service")
+        self.scan_disabled_apis = scan_disabled_apis
 
         self._impersonated_service_account = impersonate_service_account
         # Set the GCP credentials using the provided client_id, client_secret and refresh_token

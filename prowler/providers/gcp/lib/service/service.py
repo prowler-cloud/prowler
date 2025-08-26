@@ -7,10 +7,7 @@ from googleapiclient import discovery
 from googleapiclient.discovery import Resource
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.config import (
-    DEFAULT_RETRY_ATTEMPTS,
-    DEFAULT_SCAN_DISABLED_APIS,
-)
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 
 
@@ -32,7 +29,7 @@ class GCPService:
             self.service, api_version, self.credentials
         )
         # Only project ids that have their API enabled will be scanned
-        if DEFAULT_SCAN_DISABLED_APIS:
+        if provider.scan_disabled_apis:
             self.project_ids = provider.project_ids
         else:
             self.project_ids = self.__is_api_active__(provider.project_ids)
