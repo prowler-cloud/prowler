@@ -85,7 +85,3 @@ What we promise:
 - In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise).
 
 We strive to resolve all problems as quickly as possible, and we would like to play an active role in the ultimate publication on the problem after it is resolved.
-
----
-
-For more information about our security policies, please refer to our [Security](https://docs.prowler.com/security) section in our documentation.
