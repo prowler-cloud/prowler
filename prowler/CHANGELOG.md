@@ -22,6 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Improve AWS Security Hub region check using multiple threads [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 
 ### Fixed
+- Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
 
 ---
 
