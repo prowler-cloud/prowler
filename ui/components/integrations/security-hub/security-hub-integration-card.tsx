@@ -37,7 +37,7 @@ export const SecurityHubIntegrationCard = () => {
               size="sm"
               variant="bordered"
               startContent={<SettingsIcon size={14} />}
-              asLink="/integrations/securityhub"
+              asLink="/integrations/aws-security-hub"
               ariaLabel="Manage Security Hub integrations"
             >
               Manage

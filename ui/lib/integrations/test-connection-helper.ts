@@ -12,10 +12,21 @@ export interface IntegrationMessages {
 
 // Configuration map for integration-specific messages
 const INTEGRATION_CONFIG: Record<string, IntegrationMessages> = {
+  "amazon-s3": {
+    testingMessage: "Testing connection to Amazon S3 bucket...",
+    successMessage: "Successfully connected to Amazon S3 bucket.",
+    errorMessage: "Failed to connect to Amazon S3 bucket.",
+  },
+  "aws-security-hub": {
+    testingMessage: "Testing connection to AWS Security Hub...",
+    successMessage: "Successfully connected to AWS Security Hub.",
+    errorMessage: "Failed to connect to AWS Security Hub.",
+  },
+  // Legacy mappings for backward compatibility
   s3: {
-    testingMessage: "Testing connection to S3 bucket...",
-    successMessage: "Successfully connected to S3 bucket.",
-    errorMessage: "Failed to connect to S3 bucket.",
+    testingMessage: "Testing connection to Amazon S3 bucket...",
+    successMessage: "Successfully connected to Amazon S3 bucket.",
+    errorMessage: "Failed to connect to Amazon S3 bucket.",
   },
   security_hub: {
     testingMessage: "Testing connection to AWS Security Hub...",

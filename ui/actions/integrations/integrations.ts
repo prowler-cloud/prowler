@@ -100,9 +100,9 @@ export const createIntegration = async (
 
       // Revalidate the appropriate page based on integration type
       if (integration_type === "amazon_s3") {
-        revalidatePath("/integrations/s3");
+        revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
-        revalidatePath("/integrations/securityhub");
+        revalidatePath("/integrations/aws-security-hub");
       }
 
       return {
@@ -183,9 +183,9 @@ export const updateIntegration = async (
     if (response.ok) {
       // Revalidate the appropriate page based on integration type
       if (integration_type === "amazon_s3") {
-        revalidatePath("/integrations/s3");
+        revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
-        revalidatePath("/integrations/securityhub");
+        revalidatePath("/integrations/aws-security-hub");
       }
 
       return {
@@ -217,9 +217,9 @@ export const deleteIntegration = async (
     if (response.ok) {
       // Revalidate the appropriate page based on integration type
       if (integration_type === "amazon_s3") {
-        revalidatePath("/integrations/s3");
+        revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
-        revalidatePath("/integrations/securityhub");
+        revalidatePath("/integrations/aws-security-hub");
       }
 
       return { success: "Integration deleted successfully!" };
@@ -313,8 +313,8 @@ export const testIntegrationConnection = async (
         // Poll the task until completion
         const pollResult = await pollTaskUntilComplete(taskId);
 
-        revalidatePath("/integrations/s3");
-        revalidatePath("/integrations/securityhub");
+        revalidatePath("/integrations/amazon-s3");
+        revalidatePath("/integrations/aws-security-hub");
 
         if (pollResult.error) {
           return { error: pollResult.error };
@@ -355,8 +355,8 @@ export const pollConnectionTestStatus = async (taskId: string) => {
   try {
     const pollResult = await pollTaskUntilComplete(taskId);
 
-    revalidatePath("/integrations/s3");
-    revalidatePath("/integrations/securityhub");
+    revalidatePath("/integrations/amazon-s3");
+    revalidatePath("/integrations/aws-security-hub");
 
     if (pollResult.error) {
       return { success: false, error: pollResult.error };
