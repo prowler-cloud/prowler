@@ -12,7 +12,7 @@ We use encryption everywhere possible. The data and communications used by **Pro
 
 ## Data Retention Policy (Prowler Cloud)
 
-Prowler Cloud is GDPR compliant in regards to personal data and the [“right to be forgotten”](https://gdpr-info.eu/art-17-gdpr/). When a user deletes their account their user information will be deleted from Prowler Cloud online and backup systems within 10 calendar days.
+Prowler Cloud is GDPR compliant in regards to personal data and the ["right to be forgotten"](https://gdpr-info.eu/art-17-gdpr/). When a user deletes their account their user information will be deleted from Prowler Cloud online and backup systems within 10 calendar days.
 
 ## Software Security
 
