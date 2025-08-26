@@ -52,6 +52,21 @@ class S3ConfigSerializer(BaseValidateSerializer):
         resource_name = "integrations"
 
 
+class SecurityHubConfigSerializer(BaseValidateSerializer):
+    send_only_fails = serializers.BooleanField(default=False)
+    archive_previous_findings = serializers.BooleanField(default=False)
+    regions = serializers.DictField(default=dict, read_only=True)
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+        # Always initialize regions as empty dict
+        validated_data["regions"] = {}
+        return validated_data
+
+    class Meta:
+        resource_name = "integrations"
+
+
 class AWSCredentialSerializer(BaseValidateSerializer):
     role_arn = serializers.CharField(required=False)
     external_id = serializers.CharField(required=False)
@@ -145,6 +160,22 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                 },
                 "required": ["bucket_name"],
+            },
+            {
+                "type": "object",
+                "title": "AWS Security Hub",
+                "properties": {
+                    "send_only_fails": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, only findings with status 'FAIL' will be sent to Security Hub.",
+                    },
+                    "archive_previous_findings": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, archives findings that are not present in the current execution.",
+                    },
+                },
             },
         ]
     }
