@@ -67,6 +67,7 @@ nav:
           - SSO with SAML: tutorials/prowler-app-sso.md
           - Mute findings: tutorials/prowler-app-mute-findings.md
           - Amazon S3 Integration: tutorials/prowler-app-s3-integration.md
+          - AWS Security Hub Integration: tutorials/prowler-app-security-hub-integration.md
           - Lighthouse: tutorials/prowler-app-lighthouse.md
           - Bulk Provider Provisioning: tutorials/bulk-provider-provisioning.md
       - CLI:

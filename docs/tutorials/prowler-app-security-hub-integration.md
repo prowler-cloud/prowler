@@ -68,12 +68,14 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
 1. Navigate to **Integrations** in the navigation menu
 
 2. Locate the **AWS Security Hub** card and click **Manage** then **Add integration**
+   ![Integrations tab](./img/security-hub/integrations-tab.png)
 
 3. Complete the integration settings:
 
     - **AWS Provider:** Select the AWS provider whose findings should be exported
     - **Send Only Failed Findings:** Enable to export only FAIL findings (recommended to reduce costs)
     - **Archive Previous Findings:** Enable to automatically archive resolved findings
+    ![Integration settings](./img/security-hub/integration-settings.png)
 
 4. Configure authentication (optional):
 
@@ -84,8 +86,10 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
     - **Access Key ID & Secret:** AWS credentials with Security Hub permissions
     - **SDK default credentials:** Uses the AWS SDK default credentials
     - **IAM Role (Optional):** Role ARN and External ID for role assumption
+    ![Credentials configuration](./img/security-hub/credentials-configuration.png)
 
-6. Click **Create integration** to enable the integration
+6. Click **Create integration** to enable the integration and test the connection
+   ![Create integration](./img/security-hub/create-integration.png)
 
 ???+ success
     Once configured, findings from the next scan will appear in AWS Security Hub. Check the next scheduled scan time below the Security Hub connection status.
