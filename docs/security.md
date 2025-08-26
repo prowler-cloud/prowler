@@ -57,16 +57,19 @@ When reporting vulnerabilities, please consider (1) attack scenario / exploitabi
 - User enumeration.
 
 Testing guidelines:
+
 - Do not run automated scanners on other customer projects. Running automated scanners can run up costs for our users. Aggressively configured scanners might inadvertently disrupt services, exploit vulnerabilities, lead to system instability or breaches and violate Terms of Service from our upstream providers. Our own security systems won't be able to distinguish hostile reconnaissance from whitehat research. If you wish to run an automated scanner, notify us at support@prowler.com and only run it on your own Prowler app project. Do NOT attack Prowler in usage of other customers.
 - Do not take advantage of the vulnerability or problem you have discovered, for example by downloading more data than necessary to demonstrate the vulnerability or deleting or modifying other people's data.
 
 Reporting guidelines:
+
 - File a report through our Support Desk at https://support.prowler.com
 - If it is about a lack of a security functionality, please file a feature request instead at https://github.com/prowler-cloud/prowler/issues
 - Do provide sufficient information to reproduce the problem, so we will be able to resolve it as quickly as possible.
 - If you have further questions and want direct interaction with the Prowler team, please contact us at via our Community Slack at goto.prowler.com/slack.
 
 Disclosure guidelines:
+
 - In order to protect our users and customers, do not reveal the problem to others until we have researched, addressed and informed our affected customers.
 - If you want to publicly share your research about Prowler at a conference, in a blog or any other public forum, you should share a draft with us for review and approval at least 30 days prior to the publication date. Please note that the following should not be included:
     - Data regarding any Prowler user or customer projects.
@@ -74,6 +77,7 @@ Disclosure guidelines:
     - Information about Prowler employees, contractors or partners.
 
 What we promise:
+
 - We will respond to your report within 5 business days with our evaluation of the report and an expected resolution date.
 - If you have followed the instructions above, we will not take any legal action against you in regard to the report.
 - We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission.
