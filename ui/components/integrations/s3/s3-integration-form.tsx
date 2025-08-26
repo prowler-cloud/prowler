@@ -75,15 +75,9 @@ export const S3IntegrationForm = ({
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
-      // For credentials editing, show current values as placeholders but require new input
-      role_arn: isEditingCredentials
-        ? ""
-        : integration?.attributes.configuration.credentials?.role_arn || "",
+      role_arn: "",
       // External ID always defaults to tenantId, even when editing credentials
-      external_id:
-        integration?.attributes.configuration.credentials?.external_id ||
-        session?.tenantId ||
-        "",
+      external_id: session?.tenantId || "",
       role_session_name: "",
       session_duration: "",
       show_role_section: false,

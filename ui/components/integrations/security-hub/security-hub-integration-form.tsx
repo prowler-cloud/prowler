@@ -89,15 +89,11 @@ export const SecurityHubIntegrationForm = ({
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
-      role_arn: isEditingCredentials
-        ? ""
-        : integration?.attributes.configuration.credentials?.role_arn || "",
-      external_id:
-        integration?.attributes.configuration.credentials?.external_id ||
-        session?.tenantId ||
-        "",
+      role_arn: "",
+      external_id: session?.tenantId || "",
       role_session_name: "",
       session_duration: "",
+      show_role_section: false,
     },
   });
 

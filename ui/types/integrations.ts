@@ -174,6 +174,7 @@ const baseSecurityHubIntegrationSchema = z.object({
   role_session_name: z.string().optional(),
   session_duration: z.string().optional(),
   enabled: z.boolean().optional(),
+  show_role_section: z.boolean().optional(),
 });
 
 const securityHubIntegrationValidation = (data: any, ctx: z.RefinementCtx) => {
@@ -196,6 +197,24 @@ const securityHubIntegrationValidation = (data: any, ctx: z.RefinementCtx) => {
           "AWS Secret Access Key is required when using access and secret key",
         path: ["aws_secret_access_key"],
       });
+    }
+
+    // When role section is shown, both role_arn and external_id are required
+    if (data.show_role_section === true) {
+      if (!data.role_arn || data.role_arn.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Role ARN is required",
+          path: ["role_arn"],
+        });
+      }
+      if (!data.external_id || data.external_id.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "External ID is required",
+          path: ["external_id"],
+        });
+      }
     }
   }
 
