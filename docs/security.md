@@ -6,13 +6,13 @@ We publish our live SOC 2 Type 2 Compliance data at [https://trust.prowler.com](
 As an **AWS Partner**, we have passed the [AWS Foundation Technical Review (FTR)](https://aws.amazon.com/partners/foundational-technical-review/).
 
 
-### Encryption (Prowler Cloud)
+## Encryption (Prowler Cloud)
 
 We use encryption everywhere possible. The data and communications used by **Prowler Cloud** are **encrypted at-rest** and **in-transit**.
 
 ## Data Retention Policy (Prowler Cloud)
 
-Prowler Cloud is GDPR compliant in regards to personal data and the “right to be forgotten”. When a User deletes their account their user information will be deleted from Prowler Cloud online and backup systems within 10 calendar days.
+Prowler Cloud is GDPR compliant in regards to personal data and the [“right to be forgotten”](https://gdpr-info.eu/art-17-gdpr/). When a user deletes their account their user information will be deleted from Prowler Cloud online and backup systems within 10 calendar days.
 
 ## Software Security
 
