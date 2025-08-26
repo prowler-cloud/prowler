@@ -11,7 +11,7 @@ This guide explains how to set up authentication with GitHub for Prowler. The do
 
 ### 1. Personal Access Token (PAT)
 
-Personal Access Tokens provide the simplest GitHub authentication method and support individual user authentication or testing scenarios.
+Personal Access Tokens provide the simplest GitHub authentication method, but it can only access resources owned by a single user or organization.
 
 ???+ warning "Classic Tokens Deprecated"
     GitHub has deprecated Personal Access Tokens (classic) in favor of fine-grained Personal Access Tokens. We recommend using fine-grained tokens as they provide better security through more granular permissions and resource-specific access control.
