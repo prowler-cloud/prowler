@@ -1074,3 +1074,89 @@ class TestGCPProvider:
 
             assert gcp_provider.scan_disabled_apis is True
             mocked_is_api_active.assert_not_called()
+
+    def test_no_scan_disabled_argument(self):
+        """Test that scan_disabled_apis argument is set correctly in GcpProvider"""
+
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.organization_id = None
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = ""
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+        arguments.scan_disabled_apis = False
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels={"test": "value"},
+                lifecycle_state="ACTIVE",
+            )
+        }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
+
+        mocked_is_api_active = MagicMock()
+        mocked_is_api_active.return_value = projects.keys()
+
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                mocked_is_api_active,
+            ),
+        ):
+            gcp_provider = GcpProvider(
+                retries_max_attempts=None,
+                organization_id=arguments.organization_id,
+                project_ids=arguments.project_id,
+                excluded_project_ids=arguments.excluded_project_id,
+                credentials_file=arguments.credentials_file,
+                impersonate_service_account=arguments.impersonate_service_account,
+                list_project_ids=arguments.list_project_id,
+                config_path=arguments.config_file,
+                fixer_config=arguments.fixer_config,
+                client_id=None,
+                client_secret=None,
+                refresh_token=None,
+                scan_disabled_apis=arguments.scan_disabled_apis,
+            )
+
+            from prowler.providers.gcp.lib.service.service import GCPService
+
+            GCPService("testservice", gcp_provider)
+            assert gcp_provider.scan_disabled_apis is False
+            mocked_is_api_active.assert_called()
