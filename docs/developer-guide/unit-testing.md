@@ -520,7 +520,7 @@ Execute tests on the service `__init__` to ensure correct information retrieval.
 
 While service tests resemble *Integration Tests*, as they assess how the service interacts with the provider, they ultimately fall under *Unit Tests*, due to the use of Moto or custom mock objects.
 
-For detailed guidance on test creation and existing service tests, refer to the [AWS checks test documentation](https://github.com/prowler-cloud/prowler/tree/master/tests/providers/aws/services).
+For detailed guidance on test creation and existing service tests, check the current [AWS checks implementation](https://github.com/prowler-cloud/prowler/tree/master/tests/providers/aws/services).
 
 ## GCP
 
