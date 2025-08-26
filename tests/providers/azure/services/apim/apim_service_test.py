@@ -200,9 +200,14 @@ class Test_APIM_Service(TestCase):
                 mock_workspace = Workspace(location=LOCATION)
                 # Set customer_id after creation since it's readonly
                 mock_workspace.customer_id = WORKSPACE_CUSTOMER_ID
-                mock_loganalytics_client.clients[
-                    AZURE_SUBSCRIPTION_ID
-                ].workspaces.get.return_value = mock_workspace
+
+                # Properly mock the nested client structure
+                mock_client = mock.MagicMock()
+                mock_workspaces = mock.MagicMock()
+                mock_workspaces.get.return_value = mock_workspace
+                mock_client.workspaces = mock_workspaces
+                mock_loganalytics_client.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
                 customer_id = apim._get_workspace_customer_id(
                     AZURE_SUBSCRIPTION_ID, WORKSPACE_ID
                 )
@@ -234,9 +239,12 @@ class Test_APIM_Service(TestCase):
                 mock_table.rows = [["val1", "val2"]]
 
                 mock_response = LogsQueryResult(tables=[mock_table], status="Success")
-                mock_logsquery_client.clients[
-                    AZURE_SUBSCRIPTION_ID
-                ].query_workspace.return_value = mock_response
+
+                # Properly mock the nested client structure
+                mock_client = mock.MagicMock()
+                mock_client.query_workspace.return_value = mock_response
+                mock_logsquery_client.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
                 result = apim.query_logs(
                     AZURE_SUBSCRIPTION_ID,
                     "query",
