@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "apim_threat_detection_llm_jacking",
+  "CheckTitle": "Ensure Azure API Management is protected against LLM Jacking attacks",
+  "CheckType": [],
+  "ServiceName": "apim",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Azure API Management Instance",
+  "Description": "This check analyzes Azure API Management diagnostic logs in Log Analytics to detect potential LLM Jacking attacks by monitoring the frequency of LLM-related operations (ImageGenerations_Create, ChatCompletions_Create, Completions_Create) from individual IP addresses within a configurable time window.",
+  "Risk": "LLM Jacking attacks can lead to unauthorized access to AI models, potential data exfiltration, increased costs, and abuse of AI services. Attackers may use these endpoints to generate content, bypass rate limits, or access premium AI capabilities without proper authorization.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-configure-diagnostics",
+  "Remediation": {
+    "Code": {
+      "CLI": "az monitor diagnostic-settings create --name apim-diagnostics --resource-group <resource-group> --resource <apim-resource-id> --logs '[{\"category\": \"GatewayLogs\", \"enabled\": true}]' --workspace <log-analytics-workspace-id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"azurerm_monitor_diagnostic_setting\" \"apim\" {\n  name                       = \"apim-diagnostics\"\n  target_resource_id         = azurerm_api_management.apim.id\n  log_analytics_workspace_id = azurerm_log_analytics_workspace.workspace.id\n\n  log {\n    category = \"GatewayLogs\"\n    enabled  = true\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "To protect against LLM Jacking attacks: 1. Enable diagnostic logging for APIM instances and send logs to Log Analytics workspace 2. Configure appropriate thresholds for LLM operation frequency monitoring 3. Set up alerts for suspicious activity patterns 4. Implement rate limiting and IP allowlisting for sensitive AI endpoints 5. Regularly review and analyze APIM access logs for anomalies",
+      "Url": "https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-configure-diagnostics"
+    }
+  },
+  "Categories": [
+    "threat-detection",
+    "monitoring",
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires: 1. APIM diagnostic logging to be enabled and configured to send logs to Log Analytics workspace 2. Log Analytics workspace ID and key to be configured in the audit configuration 3. Appropriate permissions to query Log Analytics workspace"
+}
