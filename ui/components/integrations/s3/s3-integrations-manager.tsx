@@ -322,7 +322,7 @@ export const S3IntegrationsManager = ({
                     connectionStatus={{
                       connected: integration.attributes.connected,
                     }}
-                    navigationUrl={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}?prefix=${integration.attributes.configuration.output_directory}`}
+                    navigationUrl={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}`}
                   />
                 </CardHeader>
 

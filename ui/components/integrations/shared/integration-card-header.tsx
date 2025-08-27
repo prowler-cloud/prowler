@@ -47,6 +47,7 @@ export const IntegrationCardHeader = ({
                 rel="noopener noreferrer"
                 className="text-black dark:text-white"
                 href={navigationUrl}
+                aria-label="open bucket in new tab"
               >
                 <ExternalLink size={16} />
               </a>
