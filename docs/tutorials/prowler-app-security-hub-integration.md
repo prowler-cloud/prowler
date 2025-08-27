@@ -37,13 +37,14 @@ The Security Hub integration requires specific permissions to export findings. T
 
 ### Infrastructure as Code Templates
 
-**Prowler App** provides IaC templates to automate IAM role creation with Security Hub permissions:
+**Prowler App** provides IaC templates to automate IAM role creation with Security Hub permissions.
 
 #### CloudFormation
 
 [**Launch CloudFormation Stack →**](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_EnableSecurityHubIntegration=true)
 
 Key parameters:
+
 - `EnableSecurityHubIntegration`: Set to `true`
 - `ExternalId`: Use the value from **Prowler App**
 - `SecurityHubIntegrationRegions`: Comma-separated list of regions
@@ -107,6 +108,7 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
 ### Test Connection
 
 Use the **Test Connection** button to:
+
 - Verify AWS credentials validity
 - Check Security Hub accessibility
 - Detect enabled regions automatically
@@ -115,6 +117,7 @@ Use the **Test Connection** button to:
 ### Update Configuration
 
 Modify integration settings anytime:
+
 1. Click the **Config** button
 2. Update provider selection or finding filters
 3. Click **Update Configuration** to save
@@ -122,6 +125,7 @@ Modify integration settings anytime:
 ### Enable/Disable Integration
 
 Toggle the integration status without deleting:
+
 - **Enable:** Resume finding exports to Security Hub
 - **Disable:** Pause exports temporarily
 
@@ -158,6 +162,7 @@ The Security Hub integration supports multiple AWS regions:
 ### Automatic Region Detection
 
 During connection testing, **Prowler App** automatically:
+
 - Detects regions where Security Hub is enabled
 - Validates Prowler integration acceptance per region
 - Configures finding export to all available regions
@@ -165,6 +170,7 @@ During connection testing, **Prowler App** automatically:
 ### Regional Export Behavior
 
 Findings are exported based on resource location:
+
 - Regional resources → Sent to Security Hub in the resource's region
 - Global resources → Sent to the primary region (typically `us-east-1`)
 
@@ -178,12 +184,14 @@ Findings are exported based on resource location:
 ### Finding Lifecycle Management
 
 **Archive Previous Findings** option maintains clean Security Hub dashboards:
+
 - **Enabled:** Archives resolved findings automatically
 - **Disabled:** All findings remain active in Security Hub
 
 ### Compliance Framework Integration
 
 Exported findings integrate with Security Hub compliance standards:
+
 - **AWS Foundational Security Best Practices**
 - **CIS AWS Foundations Benchmark**
 - **PCI DSS**
@@ -206,18 +214,21 @@ Prowler severities map to Security Hub labels:
 ## Troubleshooting
 
 **Connection test fails:**
+
 - Verify AWS Security Hub is enabled in target regions
 - Confirm Prowler integration is accepted in Security Hub
 - Check IAM permissions include required Security Hub actions
 - If using IAM Role, verify trust policy and External ID
 
 **No findings in Security Hub:**
+
 - Ensure integration shows "Connected" status
 - Verify a scan has completed after enabling integration
 - Check Security Hub console in the correct region
 - Confirm finding filters match expectations
 
 **Authentication errors:**
+
 - For provider credentials, verify provider configuration
 - For custom credentials, check access key validity
 - For IAM roles, confirm role ARN and External ID match
