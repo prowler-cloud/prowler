@@ -356,17 +356,35 @@ class SecurityHub:
 
     def get_existing_findings_timestamps(self) -> dict:
         """
-        Retrieves existing findings from Security Hub and returns their timestamps.
+        Retrieves existing findings from Security Hub that are relevant to the current scan
+        and returns their timestamps. This function only checks for findings that match
+        the current scan's check IDs to improve performance, then filters locally by finding IDs.
 
         Returns:
             dict: A dictionary mapping finding IDs to their timestamps from Security Hub.
         """
         existing_findings_timestamps = {}
-        logger.info("Retrieving existing findings timestamps from Security Hub.")
+        logger.info(
+            "Retrieving existing findings timestamps from Security Hub for current scan."
+        )
+
+        # Get unique check IDs and finding IDs from current scan findings
+        current_finding_ids = set()
+        for findings in self._findings_per_region.values():
+            for finding in findings:
+                current_finding_ids.add(finding.Id)
+
+        if not current_finding_ids:
+            logger.info("No current scan findings to check timestamps for.")
+            return existing_findings_timestamps
+
+        logger.info(
+            f"Checking timestamps for {len(current_finding_ids)} findings from current scan."
+        )
 
         for region in self._findings_per_region.keys():
             try:
-                # Get findings of that region
+                # Get findings of that region, filtered by current scan's finding IDs
                 findings_filter = {
                     "ProductName": [{"Value": "Prowler", "Comparison": "EQUALS"}],
                     "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
@@ -374,6 +392,10 @@ class SecurityHub:
                         {"Value": self._aws_account_id, "Comparison": "EQUALS"}
                     ],
                     "Region": [{"Value": region, "Comparison": "EQUALS"}],
+                    "Id": [
+                        {"Value": finding_id, "Comparison": "EQUALS"}
+                        for finding_id in current_finding_ids
+                    ],
                 }
                 get_findings_paginator = self._enabled_regions[region].get_paginator(
                     "get_findings"
@@ -396,7 +418,7 @@ class SecurityHub:
                 )
 
         logger.info(
-            f"Retrieved timestamps for {len(existing_findings_timestamps)} existing findings from Security Hub."
+            f"Retrieved timestamps for {len(existing_findings_timestamps)} existing findings from Security Hub relevant to current scan."
         )
         return existing_findings_timestamps
 
