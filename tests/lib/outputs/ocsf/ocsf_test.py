@@ -62,7 +62,9 @@ class TestOCSF:
         assert output_data.finding_info.desc == findings[0].metadata.Description
         assert output_data.finding_info.title == findings[0].metadata.CheckTitle
         assert output_data.finding_info.uid == findings[0].uid
-        assert output_data.finding_info.types == ["test-type"]
+        assert output_data.finding_info.types == [
+            "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+        ]
         assert output_data.time == int(findings[0].timestamp.timestamp())
         assert output_data.time_dt == findings[0].timestamp
         assert (
@@ -200,7 +202,9 @@ class TestOCSF:
                     "desc": "check description",
                     "title": "service_test_check_id",
                     "uid": "test-unique-finding",
-                    "types": ["test-type"],
+                    "types": [
+                        "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+                    ],
                 },
                 "resources": [
                     {
