@@ -54,14 +54,16 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
 1. Navigate to **Integrations** in the navigation menu
 
 2. Locate the **AWS Security Hub** card and click **Manage** then **Add integration**
-   ![Integrations tab](./img/security-hub/integrations-tab.png)
+
+   <img src="./img/security-hub/integrations-tab.png" alt="Integrations tab" width="700"/>
 
 3. Complete the integration settings:
 
     - **AWS Provider:** Select the AWS provider whose findings should be exported
     - **Send Only Failed Findings:** Enable to export only FAIL findings (recommended to reduce costs)
     - **Archive Previous Findings:** Enable to automatically archive resolved findings
-    ![Integration settings](./img/security-hub/integration-settings.png)
+
+    <img src="./img/security-hub/integration-settings.png" alt="Integration settings" width="400"/>
 
 4. Configure authentication (optional):
 
@@ -72,10 +74,11 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
     - **Access Key ID & Secret:** AWS credentials with Security Hub permissions
     - **SDK default credentials:** Uses the AWS SDK default credentials
     - **IAM Role (Optional):** Role ARN and External ID for role assumption
-    ![Credentials configuration](./img/security-hub/credentials-configuration.png)
+
+    <img src="./img/security-hub/credentials-configuration.png" alt="Credentials configuration" width="400"/>
 
 5. Click **Create integration** to enable the integration and test the connection
-   ![Create integration](./img/security-hub/create-integration.png)
+   <img src="./img/security-hub/create-integration.png" alt="Create integration" width="700"/>
 
 
 ???+ success
@@ -96,39 +99,35 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
 
 ## Integration Management
 
-### Test Connection
+### Integration Status
 
-Use the **Test Connection** button to:
+Once the integration is active, monitor its status and make adjustments as needed through the integrations management interface.
 
-- Verify AWS credentials validity
-- Check Security Hub accessibility
-- Detect enabled regions automatically
-- Validate finding export capability
+1. Review configured integrations in the management interface
+2. Each integration displays:
 
-### Update Configuration
+    - **Connection Status:** Connected or Disconnected indicator
+    - **Provider Information:** Selected AWS provider name
+    - **Finding Filters:** Status of failed-only and archive settings
+    - **Last Checked:** Timestamp of the most recent connection test
+    - **Regions:** List of regions where the integration is active
 
-Modify integration settings anytime:
+#### Actions
 
-1. Click the **Config** button
-2. Update provider selection or finding filters
-3. Click **Update Configuration** to save
+Each Security Hub integration provides several management actions accessible through dedicated buttons:
 
-### Enable/Disable Integration
+| Button | Purpose | Available Actions | Notes |
+|--------|---------|------------------|-------|
+| **Test** | Verify integration connectivity | • Test AWS credential validity<br/>• Check Security Hub accessibility<br/>• Detect enabled regions automatically<br/>• Validate finding export capability | Results displayed in notification message |
+| **Config** | Modify integration settings | • Update AWS provider selection<br/>• Change finding filter settings<br/>• Modify archive preferences | Click "Update Configuration" to save changes |
+| **Credentials** | Update authentication settings | • Switch between provider/custom credentials<br/>• Update AWS access keys<br/>• Change IAM role configuration | Click "Update Credentials" to save changes |
+| **Enable/Disable** | Toggle integration status | • Enable integration to start exporting findings<br/>• Disable integration to pause exports | Status change takes effect immediately |
+| **Delete** | Remove integration permanently | • Permanently delete integration<br/>• Remove all configuration data | ⚠️ **Cannot be undone** - confirm before deleting |
 
-Toggle the integration status without deleting:
-
-- **Enable:** Resume finding exports to Security Hub
-- **Disable:** Pause exports temporarily
-
-### Delete Integration
-
-To remove the Security Hub integration:
-
-1. Click the **Delete** button in the integration row
-2. Confirm deletion in the modal dialog
-
-???+ warning
-    Deletion is permanent and cannot be undone. Consider using Enable/Disable for temporary changes.
+???+ tip "Management Best Practices"
+    - Test the integration after any configuration changes
+    - Use the Enable/Disable toggle for temporary changes instead of deleting
+    - Monitor the Last Checked timestamp to ensure recent connectivity
 
 ---
 
