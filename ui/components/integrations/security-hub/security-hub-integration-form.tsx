@@ -285,6 +285,7 @@ export const SecurityHubIntegrationForm = ({
                   "aws_security_hub",
                 )}
                 type="integrations"
+                integrationType="aws_security_hub"
               />
             </>
           )}
@@ -308,6 +309,7 @@ export const SecurityHubIntegrationForm = ({
           externalId={externalId}
           templateLinks={templateLinks}
           type="integrations"
+          integrationType="aws_security_hub"
         />
       );
     }
@@ -379,7 +381,10 @@ export const SecurityHubIntegrationForm = ({
                       onValueChange={field.onChange}
                       size="sm"
                     >
-                      <span className="text-sm">Use custom credentials</span>
+                      <span className="text-sm">
+                        Use custom credentials (By default, AWS account ones
+                        will be used)
+                      </span>
                     </Checkbox>
                   </FormControl>
                 )}
