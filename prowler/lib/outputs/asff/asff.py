@@ -20,6 +20,7 @@ class ASFF(Output):
     Attributes:
         - _data: A list to store the transformed findings.
         - _file_descriptor: A file descriptor to write to file.
+        - _existing_findings_timestamps: A dictionary mapping finding IDs to their existing timestamps from Security Hub.
 
     Methods:
         - transform(findings: list[Finding]) -> None: Transforms a list of findings into ASFF format.
@@ -31,7 +32,30 @@ class ASFF(Output):
         - AWS Security Finding Format Syntax: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html
     """
 
-    def transform(self, findings: list[Finding]) -> None:
+    def __init__(
+        self,
+        findings: list[Finding],
+        file_path: str = None,
+        file_extension: str = "",
+        from_cli: bool = True,
+        existing_findings_timestamps: dict = None,
+    ) -> None:
+        """
+        Initialize the ASFF output formatter.
+
+        Args:
+            findings: List of findings to transform
+            file_path: Path to the output file
+            file_extension: File extension for the output
+            from_cli: Whether this is being called from CLI
+            existing_findings_timestamps: Dictionary mapping finding IDs to existing timestamps from Security Hub
+        """
+        self._existing_findings_timestamps = existing_findings_timestamps
+        super().__init__(findings, file_path, file_extension, from_cli)
+
+    def transform(
+        self, findings: list[Finding], existing_findings_timestamps: dict = None
+    ) -> None:
         """
         Transforms a list of findings into AWS Security Finding Format (ASFF).
 
@@ -39,6 +63,7 @@ class ASFF(Output):
 
         Parameters:
             - findings (list[Finding]): A list of Finding objects representing the findings to be transformed.
+            - existing_findings_timestamps (dict, optional): A dictionary mapping finding IDs to their existing timestamps from Security Hub.
 
         Returns:
             - None
@@ -49,18 +74,43 @@ class ASFF(Output):
             - It formats timestamps in the required ASFF format.
             - It handles compliance frameworks and associated standards for each finding.
             - It ensures that the finding status matches the allowed values in ASFF.
+            - If existing_findings_timestamps is provided, it preserves the original FirstObservedAt and CreatedAt timestamps for findings that already exist in Security Hub.
 
         References:
             - AWS Security Hub API Reference: https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
             - AWS Security Finding Format Syntax: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html
         """
         try:
+            # Use the parameter if provided, otherwise use the stored value
+            timestamps_to_use = (
+                existing_findings_timestamps or self._existing_findings_timestamps
+            )
+
             for finding in findings:
                 # MANUAL status is not valid in SecurityHub
                 # https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
                 if finding.status == "MANUAL":
                     continue
-                timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+                current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+                # Generate the finding ID to check if it exists in Security Hub
+                finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+                # Determine timestamps based on whether the finding already exists in Security Hub
+                if timestamps_to_use and finding_id in timestamps_to_use:
+                    existing_timestamps = timestamps_to_use[finding_id]
+                    # Preserve original FirstObservedAt and CreatedAt, update UpdatedAt
+                    first_observed_at = existing_timestamps.get(
+                        "FirstObservedAt", current_timestamp
+                    )
+                    created_at = existing_timestamps.get("CreatedAt", current_timestamp)
+                    updated_at = current_timestamp  # Always update with current time
+                else:
+                    # New finding: use current timestamp for all fields
+                    first_observed_at = current_timestamp
+                    created_at = current_timestamp
+                    updated_at = current_timestamp
 
                 associated_standards, compliance_summary = ASFF.format_compliance(
                     finding.compliance
@@ -72,7 +122,7 @@ class ASFF(Output):
                     AWSSecurityFindingFormat(
                         # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
                         # If changed some findings could be lost because the unique identifier will be different
-                        Id=f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}",
+                        Id=finding_id,
                         ProductArn=f"arn:{finding.partition}:securityhub:{finding.region}::product/prowler/prowler",
                         ProductFields=ProductFields(
                             ProwlerResourceName=finding.resource_uid,
@@ -84,9 +134,9 @@ class ASFF(Output):
                             if finding.metadata.CheckType
                             else ["Software and Configuration Checks"]
                         ),
-                        FirstObservedAt=timestamp,
-                        UpdatedAt=timestamp,
-                        CreatedAt=timestamp,
+                        FirstObservedAt=first_observed_at,
+                        UpdatedAt=updated_at,
+                        CreatedAt=created_at,
                         Severity=Severity(Label=finding.metadata.Severity.value),
                         Title=finding.metadata.CheckTitle,
                         Description=(

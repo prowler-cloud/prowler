@@ -5,7 +5,7 @@ import botocore
 import pytest
 from boto3 import session
 from botocore.client import ClientError
-from mock import patch
+from mock import MagicMock, patch
 
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
@@ -1283,3 +1283,241 @@ class TestSecurityHub:
         assert connection.error is None
         assert len(connection.enabled_regions) == 1
         assert len(connection.disabled_regions) == 1
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.AwsSetUpSession")
+    def test_get_existing_findings_timestamps(self, mock_aws_setup):
+        """Test that get_existing_findings_timestamps correctly retrieves existing findings timestamps."""
+        # Mock findings per region
+        mock_findings = [
+            MagicMock(
+                Id="prowler-test-check-123456789012-us-east-1-hash123",
+                Region="us-east-1",
+                Compliance=MagicMock(Status="FAILED"),
+            ),
+            MagicMock(
+                Id="prowler-test-check-123456789012-us-west-2-hash456",
+                Region="us-west-2",
+                Compliance=MagicMock(Status="FAILED"),
+            ),
+        ]
+
+        # Mock enabled regions
+        mock_enabled_regions = {
+            "us-east-1": MagicMock(),
+            "us-west-2": MagicMock(),
+        }
+
+        # Mock paginator responses
+        mock_page1 = {
+            "Findings": [
+                {
+                    "Id": "prowler-test-check-123456789012-us-east-1-hash123",
+                    "FirstObservedAt": "2023-01-01T00:00:00Z",
+                    "CreatedAt": "2023-01-01T00:00:00Z",
+                    "UpdatedAt": "2023-01-01T00:00:00Z",
+                }
+            ]
+        }
+        mock_page2 = {
+            "Findings": [
+                {
+                    "Id": "prowler-test-check-123456789012-us-west-2-hash456",
+                    "FirstObservedAt": "2023-01-15T00:00:00Z",
+                    "CreatedAt": "2023-01-15T00:00:00Z",
+                    "UpdatedAt": "2023-01-15T00:00:00Z",
+                }
+            ]
+        }
+
+        # Mock paginator
+        mock_paginator = MagicMock()
+        mock_paginator.paginate.return_value = [mock_page1, mock_page2]
+
+        # Mock Security Hub client
+        mock_client = MagicMock()
+        mock_client.get_paginator.return_value = mock_paginator
+
+        # Create SecurityHub instance with mocked session
+        mock_session = MagicMock()
+        mock_aws_setup.return_value._session.current_session = mock_session
+
+        security_hub = SecurityHub(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            findings=mock_findings,
+            aws_security_hub_available_regions=["us-east-1", "us-west-2"],
+        )
+
+        # Mock the enabled regions
+        security_hub._enabled_regions = mock_enabled_regions
+        security_hub._enabled_regions["us-east-1"] = mock_client
+        security_hub._enabled_regions["us-west-2"] = mock_client
+
+        # Mock findings per region
+        security_hub._findings_per_region = {
+            "us-east-1": [mock_findings[0]],
+            "us-west-2": [mock_findings[1]],
+        }
+
+        # Call the method
+        result = security_hub.get_existing_findings_timestamps()
+
+        # Verify the result
+        expected_result = {
+            "prowler-test-check-123456789012-us-east-1-hash123": {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            },
+            "prowler-test-check-123456789012-us-west-2-hash456": {
+                "FirstObservedAt": "2023-01-15T00:00:00Z",
+                "CreatedAt": "2023-01-15T00:00:00Z",
+                "UpdatedAt": "2023-01-15T00:00:00Z",
+            },
+        }
+
+        assert result == expected_result
+
+        # Verify that the paginator was called correctly
+        mock_client.get_paginator.assert_called_with("get_findings")
+        assert mock_paginator.paginate.call_count == 2
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.AwsSetUpSession")
+    def test_get_existing_findings_timestamps_empty_regions(self, mock_aws_setup):
+        """Test that get_existing_findings_timestamps handles empty regions correctly."""
+        # Mock session
+        mock_session = MagicMock()
+        mock_aws_setup.return_value._session.current_session = mock_session
+
+        security_hub = SecurityHub(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            findings=[],
+            aws_security_hub_available_regions=[],
+        )
+
+        # Mock empty findings per region
+        security_hub._findings_per_region = {}
+
+        result = security_hub.get_existing_findings_timestamps()
+
+        assert result == {}
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.AwsSetUpSession")
+    def test_get_existing_findings_timestamps_with_error(self, mock_aws_setup):
+        """Test that get_existing_findings_timestamps handles errors gracefully."""
+        # Mock findings per region
+        mock_findings = [
+            MagicMock(
+                Id="prowler-test-check-123456789012-us-east-1-hash123",
+                Region="us-east-1",
+                Compliance=MagicMock(Status="FAILED"),
+            ),
+        ]
+
+        # Mock enabled regions
+        mock_enabled_regions = {
+            "us-east-1": MagicMock(),
+        }
+
+        # Mock client that raises an exception
+        mock_client = MagicMock()
+        mock_client.get_paginator.side_effect = Exception("Test error")
+
+        # Mock session
+        mock_session = MagicMock()
+        mock_aws_setup.return_value._session.current_session = mock_session
+
+        # Create SecurityHub instance
+        security_hub = SecurityHub(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            findings=mock_findings,
+            aws_security_hub_available_regions=["us-east-1"],
+        )
+
+        # Mock the enabled regions
+        security_hub._enabled_regions = mock_enabled_regions
+        security_hub._enabled_regions["us-east-1"] = mock_client
+
+        # Mock findings per region
+        security_hub._findings_per_region = {
+            "us-east-1": [mock_findings[0]],
+        }
+
+        # Call the method - should not raise exception
+        result = security_hub.get_existing_findings_timestamps()
+
+        # Should return empty dict due to error
+        assert result == {}
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.AwsSetUpSession")
+    def test_get_existing_findings_timestamps_partial_data(self, mock_aws_setup):
+        """Test that get_existing_findings_timestamps handles partial timestamp data correctly."""
+        # Mock findings per region
+        mock_findings = [
+            MagicMock(
+                Id="prowler-test-check-123456789012-us-east-1-hash123",
+                Region="us-east-1",
+                Compliance=MagicMock(Status="FAILED"),
+            ),
+        ]
+
+        # Mock enabled regions
+        mock_enabled_regions = {
+            "us-east-1": MagicMock(),
+        }
+
+        # Mock paginator responses with partial data
+        mock_page = {
+            "Findings": [
+                {
+                    "Id": "prowler-test-check-123456789012-us-east-1-hash123",
+                    "FirstObservedAt": "2023-01-01T00:00:00Z",
+                    # Missing CreatedAt and UpdatedAt
+                }
+            ]
+        }
+
+        # Mock paginator
+        mock_paginator = MagicMock()
+        mock_paginator.paginate.return_value = [mock_page]
+
+        # Mock Security Hub client
+        mock_client = MagicMock()
+        mock_client.get_paginator.return_value = mock_paginator
+
+        # Mock session
+        mock_session = MagicMock()
+        mock_aws_setup.return_value._session.current_session = mock_session
+
+        # Create SecurityHub instance
+        security_hub = SecurityHub(
+            aws_account_id="123456789012",
+            aws_partition="aws",
+            findings=mock_findings,
+            aws_security_hub_available_regions=["us-east-1"],
+        )
+
+        # Mock the enabled regions
+        security_hub._enabled_regions = mock_enabled_regions
+        security_hub._enabled_regions["us-east-1"] = mock_client
+
+        # Mock findings per region
+        security_hub._findings_per_region = {
+            "us-east-1": [mock_findings[0]],
+        }
+
+        # Call the method
+        result = security_hub.get_existing_findings_timestamps()
+
+        # Verify the result handles missing fields gracefully
+        expected_result = {
+            "prowler-test-check-123456789012-us-east-1-hash123": {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": None,
+                "UpdatedAt": None,
+            },
+        }
+
+        assert result == expected_result

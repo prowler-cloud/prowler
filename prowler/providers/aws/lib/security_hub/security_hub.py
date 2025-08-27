@@ -354,6 +354,52 @@ class SecurityHub:
             )
         return success_count
 
+    def get_existing_findings_timestamps(self) -> dict:
+        """
+        Retrieves existing findings from Security Hub and returns their timestamps.
+
+        Returns:
+            dict: A dictionary mapping finding IDs to their timestamps from Security Hub.
+        """
+        existing_findings_timestamps = {}
+        logger.info("Retrieving existing findings timestamps from Security Hub.")
+
+        for region in self._findings_per_region.keys():
+            try:
+                # Get findings of that region
+                findings_filter = {
+                    "ProductName": [{"Value": "Prowler", "Comparison": "EQUALS"}],
+                    "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
+                    "AwsAccountId": [
+                        {"Value": self._aws_account_id, "Comparison": "EQUALS"}
+                    ],
+                    "Region": [{"Value": region, "Comparison": "EQUALS"}],
+                }
+                get_findings_paginator = self._enabled_regions[region].get_paginator(
+                    "get_findings"
+                )
+
+                for page in get_findings_paginator.paginate(
+                    Filters=findings_filter, PaginationConfig={"PageSize": 100}
+                ):
+                    for finding in page["Findings"]:
+                        finding_id = finding["Id"]
+                        existing_findings_timestamps[finding_id] = {
+                            "FirstObservedAt": finding.get("FirstObservedAt"),
+                            "CreatedAt": finding.get("CreatedAt"),
+                            "UpdatedAt": finding.get("UpdatedAt"),
+                        }
+
+            except Exception as error:
+                logger.error(
+                    f"Error retrieving existing findings timestamps from region {region}: {error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        logger.info(
+            f"Retrieved timestamps for {len(existing_findings_timestamps)} existing findings from Security Hub."
+        )
+        return existing_findings_timestamps
+
     def archive_previous_findings(self) -> int:
         """
         Checks previous findings in Security Hub to archive them.

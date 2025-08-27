@@ -402,13 +402,8 @@ def prowler():
                 csv_output.batch_write_data_to_file()
 
             if mode == "json-asff":
-                asff_output = ASFF(
-                    findings=finding_outputs,
-                    file_path=f"{filename}{json_asff_file_suffix}",
-                )
-                generated_outputs["regular"].append(asff_output)
-                # Write ASFF Finding Object to file
-                asff_output.batch_write_data_to_file()
+                # ASFF output is handled in Security Hub section to preserve existing timestamps
+                pass
 
             if mode == "json-ocsf":
                 json_output = OCSF(
@@ -876,31 +871,103 @@ def prowler():
                 else global_provider.identity.audited_regions
             )
 
+            # First, create ASFF output to get AWSSecurityFindingFormat objects for Security Hub
+            asff_filename = (
+                f"{output_options.output_directory}/{output_options.output_filename}"
+            )
+            try:
+                asff_output = ASFF(
+                    findings=finding_outputs,
+                    file_path=(
+                        f"{asff_filename}{json_asff_file_suffix}"
+                        if "json-asff" in args.output_formats
+                        else None
+                    ),
+                )
+            except Exception as error:
+                logger.error(
+                    f"Error creating ASFF output for Security Hub integration: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                print(
+                    f"{Style.BRIGHT}{Fore.RED}\nError creating ASFF output for Security Hub integration: {error}{Style.RESET_ALL}"
+                )
+                sys.exit(1)
+
             security_hub = SecurityHub(
                 aws_account_id=global_provider.identity.account,
                 aws_partition=global_provider.identity.partition,
                 aws_session=global_provider.session.current_session,
-                findings=asff_output.data,
+                findings=asff_output.data,  # Pass AWSSecurityFindingFormat objects
                 send_only_fails=output_options.send_sh_only_fails,
                 aws_security_hub_available_regions=security_hub_regions,
             )
-            # Send the findings to Security Hub
-            findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
-            print(
-                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
-            )
+            if not security_hub._enabled_regions:
+                print(
+                    f"{Style.BRIGHT}{Fore.RED}\nNo regions with Security Hub enabled with Prowler integration found. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/{Style.RESET_ALL}\n"
+                )
+                sys.exit(1)
+            else:
+                try:
+                    # Get existing findings timestamps to preserve FirstObservedAt, CreatedAt, and UpdatedAt for findings that already exist
+                    existing_findings_timestamps = (
+                        security_hub.get_existing_findings_timestamps()
+                    )
 
-            # Resolve previous fails of Security Hub
-            if not args.skip_sh_update:
-                print(
-                    f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
-                )
-                findings_archived_in_security_hub = (
-                    security_hub.archive_previous_findings()
-                )
-                print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
-                )
+                    # Create ASFF output with existing timestamps to preserve FirstObservedAt, CreatedAt, and UpdatedAt
+                    asff_output_with_timestamps = ASFF(
+                        findings=finding_outputs,
+                        existing_findings_timestamps=existing_findings_timestamps,
+                    )
+
+                    # Update Security Hub findings to use the ones with preserved timestamps
+                    security_hub._findings_per_region = security_hub.filter(
+                        asff_output_with_timestamps.data,
+                        output_options.send_sh_only_fails,
+                    )
+
+                    # Send the findings to Security Hub
+                    findings_sent_to_security_hub = (
+                        security_hub.batch_send_to_security_hub()
+                    )
+                    print(
+                        f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+                    )
+
+                    # Resolve previous fails of Security Hub
+                    if not args.skip_sh_update:
+                        print(
+                            f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
+                        )
+                        findings_archived_in_security_hub = (
+                            security_hub.archive_previous_findings()
+                        )
+                        print(
+                            f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                        )
+
+                    # Add ASFF output with preserved timestamps to generated outputs if requested
+                    if "json-asff" in args.output_formats:
+                        asff_output_with_timestamps.file_path = (
+                            f"{asff_filename}{json_asff_file_suffix}"
+                        )
+                        generated_outputs["regular"].append(asff_output_with_timestamps)
+                        # Write ASFF Finding Object to file
+                        asff_output_with_timestamps.batch_write_data_to_file()
+                    else:
+                        # Still need to create ASFF output for Security Hub integration, but don't write to file
+                        asff_output_with_timestamps = ASFF(
+                            findings=finding_outputs,
+                            existing_findings_timestamps=existing_findings_timestamps,
+                        )
+
+                except Exception as error:
+                    logger.error(
+                        f"Error during Security Hub integration: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    print(
+                        f"{Style.BRIGHT}{Fore.RED}\nError during Security Hub integration: {error}{Style.RESET_ALL}"
+                    )
+                    # Continue execution even if Security Hub fails
 
     # Display summary table
     if not args.only_logs:
