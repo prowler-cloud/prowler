@@ -15,23 +15,16 @@ Before configuring the AWS Security Hub Integration in **Prowler App**, ensure t
 
 1. **Enable AWS Security Hub** in at least one AWS region for the target AWS account
 2. **Accept the Prowler Integration** in AWS Security Hub to allow findings import
-3. **Configure IAM Permissions** for `securityhub:BatchImportFindings` and `securityhub:GetFindings`
+3. **Configure IAM Permissions**:
+
+    - `securityhub:BatchImportFindings` - To send findings to Security Hub
+    - `securityhub:GetFindings` - To retrieve existing findings for updates
+
+More information [Viewing Prowler Findings guide](./aws/getting-started-aws.md#step-3:-set-up-aws-authentication).
 
 ???+ info "AWS Configuration Required"
     If no region has Security Hub enabled, the integration in **Prowler App** will not work. Security Hub is a regional service - enable it in each region where findings should be received.
     AWS Security Hub must be properly configured before setting up the integration in **Prowler App**. For detailed instructions on enabling Security Hub and accepting the Prowler integration, refer to the [AWS Security Hub Setup Guide](https://prowler-prowler-docs--8576.com.readthedocs.build/projects/prowler-open-source/en/8576/tutorials/aws/securityhub/#enabling-aws-security-hub-for-prowler-integration).
-
-## Required Permissions
-
-### IAM Policy
-
-The Security Hub integration requires specific permissions to export findings. The IAM role or user credentials must include:
-
-- `securityhub:BatchImportFindings` - To send findings to Security Hub
-- `securityhub:GetFindings` - To retrieve existing findings for updates
-
-???+ tip "Permission Templates Available"
-    For the complete IAM policy JSON, refer to the [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json) on GitHub.
 
 ### Infrastructure as Code Templates
 
