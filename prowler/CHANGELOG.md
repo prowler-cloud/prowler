@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.11.0] (Prowler UNRELEASED)
+## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
 - Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
@@ -24,12 +24,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
 - GitHub App authentication through API fails with auth_method validation error [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
-
----
-
-## [v5.10.3] (Prowler UNRELEASED)
-
-### Fixed
 - AWS resource-arn filtering [(#8533)](https://github.com/prowler-cloud/prowler/pull/8533)
 - GitHub App authentication for GitHub provider [(#8529)](https://github.com/prowler-cloud/prowler/pull/8529)
 - List all accessible organizations in GitHub provider [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
