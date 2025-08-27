@@ -153,9 +153,10 @@ class Repository(GithubService):
                                 self._handle_github_api_error(
                                     error, "processing organization", org_name
                                 )
-                    if (
+                    elif (
                         isinstance(self.provider.identity, GithubAppIdentityInfo)
                         and self.provider.identity.installations
+                        and not self.provider.repositories
                     ):
                         logger.info(
                             f"Filtering for repositories in the organizations or accounts that the GitHub App is installed in: {', '.join(self.provider.identity.installations)}"
