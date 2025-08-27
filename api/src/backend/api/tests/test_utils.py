@@ -197,6 +197,10 @@ class TestGetProwlerProviderKwargs:
                 Provider.ProviderChoices.M365.value,
                 {},
             ),
+            (
+                Provider.ProviderChoices.GITHUB.value,
+                {"organizations": ["provider_uid"]},
+            ),
         ],
     )
     def test_get_prowler_provider_kwargs(self, provider_type, expected_extra_kwargs):
