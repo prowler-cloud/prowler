@@ -3033,7 +3033,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews metadata obtained successfully",
                 response=ComplianceOverviewMetadataSerializer,
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3065,7 +3067,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance requirement details obtained successfully",
                 response=ComplianceOverviewDetailSerializer(many=True),
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
