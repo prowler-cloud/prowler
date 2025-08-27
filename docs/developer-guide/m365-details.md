@@ -2,7 +2,7 @@
 
 This page details the [Microsoft 365 (M365)](https://www.microsoft.com/en-us/microsoft-365) provider implementation in Prowler.
 
-By default, Prowler will audit the Microsoft Entra ID tenant and its supported services. To configure it, follow the [getting started](../index.md#microsoft-365) page.
+By default, Prowler will audit the Microsoft Entra ID tenant and its supported services. To configure it, follow the [M365 getting started guide](../tutorials/microsoft365/getting-started-m365.md).
 
 ---
 
@@ -15,7 +15,7 @@ By default, Prowler will audit the Microsoft Entra ID tenant and its supported s
 - **Required modules:**
     - [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0) (≥ 3.6.0)
     - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0) (≥ 6.6.0)
-- If you use Prowler Cloud or the official containers, PowerShell is pre-installed. For local or pip installations, you must install PowerShell and the modules yourself. See [Requirements: Supported PowerShell Versions](../getting-started/requirements.md#supported-powershell-versions) and [Needed PowerShell Modules](../getting-started/requirements.md#needed-powershell-modules).
+- If you use Prowler Cloud or the official containers, PowerShell is pre-installed. For local or pip installations, you must install PowerShell and the modules yourself. See [Authentication: Supported PowerShell Versions](../tutorials/microsoft365/authentication.md#supported-powershell-versions) and [Needed PowerShell Modules](../tutorials/microsoft365/authentication.md#required-powershell-modules).
 - For more details and troubleshooting, see [Use of PowerShell in M365](../tutorials/microsoft365/use-of-powershell.md).
 
 ---

@@ -3,6 +3,7 @@ export {
   deleteIntegration,
   getIntegration,
   getIntegrations,
+  pollConnectionTestStatus,
   testIntegrationConnection,
   updateIntegration,
 } from "./integrations";
