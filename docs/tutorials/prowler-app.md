@@ -4,7 +4,7 @@
 
 ## Accessing Prowler App and API Documentation
 
-After [installing](../index.md#prowler-app-installation) **Prowler App**, access it at [http://localhost:3000](http://localhost:3000). To view the auto-generated **Prowler API** documentation, navigate to [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs). This documentation provides details on available endpoints, parameters, and responses.
+After [installing](../installation/prowler-app.md) **Prowler App**, access it at [http://localhost:3000](http://localhost:3000). To view the auto-generated **Prowler API** documentation, navigate to [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs). This documentation provides details on available endpoints, parameters, and responses.
 
 ???+ note
     If you are a [Prowler Cloud](https://cloud.prowler.com/sign-in) user, you can access API docs at [https://api.prowler.com/api/v1/docs](https://api.prowler.com/api/v1/docs)
@@ -109,7 +109,7 @@ For AWS, enter your `AWS Account ID` and choose one of the following methods to 
 
 ### **Step 4.2: Azure Credentials**:
 
-For Azure, Prowler App uses a service principal application to authenticate. For more information about the process of creating and adding permissions to a service principal refer to this [section](../getting-started/requirements.md#azure). When you finish creating and adding the [Entra](./azure/create-prowler-service-principal.md#assigning-the-proper-permissions) and [Subscription](./azure/subscriptions.md#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler) scope permissions to the service principal, enter the `Tenant ID`, `Client ID` and `Client Secret` of the service principal application.
+For Azure, Prowler App uses a service principal application to authenticate. For more information about the process of creating and adding permissions to a service principal refer to this [section](../tutorials/azure/authentication.md). When you finish creating and adding the [Entra](./azure/create-prowler-service-principal.md#assigning-proper-permissions) and [Subscription](./azure/subscriptions.md) scope permissions to the service principal, enter the `Tenant ID`, `Client ID` and `Client Secret` of the service principal application.
 
 <img src="../../img/azure-credentials.png" alt="Azure Credentials" width="700"/>
 

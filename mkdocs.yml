@@ -51,15 +51,14 @@ nav:
       - Products:
           - Prowler App: products/prowler-app.md
           - Prowler CLI: products/prowler-cli.md
-          - Prowler Cloud: https://cloud.prowler.com
-          - Prowler Hub: https://hub.prowler.com
+          - Prowler Cloud 🔗: https://cloud.prowler.com
+          - Prowler Hub 🔗: https://hub.prowler.com
     - Installation:
         - Prowler App: installation/prowler-app.md
         - Prowler CLI: installation/prowler-cli.md
     - Basic Usage:
         - Prowler App: basic-usage/prowler-app.md
         - Prowler CLI: basic-usage/prowler-cli.md
-    - Requirements: getting-started/requirements.md
   - Tutorials:
       - Prowler App:
           - Getting Started: tutorials/prowler-app.md
@@ -69,6 +68,7 @@ nav:
           - Mute findings: tutorials/prowler-app-mute-findings.md
           - Amazon S3 Integration: tutorials/prowler-app-s3-integration.md
           - Lighthouse: tutorials/prowler-app-lighthouse.md
+          - Bulk Provider Provisioning: tutorials/bulk-provider-provisioning.md
       - CLI:
           - Miscellaneous: tutorials/misc.md
           - Reporting: tutorials/reporting.md
@@ -123,12 +123,13 @@ nav:
           - Authentication: tutorials/microsoft365/authentication.md
           - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
       - GitHub:
-          - Authentication: tutorials/github/authentication.md
           - Getting Started: tutorials/github/getting-started-github.md
+          - Authentication: tutorials/github/authentication.md
       - IaC:
           - Getting Started: tutorials/iac/getting-started-iac.md
+          - Authentication: tutorials/iac/authentication.md
   - Developer Guide:
-      - General Concepts:
+      - Concepts:
         - Introduction: developer-guide/introduction.md
         - Providers: developer-guide/provider.md
         - Services: developer-guide/services.md
@@ -137,7 +138,7 @@ nav:
         - Integrations: developer-guide/integrations.md
         - Compliance: developer-guide/security-compliance-framework.md
         - Lighthouse: developer-guide/lighthouse.md
-      - Provider Specific Details:
+      - Providers:
         - AWS: developer-guide/aws-details.md
         - Azure: developer-guide/azure-details.md
         - Google Cloud: developer-guide/gcp-details.md
@@ -154,8 +155,8 @@ nav:
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
-  - About: about.md
-  - Prowler Cloud: https://prowler.com
+  - About 🔗: https://prowler.com/about#team
+  - Release Notes 🔗: https://github.com/prowler-cloud/prowler/releases
 
 # Customization
 extra:
