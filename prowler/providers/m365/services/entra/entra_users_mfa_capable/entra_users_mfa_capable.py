@@ -26,20 +26,21 @@ class entra_users_mfa_capable(Check):
         findings = []
 
         for user in entra_client.users.values():
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource=user,
-                resource_name=user.name,
-                resource_id=user.id,
-            )
+            if user.account_enabled:
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=user,
+                    resource_name=user.name,
+                    resource_id=user.id,
+                )
 
-            if not user.is_mfa_capable:
-                report.status = "FAIL"
-                report.status_extended = f"User {user.name} is not MFA capable."
-            else:
-                report.status = "PASS"
-                report.status_extended = f"User {user.name} is MFA capable."
+                if not user.is_mfa_capable:
+                    report.status = "FAIL"
+                    report.status_extended = f"User {user.name} is not MFA capable."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"User {user.name} is MFA capable."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
