@@ -255,8 +255,7 @@ class CheckMetadata(BaseModel):
             for check_type_item in check_type:
                 if not _validate_aws_check_type_in_config(check_type_item):
                     raise ValueError(
-                        f"Invalid CheckType: '{check_type_item}'. Must be a valid path in the AWS CheckType hierarchy. "
-                        f"See prowler/config/config.yaml 'aws.valid_check_types' for valid values."
+                        f"Invalid CheckType: '{check_type_item}'. Must be a valid path in the AWS CheckType hierarchy. See prowler/providers/aws/config/check_types.json for valid values."
                     )
 
         return check_type
