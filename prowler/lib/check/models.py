@@ -679,6 +679,38 @@ class CheckReportIAC(Check_Report):
 
 
 @dataclass
+class CheckReportGithubAction(Check_Report):
+    """Contains the GitHub Action Check's finding information using zizmor."""
+
+    resource_name: str
+    resource_line_range: str
+
+    def __init__(
+        self, metadata: dict = {}, finding: dict = {}, workflow_path: str = ""
+    ) -> None:
+        """
+        Initialize the GitHub Action Check's finding information from a zizmor finding dict.
+
+        Args:
+            metadata (Dict): Optional check metadata (can be None).
+            finding (dict): A single finding result from zizmor's JSON output.
+            workflow_path (str): Path to the workflow file.
+        """
+        super().__init__(metadata, finding)
+
+        self.resource = finding
+        self.resource_name = workflow_path
+        # Extract line range from location if available
+        location = finding.get("location", {})
+        if location.get("line"):
+            start_line = location.get("line", "")
+            end_line = location.get("end_line", start_line)
+            self.resource_line_range = f"{start_line}:{end_line}" if start_line else ""
+        else:
+            self.resource_line_range = ""
+
+
+@dataclass
 class CheckReportNHN(Check_Report):
     """Contains the NHN Check's finding information."""
 

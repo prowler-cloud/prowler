@@ -149,7 +149,11 @@ class Provider(ABC):
             provider_class_path = (
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
             )
-            provider_class_name = f"{arguments.provider.capitalize()}Provider"
+            # Special handling for github_action provider
+            if arguments.provider == "github_action":
+                provider_class_name = "GithubActionProvider"
+            else:
+                provider_class_name = f"{arguments.provider.capitalize()}Provider"
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
@@ -236,6 +240,17 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                    )
+                elif "githubaction" in provider_class_name.lower():
+                    provider_class(
+                        workflow_path=getattr(arguments, "workflow_path", "."),
+                        repository_url=getattr(arguments, "repository_url", None),
+                        exclude_workflows=getattr(arguments, "exclude_workflows", []),
+                        config_path=getattr(arguments, "config_file", None),
+                        fixer_config=fixer_config,
+                        github_username=getattr(arguments, "github_username", None),
+                        personal_access_token=getattr(arguments, "personal_access_token", None),
+                        oauth_app_token=getattr(arguments, "oauth_app_token", None),
                     )
                 elif "github" in provider_class_name.lower():
                     provider_class(

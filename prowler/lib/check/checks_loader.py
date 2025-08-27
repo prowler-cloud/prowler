@@ -20,8 +20,8 @@ def load_checks_to_execute(
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for IAC provider since it uses Trivy directly
-        if provider == "iac":
+        # Bypass check loading for IAC and GitHub Action providers since they use external tools directly
+        if provider in ["iac", "github_action"]:
             return set()
 
         # Local subsets
