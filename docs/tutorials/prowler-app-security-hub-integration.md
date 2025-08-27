@@ -20,7 +20,7 @@ Before configuring the AWS Security Hub Integration in **Prowler App**, ensure t
     - `securityhub:BatchImportFindings` - To send findings to Security Hub
     - `securityhub:GetFindings` - To retrieve existing findings for updates
 
-More information [Set up AWS Authentication](./aws/getting-started-aws.md#step-3:-set-up-aws-authentication).
+More information [Set up AWS Authentication](./aws/getting-started-aws.md#step-3-set-up-aws-authentication).
 
 ???+ info "AWS Configuration Required"
     If no region has Security Hub enabled, the integration in **Prowler App** will not work. Security Hub is a regional service - enable it in each region where findings should be received.
