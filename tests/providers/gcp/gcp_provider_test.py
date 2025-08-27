@@ -1074,4 +1074,3 @@ class TestGCPProvider:
 
             assert gcp_provider.skip_api_check is True
             mocked_is_api_active.assert_not_called()
-
