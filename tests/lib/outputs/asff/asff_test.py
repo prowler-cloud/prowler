@@ -584,3 +584,697 @@ class TestASFF:
         assert ASFF.generate_status("FAIL") == "FAILED"
         assert ASFF.generate_status("FAIL", True) == "WARNING"
         assert ASFF.generate_status("SOMETHING ELSE") == "NOT_AVAILABLE"
+
+    def test_asff_preserves_existing_timestamps(self):
+        """Test that ASFF preserves existing timestamps for findings that already exist in Security Hub."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Mock existing finding timestamps from Security Hub
+        finding_id = f"prowler-{finding.metadata.CheckID}-{AWS_ACCOUNT_NUMBER}-{AWS_REGION_EU_WEST_1}-{hash_sha512(finding.resource_uid)}"
+        existing_timestamps = {
+            finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        associated_standards, compliance_summary = ASFF.format_compliance(
+            finding.compliance
+        )
+
+        expected = AWSSecurityFindingFormat(
+            Id=finding_id,
+            ProductArn=f"arn:{AWS_COMMERCIAL_PARTITION}:securityhub:{AWS_REGION_EU_WEST_1}::product/prowler/prowler",
+            ProductFields=ProductFields(
+                ProviderVersion=prowler_version,
+                ProwlerResourceName=finding.resource_uid,
+            ),
+            GeneratorId="prowler-" + finding.metadata.CheckID,
+            AwsAccountId=AWS_ACCOUNT_NUMBER,
+            Types=finding.metadata.CheckType,
+            FirstObservedAt="2023-01-01T00:00:00Z",  # Should preserve existing timestamp
+            UpdatedAt=current_timestamp,  # Should update with current timestamp
+            CreatedAt="2023-01-01T00:00:00Z",  # Should preserve existing timestamp
+            Severity=Severity(Label=finding.metadata.Severity.value),
+            Title=finding.metadata.CheckTitle,
+            Resources=[
+                Resource(
+                    Id=finding.resource_uid,
+                    Type=finding.metadata.ResourceType,
+                    Partition=AWS_COMMERCIAL_PARTITION,
+                    Region=AWS_REGION_EU_WEST_1,
+                    Tags={"key1": "value1"},
+                )
+            ],
+            Compliance=Compliance(
+                Status=ASFF.generate_status(status),
+                RelatedRequirements=compliance_summary,
+                AssociatedStandards=associated_standards,
+            ),
+            Remediation=Remediation(
+                Recommendation=Recommendation(
+                    Text=finding.metadata.Remediation.Recommendation.Text,
+                    Url=finding.metadata.Remediation.Recommendation.Url,
+                )
+            ),
+            Description=finding.status_extended,
+        )
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        assert len(asff.data) == 1
+        asff_finding = asff.data[0]
+
+        assert asff_finding == expected
+        # Verify that FirstObservedAt and CreatedAt are preserved
+        assert asff_finding.FirstObservedAt == "2023-01-01T00:00:00Z"
+        assert asff_finding.CreatedAt == "2023-01-01T00:00:00Z"
+        # Verify that UpdatedAt uses current timestamp
+        assert asff_finding.UpdatedAt == current_timestamp
+
+    def test_asff_uses_current_timestamps_for_new_findings(self):
+        """Test that ASFF uses current timestamps for new findings when no existing timestamps are provided."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        associated_standards, compliance_summary = ASFF.format_compliance(
+            finding.compliance
+        )
+
+        expected = AWSSecurityFindingFormat(
+            Id=f"prowler-{finding.metadata.CheckID}-{AWS_ACCOUNT_NUMBER}-{AWS_REGION_EU_WEST_1}-{hash_sha512(finding.resource_uid)}",
+            ProductArn=f"arn:{AWS_COMMERCIAL_PARTITION}:securityhub:{AWS_REGION_EU_WEST_1}::product/prowler/prowler",
+            ProductFields=ProductFields(
+                ProviderVersion=prowler_version,
+                ProwlerResourceName=finding.resource_uid,
+            ),
+            GeneratorId="prowler-" + finding.metadata.CheckID,
+            AwsAccountId=AWS_ACCOUNT_NUMBER,
+            Types=finding.metadata.CheckType,
+            FirstObservedAt=current_timestamp,  # Should use current timestamp for new findings
+            UpdatedAt=current_timestamp,
+            CreatedAt=current_timestamp,
+            Severity=Severity(Label=finding.metadata.Severity.value),
+            Title=finding.metadata.CheckTitle,
+            Resources=[
+                Resource(
+                    Id=finding.resource_uid,
+                    Type=finding.metadata.ResourceType,
+                    Partition=AWS_COMMERCIAL_PARTITION,
+                    Region=AWS_REGION_EU_WEST_1,
+                    Tags={"key1": "value1"},
+                )
+            ],
+            Compliance=Compliance(
+                Status=ASFF.generate_status(status),
+                RelatedRequirements=compliance_summary,
+                AssociatedStandards=associated_standards,
+            ),
+            Remediation=Remediation(
+                Recommendation=Recommendation(
+                    Text=finding.metadata.Remediation.Recommendation.Text,
+                    Url=finding.metadata.Remediation.Recommendation.Url,
+                )
+            ),
+            Description=finding.status_extended,
+        )
+
+        asff = ASFF(findings=[finding])
+
+        assert len(asff.data) == 1
+        asff_finding = asff.data[0]
+
+        assert asff_finding == expected
+        # Verify that all timestamps use current timestamp for new findings
+        assert asff_finding.FirstObservedAt == current_timestamp
+        assert asff_finding.UpdatedAt == current_timestamp
+        assert asff_finding.CreatedAt == current_timestamp
+
+    def test_asff_constructor_with_existing_timestamps(self):
+        """Test that ASFF constructor properly stores existing timestamps."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID that will be used
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Existing timestamps with the correct ID
+        existing_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        # Create ASFF output with timestamps in constructor
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # Verify that timestamps are preserved
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        assert finding_asff.FirstObservedAt == "2023-01-01T00:00:00Z"
+        assert finding_asff.CreatedAt == "2023-01-01T00:00:00Z"
+
+    def test_asff_constructor_without_existing_timestamps(self):
+        """Test that ASFF constructor works without existing timestamps."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Create ASFF output without timestamps parameter
+        asff = ASFF(findings=[finding])
+
+        # Verify that current timestamps are used
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding_asff.FirstObservedAt == current_timestamp
+        assert finding_asff.CreatedAt == current_timestamp
+        assert finding_asff.UpdatedAt == current_timestamp
+
+    def test_asff_transform_method_parameter_override(self):
+        """Test that transform method parameter overrides constructor parameter."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Constructor timestamps
+        constructor_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        # Transform method timestamps (different)
+        transform_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-02-01T00:00:00Z",
+                "CreatedAt": "2023-02-01T00:00:00Z",
+                "UpdatedAt": "2023-02-01T00:00:00Z",
+            }
+        }
+
+        # Create ASFF output with constructor timestamps
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=constructor_timestamps
+        )
+
+        # Clear existing data and transform with different timestamps
+        asff._data = []
+        asff.transform([finding], transform_timestamps)
+
+        # Verify that transform method timestamps are used
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        assert finding_asff.FirstObservedAt == "2023-02-01T00:00:00Z"
+        assert finding_asff.CreatedAt == "2023-02-01T00:00:00Z"
+
+    def test_asff_transform_method_without_parameter(self):
+        """Test that transform method uses constructor timestamps when no parameter is provided."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Constructor timestamps
+        constructor_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        # Create ASFF output with timestamps in constructor
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=constructor_timestamps
+        )
+
+        # Clear existing data and transform without parameter (should use constructor timestamps)
+        asff._data = []
+        asff.transform([finding])
+
+        # Verify that constructor timestamps are used
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        assert finding_asff.FirstObservedAt == "2023-01-01T00:00:00Z"
+        assert finding_asff.CreatedAt == "2023-01-01T00:00:00Z"
+
+    def test_asff_handles_partial_existing_timestamps(self):
+        """Test that ASFF handles cases where only some timestamp fields exist in the existing data."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Mock existing finding with only FirstObservedAt timestamp
+        existing_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                # Missing CreatedAt and UpdatedAt
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # Should preserve FirstObservedAt, use current timestamp for missing fields
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        assert finding_asff.FirstObservedAt == "2023-01-01T00:00:00Z"
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding_asff.CreatedAt == current_timestamp
+        assert finding_asff.UpdatedAt == current_timestamp
+
+    def test_asff_handles_missing_timestamp_fields(self):
+        """Test that ASFF handles cases where timestamp fields are missing from the dictionary."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Mock existing finding with missing keys (not None values)
+        existing_timestamps = {
+            actual_finding_id: {
+                # Missing FirstObservedAt, CreatedAt, and UpdatedAt keys entirely
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # Should use current timestamp for all fields when keys are missing
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding_asff.FirstObservedAt == current_timestamp
+        assert finding_asff.CreatedAt == current_timestamp
+        assert finding_asff.UpdatedAt == current_timestamp
+
+    def test_asff_handles_empty_existing_timestamps_dict(self):
+        """Test that ASFF handles empty existing timestamps dictionary."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Empty existing timestamps
+        existing_timestamps = {}
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # Should use current timestamp for all fields
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding_asff.FirstObservedAt == current_timestamp
+        assert finding_asff.CreatedAt == current_timestamp
+        assert finding_asff.UpdatedAt == current_timestamp
+
+    def test_asff_handles_none_existing_timestamps(self):
+        """Test that ASFF handles None existing timestamps parameter."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # None existing timestamps
+        asff = ASFF(findings=[finding], existing_findings_timestamps=None)
+
+        # Should use current timestamp for all fields
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding_asff.FirstObservedAt == current_timestamp
+        assert finding_asff.CreatedAt == current_timestamp
+        assert finding_asff.UpdatedAt == current_timestamp
+
+    def test_asff_finding_id_generation_consistency(self):
+        """Test that finding ID generation is consistent between timestamp lookup and ASFF creation."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the expected finding ID
+        expected_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Create existing timestamps with the expected ID
+        existing_timestamps = {
+            expected_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # Verify that the finding ID matches and timestamps are preserved
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        assert finding_asff.Id == expected_finding_id
+        assert finding_asff.FirstObservedAt == "2023-01-01T00:00:00Z"
+        assert finding_asff.CreatedAt == "2023-01-01T00:00:00Z"
+
+    def test_asff_multiple_findings_mixed_timestamps(self):
+        """Test that ASFF handles multiple findings with mixed existing and new timestamps."""
+        # Create multiple findings
+        finding1 = generate_finding_output(
+            status="PASS",
+            status_extended="First finding",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource-1",
+            resource_uid="test-arn-1",
+            resource_tags={"key1": "value1"},
+        )
+
+        finding2 = generate_finding_output(
+            status="FAIL",
+            status_extended="Second finding",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource-2",
+            resource_uid="test-arn-2",
+            resource_tags={"key2": "value2"},
+        )
+
+        # Only first finding has existing timestamps
+        finding1_id = f"prowler-{finding1.metadata.CheckID}-{finding1.account_uid}-{finding1.region}-{hash_sha512(finding1.resource_uid)}"
+        existing_timestamps = {
+            finding1_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding1, finding2],
+            existing_findings_timestamps=existing_timestamps,
+        )
+
+        # Verify that first finding preserves timestamps
+        assert len(asff.data) == 2
+
+        finding1_asff = asff.data[0]
+        assert finding1_asff.FirstObservedAt == "2023-01-01T00:00:00Z"
+        assert finding1_asff.CreatedAt == "2023-01-01T00:00:00Z"
+
+        # Verify that second finding uses current timestamps
+        finding2_asff = asff.data[1]
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding2_asff.FirstObservedAt == current_timestamp
+        assert finding2_asff.CreatedAt == current_timestamp
+        assert finding2_asff.UpdatedAt == current_timestamp
+
+    def test_asff_updated_at_always_current(self):
+        """Test that UpdatedAt is always set to current timestamp regardless of existing data."""
+        status = "PASS"
+        finding = generate_finding_output(
+            status=status,
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Existing timestamps with old UpdatedAt
+        existing_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",  # Old timestamp
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # Verify that UpdatedAt is current time, not the old timestamp
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        assert finding_asff.FirstObservedAt == "2023-01-01T00:00:00Z"
+        assert finding_asff.CreatedAt == "2023-01-01T00:00:00Z"
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding_asff.UpdatedAt == current_timestamp
+        assert finding_asff.UpdatedAt != "2023-01-01T00:00:00Z"
+
+    def test_asff_handles_duplicate_finding_ids(self):
+        """Test that ASFF handles cases where multiple findings might have the same ID."""
+        # Create findings with same check ID but different resources
+        finding1 = generate_finding_output(
+            status="PASS",
+            status_extended="First finding",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource-1",
+            resource_uid="test-arn-1",
+            resource_tags={"key1": "value1"},
+        )
+
+        finding2 = generate_finding_output(
+            status="FAIL",
+            status_extended="Second finding",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource-2",
+            resource_uid="test-arn-2",
+            resource_tags={"key2": "value2"},
+        )
+
+        # Create existing timestamps for one finding
+        finding1_id = f"prowler-{finding1.metadata.CheckID}-{finding1.account_uid}-{finding1.region}-{hash_sha512(finding1.resource_uid)}"
+        existing_timestamps = {
+            finding1_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding1, finding2],
+            existing_findings_timestamps=existing_timestamps,
+        )
+
+        # Verify that findings are processed correctly
+        assert len(asff.data) == 2
+
+        # First finding should preserve timestamps
+        finding1_asff = asff.data[0]
+        assert finding1_asff.FirstObservedAt == "2023-01-01T00:00:00Z"
+        assert finding1_asff.CreatedAt == "2023-01-01T00:00:00Z"
+
+        # Second finding should use current timestamps
+        finding2_asff = asff.data[1]
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding2_asff.FirstObservedAt == current_timestamp
+        assert finding2_asff.CreatedAt == current_timestamp
+
+    def test_asff_handles_manual_status_findings(self):
+        """Test that ASFF correctly skips MANUAL status findings even with existing timestamps."""
+        finding = generate_finding_output(
+            status="MANUAL",
+            status_extended="This is a manual finding",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Existing timestamps
+        existing_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # MANUAL findings should be skipped
+        assert len(asff.data) == 0
+
+    def test_asff_timestamp_format_consistency(self):
+        """Test that all timestamps use consistent ISO 8601 format."""
+        finding = generate_finding_output(
+            status="PASS",
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Generate the actual finding ID
+        actual_finding_id = f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}"
+
+        # Existing timestamps in different formats
+        existing_timestamps = {
+            actual_finding_id: {
+                "FirstObservedAt": "2023-01-01T00:00:00Z",
+                "CreatedAt": "2023-01-01T00:00:00Z",
+                "UpdatedAt": "2023-01-01T00:00:00Z",
+            }
+        }
+
+        asff = ASFF(
+            findings=[finding], existing_findings_timestamps=existing_timestamps
+        )
+
+        # Verify that all timestamps use consistent format
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+
+        # Check format: YYYY-MM-DDTHH:MM:SSZ
+        import re
+
+        timestamp_pattern = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"
+
+        assert re.match(timestamp_pattern, finding_asff.FirstObservedAt)
+        assert re.match(timestamp_pattern, finding_asff.CreatedAt)
+        assert re.match(timestamp_pattern, finding_asff.UpdatedAt)
+
+    def test_asff_backward_compatibility(self):
+        """Test that ASFF maintains backward compatibility when no existing timestamps are provided."""
+        finding = generate_finding_output(
+            status="PASS",
+            status_extended="This is a test",
+            region=AWS_REGION_EU_WEST_1,
+            resource_details="Test resource details",
+            resource_name="test-resource",
+            resource_uid="test-arn",
+            resource_tags={"key1": "value1"},
+        )
+
+        # Test with no existing timestamps (backward compatibility)
+        asff = ASFF(findings=[finding])
+
+        # Verify that current timestamps are used
+        assert len(asff.data) == 1
+        finding_asff = asff.data[0]
+        current_timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert finding_asff.FirstObservedAt == current_timestamp
+        assert finding_asff.UpdatedAt == current_timestamp
+        assert finding_asff.CreatedAt == current_timestamp

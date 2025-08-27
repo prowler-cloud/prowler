@@ -23,6 +23,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
+- Preserve timestamps in existing findings from Security Hub integration [(#8589)](https://github.com/prowler-cloud/prowler/pull/8589)
 
 ---
 
