@@ -27,19 +27,25 @@ def _validate_aws_check_type_in_config(check_type: str) -> bool:
         bool: True if the CheckType path exists in the config hierarchy
     """
     try:
-        # Get config directly from global provider like custom checks do
-        from prowler.providers.common.provider import Provider
+        import json
+        import os
 
-        if not hasattr(Provider, "_global_provider") or not Provider._global_provider:
+        if not check_type:
             return False
 
-        # Access config directly like: service_client.audit_config.get("key", default)
-        hierarchy = Provider._global_provider.audit_config.get("aws", {}).get(
-            "valid_check_types", {}
+        # Get the path to the AWS CheckTypes configuration
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        check_types_file = os.path.join(
+            current_dir, "..", "..", "providers", "aws", "config", "check_types.json"
         )
+        check_types_file = os.path.normpath(check_types_file)
 
-        if not check_type or not hierarchy:
+        # Load the CheckTypes hierarchy from JSON file
+        if not os.path.exists(check_types_file):
             return False
+
+        with open(check_types_file, "r") as f:
+            hierarchy = json.load(f)
 
         # Split the path by '/' to get each level
         path_parts = check_type.split("/")
@@ -53,7 +59,7 @@ def _validate_aws_check_type_in_config(check_type: str) -> bool:
 
         return True
 
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, FileNotFoundError, json.JSONDecodeError):
         return False
 
 
