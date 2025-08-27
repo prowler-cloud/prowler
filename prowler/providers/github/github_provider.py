@@ -156,7 +156,7 @@ class GithubProvider(Provider):
             self._auth_method = "Personal Access Token"
         elif oauth_app_token:
             self._auth_method = "OAuth App Token"
-        elif github_app_id and github_app_key:
+        elif github_app_id and (github_app_key or github_app_key_content):
             self._auth_method = "GitHub App Token"
         elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
             self._auth_method = "Environment Variable for Personal Access Token"

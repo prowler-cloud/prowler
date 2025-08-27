@@ -23,6 +23,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
+- GitHub App authentication through API fails with auth_method validation error [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
 
 ---
 
