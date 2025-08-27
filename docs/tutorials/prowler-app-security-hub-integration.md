@@ -65,9 +65,9 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
 
     <img src="./img/security-hub/integration-settings.png" alt="Integration settings" width="400"/>
 
-4. Configure authentication (optional):
+4. Configure authentication:
 
-    - **Use Provider Credentials:** Uses the AWS provider's existing credentials (default)
+    - **Use Provider Credentials:** Uses the AWS provider's existing credentials (default). This recommendation simplifies credential management. By utilizing this approach, we only need to manage a single set of credentials instead of maintaining two separate authentication mechanisms. This reduces administrative complexity and minimizes potential security risks associated with managing multiple credentials. When the provider already has sufficient permissions to export findings to Security Hub, leveraging these existing credentials provides the most efficient integration path while maintaining the necessary security controls for proper data export
     - **Custom Credentials:** Configure separate credentials for Security Hub access
 
    4.a. For custom credentials:
