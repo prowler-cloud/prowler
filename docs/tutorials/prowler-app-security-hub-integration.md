@@ -151,7 +151,7 @@ After configuration and scan completion, Prowler findings appear in AWS Security
 4. Click any finding title to see detailed information and compliance mappings
 
 ???+ info "Detailed Instructions"
-    For comprehensive information on viewing and managing Prowler findings in Security Hub, refer to the [Viewing Prowler Findings guide](../aws/securityhub.md#viewing-prowler-findings-in-aws-security-hub).
+    For comprehensive information on viewing and managing Prowler findings in Security Hub, refer to the [Viewing Prowler Findings guide](./aws/securityhub.md#viewing-prowler-findings-in-aws-security-hub).
 
 ---
 
