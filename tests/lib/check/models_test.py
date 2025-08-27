@@ -339,7 +339,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -376,7 +378,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -413,7 +417,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -453,7 +459,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -489,7 +497,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -526,7 +536,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -563,7 +575,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -599,7 +613,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -636,7 +652,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "s3_bucket_public_read",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "s3",  # Matches first part of CheckID
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -672,7 +690,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "s3_bucket_public_read",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "ec2",  # Does not match first part of CheckID
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -749,7 +769,9 @@ class TestCheckMetadataValidators:
             "Provider": "iac",
             "CheckID": "custom_check_id",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "CustomService",  # Valid for IAC provider
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -785,7 +807,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "s3_bucket_public_read_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "s3",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -821,7 +845,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "",  # Invalid: empty string
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -858,7 +884,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "s3-bucket-public-read",  # Invalid: contains hyphens
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "s3",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -898,7 +926,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "A" * 150,  # Exactly 150 characters
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -934,7 +964,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "A" * 151,  # Too long: 151 characters
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1046,7 +1078,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1082,7 +1116,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1121,7 +1157,9 @@ class TestCheckMetadataValidators:
             "Provider": "azure",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
@@ -1157,7 +1195,9 @@ class TestCheckMetadataValidators:
             "Provider": "aws",
             "CheckID": "test_check",
             "CheckTitle": "Test Check",
-            "CheckType": ["Security"],
+            "CheckType": [
+                "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+            ],
             "ServiceName": "test",
             "SubServiceName": "subtest",
             "ResourceIdTemplate": "template",
