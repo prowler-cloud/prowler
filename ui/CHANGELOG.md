@@ -16,6 +16,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Disable `See Compliance` button until scan completes [(#8487)](https://github.com/prowler-cloud/prowler/pull/8487)
 - Provider connection filter now shows "Connected/Disconnected" instead of "true/false" for better UX [(#8520)](https://github.com/prowler-cloud/prowler/pull/8520)
+- Provider Uid filter on scan page to list all UIDs regardless of connection status [(#8375)] (https://github.com/prowler-cloud/prowler/pull/8375)
 
 ### 🐞 Fixed
 
