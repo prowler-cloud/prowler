@@ -69,8 +69,6 @@ Choose the appropriate authentication method:
 
 Once configured successfully, findings from subsequent scans will automatically appear in AWS Security Hub.
 
-Once configured, findings from the next scan on will appear in AWS Security Hub.
-
 ### Integration Status
 
 Once the integration is active, monitor its status and make adjustments as needed through the integrations management interface.
