@@ -39,7 +39,9 @@ def generate_finding_output(
     service_name: str = "service",
     check_id: str = "service_test_check_id",
     check_title: str = "service_test_check_id",
-    check_type: list[str] = ["test-type"],
+    check_type: list[str] = [
+        "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+    ],
 ) -> Finding:
     return Finding(
         auth_method="profile: default",

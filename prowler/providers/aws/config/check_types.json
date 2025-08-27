@@ -1,0 +1,79 @@
+{
+  "Software and Configuration Checks": {
+    "Vulnerabilities": {
+      "CVE": {}
+    },
+    "AWS Security Best Practices": {
+      "Network Reachability": {},
+      "Runtime Behavior Analysis": {}
+    },
+    "Industry and Regulatory Standards": {
+      "AWS Foundational Security Best Practices": {},
+      "CIS Host Hardening Benchmarks": {},
+      "CIS AWS Foundations Benchmark": {},
+      "PCI-DSS": {},
+      "Cloud Security Alliance Controls": {},
+      "ISO 90001 Controls": {},
+      "ISO 27001 Controls": {},
+      "ISO 27017 Controls": {},
+      "ISO 27018 Controls": {},
+      "SOC 1": {},
+      "SOC 2": {},
+      "HIPAA Controls (USA)": {},
+      "NIST 800-53 Controls (USA)": {},
+      "NIST CSF Controls (USA)": {},
+      "IRAP Controls (Australia)": {},
+      "K-ISMS Controls (Korea)": {},
+      "MTCS Controls (Singapore)": {},
+      "FISC Controls (Japan)": {},
+      "My Number Act Controls (Japan)": {},
+      "ENS Controls (Spain)": {},
+      "Cyber Essentials Plus Controls (UK)": {},
+      "G-Cloud Controls (UK)": {},
+      "C5 Controls (Germany)": {},
+      "IT-Grundschutz Controls (Germany)": {},
+      "GDPR Controls (Europe)": {},
+      "TISAX Controls (Europe)": {}
+    },
+    "Patch Management": {}
+  },
+  "TTPs": {
+    "Initial Access": {},
+    "Execution": {},
+    "Persistence": {},
+    "Privilege Escalation": {},
+    "Defense Evasion": {},
+    "Credential Access": {},
+    "Discovery": {},
+    "Lateral Movement": {},
+    "Collection": {},
+    "Command and Control": {}
+  },
+  "Effects": {
+    "Data Exposure": {},
+    "Data Exfiltration": {},
+    "Data Destruction": {},
+    "Denial of Service": {},
+    "Resource Consumption": {}
+  },
+  "Unusual Behaviors": {
+    "Application": {},
+    "Network Flow": {},
+    "IP address": {},
+    "User": {},
+    "VM": {},
+    "Container": {},
+    "Serverless": {},
+    "Process": {},
+    "Database": {},
+    "Data": {}
+  },
+  "Sensitive Data Identifications": {
+    "PII": {},
+    "Passwords": {},
+    "Legal": {},
+    "Financial": {},
+    "Security": {},
+    "Business": {}
+  }
+}

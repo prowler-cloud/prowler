@@ -36,7 +36,7 @@ class TestCustomChecksMetadata:
             Provider="aws",
             CheckID=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
             CheckTitle="Check S3 Bucket Level Public Access Block.",
-            CheckType=["Data Protection"],
+            CheckType=["Sensitive Data Identifications/PII"],
             CheckAliases=[],
             ServiceName="s3",
             SubServiceName="",

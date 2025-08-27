@@ -795,7 +795,7 @@ class TestFinding:
             "provider": "test_provider",
             "checkid": "service_check_001",
             "checktitle": "Test Check",
-            "checktype": ["type1"],
+            "checktype": [],
             "servicename": "service",
             "subservicename": "SubService",
             "severity": "high",
@@ -838,7 +838,7 @@ class TestFinding:
         assert meta.Provider == "test_provider"
         assert meta.CheckID == "service_check_001"
         assert meta.CheckTitle == "Test Check"
-        assert meta.CheckType == ["type1"]
+        assert meta.CheckType == []
         assert meta.ServiceName == "service"
         assert meta.SubServiceName == "SubService"
         assert meta.Severity == "high"
