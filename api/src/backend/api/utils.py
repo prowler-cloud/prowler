@@ -223,6 +223,10 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             # Save regions information in the integration configuration
             integration.configuration["regions"] = regions_status
             integration.save()
+        else:
+            # Reset regions information if connection fails
+            integration.configuration["regions"] = {}
+            integration.save()
 
         return connection
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:

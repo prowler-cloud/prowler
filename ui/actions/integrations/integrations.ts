@@ -9,7 +9,8 @@ import {
   parseStringify,
 } from "@/lib";
 
-import { getTask } from "../task";
+import { getTask } from "@/actions/task";
+import { IntegrationType } from "@/types/integrations";
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -59,7 +60,7 @@ export const getIntegration = async (id: string) => {
 
 export const createIntegration = async (
   formData: FormData,
-): Promise<{ success: string; testConnection?: any } | { error: string }> => {
+): Promise<{ success: string; integrationId?: string } | { error: string }> => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations`);
 
@@ -97,25 +98,33 @@ export const createIntegration = async (
       const responseData = await response.json();
       const integrationId = responseData.data.id;
 
-      const testResult = await testIntegrationConnection(integrationId);
+      // Revalidate the appropriate page based on integration type
+      if (integration_type === "amazon_s3") {
+        revalidatePath("/integrations/amazon-s3");
+      } else if (integration_type === "aws_security_hub") {
+        revalidatePath("/integrations/aws-security-hub");
+      }
 
       return {
         success: "Integration created successfully!",
-        testConnection: testResult,
+        integrationId,
       };
     }
 
     const errorData = await response.json().catch(() => ({}));
     const errorMessage =
       errorData.errors?.[0]?.detail ||
-      `Unable to create S3 integration: ${response.statusText}`;
+      `Unable to create integration: ${response.statusText}`;
     return { error: errorMessage };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
-export const updateIntegration = async (id: string, formData: FormData) => {
+export const updateIntegration = async (
+  id: string,
+  formData: FormData,
+): Promise<{ success: string; integrationId?: string } | { error: string }> => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}`);
 
@@ -172,33 +181,33 @@ export const updateIntegration = async (id: string, formData: FormData) => {
     });
 
     if (response.ok) {
-      revalidatePath("/integrations/s3");
-
-      // Only test connection if credentials or configuration were updated
-      if (credentials || configuration) {
-        const testResult = await testIntegrationConnection(id);
-        return {
-          success: "Integration updated successfully!",
-          testConnection: testResult,
-        };
-      } else {
-        return {
-          success: "Integration updated successfully!",
-        };
+      // Revalidate the appropriate page based on integration type
+      if (integration_type === "amazon_s3") {
+        revalidatePath("/integrations/amazon-s3");
+      } else if (integration_type === "aws_security_hub") {
+        revalidatePath("/integrations/aws-security-hub");
       }
+
+      return {
+        success: "Integration updated successfully!",
+        integrationId: id,
+      };
     }
 
     const errorData = await response.json().catch(() => ({}));
     const errorMessage =
       errorData.errors?.[0]?.detail ||
-      `Unable to update S3 integration: ${response.statusText}`;
+      `Unable to update integration: ${response.statusText}`;
     return { error: errorMessage };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
-export const deleteIntegration = async (id: string) => {
+export const deleteIntegration = async (
+  id: string,
+  integration_type: IntegrationType,
+) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}`);
 
@@ -206,14 +215,20 @@ export const deleteIntegration = async (id: string) => {
     const response = await fetch(url.toString(), { method: "DELETE", headers });
 
     if (response.ok) {
-      revalidatePath("/integrations/s3");
+      // Revalidate the appropriate page based on integration type
+      if (integration_type === "amazon_s3") {
+        revalidatePath("/integrations/amazon-s3");
+      } else if (integration_type === "aws_security_hub") {
+        revalidatePath("/integrations/aws-security-hub");
+      }
+
       return { success: "Integration deleted successfully!" };
     }
 
     const errorData = await response.json().catch(() => ({}));
     const errorMessage =
       errorData.errors?.[0]?.detail ||
-      `Unable to delete S3 integration: ${response.statusText}`;
+      `Unable to delete integration: ${response.statusText}`;
     return { error: errorMessage };
   } catch (error) {
     return handleApiError(error);
@@ -269,7 +284,10 @@ const pollTaskUntilComplete = async (taskId: string): Promise<any> => {
   return { error: "Connection test timeout. Test took too long to complete." };
 };
 
-export const testIntegrationConnection = async (id: string) => {
+export const testIntegrationConnection = async (
+  id: string,
+  waitForCompletion = true,
+) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}/connection`);
 
@@ -281,10 +299,22 @@ export const testIntegrationConnection = async (id: string) => {
       const taskId = data?.data?.id;
 
       if (taskId) {
+        // If waitForCompletion is false, return immediately with task started status
+        if (!waitForCompletion) {
+          return {
+            success: true,
+            message:
+              "Connection test started. It may take some time to complete.",
+            taskId,
+            data: parseStringify(data),
+          };
+        }
+
         // Poll the task until completion
         const pollResult = await pollTaskUntilComplete(taskId);
 
-        revalidatePath("/integrations/s3");
+        revalidatePath("/integrations/amazon-s3");
+        revalidatePath("/integrations/aws-security-hub");
 
         if (pollResult.error) {
           return { error: pollResult.error };
@@ -292,17 +322,20 @@ export const testIntegrationConnection = async (id: string) => {
 
         if (pollResult.success) {
           return {
-            success: "Connection test completed successfully!",
-            message: pollResult.message,
+            success: true,
+            message:
+              pollResult.message || "Connection test completed successfully!",
             data: parseStringify(data),
           };
         } else {
           return {
+            success: false,
             error: pollResult.message || "Connection test failed.",
           };
         }
       } else {
         return {
+          success: false,
           error: "Failed to start connection test. No task ID received.",
         };
       }
@@ -311,9 +344,37 @@ export const testIntegrationConnection = async (id: string) => {
     const errorData = await response.json().catch(() => ({}));
     const errorMessage =
       errorData.errors?.[0]?.detail ||
-      `Unable to test S3 integration connection: ${response.statusText}`;
-    return { error: errorMessage };
+      `Unable to test integration connection: ${response.statusText}`;
+    return { success: false, error: errorMessage };
   } catch (error) {
     return handleApiError(error);
+  }
+};
+
+export const pollConnectionTestStatus = async (taskId: string) => {
+  try {
+    const pollResult = await pollTaskUntilComplete(taskId);
+
+    revalidatePath("/integrations/amazon-s3");
+    revalidatePath("/integrations/aws-security-hub");
+
+    if (pollResult.error) {
+      return { success: false, error: pollResult.error };
+    }
+
+    if (pollResult.success) {
+      return {
+        success: true,
+        message:
+          pollResult.message || "Connection test completed successfully!",
+      };
+    } else {
+      return {
+        success: false,
+        error: pollResult.message || "Connection test failed.",
+      };
+    }
+  } catch (error) {
+    return { success: false, error: "Failed to check connection test status." };
   }
 };

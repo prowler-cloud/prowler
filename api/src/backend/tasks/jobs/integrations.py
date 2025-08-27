@@ -220,6 +220,11 @@ def get_security_hub_client_from_integration(
             **credentials,
         )
         return True, security_hub
+    else:
+        # Reset regions information if connection fails
+        with rls_transaction(tenant_id):
+            integration.configuration["regions"] = {}
+            integration.save()
 
     return False, connection
 

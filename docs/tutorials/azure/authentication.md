@@ -21,7 +21,7 @@ export AZURE_CLIENT_SECRET="XXXXXXX"
 
 Execution with the `--sp-env-auth` flag fails if these variables are not set or exported.
 
-Refer to the [Create Prowler Service Principal](create-prowler-service-principal.md#how-to-create-prowler-service-principal-application) guide for detailed setup instructions.
+Refer to the [Create Prowler Service Principal](create-prowler-service-principal.md) guide for detailed setup instructions.
 
 ### Azure Authentication Methods
 
@@ -63,8 +63,8 @@ These permissions are required to perform security checks against Azure resource
 
 To properly configure permissions, follow these guides:
 
-- [Microsoft Entra ID permissions](create-prowler-service-principal.md#assigning-the-proper-permissions)
-- [Azure subscription permissions](subscriptions.md#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler)
+- [Microsoft Entra ID permissions](create-prowler-service-principal.md#assigning-proper-permissions)
+- [Azure subscription permissions](subscriptions.md)
 
 ???+ warning
      Some permissions in `ProwlerRole` involve **write access**. If a `ReadOnly` lock is attached to certain resources, you may encounter errors, and findings for those checks will not be available.
