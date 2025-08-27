@@ -44,13 +44,13 @@ Personal Access Tokens provide the simplest GitHub authentication method, but it
     To enable Prowler functionality, configure the following permissions:
 
     - **Repository permissions:**
+        - **Administration**: Read-only access
         - **Contents**: Read-only access
         - **Metadata**: Read-only access
         - **Pull requests**: Read-only access
-        - **Security advisories**: Read-only access
-        - **Statuses**: Read-only access
 
     - **Organization permissions:**
+        - **Administration**: Read-only access
         - **Members**: Read-only access
 
     - **Account permissions:**
