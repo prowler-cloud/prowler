@@ -22,7 +22,7 @@ export const AWSRoleCredentialsForm = ({
     cloudformationQuickLink: string;
     terraform: string;
   };
-  type?: "providers" | "s3-integration";
+  type?: "providers" | "integrations";
 }) => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const defaultCredentialsType = isCloudEnv
@@ -142,9 +142,6 @@ export const AWSRoleCredentialsForm = ({
             isInvalid={
               !!control._formState.errors[
                 ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
-              ] ||
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_ACCESS_KEY_ID
               ]
             }
           />
