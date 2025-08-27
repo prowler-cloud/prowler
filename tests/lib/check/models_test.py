@@ -1,5 +1,8 @@
 from unittest import mock
 
+import pytest
+from pydantic.v1 import ValidationError
+
 from prowler.lib.check.models import CheckMetadata
 from tests.lib.check.compliance_check_test import custom_compliance_metadata
 
@@ -325,3 +328,214 @@ class TestCheckMetada:
 
         result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata)
         assert result == set()
+
+    def test_additional_urls_valid_empty_list(self):
+        """Test AdditionalUrls with valid empty list (default)"""
+        metadata = CheckMetadata(
+            Provider="aws",
+            CheckID="test_check",
+            CheckTitle="Test Check",
+            CheckType=["type1"],
+            ServiceName="test",
+            SubServiceName="subservice1",
+            ResourceIdTemplate="template1",
+            Severity="high",
+            ResourceType="resource1",
+            Description="Description 1",
+            Risk="risk1",
+            RelatedUrl="url1",
+            Remediation={
+                "Code": {
+                    "CLI": "cli1",
+                    "NativeIaC": "native1",
+                    "Other": "other1",
+                    "Terraform": "terraform1",
+                },
+                "Recommendation": {"Text": "text1", "Url": "url1"},
+            },
+            Categories=["categoryone"],
+            DependsOn=["dependency1"],
+            RelatedTo=["related1"],
+            Notes="notes1",
+            AdditionalUrls=[],
+            Compliance=[],
+        )
+        assert metadata.AdditionalUrls == []
+
+    def test_additional_urls_valid_with_urls(self):
+        """Test AdditionalUrls with valid URLs"""
+        valid_urls = [
+            "https://example.com/doc1",
+            "https://example.com/doc2",
+            "https://aws.amazon.com/docs",
+        ]
+        metadata = CheckMetadata(
+            Provider="aws",
+            CheckID="test_check",
+            CheckTitle="Test Check",
+            CheckType=["type1"],
+            ServiceName="test",
+            SubServiceName="subservice1",
+            ResourceIdTemplate="template1",
+            Severity="high",
+            ResourceType="resource1",
+            Description="Description 1",
+            Risk="risk1",
+            RelatedUrl="url1",
+            Remediation={
+                "Code": {
+                    "CLI": "cli1",
+                    "NativeIaC": "native1",
+                    "Other": "other1",
+                    "Terraform": "terraform1",
+                },
+                "Recommendation": {"Text": "text1", "Url": "url1"},
+            },
+            Categories=["categoryone"],
+            DependsOn=["dependency1"],
+            RelatedTo=["related1"],
+            Notes="notes1",
+            AdditionalUrls=valid_urls,
+            Compliance=[],
+        )
+        assert metadata.AdditionalUrls == valid_urls
+
+    def test_additional_urls_invalid_not_list(self):
+        """Test AdditionalUrls with non-list value"""
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(
+                Provider="aws",
+                CheckID="test_check",
+                CheckTitle="Test Check",
+                CheckType=["type1"],
+                ServiceName="test",
+                SubServiceName="subservice1",
+                ResourceIdTemplate="template1",
+                Severity="high",
+                ResourceType="resource1",
+                Description="Description 1",
+                Risk="risk1",
+                RelatedUrl="url1",
+                Remediation={
+                    "Code": {
+                        "CLI": "cli1",
+                        "NativeIaC": "native1",
+                        "Other": "other1",
+                        "Terraform": "terraform1",
+                    },
+                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                },
+                Categories=["categoryone"],
+                DependsOn=["dependency1"],
+                RelatedTo=["related1"],
+                Notes="notes1",
+                AdditionalUrls="not_a_list",
+                Compliance=[],
+            )
+        assert "AdditionalUrls must be a list" in str(exc_info.value)
+
+    def test_additional_urls_invalid_empty_items(self):
+        """Test AdditionalUrls with empty string items"""
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(
+                Provider="aws",
+                CheckID="test_check",
+                CheckTitle="Test Check",
+                CheckType=["type1"],
+                ServiceName="test",
+                SubServiceName="subservice1",
+                ResourceIdTemplate="template1",
+                Severity="high",
+                ResourceType="resource1",
+                Description="Description 1",
+                Risk="risk1",
+                RelatedUrl="url1",
+                Remediation={
+                    "Code": {
+                        "CLI": "cli1",
+                        "NativeIaC": "native1",
+                        "Other": "other1",
+                        "Terraform": "terraform1",
+                    },
+                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                },
+                Categories=["categoryone"],
+                DependsOn=["dependency1"],
+                RelatedTo=["related1"],
+                Notes="notes1",
+                AdditionalUrls=["https://example.com", "", "https://example2.com"],
+                Compliance=[],
+            )
+        assert "AdditionalUrls cannot contain empty items" in str(exc_info.value)
+
+    def test_additional_urls_invalid_whitespace_items(self):
+        """Test AdditionalUrls with whitespace-only items"""
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(
+                Provider="aws",
+                CheckID="test_check",
+                CheckTitle="Test Check",
+                CheckType=["type1"],
+                ServiceName="test",
+                SubServiceName="subservice1",
+                ResourceIdTemplate="template1",
+                Severity="high",
+                ResourceType="resource1",
+                Description="Description 1",
+                Risk="risk1",
+                RelatedUrl="url1",
+                Remediation={
+                    "Code": {
+                        "CLI": "cli1",
+                        "NativeIaC": "native1",
+                        "Other": "other1",
+                        "Terraform": "terraform1",
+                    },
+                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                },
+                Categories=["categoryone"],
+                DependsOn=["dependency1"],
+                RelatedTo=["related1"],
+                Notes="notes1",
+                AdditionalUrls=["https://example.com", "   ", "https://example2.com"],
+                Compliance=[],
+            )
+        assert "AdditionalUrls cannot contain empty items" in str(exc_info.value)
+
+    def test_additional_urls_invalid_duplicates(self):
+        """Test AdditionalUrls with duplicate items"""
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(
+                Provider="aws",
+                CheckID="test_check",
+                CheckTitle="Test Check",
+                CheckType=["type1"],
+                ServiceName="test",
+                SubServiceName="subservice1",
+                ResourceIdTemplate="template1",
+                Severity="high",
+                ResourceType="resource1",
+                Description="Description 1",
+                Risk="risk1",
+                RelatedUrl="url1",
+                Remediation={
+                    "Code": {
+                        "CLI": "cli1",
+                        "NativeIaC": "native1",
+                        "Other": "other1",
+                        "Terraform": "terraform1",
+                    },
+                    "Recommendation": {"Text": "text1", "Url": "url1"},
+                },
+                Categories=["categoryone"],
+                DependsOn=["dependency1"],
+                RelatedTo=["related1"],
+                Notes="notes1",
+                AdditionalUrls=[
+                    "https://example.com",
+                    "https://example2.com",
+                    "https://example.com",
+                ],
+                Compliance=[],
+            )
+        assert "AdditionalUrls cannot contain duplicate items" in str(exc_info.value)
