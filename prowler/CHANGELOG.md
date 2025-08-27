@@ -32,6 +32,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - GitHub App authentication for GitHub provider [(#8529)](https://github.com/prowler-cloud/prowler/pull/8529)
 - List all accessible organizations in GitHub provider [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
 - Only evaluate enabled accounts in `entra_users_mfa_capable` check [(#8544)](https://github.com/prowler-cloud/prowler/pull/8544)
+- GitHub Personal Access Token authentication fails without `user:email` scope [(#8580)](https://github.com/prowler-cloud/prowler/pull/8580)
 
 ---
 
