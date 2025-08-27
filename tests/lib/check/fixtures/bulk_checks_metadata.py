@@ -5,7 +5,9 @@ test_bulk_checks_metadata = {
         Provider="aws",
         CheckID="vpc_peering_routing_tables_with_least_privilege",
         CheckTitle="Ensure routing tables for VPC peering are least access.",
-        CheckType=["Infrastructure Security"],
+        CheckType=[
+            "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+        ],
         ServiceName="vpc",
         SubServiceName="route_table",
         ResourceIdTemplate="arn:partition:service:region:account-id:resource-id",
@@ -36,7 +38,9 @@ test_bulk_checks_metadata = {
         Provider="aws",
         CheckID="vpc_subnet_different_az",
         CheckTitle="Ensure all vpc has subnets in more than one availability zone",
-        CheckType=["Infrastructure Security"],
+        CheckType=[
+            "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+        ],
         ServiceName="vpc",
         SubServiceName="subnet",
         ResourceIdTemplate="arn:partition:service:region:account-id:resource-id",
@@ -64,7 +68,9 @@ test_bulk_checks_metadata = {
         Provider="aws",
         CheckID="vpc_subnet_separate_private_public",
         CheckTitle="Ensure all vpc has public and private subnets defined",
-        CheckType=["Infrastructure Security"],
+        CheckType=[
+            "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+        ],
         ServiceName="vpc",
         SubServiceName="subnet",
         ResourceIdTemplate="arn:partition:service:region:account-id:resource-id",
@@ -91,7 +97,9 @@ test_bulk_checks_metadata = {
         Provider="aws",
         CheckID="workspaces_volume_encryption_enabled",
         CheckTitle="Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements",
-        CheckType=[],
+        CheckType=[
+            "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+        ],
         ServiceName="workspaces",
         SubServiceName="",
         ResourceIdTemplate="arn:aws:workspaces:region:account-id:workspace",
@@ -122,7 +130,9 @@ test_bulk_checks_metadata = {
         Provider="aws",
         CheckID="workspaces_vpc_2private_1public_subnets_nat",
         CheckTitle="Ensure that the Workspaces VPC are deployed following the best practices using 1 public subnet and 2 private subnets with a NAT Gateway attached",
-        CheckType=[],
+        CheckType=[
+            "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+        ],
         ServiceName="workspaces",
         SubServiceName="",
         ResourceIdTemplate="arn:aws:workspaces:region:account-id:workspace",

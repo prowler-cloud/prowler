@@ -15,6 +15,54 @@ from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 
 
+def _validate_aws_check_type_in_config(check_type: str) -> bool:
+    """
+    Validate if a CheckType exists in the AWS config using direct lookups.
+    Supports partial paths: namespace, namespace/category, namespace/category/classifier
+
+    Args:
+        check_type: The CheckType string to validate (e.g., "TTPs/Initial Access")
+
+    Returns:
+        bool: True if the CheckType path exists in the config hierarchy
+    """
+    try:
+        import json
+        import os
+
+        if not check_type:
+            return False
+
+        # Get the path to the AWS CheckTypes configuration
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        check_types_file = os.path.join(
+            current_dir, "..", "..", "providers", "aws", "config", "check_types.json"
+        )
+        check_types_file = os.path.normpath(check_types_file)
+
+        # Load the CheckTypes hierarchy from JSON file
+        if not os.path.exists(check_types_file):
+            return False
+
+        with open(check_types_file, "r") as f:
+            hierarchy = json.load(f)
+
+        # Split the path by '/' to get each level
+        path_parts = check_type.split("/")
+
+        # Navigate through the hierarchy using direct lookups
+        current_level = hierarchy
+        for part in path_parts:
+            if not isinstance(current_level, dict) or part not in current_level:
+                return False
+            current_level = current_level[part]
+
+        return True
+
+    except (KeyError, AttributeError, FileNotFoundError, json.JSONDecodeError):
+        return False
+
+
 class Code(BaseModel):
     """
     Represents the remediation code using IaC like CloudFormation, Terraform or the native CLI.
@@ -94,9 +142,14 @@ class CheckMetadata(BaseModel):
     Validators:
         valid_category(value): Validator function to validate the categories of the check.
         severity_to_lower(severity): Validator function to convert the severity to lowercase.
-        valid_severity(severity): Validator function to validate the severity of the check.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
+        validate_service_name(service_name, values): Validator function to validate the service name matches CheckID.
+        valid_check_id(check_id): Validator function to validate the CheckID format.
+        validate_check_title(check_title): Validator function to validate CheckTitle max length (150 chars).
+        validate_check_type(check_type, values): Validator function to validate CheckType - no empty strings for all providers, plus predefined types validation for AWS (loaded from config file).
+        validate_description(description): Validator function to validate Description max length (400 chars).
+        validate_risk(risk): Validator function to validate Risk max length (400 chars).
     """
 
     Provider: str
@@ -177,6 +230,51 @@ class CheckMetadata(BaseModel):
                 )
 
         return check_id
+
+    @validator("CheckTitle", pre=True, always=True)
+    def validate_check_title(cls, check_title):
+        if len(check_title) > 150:
+            raise ValueError(
+                f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
+            )
+        return check_title
+
+    @validator("CheckType", pre=True, always=True)
+    def validate_check_type(cls, check_type, values):
+        # Check for empty strings in the list - applies to ALL providers
+        for i, check_type_item in enumerate(check_type):
+            if not check_type_item or check_type_item.strip() == "":
+                raise ValueError(
+                    f"CheckType list cannot contain empty strings. Found empty string at index {i}."
+                )
+
+        provider = values.get("Provider", "").lower()
+
+        # For AWS provider, also validate against config hierarchy (like custom checks)
+        if provider == "aws":
+            for check_type_item in check_type:
+                if not _validate_aws_check_type_in_config(check_type_item):
+                    raise ValueError(
+                        f"Invalid CheckType: '{check_type_item}'. Must be a valid path in the AWS CheckType hierarchy. See prowler/providers/aws/config/check_types.json for valid values."
+                    )
+
+        return check_type
+
+    @validator("Description", pre=True, always=True)
+    def validate_description(cls, description):
+        if len(description) > 400:
+            raise ValueError(
+                f"Description must not exceed 400 characters, got {len(description)} characters"
+            )
+        return description
+
+    @validator("Risk", pre=True, always=True)
+    def validate_risk(cls, risk):
+        if len(risk) > 400:
+            raise ValueError(
+                f"Risk must not exceed 400 characters, got {len(risk)} characters"
+            )
+        return risk
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
