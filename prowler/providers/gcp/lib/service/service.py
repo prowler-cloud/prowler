@@ -29,7 +29,7 @@ class GCPService:
             self.service, api_version, self.credentials
         )
         # Only project ids that have their API enabled will be scanned
-        if provider.scan_disabled_apis:
+        if provider.skip_api_check:
             self.project_ids = provider.project_ids
         else:
             self.project_ids = self.__is_api_active__(provider.project_ids)

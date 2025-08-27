@@ -59,7 +59,7 @@ def init_parser(self):
     )
 
     gcp_config_subparser.add_argument(
-        "--scan-disabled-apis",
+        "--skip-api-check",
         action="store_true",
         default=False,
         help="Assume all APIs are active and skip the active API check for each service",

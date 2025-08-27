@@ -86,7 +86,7 @@ class GcpProvider(Provider):
         client_secret: str = None,
         refresh_token: str = None,
         service_account_key: dict = None,
-        scan_disabled_apis: bool = False,
+        skip_api_check: bool = False,
     ):
         """
         GCP Provider constructor
@@ -108,7 +108,7 @@ class GcpProvider(Provider):
             client_secret: str
             refresh_token: str
             service_account_key: dict
-            scan_disabled_apis: bool
+            skip_api_check: bool
 
         Raises:
             GCPNoAccesibleProjectsError if no project IDs can be accessed via Google Credentials
@@ -176,9 +176,9 @@ class GcpProvider(Provider):
             gcp_config.DEFAULT_RETRY_ATTEMPTS = retries_max_attempts
             logger.info(f"GCP retry attempts set to {retries_max_attempts}")
 
-        if scan_disabled_apis:
+        if skip_api_check:
             logger.info("Skipping API active check for each service")
-        self.scan_disabled_apis = scan_disabled_apis
+        self.skip_api_check = skip_api_check
 
         self._impersonated_service_account = impersonate_service_account
         # Set the GCP credentials using the provided client_id, client_secret and refresh_token

@@ -988,8 +988,8 @@ class TestGCPProvider:
 
         assert DEFAULT_RETRY_ATTEMPTS == 3
 
-    def test_scan_disabled_argument(self):
-        """Test that scan_disabled_apis argument is set correctly in GcpProvider"""
+    def test_skip_api_check_argument(self):
+        """Test that skip_api_check argument is set correctly in GcpProvider"""
 
         mocked_credentials = MagicMock()
 
@@ -1005,7 +1005,7 @@ class TestGCPProvider:
         arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
-        arguments.scan_disabled_apis = True
+        arguments.skip_api_check = True
 
         projects = {
             "test-project": GCPProject(
@@ -1065,18 +1065,18 @@ class TestGCPProvider:
                 client_id=None,
                 client_secret=None,
                 refresh_token=None,
-                scan_disabled_apis=arguments.scan_disabled_apis,
+                skip_api_check=arguments.skip_api_check,
             )
 
             from prowler.providers.gcp.lib.service.service import GCPService
 
             GCPService("testservice", gcp_provider)
 
-            assert gcp_provider.scan_disabled_apis is True
+            assert gcp_provider.skip_api_check is True
             mocked_is_api_active.assert_not_called()
 
-    def test_no_scan_disabled_argument(self):
-        """Test that scan_disabled_apis argument is set correctly in GcpProvider"""
+    def test_api_check_argugement(self):
+        """Test that skip_api_check argument is set correctly in GcpProvider"""
 
         mocked_credentials = MagicMock()
 
@@ -1092,7 +1092,7 @@ class TestGCPProvider:
         arguments.impersonate_service_account = ""
         arguments.config_file = default_config_file_path
         arguments.fixer_config = default_fixer_config_file_path
-        arguments.scan_disabled_apis = False
+        arguments.skip_api_check = False
 
         projects = {
             "test-project": GCPProject(
@@ -1152,11 +1152,11 @@ class TestGCPProvider:
                 client_id=None,
                 client_secret=None,
                 refresh_token=None,
-                scan_disabled_apis=arguments.scan_disabled_apis,
+                skip_api_check=arguments.skip_api_check,
             )
 
             from prowler.providers.gcp.lib.service.service import GCPService
 
             GCPService("testservice", gcp_provider)
-            assert gcp_provider.scan_disabled_apis is False
+            assert gcp_provider.skip_api_check is False
             mocked_is_api_active.assert_called()
