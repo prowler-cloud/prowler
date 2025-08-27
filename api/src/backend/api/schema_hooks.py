@@ -36,7 +36,7 @@ def _extract_task_example_from_components(components):
     }
 
 
-def attach_task_202_examples(result, generator, request, public):
+def attach_task_202_examples(result, generator, request, public):  # noqa: F841
     if not isinstance(result, dict):
         return result
 
