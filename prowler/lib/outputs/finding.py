@@ -19,6 +19,7 @@ from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
+from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 class Finding(BaseModel):
@@ -250,15 +251,16 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
 
-                if hasattr(provider.identity, "account_name"):
+                if isinstance(provider.identity, GithubIdentityInfo):
                     # GithubIdentityInfo (Personal Access Token, OAuth)
                     output_data["account_name"] = provider.identity.account_name
                     output_data["account_uid"] = provider.identity.account_id
-                elif hasattr(provider.identity, "app_id"):
+                    output_data["account_email"] = provider.identity.account_email
+                elif isinstance(provider.identity, GithubAppIdentityInfo):
                     # GithubAppIdentityInfo (GitHub App)
-                    # TODO: Get Github App name
-                    output_data["account_name"] = f"app-{provider.identity.app_id}"
+                    output_data["account_name"] = provider.identity.app_name
                     output_data["account_uid"] = provider.identity.app_id
+                    output_data["installations"] = provider.identity.installations
 
                 output_data["region"] = check_output.owner
 
@@ -295,9 +297,9 @@ class Finding(BaseModel):
                 output_data["auth_method"] = provider.auth_method
                 output_data["account_uid"] = "iac"
                 output_data["account_name"] = "iac"
-                output_data["resource_name"] = check_output.resource["resource"]
-                output_data["resource_uid"] = check_output.resource["resource"]
-                output_data["region"] = check_output.resource_path
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_name
+                output_data["region"] = check_output.resource_line_range
                 output_data["resource_line_range"] = check_output.resource_line_range
                 output_data["framework"] = check_output.check_metadata.ServiceName
 

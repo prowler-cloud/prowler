@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Control, useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { ProviderSelector } from "@/components/providers/provider-selector";
+import { EnhancedProviderSelector } from "@/components/providers/enhanced-provider-selector";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
@@ -27,7 +27,7 @@ import { ProviderProps } from "@/types/providers";
 interface S3IntegrationFormProps {
   integration?: IntegrationProps | null;
   providers: ProviderProps[];
-  onSuccess: () => void;
+  onSuccess: (integrationId?: string, shouldTestConnection?: boolean) => void;
   onCancel: () => void;
   editMode?: "configuration" | "credentials" | null; // null means creating new
 }
@@ -49,6 +49,11 @@ export const S3IntegrationForm = ({
   const isEditingConfig = editMode === "configuration";
   const isEditingCredentials = editMode === "credentials";
 
+  const defaultCredentialsType =
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+      ? "aws-sdk-default"
+      : "access-secret-key";
+
   const form = useForm({
     resolver: zodResolver(
       // For credentials editing, use creation schema (all fields required)
@@ -66,21 +71,16 @@ export const S3IntegrationForm = ({
       providers:
         integration?.relationships?.providers?.data?.map((p) => p.id) || [],
       enabled: integration?.attributes.enabled ?? true,
-      credentials_type: "access-secret-key" as const,
+      credentials_type: defaultCredentialsType,
       aws_access_key_id: "",
       aws_secret_access_key: "",
       aws_session_token: "",
-      // For credentials editing, show current values as placeholders but require new input
-      role_arn: isEditingCredentials
-        ? ""
-        : integration?.attributes.configuration.credentials?.role_arn || "",
+      role_arn: "",
       // External ID always defaults to tenantId, even when editing credentials
-      external_id:
-        integration?.attributes.configuration.credentials?.external_id ||
-        session?.tenantId ||
-        "",
+      external_id: session?.tenantId || "",
       role_session_name: "",
       session_duration: "",
+      show_role_section: false,
     },
   });
 
@@ -115,6 +115,9 @@ export const S3IntegrationForm = ({
   // Helper function to build credentials object
   const buildCredentials = (values: any) => {
     const credentials: any = {};
+
+    // Don't include credentials_type in the API payload - it's a UI-only field
+    // The backend determines credential type based on which fields are present
 
     // Only include role-related fields if role_arn is provided
     if (values.role_arn && values.role_arn.trim() !== "") {
@@ -202,10 +205,16 @@ export const S3IntegrationForm = ({
 
     try {
       let result;
+      let shouldTestConnection = false;
+
       if (isEditing && integration) {
         result = await updateIntegration(integration.id, formData);
+        // Test connection if we're editing credentials or configuration (S3 needs both)
+        shouldTestConnection = isEditingCredentials || isEditingConfig;
       } else {
         result = await createIntegration(formData);
+        // Always test connection for new integrations
+        shouldTestConnection = true;
       }
 
       if ("success" in result) {
@@ -214,23 +223,8 @@ export const S3IntegrationForm = ({
           description: `S3 integration ${isEditing ? "updated" : "created"} successfully.`,
         });
 
-        if ("testConnection" in result) {
-          if (result.testConnection.success) {
-            toast({
-              title: "Connection test started!",
-              description:
-                "Connection test started. It may take some time to complete.",
-            });
-          } else if (result.testConnection.error) {
-            toast({
-              variant: "destructive",
-              title: "Connection test failed",
-              description: result.testConnection.error,
-            });
-          }
-        }
-
-        onSuccess();
+        // Pass the integration ID and whether to test connection to the success callback
+        onSuccess(result.integrationId, shouldTestConnection);
       } else if ("error" in result) {
         const errorMessage = result.error;
 
@@ -261,6 +255,7 @@ export const S3IntegrationForm = ({
       const templateLinks = getAWSCredentialsTemplateLinks(
         externalId,
         bucketName,
+        "amazon_s3",
       );
 
       return (
@@ -269,7 +264,7 @@ export const S3IntegrationForm = ({
           setValue={form.setValue as any}
           externalId={externalId}
           templateLinks={templateLinks}
-          type="s3-integration"
+          type="integrations"
         />
       );
     }
@@ -280,13 +275,15 @@ export const S3IntegrationForm = ({
         <>
           {/* Provider Selection */}
           <div className="space-y-4">
-            <ProviderSelector
+            <EnhancedProviderSelector
               control={form.control}
               name="providers"
               providers={providers}
               label="Cloud Providers"
               placeholder="Select providers to integrate with"
               isInvalid={!!form.formState.errors.providers}
+              selectionMode="multiple"
+              enableSearch={providers.length > 10}
             />
           </div>
 

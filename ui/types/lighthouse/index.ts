@@ -1,6 +1,7 @@
 export * from "./checks";
 export * from "./compliances";
 export * from "./findings";
+export * from "./model-params";
 export * from "./overviews";
 export * from "./providers";
 export * from "./resources";
