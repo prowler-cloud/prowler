@@ -5,7 +5,7 @@
 When enabled and configured, scan results are automatically sent to AWS Security Hub after each scan completes. Findings are formatted in ASFF (AWS Security Finding Format), enabling native integration with AWS security workflows and compliance frameworks.
 
 ???+ note
-    AWS Security Hub must be enabled in target regions before configuring this integration. Refer to [AWS Security Hub pricing](https://aws.amazon.com/security-hub/pricing/) for cost information.
+    Refer to [AWS Security Hub pricing](https://aws.amazon.com/security-hub/pricing/) for cost information.
 
 ## Prerequisites
 
@@ -18,10 +18,8 @@ Before configuring the AWS Security Hub Integration in **Prowler App**, ensure t
 3. **Configure IAM Permissions** for `securityhub:BatchImportFindings` and `securityhub:GetFindings`
 
 ???+ info "AWS Configuration Required"
-    AWS Security Hub must be properly configured before setting up the integration in **Prowler App**. For detailed instructions on enabling Security Hub and accepting the Prowler integration, refer to the [AWS Security Hub Setup Guide](./aws/securityhub.md).
-
-???+ warning
     If no region has Security Hub enabled, the integration in **Prowler App** will not work. Security Hub is a regional service - enable it in each region where findings should be received.
+    AWS Security Hub must be properly configured before setting up the integration in **Prowler App**. For detailed instructions on enabling Security Hub and accepting the Prowler integration, refer to the [AWS Security Hub Setup Guide](https://prowler-prowler-docs--8576.com.readthedocs.build/projects/prowler-open-source/en/8576/tutorials/aws/securityhub/#enabling-aws-security-hub-for-prowler-integration).
 
 ## Required Permissions
 
@@ -43,22 +41,9 @@ The Security Hub integration requires specific permissions to export findings. T
 
 [**Launch CloudFormation Stack →**](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Faws%2Fcloudformation%2Fprowler-scan-role.yml&stackName=Prowler&param_EnableSecurityHubIntegration=true)
 
-Key parameters:
-
-- `EnableSecurityHubIntegration`: Set to `true`
-- `ExternalId`: Use the value from **Prowler App**
-- `SecurityHubIntegrationRegions`: Comma-separated list of regions
-
 #### Terraform
 
 [**View Terraform Module →**](https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform)
-
-Configure in `terraform.tfvars`:
-```hcl
-enable_security_hub_integration = true
-security_hub_integration_regions = ["us-east-1", "eu-west-1"]
-external_id = "your-external-id-from-prowler-app"
-```
 
 ---
 
@@ -83,17 +68,23 @@ Once prerequisites are met, configure the Security Hub integration in **Prowler 
     - **Use Provider Credentials:** Uses the AWS provider's existing credentials (default)
     - **Custom Credentials:** Configure separate credentials for Security Hub access
 
-5. For custom credentials:
+   4.a. For custom credentials:
     - **Access Key ID & Secret:** AWS credentials with Security Hub permissions
     - **SDK default credentials:** Uses the AWS SDK default credentials
     - **IAM Role (Optional):** Role ARN and External ID for role assumption
     ![Credentials configuration](./img/security-hub/credentials-configuration.png)
 
-6. Click **Create integration** to enable the integration and test the connection
+5. Click **Create integration** to enable the integration and test the connection
    ![Create integration](./img/security-hub/create-integration.png)
+
 
 ???+ success
     Once configured, findings from the next scan will appear in AWS Security Hub. Check the next scheduled scan time below the Security Hub connection status.
+
+
+???+ tip "Best Practices"
+- **Test After Changes:** Always test connection after configuration updates
+- **Use Failed Findings Filter:** Enable to reduce Security Hub costs and noise
 
 ### Finding Export Options
 
@@ -143,12 +134,7 @@ To remove the Security Hub integration:
 
 ## Viewing Findings in AWS Security Hub
 
-After configuration and scan completion, Prowler findings appear in AWS Security Hub:
-
-1. Open the [AWS Security Hub console](https://console.aws.amazon.com/securityhub/)
-2. Navigate to **Findings**
-3. Filter by **Product Name: Prowler** to view exported findings
-4. Click any finding title to see detailed information and compliance mappings
+After configuration and scan completion, Prowler findings appear in AWS Security Hub.
 
 ???+ info "Detailed Instructions"
     For comprehensive information on viewing and managing Prowler findings in Security Hub, refer to the [Viewing Prowler Findings guide](./aws/securityhub.md#viewing-prowler-findings-in-aws-security-hub).
@@ -232,13 +218,3 @@ Prowler severities map to Security Hub labels:
 - For provider credentials, verify provider configuration
 - For custom credentials, check access key validity
 - For IAM roles, confirm role ARN and External ID match
-
----
-
-## Best Practices
-
-- **Test After Changes:** Always test connection after configuration updates
-- **Use Failed Findings Filter:** Enable to reduce Security Hub costs and noise
-- **Monitor Multiple Regions:** Check all regions where resources exist
-- **Regular Review:** Periodically review Security Hub findings and take action
-- **Leverage Compliance Mapping:** Use Security Hub compliance scores for tracking
