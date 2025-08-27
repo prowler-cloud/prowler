@@ -348,7 +348,9 @@ export const SecurityHubIntegrationForm = ({
                     onValueChange={field.onChange}
                     size="sm"
                   >
-                    <span className="text-sm">Send only Failed Findings</span>
+                    <span className="text-sm">
+                      Send only findings with status FAIL
+                    </span>
                   </Checkbox>
                 </FormControl>
               )}
