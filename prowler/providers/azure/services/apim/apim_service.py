@@ -21,8 +21,6 @@ class APIMInstance:
     id: str
     name: str
     location: str
-    resource_group: str
-    subscription_id: str
     sku_name: str
     sku_capacity: int
     virtual_network_type: str
@@ -35,14 +33,29 @@ class APIMInstance:
 
 class APIM(AzureService):
     def __init__(self, provider: AzureProvider):
+            """Initialize the APIM service client.
+
+        Args:
+            provider: The Azure provider instance containing authentication and client configuration
+        """
         super().__init__(ApiManagementClient, provider)
         self.instances = self._get_instances()
 
     def _get_workspace_customer_id(
         self, subscription: str, workspace_arm_id: str
     ) -> Optional[str]:
-        """
-        Get the Customer ID (GUID) for a workspace from its full ARM ID.
+        """Get the Customer ID (GUID) for a workspace from its full ARM ID.
+
+        This method extracts the resource group and workspace name from the ARM ID
+        and queries the Log Analytics client to retrieve the customer ID (GUID)
+        needed for workspace-specific queries.
+
+        Args:
+            subscription: The Azure subscription ID
+            workspace_arm_id: The full ARM ID of the Log Analytics workspace
+
+        Returns:
+            The customer ID (GUID) of the workspace if successful, None otherwise
         """
         try:
             resource_group = workspace_arm_id.split("/")[4]
@@ -61,7 +74,21 @@ class APIM(AzureService):
     def _get_log_analytics_workspace_id(
         self, instance_id: str, subscription: str
     ) -> Optional[str]:
-        """Retrieve the Log Analytics workspace ARM ID from an APIM instance's diagnostic settings"""
+        """Retrieve the Log Analytics workspace ARM ID from an APIM instance's diagnostic settings.
+
+        This method queries the Azure Monitor diagnostic settings for a specific APIM
+        instance to find the configured Log Analytics workspace. It specifically looks
+        for diagnostic settings that have GatewayLogs enabled, which are essential for
+        monitoring APIM API calls and operations.
+
+        Args:
+            instance_id: The ARM ID of the APIM instance
+            subscription: The Azure subscription ID
+
+        Returns:
+            The ARM ID of the Log Analytics workspace if diagnostic settings are found
+            and GatewayLogs are enabled, None otherwise
+        """
         try:
             diagnostic_settings = monitor_client.diagnostic_settings_with_uri(
                 subscription, instance_id, monitor_client.clients[subscription]
@@ -84,7 +111,19 @@ class APIM(AzureService):
         return None
 
     def _get_instances(self):
-        """Get all APIM instances and their configured Log Analytics workspace"""
+        """Get all APIM instances and their configured Log Analytics workspace.
+
+        This method iterates through all accessible Azure subscriptions and retrieves
+        all APIM instances within each subscription. For each instance, it also
+        determines the associated Log Analytics workspace by checking diagnostic
+        settings. The method populates the instances dictionary with APIMInstance
+        objects containing all relevant metadata and configuration.
+
+        Returns:
+            A dictionary mapping subscription IDs to lists of APIMInstance objects.
+            Each APIMInstance contains the instance details and its associated
+            Log Analytics workspace ID if configured.
+        """```
         logger.info("APIM - Getting instances...")
         instances = {}
 
@@ -102,15 +141,13 @@ class APIM(AzureService):
                             id=instance.id,
                             name=instance.name,
                             location=instance.location,
-                            resource_group=instance.id.split("/")[4],
-                            subscription_id=instance.id.split("/")[2],
                             sku_name=instance.sku.name,
                             sku_capacity=instance.sku.capacity,
                             virtual_network_type=instance.virtual_network_type,
                             publisher_email=instance.publisher_email,
                             publisher_name=instance.publisher_name,
-                            zones=instance.zones or [],
-                            tags=instance.tags or {},
+                            zones=getattr(instance, "zones", []),
+                            tags=getattr(instance, "tags", {}),
                             log_analytics_workspace_id=workspace_id,
                         )
                     )
@@ -128,7 +165,24 @@ class APIM(AzureService):
         timespan: timedelta,
         workspace_customer_id: str,
     ) -> List[Dict[str, Any]]:
-        """Query a specific Log Analytics workspace using its Customer ID (GUID)"""
+        """Query a specific Log Analytics workspace using its Customer ID (GUID).
+
+        This method executes Kusto Query Language (KQL) queries against a specific
+        Log Analytics workspace. It's used to retrieve log data for analysis and
+        monitoring purposes. The method handles the response parsing and converts
+        the tabular results into a list of dictionaries for easy consumption.
+
+        Args:
+            subscription: The Azure subscription ID
+            query: The KQL query string to execute
+            timespan: The time range for the query as a timedelta
+            workspace_customer_id: The customer ID (GUID) of the Log Analytics workspace
+
+        Returns:
+            A list of dictionaries where each dictionary represents a row from the
+            query results. The keys are the column names from the query response.
+            Returns an empty list if the query fails or returns no results.
+        """
         try:
             response = logsquery_client.clients[subscription].query_workspace(
                 workspace_id=workspace_customer_id,
@@ -151,7 +205,24 @@ class APIM(AzureService):
     def get_llm_operations_logs(
         self, subscription: str, instance: APIMInstance, minutes: int = 1440
     ) -> List[Dict[str, Any]]:
-        """Get LLM-related operations from the APIM instance's specific Log Analytics workspace"""
+        """Get LLM-related operations from the APIM instance's specific Log Analytics workspace.
+
+        This method retrieves logs related to Large Language Model (LLM) operations
+        from a specific APIM instance. It queries the GatewayLogs table in the
+        associated Log Analytics workspace to find API calls and operations that
+        may be related to LLM services. The method automatically handles the
+        translation from workspace ARM ID to customer ID for querying.
+
+        Args:
+            subscription: The Azure subscription ID
+            instance: The APIMInstance object containing the instance details
+            minutes: The time range in minutes to look back (default: 1440 = 24 hours)
+
+        Returns:
+            A list of dictionaries containing log entries with fields like
+            TimeGenerated, OperationId, CallerIpAddress, and CorrelationId.
+            Returns an empty list if no workspace is configured or if the query fails.
+        """
         if not instance.log_analytics_workspace_id:
             logger.warning(
                 f"APIM instance {instance.name} has no configured Log Analytics workspace."
