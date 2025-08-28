@@ -48,6 +48,8 @@ class Migration(migrations.Migration):
                 ("passed_checks", models.IntegerField(default=0)),
                 ("failed_checks", models.IntegerField(default=0)),
                 ("total_checks", models.IntegerField(default=0)),
+                ("passed_findings", models.IntegerField(default=0)),
+                ("total_findings", models.IntegerField(default=0)),
                 (
                     "scan",
                     models.ForeignKey(

@@ -1797,6 +1797,8 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
     version = serializers.CharField()
     description = serializers.CharField()
     status = serializers.ChoiceField(choices=StatusChoices.choices)
+    passed_findings = serializers.IntegerField()
+    total_findings = serializers.IntegerField()
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-details"

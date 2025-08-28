@@ -615,19 +615,16 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                         for requirement_id in requirements:
                             compliance_key = findings_count_by_compliance.setdefault(
                                 region, {}
-                            ).setdefault(framework_id, {})
+                            ).setdefault(framework_id.lower().replace("-", ""), {})
                             if requirement_id not in compliance_key:
                                 compliance_key[requirement_id] = {
                                     "total": 0,
                                     "pass": 0,
-                                    "fail": 0,
                                 }
 
                             compliance_key[requirement_id]["total"] += 1
                             if finding.status == "PASS":
                                 compliance_key[requirement_id]["pass"] += 1
-                            elif finding.status == "FAIL":
-                                compliance_key[requirement_id]["fail"] += 1
 
         try:
             # Try to get regions from provider
@@ -663,6 +660,13 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         compliance_requirement_objects = []
         for region, compliance_data in compliance_overview_by_region.items():
             for compliance_id, compliance in compliance_data.items():
+                modeled_framework = (
+                    compliance["framework"].lower().replace("-", "").replace("_", "")
+                )
+                modeled_version = (
+                    compliance["version"].lower().replace("-", "").replace("_", "")
+                )
+                modeled_compliance_id = f"{modeled_framework}{modeled_version}"
                 # Create an overview record for each requirement within each compliance framework
                 for requirement_id, requirement in compliance["requirements"].items():
                     compliance_requirement_objects.append(
@@ -679,9 +683,16 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             failed_checks=requirement["checks_status"]["fail"],
                             total_checks=requirement["checks_status"]["total"],
                             requirement_status=requirement["status"],
+                            passed_findings=findings_count_by_compliance.get(region, {})
+                            .get(modeled_compliance_id, {})
+                            .get(requirement_id, {})
+                            .get("pass", 0),
+                            total_findings=findings_count_by_compliance.get(region, {})
+                            .get(modeled_compliance_id, {})
+                            .get(requirement_id, {})
+                            .get("total", 0),
                         )
                     )
-
         # Bulk create requirement records
         create_objects_in_batches(
             tenant_id, ComplianceRequirementOverview, compliance_requirement_objects
