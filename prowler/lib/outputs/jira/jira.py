@@ -744,6 +744,8 @@ class Jira:
         remediation_code_other: str = None,
         resource_tags: dict = None,
         compliance: dict = None,
+        finding_url: str = None,
+        tenant_info: str = None,
     ) -> dict:
         table_rows = [
             {
@@ -1321,6 +1323,93 @@ class Jira:
                     }
                 )
 
+        if finding_url:
+            table_rows.append(
+                {
+                    "type": "tableRow",
+                    "content": [
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [1]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Finding URL",
+                                            "marks": [{"type": "strong"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [3]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": finding_url,
+                                            "marks": [
+                                                {
+                                                    "type": "link",
+                                                    "attrs": {"href": finding_url},
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+
+        if tenant_info:
+            table_rows.append(
+                {
+                    "type": "tableRow",
+                    "content": [
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [1]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Tenant Info",
+                                            "marks": [{"type": "strong"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [3]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": tenant_info,
+                                            "marks": [{"type": "code"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+
         return {
             "type": "doc",
             "version": 1,
@@ -1348,6 +1437,8 @@ class Jira:
         project_key: str = None,
         issue_type: str = None,
         issue_labels: list[str] = None,
+        finding_url: str = None,
+        tenant_info: str = None,
     ):
         """
         Send the findings to Jira
@@ -1357,6 +1448,8 @@ class Jira:
             - project_key: The project key
             - issue_type: The issue type
             - issue_labels: The issue labels
+            - finding_url: The finding URL
+            - tenant_info: The tenant info
 
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
@@ -1428,6 +1521,8 @@ class Jira:
                     remediation_code_other=finding.metadata.Remediation.Code.Other,
                     resource_tags=finding.resource_tags,
                     compliance=finding.compliance,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
                 )
                 payload = {
                     "fields": {
