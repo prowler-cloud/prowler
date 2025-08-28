@@ -23,20 +23,13 @@ class APIMInstance(BaseModel):
     log_analytics_workspace_id: Optional[str] = None
 
 
-class LogsQueryLogEntry:
+class LogsQueryLogEntry(BaseModel):
     """Represents a log entry from Azure Log Analytics query results."""
 
-    def __init__(
-        self,
-        time_generated: datetime,
-        operation_id: str,
-        caller_ip_address: str,
-        correlation_id: str,
-    ):
-        self.time_generated = time_generated
-        self.operation_id = operation_id
-        self.caller_ip_address = caller_ip_address
-        self.correlation_id = correlation_id
+    time_generated: datetime
+    operation_id: str
+    caller_ip_address: str
+    correlation_id: str
 
 
 class APIM(AzureService):
