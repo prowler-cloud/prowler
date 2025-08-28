@@ -13,6 +13,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    orange_color,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -886,9 +887,14 @@ def prowler():
             )
             # Send the findings to Security Hub
             findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
-            print(
-                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
-            )
+            if findings_sent_to_security_hub == 0:
+                print(
+                    f"{Style.BRIGHT}{orange_color}\nNo findings sent to AWS Security Hub.{Style.RESET_ALL}"
+                )
+            else:
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+                )
 
             # Resolve previous fails of Security Hub
             if not args.skip_sh_update:
@@ -898,9 +904,14 @@ def prowler():
                 findings_archived_in_security_hub = (
                     security_hub.archive_previous_findings()
                 )
-                print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
-                )
+                if findings_archived_in_security_hub == 0:
+                    print(
+                        f"{Style.BRIGHT}{orange_color}\nNo findings archived in AWS Security Hub.{Style.RESET_ALL}"
+                    )
+                else:
+                    print(
+                        f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                    )
 
     # Display summary table
     if not args.only_logs:

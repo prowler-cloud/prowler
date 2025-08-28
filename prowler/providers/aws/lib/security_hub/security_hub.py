@@ -165,8 +165,11 @@ class SecurityHub:
                 aws_account_id,
                 aws_partition,
             )
-        if findings and self._enabled_regions:
-            self._findings_per_region = self.filter(findings, send_only_fails)
+        if findings:
+            if not self._enabled_regions:
+                logger.error("No enabled regions found in Security Hub.")
+            else:
+                self._findings_per_region = self.filter(findings, send_only_fails)
 
     def filter(
         self,
@@ -193,6 +196,9 @@ class SecurityHub:
             for finding in findings:
                 # We don't send findings to not enabled regions
                 if finding.Resources[0].Region not in findings_per_region:
+                    logger.error(
+                        f"Skipping finding {finding.Id} in region {finding.Resources[0].Region} because it is not enabled in Security Hub."
+                    )
                     continue
 
                 if (
