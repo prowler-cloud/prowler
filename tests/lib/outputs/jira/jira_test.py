@@ -606,7 +606,10 @@ class TestJiraIntegration:
         self.jira_integration.cloud_id = "valid_cloud_id"
 
         self.jira_integration.send_findings(
-            findings=[finding], project_key="TEST-1", issue_type="Bug"
+            findings=[finding],
+            project_key="TEST-1",
+            issue_type="Bug",
+            issue_labels=["scan-mocked", "whatever"],
         )
 
         mock_post.assert_called_once()
@@ -629,6 +632,7 @@ class TestJiraIntegration:
         assert payload["fields"]["summary"] == "[Prowler] HIGH - CHECK-1 - resource-1"
         assert payload["fields"]["issuetype"]["name"] == "Bug"
         assert payload["fields"]["description"]["type"] == "doc"
+        assert payload["fields"]["labels"] == ["scan-mocked", "whatever"]
 
         description_content = payload["fields"]["description"]["content"]
 

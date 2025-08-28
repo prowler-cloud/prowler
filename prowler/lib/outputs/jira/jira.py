@@ -67,6 +67,7 @@ class Jira:
         - test_connection: Test the connection to Jira and return a Connection object
         - get_projects: Get the projects from Jira
         - get_available_issue_types: Get the available issue types for a project
+        - get_available_issue_labels: Get the available labels for a project
         - send_findings: Send the findings to Jira and create an issue
 
     Raises:
@@ -1346,6 +1347,7 @@ class Jira:
         findings: list[Finding] = None,
         project_key: str = None,
         issue_type: str = None,
+        issue_labels: list[str] = None,
     ):
         """
         Send the findings to Jira
@@ -1354,6 +1356,7 @@ class Jira:
             - findings: The findings to send
             - project_key: The project key
             - issue_type: The issue type
+            - issue_labels: The issue labels
 
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
@@ -1434,6 +1437,8 @@ class Jira:
                         "issuetype": {"name": issue_type},
                     }
                 }
+                if issue_labels:
+                    payload["fields"]["labels"] = issue_labels
 
                 response = requests.post(
                     f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
