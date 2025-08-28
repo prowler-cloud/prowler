@@ -16,11 +16,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - ECS privilege escalation patterns (StartTask and RunTask) for AWS provider [(#8541)](https://github.com/prowler-cloud/prowler/pull/8541)
 - Resource Explorer enumeration v2 API actions in `cloudtrail_threat_detection_enumeration` check [(#8557)](https://github.com/prowler-cloud/prowler/pull/8557)
 - GCP `--skip-api-check` command line flag [(#8575)](https://github.com/prowler-cloud/prowler/pull/8575)
-- `AdditionalUrls` field in CheckMetadata Pydantic model [(#8584)](https://github.com/prowler-cloud/prowler/pull/8584)
+- `AdditionalUrls` field in CheckMetadata Pydantic model [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 
 ### Changed
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
-- Improve AWS Security Hub region check using multiple threads [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
+- Improve AWS Security Hub region check using multiple threads [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 
 ### Fixed
 - Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
