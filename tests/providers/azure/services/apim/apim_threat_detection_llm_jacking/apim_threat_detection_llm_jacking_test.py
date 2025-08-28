@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
@@ -6,123 +7,130 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
+# Create a mock LogsQueryLogEntry class for testing
+class MockLogsQueryLogEntry:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
 def mock_get_llm_operations_logs(subscription, instance, minutes):
     """Mock LLM operations logs for testing - returns 2 operations"""
     return [
-        {
-            "TimeGenerated": "2024-01-01T10:00:00Z",
-            "OperationId": "ChatCompletions_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-1",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:01:00Z",
-            "OperationId": "ImageGenerations_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-2",
-        },
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            OperationId="ChatCompletions_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-1",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            OperationId="ImageGenerations_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-2",
+        ),
     ]
 
 
 def mock_get_llm_operations_logs_6_operations(subscription, instance, minutes):
     """Mock LLM operations logs for testing - returns 6 operations"""
     return [
-        {
-            "TimeGenerated": "2024-01-01T10:00:00Z",
-            "OperationId": "ChatCompletions_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-1",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:01:00Z",
-            "OperationId": "ImageGenerations_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-2",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:02:00Z",
-            "OperationId": "Completions_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-3",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:03:00Z",
-            "OperationId": "Embeddings_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-4",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:04:00Z",
-            "OperationId": "FineTuning_Jobs_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-5",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:05:00Z",
-            "OperationId": "Models_List",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-6",
-        },
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            OperationId="ChatCompletions_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-1",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            OperationId="ImageGenerations_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-2",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:02:00+00:00"),
+            OperationId="Completions_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-3",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:03:00+00:00"),
+            OperationId="Embeddings_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-4",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:04:00+00:00"),
+            OperationId="FineTuning_Jobs_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-5",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:05:00+00:00"),
+            OperationId="Models_List",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-6",
+        ),
     ]
 
 
 def mock_get_llm_operations_logs_2_operations(subscription, instance, minutes):
     """Mock LLM operations logs for testing - returns 2 operations"""
     return [
-        {
-            "TimeGenerated": "2024-01-01T10:00:00Z",
-            "OperationId": "ChatCompletions_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-1",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:01:00Z",
-            "OperationId": "ImageGenerations_Create",
-            "CallerIpAddress": "192.168.1.100",
-            "CorrelationId": "test-correlation-id-2",
-        },
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            OperationId="ChatCompletions_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-1",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            OperationId="ImageGenerations_Create",
+            CallerIpAddress="192.168.1.100",
+            CorrelationId="test-correlation-id-2",
+        ),
     ]
 
 
 def mock_get_llm_operations_logs_attacker(subscription, instance, minutes):
     """Mock LLM operations logs showing potential attack"""
     return [
-        {
-            "TimeGenerated": "2024-01-01T10:00:00Z",
-            "OperationId": "ChatCompletions_Create",
-            "CallerIpAddress": "10.0.0.50",
-            "CorrelationId": "test-correlation-id-1",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:01:00Z",
-            "OperationId": "ImageGenerations_Create",
-            "CallerIpAddress": "10.0.0.50",
-            "CorrelationId": "test-correlation-id-2",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:02:00Z",
-            "OperationId": "Completions_Create",
-            "CallerIpAddress": "10.0.0.50",
-            "CorrelationId": "test-correlation-id-3",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:03:00Z",
-            "OperationId": "Embeddings_Create",
-            "CallerIpAddress": "10.0.0.50",
-            "CorrelationId": "test-correlation-id-4",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:04:00Z",
-            "OperationId": "FineTuning_Jobs_Create",
-            "CallerIpAddress": "10.0.0.50",
-            "CorrelationId": "test-correlation-id-5",
-        },
-        {
-            "TimeGenerated": "2024-01-01T10:05:00Z",
-            "OperationId": "Models_List",
-            "CallerIpAddress": "10.0.0.50",
-            "CorrelationId": "test-correlation-id-6",
-        },
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            OperationId="ChatCompletions_Create",
+            CallerIpAddress="10.0.0.50",
+            CorrelationId="test-correlation-id-1",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            OperationId="ImageGenerations_Create",
+            CallerIpAddress="10.0.0.50",
+            CorrelationId="test-correlation-id-2",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:02:00+00:00"),
+            OperationId="Completions_Create",
+            CallerIpAddress="10.0.0.50",
+            CorrelationId="test-correlation-id-3",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:03:00+00:00"),
+            OperationId="Embeddings_Create",
+            CallerIpAddress="10.0.0.50",
+            CorrelationId="test-correlation-id-4",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:04:00+00:00"),
+            OperationId="FineTuning_Jobs_Create",
+            CallerIpAddress="10.0.0.50",
+            CorrelationId="test-correlation-id-5",
+        ),
+        MockLogsQueryLogEntry(
+            TimeGenerated=datetime.fromisoformat("2024-01-01T10:05:00+00:00"),
+            OperationId="Models_List",
+            CallerIpAddress="10.0.0.50",
+            CorrelationId="test-correlation-id-6",
+        ),
     ]
 
 
@@ -134,7 +142,7 @@ def mock_get_llm_operations_logs_no_workspace(subscription, instance, minutes):
 class Test_apim_threat_detection_llm_jacking:
     def test_no_apim_instances(self):
         """Test when there are no APIM instances"""
-        apim_client = mock.MagicMock
+        apim_client = mock.MagicMock()
         apim_client.instances = {}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.1,
@@ -166,7 +174,7 @@ class Test_apim_threat_detection_llm_jacking:
 
     def test_no_potential_llm_jacking(self):
         """Test when no potential LLM jacking is detected"""
-        apim_client = mock.MagicMock
+        apim_client = mock.MagicMock()
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -202,9 +210,7 @@ class Test_apim_threat_detection_llm_jacking:
                 "Llama_Generate",
             ],
         }
-        apim_client.get_llm_operations_logs = mock.MagicMock(
-            side_effect=mock_get_llm_operations_logs_6_operations
-        )
+        apim_client.get_llm_operations_logs = mock_get_llm_operations_logs_6_operations
 
         with (
             mock.patch(
@@ -232,7 +238,7 @@ class Test_apim_threat_detection_llm_jacking:
 
     def test_potential_llm_jacking_detected(self):
         """Test when potential LLM jacking is detected"""
-        apim_client = mock.MagicMock
+        apim_client = mock.MagicMock()
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -285,7 +291,7 @@ class Test_apim_threat_detection_llm_jacking:
 
     def test_higher_threshold_no_detection(self):
         """Test when threshold is higher and no attack is detected"""
-        apim_client = mock.MagicMock
+        apim_client = mock.MagicMock()
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -321,9 +327,7 @@ class Test_apim_threat_detection_llm_jacking:
                 "Llama_Generate",
             ],
         }
-        apim_client.get_llm_operations_logs = mock.MagicMock(
-            side_effect=mock_get_llm_operations_logs_6_operations
-        )
+        apim_client.get_llm_operations_logs = mock_get_llm_operations_logs_6_operations
 
         with (
             mock.patch(
@@ -351,7 +355,7 @@ class Test_apim_threat_detection_llm_jacking:
 
     def test_instance_without_workspace(self):
         """Test when APIM instance has no Log Analytics workspace configured"""
-        apim_client = mock.MagicMock
+        apim_client = mock.MagicMock()
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -387,9 +391,7 @@ class Test_apim_threat_detection_llm_jacking:
                 "Llama_Generate",
             ],
         }
-        apim_client.get_llm_operations_logs = mock.MagicMock(
-            side_effect=mock_get_llm_operations_logs_2_operations
-        )
+        apim_client.get_llm_operations_logs = mock_get_llm_operations_logs_2_operations
 
         with (
             mock.patch(
@@ -417,7 +419,7 @@ class Test_apim_threat_detection_llm_jacking:
 
     def test_multiple_subscriptions(self):
         """Test with multiple subscriptions"""
-        apim_client = mock.MagicMock
+        apim_client = mock.MagicMock()
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -460,9 +462,7 @@ class Test_apim_threat_detection_llm_jacking:
                 "Llama_Generate",
             ],
         }
-        apim_client.get_llm_operations_logs = mock.MagicMock(
-            side_effect=mock_get_llm_operations_logs_2_operations
-        )
+        apim_client.get_llm_operations_logs = mock_get_llm_operations_logs_2_operations
 
         with (
             mock.patch(

@@ -30,15 +30,6 @@ def mock_apim_get_instances(_):
                 id=APIM_INSTANCE_ID,
                 name=APIM_INSTANCE_NAME,
                 location=LOCATION,
-                resource_group=RESOURCE_GROUP,
-                subscription_id=AZURE_SUBSCRIPTION_ID,
-                sku_name="Premium",
-                sku_capacity=1,
-                virtual_network_type="None",
-                publisher_email="test@example.com",
-                publisher_name="test",
-                zones=["1"],
-                tags={"key": "value"},
                 log_analytics_workspace_id=WORKSPACE_ID,
             )
         ]
@@ -110,7 +101,6 @@ class Test_APIM_Service(TestCase):
             self.assertEqual(instance.id, APIM_INSTANCE_ID)
             self.assertEqual(instance.name, APIM_INSTANCE_NAME)
             self.assertEqual(instance.location, LOCATION)
-            self.assertEqual(instance.resource_group, RESOURCE_GROUP)
             self.assertEqual(instance.log_analytics_workspace_id, WORKSPACE_ID)
 
     def test_get_log_analytics_workspace_id_success(self):
@@ -233,10 +223,24 @@ class Test_APIM_Service(TestCase):
                 ) as mock_logsquery_client,
             ):
                 apim = APIM(set_mocked_azure_provider())
-                # Create a mock table with the expected structure
+                # Create a mock table with the expected structure for LogsQueryLogEntry
                 mock_table = mock.MagicMock()
-                mock_table.columns = ["col1", "col2"]
-                mock_table.rows = [["val1", "val2"]]
+                mock_table.columns = [
+                    "TimeGenerated",
+                    "OperationId",
+                    "CallerIpAddress",
+                    "CorrelationId",
+                ]
+                from datetime import datetime
+
+                mock_table.rows = [
+                    [
+                        datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+                        "test-operation",
+                        "192.168.1.100",
+                        "test-correlation",
+                    ]
+                ]
 
                 mock_response = LogsQueryResult(tables=[mock_table], status="Success")
 
@@ -252,7 +256,16 @@ class Test_APIM_Service(TestCase):
                     WORKSPACE_CUSTOMER_ID,
                 )
                 self.assertEqual(len(result), 1)
-                self.assertEqual(result[0], {"col1": "val1", "col2": "val2"})
+                # The result should be LogsQueryLogEntry objects
+                from datetime import datetime
+
+                self.assertEqual(
+                    result[0].TimeGenerated,
+                    datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+                )
+                self.assertEqual(result[0].OperationId, "test-operation")
+                self.assertEqual(result[0].CallerIpAddress, "192.168.1.100")
+                self.assertEqual(result[0].CorrelationId, "test-correlation")
 
     def test_get_llm_operations_logs_no_workspace_id(self):
         """Test getting logs when the APIM instance has no workspace configured."""

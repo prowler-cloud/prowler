@@ -1,5 +1,8 @@
+from typing import List
+
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.apim.apim_client import apim_client
+from prowler.providers.azure.services.apim.apim_service import LogsQueryLogEntry
 
 
 class apim_threat_detection_llm_jacking(Check):
@@ -22,33 +25,33 @@ class apim_threat_detection_llm_jacking(Check):
                 "ImageGenerations_Create",
                 "ChatCompletions_Create",
                 "Completions_Create",
-                "Embeddings_Create",
-                "FineTuning_Jobs_Create",
-                "Models_List",
-                # Azure OpenAI endpoints
-                "Deployments_List",
-                "Deployments_Get",
-                "Deployments_Create",
-                "Deployments_Delete",
-                # Anthropic endpoints
-                "Messages_Create",
-                "Claude_Create",
-                # Google AI endpoints
-                "GenerateContent",
-                "GenerateText",
-                "GenerateImage",
-                # Meta AI endpoints
-                "Llama_Create",
-                "CodeLlama_Create",
-                # Other LLM endpoints
-                "Gemini_Generate",
-                "Claude_Generate",
-                "Llama_Generate",
+                # "Embeddings_Create",
+                # "FineTuning_Jobs_Create",
+                # "Models_List",
+                # # Azure OpenAI endpoints
+                # "Deployments_List",
+                # "Deployments_Get",
+                # "Deployments_Create",
+                # "Deployments_Delete",
+                # # Anthropic endpoints
+                # "Messages_Create",
+                # "Claude_Create",
+                # # Google AI endpoints
+                # "GenerateContent",
+                # "GenerateText",
+                # "GenerateImage",
+                # # Meta AI endpoints
+                # "Llama_Create",
+                # "CodeLlama_Create",
+                # # Other LLM endpoints
+                # "Gemini_Generate",
+                # "Claude_Generate",
+                # "Llama_Generate",
             ],
         )
 
         # 1. Aggregate logs from all APIM instances first
-        all_llm_logs = []
+        all_llm_logs: List[LogsQueryLogEntry] = []
         for subscription, instances in apim_client.instances.items():
             for instance in instances:
                 if instance.log_analytics_workspace_id:
@@ -58,24 +61,27 @@ class apim_threat_detection_llm_jacking(Check):
                     all_llm_logs.extend(logs)
 
             # 2. Perform a single, global analysis on all collected logs
-            potential_llm_jacking = {}
+            potential_llm_jacking_attackers = {}
             for log in all_llm_logs:
-                operation_name = log.get("OperationId")
-                caller_ip = log.get("CallerIpAddress")
+                operation_name = log.OperationId
+                caller_ip = log.CallerIpAddress
 
                 if operation_name in monitored_actions and caller_ip:
                     # Use IP address as the principal identifier
-                    if caller_ip not in potential_llm_jacking:
-                        potential_llm_jacking[caller_ip] = set()
-                    potential_llm_jacking[caller_ip].add(operation_name)
+                    if caller_ip not in potential_llm_jacking_attackers:
+                        potential_llm_jacking_attackers[caller_ip] = set()
+                    potential_llm_jacking_attackers[caller_ip].add(operation_name)
 
             # 3. Check each principal against the threshold and report failures
-            found_potential_llm_jacking = False
-            for principal_ip, distinct_actions in potential_llm_jacking.items():
+            found_potential_llm_jacking_attackers = False
+            for (
+                principal_ip,
+                distinct_actions,
+            ) in potential_llm_jacking_attackers.items():
                 action_ratio = round(len(distinct_actions) / len(monitored_actions), 2)
 
                 if action_ratio > threshold:
-                    found_potential_llm_jacking = True
+                    found_potential_llm_jacking_attackers = True
                     # Build Identity resource for the report
                     resource = {
                         "name": principal_ip,
@@ -89,7 +95,7 @@ class apim_threat_detection_llm_jacking(Check):
                     findings.append(report)
 
             # 4. If no threats were found after checking all principals, create a single PASS report
-            if not found_potential_llm_jacking:
+            if not found_potential_llm_jacking_attackers:
                 report = Check_Report_Azure(self.metadata(), resource={})
                 report.resource_name = "Azure API Management"
                 report.resource_id = "Azure API Management"

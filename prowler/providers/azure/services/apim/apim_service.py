@@ -1,8 +1,8 @@
-from dataclasses import dataclass
-from datetime import timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+from typing import List, Optional
 
 from azure.mgmt.apimanagement import ApiManagementClient
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -14,26 +14,27 @@ from prowler.providers.azure.services.logs.logsquery_client import logsquery_cli
 from prowler.providers.azure.services.monitor.monitor_client import monitor_client
 
 
-@dataclass
-class APIMInstance:
+class APIMInstance(BaseModel):
     """APIM Instance model"""
 
     id: str
     name: str
     location: str
-    sku_name: str
-    sku_capacity: int
-    virtual_network_type: str
-    publisher_email: str
-    publisher_name: str
-    zones: List[str]
-    tags: Dict[str, str]
     log_analytics_workspace_id: Optional[str] = None
+
+
+class LogsQueryLogEntry(BaseModel):
+    """Logs Query Log Entry model"""
+
+    TimeGenerated: datetime
+    OperationId: str
+    CallerIpAddress: str
+    CorrelationId: str
 
 
 class APIM(AzureService):
     def __init__(self, provider: AzureProvider):
-            """Initialize the APIM service client.
+        """Initialize the APIM service client.
 
         Args:
             provider: The Azure provider instance containing authentication and client configuration
@@ -123,7 +124,7 @@ class APIM(AzureService):
             A dictionary mapping subscription IDs to lists of APIMInstance objects.
             Each APIMInstance contains the instance details and its associated
             Log Analytics workspace ID if configured.
-        """```
+        """
         logger.info("APIM - Getting instances...")
         instances = {}
 
@@ -141,13 +142,6 @@ class APIM(AzureService):
                             id=instance.id,
                             name=instance.name,
                             location=instance.location,
-                            sku_name=instance.sku.name,
-                            sku_capacity=instance.sku.capacity,
-                            virtual_network_type=instance.virtual_network_type,
-                            publisher_email=instance.publisher_email,
-                            publisher_name=instance.publisher_name,
-                            zones=getattr(instance, "zones", []),
-                            tags=getattr(instance, "tags", {}),
                             log_analytics_workspace_id=workspace_id,
                         )
                     )
@@ -164,7 +158,7 @@ class APIM(AzureService):
         query: str,
         timespan: timedelta,
         workspace_customer_id: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[LogsQueryLogEntry]:
         """Query a specific Log Analytics workspace using its Customer ID (GUID).
 
         This method executes Kusto Query Language (KQL) queries against a specific
@@ -192,9 +186,10 @@ class APIM(AzureService):
 
             if response.tables:
                 columns = response.tables[0].columns
-                return [dict(zip(columns, row)) for row in response.tables[0].rows]
-
-            return []
+                return [
+                    LogsQueryLogEntry(**dict(zip(columns, row)))
+                    for row in response.tables[0].rows
+                ]
 
         except Exception as error:
             logger.error(
@@ -204,7 +199,7 @@ class APIM(AzureService):
 
     def get_llm_operations_logs(
         self, subscription: str, instance: APIMInstance, minutes: int = 1440
-    ) -> List[Dict[str, Any]]:
+    ) -> List[LogsQueryLogEntry]:
         """Get LLM-related operations from the APIM instance's specific Log Analytics workspace.
 
         This method retrieves logs related to Large Language Model (LLM) operations
