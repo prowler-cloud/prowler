@@ -96,6 +96,8 @@ Once you have decided the provider you want or need to add to Prowler, the next 
 - Yes → Consider API Provider
 - No → You may need a custom approach
 
+![FlowChart Decision](../img/provider-decision-tree.png)
+
 #### Implementation Complexity
 
 - **SDK Providers**: Low complexity. You have mature examples like AWS, Azure, GCP, Kubernetes, etc. that you can leverage to implement your provider.
