@@ -245,6 +245,7 @@ class APIM(AzureService):
         query = f"""
         ApiManagementGatewayLogs
         | where _ResourceId has '{instance.id}'
+        | where isnotempty(OperationId)
         | project TimeGenerated, OperationId, CallerIpAddress, CorrelationId
         """
         timespan = timedelta(minutes=minutes)
