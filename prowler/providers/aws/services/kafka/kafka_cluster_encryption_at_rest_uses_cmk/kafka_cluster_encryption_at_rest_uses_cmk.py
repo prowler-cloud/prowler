@@ -12,7 +12,12 @@ class kafka_cluster_encryption_at_rest_uses_cmk(Check):
             report.status = "FAIL"
             report.status_extended = f"Kafka cluster '{cluster.name}' does not have encryption at rest enabled with a CMK."
 
-            if any(
+            # Serverless clusters always have encryption at rest enabled by default
+            if cluster.kafka_version == "SERVERLESS":
+                report.status = "PASS"
+                report.status_extended = f"Kafka cluster '{cluster.name}' is serverless and always has encryption at rest enabled by default."
+            # For provisioned clusters, check if they use a customer managed KMS key
+            elif any(
                 (
                     cluster.data_volume_kms_key_id == key.arn
                     and getattr(key, "manager", "") == "CUSTOMER"

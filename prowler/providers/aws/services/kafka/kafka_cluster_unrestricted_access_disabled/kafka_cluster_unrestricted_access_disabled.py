@@ -13,7 +13,12 @@ class kafka_cluster_unrestricted_access_disabled(Check):
                 f"Kafka cluster '{cluster.name}' has unrestricted access enabled."
             )
 
-            if not cluster.unauthentication_access:
+            # Serverless clusters always require authentication by default
+            if cluster.kafka_version == "SERVERLESS":
+                report.status = "PASS"
+                report.status_extended = f"Kafka cluster '{cluster.name}' is serverless and always requires authentication by default."
+            # For provisioned clusters, check the unauthenticated access configuration
+            elif not cluster.unauthentication_access:
                 report.status = "PASS"
                 report.status_extended = f"Kafka cluster '{cluster.name}' does not have unrestricted access enabled."
 
