@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Set
 
-from pydantic.v1 import BaseModel, ValidationError, validator
+from pydantic.v1 import BaseModel, Field, ValidationError, validator
 
 from prowler.config.config import Provider
 from prowler.lib.check.compliance_models import Compliance
@@ -105,7 +105,7 @@ class CheckMetadata(BaseModel):
     CheckID: str
     CheckTitle: str
     CheckType: list[str]
-    CheckAliases: list[str] = []
+    CheckAliases: list[str] = Field(default_factory=list)
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str
@@ -115,14 +115,14 @@ class CheckMetadata(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
-    AdditionalUrls: list[str] = []
+    AdditionalUrls: list[str] = Field(default_factory=list)
     Categories: list[str]
     DependsOn: list[str]
     RelatedTo: list[str]
     Notes: str
     # We set the compliance to None to
     # store the compliance later if supplied
-    Compliance: Optional[list[Any]] = []
+    Compliance: Optional[list[Any]] = Field(default_factory=list)
 
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
