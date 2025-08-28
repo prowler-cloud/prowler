@@ -1,14 +1,8 @@
 "use client";
 
-import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@nextui-org/react";
 import { format } from "date-fns";
-import {
-  PlusIcon,
-  Power,
-  SettingsIcon,
-  TestTube,
-  Trash2Icon,
-} from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -17,15 +11,20 @@ import {
   updateIntegration,
 } from "@/actions/integrations";
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
+import {
+  IntegrationActionButtons,
+  IntegrationCardHeader,
+  IntegrationSkeleton,
+} from "@/components/integrations/shared";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
+import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
 import { S3IntegrationForm } from "./s3-integration-form";
-import { S3IntegrationCardSkeleton } from "./skeleton-s3-integration-card";
 
 interface S3IntegrationsManagerProps {
   integrations: IntegrationProps[];
@@ -78,7 +77,7 @@ export const S3IntegrationsManager = ({
   const handleDeleteIntegration = async (id: string) => {
     setIsDeleting(id);
     try {
-      const result = await deleteIntegration(id);
+      const result = await deleteIntegration(id, "amazon_s3");
 
       if (result.success) {
         toast({
@@ -173,11 +172,34 @@ export const S3IntegrationsManager = ({
     setEditMode(null);
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = async (
+    integrationId?: string,
+    shouldTestConnection?: boolean,
+  ) => {
+    // Close the modal immediately
     setIsModalOpen(false);
     setEditingIntegration(null);
     setEditMode(null);
     setIsOperationLoading(true);
+
+    // Set testing state for server-triggered test connections
+    if (integrationId && shouldTestConnection) {
+      setIsTesting(integrationId);
+    }
+
+    // Trigger test connection if needed
+    triggerTestConnectionWithDelay(
+      integrationId,
+      shouldTestConnection,
+      "s3",
+      toast,
+      200,
+      () => {
+        // Clear testing state when server-triggered test completes
+        setIsTesting(null);
+      },
+    );
+
     // Reset loading state after a short delay to show the skeleton briefly
     setTimeout(() => {
       setIsOperationLoading(false);
@@ -274,45 +296,36 @@ export const S3IntegrationsManager = ({
 
         {/* Integrations List */}
         {isOperationLoading ? (
-          <S3IntegrationCardSkeleton
+          <IntegrationSkeleton
             variant="manager"
             count={integrations.length || 1}
+            icon={<AmazonS3Icon size={32} />}
+            title="Amazon S3"
+            subtitle="Export security findings to Amazon S3 buckets."
           />
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">
             {integrations.map((integration) => (
               <Card key={integration.id} className="dark:bg-gray-800">
                 <CardHeader className="pb-2">
-                  <div className="flex w-full items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <AmazonS3Icon size={32} />
-                      <div>
-                        <h4 className="text-md font-semibold">
-                          {integration.attributes.configuration.bucket_name ||
-                            "Unknown Bucket"}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-300">
-                          Output directory:{" "}
-                          {integration.attributes.configuration
-                            .output_directory ||
-                            integration.attributes.configuration.path ||
-                            "/"}
-                        </p>
-                      </div>
-                    </div>
-                    <Chip
-                      size="sm"
-                      color={
-                        integration.attributes.connected ? "success" : "danger"
-                      }
-                      variant="flat"
-                    >
-                      {integration.attributes.connected
-                        ? "Connected"
-                        : "Disconnected"}
-                    </Chip>
-                  </div>
+                  <IntegrationCardHeader
+                    icon={<AmazonS3Icon size={32} />}
+                    title={
+                      integration.attributes.configuration.bucket_name ||
+                      "Unknown Bucket"
+                    }
+                    subtitle={`Output directory: ${
+                      integration.attributes.configuration.output_directory ||
+                      integration.attributes.configuration.path ||
+                      "/"
+                    }`}
+                    connectionStatus={{
+                      connected: integration.attributes.connected,
+                    }}
+                    navigationUrl={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}`}
+                  />
                 </CardHeader>
+
                 <CardBody className="pt-0">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-gray-500 dark:text-gray-300">
@@ -328,68 +341,15 @@ export const S3IntegrationsManager = ({
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <CustomButton
-                        size="sm"
-                        variant="bordered"
-                        startContent={<TestTube size={14} />}
-                        onPress={() => handleTestConnection(integration.id)}
-                        isLoading={isTesting === integration.id}
-                        isDisabled={!integration.attributes.enabled}
-                        ariaLabel="Test connection"
-                        className="w-full sm:w-auto"
-                      >
-                        Test
-                      </CustomButton>
-                      <CustomButton
-                        size="sm"
-                        variant="bordered"
-                        startContent={<SettingsIcon size={14} />}
-                        onPress={() => handleEditConfiguration(integration)}
-                        ariaLabel="Edit configuration"
-                        className="w-full sm:w-auto"
-                      >
-                        Config
-                      </CustomButton>
-                      <CustomButton
-                        size="sm"
-                        variant="bordered"
-                        startContent={<SettingsIcon size={14} />}
-                        onPress={() => handleEditCredentials(integration)}
-                        ariaLabel="Edit credentials"
-                        className="w-full sm:w-auto"
-                      >
-                        Credentials
-                      </CustomButton>
-                      <CustomButton
-                        size="sm"
-                        variant="bordered"
-                        color={
-                          integration.attributes.enabled ? "warning" : "primary"
-                        }
-                        startContent={<Power size={14} />}
-                        onPress={() => handleToggleEnabled(integration)}
-                        ariaLabel={
-                          integration.attributes.enabled
-                            ? "Disable integration"
-                            : "Enable integration"
-                        }
-                        className="w-full sm:w-auto"
-                      >
-                        {integration.attributes.enabled ? "Disable" : "Enable"}
-                      </CustomButton>
-                      <CustomButton
-                        size="sm"
-                        color="danger"
-                        variant="bordered"
-                        startContent={<Trash2Icon size={14} />}
-                        onPress={() => handleOpenDeleteModal(integration)}
-                        ariaLabel="Delete integration"
-                        className="w-full sm:w-auto"
-                      >
-                        Delete
-                      </CustomButton>
-                    </div>
+                    <IntegrationActionButtons
+                      integration={integration}
+                      onTestConnection={handleTestConnection}
+                      onEditConfiguration={handleEditConfiguration}
+                      onEditCredentials={handleEditCredentials}
+                      onToggleEnabled={handleToggleEnabled}
+                      onDelete={handleOpenDeleteModal}
+                      isTesting={isTesting === integration.id}
+                    />
                   </div>
                 </CardBody>
               </Card>

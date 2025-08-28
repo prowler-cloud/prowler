@@ -56,6 +56,7 @@ class Monitor(AzureService):
                             for log_settings in (getattr(setting, "logs", []) or [])
                         ],
                         storage_account_id=setting.storage_account_id,
+                        workspace_id=getattr(setting, "workspace_id", None),
                     )
                 )
         except Exception as error:
@@ -112,6 +113,7 @@ class DiagnosticSetting:
     storage_account_name: str
     logs: List[LogSettings]
     name: str
+    workspace_id: Optional[str] = None
 
 
 @dataclass
