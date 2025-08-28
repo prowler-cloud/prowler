@@ -6,6 +6,7 @@ import { CredentialsRoleHelper } from "@/components/providers/workflow";
 import { CustomInput } from "@/components/ui/custom";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AWSCredentialsRole } from "@/types";
+import { IntegrationType } from "@/types/integrations";
 
 export const AWSRoleCredentialsForm = ({
   control,
@@ -13,6 +14,7 @@ export const AWSRoleCredentialsForm = ({
   externalId,
   templateLinks,
   type = "providers",
+  integrationType,
 }: {
   control: Control<AWSCredentialsRole>;
   setValue: UseFormSetValue<AWSCredentialsRole>;
@@ -22,7 +24,8 @@ export const AWSRoleCredentialsForm = ({
     cloudformationQuickLink: string;
     terraform: string;
   };
-  type?: "providers" | "s3-integration";
+  type?: "providers" | "integrations";
+  integrationType?: IntegrationType;
 }) => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const defaultCredentialsType = isCloudEnv
@@ -142,9 +145,6 @@ export const AWSRoleCredentialsForm = ({
             isInvalid={
               !!control._formState.errors[
                 ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
-              ] ||
-              !!control._formState.errors[
-                ProviderCredentialFields.AWS_ACCESS_KEY_ID
               ]
             }
           />
@@ -190,7 +190,7 @@ export const AWSRoleCredentialsForm = ({
           <CredentialsRoleHelper
             externalId={externalId}
             templateLinks={templateLinks}
-            type={type}
+            integrationType={integrationType}
           />
 
           <Divider />
