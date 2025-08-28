@@ -309,11 +309,6 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing tenants, along with their memberships.",
             },
             {
-                "name": "Membership",
-                "description": "Endpoints for managing tenant memberships, allowing retrieval and filtering of "
-                "user membership information within tenants.",
-            },
-            {
                 "name": "Invitation",
                 "description": "Endpoints for tenant invitations management, allowing retrieval and filtering of "
                 "invitations, creating new invitations, accepting and revoking them.",
@@ -326,11 +321,6 @@ class SchemaView(SpectacularAPIView):
             {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
-            },
-            {
-                "name": "Provider Secret",
-                "description": "Endpoints for managing provider secrets, allowing secure storage and management "
-                "of credentials for providers.",
             },
             {
                 "name": "Provider Group",
