@@ -25,28 +25,28 @@ class apim_threat_detection_llm_jacking(Check):
                 "ImageGenerations_Create",
                 "ChatCompletions_Create",
                 "Completions_Create",
-                # "Embeddings_Create",
-                # "FineTuning_Jobs_Create",
-                # "Models_List",
-                # # Azure OpenAI endpoints
-                # "Deployments_List",
-                # "Deployments_Get",
-                # "Deployments_Create",
-                # "Deployments_Delete",
-                # # Anthropic endpoints
-                # "Messages_Create",
-                # "Claude_Create",
-                # # Google AI endpoints
-                # "GenerateContent",
-                # "GenerateText",
-                # "GenerateImage",
-                # # Meta AI endpoints
-                # "Llama_Create",
-                # "CodeLlama_Create",
-                # # Other LLM endpoints
-                # "Gemini_Generate",
-                # "Claude_Generate",
-                # "Llama_Generate",
+                "Embeddings_Create",
+                "FineTuning_Jobs_Create",
+                "Models_List",
+                # Azure OpenAI endpoints
+                "Deployments_List",
+                "Deployments_Get",
+                "Deployments_Create",
+                "Deployments_Delete",
+                # Anthropic endpoints
+                "Messages_Create",
+                "Claude_Create",
+                # Google AI endpoints
+                "GenerateContent",
+                "GenerateText",
+                "GenerateImage",
+                # Meta AI endpoints
+                "Llama_Create",
+                "CodeLlama_Create",
+                # Other LLM endpoints
+                "Gemini_Generate",
+                "Claude_Generate",
+                "Llama_Generate",
             ],
         )
 
