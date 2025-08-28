@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.12.0] (Prowler UNRELEASED)
+
+### Added
+- Add more fields for the Jira ticket and handle custom fields errors []
+
+### Changed
+
+### Fixed
+
+---
+
+## [v5.11.1] (Prowler UNRELEASED)
+
+### Fixed
+
+---
+
 ## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
