@@ -15,6 +15,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetProjectsError,
     JiraNoProjectsError,
     JiraRefreshTokenError,
+    JiraRequiredCustomFieldsError,
 )
 from prowler.lib.outputs.jira.jira import Jira
 
@@ -587,6 +588,20 @@ class TestJiraIntegration:
         finding.metadata.Risk = "risk"
         finding.metadata.Remediation.Recommendation.Text = "remediation_text"
         finding.metadata.Remediation.Recommendation.Url = "remediation_url"
+        finding.metadata.Remediation.Code.NativeIaC = (
+            'resource "aws_s3_bucket" "example" { bucket = "my-bucket" }'
+        )
+        finding.metadata.Remediation.Code.Terraform = (
+            "terraform apply -target=aws_s3_bucket.example"
+        )
+        finding.metadata.Remediation.Code.CLI = (
+            "aws s3api create-bucket --bucket my-bucket --region us-east-1"
+        )
+        finding.metadata.Remediation.Code.Other = (
+            "Manual configuration required in AWS Console"
+        )
+        finding.resource_tags = {"Environment": "Production", "Owner": "SecurityTeam"}
+        finding.compliance = {"CIS": ["2.1.1", "2.1.2"], "NIST": ["AC-3", "AC-6"]}
 
         self.jira_integration.cloud_id = "valid_cloud_id"
 
@@ -594,483 +609,115 @@ class TestJiraIntegration:
             findings=[finding], project_key="TEST-1", issue_type="Bug"
         )
 
+        mock_post.assert_called_once()
+
+        call_args = mock_post.call_args
+
         expected_url = (
             "https://api.atlassian.com/ex/jira/valid_cloud_id/rest/api/3/issue"
         )
-        expected_json = {
-            "fields": {
-                "project": {"key": "TEST-1"},
-                "summary": "[Prowler] HIGH - CHECK-1 - resource-1",
-                "description": {
-                    "type": "doc",
-                    "version": 1,
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "Prowler has discovered the following finding:",
-                                }
-                            ],
-                        },
-                        {
-                            "type": "table",
-                            "attrs": {"layout": "full-width"},
-                            "content": [
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Check Id",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "CHECK-1",
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Check Title",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Check Title",
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Severity",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {"type": "text", "text": "HIGH"}
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Status",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "FAIL",
-                                                            "marks": [
-                                                                {"type": "strong"},
-                                                                {
-                                                                    "type": "textColor",
-                                                                    "attrs": {
-                                                                        "color": "#FF0000"
-                                                                    },
-                                                                },
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Status Extended",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "status_extended",
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Provider",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "aws",
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Region",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "region",
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Resource UID",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "resource-1",
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Resource Name",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "resource_name",
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Risk",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {"type": "text", "text": "risk"}
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Recommendation",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "remediation_text ",
-                                                        },
-                                                        {
-                                                            "type": "text",
-                                                            "text": "remediation_url",
-                                                            "marks": [
-                                                                {
-                                                                    "type": "link",
-                                                                    "attrs": {
-                                                                        "href": "remediation_url"
-                                                                    },
-                                                                }
-                                                            ],
-                                                        },
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
-                },
-                "issuetype": {"name": "Bug"},
-            }
-        }
         expected_headers = {
             "Authorization": "Bearer valid_access_token",
             "Content-Type": "application/json",
         }
 
-        mock_post.assert_called_once_with(
-            expected_url, json=expected_json, headers=expected_headers
+        assert call_args[0][0] == expected_url
+        assert call_args.kwargs["headers"] == expected_headers
+
+        payload = call_args.kwargs["json"]
+        assert payload["fields"]["project"]["key"] == "TEST-1"
+        assert payload["fields"]["summary"] == "[Prowler] HIGH - CHECK-1 - resource-1"
+        assert payload["fields"]["issuetype"]["name"] == "Bug"
+        assert payload["fields"]["description"]["type"] == "doc"
+
+        description_content = payload["fields"]["description"]["content"]
+
+        intro_paragraph = description_content[0]
+        assert intro_paragraph["type"] == "paragraph"
+        intro_text = intro_paragraph["content"][0]
+        assert intro_text["type"] == "text"
+        assert intro_text["text"] == "Prowler has discovered the following finding:"
+
+        table = description_content[1]
+        assert table["type"] == "table"
+
+        table_rows = table["content"]
+        row_texts = []
+        for row in table_rows:
+            if row["type"] == "tableRow":
+                cells = row["content"]
+                if len(cells) == 2:
+                    key_cell = cells[0]["content"][0]["content"][0]["text"]
+
+                    value_content = cells[1]["content"][0]["content"]
+                    if len(value_content) > 1:
+                        value_texts = []
+                        for content_item in value_content:
+                            if content_item["type"] == "text":
+                                value_texts.append(content_item["text"])
+                        value_cell = "".join(value_texts)
+                    else:
+                        value_cell = value_content[0]["text"]
+
+                    row_texts.append((key_cell, value_cell))
+
+        expected_keys = [
+            "Check Id",
+            "Check Title",
+            "Severity",
+            "Status",
+            "Status Extended",
+            "Provider",
+            "Region",
+            "Resource UID",
+            "Resource Name",
+            "Risk",
+            "Resource Tags",
+            "Compliance",
+            "Recommendation",
+            "Remediation Native IaC",
+            "Remediation Terraform",
+            "Remediation CLI",
+            "Remediation Other",
+        ]
+
+        actual_keys = [key for key, _ in row_texts]
+
+        for expected_key in expected_keys:
+            assert expected_key in actual_keys, f"Missing row key: {expected_key}"
+
+        row_dict = dict(row_texts)
+        assert row_dict["Check Id"] == "CHECK-1"
+        assert row_dict["Check Title"] == "Check Title"
+        assert row_dict["Status"] == "FAIL"
+        assert row_dict["Severity"] == "HIGH"
+        assert row_dict["Resource UID"] == "resource-1"
+        assert row_dict["Resource Name"] == "resource_name"
+        assert row_dict["Provider"] == "aws"
+        assert row_dict["Region"] == "region"
+        assert row_dict["Risk"] == "risk"
+        assert "remediation_text" in row_dict["Recommendation"]
+        assert "remediation_url" in row_dict["Recommendation"]
+        assert (
+            row_dict["Remediation Native IaC"]
+            == 'resource "aws_s3_bucket" "example" { bucket = "my-bucket" }'
         )
+        assert (
+            row_dict["Remediation Terraform"]
+            == "terraform apply -target=aws_s3_bucket.example"
+        )
+        assert (
+            row_dict["Remediation CLI"]
+            == "aws s3api create-bucket --bucket my-bucket --region us-east-1"
+        )
+        assert (
+            row_dict["Remediation Other"]
+            == "Manual configuration required in AWS Console"
+        )
+        assert "Environment=Production" in row_dict["Resource Tags"]
+        assert "Owner=SecurityTeam" in row_dict["Resource Tags"]
+        assert "CIS: 2.1.1, 2.1.2" in row_dict["Compliance"]
+        assert "NIST: AC-3, AC-6" in row_dict["Compliance"]
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1084,6 +731,7 @@ class TestJiraIntegration:
         # To disable vulture
         mock_get_available_issue_types = mock_get_available_issue_types
         mock_get_access_token = mock_get_access_token
+        mock_post = mock_post
 
         with pytest.raises(JiraCreateIssueError):
             self.jira_integration.send_findings(
@@ -1119,6 +767,120 @@ class TestJiraIntegration:
                 findings=[finding], project_key="TEST", issue_type="Bug"
             )
 
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "get_available_issue_types", return_value=["Bug", "Task", "Story"]
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST-1": "Test Project"})
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_findings_custom_fields_required_error(
+        self,
+        mock_post,
+        mock_get_projects,
+        mock_get_available_issue_types,
+        mock_get_access_token,
+    ):
+        """Test that send_findings raises JiraRequiredCustomFieldsError when custom fields are required."""
+        # To disable vulture
+        mock_get_available_issue_types = mock_get_available_issue_types
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {
+            "errorMessages": [],
+            "errors": {
+                "customfield_10148": "Team is required.",
+                "customfield_10088": "Component is required.",
+            },
+        }
+        mock_post.return_value = mock_response
+
+        finding = MagicMock()
+        finding.status.value = "FAIL"
+        finding.status_extended = "status_extended"
+        finding.metadata.Severity.value = "HIGH"
+        finding.metadata.CheckID = "CHECK-1"
+        finding.metadata.CheckTitle = "Check Title"
+        finding.resource_uid = "resource-1"
+        finding.resource_name = "resource_name"
+        finding.metadata.Provider = "aws"
+        finding.region = "region"
+        finding.metadata.Risk = "risk"
+        finding.metadata.Remediation.Recommendation.Text = "remediation_text"
+        finding.metadata.Remediation.Recommendation.Url = "remediation_url"
+        finding.metadata.Remediation.Code.NativeIaC = ""
+        finding.metadata.Remediation.Code.Terraform = ""
+        finding.metadata.Remediation.Code.CLI = ""
+        finding.metadata.Remediation.Code.Other = ""
+        finding.resource_tags = {}
+        finding.compliance = {}
+
+        self.jira_integration.cloud_id = "valid_cloud_id"
+
+        with pytest.raises(JiraRequiredCustomFieldsError):
+            self.jira_integration.send_findings(
+                findings=[finding], project_key="TEST-1", issue_type="Bug"
+            )
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "get_available_issue_types", return_value=["Bug", "Task", "Story"]
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST-1": "Test Project"})
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_findings_non_custom_field_400_error(
+        self,
+        mock_post,
+        mock_get_projects,
+        mock_get_available_issue_types,
+        mock_get_access_token,
+    ):
+        """Test that send_findings raises JiraCreateIssueError for non-custom field 400 errors."""
+        # To disable vulture
+        mock_get_available_issue_types = mock_get_available_issue_types
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {
+            "errorMessages": [],
+            "errors": {
+                "summary": "Summary is required.",
+                "description": "Description is required.",
+            },
+        }
+        mock_post.return_value = mock_response
+
+        finding = MagicMock()
+        finding.status.value = "FAIL"
+        finding.status_extended = "status_extended"
+        finding.metadata.Severity.value = "HIGH"
+        finding.metadata.CheckID = "CHECK-1"
+        finding.metadata.CheckTitle = "Check Title"
+        finding.resource_uid = "resource-1"
+        finding.resource_name = "resource_name"
+        finding.metadata.Provider = "aws"
+        finding.region = "region"
+        finding.metadata.Risk = "risk"
+        finding.metadata.Remediation.Recommendation.Text = "remediation_text"
+        finding.metadata.Remediation.Recommendation.Url = "remediation_url"
+        finding.metadata.Remediation.Code.NativeIaC = ""
+        finding.metadata.Remediation.Code.Terraform = ""
+        finding.metadata.Remediation.Code.CLI = ""
+        finding.metadata.Remediation.Code.Other = ""
+        finding.resource_tags = {}
+        finding.compliance = {}
+
+        self.jira_integration.cloud_id = "valid_cloud_id"
+
+        with pytest.raises(JiraCreateIssueError):
+            self.jira_integration.send_findings(
+                findings=[finding], project_key="TEST-1", issue_type="Bug"
+            )
+
     @pytest.mark.parametrize(
         "status, expected_color",
         [("FAIL", "#FF0000"), ("PASS", "#008000"), ("MUTED", "#FFA500")],
@@ -1126,3 +888,18 @@ class TestJiraIntegration:
     def test_get_color_from_status(self, status, expected_color):
         """Test that get_color_from_status returns the correct color for a status."""
         assert self.jira_integration.get_color_from_status(status) == expected_color
+
+    @pytest.mark.parametrize(
+        "severity, expected_color",
+        [
+            ("critical", "#FF0000"),
+            ("high", "#FFA500"),
+            ("medium", "#FFFF00"),
+            ("low", "#008000"),
+            ("informational", "#0000FF"),
+            ("unknown", "#000000"),
+        ],
+    )
+    def test_get_severity_color(self, severity, expected_color):
+        """Test that get_severity_color returns the correct color for a severity."""
+        assert self.jira_integration.get_severity_color(severity) == expected_color
