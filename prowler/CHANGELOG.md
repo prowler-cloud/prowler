@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.11.1] (Prowler v5.11.1 UNRELEASED)
+
+### Fixed
+- `firehose_stream_encrypted_at_rest` check false positives and new api call in kafka service [(#8599)](https://github.com/prowler-cloud/prowler/pull/8599)
+
+---
+
 ## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
