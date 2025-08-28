@@ -322,8 +322,10 @@ export const S3IntegrationsManager = ({
                     connectionStatus={{
                       connected: integration.attributes.connected,
                     }}
+                    navigationUrl={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}`}
                   />
                 </CardHeader>
+
                 <CardBody className="pt-0">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-gray-500 dark:text-gray-300">

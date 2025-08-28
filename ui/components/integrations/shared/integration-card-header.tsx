@@ -1,6 +1,7 @@
 "use client";
 
 import { Chip } from "@nextui-org/react";
+import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
 
 interface IntegrationCardHeaderProps {
@@ -22,6 +23,7 @@ interface IntegrationCardHeaderProps {
     connected: boolean;
     label?: string;
   };
+  navigationUrl?: string;
 }
 
 export const IntegrationCardHeader = ({
@@ -30,13 +32,27 @@ export const IntegrationCardHeader = ({
   subtitle,
   chips = [],
   connectionStatus,
+  navigationUrl,
 }: IntegrationCardHeaderProps) => {
   return (
     <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         {icon}
         <div>
-          <h4 className="text-md font-semibold">{title}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="text-md font-semibold">{title}</h4>
+            {navigationUrl && (
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black dark:text-white"
+                href={navigationUrl}
+                aria-label="open bucket in new tab"
+              >
+                <ExternalLink size={16} />
+              </a>
+            )}
+          </div>
           {subtitle && (
             <p className="text-xs text-gray-500 dark:text-gray-300">
               {subtitle}

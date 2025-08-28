@@ -120,6 +120,12 @@ def get_prowler_provider_kwargs(
         }
     elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
+    elif provider.provider == Provider.ProviderChoices.GITHUB.value:
+        if provider.uid:
+            prowler_provider_kwargs = {
+                **prowler_provider_kwargs,
+                "organizations": [provider.uid],
+            }
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
@@ -222,6 +228,10 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
 
             # Save regions information in the integration configuration
             integration.configuration["regions"] = regions_status
+            integration.save()
+        else:
+            # Reset regions information if connection fails
+            integration.configuration["regions"] = {}
             integration.save()
 
         return connection

@@ -9,6 +9,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - Integration with Amazon Security Hub, enabling sending findings to Security Hub [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 - Generate ASFF output for AWS providers with SecurityHub integration enabled [(#8569)](https://github.com/prowler-cloud/prowler/pull/8569)
 
+### Fixed
+- GitHub provider always scans user instead of organization when using provider UID [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
+
 ## [1.11.0] (Prowler 5.10.0)
 
 ### Added
