@@ -346,6 +346,25 @@ export const handleApiResponse = async (
   response: Response,
   pathToRevalidate?: string,
 ) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const errorDetail = errorData?.errors?.[0]?.detail;
+
+    // Special handling for server errors (500+)
+    if (response.status >= 500) {
+      throw new Error(
+        errorDetail ||
+          `Server error (${response.status}): The server encountered an error. Please try again later.`,
+      );
+    }
+
+    // Client errors (4xx)
+    throw new Error(
+      errorDetail ||
+        `Request failed (${response.status}): ${response.statusText}`,
+    );
+  }
+
   const data = await response.json();
 
   if (pathToRevalidate) {
