@@ -63,8 +63,8 @@ class apim_threat_detection_llm_jacking(Check):
             # 2. Perform a single, global analysis on all collected logs
             potential_llm_jacking_attackers = {}
             for log in all_llm_logs:
-                operation_name = log.OperationId
-                caller_ip = log.CallerIpAddress
+                operation_name = log.operation_id
+                caller_ip = log.caller_ip_address
 
                 if operation_name in monitored_actions and caller_ip:
                     # Use IP address as the principal identifier

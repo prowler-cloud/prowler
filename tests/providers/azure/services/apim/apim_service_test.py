@@ -260,12 +260,12 @@ class Test_APIM_Service(TestCase):
                 from datetime import datetime
 
                 self.assertEqual(
-                    result[0].TimeGenerated,
+                    result[0].time_generated,
                     datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
                 )
-                self.assertEqual(result[0].OperationId, "test-operation")
-                self.assertEqual(result[0].CallerIpAddress, "192.168.1.100")
-                self.assertEqual(result[0].CorrelationId, "test-correlation")
+                self.assertEqual(result[0].operation_id, "test-operation")
+                self.assertEqual(result[0].caller_ip_address, "192.168.1.100")
+                self.assertEqual(result[0].correlation_id, "test-correlation")
 
     def test_get_llm_operations_logs_no_workspace_id(self):
         """Test getting logs when the APIM instance has no workspace configured."""

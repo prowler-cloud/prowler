@@ -23,13 +23,20 @@ class APIMInstance(BaseModel):
     log_analytics_workspace_id: Optional[str] = None
 
 
-class LogsQueryLogEntry(BaseModel):
-    """Logs Query Log Entry model"""
+class LogsQueryLogEntry:
+    """Represents a log entry from Azure Log Analytics query results."""
 
-    TimeGenerated: datetime
-    OperationId: str
-    CallerIpAddress: str
-    CorrelationId: str
+    def __init__(
+        self,
+        time_generated: datetime,
+        operation_id: str,
+        caller_ip_address: str,
+        correlation_id: str,
+    ):
+        self.time_generated = time_generated
+        self.operation_id = operation_id
+        self.caller_ip_address = caller_ip_address
+        self.correlation_id = correlation_id
 
 
 class APIM(AzureService):
@@ -186,10 +193,21 @@ class APIM(AzureService):
 
             if response.tables:
                 columns = response.tables[0].columns
-                return [
-                    LogsQueryLogEntry(**dict(zip(columns, row)))
-                    for row in response.tables[0].rows
-                ]
+                rows = response.tables[0].rows
+                result = []
+
+                for row in rows:
+                    # Create a mapping from Azure column names to our snake_case field names
+                    row_dict = dict(zip(columns, row))
+                    mapped_dict = {
+                        "time_generated": row_dict.get("TimeGenerated"),
+                        "operation_id": row_dict.get("OperationId"),
+                        "caller_ip_address": row_dict.get("CallerIpAddress"),
+                        "correlation_id": row_dict.get("CorrelationId"),
+                    }
+                    result.append(LogsQueryLogEntry(**mapped_dict))
+
+                return result
 
         except Exception as error:
             logger.error(
@@ -215,7 +233,7 @@ class APIM(AzureService):
 
         Returns:
             A list of dictionaries containing log entries with fields like
-            TimeGenerated, OperationId, CallerIpAddress, and CorrelationId.
+            time_generated, operation_id, caller_ip_address, and correlation_id.
             Returns an empty list if no workspace is configured or if the query fails.
         """
         if not instance.log_analytics_workspace_id:

@@ -18,16 +18,16 @@ def mock_get_llm_operations_logs(subscription, instance, minutes):
     """Mock LLM operations logs for testing - returns 2 operations"""
     return [
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
-            OperationId="ChatCompletions_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-1",
+            time_generated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            operation_id="ChatCompletions_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-1",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
-            OperationId="ImageGenerations_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-2",
+            time_generated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            operation_id="ImageGenerations_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-2",
         ),
     ]
 
@@ -36,40 +36,40 @@ def mock_get_llm_operations_logs_6_operations(subscription, instance, minutes):
     """Mock LLM operations logs for testing - returns 6 operations"""
     return [
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
-            OperationId="ChatCompletions_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-1",
+            time_generated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            operation_id="ChatCompletions_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-1",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
-            OperationId="ImageGenerations_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-2",
+            time_generated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            operation_id="ImageGenerations_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-2",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:02:00+00:00"),
-            OperationId="Completions_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-3",
+            time_generated=datetime.fromisoformat("2024-01-01T10:02:00+00:00"),
+            operation_id="Completions_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-3",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:03:00+00:00"),
-            OperationId="Embeddings_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-4",
+            time_generated=datetime.fromisoformat("2024-01-01T10:03:00+00:00"),
+            operation_id="Embeddings_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-4",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:04:00+00:00"),
-            OperationId="FineTuning_Jobs_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-5",
+            time_generated=datetime.fromisoformat("2024-01-01T10:04:00+00:00"),
+            operation_id="FineTuning_Jobs_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-5",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:05:00+00:00"),
-            OperationId="Models_List",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-6",
+            time_generated=datetime.fromisoformat("2024-01-01T10:05:00+00:00"),
+            operation_id="Models_List",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-6",
         ),
     ]
 
@@ -78,16 +78,16 @@ def mock_get_llm_operations_logs_2_operations(subscription, instance, minutes):
     """Mock LLM operations logs for testing - returns 2 operations"""
     return [
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
-            OperationId="ChatCompletions_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-1",
+            time_generated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            operation_id="ChatCompletions_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-1",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
-            OperationId="ImageGenerations_Create",
-            CallerIpAddress="192.168.1.100",
-            CorrelationId="test-correlation-id-2",
+            time_generated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            operation_id="ImageGenerations_Create",
+            caller_ip_address="192.168.1.100",
+            correlation_id="test-correlation-id-2",
         ),
     ]
 
@@ -96,40 +96,40 @@ def mock_get_llm_operations_logs_attacker(subscription, instance, minutes):
     """Mock LLM operations logs showing potential attack"""
     return [
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
-            OperationId="ChatCompletions_Create",
-            CallerIpAddress="10.0.0.50",
-            CorrelationId="test-correlation-id-1",
+            time_generated=datetime.fromisoformat("2024-01-01T10:00:00+00:00"),
+            operation_id="ChatCompletions_Create",
+            caller_ip_address="10.0.0.50",
+            correlation_id="test-correlation-id-1",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
-            OperationId="ImageGenerations_Create",
-            CallerIpAddress="10.0.0.50",
-            CorrelationId="test-correlation-id-2",
+            time_generated=datetime.fromisoformat("2024-01-01T10:01:00+00:00"),
+            operation_id="ImageGenerations_Create",
+            caller_ip_address="10.0.0.50",
+            correlation_id="test-correlation-id-2",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:02:00+00:00"),
-            OperationId="Completions_Create",
-            CallerIpAddress="10.0.0.50",
-            CorrelationId="test-correlation-id-3",
+            time_generated=datetime.fromisoformat("2024-01-01T10:02:00+00:00"),
+            operation_id="Completions_Create",
+            caller_ip_address="10.0.0.50",
+            correlation_id="test-correlation-id-3",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:03:00+00:00"),
-            OperationId="Embeddings_Create",
-            CallerIpAddress="10.0.0.50",
-            CorrelationId="test-correlation-id-4",
+            time_generated=datetime.fromisoformat("2024-01-01T10:03:00+00:00"),
+            operation_id="Embeddings_Create",
+            caller_ip_address="10.0.0.50",
+            correlation_id="test-correlation-id-4",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:04:00+00:00"),
-            OperationId="FineTuning_Jobs_Create",
-            CallerIpAddress="10.0.0.50",
-            CorrelationId="test-correlation-id-5",
+            time_generated=datetime.fromisoformat("2024-01-01T10:04:00+00:00"),
+            operation_id="FineTuning_Jobs_Create",
+            caller_ip_address="10.0.0.50",
+            correlation_id="test-correlation-id-5",
         ),
         MockLogsQueryLogEntry(
-            TimeGenerated=datetime.fromisoformat("2024-01-01T10:05:00+00:00"),
-            OperationId="Models_List",
-            CallerIpAddress="10.0.0.50",
-            CorrelationId="test-correlation-id-6",
+            time_generated=datetime.fromisoformat("2024-01-01T10:05:00+00:00"),
+            operation_id="Models_List",
+            caller_ip_address="10.0.0.50",
+            correlation_id="test-correlation-id-6",
         ),
     ]
 
