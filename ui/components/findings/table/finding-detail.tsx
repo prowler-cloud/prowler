@@ -1,6 +1,7 @@
 "use client";
 
 import { Snippet } from "@nextui-org/react";
+import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomSection } from "@/components/ui/custom";
@@ -122,15 +123,21 @@ export const FindingDetail = ({
               hideCopyButton
               hideSymbol
             >
-              <p className="whitespace-pre-line">
-                {attributes.check_metadata.risk}
-              </p>
+              {/* eslint-disable-next-line */}
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown>{attributes.check_metadata.risk}</ReactMarkdown>
+              </div>
             </Snippet>
           </InfoField>
         )}
 
         <InfoField label="Description">
-          {renderValue(attributes.check_metadata.description)}
+          {/* eslint-disable-next-line */}
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            <ReactMarkdown>
+              {attributes.check_metadata.description}
+            </ReactMarkdown>
+          </div>
         </InfoField>
 
         <InfoField label="Status Extended">
@@ -147,9 +154,15 @@ export const FindingDetail = ({
             {attributes.check_metadata.remediation.recommendation.text && (
               <InfoField label="Recommendation">
                 <div className="flex flex-col gap-2">
-                  <p>
-                    {attributes.check_metadata.remediation.recommendation.text}
-                  </p>
+                  {/* eslint-disable-next-line */}
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <ReactMarkdown>
+                      {
+                        attributes.check_metadata.remediation.recommendation
+                          .text
+                      }
+                    </ReactMarkdown>
+                  </div>
                   {attributes.check_metadata.remediation.recommendation.url && (
                     <CustomLink
                       href={
@@ -178,12 +191,12 @@ export const FindingDetail = ({
             {/* Additional Resources section */}
             {attributes.check_metadata.remediation.code.other && (
               <InfoField label="Additional Resources">
-                <CustomLink
-                  href={attributes.check_metadata.remediation.code.other}
-                  size="sm"
-                >
-                  View documentation
-                </CustomLink>
+                {/* eslint-disable-next-line */}
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown>
+                    {attributes.check_metadata.remediation.code.other}
+                  </ReactMarkdown>
+                </div>
               </InfoField>
             )}
           </div>
