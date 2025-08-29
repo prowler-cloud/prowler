@@ -2,14 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getTask } from "@/actions/task";
 import {
   apiBaseUrl,
   getAuthHeaders,
   handleApiError,
   parseStringify,
 } from "@/lib";
-
-import { getTask } from "@/actions/task";
 import { IntegrationType } from "@/types/integrations";
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {

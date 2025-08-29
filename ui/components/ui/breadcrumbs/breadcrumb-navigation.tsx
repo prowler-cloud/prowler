@@ -5,6 +5,7 @@ import { BreadcrumbItem, Breadcrumbs } from "@nextui-org/react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
+
 import { LighthouseIcon } from "@/components/icons/Icons";
 
 export interface CustomBreadcrumbItem {
