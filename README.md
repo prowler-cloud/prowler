@@ -63,7 +63,7 @@ Prowler offers a Command Line Interface (CLI), known as Prowler Open Source, and
 
 Prowler App is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
-![Prowler App](docs/img/overview.png)
+![Prowler App](docs/products/img/overview.png)
 
 >For more details, refer to the [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
@@ -80,7 +80,7 @@ prowler <provider>
 ```console
 prowler dashboard
 ```
-![Prowler Dashboard](docs/img/dashboard.png)
+![Prowler Dashboard](docs/products/img/dashboard.png)
 
 # Prowler at a Glance
 
