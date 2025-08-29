@@ -100,7 +100,7 @@ prowler dashboard
 > - `prowler <provider> --list-checks`
 > - `prowler <provider> --list-services`
 > - `prowler <provider> --list-compliance`
-> - `prowler <provider> --list-categories`.
+> - `prowler <provider> --list-categories`
 
 # 💻 Installation
 
