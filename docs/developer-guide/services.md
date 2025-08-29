@@ -231,11 +231,11 @@ Before implementing a new service, verify that Prowler's existing permissions fo
 
 Provider-Specific Permissions Documentation:
 
-- [AWS](../getting-started/requirements.md#authentication)
-- [Azure](../getting-started/requirements.md#needed-permissions)
-- [GCP](../getting-started/requirements.md#needed-permissions_1)
-- [M365](../getting-started/requirements.md#needed-permissions_2)
-- [GitHub](../getting-started/requirements.md#authentication_2)
+- [AWS](../tutorials/aws/authentication.md#required-permissions)
+- [Azure](../tutorials/azure/authentication.md#required-permissions)
+- [GCP](../tutorials/gcp/authentication.md#required-permissions)
+- [M365](../tutorials/microsoft365/authentication.md#required-permissions)
+- [GitHub](../tutorials/github/authentication.md)
 
 ## Best Practices
 

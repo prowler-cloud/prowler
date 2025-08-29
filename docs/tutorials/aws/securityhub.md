@@ -21,7 +21,7 @@ AWS Security Hub can be enabled using either of the following methods:
 
 #### Enabling AWS Security Hub for Prowler Integration
 
-If AWS Security Hub is already enabled, you can proceed to the [next section](#enable-prowler-integration).
+If AWS Security Hub is already enabled, you can proceed to the [next section](#enabling-prowler-integration-in-aws-security-hub).
 
 1. Enable AWS Security Hub via Console: Open the **AWS Security Hub** console: https://console.aws.amazon.com/securityhub/.
 
@@ -33,7 +33,7 @@ If AWS Security Hub is already enabled, you can proceed to the [next section](#e
 
 #### Enabling Prowler Integration in AWS Security Hub
 
-If the Prowler integration is already enabled in AWS Security Hub, you can proceed to the [next section](#send-findings) and begin sending findings.
+If the Prowler integration is already enabled in AWS Security Hub, you can proceed to the [next section](#sending-findings-to-aws-security-hub) and begin sending findings.
 
 Once **AWS Security Hub** is activated, **Prowler** must be enabled as partner integration to allow security findings to be sent to it.
 
@@ -132,7 +132,7 @@ prowler --security-hub --role arn:aws:iam::123456789012:role/ProwlerExecutionRol
 ```
 
 ???+ note
-    The specified IAM role must have the necessary permissions to send findings to Security Hub. For details on the required permissions, refer to the IAM policy: [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
+    The specified IAM role must have the necessary permissions to send findings to Security Hub. For details on the required permissions, refer to the IAM policy: [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json)
 
 ## Sending Only Failed Findings to AWS Security Hub
 

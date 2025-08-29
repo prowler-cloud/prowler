@@ -46,6 +46,7 @@ from api.v1.serializer_utils.integrations import (
     IntegrationConfigField,
     IntegrationCredentialField,
     S3ConfigSerializer,
+    SecurityHubConfigSerializer,
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
@@ -1951,12 +1952,43 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
     def validate(self, attrs):
-        if Integration.objects.filter(
-            configuration=attrs.get("configuration")
-        ).exists():
+        if (
+            attrs.get("integration_type") == Integration.IntegrationChoices.AMAZON_S3
+            and Integration.objects.filter(
+                configuration=attrs.get("configuration")
+            ).exists()
+        ):
             raise serializers.ValidationError(
-                {"name": "This integration already exists."}
+                {"configuration": "This integration already exists."}
             )
+
+        # Check if any provider already has a SecurityHub integration
+        integration_type = attrs.get("integration_type")
+        if hasattr(self, "instance") and self.instance and not integration_type:
+            integration_type = self.instance.integration_type
+
+        if (
+            integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+            and "providers" in attrs
+        ):
+            providers = attrs.get("providers", [])
+            tenant_id = self.context.get("tenant_id")
+            for provider in providers:
+                # For updates, exclude the current instance from the check
+                query = IntegrationProviderRelationship.objects.filter(
+                    provider=provider,
+                    integration__integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                    tenant_id=tenant_id,
+                )
+                if hasattr(self, "instance") and self.instance:
+                    query = query.exclude(integration=self.instance)
+
+                if query.exists():
+                    raise serializers.ValidationError(
+                        {
+                            "providers": f"Provider {provider.id} already has a Security Hub integration. Only one Security Hub integration is allowed per provider."
+                        }
+                    )
 
         return super().validate(attrs)
 
@@ -1970,14 +2002,22 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
         if integration_type == Integration.IntegrationChoices.AMAZON_S3:
             config_serializer = S3ConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
-            # TODO: This will be required for AWS Security Hub
-            # if providers and not all(
-            #     provider.provider == Provider.ProviderChoices.AWS
-            #     for provider in providers
-            # ):
-            #     raise serializers.ValidationError(
-            #         {"providers": "All providers must be AWS for the S3 integration."}
-            #     )
+        elif integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
+            if providers:
+                if len(providers) > 1:
+                    raise serializers.ValidationError(
+                        {
+                            "providers": "Only one provider is supported for the Security Hub integration."
+                        }
+                    )
+                if providers[0].provider != Provider.ProviderChoices.AWS:
+                    raise serializers.ValidationError(
+                        {
+                            "providers": "The provider must be AWS type for the Security Hub integration."
+                        }
+                    )
+            config_serializer = SecurityHubConfigSerializer
+            credentials_serializers = [AWSCredentialSerializer]
         else:
             raise serializers.ValidationError(
                 {
@@ -2077,6 +2117,16 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         configuration = attrs.get("configuration")
         credentials = attrs.get("credentials")
 
+        if (
+            not providers
+            and integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+        ):
+            raise serializers.ValidationError(
+                {
+                    "providers": "At least one provider is required for the Security Hub integration."
+                }
+            )
+
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
@@ -2131,16 +2181,15 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         }
 
     def validate(self, attrs):
-        super().validate(attrs)
         integration_type = self.instance.integration_type
         providers = attrs.get("providers")
         configuration = attrs.get("configuration") or self.instance.configuration
         credentials = attrs.get("credentials") or self.instance.credentials
 
-        validated_attrs = super().validate(attrs)
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
+        validated_attrs = super().validate(attrs)
         return validated_attrs
 
     def update(self, instance, validated_data):
@@ -2154,6 +2203,13 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
                 for provider in validated_data["providers"]
             ]
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
+
+        # Preserve regions field for Security Hub integrations
+        if instance.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
+            if "configuration" in validated_data:
+                # Preserve the existing regions field if it exists
+                existing_regions = instance.configuration.get("regions", {})
+                validated_data["configuration"]["regions"] = existing_regions
 
         return super().update(instance, validated_data)
 

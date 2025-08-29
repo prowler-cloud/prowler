@@ -11,7 +11,7 @@ prowler <provider>
 ![Prowler Execution](../img/short-display.png)
 
 ???+ note
-    Running the `prowler` command without options will uses environment variable credentials. Refer to the [Requirements](../getting-started/requirements.md) section for credential configuration details.
+    Running the `prowler` command without options will uses environment variable credentials. Refer to the Authentication section of each provider for credential configuration details.
 
 ## Verbose Output
 
@@ -77,7 +77,7 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ???+ note
     By default, `prowler` will scan all AWS regions.
 
-See more details about AWS Authentication in the [Requirements](../getting-started/requirements.md#aws) section.
+See more details about AWS Authentication in the [Authentication Section](../tutorials/aws/authentication.md) section.
 
 ## Azure
 
@@ -97,7 +97,7 @@ prowler azure --browser-auth --tenant-id "XXXXXXXX"
 prowler azure --managed-identity-auth
 ```
 
-See more details about Azure Authentication in [Requirements](../getting-started/requirements.md#azure)
+See more details about Azure Authentication in the [Authentication Section](../tutorials/azure/authentication.md)
 
 By default, Prowler scans all accessible subscriptions. Scan specific subscriptions using the following flag (using az cli auth as example):
 
@@ -193,7 +193,7 @@ prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 
 ```
 
-See more details about M365 Authentication in the [Requirements](../getting-started/requirements.md#microsoft-365) section.
+See more details about M365 Authentication in the [Authentication Section](../tutorials/microsoft365/authentication.md) section.
 
 ## GitHub
 
