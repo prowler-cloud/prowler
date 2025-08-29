@@ -3339,27 +3339,6 @@ paths:
         description: A search term.
         schema:
           type: string
-      - in: query
-        name: filter[status]
-        schema:
-          type: string
-          enum:
-          - FAIL
-          - MANUAL
-          - PASS
-        description: |-
-          * `FAIL` - Fail
-          * `PASS` - Pass
-          * `MANUAL` - Manual
-      - in: query
-        name: filter[status__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - name: sort
         required: false
         in: query
@@ -3731,27 +3710,6 @@ paths:
         description: A search term.
         schema:
           type: string
-      - in: query
-        name: filter[status]
-        schema:
-          type: string
-          enum:
-          - FAIL
-          - MANUAL
-          - PASS
-        description: |-
-          * `FAIL` - Fail
-          * `PASS` - Pass
-          * `MANUAL` - Manual
-      - in: query
-        name: filter[status__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
       - name: sort
         required: false
         in: query

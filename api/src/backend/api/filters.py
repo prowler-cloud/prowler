@@ -732,6 +732,8 @@ class ComplianceOverviewFilter(FilterSet):
 
 
 class ScanSummaryFilter(FilterSet):
+    """Base filter for ScanSummary"""
+
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_type = ChoiceFilter(
@@ -742,7 +744,18 @@ class ScanSummaryFilter(FilterSet):
     )
     region = CharFilter(field_name="region")
 
-    # Custom status filters - it allows the parameters to pass validation
+    class Meta:
+        model = ScanSummary
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+            "region": ["exact", "icontains", "in"],
+        }
+
+
+class ScanSummarySeverityFilter(ScanSummaryFilter):
+    """Filter for findings_severity ScanSummary endpoint - includes status filters"""
+
+    # Custom status filters - only for severity grouping endpoint
     status = ChoiceFilter(method="filter_status", choices=StatusChoices.choices)
     status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
 

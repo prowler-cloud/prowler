@@ -89,6 +89,7 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
@@ -3546,8 +3547,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "findings_severity"]:
+        elif self.action == "findings":
             return ScanSummaryFilter
+        elif self.action == "findings_severity":
+            return ScanSummarySeverityFilter
         elif self.action == "services":
             return ServiceOverviewFilter
         return None
