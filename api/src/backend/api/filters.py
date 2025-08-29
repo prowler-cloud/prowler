@@ -732,6 +732,8 @@ class ComplianceOverviewFilter(FilterSet):
 
 
 class ScanSummaryFilter(FilterSet):
+    """Base filter for ScanSummary"""
+
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
     provider_type = ChoiceFilter(
@@ -741,6 +743,34 @@ class ScanSummaryFilter(FilterSet):
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
     region = CharFilter(field_name="region")
+
+    class Meta:
+        model = ScanSummary
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+            "region": ["exact", "icontains", "in"],
+        }
+
+
+class ScanSummarySeverityFilter(ScanSummaryFilter):
+    """Filter for findings_severity ScanSummary endpoint - includes status filters"""
+
+    # Custom status filters - only for severity grouping endpoint
+    status = ChoiceFilter(method="filter_status", choices=StatusChoices.choices)
+    status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
+
+    def filter_status(self, queryset, name, value):
+        # This method just validates the status value and passes it through
+        if value not in [choice[0] for choice in StatusChoices.choices]:
+            raise ValidationError(f"Invalid status value: {value}")
+        return queryset
+
+    def filter_status_in(self, queryset, name, value):
+        # This method just validates the status values and passes them through
+        for status_val in value:
+            if status_val not in [choice[0] for choice in StatusChoices.choices]:
+                raise ValidationError(f"Invalid status value: {status_val}")
+        return queryset
 
     class Meta:
         model = ScanSummary

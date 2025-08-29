@@ -89,6 +89,7 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
@@ -3546,8 +3547,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "findings_severity"]:
+        elif self.action == "findings":
             return ScanSummaryFilter
+        elif self.action == "findings_severity":
+            return ScanSummarySeverityFilter
         elif self.action == "services":
             return ServiceOverviewFilter
         return None
@@ -3669,7 +3672,12 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
         tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
+
+        # Load only required fields
+        queryset = self.get_queryset().only(
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "muted", "total"
+        )
+
         filtered_queryset = self.filter_queryset(queryset)
         provider_filter = (
             {"provider__in": self.allowed_providers}
@@ -3689,16 +3697,42 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
+        # Status sum mapping for cleaner logic
+        STATUS_SUM_MAPPING = {
+            frozenset(): Sum("total"),
+            frozenset(["FAIL", "PASS", "MUTED"]): Sum("total"),
+            frozenset(["FAIL"]): Sum("fail"),
+            frozenset(["PASS"]): Sum("_pass"),
+            frozenset(["MUTED"]): Sum("muted"),
+            frozenset(["FAIL", "PASS"]): Sum("fail") + Sum("_pass"),
+            frozenset(["FAIL", "MUTED"]): Sum("fail") + Sum("muted"),
+            frozenset(["PASS", "MUTED"]): Sum("_pass") + Sum("muted"),
+        }
+
+        # Parse status filters
+        status_filter = request.query_params.get("filter[status]")
+        status_in_filter = request.query_params.get("filter[status__in]")
+
+        requested_statuses = set()
+        if status_filter:
+            requested_statuses.add(status_filter)
+        if status_in_filter:
+            requested_statuses.update(status_in_filter.split(","))
+
+        # Get sum expression from mapping
+        status_key = frozenset(requested_statuses)
+        sum_expression = STATUS_SUM_MAPPING.get(status_key, Sum("total"))
+
         severity_counts = (
             filtered_queryset.values("severity")
-            .annotate(count=Sum("total"))
+            .annotate(count=sum_expression)
             .order_by("severity")
         )
 
         severity_data = {sev[0]: 0 for sev in SeverityChoices}
-
-        for item in severity_counts:
-            severity_data[item["severity"]] = item["count"]
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
 
         serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
