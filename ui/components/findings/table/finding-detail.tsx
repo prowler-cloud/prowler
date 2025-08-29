@@ -16,7 +16,7 @@ import { DeltaIndicator } from "./delta-indicator";
 
 const MarkdownContainer = ({ children }: { children: string }) => {
   return (
-    <div className="prose prose-sm max-w-none dark:prose-invert whitespace-normal break-words">
+    <div className="prose prose-sm max-w-none whitespace-normal break-words dark:prose-invert">
       <ReactMarkdown>{children}</ReactMarkdown>
     </div>
   );
@@ -186,9 +186,9 @@ export const FindingDetail = ({
               </InfoField>
             )}
 
-            {/* Additional Resources section */}
+            {/* Remediation Steps section */}
             {attributes.check_metadata.remediation.code.other && (
-              <InfoField label="Additional Resources">
+              <InfoField label="Remediation Steps">
                 <MarkdownContainer>
                   {attributes.check_metadata.remediation.code.other}
                 </MarkdownContainer>
