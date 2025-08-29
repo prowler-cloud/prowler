@@ -1530,6 +1530,8 @@ class Jira:
                         "summary": f"[Prowler] {finding.metadata.Severity.value.upper()} - {finding.metadata.CheckID} - {finding.resource_uid}",
                         "description": adf_description,
                         "issuetype": {"name": issue_type},
+                        "customfield_10148": {"value": "SDK"},
+                        "customfield_10088": {"value": "Core"},
                     }
                 }
                 if issue_labels:
@@ -1542,7 +1544,15 @@ class Jira:
                 )
 
                 if response.status_code != 201:
-                    response_json = response.json()
+                    try:
+                        response_json = response.json()
+                    except (ValueError, requests.exceptions.JSONDecodeError):
+                        response_error = f"Failed to send finding: {response.status_code} - {response.text}"
+                        logger.warning(response_error)
+                        raise JiraSendFindingsResponseError(
+                            message=response_error, file=os.path.basename(__file__)
+                        )
+
                     # Check if the error is due to required custom fields
                     if response.status_code == 400 and "errors" in response_json:
                         errors = response_json.get("errors", {})
@@ -1570,7 +1580,13 @@ class Jira:
                         message=response_error, file=os.path.basename(__file__)
                     )
                 else:
-                    logger.info(f"Finding sent successfully: {response.json()}")
+                    try:
+                        response_json = response.json()
+                        logger.info(f"Finding sent successfully: {response_json}")
+                    except (ValueError, requests.exceptions.JSONDecodeError):
+                        logger.info(
+                            f"Finding sent successfully: Status {response.status_code}"
+                        )
         except JiraRequiredCustomFieldsError as custom_fields_error:
             raise custom_fields_error
         except JiraRefreshTokenError as refresh_error:
