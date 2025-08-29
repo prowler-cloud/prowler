@@ -370,8 +370,8 @@ class SchemaView(SpectacularAPIView):
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
             {
-                "name": "Lighthouse",
-                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
+                "name": "Lighthouse AI",
+                "description": "Endpoints for managing Lighthouse AI configurations, including creation, retrieval, "
                 "updating, and deletion of configurations such as OpenAI keys, models, and business "
                 "context.",
             },
@@ -3888,29 +3888,29 @@ class IntegrationViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse"],
-        summary="List all Lighthouse configurations",
-        description="Retrieve a list of all Lighthouse configurations.",
+        tags=["Lighthouse AI"],
+        summary="List all Lighthouse AI configurations",
+        description="Retrieve a list of all Lighthouse AI configurations.",
     ),
     create=extend_schema(
-        tags=["Lighthouse"],
-        summary="Create a new Lighthouse configuration",
-        description="Create a new Lighthouse configuration with the specified details.",
+        tags=["Lighthouse AI"],
+        summary="Create a new Lighthouse AI configuration",
+        description="Create a new Lighthouse AI configuration with the specified details.",
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse"],
-        summary="Partially update a Lighthouse configuration",
-        description="Update certain fields of an existing Lighthouse configuration.",
+        tags=["Lighthouse AI"],
+        summary="Partially update a Lighthouse AI configuration",
+        description="Update certain fields of an existing Lighthouse AI configuration.",
     ),
     destroy=extend_schema(
-        tags=["Lighthouse"],
-        summary="Delete a Lighthouse configuration",
-        description="Remove a Lighthouse configuration by its ID.",
+        tags=["Lighthouse AI"],
+        summary="Delete a Lighthouse AI configuration",
+        description="Remove a Lighthouse AI configuration by its ID.",
     ),
     connection=extend_schema(
-        tags=["Lighthouse"],
+        tags=["Lighthouse AI"],
         summary="Check the connection to the OpenAI API",
-        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
