@@ -72,12 +72,14 @@ jobs:
             fi
           }
 
-          # Read actual versions from changelogs (source of truth)
+                    # Read actual versions from changelogs (source of truth)
           UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
           API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
+          SDK_VERSION=$(extract_latest_version "prowler/CHANGELOG.md")
 
           echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
           echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
+          echo "SDK_VERSION=${SDK_VERSION}" >> "${GITHUB_ENV}"
 
           if [ -n "$UI_VERSION" ]; then
             echo "Read UI version from changelog: $UI_VERSION"
@@ -91,10 +93,17 @@ jobs:
             echo "Warning: No API version found in api/CHANGELOG.md"
           fi
 
+          if [ -n "$SDK_VERSION" ]; then
+            echo "Read SDK version from changelog: $SDK_VERSION"
+          else
+            echo "Warning: No SDK version found in prowler/CHANGELOG.md"
+          fi
+
           echo "Prowler version: $PROWLER_VERSION"
           echo "Branch name: $BRANCH_NAME"
           echo "UI version: $UI_VERSION"
           echo "API version: $API_VERSION"
+          echo "SDK version: $SDK_VERSION"
           echo "Is minor release: $([ $PATCH_VERSION -eq 0 ] && echo 'true' || echo 'false')"
         else
           echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
@@ -163,9 +172,16 @@ jobs:
           touch "api_changelog.md"
         fi
 
-        # Always extract Prowler changelog for the input version
-        echo "Extracting Prowler changelog for version $PROWLER_VERSION..."
-        extract_changelog "prowler/CHANGELOG.md" "$PROWLER_VERSION" "prowler_changelog.md"
+        # SDK has changes if its current version matches the input version
+        if [ -n "$SDK_VERSION" ] && [ "$SDK_VERSION" = "$PROWLER_VERSION" ]; then
+          echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ SDK changes detected - version matches input: $SDK_VERSION"
+          extract_changelog "prowler/CHANGELOG.md" "$PROWLER_VERSION" "prowler_changelog.md"
+        else
+          echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No SDK changes for this release (current: $SDK_VERSION, input: $PROWLER_VERSION)"
+          touch "prowler_changelog.md"
+        fi
 
         # Combine changelogs in order: UI, API, SDK
         > combined_changelog.md
@@ -184,7 +200,7 @@ jobs:
           echo "" >> combined_changelog.md
         fi
 
-        if [ -s "prowler_changelog.md" ]; then
+        if [ "$HAS_SDK_CHANGES" = "true" ] && [ -s "prowler_changelog.md" ]; then
           echo "## SDK" >> combined_changelog.md
           echo "" >> combined_changelog.md
           cat prowler_changelog.md >> combined_changelog.md
