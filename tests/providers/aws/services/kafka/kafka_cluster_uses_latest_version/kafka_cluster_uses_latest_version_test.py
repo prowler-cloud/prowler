@@ -5,7 +5,7 @@ from prowler.providers.aws.services.kafka.kafka_service import (
     EncryptionInTransit,
     KafkaVersion,
 )
-from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 
 class Test_kafka_cluster_latest_version:
@@ -15,11 +15,11 @@ class Test_kafka_cluster_latest_version:
 
         with (
             patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
                 new=kafka_client,
             ),
         ):
@@ -62,11 +62,11 @@ class Test_kafka_cluster_latest_version:
 
         with (
             patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
                 new=kafka_client,
             ),
         ):
@@ -121,11 +121,11 @@ class Test_kafka_cluster_latest_version:
 
         with (
             patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
                 new=kafka_client,
             ),
         ):
@@ -180,11 +180,11 @@ class Test_kafka_cluster_latest_version:
 
         with (
             patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
                 new=kafka_client,
             ),
         ):
