@@ -53,7 +53,7 @@ Review findings during scan execution in the following sections:
   <img src="../../products/img/overview.png" alt="Overview" width="700"/>
 
 - **Compliance** – Displays compliance insights based on security frameworks.
-  <img src="../img/compliance.png" alt="Compliance" width="700"/>
+  <img src="../../img/compliance.png" alt="Compliance" width="700"/>
 
 > For detailed usage instructions, refer to the [Prowler App Guide](../tutorials/prowler-app.md).
 
