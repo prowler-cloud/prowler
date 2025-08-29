@@ -59,14 +59,37 @@ jobs:
           BRANCH_NAME="v${MAJOR_VERSION}.${MINOR_VERSION}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "${GITHUB_ENV}"
 
-          # Calculate UI version (1.X.X format - matches Prowler minor version)
-          UI_VERSION="1.${MINOR_VERSION}.${PATCH_VERSION}"
-          echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
+          # Function to extract the latest version from changelog
+          extract_latest_version() {
+            local changelog_file="$1"
+            if [ -f "$changelog_file" ]; then
+              # Extract the first version entry (most recent) from changelog
+              # Format: ## [version] or ## [vversion]
+              local version=$(grep -m 1 '^## \[' "$changelog_file" | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
+              echo "$version"
+            else
+              echo ""
+            fi
+          }
 
-          # Calculate API version (1.X.X format - one minor version ahead)
-          API_MINOR_VERSION=$((MINOR_VERSION + 1))
-          API_VERSION="1.${API_MINOR_VERSION}.${PATCH_VERSION}"
+          # Read actual versions from changelogs (source of truth)
+          UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
+          API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
+
+          echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
           echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
+
+          if [ -n "$UI_VERSION" ]; then
+            echo "Read UI version from changelog: $UI_VERSION"
+          else
+            echo "Warning: No UI version found in ui/CHANGELOG.md"
+          fi
+
+          if [ -n "$API_VERSION" ]; then
+            echo "Read API version from changelog: $API_VERSION"
+          else
+            echo "Warning: No API version found in api/CHANGELOG.md"
+          fi
 
           echo "Prowler version: $PROWLER_VERSION"
           echo "Branch name: $BRANCH_NAME"
@@ -115,30 +138,36 @@ jobs:
         extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
 
         # Check if API changelog has content (indicating API changes for this release)
-        if [ -s "api_changelog.md" ]; then
+        if [ -n "$API_VERSION" ] && [ -s "api_changelog.md" ]; then
           echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
           echo "✓ API changes detected for version $API_VERSION"
         else
           echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
-          echo "ℹ No API changes detected for version $API_VERSION"
+          if [ -z "$API_VERSION" ]; then
+            echo "ℹ No API version found, skipping API processing"
+          else
+            echo "ℹ No API changes detected for version $API_VERSION"
+          fi
         fi
 
         # Combine changelogs in order: UI, API, SDK
         > combined_changelog.md
 
-        if [ -s "ui_changelog.md" ]; then
+        if [ -n "$UI_VERSION" ] && [ -s "ui_changelog.md" ]; then
           echo "## UI" >> combined_changelog.md
           echo "" >> combined_changelog.md
           cat ui_changelog.md >> combined_changelog.md
           echo "" >> combined_changelog.md
+        elif [ -n "$UI_VERSION" ]; then
+          echo "ℹ Skipping UI changelog (no changes for version $UI_VERSION)"
         fi
 
-        if [ -s "api_changelog.md" ]; then
+        if [ -n "$API_VERSION" ] && [ -s "api_changelog.md" ]; then
           echo "## API" >> combined_changelog.md
           echo "" >> combined_changelog.md
           cat api_changelog.md >> combined_changelog.md
           echo "" >> combined_changelog.md
-        elif [ "$HAS_API_CHANGES" = "false" ]; then
+        elif [ -n "$API_VERSION" ]; then
           echo "ℹ Skipping API changelog (no changes for version $API_VERSION)"
         fi
 
@@ -188,7 +217,7 @@ jobs:
         echo "✓ prowler/config/config.py version: $CURRENT_VERSION"
 
     - name: Verify version in api/pyproject.toml
-      if: ${{ env.HAS_API_CHANGES == 'true' }}
+      if: ${{ env.API_VERSION != '' }}
       run: |
         CURRENT_API_VERSION=$(grep '^version = ' api/pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
         API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
@@ -199,7 +228,7 @@ jobs:
         echo "✓ api/pyproject.toml version: $CURRENT_API_VERSION"
 
     - name: Verify prowler dependency in api/pyproject.toml
-      if: ${{ env.PATCH_VERSION != '0' && env.HAS_API_CHANGES == 'true' }}
+      if: ${{ env.PATCH_VERSION != '0' && env.API_VERSION != '' }}
       run: |
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
         BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
@@ -210,7 +239,7 @@ jobs:
         echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
 
     - name: Verify version in api/src/backend/api/v1/views.py
-      if: ${{ env.HAS_API_CHANGES == 'true' }}
+      if: ${{ env.API_VERSION != '' }}
       run: |
         CURRENT_API_VERSION=$(grep 'spectacular_settings.VERSION = ' api/src/backend/api/v1/views.py | sed -E 's/.*spectacular_settings.VERSION = "([^"]+)".*/\1/' | tr -d '[:space:]')
         API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
@@ -238,12 +267,11 @@ jobs:
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
         BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
 
-        # Create a temporary branch for the PR
+        # Create a temporary branch for the PR from the minor version branch
         TEMP_BRANCH="update-api-dependency-$BRANCH_NAME_TRIMMED-$(date +%s)"
         echo "TEMP_BRANCH=$TEMP_BRANCH" >> $GITHUB_ENV
 
-        # Switch back to master and create temp branch
-        git checkout master
+        # Create temp branch from the current minor version branch
         git checkout -b "$TEMP_BRANCH"
 
         # Minor release: update the dependency to use the release branch
@@ -304,7 +332,7 @@ jobs:
         name: Prowler ${{ env.PROWLER_VERSION }}
         body_path: combined_changelog.md
         draft: true
-        target_commitish: ${{ env.PATCH_VERSION == '0' && 'master' || env.BRANCH_NAME }}
+        target_commitish: ${{ env.BRANCH_NAME }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
