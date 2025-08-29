@@ -1362,6 +1362,7 @@
           "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
@@ -1395,6 +1396,7 @@
           "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
@@ -1430,7 +1432,9 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "bedrock-runtime": {
@@ -8270,6 +8274,7 @@
         "aws": [
           "af-south-1",
           "ap-east-1",
+          "ap-east-2",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
@@ -9663,7 +9668,10 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "s3": {

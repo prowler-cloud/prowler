@@ -13,8 +13,10 @@ from api.models import Scan
 from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
+    json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
+from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
@@ -109,6 +111,7 @@ OUTPUT_FORMATS_MAPPING = {
         "kwargs": {},
     },
     "json-ocsf": {"class": OCSF, "suffix": json_ocsf_file_suffix, "kwargs": {}},
+    "json-asff": {"class": ASFF, "suffix": json_asff_file_suffix, "kwargs": {}},
     "html": {"class": HTML, "suffix": html_file_suffix, "kwargs": {"stats": {}}},
 }
 

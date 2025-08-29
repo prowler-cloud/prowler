@@ -1372,10 +1372,6 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
-            models.UniqueConstraint(
-                fields=("configuration", "tenant"),
-                name="unique_configuration_per_tenant",
-            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
@@ -1752,6 +1748,10 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         GPT_4O = "gpt-4o", _("GPT-4o Default")
         GPT_4O_MINI_2024_07_18 = "gpt-4o-mini-2024-07-18", _("GPT-4o Mini v2024-07-18")
         GPT_4O_MINI = "gpt-4o-mini", _("GPT-4o Mini Default")
+        GPT_5_2025_08_07 = "gpt-5-2025-08-07", _("GPT-5 v2025-08-07")
+        GPT_5 = "gpt-5", _("GPT-5 Default")
+        GPT_5_MINI_2025_08_07 = "gpt-5-mini-2025-08-07", _("GPT-5 Mini v2025-08-07")
+        GPT_5_MINI = "gpt-5-mini", _("GPT-5 Mini Default")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
