@@ -345,6 +345,8 @@ export const permissionFormFields: PermissionInfo[] = [
 export const handleApiResponse = async (
   response: Response,
   pathToRevalidate?: string,
+  parse = true,
+  emptyResponse = false,
 ) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
@@ -371,7 +373,9 @@ export const handleApiResponse = async (
     revalidatePath(pathToRevalidate);
   }
 
-  return parseStringify(data);
+  if (emptyResponse) return;
+
+  return parse ? parseStringify(data) : data;
 };
 
 // Helper function to handle API errors consistently
