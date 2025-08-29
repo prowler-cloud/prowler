@@ -871,18 +871,14 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.users[0].inline_policies == [policy_name]
         assert iam.users[0].tags == []
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies.values():
-            if policy.name == policy_name:
-                assert policy == Policy(
-                    name=policy_name,
-                    arn=user_arn,
-                    version_id="v1",
-                    type="Inline",
-                    attached=True,
-                    document=INLINE_POLICY_NOT_ADMIN,
-                    entity=user_name,
-                )
+        policy = iam.policies[f"{user_arn}:policy/{policy_name}"]
+        assert policy.name == policy_name
+        assert policy.arn == user_arn
+        assert policy.version_id == "v1"
+        assert policy.type == "Inline"
+        assert policy.attached == True
+        assert policy.document == INLINE_POLICY_NOT_ADMIN
+        assert policy.entity == user_name
 
     # Test IAM Group Inline Policy
     @mock_aws
@@ -913,18 +909,14 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.groups[0].inline_policies == [policy_name]
         assert iam.groups[0].users == []
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies.values():
-            if policy.name == policy_name:
-                assert policy == Policy(
-                    name=policy_name,
-                    arn=group_arn,
-                    version_id="v1",
-                    type="Inline",
-                    attached=True,
-                    document=INLINE_POLICY_NOT_ADMIN,
-                    entity=group_name,
-                )
+        policy = iam.policies[f"{group_arn}:policy/{policy_name}"]
+        assert policy.name == policy_name
+        assert policy.arn == group_arn
+        assert policy.version_id == "v1"
+        assert policy.type == "Inline"
+        assert policy.attached == True
+        assert policy.document == INLINE_POLICY_NOT_ADMIN
+        assert policy.entity == group_name
 
     # Test IAM Role Inline Policy
     @mock_aws
@@ -959,18 +951,14 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.roles[0].inline_policies == [policy_name]
         assert iam.roles[0].tags == []
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies.values():
-            if policy.name == policy_name:
-                assert policy == Policy(
-                    name=policy_name,
-                    arn=role_arn,
-                    version_id="v1",
-                    type="Inline",
-                    attached=True,
-                    document=INLINE_POLICY_NOT_ADMIN,
-                    entity=role_name,
-                )
+        policy = iam.policies[f"{role_arn}:policy/{policy_name}"]
+        assert policy.name == policy_name
+        assert policy.arn == role_arn
+        assert policy.version_id == "v1"
+        assert policy.type == "Inline"
+        assert policy.attached == True
+        assert policy.document == INLINE_POLICY_NOT_ADMIN
+        assert policy.entity == role_name
 
     # Test IAM List Attached Group Policies
     @mock_aws
