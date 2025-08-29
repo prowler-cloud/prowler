@@ -102,6 +102,7 @@ from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
+from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 
 
@@ -298,6 +299,10 @@ def prowler():
         )
     elif provider == "m365":
         output_options = M365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "mongodbatlas":
+        output_options = MongoDBAtlasOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "nhn":
