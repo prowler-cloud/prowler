@@ -10,15 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Composite index for filtering by tenant, scan and individual status columns
-        # The new indexes with INCLUDE clause provide better performance for specific queries
-        AddIndexConcurrently(
-            model_name="scansummary",
-            index=models.Index(
-                fields=["tenant_id", "scan_id", "fail", "_pass", "muted"],
-                name="ss_tenant_scan_status_cols_idx",
-            ),
-        ),
         # Index for severity grouping with status columns included (CRITICAL for findings_severity endpoint)
         # This complements ss_tenant_scan_severity_idx by allowing Index-Only Scans
         AddIndexConcurrently(
@@ -37,6 +28,15 @@ class Migration(migrations.Migration):
                 fields=["tenant_id", "scan_id", "service"],
                 include=("fail", "_pass", "muted", "total", "severity"),
                 name="ss_tenant_scan_svc_status_idx",
+            ),
+        ),
+        # Composite index for filtering by tenant, scan and individual status columns
+        # The new indexes with INCLUDE clause provide better performance for specific queries
+        AddIndexConcurrently(
+            model_name="scansummary",
+            index=models.Index(
+                fields=["tenant_id", "scan_id", "fail", "_pass", "muted"],
+                name="ss_tenant_scan_status_cols_idx",
             ),
         ),
         # Index for region filtering with status columns
