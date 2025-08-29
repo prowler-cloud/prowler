@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.12.0] (Prowler v5.12.0 UNRELEASED)
+
+### Added
+- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
+  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
+  - `clusters_backup_enabled` - Ensure clusters have backup enabled
+  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
+  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
+  - `organizations_api_access_list_required` - Ensure organization requires API access list
+  - `organizations_mfa_required` - Ensure organization requires MFA
+  - `organizations_security_contact_defined` - Ensure organization has security contact defined
+  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
+  - `projects_auditing_enabled` - Ensure database auditing is enabled
+  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
+
+---
+
 ## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
@@ -14,17 +31,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Support session/profile/role/static credentials in Security Hub integration [(#8539)](https://github.com/prowler-cloud/prowler/pull/8539)
 - `eks_cluster_deletion_protection_enabled` check for AWS provider [(#8536)](https://github.com/prowler-cloud/prowler/pull/8536)
 - ECS privilege escalation patterns (StartTask and RunTask) for AWS provider [(#8541)](https://github.com/prowler-cloud/prowler/pull/8541)
-- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
-  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
-  - `clusters_backup_enabled` - Ensure clusters have backup enabled
-  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
-  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
-  - `organizations_api_access_list_required` - Ensure organization requires API access list
-  - `organizations_mfa_required` - Ensure organization requires MFA
-  - `organizations_security_contact_defined` - Ensure organization has security contact defined
-  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
-  - `projects_auditing_enabled` - Ensure database auditing is enabled
-  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
 - Resource Explorer enumeration v2 API actions in `cloudtrail_threat_detection_enumeration` check [(#8557)](https://github.com/prowler-cloud/prowler/pull/8557)
 - `apim_threat_detection_llm_jacking` check for Azure provider [(#8571)](https://github.com/prowler-cloud/prowler/pull/8571)
 - GCP `--skip-api-check` command line flag [(#8575)](https://github.com/prowler-cloud/prowler/pull/8575)
