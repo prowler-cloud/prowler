@@ -80,6 +80,7 @@ export const getMenuList = ({
           href: "/lighthouse",
           label: "Lighthouse AI",
           icon: LighthouseIcon,
+          active: pathname === "/lighthouse",
         },
       ],
     },
