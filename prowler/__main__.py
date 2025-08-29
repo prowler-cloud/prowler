@@ -101,6 +101,7 @@ from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 
@@ -177,8 +178,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC provider
-    if provider != "iac":
+    # Skip compliance frameworks for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -235,8 +236,8 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Skip service and check loading for IAC provider
-    if provider != "iac":
+    # Skip service and check loading for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -306,6 +307,8 @@ def prowler():
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "llm":
+        output_options = LLMOutputOptions(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -315,8 +318,8 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider == "iac":
-        # For IAC provider, run the scan directly
+    if provider == "iac" or provider == "llm":
+        # For IAC and LLM providers, run the scan directly
         findings = global_provider.run()
     elif len(checks_to_execute):
         findings = execute_checks(
