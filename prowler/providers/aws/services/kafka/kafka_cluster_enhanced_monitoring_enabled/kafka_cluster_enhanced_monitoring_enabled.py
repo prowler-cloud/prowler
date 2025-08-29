@@ -13,7 +13,12 @@ class kafka_cluster_enhanced_monitoring_enabled(Check):
                 f"Kafka cluster '{cluster.name}' has enhanced monitoring enabled."
             )
 
-            if cluster.enhanced_monitoring == "DEFAULT":
+            # Serverless clusters always have enhanced monitoring enabled by default
+            if cluster.kafka_version == "SERVERLESS":
+                report.status = "PASS"
+                report.status_extended = f"Kafka cluster '{cluster.name}' is serverless and always has enhanced monitoring enabled by default."
+            # For provisioned clusters, check the enhanced monitoring configuration
+            elif cluster.enhanced_monitoring == "DEFAULT":
                 report.status = "FAIL"
                 report.status_extended = f"Kafka cluster '{cluster.name}' does not have enhanced monitoring enabled."
 

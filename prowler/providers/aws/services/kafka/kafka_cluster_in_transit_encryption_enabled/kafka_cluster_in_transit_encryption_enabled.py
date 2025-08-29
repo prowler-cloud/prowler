@@ -11,7 +11,12 @@ class kafka_cluster_in_transit_encryption_enabled(Check):
             report.status = "FAIL"
             report.status_extended = f"Kafka cluster '{cluster.name}' does not have encryption in transit enabled."
 
-            if (
+            # Serverless clusters always have encryption in transit enabled by default
+            if cluster.kafka_version == "SERVERLESS":
+                report.status = "PASS"
+                report.status_extended = f"Kafka cluster '{cluster.name}' is serverless and always has encryption in transit enabled by default."
+            # For provisioned clusters, check the encryption configuration
+            elif (
                 cluster.encryption_in_transit.client_broker == "TLS"
                 and cluster.encryption_in_transit.in_cluster
             ):
