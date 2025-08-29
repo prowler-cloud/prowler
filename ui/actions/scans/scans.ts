@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
@@ -9,7 +8,6 @@ import {
   getErrorMessage,
   handleApiError,
   handleApiResponse,
-  parseStringify,
 } from "@/lib";
 
 export const getScans = async ({
@@ -223,7 +221,9 @@ export const getExportsZip = async (scanId: string) => {
       filename: `scan-${scanId}-report.zip`,
     };
   } catch (error) {
-    return handleApiError(error);
+    return {
+      error: getErrorMessage(error),
+    };
   }
 };
 
@@ -268,6 +268,8 @@ export const getComplianceCsv = async (
       filename: `scan-${scanId}-compliance-${complianceId}.csv`,
     };
   } catch (error) {
-    return handleApiError(error);
+    return {
+      error: getErrorMessage(error),
+    };
   }
 };
