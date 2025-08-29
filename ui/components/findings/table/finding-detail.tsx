@@ -14,6 +14,14 @@ import { FindingProps, ProviderType } from "@/types";
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
 
+const MarkdownContainer = ({ children }: { children: string }) => {
+  return (
+    <div className="prose prose-sm max-w-none dark:prose-invert">
+      <ReactMarkdown>{children}</ReactMarkdown>
+    </div>
+  );
+};
+
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
 };
@@ -123,21 +131,17 @@ export const FindingDetail = ({
               hideCopyButton
               hideSymbol
             >
-              {/* eslint-disable-next-line */}
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <ReactMarkdown>{attributes.check_metadata.risk}</ReactMarkdown>
-              </div>
+              <MarkdownContainer>
+                {attributes.check_metadata.risk}
+              </MarkdownContainer>
             </Snippet>
           </InfoField>
         )}
 
         <InfoField label="Description">
-          {/* eslint-disable-next-line */}
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown>
-              {attributes.check_metadata.description}
-            </ReactMarkdown>
-          </div>
+          <MarkdownContainer>
+            {attributes.check_metadata.description}
+          </MarkdownContainer>
         </InfoField>
 
         <InfoField label="Status Extended">
@@ -154,15 +158,9 @@ export const FindingDetail = ({
             {attributes.check_metadata.remediation.recommendation.text && (
               <InfoField label="Recommendation">
                 <div className="flex flex-col gap-2">
-                  {/* eslint-disable-next-line */}
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <ReactMarkdown>
-                      {
-                        attributes.check_metadata.remediation.recommendation
-                          .text
-                      }
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownContainer>
+                    {attributes.check_metadata.remediation.recommendation.text}
+                  </MarkdownContainer>
                   {attributes.check_metadata.remediation.recommendation.url && (
                     <CustomLink
                       href={
@@ -191,12 +189,9 @@ export const FindingDetail = ({
             {/* Additional Resources section */}
             {attributes.check_metadata.remediation.code.other && (
               <InfoField label="Additional Resources">
-                {/* eslint-disable-next-line */}
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <ReactMarkdown>
-                    {attributes.check_metadata.remediation.code.other}
-                  </ReactMarkdown>
-                </div>
+                <MarkdownContainer>
+                  {attributes.check_metadata.remediation.code.other}
+                </MarkdownContainer>
               </InfoField>
             )}
           </div>
