@@ -29,13 +29,11 @@ class organizations_security_contact_defined(Check):
                 metadata=self.metadata(), resource=organization
             )
 
-            security_contact = organization.settings.get("securityContact")
-
-            if security_contact:
+            if organization.settings.security_contact:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Organization {organization.name} has a security contact defined: "
-                    f"{security_contact}"
+                    f"{organization.settings.security_contact}"
                 )
             else:
                 report.status = "FAIL"

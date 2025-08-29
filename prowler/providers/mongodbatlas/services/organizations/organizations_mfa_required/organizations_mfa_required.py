@@ -29,9 +29,7 @@ class organizations_mfa_required(Check):
                 metadata=self.metadata(), resource=organization
             )
 
-            mfa_required = organization.settings.get("multiFactorAuthRequired", False)
-
-            if mfa_required:
+            if organization.settings.multi_factor_auth_required:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Organization {organization.name} requires users to set up "

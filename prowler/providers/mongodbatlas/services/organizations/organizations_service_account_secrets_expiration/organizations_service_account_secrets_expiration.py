@@ -34,28 +34,30 @@ class organizations_service_account_secrets_expiration(Check):
                 metadata=self.metadata(), resource=organization
             )
 
-            max_validity_hours = organization.settings.get(
-                "maxServiceAccountSecretValidityInHours"
-            )
-
-            if max_validity_hours is None:
+            if (
+                organization.settings.max_service_account_secret_validity_in_hours
+                is None
+            ):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Organization {organization.name} does not have a maximum period "
                     f"expiration configured for Admin API Service Account secrets."
                 )
-            elif max_validity_hours <= max_hours_threshold:
+            elif (
+                organization.settings.max_service_account_secret_validity_in_hours
+                <= max_hours_threshold
+            ):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Organization {organization.name} has a maximum period expiration "
-                    f"of {max_validity_hours} hours for Admin API Service Account secrets, "
+                    f"of {organization.settings.max_service_account_secret_validity_in_hours} hours for Admin API Service Account secrets, "
                     f"which is within the recommended threshold of {max_hours_threshold} hours."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Organization {organization.name} has a maximum period expiration "
-                    f"of {max_validity_hours} hours for Admin API Service Account secrets, "
+                    f"of {organization.settings.max_service_account_secret_validity_in_hours} hours for Admin API Service Account secrets, "
                     f"which exceeds the recommended threshold of {max_hours_threshold} hours."
                 )
 

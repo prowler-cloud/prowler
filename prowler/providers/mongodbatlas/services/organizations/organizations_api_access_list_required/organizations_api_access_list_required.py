@@ -29,11 +29,7 @@ class organizations_api_access_list_required(Check):
                 metadata=self.metadata(), resource=organization
             )
 
-            api_access_list_required = organization.settings.get(
-                "apiAccessListRequired", False
-            )
-
-            if api_access_list_required:
+            if organization.settings.api_access_list_required:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Organization {organization.name} requires API operations "
