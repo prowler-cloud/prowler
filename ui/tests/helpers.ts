@@ -2,6 +2,7 @@ import { Page, expect } from "@playwright/test";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
+  INVALID_EMAILID: "Invalid email"
 } as const;
 
 export const URLS = {
