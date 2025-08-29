@@ -3669,7 +3669,12 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
         tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
+
+        # Load only required fields
+        queryset = self.get_queryset().only(
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "muted", "total"
+        )
+
         filtered_queryset = self.filter_queryset(queryset)
         provider_filter = (
             {"provider__in": self.allowed_providers}
@@ -3689,59 +3694,31 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
-        # Handle status filtering by determining which fields to sum
+        # Status sum mapping for cleaner logic
+        STATUS_SUM_MAPPING = {
+            frozenset(): Sum("total"),
+            frozenset(["FAIL", "PASS", "MUTED"]): Sum("total"),
+            frozenset(["FAIL"]): Sum("fail"),
+            frozenset(["PASS"]): Sum("_pass"),
+            frozenset(["MUTED"]): Sum("muted"),
+            frozenset(["FAIL", "PASS"]): Sum("fail") + Sum("_pass"),
+            frozenset(["FAIL", "MUTED"]): Sum("fail") + Sum("muted"),
+            frozenset(["PASS", "MUTED"]): Sum("_pass") + Sum("muted"),
+        }
+
+        # Parse status filters
         status_filter = request.query_params.get("filter[status]")
         status_in_filter = request.query_params.get("filter[status__in]")
 
-        # Parse status filters to determine what to include
         requested_statuses = set()
         if status_filter:
             requested_statuses.add(status_filter)
         if status_in_filter:
             requested_statuses.update(status_in_filter.split(","))
 
-        # Determine which fields to sum based on requested statuses
-        sum_expression = None
-        if not requested_statuses or (
-            "FAIL" in requested_statuses
-            and "PASS" in requested_statuses
-            and "MUTED" in requested_statuses
-        ):
-            # No status filter or all statuses requested - use total
-            sum_expression = Sum("total")
-        elif (
-            "FAIL" in requested_statuses
-            and "PASS" in requested_statuses
-            and "MUTED" not in requested_statuses
-        ):
-            # Both FAIL and PASS but not MUTED
-            sum_expression = Sum("fail") + Sum("_pass")
-        elif (
-            "FAIL" in requested_statuses
-            and "MUTED" in requested_statuses
-            and "PASS" not in requested_statuses
-        ):
-            # FAIL and MUTED but not PASS
-            sum_expression = Sum("fail") + Sum("muted")
-        elif (
-            "PASS" in requested_statuses
-            and "MUTED" in requested_statuses
-            and "FAIL" not in requested_statuses
-        ):
-            # PASS and MUTED but not FAIL
-            sum_expression = Sum("_pass") + Sum("muted")
-        elif "FAIL" in requested_statuses and len(requested_statuses) == 1:
-            # Only FAIL
-            sum_expression = Sum("fail")
-        elif "PASS" in requested_statuses and len(requested_statuses) == 1:
-            # Only PASS
-            sum_expression = Sum("_pass")
-        elif "MUTED" in requested_statuses and len(requested_statuses) == 1:
-            # Only MUTED
-            sum_expression = Sum("muted")
-        else:
-            # Default to total for any other combination
-            sum_expression = Sum("total")
+        # Get sum expression from mapping
+        status_key = frozenset(requested_statuses)
+        sum_expression = STATUS_SUM_MAPPING.get(status_key, Sum("total"))
 
         severity_counts = (
             filtered_queryset.values("severity")
@@ -3750,9 +3727,9 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
         severity_data = {sev[0]: 0 for sev in SeverityChoices}
-
-        for item in severity_counts:
-            severity_data[item["severity"]] = item["count"]
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
 
         serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
