@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import { Icon } from "@iconify/react";
-import { RocketIcon } from "@/components/icons";
+import { useEffect } from "react";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
