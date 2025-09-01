@@ -46,7 +46,7 @@ export const getResources = async ({
       headers,
     });
 
-    handleApiResponse(response, "/resources");
+    return handleApiResponse(response, "/resources");
   } catch (error) {
     console.error("Error fetching resources:", error);
     return undefined;
@@ -95,7 +95,7 @@ export const getLatestResources = async ({
       headers,
     });
 
-    handleApiResponse(response, "/resources");
+    return handleApiResponse(response, "/resources");
   } catch (error) {
     console.error("Error fetching latest resources:", error);
     return undefined;
@@ -123,7 +123,7 @@ export const getMetadataInfo = async ({
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching metadata info:", error);
     return undefined;
@@ -151,7 +151,7 @@ export const getLatestMetadataInfo = async ({
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching latest metadata info:", error);
     return undefined;
@@ -189,7 +189,7 @@ export const getResourceById = async (
       throw new Error(`Error fetching resource: ${resource.status}`);
     }
 
-    handleApiResponse(resource);
+    return handleApiResponse(resource);
   } catch (error) {
     console.error("Error fetching resource by ID:", error);
     return undefined;

@@ -80,7 +80,7 @@ export async function updateTenantName(prevState: any, formData: FormData) {
       throw new Error(`Failed to update tenant name: ${response.statusText}`);
     }
 
-    handleApiResponse(response, "/profile", false, true);
+    handleApiResponse(response, "/profile", false);
     return { success: "Tenant name updated successfully!" };
   } catch (error) {
     return handleApiError(error);

@@ -48,7 +48,7 @@ export const getProviderGroups = async ({
       headers,
     });
 
-    handleApiResponse(response, "/manage-groups");
+    return handleApiResponse(response, "/manage-groups");
   } catch (error) {
     console.error("Error fetching provider groups:", error);
     return undefined;
@@ -65,7 +65,7 @@ export const getProviderGroupInfoById = async (providerGroupId: string) => {
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -116,7 +116,7 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
 
-    handleApiResponse(response, "/manage-groups");
+    return handleApiResponse(response, "/manage-groups");
   } catch (error) {
     handleApiError(error);
   }
@@ -161,7 +161,7 @@ export const updateProviderGroup = async (
       body: JSON.stringify(payload),
     });
 
-    handleApiResponse(response, "/manage-groups");
+    return handleApiResponse(response, "/manage-groups");
   } catch (error) {
     handleApiError(error);
   }

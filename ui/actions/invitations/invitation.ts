@@ -39,7 +39,8 @@ export const getInvitations = async ({
     const response = await fetch(url.toString(), {
       headers,
     });
-    handleApiResponse(response, "/invitations");
+
+    return handleApiResponse(response, "/invitations");
   } catch (error) {
     console.error("Error fetching invitations:", error);
     return undefined;
@@ -80,7 +81,8 @@ export const sendInvite = async (formData: FormData) => {
       headers,
       body,
     });
-    handleApiResponse(response);
+
+    return handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -137,7 +139,7 @@ export const updateInvite = async (formData: FormData) => {
       return { error };
     }
 
-    handleApiResponse(response, "/invitations");
+    return handleApiResponse(response, "/invitations");
   } catch (error) {
     handleApiError(error);
   }
@@ -153,7 +155,7 @@ export const getInvitationInfoById = async (invitationId: string) => {
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }

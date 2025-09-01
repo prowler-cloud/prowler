@@ -31,7 +31,7 @@ export const getProvidersOverview = async ({
       headers,
     });
 
-    handleApiResponse(response, "/");
+    return handleApiResponse(response, "/");
   } catch (error) {
     console.error("Error fetching providers overview:", error);
     return undefined;
@@ -66,7 +66,7 @@ export const getFindingsByStatus = async ({
       headers,
     });
 
-    handleApiResponse(response, "/");
+    return handleApiResponse(response, "/");
   } catch (error) {
     console.error("Error fetching findings severity overview:", error);
     return undefined;
@@ -101,7 +101,7 @@ export const getFindingsBySeverity = async ({
       headers,
     });
 
-    handleApiResponse(response, "/");
+    return handleApiResponse(response, "/");
   } catch (error) {
     console.error("Error fetching findings severity overview:", error);
     return undefined;

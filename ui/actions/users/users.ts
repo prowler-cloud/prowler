@@ -40,7 +40,7 @@ export const getUsers = async ({
       headers,
     });
 
-    handleApiResponse(users, "/users");
+    return handleApiResponse(users, "/users");
   } catch (error) {
     console.error("Error fetching users:", error);
     return undefined;
@@ -85,7 +85,7 @@ export const updateUser = async (formData: FormData) => {
       }),
     });
 
-    handleApiResponse(response, "/users");
+    return handleApiResponse(response, "/users");
   } catch (error) {
     handleApiError(error);
   }
@@ -120,7 +120,7 @@ export const updateUserRole = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    handleApiResponse(response, "/users");
+    return handleApiResponse(response, "/users");
   } catch (error) {
     handleApiError(error);
   }
@@ -176,7 +176,7 @@ export const getUserInfo = async () => {
       throw new Error(`Failed to fetch user data: ${response.statusText}`);
     }
 
-    handleApiResponse(response, "/profile");
+    return handleApiResponse(response, "/profile");
   } catch (error) {
     console.error("Error fetching profile:", error);
     return undefined;
@@ -198,7 +198,7 @@ export const getUserMemberships = async (userId: string) => {
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching user memberships:", error);
     return { data: [] };

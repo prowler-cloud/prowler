@@ -346,7 +346,6 @@ export const handleApiResponse = async (
   response: Response,
   pathToRevalidate?: string,
   parse = true,
-  emptyResponse = false,
 ) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
@@ -372,8 +371,6 @@ export const handleApiResponse = async (
   if (pathToRevalidate && pathToRevalidate !== "") {
     revalidatePath(pathToRevalidate);
   }
-
-  if (emptyResponse) return;
 
   return parse ? parseStringify(data) : data;
 };

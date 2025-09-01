@@ -28,7 +28,7 @@ export const getCompliancesOverview = async ({
       headers,
     });
 
-    handleApiResponse(response, "/compliance");
+    return handleApiResponse(response, "/compliance");
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;
@@ -59,7 +59,7 @@ export const getComplianceOverviewMetadataInfo = async ({
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching compliance overview metadata info:", error);
     return undefined;
@@ -77,7 +77,7 @@ export const getComplianceAttributes = async (complianceId: string) => {
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching compliance attributes:", error);
     return undefined;
@@ -111,7 +111,7 @@ export const getComplianceRequirements = async ({
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching compliance requirements:", error);
     return undefined;

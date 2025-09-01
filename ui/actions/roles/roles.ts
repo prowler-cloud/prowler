@@ -40,7 +40,7 @@ export const getRoles = async ({
       headers,
     });
 
-    handleApiResponse(response, "/roles");
+    return handleApiResponse(response, "/roles");
   } catch (error) {
     console.error("Error fetching roles:", error);
     return undefined;
@@ -57,7 +57,7 @@ export const getRoleInfoById = async (roleId: string) => {
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -82,7 +82,7 @@ export const getRolesByIds = async (roleIds: string[]) => {
       headers,
     });
 
-    handleApiResponse(response);
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching roles by IDs:", error);
     return { data: [] };
@@ -137,7 +137,7 @@ export const addRole = async (formData: FormData) => {
       body,
     });
 
-    handleApiResponse(response, "/roles", false);
+    return handleApiResponse(response, "/roles", false);
   } catch (error) {
     handleApiError(error);
   }
@@ -193,7 +193,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
       body,
     });
 
-    handleApiResponse(response, "/roles", false);
+    return handleApiResponse(response, "/roles", false);
   } catch (error) {
     handleApiError(error);
   }
