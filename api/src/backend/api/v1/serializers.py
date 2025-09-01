@@ -45,6 +45,8 @@ from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
     IntegrationConfigField,
     IntegrationCredentialField,
+    JiraConfigSerializer,
+    JiraCredentialSerializer,
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
 )
@@ -1952,8 +1954,10 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
     def validate(self, attrs):
+        integration_type = attrs.get("integration_type")
+
         if (
-            attrs.get("integration_type") == Integration.IntegrationChoices.AMAZON_S3
+            integration_type == Integration.IntegrationChoices.AMAZON_S3
             and Integration.objects.filter(
                 configuration=attrs.get("configuration")
             ).exists()
@@ -1963,7 +1967,6 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
             )
 
         # Check if any provider already has a SecurityHub integration
-        integration_type = attrs.get("integration_type")
         if hasattr(self, "instance") and self.instance and not integration_type:
             integration_type = self.instance.integration_type
 
@@ -1986,7 +1989,8 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 if query.exists():
                     raise serializers.ValidationError(
                         {
-                            "providers": f"Provider {provider.id} already has a Security Hub integration. Only one Security Hub integration is allowed per provider."
+                            "providers": f"Provider {provider.id} already has a Security Hub integration. Only one "
+                            f"Security Hub integration is allowed per provider."
                         }
                     )
 
@@ -2018,6 +2022,9 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     )
             config_serializer = SecurityHubConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
+        elif integration_type == Integration.IntegrationChoices.JIRA:
+            config_serializer = JiraConfigSerializer
+            credentials_serializers = [JiraCredentialSerializer]
         else:
             raise serializers.ValidationError(
                 {
@@ -2122,9 +2129,7 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
             and integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
         ):
             raise serializers.ValidationError(
-                {
-                    "providers": "At least one provider is required for the Security Hub integration."
-                }
+                {"providers": "At least one provider is required for this integration."}
             )
 
         self.validate_integration_data(
