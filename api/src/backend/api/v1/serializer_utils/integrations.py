@@ -71,7 +71,6 @@ class JiraConfigSerializer(BaseValidateSerializer):
     project_key = serializers.CharField(required=True)
     issue_types = serializers.ListField(required=False, child=serializers.CharField())
     issue_labels = serializers.ListField(required=False, child=serializers.CharField())
-    apply_to_all_providers = serializers.BooleanField(required=True)
 
     class Meta:
         resource_name = "integrations"
@@ -238,16 +237,8 @@ class IntegrationCredentialField(serializers.JSONField):
                         "items": {"type": "string"},
                         "description": "List of labels to apply to created JIRA issues..",
                     },
-                    "apply_to_all_providers": {
-                        "type": "boolean",
-                        "description": "If true, this integration will automatically apply to all providers in the "
-                        "tenant by default, including any providers added in the future. This allows "
-                        "you to configure the integration once and have it work with new providers "
-                        "without needing to reconfigure it. If false, the integration will only apply "
-                        "to specifically selected providers.",
-                    },
                 },
-                "required": ["project_key", "apply_to_all_providers"],
+                "required": ["project_key"],
             },
         ]
     }
