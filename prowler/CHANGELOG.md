@@ -1,6 +1,21 @@
 # Prowler SDK Changelog
 
 All notable changes to the **Prowler SDK** are documented in this file.
+## [v5.12.0] (Prowler UNRELEASED)
+
+### Added
+
+### Changed
+
+### Fixed
+
+---
+
+## [v5.11.1] (Prowler UNRELEASED)
+
+### Fixed
+
+---
 
 ## [v5.11.0] (Prowler v5.11.0)
 
