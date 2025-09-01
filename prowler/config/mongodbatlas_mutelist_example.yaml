@@ -1,5 +1,5 @@
 ### Account, Check and/or Region can be * to apply for all the cases.
-### Account == MongoDB Atlas Project ID and Region == MongoDB Atlas Cluster Region
+### Account == MongoDB Atlas Organization ID and Region == MongoDB Atlas Cluster Region
 ### Resources and tags are lists that can have either Regex or Keywords.
 ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
 ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
@@ -7,7 +7,7 @@
 ###########################  MONGODB ATLAS MUTELIST EXAMPLE  ###########################
 Mutelist:
   Accounts:
-    "your-project-id-here":
+    "your-organization-id-here":
       Checks:
         "clusters_authentication_enabled":
           Regions:
