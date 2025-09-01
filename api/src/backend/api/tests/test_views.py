@@ -5660,6 +5660,18 @@ class TestIntegrationViewSet:
                 },
                 {},
             ),
+            # JIRA
+            (
+                Integration.IntegrationChoices.JIRA,
+                {
+                    "project_key": "JIRA",
+                },
+                {
+                    "api_token": "this-is-an-api-token-for-jira-that-works-for-sure",
+                    "domain": "prowlerdomain",
+                    "user_mail": "testing@prowler.com",
+                },
+            ),
         ],
     )
     def test_integrations_create_valid(
@@ -5805,6 +5817,38 @@ class TestIntegrationViewSet:
                     },
                     "invalid",
                     None,
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {
+                            "bucket_name": "bucket_name",
+                        },
+                        "credentials": {},
+                    },
+                    "required",
+                    "project_key",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {
+                            "project_key": "JIRA",
+                        },
+                    },
+                    "required",
+                    "credentials",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {
+                            "project_key": "JIRA",
+                        },
+                        "credentials": {"api_token": "api-token"},
+                    },
+                    "invalid",
+                    "credentials",
                 ),
             ]
         ),
