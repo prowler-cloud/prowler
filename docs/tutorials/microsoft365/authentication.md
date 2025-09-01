@@ -8,7 +8,7 @@ Prowler for Microsoft 365 (M365) supports the following authentication methods:
 - **Interactive browser authentication**
 
 ???+ warning
-    Prowler App supports the **Service Principal** authentication method and the **Service Principal with User Credentials** authentication method, but this last one will be deprecated in September once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
+    Prowler App supports the **Service Principal** authentication method and the **Service Principal with User Credentials** authentication method, but this last one will be deprecated in October once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
 
 ### Service Principal Authentication (Recommended)
 
@@ -109,7 +109,7 @@ When using service principal authentication, add the following **Application Per
     > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
 
 ???+ note
-    This is the **recommended authentication method** because it allows you to run the full M365 provider including PowerShell checks, providing complete coverage of all available security checks, same as the Service Principal Authentication + User Credentials Authentication but this last one will be deprecated in September once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
+    This is the **recommended authentication method** because it allows you to run the full M365 provider including PowerShell checks, providing complete coverage of all available security checks, same as the Service Principal Authentication + User Credentials Authentication but this last one will be deprecated in October once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
 
 
 ####  Service Principal + User Credentials Authentication (`--env-auth`)

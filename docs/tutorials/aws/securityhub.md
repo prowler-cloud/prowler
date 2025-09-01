@@ -132,7 +132,7 @@ prowler --security-hub --role arn:aws:iam::123456789012:role/ProwlerExecutionRol
 ```
 
 ???+ note
-    The specified IAM role must have the necessary permissions to send findings to Security Hub. For details on the required permissions, refer to the IAM policy: [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
+    The specified IAM role must have the necessary permissions to send findings to Security Hub. For details on the required permissions, refer to the IAM policy: [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json)
 
 ## Sending Only Failed Findings to AWS Security Hub
 
