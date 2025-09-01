@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import {
   apiBaseUrl,
   getAuthHeaders,
-  getErrorMessage,
   getFormValue,
   handleApiError,
   handleApiResponse,
@@ -246,9 +245,7 @@ export const deleteCredentials = async (secretId: string) => {
     revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting credentials:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };
 
@@ -285,8 +282,6 @@ export const deleteProvider = async (formData: FormData) => {
     revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting provider:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };
