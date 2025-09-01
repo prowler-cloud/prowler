@@ -5665,10 +5665,10 @@ class TestIntegrationViewSet:
                 Integration.IntegrationChoices.JIRA,
                 {
                     "project_key": "JIRA",
+                    "domain": "prowlerdomain",
                 },
                 {
                     "api_token": "this-is-an-api-token-for-jira-that-works-for-sure",
-                    "domain": "prowlerdomain",
                     "user_mail": "testing@prowler.com",
                 },
             ),
@@ -5822,18 +5822,19 @@ class TestIntegrationViewSet:
                     {
                         "integration_type": "jira",
                         "configuration": {
-                            "bucket_name": "bucket_name",
+                            "project_key": "JIRA",
                         },
                         "credentials": {},
                     },
                     "required",
-                    "project_key",
+                    "domain",
                 ),
                 (
                     {
                         "integration_type": "jira",
                         "configuration": {
                             "project_key": "JIRA",
+                            "domain": "prowlerdomain",
                         },
                     },
                     "required",
@@ -5844,6 +5845,7 @@ class TestIntegrationViewSet:
                         "integration_type": "jira",
                         "configuration": {
                             "project_key": "JIRA",
+                            "domain": "prowlerdomain",
                         },
                         "credentials": {"api_token": "api-token"},
                     },

@@ -510,6 +510,8 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "test@example.com",
             "api_token": "test_api_token",
+        }
+        integration.configuration = {
             "domain": "example.atlassian.net",
         }
 
@@ -537,6 +539,8 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "invalid@example.com",
             "api_token": "invalid_token",
+        }
+        integration.configuration = {
             "domain": "invalid.atlassian.net",
         }
 

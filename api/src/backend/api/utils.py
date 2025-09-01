@@ -240,6 +240,7 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
         return Jira.test_connection(
             **integration.credentials,
+            domain=integration.configuration["domain"],
             raise_on_exception=False,
         )
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:

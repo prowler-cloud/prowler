@@ -1966,6 +1966,19 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 {"configuration": "This integration already exists."}
             )
 
+        if (
+            integration_type == Integration.IntegrationChoices.JIRA
+            and Integration.objects.filter(
+                configuration__contains={
+                    "domain": attrs.get("configuration").get("domain"),
+                    "project_key": attrs.get("configuration").get("project_key"),
+                }
+            ).exists()
+        ):
+            raise serializers.ValidationError(
+                {"configuration": "This integration already exists."}
+            )
+
         # Check if any provider already has a SecurityHub integration
         if hasattr(self, "instance") and self.instance and not integration_type:
             integration_type = self.instance.integration_type
