@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.11.1] (Prowler v5.11.1)
+
+### 🐞 Changed
+
+- Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
+
 ## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added
