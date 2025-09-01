@@ -9,22 +9,22 @@ class MongoDBAtlasMutelist(Mutelist):
     def is_finding_muted(
         self,
         finding: CheckReportMongoDBAtlas,
-        account_name: str,
+        organization_id: str,
     ) -> bool:
         """
         Check if a finding is muted in the MongoDB Atlas mutelist.
 
         Args:
             finding: The CheckReportMongoDBAtlas finding
-            account_name: The account/project name
+            organization_id: The organization/project id
 
         Returns:
             bool: True if the finding is muted, False otherwise
         """
         return self.is_muted(
-            account_name,
+            organization_id,
             finding.check_metadata.CheckID,
-            "*",  # TODO: Study regions in MongoDB Atlas
+            finding.location,  # TODO: Study regions in MongoDB Atlas
             finding.resource_name,
             unroll_dict(unroll_tags(finding.resource_tags)),
         )
