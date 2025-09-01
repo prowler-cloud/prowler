@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
 
+### 🐞 Changed
+
+- Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
+
 ## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added
