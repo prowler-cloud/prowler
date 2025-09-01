@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.11.1] (Prowler UNRELEASED)
 
 ### Fixed
+- TypeError from Python 3.9 in Security Hub module by updating type annotations [(#8619)](https://github.com/prowler-cloud/prowler/pull/8619)
 
 ---
 
