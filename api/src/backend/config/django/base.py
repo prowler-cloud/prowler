@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "psqlextra",
     "api",
     "rest_framework",
+    "rest_framework_api_key",
     "corsheaders",
     "drf_spectacular",
     "drf_spectacular_jsonapi",
@@ -84,6 +85,7 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular_jsonapi.schemas.openapi.JsonApiAutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "api.authentication.APIKeyAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "PAGE_SIZE": 10,
@@ -249,7 +251,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Cache settings
 CACHE_MAX_AGE = env.int("DJANGO_CACHE_MAX_AGE", 3600)
 CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
-
 
 TESTING = False
 

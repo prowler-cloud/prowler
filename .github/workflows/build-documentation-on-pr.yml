@@ -1,7 +1,7 @@
 name: Prowler - Pull Request Documentation Link
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - 'master'
       - 'v3'
@@ -12,6 +12,10 @@ on:
 env:
   PR_NUMBER: ${{ github.event.pull_request.number }}
 
+permissions:
+  issues: write
+  pull-requests: write
+
 jobs:
   documentation-link:
     name: Documentation Link
@@ -21,6 +25,7 @@ jobs:
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: find-comment
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ env.PR_NUMBER }}
           comment-author: 'github-actions[bot]'
           body-includes: '<!-- prowler-docs-link -->'

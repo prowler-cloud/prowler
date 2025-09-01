@@ -2,6 +2,8 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+- API Key Management UI with complete interface for managing API keys in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
+
 ## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added

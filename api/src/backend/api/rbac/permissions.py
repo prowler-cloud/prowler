@@ -5,7 +5,7 @@ from django.db.models import QuerySet
 from rest_framework.permissions import BasePermission
 
 from api.db_router import MainRouter
-from api.models import Provider, Role, User
+from api.models import Provider, Role, User, APIKeyUser
 
 
 class Permissions(Enum):
@@ -16,6 +16,27 @@ class Permissions(Enum):
     MANAGE_INTEGRATIONS = "manage_integrations"
     MANAGE_SCANS = "manage_scans"
     UNLIMITED_VISIBILITY = "unlimited_visibility"
+
+
+class IsAuthenticated(BasePermission):
+    """
+    Custom IsAuthenticated permission that handles both JWT and API key authentication.
+
+    Allows access if:
+    - User is authenticated (JWT authentication), OR
+    - Request has valid API key authentication info
+    """
+
+    def has_permission(self, request, view):
+        # Handle regular authenticated users (JWT)
+        if request.user and request.user.is_authenticated:
+            return True
+
+        # Handle API key authentication (returns APIKeyUser)
+        if isinstance(request.user, APIKeyUser):
+            return True
+
+        return False
 
 
 class HasPermissions(BasePermission):
@@ -29,26 +50,53 @@ class HasPermissions(BasePermission):
         if not required_permissions:
             return True
 
-        user_roles = (
-            User.objects.using(MainRouter.admin_db).get(id=request.user.id).roles.all()
-        )
-        if not user_roles:
-            return False
-
-        for perm in required_permissions:
-            if not getattr(user_roles[0], perm.value, False):
+        # Handle API key authentication
+        if isinstance(request.user, APIKeyUser):
+            # Check API key's role permissions instead of granting unlimited access
+            if not request.user.role:
                 return False
 
-        return True
+            for perm in required_permissions:
+                if not getattr(request.user.role, perm.value, False):
+                    return False
+
+            return True
+
+        # Handle regular user authentication
+        try:
+            user_roles = (
+                User.objects.using(MainRouter.admin_db)
+                .get(id=request.user.id)
+                .roles.all()
+            )
+            if not user_roles:
+                return False
+
+            for perm in required_permissions:
+                if not getattr(user_roles[0], perm.value, False):
+                    return False
+
+            return True
+        except User.DoesNotExist:
+            return False
 
 
-def get_role(user: User) -> Optional[Role]:
+def get_role(user: User, request=None) -> Optional[Role]:
     """
     Retrieve the first role assigned to the given user.
 
+    For API key authentication, returns the role associated with the API key.
+
     Returns:
-        The user's first Role instance if the user has any roles, otherwise None.
+        The user's first Role instance if the user has any roles,
+        or the API key's role for API key authentication,
+        otherwise None.
     """
+    # Handle API key authentication
+    if isinstance(user, APIKeyUser):
+        # Return the actual role associated with the API key
+        return user.role
+
     return user.roles.first()
 
 

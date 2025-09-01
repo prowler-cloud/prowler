@@ -149,3 +149,52 @@ export interface TenantDetailData {
     };
   };
 }
+
+// API Key types
+export interface APIKey {
+  id: string; // This is the UUID in JSON API format
+  type: "api-keys";
+  attributes: {
+    name: string;
+    prefix: string;
+    expiry_date: string | null;
+    last_used_at: string | null;
+    created: string;
+  };
+  relationships?: {
+    role?: {
+      data: {
+        type: "roles";
+        id: string;
+      };
+    };
+  };
+}
+
+export interface APIKeyCreateData {
+  name: string;
+  expiry_date?: string | null;
+  role: string; // Role ID is required for API key creation
+}
+
+export interface APIKeyCreateResponse {
+  data: {
+    id: string;
+    type: "api-keys";
+    attributes: {
+      name: string;
+      prefix: string;
+      expiry_date: string | null;
+      created: string;
+      key: string; // Only returned on creation
+    };
+    relationships?: {
+      role?: {
+        data: {
+          type: "roles";
+          id: string;
+        };
+      };
+    };
+  };
+}

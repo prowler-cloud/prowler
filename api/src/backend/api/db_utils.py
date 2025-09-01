@@ -99,12 +99,11 @@ def one_week_from_now():
     return datetime.now(timezone.utc) + timedelta(days=7)
 
 
-def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
+def generate_random_token(length: int = 14) -> str:
     """
     Generate a random token with the specified length.
     """
-    _symbols = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
-    return "".join(secrets.choice(symbols or _symbols) for _ in range(length))
+    return secrets.token_urlsafe(length)[:length]
 
 
 def batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_SIZE):
