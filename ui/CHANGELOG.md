@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.11.1] (Prowler v5.11.1)
+
+### 🐞 Added
+
+- Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
+
 ## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added
