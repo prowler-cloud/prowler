@@ -12,7 +12,7 @@ from api.rls import RowLevelSecurityConstraint
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0045_alter_scan_output_location"),
+        ("api", "0047_remove_integration_unique_configuration_per_tenant.py"),
     ]
 
     operations = [
