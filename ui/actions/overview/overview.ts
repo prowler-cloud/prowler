@@ -1,8 +1,7 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders, handleApiResponse } from "@/lib";
 
 export const getProvidersOverview = async ({
   page = 1,
@@ -32,12 +31,8 @@ export const getProvidersOverview = async ({
       headers,
     });
 
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/");
-    return parsedData;
+    handleApiResponse(response, "/");
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching providers overview:", error);
     return undefined;
   }
@@ -71,16 +66,8 @@ export const getFindingsByStatus = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch findings severity: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/");
-    return parsedData;
+    handleApiResponse(response, "/");
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching findings severity overview:", error);
     return undefined;
   }
@@ -114,16 +101,8 @@ export const getFindingsBySeverity = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch findings severity: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/");
-    return parsedData;
+    handleApiResponse(response, "/");
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching findings severity overview:", error);
     return undefined;
   }
