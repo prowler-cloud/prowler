@@ -31,20 +31,22 @@ export default async function Scans({
   const searchParamsKey = JSON.stringify(filteredParams);
 
   const providersData = await getProviders({
-    filters: {
-      "filter[connected]": true,
-    },
     pageSize: 50,
   });
 
   const providerInfo =
-    providersData?.data?.map((provider: ProviderProps) => ({
-      providerId: provider.id,
-      alias: provider.attributes.alias,
-      providerType: provider.attributes.provider,
-      uid: provider.attributes.uid,
-      connected: provider.attributes.connection.connected,
-    })) || [];
+    providersData?.data
+      ?.filter(
+        (provider: ProviderProps) =>
+          provider.attributes.connection.connected === true,
+      )
+      .map((provider: ProviderProps) => ({
+        providerId: provider.id,
+        alias: provider.attributes.alias,
+        providerType: provider.attributes.provider,
+        uid: provider.attributes.uid,
+        connected: provider.attributes.connection.connected,
+      })) || [];
 
   const thereIsNoProviders = !providersData?.data;
 
@@ -94,7 +96,7 @@ export default async function Scans({
         />
         <Spacer y={8} />
         <div className="flex items-center justify-end gap-4">
-          <MutedFindingsConfigButton isDisabled={thereIsNoProvidersConnected} />
+          <MutedFindingsConfigButton />
         </div>
         <Spacer y={8} />
         <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>

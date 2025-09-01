@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_client import (
@@ -26,7 +27,7 @@ class IAM(GCPService):
                     .list(name="projects/" + project_id)
                 )
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for account in response.get("accounts", []):
                         self.service_accounts.append(
@@ -63,7 +64,7 @@ class IAM(GCPService):
                         + sa.email
                     )
                 )
-                response = request.execute()
+                response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                 for key in response.get("keys", []):
                     sa.keys.append(
@@ -116,7 +117,7 @@ class AccessApproval(GCPService):
                     self.client.projects().getAccessApprovalSettings(
                         name=f"projects/{project_id}/accessApprovalSettings"
                     )
-                ).execute()
+                ).execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                 self.settings[project_id] = Setting(
                     name=response["name"],
                     project_id=project_id,
@@ -147,7 +148,7 @@ class EssentialContacts(GCPService):
                     self.client.organizations()
                     .contacts()
                     .list(parent="organizations/" + org.id)
-                ).execute()
+                ).execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                 if len(response.get("contacts", [])) > 0:
                     contacts = True
 

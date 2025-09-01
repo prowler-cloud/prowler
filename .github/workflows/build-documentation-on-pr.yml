@@ -7,6 +7,7 @@ on:
       - 'v3'
     paths:
       - 'docs/**'
+      - '.github/workflows/build-documentation-on-pr.yml'
 
 env:
   PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -20,10 +21,21 @@ jobs:
     name: Documentation Link
     runs-on: ubuntu-latest
     steps:
-      - name: Leave PR comment with the Prowler Documentation URI
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+      - name: Find existing documentation comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        id: find-comment
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ env.PR_NUMBER }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- prowler-docs-link -->'
+
+      - name: Create or update PR comment with the Prowler Documentation URI
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ env.PR_NUMBER }}
           body: |
+            <!-- prowler-docs-link -->
             You can check the documentation for this PR here -> [Prowler Documentation](https://prowler-prowler-docs--${{ env.PR_NUMBER }}.com.readthedocs.build/projects/prowler-open-source/en/${{ env.PR_NUMBER }}/)
+          edit-mode: replace

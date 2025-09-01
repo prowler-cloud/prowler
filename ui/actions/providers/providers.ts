@@ -8,14 +8,12 @@ import {
   getAuthHeaders,
   getErrorMessage,
   getFormValue,
+  handleApiError,
+  handleApiResponse,
   parseStringify,
   wait,
 } from "@/lib";
-import {
-  buildSecretConfig,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib/provider-credentials/build-crendentials";
+import { buildSecretConfig } from "@/lib/provider-credentials/build-crendentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 

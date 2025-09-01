@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.11.0
+  version: 1.12.0
   description: |-
     Prowler API specification.
 
@@ -147,7 +147,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/PaginatedTaskList'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: The task is in progress
         '500':
           description: Compliance overviews generation task failed
@@ -230,6 +245,25 @@ paths:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: Compliance overviews metadata obtained successfully
         '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: The task is in progress
         '500':
           description: Compliance overviews generation task failed
@@ -360,6 +394,25 @@ paths:
                 $ref: '#/components/schemas/PaginatedComplianceOverviewDetailList'
           description: Compliance requirement details obtained successfully
         '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: The task is in progress
         '500':
           description: Compliance overviews generation task failed
@@ -417,6 +470,7 @@ paths:
         name: filter[delta]
         schema:
           type: string
+          x-spec-enum-id: fef6b0e2506af8bc
           nullable: true
           enum:
           - changed
@@ -452,6 +506,7 @@ paths:
         name: filter[impact]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -540,6 +595,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -560,6 +616,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -715,6 +772,7 @@ paths:
         name: filter[severity]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -740,6 +798,7 @@ paths:
         name: filter[status]
         schema:
           type: string
+          x-spec-enum-id: ce612ddbfa464789
           enum:
           - FAIL
           - MANUAL
@@ -941,6 +1000,7 @@ paths:
         name: filter[delta]
         schema:
           type: string
+          x-spec-enum-id: fef6b0e2506af8bc
           nullable: true
           enum:
           - changed
@@ -976,6 +1036,7 @@ paths:
         name: filter[impact]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -1061,6 +1122,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -1081,6 +1143,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -1236,6 +1299,7 @@ paths:
         name: filter[severity]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -1261,6 +1325,7 @@ paths:
         name: filter[status]
         schema:
           type: string
+          x-spec-enum-id: ce612ddbfa464789
           enum:
           - FAIL
           - MANUAL
@@ -1392,6 +1457,7 @@ paths:
         name: filter[delta]
         schema:
           type: string
+          x-spec-enum-id: fef6b0e2506af8bc
           nullable: true
           enum:
           - changed
@@ -1427,6 +1493,7 @@ paths:
         name: filter[impact]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -1490,6 +1557,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -1510,6 +1578,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -1650,6 +1719,7 @@ paths:
         name: filter[severity]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -1675,6 +1745,7 @@ paths:
         name: filter[status]
         schema:
           type: string
+          x-spec-enum-id: ce612ddbfa464789
           enum:
           - FAIL
           - MANUAL
@@ -1794,6 +1865,7 @@ paths:
         name: filter[delta]
         schema:
           type: string
+          x-spec-enum-id: fef6b0e2506af8bc
           nullable: true
           enum:
           - changed
@@ -1829,6 +1901,7 @@ paths:
         name: filter[impact]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -1917,6 +1990,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -1937,6 +2011,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -2092,6 +2167,7 @@ paths:
         name: filter[severity]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -2117,6 +2193,7 @@ paths:
         name: filter[status]
         schema:
           type: string
+          x-spec-enum-id: ce612ddbfa464789
           enum:
           - FAIL
           - MANUAL
@@ -2234,6 +2311,7 @@ paths:
         name: filter[delta]
         schema:
           type: string
+          x-spec-enum-id: fef6b0e2506af8bc
           nullable: true
           enum:
           - changed
@@ -2269,6 +2347,7 @@ paths:
         name: filter[impact]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -2332,6 +2411,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -2352,6 +2432,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -2492,6 +2573,7 @@ paths:
         name: filter[severity]
         schema:
           type: string
+          x-spec-enum-id: c93e070ed135d9bf
           enum:
           - critical
           - high
@@ -2517,6 +2599,7 @@ paths:
         name: filter[status]
         schema:
           type: string
+          x-spec-enum-id: ce612ddbfa464789
           enum:
           - FAIL
           - MANUAL
@@ -2633,6 +2716,7 @@ paths:
         name: filter[integration_type]
         schema:
           type: string
+          x-spec-enum-id: 6cfd0ff9cf4d6dcc
           enum:
           - amazon_s3
           - aws_security_hub
@@ -2649,6 +2733,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 6cfd0ff9cf4d6dcc
             enum:
             - amazon_s3
             - aws_security_hub
@@ -2893,7 +2978,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: ''
   /api/v1/invitations/accept:
     post:
@@ -3096,7 +3196,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: ''
   /api/v1/overviews/findings:
     get:
@@ -3161,6 +3276,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -3181,6 +3297,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -3326,6 +3443,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -3346,6 +3464,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -3507,6 +3626,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -3527,6 +3647,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -3625,6 +3746,7 @@ paths:
         name: filter[processor_type]
         schema:
           type: string
+          x-spec-enum-id: 53cda4a99fe3d655
           enum:
           - mutelist
         description: '* `mutelist` - Mutelist'
@@ -3634,6 +3756,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 53cda4a99fe3d655
             enum:
             - mutelist
         description: |-
@@ -4217,6 +4340,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -4473,7 +4597,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: ''
   /api/v1/providers/{id}/connection:
     post:
@@ -4498,7 +4637,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: ''
   /api/v1/providers/secrets:
     get:
@@ -4800,6 +4954,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -4820,6 +4975,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -5163,10 +5319,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5175,16 +5333,19 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5195,6 +5356,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5423,10 +5585,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5435,16 +5599,19 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5455,6 +5622,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -5689,10 +5857,12 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
           - gcp
+          - github
           - kubernetes
           - m365
         description: |-
@@ -5701,16 +5871,19 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
             - gcp
+            - github
             - kubernetes
             - m365
         description: |-
@@ -5721,6 +5894,7 @@ paths:
           * `gcp` - GCP
           * `kubernetes` - Kubernetes
           * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - in: query
@@ -6515,6 +6689,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
           enum:
           - aws
           - azure
@@ -6535,6 +6710,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -6595,6 +6771,7 @@ paths:
         name: filter[state]
         schema:
           type: string
+          x-spec-enum-id: d38ba07264e1ed34
           enum:
           - available
           - cancelled
@@ -6615,6 +6792,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: d38ba07264e1ed34
             enum:
             - available
             - cancelled
@@ -6637,6 +6815,7 @@ paths:
         name: filter[trigger]
         schema:
           type: string
+          x-spec-enum-id: 2e52c981d1c89bdf
           enum:
           - manual
           - scheduled
@@ -6729,7 +6908,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: ''
   /api/v1/scans/{id}:
     get:
@@ -6933,7 +7127,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: ''
   /api/v1/tasks:
     get:
@@ -7098,7 +7307,22 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
           description: ''
   /api/v1/tenants:
     get:
@@ -7520,6 +7744,7 @@ paths:
         name: filter[state]
         schema:
           type: string
+          x-spec-enum-id: 92a1c1fd12e13e25
           enum:
           - accepted
           - expired
@@ -8205,6 +8430,7 @@ paths:
         name: filter[role]
         schema:
           type: string
+          x-spec-enum-id: 12c359ee5dc51001
           enum:
           - member
           - owner
@@ -8366,11 +8592,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/ComplianceOverviewTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - compliance-overviews
         id: {}
         attributes:
           type: object
@@ -8405,11 +8632,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/ComplianceOverviewAttributesTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - compliance-requirements-attributes
         id: {}
         attributes:
           type: object
@@ -8435,10 +8663,6 @@ components:
           - version
           - description
           - attributes
-    ComplianceOverviewAttributesTypeEnum:
-      type: string
-      enum:
-      - compliance-requirements-attributes
     ComplianceOverviewDetail:
       type: object
       required:
@@ -8447,11 +8671,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/ComplianceOverviewDetailTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - compliance-requirements-details
         id: {}
         attributes:
           type: object
@@ -8474,16 +8699,13 @@ components:
                 * `FAIL` - Fail
                 * `PASS` - Pass
                 * `MANUAL` - Manual
+              x-spec-enum-id: ce612ddbfa464789
           required:
           - id
           - framework
           - version
           - description
           - status
-    ComplianceOverviewDetailTypeEnum:
-      type: string
-      enum:
-      - compliance-requirements-details
     ComplianceOverviewMetadata:
       type: object
       required:
@@ -8492,11 +8714,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/ComplianceOverviewMetadataTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - compliance-overviews-metadata
         id: {}
         attributes:
           type: object
@@ -8507,14 +8730,6 @@ components:
                 type: string
           required:
           - regions
-    ComplianceOverviewMetadataTypeEnum:
-      type: string
-      enum:
-      - compliance-overviews-metadata
-    ComplianceOverviewTypeEnum:
-      type: string
-      enum:
-      - compliance-overviews
     Finding:
       type: object
       required:
@@ -8523,11 +8738,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/FindingTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - findings
         id:
           type: string
           format: uuid
@@ -8546,6 +8762,7 @@ components:
               description: |-
                 * `new` - New
                 * `changed` - Changed
+              x-spec-enum-id: fef6b0e2506af8bc
               nullable: true
             status:
               enum:
@@ -8557,6 +8774,7 @@ components:
                 * `FAIL` - Fail
                 * `PASS` - Pass
                 * `MANUAL` - Manual
+              x-spec-enum-id: ce612ddbfa464789
             status_extended:
               type: string
               nullable: true
@@ -8574,6 +8792,7 @@ components:
                 * `medium` - Medium
                 * `low` - Low
                 * `informational` - Informational
+              x-spec-enum-id: c93e070ed135d9bf
             check_id:
               type: string
               maxLength: 100
@@ -8670,11 +8889,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/FindingDynamicFilterTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - finding-dynamic-filters
         id: {}
         attributes:
           type: object
@@ -8697,10 +8917,6 @@ components:
           $ref: '#/components/schemas/FindingDynamicFilter'
       required:
       - data
-    FindingDynamicFilterTypeEnum:
-      type: string
-      enum:
-      - finding-dynamic-filters
     FindingMetadata:
       type: object
       required:
@@ -8709,11 +8925,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/FindingMetadataTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - findings-metadata
         id: {}
         attributes:
           type: object
@@ -8741,10 +8958,6 @@ components:
           $ref: '#/components/schemas/FindingMetadata'
       required:
       - data
-    FindingMetadataTypeEnum:
-      type: string
-      enum:
-      - findings-metadata
     FindingResponse:
       type: object
       properties:
@@ -8752,10 +8965,6 @@ components:
           $ref: '#/components/schemas/Finding'
       required:
       - data
-    FindingTypeEnum:
-      type: string
-      enum:
-      - findings
     Integration:
       type: object
       required:
@@ -8764,11 +8973,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeC82Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - integrations
         id:
           type: string
           format: uuid
@@ -8804,6 +9014,7 @@ components:
                 * `aws_security_hub` - AWS Security Hub
                 * `jira` - JIRA
                 * `slack` - Slack
+              x-spec-enum-id: 6cfd0ff9cf4d6dcc
             configuration: {}
           required:
           - integration_type
@@ -8847,11 +9058,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeC82Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - integrations
         attributes:
           type: object
           properties:
@@ -8865,7 +9077,6 @@ components:
               readOnly: true
             enabled:
               type: boolean
-              readOnly: true
             connected:
               type: boolean
               readOnly: true
@@ -8887,6 +9098,7 @@ components:
                 * `aws_security_hub` - AWS Security Hub
                 * `jira` - JIRA
                 * `slack` - Slack
+              x-spec-enum-id: 6cfd0ff9cf4d6dcc
             configuration:
               oneOf:
               - type: object
@@ -8897,11 +9109,29 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Optional - defaults to "output" if not provided.
+                      Path will be normalized to remove excessive slashes and invalid
+                      characters are not allowed (< > : " | ? *). Maximum length is
+                      900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
+                    default: output
                 required:
                 - bucket_name
-                - output_directory
+              - type: object
+                title: AWS Security Hub
+                properties:
+                  send_only_fails:
+                    type: boolean
+                    default: false
+                    description: If true, only findings with status 'FAIL' will be
+                      sent to Security Hub.
+                  archive_previous_findings:
+                    type: boolean
+                    default: false
+                    description: If true, archives findings that are not present in
+                      the current execution.
             credentials:
               oneOf:
               - type: object
@@ -9006,7 +9236,6 @@ components:
                   readOnly: true
                 enabled:
                   type: boolean
-                  readOnly: true
                 connected:
                   type: boolean
                   readOnly: true
@@ -9028,6 +9257,7 @@ components:
                     * `aws_security_hub` - AWS Security Hub
                     * `jira` - JIRA
                     * `slack` - Slack
+                  x-spec-enum-id: 6cfd0ff9cf4d6dcc
                 configuration:
                   oneOf:
                   - type: object
@@ -9039,11 +9269,29 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Optional - defaults to "output" if not provided.
+                          Path will be normalized to remove excessive slashes and
+                          invalid characters are not allowed (< > : " | ? *). Maximum
+                          length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
+                        default: output
                     required:
                     - bucket_name
-                    - output_directory
+                  - type: object
+                    title: AWS Security Hub
+                    properties:
+                      send_only_fails:
+                        type: boolean
+                        default: false
+                        description: If true, only findings with status 'FAIL' will
+                          be sent to Security Hub.
+                      archive_previous_findings:
+                        type: boolean
+                        default: false
+                        description: If true, archives findings that are not present
+                          in the current execution.
                 credentials:
                   oneOf:
                   - type: object
@@ -9144,11 +9392,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeC82Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - integrations
         id: {}
         attributes:
           type: object
@@ -9184,6 +9433,7 @@ components:
                 * `aws_security_hub` - AWS Security Hub
                 * `jira` - JIRA
                 * `slack` - Slack
+              x-spec-enum-id: 6cfd0ff9cf4d6dcc
               readOnly: true
             configuration:
               oneOf:
@@ -9195,11 +9445,29 @@ components:
                     description: The name of the S3 bucket where files will be stored.
                   output_directory:
                     type: string
-                    description: The directory path within the bucket where files
-                      will be saved.
+                    description: 'The directory path within the bucket where files
+                      will be saved. Optional - defaults to "output" if not provided.
+                      Path will be normalized to remove excessive slashes and invalid
+                      characters are not allowed (< > : " | ? *). Maximum length is
+                      900 characters.'
+                    maxLength: 900
+                    pattern: ^[^<>:"|?*]+$
+                    default: output
                 required:
                 - bucket_name
-                - output_directory
+              - type: object
+                title: AWS Security Hub
+                properties:
+                  send_only_fails:
+                    type: boolean
+                    default: false
+                    description: If true, only findings with status 'FAIL' will be
+                      sent to Security Hub.
+                  archive_previous_findings:
+                    type: boolean
+                    default: false
+                    description: If true, archives findings that are not present in
+                      the current execution.
             credentials:
               oneOf:
               - type: object
@@ -9286,11 +9554,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeD4dEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - invitations
         id:
           type: string
           format: uuid
@@ -9321,6 +9590,7 @@ components:
                 * `accepted` - Invitation was accepted by a user
                 * `expired` - Invitation expired after the configured time
                 * `revoked` - Invitation was revoked by a user
+              x-spec-enum-id: 92a1c1fd12e13e25
             token:
               type: string
               readOnly: true
@@ -9421,11 +9691,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeD4dEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - invitations
         attributes:
           type: object
           properties:
@@ -9450,6 +9721,7 @@ components:
                 * `accepted` - Invitation was accepted by a user
                 * `expired` - Invitation expired after the configured time
                 * `revoked` - Invitation was revoked by a user
+              x-spec-enum-id: 92a1c1fd12e13e25
               readOnly: true
             token:
               type: string
@@ -9556,6 +9828,7 @@ components:
                     * `accepted` - Invitation was accepted by a user
                     * `expired` - Invitation expired after the configured time
                     * `revoked` - Invitation was revoked by a user
+                  x-spec-enum-id: 92a1c1fd12e13e25
                   readOnly: true
                 token:
                   type: string
@@ -9646,11 +9919,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeD4dEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - invitations
         id:
           type: string
           format: uuid
@@ -9676,6 +9950,7 @@ components:
                 * `accepted` - Invitation was accepted by a user
                 * `expired` - Invitation expired after the configured time
                 * `revoked` - Invitation was revoked by a user
+              x-spec-enum-id: 92a1c1fd12e13e25
               readOnly: true
             token:
               type: string
@@ -9726,11 +10001,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type4bfEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - lighthouse-configurations
         id:
           type: string
           format: uuid
@@ -9752,7 +10028,12 @@ components:
               - gpt-4o
               - gpt-4o-mini-2024-07-18
               - gpt-4o-mini
+              - gpt-5-2025-08-07
+              - gpt-5
+              - gpt-5-mini-2025-08-07
+              - gpt-5-mini
               type: string
+              x-spec-enum-id: bd2108eb25b2d472
               description: |-
                 Must be one of the supported model names
 
@@ -9762,6 +10043,10 @@ components:
                 * `gpt-4o` - GPT-4o Default
                 * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                 * `gpt-4o-mini` - GPT-4o Mini Default
+                * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                * `gpt-5` - GPT-5 Default
+                * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                * `gpt-5-mini` - GPT-5 Mini Default
             temperature:
               type: number
               format: double
@@ -9794,11 +10079,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type4bfEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - lighthouse-configurations
         attributes:
           type: object
           properties:
@@ -9818,7 +10104,12 @@ components:
               - gpt-4o
               - gpt-4o-mini-2024-07-18
               - gpt-4o-mini
+              - gpt-5-2025-08-07
+              - gpt-5
+              - gpt-5-mini-2025-08-07
+              - gpt-5-mini
               type: string
+              x-spec-enum-id: bd2108eb25b2d472
               description: |-
                 Must be one of the supported model names
 
@@ -9828,6 +10119,10 @@ components:
                 * `gpt-4o` - GPT-4o Default
                 * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                 * `gpt-4o-mini` - GPT-4o Mini Default
+                * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                * `gpt-5` - GPT-5 Default
+                * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                * `gpt-5-mini` - GPT-5 Mini Default
             temperature:
               type: number
               format: double
@@ -9890,7 +10185,12 @@ components:
                   - gpt-4o
                   - gpt-4o-mini-2024-07-18
                   - gpt-4o-mini
+                  - gpt-5-2025-08-07
+                  - gpt-5
+                  - gpt-5-mini-2025-08-07
+                  - gpt-5-mini
                   type: string
+                  x-spec-enum-id: bd2108eb25b2d472
                   description: |-
                     Must be one of the supported model names
 
@@ -9900,6 +10200,10 @@ components:
                     * `gpt-4o` - GPT-4o Default
                     * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                     * `gpt-4o-mini` - GPT-4o Mini Default
+                    * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                    * `gpt-5` - GPT-5 Default
+                    * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                    * `gpt-5-mini` - GPT-5 Mini Default
                 temperature:
                   type: number
                   format: double
@@ -9943,11 +10247,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type4bfEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - lighthouse-configurations
         id:
           type: string
           format: uuid
@@ -9970,7 +10275,12 @@ components:
               - gpt-4o
               - gpt-4o-mini-2024-07-18
               - gpt-4o-mini
+              - gpt-5-2025-08-07
+              - gpt-5
+              - gpt-5-mini-2025-08-07
+              - gpt-5-mini
               type: string
+              x-spec-enum-id: bd2108eb25b2d472
               description: |-
                 Must be one of the supported model names
 
@@ -9980,6 +10290,10 @@ components:
                 * `gpt-4o` - GPT-4o Default
                 * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                 * `gpt-4o-mini` - GPT-4o Mini Default
+                * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                * `gpt-5` - GPT-5 Default
+                * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                * `gpt-5-mini` - GPT-5 Mini Default
             temperature:
               type: number
               format: double
@@ -10009,11 +10323,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/MembershipTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - memberships
         attributes:
           type: object
           properties:
@@ -10025,6 +10340,7 @@ components:
               description: |-
                 * `owner` - Owner
                 * `member` - Member
+              x-spec-enum-id: 12c359ee5dc51001
             date_joined:
               type: string
               format: date-time
@@ -10091,10 +10407,6 @@ components:
           $ref: '#/components/schemas/Membership'
       required:
       - data
-    MembershipTypeEnum:
-      type: string
-      enum:
-      - memberships
     OpenApiResponseResponse:
       type: object
       properties:
@@ -10110,11 +10422,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/OverviewFindingTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - findings-overview
         id: {}
         attributes:
           type: object
@@ -10169,10 +10482,6 @@ components:
           $ref: '#/components/schemas/OverviewFinding'
       required:
       - data
-    OverviewFindingTypeEnum:
-      type: string
-      enum:
-      - findings-overview
     OverviewProvider:
       type: object
       required:
@@ -10181,11 +10490,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/OverviewProviderTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - providers-overview
         id: {}
         attributes:
           type: object
@@ -10219,10 +10529,6 @@ components:
           $ref: '#/components/schemas/OverviewProvider'
       required:
       - data
-    OverviewProviderTypeEnum:
-      type: string
-      enum:
-      - providers-overview
     OverviewService:
       type: object
       required:
@@ -10231,11 +10537,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/OverviewServiceTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - services-overview
         id: {}
         attributes:
           type: object
@@ -10263,10 +10570,6 @@ components:
           $ref: '#/components/schemas/OverviewService'
       required:
       - data
-    OverviewServiceTypeEnum:
-      type: string
-      enum:
-      - services-overview
     OverviewSeverity:
       type: object
       required:
@@ -10275,11 +10578,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/OverviewSeverityTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - findings-severity-overview
         id: {}
         attributes:
           type: object
@@ -10310,10 +10614,6 @@ components:
           $ref: '#/components/schemas/OverviewSeverity'
       required:
       - data
-    OverviewSeverityTypeEnum:
-      type: string
-      enum:
-      - findings-severity-overview
     PaginatedComplianceOverviewAttributesList:
       type: object
       properties:
@@ -10537,6 +10837,7 @@ components:
                     * `aws_security_hub` - AWS Security Hub
                     * `jira` - JIRA
                     * `slack` - Slack
+                  x-spec-enum-id: 6cfd0ff9cf4d6dcc
                   readOnly: true
                 configuration:
                   oneOf:
@@ -10549,11 +10850,29 @@ components:
                           stored.
                       output_directory:
                         type: string
-                        description: The directory path within the bucket where files
-                          will be saved.
+                        description: 'The directory path within the bucket where files
+                          will be saved. Optional - defaults to "output" if not provided.
+                          Path will be normalized to remove excessive slashes and
+                          invalid characters are not allowed (< > : " | ? *). Maximum
+                          length is 900 characters.'
+                        maxLength: 900
+                        pattern: ^[^<>:"|?*]+$
+                        default: output
                     required:
                     - bucket_name
-                    - output_directory
+                  - type: object
+                    title: AWS Security Hub
+                    properties:
+                      send_only_fails:
+                        type: boolean
+                        default: false
+                        description: If true, only findings with status 'FAIL' will
+                          be sent to Security Hub.
+                      archive_previous_findings:
+                        type: boolean
+                        default: false
+                        description: If true, archives findings that are not present
+                          in the current execution.
                 credentials:
                   oneOf:
                   - type: object
@@ -10671,6 +10990,7 @@ components:
                     * `accepted` - Invitation was accepted by a user
                     * `expired` - Invitation expired after the configured time
                     * `revoked` - Invitation was revoked by a user
+                  x-spec-enum-id: 92a1c1fd12e13e25
                   readOnly: true
                 token:
                   type: string
@@ -10749,7 +11069,12 @@ components:
                   - gpt-4o
                   - gpt-4o-mini-2024-07-18
                   - gpt-4o-mini
+                  - gpt-5-2025-08-07
+                  - gpt-5
+                  - gpt-5-mini-2025-08-07
+                  - gpt-5-mini
                   type: string
+                  x-spec-enum-id: bd2108eb25b2d472
                   description: |-
                     Must be one of the supported model names
 
@@ -10759,6 +11084,10 @@ components:
                     * `gpt-4o` - GPT-4o Default
                     * `gpt-4o-mini-2024-07-18` - GPT-4o Mini v2024-07-18
                     * `gpt-4o-mini` - GPT-4o Mini Default
+                    * `gpt-5-2025-08-07` - GPT-5 v2025-08-07
+                    * `gpt-5` - GPT-5 Default
+                    * `gpt-5-mini-2025-08-07` - GPT-5 Mini v2025-08-07
+                    * `gpt-5-mini` - GPT-5 Mini Default
                 temperature:
                   type: number
                   format: double
@@ -11052,6 +11381,7 @@ components:
                     * `static` - Key-value pairs
                     * `role` - Role assumption
                     * `service_account` - GCP Service Account Key
+                  x-spec-enum-id: 20c74ebcd6671497
                 secret:
                   oneOf:
                   - type: object
@@ -11684,11 +12014,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type552Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - processors
         id:
           type: string
           format: uuid
@@ -11708,6 +12039,7 @@ components:
               - mutelist
               type: string
               description: '* `mutelist` - Mutelist'
+              x-spec-enum-id: 53cda4a99fe3d655
             configuration:
               oneOf:
               - type: object
@@ -11785,11 +12117,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type552Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - processors
         attributes:
           type: object
           properties:
@@ -11806,6 +12139,7 @@ components:
               - mutelist
               type: string
               description: '* `mutelist` - Mutelist'
+              x-spec-enum-id: 53cda4a99fe3d655
             configuration:
               oneOf:
               - type: object
@@ -11908,6 +12242,7 @@ components:
                   - mutelist
                   type: string
                   description: '* `mutelist` - Mutelist'
+                  x-spec-enum-id: 53cda4a99fe3d655
                 configuration:
                   oneOf:
                   - type: object
@@ -12002,11 +12337,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type552Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - processors
         id: {}
         attributes:
           type: object
@@ -12103,11 +12439,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type227Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - providers
         id:
           type: string
           format: uuid
@@ -12138,6 +12475,7 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+              x-spec-enum-id: 4c1e219dad1cc0e7
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -12225,11 +12563,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type227Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - providers
         attributes:
           type: object
           properties:
@@ -12254,6 +12593,7 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+              x-spec-enum-id: 4c1e219dad1cc0e7
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -12301,6 +12641,7 @@ components:
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
+                  x-spec-enum-id: 4c1e219dad1cc0e7
                 uid:
                   type: string
                   minLength: 3
@@ -12325,11 +12666,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type34dEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - provider-groups
         id:
           type: string
           format: uuid
@@ -12415,11 +12757,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type34dEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - provider-groups
         attributes:
           type: object
           properties:
@@ -12706,11 +13049,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type049Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - provider-secrets
         id:
           type: string
           format: uuid
@@ -12740,6 +13084,7 @@ components:
                 * `static` - Key-value pairs
                 * `role` - Role assumption
                 * `service_account` - GCP Service Account Key
+              x-spec-enum-id: 20c74ebcd6671497
           required:
           - secret_type
         relationships:
@@ -12778,11 +13123,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type049Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - provider-secrets
         attributes:
           type: object
           properties:
@@ -12809,6 +13155,7 @@ components:
                 * `static` - Key-value pairs
                 * `role` - Role assumption
                 * `service_account` - GCP Service Account Key
+              x-spec-enum-id: 20c74ebcd6671497
             secret:
               oneOf:
               - type: object
@@ -13055,6 +13402,7 @@ components:
                     * `static` - Key-value pairs
                     * `role` - Role assumption
                     * `service_account` - GCP Service Account Key
+                  x-spec-enum-id: 20c74ebcd6671497
                 secret:
                   oneOf:
                   - type: object
@@ -13284,11 +13632,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type049Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - provider-secrets
         id:
           type: string
           format: uuid
@@ -13318,6 +13667,7 @@ components:
                 * `static` - Key-value pairs
                 * `role` - Role assumption
                 * `service_account` - GCP Service Account Key
+              x-spec-enum-id: 20c74ebcd6671497
             secret:
               oneOf:
               - type: object
@@ -13535,11 +13885,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/ResourceTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - resources
         id:
           type: string
           format: uuid
@@ -13645,11 +13996,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/ResourceMetadataTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - resources-metadata
         id: {}
         attributes:
           type: object
@@ -13677,10 +14029,6 @@ components:
           $ref: '#/components/schemas/ResourceMetadata'
       required:
       - data
-    ResourceMetadataTypeEnum:
-      type: string
-      enum:
-      - resources-metadata
     ResourceResponse:
       type: object
       properties:
@@ -13688,10 +14036,6 @@ components:
           $ref: '#/components/schemas/Resource'
       required:
       - data
-    ResourceTypeEnum:
-      type: string
-      enum:
-      - resources
     Role:
       type: object
       required:
@@ -13700,11 +14044,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type6bbEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - roles
         id:
           type: string
           format: uuid
@@ -13834,11 +14179,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type6bbEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - roles
         attributes:
           type: object
           properties:
@@ -14177,11 +14523,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/SAMLConfigurationTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - saml-configurations
         id:
           type: string
           format: uuid
@@ -14256,10 +14603,6 @@ components:
           $ref: '#/components/schemas/SAMLConfiguration'
       required:
       - data
-    SAMLConfigurationTypeEnum:
-      type: string
-      enum:
-      - saml-configurations
     Scan:
       type: object
       required:
@@ -14268,11 +14611,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeE53Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - scans
         id:
           type: string
           format: uuid
@@ -14292,6 +14636,7 @@ components:
               description: |-
                 * `scheduled` - Scheduled
                 * `manual` - Manual
+              x-spec-enum-id: 2e52c981d1c89bdf
               readOnly: true
             state:
               enum:
@@ -14309,6 +14654,7 @@ components:
                 * `completed` - Completed
                 * `failed` - Failed
                 * `cancelled` - Cancelled
+              x-spec-enum-id: d38ba07264e1ed34
               readOnly: true
             unique_resource_count:
               type: integer
@@ -14492,11 +14838,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TypeE53Enum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - scans
         id:
           type: string
           format: uuid
@@ -14556,11 +14903,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TaskTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - tasks
         id:
           type: string
           format: uuid
@@ -14601,10 +14949,6 @@ components:
           $ref: '#/components/schemas/Task'
       required:
       - data
-    TaskTypeEnum:
-      type: string
-      enum:
-      - tasks
     Tenant:
       type: object
       required:
@@ -14613,11 +14957,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TenantTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - tenants
         id:
           type: string
           format: uuid
@@ -14727,10 +15072,6 @@ components:
           $ref: '#/components/schemas/Tenant'
       required:
       - data
-    TenantTypeEnum:
-      type: string
-      enum:
-      - tenants
     Token:
       type: object
       required:
@@ -14738,11 +15079,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TokenTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - tokens
         attributes:
           type: object
           properties:
@@ -14774,11 +15116,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TokenRefreshTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - tokens-refresh
         attributes:
           type: object
           properties:
@@ -14826,10 +15169,6 @@ components:
           $ref: '#/components/schemas/TokenRefresh'
       required:
       - data
-    TokenRefreshTypeEnum:
-      type: string
-      enum:
-      - tokens-refresh
     TokenRequest:
       type: object
       properties:
@@ -14890,11 +15229,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/TokenSwitchTenantTypeEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - tokens-switch-tenant
         attributes:
           type: object
           properties:
@@ -14954,54 +15294,6 @@ components:
           $ref: '#/components/schemas/TokenSwitchTenant'
       required:
       - data
-    TokenSwitchTenantTypeEnum:
-      type: string
-      enum:
-      - tokens-switch-tenant
-    TokenTypeEnum:
-      type: string
-      enum:
-      - tokens
-    Type049Enum:
-      type: string
-      enum:
-      - provider-secrets
-    Type227Enum:
-      type: string
-      enum:
-      - providers
-    Type34dEnum:
-      type: string
-      enum:
-      - provider-groups
-    Type4bfEnum:
-      type: string
-      enum:
-      - lighthouse-configurations
-    Type552Enum:
-      type: string
-      enum:
-      - processors
-    Type6bbEnum:
-      type: string
-      enum:
-      - roles
-    Type8cdEnum:
-      type: string
-      enum:
-      - users
-    TypeC82Enum:
-      type: string
-      enum:
-      - integrations
-    TypeD4dEnum:
-      type: string
-      enum:
-      - invitations
-    TypeE53Enum:
-      type: string
-      enum:
-      - scans
     User:
       type: object
       required:
@@ -15010,11 +15302,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type8cdEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - users
         id:
           type: string
           format: uuid
@@ -15108,11 +15401,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type8cdEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - users
         attributes:
           type: object
           properties:
@@ -15226,11 +15520,12 @@ components:
       additionalProperties: false
       properties:
         type:
-          allOf:
-          - $ref: '#/components/schemas/Type8cdEnum'
+          type: string
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+          enum:
+          - users
         id:
           type: string
           format: uuid
@@ -15278,27 +15573,36 @@ tags:
 - name: Invitation
   description: Endpoints for tenant invitations management, allowing retrieval and
     filtering of invitations, creating new invitations, accepting and revoking them.
+- name: Role
+  description: Endpoints for managing RBAC roles within tenants, allowing creation,
+    retrieval, updating, and deletion of role configurations and permissions.
 - name: Provider
   description: Endpoints for managing providers (AWS, GCP, Azure, etc...).
 - name: Provider Group
   description: Endpoints for managing provider groups.
+- name: Task
+  description: Endpoints for task management, allowing retrieval of task status and
+    revoking tasks that have not started.
 - name: Scan
   description: Endpoints for triggering manual scans and viewing scan results.
+- name: Schedule
+  description: Endpoints for managing scan schedules, allowing configuration of automated
+    scans with different scheduling options.
 - name: Resource
   description: Endpoints for managing resources discovered by scans, allowing retrieval
     and filtering of resource information.
 - name: Finding
   description: Endpoints for managing findings, allowing retrieval and filtering of
     findings that result from scans.
-- name: Overview
-  description: Endpoints for retrieving aggregated summaries of resources from the
-    system.
+- name: Processor
+  description: Endpoints for managing post-processors used to process Prowler findings,
+    including registration, configuration, and deletion of post-processing actions.
 - name: Compliance Overview
   description: Endpoints for checking the compliance overview, allowing filtering
     by scan, provider or compliance framework ID.
-- name: Task
-  description: Endpoints for task management, allowing retrieval of task status and
-    revoking tasks that have not started.
+- name: Overview
+  description: Endpoints for retrieving aggregated summaries of resources from the
+    system.
 - name: Integration
   description: Endpoints for managing third-party integrations, including registration,
     configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
@@ -15307,6 +15611,6 @@ tags:
   description: Endpoints for managing Lighthouse configurations, including creation,
     retrieval, updating, and deletion of configurations such as OpenAI keys, models,
     and business context.
-- name: Processor
-  description: Endpoints for managing post-processors used to process Prowler findings,
-    including registration, configuration, and deletion of post-processing actions.
+- name: SAML
+  description: Endpoints for Single Sign-On authentication management via SAML for
+    seamless user authentication.

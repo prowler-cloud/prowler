@@ -2,7 +2,7 @@
 
 This page details the [GitHub](https://github.com/) provider implementation in Prowler.
 
-By default, Prowler will audit the GitHub account - scanning all repositories, organizations, and applications that your configured credentials can access. To configure it, follow the [getting started](../index.md#github) page.
+By default, Prowler will audit the GitHub account - scanning all repositories, organizations, and applications that your configured credentials can access. To configure it, follow the [GitHub getting started guide](../tutorials/github/getting-started-github.md).
 
 ## GitHub Provider Classes Architecture
 

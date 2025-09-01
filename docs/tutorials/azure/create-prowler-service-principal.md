@@ -73,7 +73,7 @@ Permissions can be assigned via the Azure Portal or the Azure CLI.
 
 7. Finally, search for "Directory", "Policy" and "UserAuthenticationMethod" select the following permissions:
 
-    - `Domain.Read.All`
+    - `Directory.Read.All`
 
     - `Policy.Read.All`
 

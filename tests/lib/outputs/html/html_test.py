@@ -4,11 +4,14 @@ from io import StringIO
 from mock import patch
 
 from prowler.config.config import prowler_version, timestamp
+from prowler.lib.logger import logger
 from prowler.lib.outputs.html.html import HTML
+from prowler.providers.github.models import GithubAppIdentityInfo
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
+from tests.providers.github.github_fixtures import APP_ID, set_mocked_github_provider
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
@@ -218,6 +221,67 @@ kubernetes_html_assessment_summary = """
                         list-group-flush">
                             <li class="list-group-item">
                                 <b>Kubernetes Context:</b> None
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+github_personal_access_token_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+
+                            <li class="list-group-item">
+                                <b>GitHub account:</b> account-name
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> Personal Access Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+github_app_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub App Name:</b> test-app
+                            </li>
+                            <li class="list-group-item">
+                                <b>Installations:</b> test-org
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> GitHub App Token
+                            </li>
+                            <li class="list-group-item">
+                                <b>GitHub App ID:</b> app-id
                             </li>
                         </ul>
                     </div>
@@ -597,3 +661,41 @@ class TestHTML:
 
         expected_summary = m365_html_assessment_summary
         assert summary == expected_summary
+
+    def test_github_personal_access_token_get_assessment_summary(self):
+        """Test GitHub HTML assessment summary generation with Personal Access Token authentication."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_github_provider(auth_method="Personal Access Token")
+
+        summary = output.get_assessment_summary(provider)
+
+        # Check for expected content in the summary
+        assert "GitHub Assessment Summary" in summary
+        assert "GitHub Credentials" in summary
+        assert "<b>GitHub account:</b> account-name" in summary
+        assert "<b>GitHub authentication method:</b> Personal Access Token" in summary
+        # Note: account_email is None in the default fixture, so it shouldn't appear
+
+    def test_github_app_get_assessment_summary(self):
+        """Test GitHub HTML assessment summary generation with GitHub App authentication."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = set_mocked_github_provider(
+            auth_method="GitHub App Token",
+            identity=GithubAppIdentityInfo(
+                app_id=APP_ID, app_name="test-app", installations=["test-org"]
+            ),
+        )
+
+        summary = output.get_assessment_summary(provider)
+        logger.error(summary)
+
+        # Check for expected content in the summary
+        assert "GitHub Assessment Summary" in summary
+        assert "GitHub Credentials" in summary
+        assert "<b>GitHub App Name:</b> test-app" in summary
+        assert "<b>Installations:</b> test-org" in summary
+        assert "<b>GitHub authentication method:</b> GitHub App Token" in summary
+        assert f"<b>GitHub App ID:</b> {APP_ID}" in summary

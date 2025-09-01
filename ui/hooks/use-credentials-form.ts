@@ -64,9 +64,13 @@ export const useCredentialsForm = ({
 
     // AWS Role credentials
     if (providerType === "aws" && via === "role") {
+      const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+      const defaultCredentialsType = isCloudEnv
+        ? "aws-sdk-default"
+        : "access-secret-key";
       return {
         ...baseDefaults,
-        [ProviderCredentialFields.CREDENTIALS_TYPE]: "aws-sdk-default",
+        [ProviderCredentialFields.CREDENTIALS_TYPE]: defaultCredentialsType,
         [ProviderCredentialFields.ROLE_ARN]: "",
         [ProviderCredentialFields.EXTERNAL_ID]: session?.tenantId || "",
         [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",

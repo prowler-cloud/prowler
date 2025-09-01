@@ -2,7 +2,7 @@
 
 This page details the [Google Cloud Platform (GCP)](https://cloud.google.com/) provider implementation in Prowler.
 
-By default, Prowler will audit all the GCP projects that the authenticated identity can access. To configure it, follow the [getting started](../index.md#google-cloud) page.
+By default, Prowler will audit all the GCP projects that the authenticated identity can access. To configure it, follow the [GCP getting started guide](../tutorials/gcp/getting-started-gcp.md).
 
 ## GCP Provider Classes Architecture
 
@@ -50,6 +50,49 @@ The GCP provider implementation follows the general [Provider structure](./provi
 - **Location:** [`prowler/providers/gcp/lib/`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/lib/)
 - **Purpose:** Helpers for argument parsing, mutelist management, and other cross-cutting concerns.
 
+## Retry Configuration
+
+GCP services implement automatic retry functionality for rate limiting errors (HTTP 429). This is configured centrally and must be included in all API calls:
+
+### Required Implementation
+
+```python
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
+
+# In discovery.build()
+client = discovery.build(
+    service, version, credentials=credentials,
+    num_retries=DEFAULT_RETRY_ATTEMPTS
+)
+
+# In request.execute()
+response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+```
+
+### Configuration
+
+- **Default Value**: 3 attempts (configurable in `prowler/providers/gcp/config.py`)
+- **Command Line Flag**: `--gcp-retries-max-attempts` for runtime configuration
+- **Error Types**: HTTP 429 and quota exceeded errors
+- **Backoff Strategy**: Exponential backoff with randomization
+
+### Example Service Implementation
+
+```python
+def _get_instances(self):
+    for project_id in self.project_ids:
+        try:
+            client = discovery.build(
+                "compute", "v1", credentials=self.credentials,
+                num_retries=DEFAULT_RETRY_ATTEMPTS
+            )
+            request = client.instances().list(project=project_id)
+            response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+            # Process response...
+        except Exception as error:
+            logger.error(f"{error.__class__.__name__}: {error}")
+```
+
 ## Specific Patterns in GCP Services
 
 The generic service pattern is described in [service page](./services.md#service-structure-and-initialisation). You can find all the currently implemented services in the following locations:
@@ -69,6 +112,7 @@ The best reference to understand how to implement a new service is following the
 - Resource discovery and attribute collection can be parallelized using `self.__threading_call__`, typically by region/zone or resource.
 - All GCP resources are represented as Pydantic `BaseModel` classes, providing type safety and structured access to resource attributes.
 - Each GCP API calls are wrapped in try/except blocks, always logging errors.
+- **Retry Configuration**: All `request.execute()` calls must include `num_retries=DEFAULT_RETRY_ATTEMPTS` for automatic retry on rate limiting errors (HTTP 429).
 - Tags and additional attributes that cannot be retrieved from the default call should be collected and stored for each resource using dedicated methods and threading.
 
 ## Specific Patterns in GCP Checks

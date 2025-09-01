@@ -192,6 +192,7 @@ class Provider(ABC):
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
+                        retries_max_attempts=arguments.gcp_retries_max_attempts,
                         organization_id=arguments.organization_id,
                         project_ids=arguments.project_id,
                         excluded_project_ids=arguments.excluded_project_id,
@@ -201,6 +202,7 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        skip_api_check=arguments.skip_api_check,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
@@ -221,6 +223,8 @@ class Provider(ABC):
                         env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
+                        certificate_auth=arguments.certificate_auth,
+                        certificate_path=arguments.certificate_path,
                         tenant_id=arguments.tenant_id,
                         init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
@@ -249,7 +253,7 @@ class Provider(ABC):
                     provider_class(
                         scan_path=arguments.scan_path,
                         scan_repository_url=arguments.scan_repository_url,
-                        frameworks=arguments.frameworks,
+                        scanners=arguments.scanners,
                         exclude_path=arguments.exclude_path,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,

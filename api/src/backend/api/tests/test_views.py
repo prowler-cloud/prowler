@@ -5691,6 +5691,7 @@ class TestIntegrationViewSet:
                     "integration_type": integration_type,
                     "configuration": configuration,
                     "credentials": credentials,
+                    "enabled": True,
                 },
                 "relationships": {
                     "providers": {
@@ -5708,6 +5709,7 @@ class TestIntegrationViewSet:
         assert Integration.objects.count() == 1
         integration = Integration.objects.first()
         assert integration.configuration == data["data"]["attributes"]["configuration"]
+        assert integration.enabled == data["data"]["attributes"]["enabled"]
         assert (
             integration.integration_type
             == data["data"]["attributes"]["integration_type"]

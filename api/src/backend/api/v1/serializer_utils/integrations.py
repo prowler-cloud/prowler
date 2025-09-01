@@ -9,15 +9,17 @@ from api.v1.serializer_utils.base import BaseValidateSerializer
 
 class S3ConfigSerializer(BaseValidateSerializer):
     bucket_name = serializers.CharField()
-    output_directory = serializers.CharField()
+    output_directory = serializers.CharField(allow_blank=True)
 
     def validate_output_directory(self, value):
         """
         Validate the output_directory field to ensure it's a properly formatted path.
         Prevents paths with excessive slashes like "///////test".
+        If empty, sets a default value.
         """
+        # If empty or None, set default value
         if not value:
-            raise serializers.ValidationError("Output directory cannot be empty.")
+            return "output"
 
         # Normalize the path to remove excessive slashes
         normalized_path = os.path.normpath(value)
@@ -35,7 +37,7 @@ class S3ConfigSerializer(BaseValidateSerializer):
         # Check for empty path after normalization
         if not normalized_path or normalized_path == ".":
             raise serializers.ValidationError(
-                "Output directory cannot be empty or just '.'."
+                "Output directory cannot be empty or just '.' or '/'."
             )
 
         # Check for paths that are too long (S3 key limit is 1024 characters, leave some room for filename)
@@ -45,6 +47,21 @@ class S3ConfigSerializer(BaseValidateSerializer):
             )
 
         return normalized_path
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class SecurityHubConfigSerializer(BaseValidateSerializer):
+    send_only_fails = serializers.BooleanField(default=False)
+    archive_previous_findings = serializers.BooleanField(default=False)
+    regions = serializers.DictField(default=dict, read_only=True)
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+        # Always initialize regions as empty dict
+        validated_data["regions"] = {}
+        return validated_data
 
     class Meta:
         resource_name = "integrations"
@@ -136,12 +153,29 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                     "output_directory": {
                         "type": "string",
-                        "description": 'The directory path within the bucket where files will be saved. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
+                        "description": 'The directory path within the bucket where files will be saved. Optional - defaults to "output" if not provided. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
                         "maxLength": 900,
                         "pattern": '^[^<>:"|?*]+$',
+                        "default": "output",
                     },
                 },
-                "required": ["bucket_name", "output_directory"],
+                "required": ["bucket_name"],
+            },
+            {
+                "type": "object",
+                "title": "AWS Security Hub",
+                "properties": {
+                    "send_only_fails": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, only findings with status 'FAIL' will be sent to Security Hub.",
+                    },
+                    "archive_previous_findings": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, archives findings that are not present in the current execution.",
+                    },
+                },
             },
         ]
     }

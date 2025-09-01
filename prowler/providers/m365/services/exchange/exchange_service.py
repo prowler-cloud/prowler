@@ -123,12 +123,20 @@ class Exchange(M365Service):
                 rules_data = [rules_data]
             for rule in rules_data:
                 if rule:
+                    sender_domain_is = rule.get("SenderDomainIs", [])
+                    if sender_domain_is is None:
+                        sender_domain_is = []
+
+                    redirect_message_to = rule.get("RedirectMessageTo", [])
+                    if redirect_message_to is None:
+                        redirect_message_to = []
+
                     transport_rules.append(
                         TransportRule(
                             name=rule.get("Name", ""),
                             scl=rule.get("SetSCL", None),
-                            sender_domain_is=rule.get("SenderDomainIs", []),
-                            redirect_message_to=rule.get("RedirectMessageTo", None),
+                            sender_domain_is=sender_domain_is,
+                            redirect_message_to=redirect_message_to,
                         )
                     )
         except Exception as error:
