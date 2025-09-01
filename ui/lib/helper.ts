@@ -376,7 +376,7 @@ export const handleApiResponse = async (
 };
 
 // Helper function to handle API errors consistently
-export const handleApiError = (error: unknown) => {
+export const handleApiError = (error: unknown): { error: string } => {
   console.error(error);
   return {
     error: getErrorMessage(error),

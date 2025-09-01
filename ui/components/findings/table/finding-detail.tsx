@@ -1,7 +1,6 @@
 "use client";
 
 import { Snippet } from "@nextui-org/react";
-import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomSection } from "@/components/ui/custom";
@@ -13,14 +12,6 @@ import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
-
-const MarkdownContainer = ({ children }: { children: string }) => {
-  return (
-    <div className="prose prose-sm max-w-none whitespace-normal break-words dark:prose-invert">
-      <ReactMarkdown>{children}</ReactMarkdown>
-    </div>
-  );
-};
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -131,17 +122,15 @@ export const FindingDetail = ({
               hideCopyButton
               hideSymbol
             >
-              <MarkdownContainer>
+              <p className="whitespace-pre-line">
                 {attributes.check_metadata.risk}
-              </MarkdownContainer>
+              </p>
             </Snippet>
           </InfoField>
         )}
 
         <InfoField label="Description">
-          <MarkdownContainer>
-            {attributes.check_metadata.description}
-          </MarkdownContainer>
+          {renderValue(attributes.check_metadata.description)}
         </InfoField>
 
         <InfoField label="Status Extended">
@@ -158,9 +147,9 @@ export const FindingDetail = ({
             {attributes.check_metadata.remediation.recommendation.text && (
               <InfoField label="Recommendation">
                 <div className="flex flex-col gap-2">
-                  <MarkdownContainer>
+                  <p>
                     {attributes.check_metadata.remediation.recommendation.text}
-                  </MarkdownContainer>
+                  </p>
                   {attributes.check_metadata.remediation.recommendation.url && (
                     <CustomLink
                       href={
@@ -186,12 +175,15 @@ export const FindingDetail = ({
               </InfoField>
             )}
 
-            {/* Remediation Steps section */}
+            {/* Additional Resources section */}
             {attributes.check_metadata.remediation.code.other && (
-              <InfoField label="Remediation Steps">
-                <MarkdownContainer>
-                  {attributes.check_metadata.remediation.code.other}
-                </MarkdownContainer>
+              <InfoField label="Additional Resources">
+                <CustomLink
+                  href={attributes.check_metadata.remediation.code.other}
+                  size="sm"
+                >
+                  View documentation
+                </CustomLink>
               </InfoField>
             )}
           </div>
