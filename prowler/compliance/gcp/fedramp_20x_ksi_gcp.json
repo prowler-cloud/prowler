@@ -1,0 +1,266 @@
+{
+  "Framework": "FedRAMP-20x-KSI",
+  "Version": "25.05C",
+  "Provider": "GCP",
+  "Description": "FedRAMP 20x Key Security Indicators (KSIs) represent core security indicators for cloud service providers, focusing on automation, continuous monitoring, and cloud-native security principles per FedRAMP 20x Phase One pilot requirements.",
+  "Requirements": [
+    {
+      "Id": "ksi-ced",
+      "Name": "KSI-CED: Cybersecurity Education",
+      "Description": "A secure cloud service provider will continuously educate their employees on cybersecurity measures, testing them regularly",
+      "Attributes": [
+        {
+          "ItemId": "ksi-ced",
+          "Section": "Cybersecurity Education",
+          "NistControls": "at-2, at-2.2, at-2.3, at-4",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_organization_essential_contacts_configured",
+        "iam_account_access_approval_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-cmt",
+      "Name": "KSI-CMT: Change Management",
+      "Description": "A secure cloud service provider will ensure that all system changes are properly documented and configuration baselines are updated accordingly",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cmt",
+          "Section": "Change Management",
+          "NistControls": "au-2, cm-2, cm-3, cm-4, cm-5, cm-6, cm-7, cm-8, cm-9, si-2, si-3",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "compute_instance_serial_ports_in_use",
+        "compute_project_os_login_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-cna",
+      "Name": "KSI-CNA: Cloud Native Architecture",
+      "Description": "A secure cloud service offering will use cloud native architecture and design principles to enforce and enhance the Confidentiality, Integrity and Availability of the system",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna",
+          "Section": "Cloud Native Architecture",
+          "NistControls": "ac-17.3, ca-9, cm-2, sc-5, sc-7",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_private_ip_assignment",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_instance_confidential_computing_enabled",
+        "compute_instance_ip_forwarding_is_enabled",
+        "compute_instance_public_ip",
+        "compute_instance_shielded_vm_enabled",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy",
+        "compute_subnet_flow_logs_enabled",
+        "gke_cluster_no_default_service_account"
+      ]
+    },
+    {
+      "Id": "ksi-iam",
+      "Name": "KSI-IAM: Identity and Access Management",
+      "Description": "A secure cloud service offering will protect user data, control access, and apply zero trust principles",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam",
+          "Section": "Identity and Access Management",
+          "NistControls": "ac-2, ac-3, ac-4, ac-6, ia-2, ia-5, ia-8",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused"
+      ]
+    },
+    {
+      "Id": "ksi-inr",
+      "Name": "KSI-INR: Incident Reporting",
+      "Description": "A secure cloud service offering will document, report, and analyze security incidents to ensure regulatory compliance and continuous security improvement",
+      "Attributes": [
+        {
+          "ItemId": "ksi-inr",
+          "Section": "Incident Reporting",
+          "NistControls": "ir-4, ir-6",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_organization_essential_contacts_configured",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-mla",
+      "Name": "KSI-MLA: Monitoring, Logging, and Auditing",
+      "Description": "A secure cloud service offering will monitor, log, and audit all important events, activity, and changes",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla",
+          "Section": "Monitoring, Logging, and Auditing",
+          "NistControls": "au-2, ca-7, ra-5",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_postgres_enable_pgaudit_flag",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudsql_instance_sqlserver_trace_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "ksi-piy",
+      "Name": "KSI-PIY: Policy and Inventory",
+      "Description": "A secure cloud service offering will have intentional, organized, universal guidance for how every information resource, including personnel, is secured",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy",
+          "Section": "Policy and Inventory",
+          "NistControls": "cm-8, pl-2",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled",
+        "iam_organization_essential_contacts_configured",
+        "compute_project_os_login_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-rpl",
+      "Name": "KSI-RPL: Recovery Planning",
+      "Description": "A secure cloud service offering will define, maintain, and test incident response plan(s) and recovery capabilities to ensure minimal service disruption and data loss",
+      "Attributes": [
+        {
+          "ItemId": "ksi-rpl",
+          "Section": "Recovery Planning",
+          "NistControls": "cp-2, cp-9, cp-10",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "ksi-svc",
+      "Name": "KSI-SVC: Service Configuration",
+      "Description": "A secure cloud service offering will follow FedRAMP encryption policies, continuously verify information resource integrity, and restrict access to third-party information resources",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc",
+          "Section": "Service Configuration",
+          "NistControls": "sc-7, sc-13, cm-6",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "cloudsql_instance_mysql_local_infile_flag",
+        "cloudsql_instance_mysql_skip_show_database_flag",
+        "cloudsql_instance_postgres_enable_pgaudit_flag",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudsql_instance_sqlserver_contained_database_authentication_flag",
+        "cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag",
+        "cloudsql_instance_sqlserver_external_scripts_enabled_flag",
+        "cloudsql_instance_sqlserver_remote_access_flag",
+        "cloudsql_instance_sqlserver_trace_flag",
+        "cloudsql_instance_sqlserver_user_connections_flag",
+        "cloudsql_instance_sqlserver_user_options_flag",
+        "cloudsql_instance_ssl_connections",
+        "compute_instance_encryption_with_csek_enabled",
+        "compute_instance_shielded_vm_enabled",
+        "dataproc_encrypted_with_cmks_disabled",
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-tpr",
+      "Name": "KSI-TPR: Third-Party Information Resources",
+      "Description": "A secure cloud service offering will understand, monitor, and manage supply chain risks from third-party information resources",
+      "Attributes": [
+        {
+          "ItemId": "ksi-tpr",
+          "Section": "Third-Party Information Resources",
+          "NistControls": "sa-9, ra-5",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled",
+        "compute_public_address_shodan"
+      ]
+    }
+  ]
+}
