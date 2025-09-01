@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Cluster",
+  "ResourceType": "MongoDBAtlasCluster",
   "Description": "Ensure MongoDB Atlas clusters have backup enabled to protect against data loss",
   "Risk": "Without backup enabled, MongoDB Atlas clusters are vulnerable to data loss in case of failures, corruption, or accidental deletion",
   "RelatedUrl": "",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that MongoDB Atlas clusters have backup enabled (backupEnabled=true) to ensure data protection and recovery capabilities."
+  "Notes": ""
 }

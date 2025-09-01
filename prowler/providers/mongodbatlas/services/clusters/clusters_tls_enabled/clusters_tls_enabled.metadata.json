@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Cluster",
+  "ResourceType": "MongoDBAtlasCluster",
   "Description": "Ensure MongoDB Atlas clusters have TLS authentication required to secure data in transit",
   "Risk": "Without TLS enabled, MongoDB Atlas clusters are vulnerable to man-in-the-middle attacks and data interception during transmission",
   "RelatedUrl": "",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that MongoDB Atlas clusters have TLS enabled (sslEnabled=true) to ensure secure data transmission."
+  "Notes": ""
 }

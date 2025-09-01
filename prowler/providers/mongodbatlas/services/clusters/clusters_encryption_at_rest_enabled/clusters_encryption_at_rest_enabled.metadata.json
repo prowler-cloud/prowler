@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that MongoDB Atlas clusters have encryption at rest enabled through either the MongoDB Atlas encryption provider or cloud provider-specific encryption (such as AWS EBS encryption). Paused clusters are skipped as they are not actively serving data."
+  "Notes": ""
 }
