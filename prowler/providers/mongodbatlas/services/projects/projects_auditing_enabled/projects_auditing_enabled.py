@@ -32,18 +32,13 @@ class projects_auditing_enabled(Check):
                 report.status_extended = f"Project {project.name} does not have audit configuration available."
             else:
                 # Check if audit configuration is enabled
-                enabled = project.audit_config.get("enabled", False)
-                audit_filter = project.audit_config.get("auditFilter")
-
-                if enabled:
+                if project.audit_config.enabled:
                     report.status = "PASS"
                     report.status_extended = (
                         f"Project {project.name} has database auditing enabled."
                     )
-                    if audit_filter:
-                        report.status_extended += (
-                            f" Audit filter configured: {audit_filter}"
-                        )
+                    if project.audit_config.audit_filter:
+                        report.status_extended += f" Audit filter configured: {project.audit_config.audit_filter}"
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"Project {project.name} does not have database auditing enabled."
