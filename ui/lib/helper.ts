@@ -369,7 +369,7 @@ export const handleApiResponse = async (
 
   const data = await response.json();
 
-  if (pathToRevalidate) {
+  if (pathToRevalidate && pathToRevalidate !== "") {
     revalidatePath(pathToRevalidate);
   }
 
