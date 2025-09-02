@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Organization",
+  "ResourceType": "MongoDBAtlasOrganization",
   "Description": "Ensure organization has a security contact defined to receive security-related notifications",
   "Risk": "Without a security contact, the organization may not receive important security notifications and alerts",
   "RelatedUrl": "",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that the organization has a security contact defined (securityContact field) to receive security-related notifications."
+  "Notes": ""
 }

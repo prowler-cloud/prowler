@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Organization",
+  "ResourceType": "MongoDBAtlasOrganization",
   "Description": "Ensure organization requires users to set up Multi-Factor Authentication (MFA) before accessing the organization",
   "Risk": "Without MFA requirement, user accounts are vulnerable to credential-based attacks and unauthorized access",
   "RelatedUrl": "",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that the organization requires users to set up Multi-Factor Authentication (MFA) before accessing the organization (multiFactorAuthRequired=true)."
+  "Notes": ""
 }

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Organization",
+  "ResourceType": "MongoDBAtlasOrganization",
   "Description": "Ensure organization requires API operations to originate from an IP Address added to the API access list",
   "Risk": "Without API access list requirement, API operations can originate from any IP address, increasing the risk of unauthorized access",
   "RelatedUrl": "",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that the organization requires API operations to originate from an IP Address added to the API access list (apiAccessListRequired=true)."
+  "Notes": "If you are running this check from Prowler Cloud, you will need to add our IP to the API access list of your API Key and then enable apiAccessListRequired to make this check pass."
 }
