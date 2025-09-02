@@ -508,38 +508,9 @@ class Jira:
                 api_token=api_token,
                 domain=domain,
             )
-            access_token = jira.get_access_token()
+            projects = list(jira.get_projects().keys())
 
-            if not access_token:
-                return ValueError("Failed to get access token")
-
-            if jira.using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}"}
-
-            response = requests.get(
-                f"https://api.atlassian.com/ex/jira/{jira.cloud_id}/rest/api/3/project",
-                headers=headers,
-            )
-
-            if response.status_code == 200:
-                projects = [project["key"] for project in response.json()]
-                if projects == []:  # If no projects are found
-                    logger.error("No projects found")
-                    raise JiraNoProjectsError(
-                        message="No projects found in Jira",
-                        file=os.path.basename(__file__),
-                    )
-                return JiraConnection(is_connected=True, projects=projects)
-            else:
-                logger.error(
-                    f"Failed to get projects: {response.status_code} - {response.text}"
-                )
-                raise JiraGetProjectsResponseError(
-                    message="Failed to get projects from Jira",
-                    file=os.path.basename(__file__),
-                )
+            return JiraConnection(is_connected=True, projects=projects)
         except JiraNoProjectsError as no_projects_error:
             logger.error(
                 f"{no_projects_error.__class__.__name__}[{no_projects_error.__traceback__.tb_lineno}]: {no_projects_error}"

@@ -17,6 +17,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraNoProjectsError,
     JiraRefreshTokenError,
     JiraRequiredCustomFieldsError,
+    JiraTestConnectionError,
 )
 from prowler.lib.outputs.jira.jira import Jira
 
@@ -294,26 +295,17 @@ class TestJiraIntegration:
         with pytest.raises(JiraRefreshTokenError):
             self.jira_integration.refresh_access_token()
 
-    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
-    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     @patch.object(Jira, "get_auth", return_value=None)
-    @patch("prowler.lib.outputs.jira.jira.requests.get")
-    def test_test_connection_successful(
-        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
-    ):
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
+    )
+    def test_test_connection_successful(self, mock_get_projects, mock_get_auth):
         """Test that a successful connection returns an active Connection object with projects."""
         # To disable vulture
-        mock_get_cloud_id = mock_get_cloud_id
+        mock_get_projects = mock_get_projects
         mock_get_auth = mock_get_auth
-        mock_get_access_token = mock_get_access_token
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = [
-            {"key": "PROJ1", "name": "Project One"},
-            {"key": "PROJ2", "name": "Project Two"},
-        ]
-        mock_get.return_value = mock_response
 
         connection = Jira.test_connection(
             redirect_uri=self.redirect_uri,
@@ -325,26 +317,19 @@ class TestJiraIntegration:
         assert connection.error is None
         assert connection.projects == ["PROJ1", "PROJ2"]
 
-    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
-    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     @patch.object(Jira, "get_basic_auth", return_value=None)
-    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
+    )
     def test_test_connection_successful_basic_auth(
-        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
+        self, mock_get_projects, mock_get_basic_auth
     ):
         """Test that a successful connection returns an active Connection object with projects."""
         # To disable vulture
-        mock_get_cloud_id = mock_get_cloud_id
-        mock_get_auth = mock_get_auth
-        mock_get_access_token = mock_get_access_token
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = [
-            {"key": "PROJ1", "name": "Project One"},
-            {"key": "PROJ2", "name": "Project Two"},
-        ]
-        mock_get.return_value = mock_response
+        mock_get_projects = mock_get_projects
+        mock_get_basic_auth = mock_get_basic_auth
 
         connection = Jira.test_connection(
             user_mail=self.user_mail,
@@ -358,13 +343,13 @@ class TestJiraIntegration:
 
     @patch.object(
         Jira,
-        "get_access_token",
+        "get_auth",
         side_effect=JiraAuthenticationError("Failed to authenticate with Jira"),
     )
-    def test_test_connection_failed(self, mock_get_access_token):
+    def test_test_connection_failed(self, mock_get_auth):
         """Test that a failed connection raises JiraAuthenticationError."""
         # To disable vulture
-        mock_get_access_token = mock_get_access_token
+        mock_get_auth = mock_get_auth
 
         with pytest.raises(JiraAuthenticationError):
             Jira.test_connection(
@@ -375,13 +360,13 @@ class TestJiraIntegration:
 
     @patch.object(
         Jira,
-        "get_cloud_id",
+        "get_basic_auth",
         side_effect=JiraBasicAuthError("Failed to authenticate with Jira"),
     )
-    def test_test_connection_failed_basic_auth(self, mock_get_access_token):
-        """Test that a failed connection raises JiraAuthenticationError."""
+    def test_test_connection_failed_basic_auth(self, mock_get_basic_auth):
+        """Test that a failed connection raises JiraBasicAuthError."""
         # To disable vulture
-        mock_get_access_token = mock_get_access_token
+        mock_get_basic_auth = mock_get_basic_auth
 
         with pytest.raises(JiraBasicAuthError):
             Jira.test_connection(
@@ -390,23 +375,15 @@ class TestJiraIntegration:
                 domain=self.domain,
             )
 
-    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
-    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     @patch.object(Jira, "get_auth", return_value=None)
-    @patch("prowler.lib.outputs.jira.jira.requests.get")
-    def test_test_connection_no_projects_found(
-        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
-    ):
+    @patch.object(
+        Jira, "get_projects", side_effect=JiraNoProjectsError("No projects found")
+    )
+    def test_test_connection_no_projects_found(self, mock_get_projects, mock_get_auth):
         """Test that test_connection raises JiraNoProjectsError when no projects are found."""
         # To disable vulture
-        mock_get_cloud_id = mock_get_cloud_id
+        mock_get_projects = mock_get_projects
         mock_get_auth = mock_get_auth
-        mock_get_access_token = mock_get_access_token
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = []
-        mock_get.return_value = mock_response
 
         with pytest.raises(JiraNoProjectsError):
             Jira.test_connection(
@@ -415,23 +392,19 @@ class TestJiraIntegration:
                 client_secret=self.client_secret,
             )
 
-    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
-    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     @patch.object(Jira, "get_auth", return_value=None)
-    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    @patch.object(
+        Jira,
+        "get_projects",
+        side_effect=JiraGetProjectsResponseError("Projects request failed"),
+    )
     def test_test_connection_projects_request_error(
-        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
+        self, mock_get_projects, mock_get_auth
     ):
         """Test that test_connection raises JiraGetProjectsResponseError when projects request fails."""
         # To disable vulture
-        mock_get_cloud_id = mock_get_cloud_id
+        mock_get_projects = mock_get_projects
         mock_get_auth = mock_get_auth
-        mock_get_access_token = mock_get_access_token
-
-        mock_response = MagicMock()
-        mock_response.status_code = 404
-        mock_response.text = "Not Found"
-        mock_get.return_value = mock_response
 
         with pytest.raises(JiraGetProjectsResponseError):
             Jira.test_connection(
@@ -440,23 +413,17 @@ class TestJiraIntegration:
                 client_secret=self.client_secret,
             )
 
-    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
-    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     @patch.object(Jira, "get_auth", return_value=None)
-    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    @patch.object(
+        Jira, "get_projects", side_effect=JiraNoProjectsError("No projects found")
+    )
     def test_test_connection_no_projects_found_no_exception(
-        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
+        self, mock_get_projects, mock_get_auth
     ):
         """Test that test_connection returns error connection object when no projects found and raise_on_exception=False."""
         # To disable vulture
-        mock_get_cloud_id = mock_get_cloud_id
+        mock_get_projects = mock_get_projects
         mock_get_auth = mock_get_auth
-        mock_get_access_token = mock_get_access_token
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = []
-        mock_get.return_value = mock_response
 
         connection = Jira.test_connection(
             redirect_uri=self.redirect_uri,
@@ -468,23 +435,19 @@ class TestJiraIntegration:
         assert not connection.is_connected
         assert isinstance(connection.error, JiraNoProjectsError)
 
-    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
-    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     @patch.object(Jira, "get_auth", return_value=None)
-    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    @patch.object(
+        Jira,
+        "get_projects",
+        side_effect=JiraGetProjectsResponseError("Projects request failed"),
+    )
     def test_test_connection_projects_request_error_no_exception(
-        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
+        self, mock_get_projects, mock_get_auth
     ):
         """Test that test_connection returns error connection object when projects request fails and raise_on_exception=False."""
         # To disable vulture
-        mock_get_cloud_id = mock_get_cloud_id
+        mock_get_projects = mock_get_projects
         mock_get_auth = mock_get_auth
-        mock_get_access_token = mock_get_access_token
-
-        mock_response = MagicMock()
-        mock_response.status_code = 404
-        mock_response.text = "Not Found"
-        mock_get.return_value = mock_response
 
         connection = Jira.test_connection(
             redirect_uri=self.redirect_uri,
@@ -495,6 +458,21 @@ class TestJiraIntegration:
 
         assert not connection.is_connected
         assert isinstance(connection.error, JiraGetProjectsResponseError)
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(Jira, "get_projects", side_effect=Exception("Unexpected error"))
+    def test_test_connection_unexpected_error(self, mock_get_projects, mock_get_auth):
+        """Test that test_connection raises JiraTestConnectionError on unexpected exceptions."""
+        # To disable vulture
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+
+        with pytest.raises(JiraTestConnectionError):
+            Jira.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
