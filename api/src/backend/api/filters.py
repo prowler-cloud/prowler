@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from dateutil.parser import parse
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import F, Q
 from django_filters.rest_framework import (
     BaseInFilter,
     BooleanFilter,
@@ -760,17 +760,55 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
     status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
 
     def filter_status(self, queryset, name, value):
-        # This method just validates the status value and passes it through
+        # Validate the status value
         if value not in [choice[0] for choice in StatusChoices.choices]:
             raise ValidationError(f"Invalid status value: {value}")
-        return queryset
+
+        # Apply the filter by annotating the queryset with the status field
+        if value == StatusChoices.FAIL:
+            return queryset.annotate(status_count=F("fail"))
+        elif value == StatusChoices.PASS:
+            return queryset.annotate(status_count=F("_pass"))
+        elif value == StatusChoices.MANUAL:
+            return queryset.annotate(status_count=F("muted"))
+        else:
+            return queryset.annotate(status_count=F("total"))
 
     def filter_status_in(self, queryset, name, value):
-        # This method just validates the status values and passes them through
+        # Validate the status values
+        valid_statuses = [choice[0] for choice in StatusChoices.choices]
         for status_val in value:
-            if status_val not in [choice[0] for choice in StatusChoices.choices]:
+            if status_val not in valid_statuses:
                 raise ValidationError(f"Invalid status value: {status_val}")
-        return queryset
+
+        # If all statuses or no valid statuses, use total
+        if (
+            set(value) >= {StatusChoices.FAIL, StatusChoices.PASS, StatusChoices.MANUAL}
+            or not value
+        ):
+            return queryset.annotate(status_count=F("total"))
+
+        # Build the sum expression based on status values
+        sum_expression = None
+        for status in value:
+            if status == StatusChoices.FAIL:
+                field_expr = F("fail")
+            elif status == StatusChoices.PASS:
+                field_expr = F("_pass")
+            elif status == StatusChoices.MANUAL:
+                field_expr = F("muted")
+            else:
+                continue
+
+            if sum_expression is None:
+                sum_expression = field_expr
+            else:
+                sum_expression = sum_expression + field_expr
+
+        if sum_expression is None:
+            return queryset.annotate(status_count=F("total"))
+
+        return queryset.annotate(status_count=sum_expression)
 
     class Meta:
         model = ScanSummary

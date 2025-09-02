@@ -3697,31 +3697,11 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
-        # Status sum mapping for cleaner logic
-        STATUS_SUM_MAPPING = {
-            frozenset(): Sum("total"),
-            frozenset(["FAIL", "PASS", "MUTED"]): Sum("total"),
-            frozenset(["FAIL"]): Sum("fail"),
-            frozenset(["PASS"]): Sum("_pass"),
-            frozenset(["MUTED"]): Sum("muted"),
-            frozenset(["FAIL", "PASS"]): Sum("fail") + Sum("_pass"),
-            frozenset(["FAIL", "MUTED"]): Sum("fail") + Sum("muted"),
-            frozenset(["PASS", "MUTED"]): Sum("_pass") + Sum("muted"),
-        }
-
-        # Parse status filters
-        status_filter = request.query_params.get("filter[status]")
-        status_in_filter = request.query_params.get("filter[status__in]")
-
-        requested_statuses = set()
-        if status_filter:
-            requested_statuses.add(status_filter)
-        if status_in_filter:
-            requested_statuses.update(status_in_filter.split(","))
-
-        # Get sum expression from mapping
-        status_key = frozenset(requested_statuses)
-        sum_expression = STATUS_SUM_MAPPING.get(status_key, Sum("total"))
+        # The filter will have added a status_count annotation if any status filter was used
+        if "status_count" in filtered_queryset.query.annotations:
+            sum_expression = Sum("status_count")
+        else:
+            sum_expression = Sum("total")
 
         severity_counts = (
             filtered_queryset.values("severity")
