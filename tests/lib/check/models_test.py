@@ -539,3 +539,75 @@ class TestCheckMetada:
                 Compliance=[],
             )
         assert "AdditionalUrls cannot contain duplicate items" in str(exc_info.value)
+
+    def test_optional_fields_none_values(self):
+        """Test that RelatedUrl and AdditionalUrls can be None"""
+        metadata = CheckMetadata(
+            Provider="aws",
+            CheckID="test_check_none_fields",
+            CheckTitle="Test Check with None Fields",
+            CheckType=["type1"],
+            ServiceName="test",
+            SubServiceName="subservice1",
+            ResourceIdTemplate="template1",
+            Severity="high",
+            ResourceType="resource1",
+            Description="Description 1",
+            Risk="risk1",
+            RelatedUrl=None,
+            Remediation={
+                "Code": {
+                    "CLI": "cli1",
+                    "NativeIaC": "native1",
+                    "Other": "other1",
+                    "Terraform": "terraform1",
+                },
+                "Recommendation": {"Text": "text1", "Url": "url1"},
+            },
+            Categories=["categoryone"],
+            DependsOn=["dependency1"],
+            RelatedTo=["related1"],
+            Notes="notes1",
+            AdditionalUrls=None,
+            Compliance=[],
+        )
+
+        # Assert that the fields are properly set to None
+        assert metadata.RelatedUrl is None
+        assert metadata.AdditionalUrls is None
+
+    def test_optional_fields_default_values(self):
+        """Test that RelatedUrl and AdditionalUrls use proper defaults when not provided"""
+        metadata = CheckMetadata(
+            Provider="aws",
+            CheckID="test_check_defaults",
+            CheckTitle="Test Check with Default Fields",
+            CheckType=["type1"],
+            ServiceName="test",
+            SubServiceName="subservice1",
+            ResourceIdTemplate="template1",
+            Severity="high",
+            ResourceType="resource1",
+            Description="Description 1",
+            Risk="risk1",
+            # RelatedUrl not provided - should default to None
+            Remediation={
+                "Code": {
+                    "CLI": "cli1",
+                    "NativeIaC": "native1",
+                    "Other": "other1",
+                    "Terraform": "terraform1",
+                },
+                "Recommendation": {"Text": "text1", "Url": "url1"},
+            },
+            Categories=["categoryone"],
+            DependsOn=["dependency1"],
+            RelatedTo=["related1"],
+            Notes="notes1",
+            # AdditionalUrls not provided - should default to empty list via default_factory
+            Compliance=[],
+        )
+
+        # Assert that the fields use their default values
+        assert metadata.RelatedUrl is None  # Should default to None
+        assert metadata.AdditionalUrls == []  # Should default to empty list
