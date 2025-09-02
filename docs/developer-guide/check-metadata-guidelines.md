@@ -19,9 +19,7 @@ This guide provides comprehensive guidelines for creating check metadata in Prow
    Include the exact secure configuration being verified. Avoid vague or generic terms like "properly configured".
 4. **Avoid Redundant or Action Words**:
    Do not include verbs like "Check", "Verify", "Ensure", or "Monitor". The title is a declarative statement of the secure condition.
-5. **Use Markdown Formatting When Appropriate**:
-   Use **bold** for emphasis on key security concepts, *italic* for technical terms or service names, and `code` formatting for specific configuration values or settings.
-6. **Length Limit**:
+5. **Length Limit**:
    Keep the title under 150 characters.
 
 ### Common Mistakes to Avoid
@@ -56,11 +54,12 @@ A partial path may be defined (e.g., `TTPs` or `TTPs/Defense Evasion` are valid)
 1. **Focus on the Finding**: All fields should address how the finding affects the security posture, rather than the control itself.
 2. **Use Natural Language**: Write in simple, clear paragraphs with complete, grammatically correct sentences.
 3. **Use Markdown Formatting**: Enhance readability with:
-    - **bold** for emphasis on key security concepts.
-    - *italic* for technical terms or service names.
-    - `code` formatting for specific configuration values, attack vectors, or technical details.
-    - bullet points or ordered lists for enumerating different concepts or steps.
-    - `\n` line breaks or `\n\n` for better readability.
+   - Use **bold** for emphasis on key security concepts.
+   - Use *italic* for a secondary emphasis. Use it for clarifications, conditions, or optional notes. But don't abuse it.
+   - Use `code` formatting for specific configuration values, or technical details. Don't use it for service names or common technical terms.
+   - Use one or two line breaks (`\n` or `\n\n`) to separate distinct ideas.
+   - Use bullet points (`-`) for listing multiple concepts or actions.
+   - Use numbers for listing steps or sequential actions.
 4. **Be Concise**: Maximum 400 characters (spaces count). Every word should add value.
 5. **Explain What the Finding Means**: Focus on what the security control evaluates and what it means when it passes or fails, but without explicitly stating the pass or fail state.
 6. **Be Technical but Clear**: Use appropriate technical terminology while remaining understandable.
@@ -82,7 +81,13 @@ A partial path may be defined (e.g., `TTPs` or `TTPs/Defense Evasion` are valid)
 1. **Explain the Cybersecurity Impact**: Focus on how the finding affects confidentiality, integrity, or availability (CIA triad). If the CIA triad does not apply, explain the risk in terms of the organization's business objectives.
 2. **Be Specific About Threats**: Clearly state what could happen if this security control is not in place. What attacks or incidents become possible?
 3. **Focus on Risk Context**: Explain the specific security implications of the finding, not just generic security risks.
-4. **Use Markdown Formatting**: Use **bold**, *italic*, `code`, line breaks, and bullet points to enhance readability.
+4. **Use Markdown Formatting**: Enhance readability with markdown formatting:
+   - Use **bold** for emphasis on key security concepts.
+   - Use *italic* for a secondary emphasis. Use it for clarifications, conditions, or optional notes. But don't abuse it.
+   - Use `code` formatting for specific configuration values, or technical details. Don't use it for service names or common technical terms.
+   - Use one or two line breaks (`\n` or `\n\n`) to separate distinct ideas.
+   - Use bullet points (`-`) for listing multiple concepts or actions.
+   - Use numbers for listing steps or sequential actions.
 5. **Be Concise**: Maximum 400 characters. Make every word count.
 
 ### Common Mistakes to Avoid
@@ -99,7 +104,13 @@ A partial path may be defined (e.g., `TTPs` or `TTPs/Defense Evasion` are valid)
 1. **Provide Actionable Best Practice Guidance**: Explain what should be done to maintain security posture. Focus on preventive measures and proactive security practices.
 2. **Be Principle-Based**: Reference established security principles (least privilege, defense in depth, zero trust, separation of duties) where applicable.
 3. **Focus on Prevention**: Explain best practices that prevent the security issue from occurring, not just detection or remediation.
-4. **Use Natural Language and Markdown**: Write clearly with proper formatting for readability.
+4. **Use Markdown Formatting**: Enhance readability with markdown formatting:
+   - Use **bold** for emphasis on key security concepts.
+   - Use *italic* for a secondary emphasis. Use it for clarifications, conditions, or optional notes. But don't abuse it.
+   - Use `code` formatting for specific configuration values, or technical details. Don't use it for service names or common technical terms.
+   - Use one or two line breaks (`\n` or `\n\n`) to separate distinct ideas.
+   - Use bullet points (`-`) for listing multiple concepts or actions.
+   - Use numbers for listing steps or sequential actions.
 5. **Be Concise**: Maximum 400 characters.
 
 ### Common Mistakes to Avoid

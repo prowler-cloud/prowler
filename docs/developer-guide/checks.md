@@ -236,6 +236,7 @@ Below is a generic example of a check metadata file. **Do not include comments i
   "Description": "This check verifies that the service resource has the required **security setting** enabled to protect against potential vulnerabilities.\n\nIt ensures that the resource follows security best practices and maintains proper access controls. The check evaluates whether the security configuration is properly implemented and active.",
   "Risk": "Without proper security settings, the resource may be vulnerable to:\n\n- **Unauthorized access** - Malicious actors could gain entry\n- **Data breaches** - Sensitive information could be compromised\n- **Security threats** - Various attack vectors could be exploited\n\nThis could result in compliance violations and potential financial or reputational damage.",
   "RelatedUrl": "",
+  "AdditionalURLs": ["https://example.com/security-documentation", "https://example.com/best-practices"],
   "Remediation": {
     "Code": {
       "CLI": "provider-cli service enable-security-setting --resource-id resource-123",
@@ -245,7 +246,7 @@ Below is a generic example of a check metadata file. **Do not include comments i
     },
     "Recommendation": {
       "Text": "Enable security settings on all service resources to ensure proper protection. Regularly review and update security configurations to align with current best practices.",
-      "Url": "https://example.com/security-documentation;https://example.com/best-practices"
+      "Url": "https://hub.prowler.com/check/service_resource_security_setting"
     }
   },
   "Categories": ["internet-exposed", "secrets"],
@@ -267,7 +268,7 @@ The unique identifier for the check inside the provider. This field **must** mat
 
 #### CheckTitle
 
-The `CheckTitle` field must clearly and succinctly define **the best practice being evaluated and which resource(s) each finding applies to**. The title should be specific, concise (no more than 150 characters), and reference the relevant resource(s) involved.
+The `CheckTitle` field must be plain text, clearly and succinctly define **the best practice being evaluated and which resource(s) each finding applies to**. The title should be specific, concise (no more than 150 characters), and reference the relevant resource(s) involved.
 
 **Always write the `CheckTitle` to describe the *PASS* case**, the desired secure or compliant state of the resource(s). This helps ensure that findings are easy to interpret and that the title always reflects the best practice being met.
 
@@ -322,7 +323,11 @@ For detailed writing guidelines and common mistakes to avoid, see [Risk Guidelin
 
 #### RelatedUrl
 
-A string containing one or more official documentation URLs for further reading, separated by commas (`,`). These should be authoritative sources that provide additional context, best practices, or detailed information about the security control being checked. Prefer official provider documentation, security standards, or well-established security resources. Avoid third-party blogs or unofficial sources unless they are highly reputable and directly relevant.
+*Deprecated*. Use `RelatedUrl` instead.
+
+#### AdditionalURLs
+
+A list of official documentation URLs for further reading. These should be authoritative sources that provide additional context, best practices, or detailed information about the security control being checked. Prefer official provider documentation, security standards, or well-established security resources. Avoid third-party blogs or unofficial sources unless they are highly reputable and directly relevant.
 
 #### Remediation
 
@@ -340,7 +345,7 @@ Provides both code examples and best practice recommendations for addressing the
 
 - **Recommendation**
     - **Text**: Generic best practice guidance in natural language using Markdown format (maximum 400 characters). For writing guidelines, see [Recommendation Guidelines](./check-metadata-guidelines.md#recommendation-guidelines).
-    - **Url**: *Deprecated*. Use `RelatedUrl` instead.
+    - **Url**: [Prowler Hub URL](https://hub.prowler.com/) of the check. This URL is always composed by `https://hub.prowler.com/check/<check_id>`.
 
 #### Categories
 
