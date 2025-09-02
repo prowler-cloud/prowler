@@ -1,9 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  handleApiError,
+  handleApiResponse,
+} from "@/lib/helper";
 
 export const getAllTenants = async () => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -19,12 +23,8 @@ export const getAllTenants = async () => {
       throw new Error(`Failed to fetch tenants data: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/profile");
-    return parsedData;
+    return handleApiResponse(response, "/profile");
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching tenants:", error);
     return undefined;
   }
@@ -80,16 +80,9 @@ export async function updateTenantName(prevState: any, formData: FormData) {
       throw new Error(`Failed to update tenant name: ${response.statusText}`);
     }
 
-    await response.json();
-    revalidatePath("/profile");
+    handleApiResponse(response, "/profile", false);
     return { success: "Tenant name updated successfully!" };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error updating tenant name:", error);
-    return {
-      errors: {
-        general: "Error updating tenant name. Please try again.",
-      },
-    };
+    return handleApiError(error);
   }
 }

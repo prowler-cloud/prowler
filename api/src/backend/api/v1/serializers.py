@@ -15,6 +15,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api.exceptions import ConflictException
 from api.models import (
     Finding,
     Integration,
@@ -45,6 +46,8 @@ from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
     IntegrationConfigField,
     IntegrationCredentialField,
+    JiraConfigSerializer,
+    JiraCredentialSerializer,
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
 )
@@ -1952,18 +1955,34 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
     def validate(self, attrs):
+        integration_type = attrs.get("integration_type")
+
         if (
-            attrs.get("integration_type") == Integration.IntegrationChoices.AMAZON_S3
+            integration_type == Integration.IntegrationChoices.AMAZON_S3
             and Integration.objects.filter(
                 configuration=attrs.get("configuration")
             ).exists()
         ):
-            raise serializers.ValidationError(
-                {"configuration": "This integration already exists."}
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
+            )
+
+        if (
+            integration_type == Integration.IntegrationChoices.JIRA
+            and Integration.objects.filter(
+                configuration__contains={
+                    "domain": attrs.get("configuration").get("domain"),
+                    "project_key": attrs.get("configuration").get("project_key"),
+                }
+            ).exists()
+        ):
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
             )
 
         # Check if any provider already has a SecurityHub integration
-        integration_type = attrs.get("integration_type")
         if hasattr(self, "instance") and self.instance and not integration_type:
             integration_type = self.instance.integration_type
 
@@ -1984,10 +2003,10 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     query = query.exclude(integration=self.instance)
 
                 if query.exists():
-                    raise serializers.ValidationError(
-                        {
-                            "providers": f"Provider {provider.id} already has a Security Hub integration. Only one Security Hub integration is allowed per provider."
-                        }
+                    raise ConflictException(
+                        detail=f"Provider {provider.id} already has a Security Hub integration. Only one "
+                        "Security Hub integration is allowed per provider.",
+                        pointer="/data/relationships/providers",
                     )
 
         return super().validate(attrs)
@@ -2018,6 +2037,9 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     )
             config_serializer = SecurityHubConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
+        elif integration_type == Integration.IntegrationChoices.JIRA:
+            config_serializer = JiraConfigSerializer
+            credentials_serializers = [JiraCredentialSerializer]
         else:
             raise serializers.ValidationError(
                 {
@@ -2122,9 +2144,7 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
             and integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
         ):
             raise serializers.ValidationError(
-                {
-                    "providers": "At least one provider is required for the Security Hub integration."
-                }
+                {"providers": "At least one provider is required for this integration."}
             )
 
         self.validate_integration_data(
