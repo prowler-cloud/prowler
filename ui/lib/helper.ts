@@ -345,18 +345,38 @@ export const permissionFormFields: PermissionInfo[] = [
 export const handleApiResponse = async (
   response: Response,
   pathToRevalidate?: string,
+  parse = true,
 ) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const errorDetail = errorData?.errors?.[0]?.detail;
+
+    // Special handling for server errors (500+)
+    if (response.status >= 500) {
+      throw new Error(
+        errorDetail ||
+          `Server error (${response.status}): The server encountered an error. Please try again later.`,
+      );
+    }
+
+    // Client errors (4xx)
+    throw new Error(
+      errorDetail ||
+        `Request failed (${response.status}): ${response.statusText}`,
+    );
+  }
+
   const data = await response.json();
 
-  if (pathToRevalidate) {
+  if (pathToRevalidate && pathToRevalidate !== "") {
     revalidatePath(pathToRevalidate);
   }
 
-  return parseStringify(data);
+  return parse ? parseStringify(data) : data;
 };
 
 // Helper function to handle API errors consistently
-export const handleApiError = (error: unknown) => {
+export const handleApiError = (error: unknown): { error: string } => {
   console.error(error);
   return {
     error: getErrorMessage(error),

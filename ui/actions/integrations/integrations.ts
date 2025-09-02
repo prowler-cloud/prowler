@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getTask } from "@/actions/task";
 import {
   apiBaseUrl,
   getAuthHeaders,
   handleApiError,
+  handleApiResponse,
   parseStringify,
 } from "@/lib";
-
-import { getTask } from "@/actions/task";
 import { IntegrationType } from "@/types/integrations";
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
@@ -25,36 +25,10 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
   try {
     const response = await fetch(url.toString(), { method: "GET", headers });
 
-    if (response.ok) {
-      const data = await response.json();
-      return parseStringify(data);
-    }
-
-    console.error(`Failed to fetch integrations: ${response.statusText}`);
-    return { data: [], meta: { pagination: { count: 0 } } };
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching integrations:", error);
     return { data: [], meta: { pagination: { count: 0 } } };
-  }
-};
-
-export const getIntegration = async (id: string) => {
-  const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/integrations/${id}`);
-
-  try {
-    const response = await fetch(url.toString(), { method: "GET", headers });
-
-    if (response.ok) {
-      const data = await response.json();
-      return parseStringify(data);
-    }
-
-    console.error(`Failed to fetch integration: ${response.statusText}`);
-    return null;
-  } catch (error) {
-    console.error("Error fetching integration:", error);
-    return null;
   }
 };
 

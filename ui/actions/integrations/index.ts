@@ -1,7 +1,6 @@
 export {
   createIntegration,
   deleteIntegration,
-  getIntegration,
   getIntegrations,
   pollConnectionTestStatus,
   testIntegrationConnection,

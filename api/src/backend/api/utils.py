@@ -9,6 +9,7 @@ from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
+from prowler.lib.outputs.jira.jira import Jira
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
@@ -199,7 +200,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             raise_on_exception=False,
         )
     # TODO: It is possible that we can unify the connection test for all integrations, but need refactoring
-    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified making some changes in the SDK.
+    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified
+    # making some changes in the SDK.
     elif (
         integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
     ):
@@ -236,7 +238,11 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
 
         return connection
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
-        pass
+        return Jira.test_connection(
+            **integration.credentials,
+            domain=integration.configuration["domain"],
+            raise_on_exception=False,
+        )
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
         pass
     else:
