@@ -113,9 +113,9 @@ class CheckMetadata(BaseModel):
     ResourceType: str
     Description: str
     Risk: str
-    RelatedUrl: Optional[str] = None
+    RelatedUrl: str = Field(default_factory=str)
     Remediation: Remediation
-    AdditionalUrls: Optional[list[str]] = Field(default_factory=list)
+    AdditionalUrls: list[str] = Field(default_factory=list)
     Categories: list[str]
     DependsOn: list[str]
     RelatedTo: list[str]
@@ -183,10 +183,6 @@ class CheckMetadata(BaseModel):
 
     @validator("AdditionalUrls", pre=True, always=True)
     def validate_additional_urls(cls, additional_urls):
-        # Allow None values for optional field
-        if additional_urls is None:
-            return additional_urls
-
         if not isinstance(additional_urls, list):
             raise ValueError("AdditionalUrls must be a list")
 
