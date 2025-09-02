@@ -41,10 +41,10 @@ class JiraConnection(Connection):
     """
     Represents a Jira connection object.
     Attributes:
-        projects (list): List of projects in Jira.
+        projects (dict): Dictionary of projects in Jira.
     """
 
-    projects: list = None
+    projects: dict = None
 
 
 class Jira:
@@ -508,7 +508,7 @@ class Jira:
                 api_token=api_token,
                 domain=domain,
             )
-            projects = list(jira.get_projects().keys())
+            projects = jira.get_projects()
 
             return JiraConnection(is_connected=True, projects=projects)
         except JiraNoProjectsError as no_projects_error:

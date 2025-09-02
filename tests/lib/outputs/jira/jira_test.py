@@ -315,7 +315,7 @@ class TestJiraIntegration:
 
         assert connection.is_connected
         assert connection.error is None
-        assert connection.projects == ["PROJ1", "PROJ2"]
+        assert connection.projects == {"PROJ1": "Project One", "PROJ2": "Project Two"}    
 
     @patch.object(Jira, "get_basic_auth", return_value=None)
     @patch.object(
@@ -339,7 +339,7 @@ class TestJiraIntegration:
 
         assert connection.is_connected
         assert connection.error is None
-        assert connection.projects == ["PROJ1", "PROJ2"]
+        assert connection.projects == {"PROJ1": "Project One", "PROJ2": "Project Two"}
 
     @patch.object(
         Jira,
