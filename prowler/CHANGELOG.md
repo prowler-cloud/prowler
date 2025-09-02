@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.12.0] (Prowler UNRELEASED)
+
+### Added
+- `AdditionalUrls` field in CheckMetadata Pydantic model [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
+
+---
+
 ## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
@@ -17,7 +24,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Resource Explorer enumeration v2 API actions in `cloudtrail_threat_detection_enumeration` check [(#8557)](https://github.com/prowler-cloud/prowler/pull/8557)
 - `apim_threat_detection_llm_jacking` check for Azure provider [(#8571)](https://github.com/prowler-cloud/prowler/pull/8571)
 - GCP `--skip-api-check` command line flag [(#8575)](https://github.com/prowler-cloud/prowler/pull/8575)
-- `AdditionalUrls` field in CheckMetadata Pydantic model [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 
 ### Changed
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
