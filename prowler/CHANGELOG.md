@@ -4,6 +4,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.12.0] (Prowler UNRELEASED)
 
 ### Added
+- Add severity colors for informational and unknown findings in Jira integration [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
+
 
 ### Changed
 
