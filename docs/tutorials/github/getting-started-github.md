@@ -11,9 +11,12 @@ This guide explains how to set up authentication with GitHub for Prowler. The do
 
 ### 1. Personal Access Token (PAT)
 
-Personal Access Tokens provide the simplest GitHub authentication method and support individual user authentication or testing scenarios.
+Personal Access Tokens provide the simplest GitHub authentication method, but it can only access resources owned by a single user or organization.
 
-#### How to Create a Personal Access Token
+???+ warning "Classic Tokens Deprecated"
+    GitHub has deprecated Personal Access Tokens (classic) in favor of fine-grained Personal Access Tokens. We recommend using fine-grained tokens as they provide better security through more granular permissions and resource-specific access control.
+
+#### **Option 1: Create a Fine-Grained Personal Access Token (Recommended)**
 
 1. **Navigate to GitHub Settings**
     - Open [GitHub](https://github.com) and sign in
@@ -24,18 +27,67 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
     - Scroll down the left sidebar
     - Click "Developer settings"
 
-3. **Generate New Token**
+3. **Generate Fine-Grained Token**
+    - Click "Personal access tokens"
+    - Select "Fine-grained tokens"
+    - Click "Generate new token"
+
+4. **Configure Token Settings**
+    - **Token name**: Give your token a descriptive name (e.g., "Prowler Security Scanner")
+    - **Expiration**: Set an appropriate expiration date (recommended: 90 days or less)
+    - **Repository access**: Choose "All repositories" or "Only select repositories" based on your needs
+
+    ???+ note "Public repositories"
+        Even if you select 'Only select repositories', the token will have access to the public repositories that you own or are a member of.
+
+5. **Configure Token Permissions**
+    To enable Prowler functionality, configure the following permissions:
+
+    - **Repository permissions:**
+        - **Administration**: Read-only access
+        - **Contents**: Read-only access
+        - **Metadata**: Read-only access
+        - **Pull requests**: Read-only access
+
+    - **Organization permissions:**
+        - **Administration**: Read-only access
+        - **Members**: Read-only access
+
+    - **Account permissions:**
+        - **Email addresses**: Read-only access
+
+6. **Copy and Store the Token**
+    - Copy the generated token immediately (GitHub displays tokens only once)
+    - Store tokens securely using environment variables
+
+![GitHub Personal Access Token Permissions](./img/github-pat-permissions.png)
+
+#### **Option 2: Create a Classic Personal Access Token (Not Recommended)**
+
+???+ warning "Security Risk"
+    Classic tokens provide broad permissions that may exceed what Prowler actually needs. Use fine-grained tokens instead for better security.
+
+1. **Navigate to GitHub Settings**
+    - Open [GitHub](https://github.com) and sign in
+    - Click the profile picture in the top right corner
+    - Select "Settings" from the dropdown menu
+
+2. **Access Developer Settings**
+    - Scroll down the left sidebar
+    - Click "Developer settings"
+
+3. **Generate Classic Token**
     - Click "Personal access tokens"
     - Select "Tokens (classic)"
     - Click "Generate new token"
 
 4. **Configure Token Permissions**
     To enable Prowler functionality, configure the following scopes:
-    - `repo`: Full control of private repositories
+    - `repo`: Full control of private repositories (includes `repo:status` and `repo:contents`)
     - `read:org`: Read organization and team membership
     - `read:user`: Read user profile data
-    - `read:discussion`: Read discussions
-    - `read:enterprise`: Read enterprise data (if applicable)
+    - `security_events`: Access security events (secret scanning and Dependabot alerts)
+    - `read:enterprise`: Read enterprise data (if using GitHub Enterprise)
 
 5. **Copy and Store the Token**
     - Copy the generated token immediately (GitHub displays tokens only once)
@@ -134,7 +186,10 @@ GitHub Apps provide the recommended integration method for accessing multiple re
     - **Account permissions**:
         - Email addresses (Read)
 
-4. **Generate Private Key**
+4. **Where can this GitHub App be installed?**
+    - Select "Any account" to be able to install the GitHub App in any organization.
+
+5. **Generate Private Key**
     - Scroll to the "Private keys" section after app creation
     - Click "Generate a private key"
     - Download the `.pem` file and store securely

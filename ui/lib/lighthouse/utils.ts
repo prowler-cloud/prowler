@@ -6,6 +6,8 @@ import {
 } from "@langchain/core/messages";
 import type { Message } from "ai";
 
+import type { ModelParams } from "@/types/lighthouse";
+
 // https://stackoverflow.com/questions/79081298/how-to-stream-langchain-langgraphs-final-generation
 /**
  * Converts a Vercel message to a LangChain message.
@@ -45,4 +47,21 @@ export const convertLangChainMessageToVercelMessage = (
     default:
       return { content: message.content, role: message.getType() };
   }
+};
+
+export const getModelParams = (config: any): ModelParams => {
+  const modelId = config.model;
+
+  const params: ModelParams = {
+    maxTokens: config.max_tokens,
+    temperature: config.temperature,
+    reasoningEffort: undefined,
+  };
+
+  if (modelId.startsWith("gpt-5")) {
+    params.temperature = undefined;
+    params.reasoningEffort = "minimal";
+  }
+
+  return params;
 };

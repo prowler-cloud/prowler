@@ -48,3 +48,19 @@ def init_parser(self):
         action="store_true",
         help="List available project IDs in Google Cloud which can be scanned by Prowler",
     )
+    # GCP Config
+    gcp_config_subparser = gcp_parser.add_argument_group("GCP Config")
+    gcp_config_subparser.add_argument(
+        "--gcp-retries-max-attempts",
+        nargs="?",
+        default=None,
+        type=int,
+        help="Set the maximum attempts for the Google Cloud SDK retry config (Default: 3)",
+    )
+
+    gcp_config_subparser.add_argument(
+        "--skip-api-check",
+        action="store_true",
+        default=False,
+        help="Assume all APIs are active and skip the active API check for each service",
+    )

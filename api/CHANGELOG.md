@@ -2,11 +2,31 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.11.0] (Prowler UNRELEASED)
+## [1.13.0] (Prowler UNRELEASED)
+
+### Added
+- Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622)
+
+---
+
+## [1.12.0] (Prowler 5.11.0)
+
+### Added
+- Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
+- Integration with Amazon Security Hub, enabling sending findings to Security Hub [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
+- Generate ASFF output for AWS providers with SecurityHub integration enabled [(#8569)](https://github.com/prowler-cloud/prowler/pull/8569)
+
+### Fixed
+- GitHub provider always scans user instead of organization when using provider UID [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
+
+## [1.11.0] (Prowler 5.10.0)
 
 ### Added
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+
+### Fixed
+- Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
 
 ---
 

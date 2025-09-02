@@ -293,7 +293,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.10.2"
+        spectacular_settings.VERSION = "1.13.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -314,6 +314,11 @@ class SchemaView(SpectacularAPIView):
                 "invitations, creating new invitations, accepting and revoking them.",
             },
             {
+                "name": "Role",
+                "description": "Endpoints for managing RBAC roles within tenants, allowing creation, retrieval, "
+                "updating, and deletion of role configurations and permissions.",
+            },
+            {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
             },
@@ -322,8 +327,18 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing provider groups.",
             },
             {
+                "name": "Task",
+                "description": "Endpoints for task management, allowing retrieval of task status and "
+                "revoking tasks that have not started.",
+            },
+            {
                 "name": "Scan",
                 "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Schedule",
+                "description": "Endpoints for managing scan schedules, allowing configuration of automated "
+                "scans with different scheduling options.",
             },
             {
                 "name": "Resource",
@@ -336,8 +351,9 @@ class SchemaView(SpectacularAPIView):
                 "findings that result from scans.",
             },
             {
-                "name": "Overview",
-                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
+                "name": "Processor",
+                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
+                "registration, configuration, and deletion of post-processing actions.",
             },
             {
                 "name": "Compliance Overview",
@@ -345,9 +361,8 @@ class SchemaView(SpectacularAPIView):
                 " compliance framework ID.",
             },
             {
-                "name": "Task",
-                "description": "Endpoints for task management, allowing retrieval of task status and "
-                "revoking tasks that have not started.",
+                "name": "Overview",
+                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
             },
             {
                 "name": "Integration",
@@ -357,12 +372,13 @@ class SchemaView(SpectacularAPIView):
             {
                 "name": "Lighthouse",
                 "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
-                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
+                "updating, and deletion of configurations such as OpenAI keys, models, and business "
+                "context.",
             },
             {
-                "name": "Processor",
-                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
-                "registration, configuration, and deletion of post-processing actions.",
+                "name": "SAML",
+                "description": "Endpoints for Single Sign-On authentication management via SAML for seamless user "
+                "authentication.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -3033,7 +3049,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews metadata obtained successfully",
                 response=ComplianceOverviewMetadataSerializer,
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3065,7 +3083,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance requirement details obtained successfully",
                 response=ComplianceOverviewDetailSerializer(many=True),
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),

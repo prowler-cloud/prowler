@@ -20,7 +20,8 @@ The most common high level steps to create a new check are:
 5. Run the check locally to ensure it works as expected. For checking you can use the CLI in the next way:
     - To ensure the check has been detected by Prowler: `poetry run python prowler-cli.py <provider> --list-checks | grep <check_name>`.
     - To run the check, to find possible issues: `poetry run python prowler-cli.py <provider> --log-level ERROR --verbose --check <check_name>`.
-6. If the check is working as expected, you can submit a PR to Prowler.
+6. Create comprehensive tests for the check that cover multiple scenarios including both PASS (compliant) and FAIL (non-compliant) cases. For detailed information about test structure and implementation guidelines, refer to the [Testing](./unit-testing.md) documentation.
+7. If the check and its corresponding tests are working as expected, you can submit a PR to Prowler.
 
 ### Naming Format for Checks
 

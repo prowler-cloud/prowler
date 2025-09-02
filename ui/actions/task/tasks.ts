@@ -3,8 +3,8 @@
 import {
   apiBaseUrl,
   getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
+  handleApiError,
+  handleApiResponse,
 } from "@/lib";
 
 export const getTask = async (taskId: string) => {
@@ -16,9 +16,9 @@ export const getTask = async (taskId: string) => {
     const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await response.json();
-    return parseStringify(data);
+
+    return handleApiResponse(response);
   } catch (error) {
-    return { error: getErrorMessage(error) };
+    return handleApiError(error);
   }
 };

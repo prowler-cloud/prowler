@@ -86,6 +86,8 @@ def display_summary_table(
                 "Muted": [],
             }
             pass_count = fail_count = muted_count = 0
+            # Sort findings by ServiceName
+            findings.sort(key=lambda x: x.check_metadata.ServiceName)
             for finding in findings:
                 # If new service and not first, add previous row
                 if (

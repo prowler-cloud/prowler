@@ -132,7 +132,7 @@ class AwsSetUpSession:
             )
             # Assume the IAM Role
             logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
-            assumed_role_credentials = self.assume_role(
+            assumed_role_credentials = AwsProvider.assume_role(
                 self._session.current_session,
                 assumed_role_information,
             )
@@ -145,8 +145,10 @@ class AwsSetUpSession:
             self._assumed_role_configuration = assumed_role_configuration
 
             # Store a new current session using the assumed IAM Role
-            self._session.current_session = self.setup_assumed_session(
-                assumed_role_configuration.credentials
+            self._session.current_session = AwsProvider.setup_assumed_session(
+                self._identity,
+                self._assumed_role_configuration,
+                self._session,
             )
             logger.info("Audit session is the new session created assuming an IAM Role")
 
@@ -192,10 +194,8 @@ def validate_arguments(
                 "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
             )
     else:
-        if session_duration or external_id or role_session_name:
-            raise ValueError(
-                "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
-            )
+        if external_id:
+            raise ValueError("If an external ID is provided, a role ARN is required.")
         if not profile and not aws_access_key_id and not aws_secret_access_key:
             raise ValueError(
                 "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."

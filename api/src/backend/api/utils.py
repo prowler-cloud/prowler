@@ -9,8 +9,10 @@ from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
+from prowler.lib.outputs.jira.jira import Jira
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -119,6 +121,12 @@ def get_prowler_provider_kwargs(
         }
     elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
+    elif provider.provider == Provider.ProviderChoices.GITHUB.value:
+        if provider.uid:
+            prowler_provider_kwargs = {
+                **prowler_provider_kwargs,
+                "organizations": [provider.uid],
+            }
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
@@ -192,13 +200,49 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             raise_on_exception=False,
         )
     # TODO: It is possible that we can unify the connection test for all integrations, but need refactoring
-    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified making some changes in the SDK.
+    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified
+    # making some changes in the SDK.
     elif (
         integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
     ):
-        pass
+        # Get the provider associated with this integration
+        provider_relationship = integration.integrationproviderrelationship_set.first()
+        if not provider_relationship:
+            return Connection(
+                is_connected=False, error="No provider associated with this integration"
+            )
+
+        credentials = (
+            integration.credentials
+            if integration.credentials
+            else provider_relationship.provider.secret.secret
+        )
+        connection = SecurityHub.test_connection(
+            aws_account_id=provider_relationship.provider.uid,
+            raise_on_exception=False,
+            **credentials,
+        )
+
+        # Only save regions if connection is successful
+        if connection.is_connected:
+            regions_status = {r: True for r in connection.enabled_regions}
+            regions_status.update({r: False for r in connection.disabled_regions})
+
+            # Save regions information in the integration configuration
+            integration.configuration["regions"] = regions_status
+            integration.save()
+        else:
+            # Reset regions information if connection fails
+            integration.configuration["regions"] = {}
+            integration.save()
+
+        return connection
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
-        pass
+        return Jira.test_connection(
+            **integration.credentials,
+            domain=integration.configuration["domain"],
+            raise_on_exception=False,
+        )
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
         pass
     else:

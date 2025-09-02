@@ -22,6 +22,11 @@ provider/kubernetes:
       - any-glob-to-any-file: "prowler/providers/kubernetes/**"
       - any-glob-to-any-file: "tests/providers/kubernetes/**"
 
+provider/m365:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/m365/**"
+      - any-glob-to-any-file: "tests/providers/m365/**"
+
 provider/github:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/github/**"

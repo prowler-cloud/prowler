@@ -9,15 +9,17 @@ from api.v1.serializer_utils.base import BaseValidateSerializer
 
 class S3ConfigSerializer(BaseValidateSerializer):
     bucket_name = serializers.CharField()
-    output_directory = serializers.CharField()
+    output_directory = serializers.CharField(allow_blank=True)
 
     def validate_output_directory(self, value):
         """
         Validate the output_directory field to ensure it's a properly formatted path.
         Prevents paths with excessive slashes like "///////test".
+        If empty, sets a default value.
         """
+        # If empty or None, set default value
         if not value:
-            raise serializers.ValidationError("Output directory cannot be empty.")
+            return "output"
 
         # Normalize the path to remove excessive slashes
         normalized_path = os.path.normpath(value)
@@ -35,7 +37,7 @@ class S3ConfigSerializer(BaseValidateSerializer):
         # Check for empty path after normalization
         if not normalized_path or normalized_path == ".":
             raise serializers.ValidationError(
-                "Output directory cannot be empty or just '.'."
+                "Output directory cannot be empty or just '.' or '/'."
             )
 
         # Check for paths that are too long (S3 key limit is 1024 characters, leave some room for filename)
@@ -45,6 +47,31 @@ class S3ConfigSerializer(BaseValidateSerializer):
             )
 
         return normalized_path
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class SecurityHubConfigSerializer(BaseValidateSerializer):
+    send_only_fails = serializers.BooleanField(default=False)
+    archive_previous_findings = serializers.BooleanField(default=False)
+    regions = serializers.DictField(default=dict, read_only=True)
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+        # Always initialize regions as empty dict
+        validated_data["regions"] = {}
+        return validated_data
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class JiraConfigSerializer(BaseValidateSerializer):
+    project_key = serializers.CharField(required=True)
+    domain = serializers.CharField(required=True)
+    issue_types = serializers.ListField(required=False, child=serializers.CharField())
+    issue_labels = serializers.ListField(required=False, child=serializers.CharField())
 
     class Meta:
         resource_name = "integrations"
@@ -60,6 +87,14 @@ class AWSCredentialSerializer(BaseValidateSerializer):
     aws_access_key_id = serializers.CharField(required=False)
     aws_secret_access_key = serializers.CharField(required=False)
     aws_session_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class JiraCredentialSerializer(BaseValidateSerializer):
+    user_mail = serializers.EmailField(required=True)
+    api_token = serializers.CharField(required=True)
 
     class Meta:
         resource_name = "integrations"
@@ -116,6 +151,23 @@ class AWSCredentialSerializer(BaseValidateSerializer):
                     },
                 },
             },
+            {
+                "type": "object",
+                "title": "JIRA Credentials",
+                "properties": {
+                    "user_mail": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The email address of the JIRA user account.",
+                    },
+                    "api_token": {
+                        "type": "string",
+                        "description": "The API token for authentication with JIRA. This can be generated from your "
+                        "Atlassian account settings.",
+                    },
+                },
+                "required": ["user_mail", "api_token"],
+            },
         ]
     }
 )
@@ -136,12 +188,57 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                     "output_directory": {
                         "type": "string",
-                        "description": 'The directory path within the bucket where files will be saved. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
+                        "description": "The directory path within the bucket where files will be saved. Optional - "
+                        'defaults to "output" if not provided. Path will be normalized to remove '
+                        'excessive slashes and invalid characters are not allowed (< > : " | ? *). '
+                        "Maximum length is 900 characters.",
                         "maxLength": 900,
                         "pattern": '^[^<>:"|?*]+$',
+                        "default": "output",
                     },
                 },
-                "required": ["bucket_name", "output_directory"],
+                "required": ["bucket_name"],
+            },
+            {
+                "type": "object",
+                "title": "AWS Security Hub",
+                "properties": {
+                    "send_only_fails": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, only findings with status 'FAIL' will be sent to Security Hub.",
+                    },
+                    "archive_previous_findings": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, archives findings that are not present in the current execution.",
+                    },
+                },
+            },
+            {
+                "type": "object",
+                "title": "JIRA",
+                "properties": {
+                    "project_key": {
+                        "type": "string",
+                        "description": "The JIRA project key where issues will be created (e.g., 'PROJ', 'SEC').",
+                    },
+                    "domain": {
+                        "type": "string",
+                        "description": "The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').",
+                    },
+                    "issue_types": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of JIRA issue types to create for findings.",
+                    },
+                    "issue_labels": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of labels to apply to created JIRA issues..",
+                    },
+                },
+                "required": ["project_key", "domain"],
             },
         ]
     }

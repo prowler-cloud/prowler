@@ -6,16 +6,18 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation, Provider
+from api.models import Integration, Invitation, Provider
 from api.utils import (
     get_prowler_provider_kwargs,
     initialize_prowler_provider,
     merge_dicts,
+    prowler_integration_connection_test,
     prowler_provider_connection_test,
     return_prowler_provider,
     validate_invitation,
 )
 from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
@@ -196,6 +198,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.M365.value,
                 {},
+            ),
+            (
+                Provider.ProviderChoices.GITHUB.value,
+                {"organizations": ["provider_uid"]},
             ),
         ],
     )
@@ -390,3 +396,168 @@ class TestValidateInvitation:
             mock_db.get.assert_called_once_with(
                 token="VALID_TOKEN", email__iexact="user@example.com"
             )
+
+
+class TestProwlerIntegrationConnectionTest:
+    """Test prowler_integration_connection_test function for SecurityHub regions reset."""
+
+    @patch("api.utils.SecurityHub")
+    def test_security_hub_connection_failure_resets_regions(
+        self, mock_security_hub_class
+    ):
+        """Test that SecurityHub connection failure resets regions to empty dict."""
+        # Create integration with existing regions configuration
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
+        integration.credentials = {
+            "aws_access_key_id": "test_key",
+            "aws_secret_access_key": "test_secret",
+        }
+        integration.configuration = {
+            "send_only_fails": True,
+            "regions": {
+                "us-east-1": True,
+                "us-west-2": True,
+                "eu-west-1": False,
+                "ap-south-1": False,
+            },
+        }
+
+        # Mock provider relationship
+        mock_provider = MagicMock()
+        mock_provider.uid = "123456789012"
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock failed SecurityHub connection
+        mock_connection = SecurityHubConnection(
+            is_connected=False,
+            error=Exception("SecurityHub testing"),
+            enabled_regions=set(),
+            disabled_regions=set(),
+        )
+        mock_security_hub_class.test_connection.return_value = mock_connection
+
+        # Call the function
+        result = prowler_integration_connection_test(integration)
+
+        # Assertions
+        assert result.is_connected is False
+        assert str(result.error) == "SecurityHub testing"
+
+        # Verify regions were completely reset to empty dict
+        assert integration.configuration["regions"] == {}
+
+        # Verify save was called to persist the change
+        integration.save.assert_called_once()
+
+        # Verify test_connection was called with correct parameters
+        mock_security_hub_class.test_connection.assert_called_once_with(
+            aws_account_id="123456789012",
+            raise_on_exception=False,
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret",
+        )
+
+    @patch("api.utils.SecurityHub")
+    def test_security_hub_connection_success_saves_regions(
+        self, mock_security_hub_class
+    ):
+        """Test that successful SecurityHub connection saves regions correctly."""
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
+        integration.credentials = {
+            "aws_access_key_id": "valid_key",
+            "aws_secret_access_key": "valid_secret",
+        }
+        integration.configuration = {"send_only_fails": False}
+
+        # Mock provider relationship
+        mock_provider = MagicMock()
+        mock_provider.uid = "123456789012"
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock successful SecurityHub connection with regions
+        mock_connection = SecurityHubConnection(
+            is_connected=True,
+            error=None,
+            enabled_regions={"us-east-1", "eu-west-1"},
+            disabled_regions={"ap-south-1"},
+        )
+        mock_security_hub_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is True
+
+        # Verify regions were saved correctly
+        assert integration.configuration["regions"]["us-east-1"] is True
+        assert integration.configuration["regions"]["eu-west-1"] is True
+        assert integration.configuration["regions"]["ap-south-1"] is False
+        integration.save.assert_called_once()
+
+    @patch("api.utils.Jira")
+    def test_jira_connection_success_basic_auth(self, mock_jira_class):
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.JIRA
+        integration.credentials = {
+            "user_mail": "test@example.com",
+            "api_token": "test_api_token",
+        }
+        integration.configuration = {
+            "domain": "example.atlassian.net",
+        }
+
+        mock_connection = MagicMock()
+        mock_connection.is_connected = True
+        mock_connection.error = None
+        mock_jira_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is True
+        assert result.error is None
+
+        mock_jira_class.test_connection.assert_called_once_with(
+            user_mail="test@example.com",
+            api_token="test_api_token",
+            domain="example.atlassian.net",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.Jira")
+    def test_jira_connection_failure_invalid_credentials(self, mock_jira_class):
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.JIRA
+        integration.credentials = {
+            "user_mail": "invalid@example.com",
+            "api_token": "invalid_token",
+        }
+        integration.configuration = {
+            "domain": "invalid.atlassian.net",
+        }
+
+        # Mock failed JIRA connection
+        mock_connection = MagicMock()
+        mock_connection.is_connected = False
+        mock_connection.error = Exception("Authentication failed: Invalid credentials")
+        mock_jira_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is False
+        assert "Authentication failed: Invalid credentials" in str(result.error)
+
+        mock_jira_class.test_connection.assert_called_once_with(
+            user_mail="invalid@example.com",
+            api_token="invalid_token",
+            domain="invalid.atlassian.net",
+            raise_on_exception=False,
+        )

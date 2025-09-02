@@ -116,7 +116,7 @@ Each check must reside in a dedicated subfolder, following this structure:
 ???+ note
     The check name must start with the service name followed by an underscore (e.g., ec2\_instance\_public\_ip).
 
-To see more information about how to write checks, refer to the [Developer Guide](../developer-guide/checks.md#create-a-new-check-for-a-provider).
+To see more information about how to write checks, refer to the [Developer Guide](../developer-guide/checks.md#creating-a-check).
 
 ???+ note
     If you want to run ONLY your custom check(s), import it with -x (--checks-folder) and then run it with -c (--checks), e.g.: `console prowler aws -x s3://bucket/prowler/providers/aws/services/s3/s3_bucket_policy/ -c s3_bucket_policy`
