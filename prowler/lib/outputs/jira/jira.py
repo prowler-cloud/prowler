@@ -682,7 +682,7 @@ class Jira:
                 file=os.path.basename(__file__),
             )
 
-    def get_jira_metadata(self) -> dict:
+    def get_metadata(self) -> dict:
         """Get the metadata from Jira
 
         Returns:
