@@ -35,7 +35,19 @@ class Test_iam_audit_logs_enabled:
             Project,
         )
 
-        project1 = Project(id=GCP_PROJECT_ID, audit_logging=True)
+        project1 = Project(
+            id=GCP_PROJECT_ID,
+            audit_logging=[
+                {
+                    "service": "allServices",
+                    "auditLogConfigs": [
+                        {"logType": "ADMIN_READ"},
+                        {"logType": "DATA_READ"},
+                        {"logType": "DATA_WRITE"},
+                    ],
+                }
+            ],
+        )
 
         cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
@@ -72,7 +84,7 @@ class Test_iam_audit_logs_enabled:
             for idx, r in enumerate(result):
                 assert r.status == "PASS"
                 assert search(
-                    "Audit Logs are enabled for project",
+                    "Default Audit Logs are enabled for all services in project",
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
@@ -85,7 +97,18 @@ class Test_iam_audit_logs_enabled:
             Project,
         )
 
-        project1 = Project(id=GCP_PROJECT_ID, audit_logging=False)
+        project1 = Project(
+            id=GCP_PROJECT_ID,
+            audit_logging=[
+                {
+                    "service": "allServices",
+                    "auditLogConfigs": [
+                        {"logType": "ADMIN_READ"},
+                        # Missing DATA_READ and DATA_WRITE
+                    ],
+                }
+            ],
+        )
 
         cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
@@ -122,7 +145,7 @@ class Test_iam_audit_logs_enabled:
             for idx, r in enumerate(result):
                 assert r.status == "FAIL"
                 assert search(
-                    "Audit Logs are not enabled for project",
+                    "Default Audit Logs are not enabled for project",
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
@@ -135,7 +158,19 @@ class Test_iam_audit_logs_enabled:
             Project,
         )
 
-        project1 = Project(id=GCP_PROJECT_ID, audit_logging=True)
+        project1 = Project(
+            id=GCP_PROJECT_ID,
+            audit_logging=[
+                {
+                    "service": "allServices",
+                    "auditLogConfigs": [
+                        {"logType": "ADMIN_READ"},
+                        {"logType": "DATA_READ"},
+                        {"logType": "DATA_WRITE"},
+                    ],
+                }
+            ],
+        )
 
         cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
@@ -172,7 +207,7 @@ class Test_iam_audit_logs_enabled:
             for idx, r in enumerate(result):
                 assert r.status == "PASS"
                 assert search(
-                    "Audit Logs are enabled for project",
+                    "Default Audit Logs are enabled for all services in project",
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
@@ -185,7 +220,7 @@ class Test_iam_audit_logs_enabled:
             Project,
         )
 
-        project1 = Project(id=GCP_PROJECT_ID, audit_logging=False)
+        project1 = Project(id=GCP_PROJECT_ID, audit_logging=[])
 
         cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
@@ -222,7 +257,7 @@ class Test_iam_audit_logs_enabled:
             for idx, r in enumerate(result):
                 assert r.status == "FAIL"
                 assert search(
-                    "Audit Logs are not enabled for project",
+                    "Default Audit Logs are not enabled for project",
                     r.status_extended,
                 )
                 assert r.resource_id == GCP_PROJECT_ID
