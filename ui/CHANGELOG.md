@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.11.1] (Prowler v5.11.1)
 
+### 🚀 Added
+
+- No-permission message on the scan page [(#8624)](https://github.com/prowler-cloud/prowler/pull/8624)
+
 ### 🐞 Changed
 
 - Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
