@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.11.1] (Prowler v5.11.1)
+
+### Changed
+- Enhance IAM policy evaluation to consider any IP-based restrictions in policy conditions, not just private IP restrictions [(#8566)](https://github.com/prowler-cloud/prowler/issues/8566)
+
+---
+
 ## [v5.11.0] (Prowler v5.11.0)
 
 ### Added

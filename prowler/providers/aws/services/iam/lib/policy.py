@@ -325,8 +325,14 @@ def has_restrictive_source_arn_condition(
     return False
 
 
-def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
-    """Check if the policy condition is coming from a private IP address.
+
+
+
+def is_condition_restricting_ip_access(condition_statement: dict) -> bool:
+    """Check if the policy condition restricts IP access (ALL IPs must be specific, not * or 0.0.0.0/0).
+
+    This function returns True only if ALL IP addresses in the condition are specific IPs or ranges.
+    If ANY IP is * or 0.0.0.0/0, it returns False (not restrictive).
 
     Keyword arguments:
     condition_statement -- The policy condition to check. For example:
@@ -340,7 +346,7 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
         CONDITION_OPERATOR = "IpAddress"
         CONDITION_KEY = "aws:sourceip"
 
-        is_from_private_ip = False
+        is_ip_restricted = False
 
         if condition_statement.get(CONDITION_OPERATOR, {}):
             # We need to transform the condition_statement into lowercase
@@ -356,20 +362,16 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
                         condition_statement[CONDITION_OPERATOR][CONDITION_KEY]
                     ]
 
+                # Security: If ANY IP is unrestricted (* or 0.0.0.0/0), the entire condition is NOT restrictive
+                # This prevents policies from being considered secure when they mix restricted and unrestricted IPs
                 for ip in condition_statement[CONDITION_OPERATOR][CONDITION_KEY]:
-                    # Select if IP address or IP network searching in the string for '/'
                     if ip == "*" or ip == "0.0.0.0/0":
+                        # If any IP is unrestricted, the condition is NOT restrictive
+                        is_ip_restricted = False
                         break
-                    else:
-                        if "/" in ip:
-                            if not ip_network(ip, strict=False).is_private:
-                                break
-                        else:
-                            if not ip_address(ip).is_private:
-                                break
                 else:
-                    is_from_private_ip = True
-
+                    # If we get here, ALL IPs are restricted (none were * or 0.0.0.0/0)
+                    is_ip_restricted = True
     except ValueError:
         logger.error(f"Invalid IP: {ip}")
     except Exception as error:
@@ -377,7 +379,7 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 
-    return is_from_private_ip
+    return is_ip_restricted
 
 
 # TODO: Add logic for deny statements
@@ -484,7 +486,8 @@ def is_policy_public(
                         and not is_condition_block_restrictive_organization(
                             statement.get("Condition", {})
                         )
-                        and not is_condition_restricting_from_private_ip(
+
+                        and not is_condition_restricting_ip_access(
                             statement.get("Condition", {})
                         )
                     )

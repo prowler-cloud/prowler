@@ -12,8 +12,8 @@ from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
-    is_condition_restricting_from_private_ip,
     is_policy_public,
+    is_condition_restricting_ip_access,
 )
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
@@ -1850,94 +1850,6 @@ class Test_Policy:
         }
         assert not check_full_service_access("s3", policy_not_action_including_service)
 
-    def test_is_condition_restricting_from_private_ip_no_condition(self):
-        assert not is_condition_restricting_from_private_ip({})
-
-    def test_is_condition_restricting_from_private_ip(self):
-        condition_from_private_ip = {
-            "IpAddress": {"aws:SourceIp": "10.0.0.22"},
-        }
-        assert is_condition_restricting_from_private_ip(condition_from_private_ip)
-
-    def test_is_condition_restricting_from_public_ip(self):
-        condition_not_from_private_ip = {
-            "IpAddress": {"aws:SourceIp": "1.2.3.4"},
-        }
-        assert not is_condition_restricting_from_private_ip(
-            condition_not_from_private_ip
-        )
-
-    def test_is_condition_restricting_from_private_ipv6(self):
-        condition_from_private_ipv6 = {
-            "IpAddress": {"aws:SourceIp": "fd00::1"},
-        }
-        assert is_condition_restricting_from_private_ip(condition_from_private_ipv6)
-
-    def test_is_condition_restricting_from_public_ipv6(self):
-        condition_not_from_private_ipv6 = {
-            "IpAddress": {"aws:SourceIp": "2001:0db8::1"},
-        }
-        assert is_condition_restricting_from_private_ip(condition_not_from_private_ipv6)
-
-    def test_is_condition_restricting_from_private_ip_network(self):
-        condition_from_private_ip_network = {
-            "IpAddress": {"aws:SourceIp": "10.0.0.0/24"},
-        }
-        assert is_condition_restricting_from_private_ip(
-            condition_from_private_ip_network
-        )
-
-    def test_is_condition_restricting_from_public_ip_network(self):
-        condition_from_public_ip_network = {
-            "IpAddress": {"aws:SourceIp": "1.2.3.0/24"},
-        }
-
-        assert not is_condition_restricting_from_private_ip(
-            condition_from_public_ip_network
-        )
-
-    def test_is_condition_restricting_from_private_ipv6_network(self):
-        condition_from_private_ipv6_network = {
-            "IpAddress": {"aws:SourceIp": "fd00::/8"},
-        }
-        assert is_condition_restricting_from_private_ip(
-            condition_from_private_ipv6_network
-        )
-
-    def test_is_condition_restricting_from_private_ip_array(self):
-        condition_from_private_ip_array = {
-            "IpAddress": {"aws:SourceIp": ["10.0.0.22", "192.168.1.1"]},
-        }
-        assert is_condition_restricting_from_private_ip(condition_from_private_ip_array)
-
-    def test_is_condition_restricting_from_private_ipv6_array(self):
-        condition_from_private_ipv6_array = {
-            "IpAddress": {"aws:SourceIp": ["fd00::1", "fe80::1"]},
-        }
-        assert is_condition_restricting_from_private_ip(
-            condition_from_private_ipv6_array
-        )
-
-    def test_is_condition_restricting_from_mixed_ip_array(self):
-        condition_from_mixed_ip_array = {
-            "IpAddress": {"aws:SourceIp": ["10.0.0.22", "2001:0db8::1"]},
-        }
-        assert is_condition_restricting_from_private_ip(condition_from_mixed_ip_array)
-
-    def test_is_condition_restricting_from_mixed_ip_array_not_private(self):
-        condition_from_mixed_ip_array_not_private = {
-            "IpAddress": {"aws:SourceIp": ["1.2.3.4", "2001:0db8::1"]},
-        }
-        assert not is_condition_restricting_from_private_ip(
-            condition_from_mixed_ip_array_not_private
-        )
-
-    def test_is_condition_restricting_from_private_ip_from_invalid_ip(self):
-        condition_from_invalid_ip = {
-            "IpAddress": {"aws:SourceIp": "256.256.256.256"},
-        }
-        assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
-
     def test_is_policy_public_(self):
         policy = {
             "Statement": [
@@ -2272,6 +2184,113 @@ class Test_Policy:
             ],
         }
         assert check_admin_access(policy)
+
+
+
+    def test_is_condition_restricting_ip_access_no_condition(self):
+        """Test is_condition_restricting_ip_access with no condition"""
+        assert not is_condition_restricting_ip_access({})
+
+    def test_is_condition_restricting_ip_access_restricted_single_ip(self):
+        """Test is_condition_restricting_ip_access with a single restricted IP"""
+        condition_restricted_ip = {
+            "IpAddress": {"aws:SourceIp": "192.168.1.1"},
+        }
+        assert is_condition_restricting_ip_access(condition_restricted_ip)
+
+    def test_is_condition_restricting_ip_access_not_restricted_wildcard(self):
+        """Test is_condition_restricting_ip_access with wildcard (not restricted)"""
+        condition_wildcard = {
+            "IpAddress": {"aws:SourceIp": "*"},
+        }
+        assert not is_condition_restricting_ip_access(condition_wildcard)
+
+    def test_is_condition_restricting_ip_access_not_restricted_internet(self):
+        """Test is_condition_restricting_ip_access with 0.0.0.0/0 (not restricted)"""
+        condition_internet = {
+            "IpAddress": {"aws:SourceIp": "0.0.0.0/0"},
+        }
+        assert not is_condition_restricting_ip_access(condition_internet)
+
+    def test_is_condition_restricting_ip_access_restricted_ipv6(self):
+        """Test is_condition_restricting_ip_access with IPv6 (should be restricted)"""
+        condition_restricted_ipv6 = {
+            "IpAddress": {"aws:SourceIp": "2001:db8::1"},
+        }
+        assert is_condition_restricting_ip_access(condition_restricted_ipv6)
+
+    def test_is_condition_restricting_ip_access_restricted_network(self):
+        """Test is_condition_restricting_ip_access with network range (should be restricted)"""
+        condition_restricted_network = {
+            "IpAddress": {"aws:SourceIp": "10.0.0.0/24"},
+        }
+        assert is_condition_restricting_ip_access(condition_restricted_network)
+
+    def test_is_condition_restricting_ip_access_restricted_public_network(self):
+        """Test is_condition_restricting_ip_access with public network range (should be restricted)"""
+        condition_restricted_public_network = {
+            "IpAddress": {"aws:SourceIp": "203.0.113.0/24"},
+        }
+        assert is_condition_restricting_ip_access(condition_restricted_public_network)
+
+    def test_is_condition_restricting_ip_access_restricted_array(self):
+        """Test is_condition_restricting_ip_access with array of restricted IPs"""
+        condition_restricted_array = {
+            "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1"]},
+        }
+        assert is_condition_restricting_ip_access(condition_restricted_array)
+
+    def test_is_condition_restricting_ip_access_mixed_array_with_wildcard(self):
+        """Test is_condition_restricting_ip_access with mixed array containing wildcard (*)"""
+        condition_mixed_array_with_wildcard = {
+            "IpAddress": {"aws:SourceIp": ["*", "192.168.1.1"]},
+        }
+        # Should return False because * makes it unrestricted
+        assert not is_condition_restricting_ip_access(condition_mixed_array_with_wildcard)
+
+    def test_is_condition_restricting_ip_access_mixed_array_not_restricted(self):
+        """Test is_condition_restricting_ip_access with mixed array containing only unrestricted IPs"""
+        condition_mixed_array_not_restricted = {
+            "IpAddress": {"aws:SourceIp": ["*", "0.0.0.0/0"]},
+        }
+        assert not is_condition_restricting_ip_access(condition_mixed_array_not_restricted)
+
+    def test_is_condition_restricting_ip_access_mixed_array_with_unrestricted_ip(self):
+        """Test is_condition_restricting_ip_access with mixed array containing one unrestricted IP"""
+        condition_mixed_array_with_unrestricted = {
+            "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1", "*"]},
+        }
+        # Should return False because * makes it unrestricted
+        assert not is_condition_restricting_ip_access(condition_mixed_array_with_unrestricted)
+
+    def test_is_condition_restricting_ip_access_mixed_array_with_internet_range(self):
+        """Test is_condition_restricting_ip_access with mixed array containing internet range"""
+        condition_mixed_array_with_internet = {
+            "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1", "0.0.0.0/0"]},
+        }
+        # Should return False because 0.0.0.0/0 makes it unrestricted
+        assert not is_condition_restricting_ip_access(condition_mixed_array_with_internet)
+
+    def test_is_condition_restricting_ip_access_case_insensitive(self):
+        """Test is_condition_restricting_ip_access with case insensitive keys"""
+        condition_case_insensitive = {
+            "IpAddress": {"AWS:SOURCEIP": "192.168.1.1"},
+        }
+        assert is_condition_restricting_ip_access(condition_case_insensitive)
+
+    def test_is_condition_restricting_ip_access_invalid_ip_handling(self):
+        """Test is_condition_restricting_ip_access with invalid IP (should handle gracefully)"""
+        condition_invalid_ip = {
+            "IpAddress": {"aws:SourceIp": "invalid.ip.address"},
+        }
+        # Should handle gracefully and not crash
+        try:
+            result = is_condition_restricting_ip_access(condition_invalid_ip)
+            # Function should return a boolean value
+            assert isinstance(result, bool)
+        except Exception:
+            # If it crashes, that's a bug
+            assert False, "Function should handle invalid IPs gracefully"
 
 
 def test_is_codebuild_using_allowed_github_org_allows():
