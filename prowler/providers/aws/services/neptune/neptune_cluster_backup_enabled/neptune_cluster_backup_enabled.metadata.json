@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "*Neptune DB cluster* automated backup is enabled and retention days are more than the required minimum retention period (default to 7 days).",
+  "Description": "Neptune DB cluster automated backup is enabled and retention days are more than the required minimum retention period (default to `7` days).",
   "Risk": "**Insufficient backup retention** reduces the ability to recover from data corruption, accidental deletion, or ransomware, impacting **availability** and **integrity**.\n\n- Prevents point-in-time recovery to required dates\n- Increases downtime, irreversible data loss, and compliance violations",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -22,8 +22,8 @@
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7 --apply-immediately",
-      "NativeIaC": "```yaml\nParameters:\n  DBClusterId:\n    Type: String\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: !Ref DBClusterId\n      BackupRetentionPeriod: 7\n```",
-      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier      = var.cluster_id\n  backup_retention_period = 7\n}\n```",
+      "NativeIaC": "```yaml\nParameters:\n  DBClusterId:\n    Type: String\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: !Ref DBClusterId\n      BackupRetentionPeriod: 7  # Enable automated backups with 7-day retention minimum\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier      = var.cluster_id\n  backup_retention_period = 7  # Enable automated backups with 7-day retention minimum\n}\n```",
       "Other": "1. Sign in to the AWS Management Console\n2. Services → Amazon Neptune → Databases\n3. Select the DB cluster and click Modify\n4. In Backup retention period set the value to 7 (or higher)\n5. Choose Apply immediately and click Modify cluster"
     },
     "Recommendation": {

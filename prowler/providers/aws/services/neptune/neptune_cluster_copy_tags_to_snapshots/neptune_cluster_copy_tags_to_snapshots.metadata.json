@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "*Neptune DB cluster* is configured to copy all tags to snapshots when snapshots are created.",
-  "Risk": "**Missing snapshot tags** weakens governance across confidentiality, integrity, and availability.\n\n- **Access control**: tag-based IAM conditions may not apply to snapshots, enabling unauthorized restore or copy\n- **Operational**: recovery, retention, and cost tracking can fail due to unidentifiable or orphaned snapshots",
+  "Description": "Neptune DB cluster is configured to copy all tags to snapshots when snapshots are created.",
+  "Risk": "**Missing snapshot tags** weakens governance across confidentiality, integrity, and availability.\n\n- **Access control**: Tag-based IAM conditions may not apply to snapshots, enabling unauthorized restore or copy\n- **Operational**: Recovery, retention, and cost tracking can fail due to unidentifiable or orphaned snapshots",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview",
@@ -22,8 +22,8 @@
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --copy-tags-to-snapshot --apply-immediately",
-      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::RDS::DBCluster\n    Properties:\n      DBClusterIdentifier: <DB_CLUSTER_ID>\n      Engine: neptune\n      CopyTagsToSnapshot: true\n```",
-      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier     = \"<DB_CLUSTER_ID>\"\n  copy_tags_to_snapshot  = true\n}\n```",
+      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::RDS::DBCluster\n    Properties:\n      DBClusterIdentifier: <DB_CLUSTER_ID>\n      Engine: neptune\n      CopyTagsToSnapshot: true  # Inherit tags for snapshot governance and access control\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier     = \"<DB_CLUSTER_ID>\"\n  copy_tags_to_snapshot  = true  # Inherit tags for snapshot governance and access control\n}\n```",
       "Other": "1. Sign in to the AWS Management Console and open Amazon Neptune\n2. Click Clusters and select the cluster\n3. Click Modify\n4. In Backup, enable \"Copy tags to snapshots\"\n5. Check \"Apply immediately\"\n6. Click Modify Cluster"
     },
     "Recommendation": {

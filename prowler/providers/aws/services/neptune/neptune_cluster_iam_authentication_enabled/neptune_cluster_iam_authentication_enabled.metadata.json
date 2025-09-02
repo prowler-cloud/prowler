@@ -12,7 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "*Neptune DB clusters* are evaluated for **IAM database authentication**. \n\nIf this setting is enabled, the cluster supports IAM-based authentication.\nIf disabled, the cluster requires traditional database credentials instead.",
+  "Description": "Neptune DB clusters are evaluated for **IAM database authentication**. \n\nIf this setting is enabled, the cluster supports IAM-based authentication.\nIf disabled, the cluster requires traditional database credentials instead.",
   "Risk": "**Disabled IAM database authentication** weakens confidentiality and integrity of the database.\n\n- Static or embedded DB credentials can be stolen or reused, enabling unauthorized queries and data exfiltration\n- Attackers may bypass centralized access controls, escalate privileges, and move laterally without IAM-based audit trails",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,8 +24,8 @@
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --enable-iam-database-authentication --apply-immediately",
-      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: <DB_CLUSTER_ID>\n      IamAuthEnabled: true\n```",
-      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier                  = \"<DB_CLUSTER_ID>\"\n  iam_database_authentication_enabled = true\n}\n```",
+      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: <DB_CLUSTER_ID>\n      IamAuthEnabled: true  # Enable IAM authentication instead of static DB credentials\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier                  = \"<DB_CLUSTER_ID>\"\n  iam_database_authentication_enabled = true  # Enable IAM authentication instead of static DB credentials\n}\n```",
       "Other": "1. Sign in to the AWS Management Console and open Amazon Neptune > Databases\n2. Select the DB cluster and choose **Actions** > **Modify**\n3. In **Authentication**, enable **IAM DB authentication** and check **Apply immediately**\n4. Click **Continue** then **Modify DB cluster**"
     },
     "Recommendation": {
