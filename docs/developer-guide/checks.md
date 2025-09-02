@@ -235,7 +235,7 @@ Below is a generic example of a check metadata file. **Do not include comments i
   "ResourceType": "Other",
   "Description": "This check verifies that the service resource has the required **security setting** enabled to protect against potential vulnerabilities.\n\nIt ensures that the resource follows security best practices and maintains proper access controls. The check evaluates whether the security configuration is properly implemented and active.",
   "Risk": "Without proper security settings, the resource may be vulnerable to:\n\n- **Unauthorized access** - Malicious actors could gain entry\n- **Data breaches** - Sensitive information could be compromised\n- **Security threats** - Various attack vectors could be exploited\n\nThis could result in compliance violations and potential financial or reputational damage.",
-  "RelatedUrl": "https://example.com/security-documentation,https://example.com/best-practices",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "provider-cli service enable-security-setting --resource-id resource-123",
@@ -245,7 +245,7 @@ Below is a generic example of a check metadata file. **Do not include comments i
     },
     "Recommendation": {
       "Text": "Enable security settings on all service resources to ensure proper protection. Regularly review and update security configurations to align with current best practices.",
-      "Url": ""
+      "Url": "https://example.com/security-documentation;https://example.com/best-practices"
     }
   },
   "Categories": ["internet-exposed", "secrets"],
