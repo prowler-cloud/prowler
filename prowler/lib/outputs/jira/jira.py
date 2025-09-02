@@ -682,8 +682,8 @@ class Jira:
                 file=os.path.basename(__file__),
             )
 
-    def get_projects_and_issue_types(self) -> dict:
-        """Get the projects and issue types from Jira
+    def get_jira_metadata(self) -> dict:
+        """Get the metadata from Jira
 
         Returns:
             - dict: The projects and issue types from Jira as a dictionary, the projects format is {"KEY": {"name": "NAME", "issue_types": ["ISSUE_TYPE_1", "ISSUE_TYPE_2"]}}

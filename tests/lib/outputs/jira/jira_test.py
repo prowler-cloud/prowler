@@ -912,7 +912,7 @@ class TestJiraIntegration:
     def test_get_projects_and_issue_types_successful(
         self, mock_get, mock_cloud_id, mock_get_access_token
     ):
-        """Test successful retrieval of projects and issue types from Jira."""
+        """Test successful retrieval of metadata associated to projects from Jira."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -959,7 +959,7 @@ class TestJiraIntegration:
             mock_issue_types_response_2,
         ]
 
-        projects_and_issue_types = self.jira_integration.get_projects_and_issue_types()
+        jira_metadata = self.jira_integration.get_jira_metadata()
 
         expected_result = {
             "PROJ1": {
@@ -972,7 +972,7 @@ class TestJiraIntegration:
             },
         }
 
-        assert projects_and_issue_types == expected_result
+        assert jira_metadata == expected_result
 
         # Verify the correct number of calls were made
         assert mock_get.call_count == 3
@@ -994,7 +994,7 @@ class TestJiraIntegration:
     def test_get_projects_and_issue_types_no_projects_found(
         self, mock_get, mock_cloud_id, mock_get_access_token
     ):
-        """Test that get_projects_and_issue_types raises JiraNoProjectsError when no projects are found."""
+        """Test that get_jira_metadata raises JiraNoProjectsError when no projects are found."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1005,7 +1005,7 @@ class TestJiraIntegration:
         mock_get.return_value = mock_response
 
         with pytest.raises(JiraNoProjectsError):
-            self.jira_integration.get_projects_and_issue_types()
+            self.jira_integration.get_jira_metadata()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1015,7 +1015,7 @@ class TestJiraIntegration:
     def test_get_projects_and_issue_types_projects_response_error(
         self, mock_get, mock_cloud_id, mock_get_access_token
     ):
-        """Test that get_projects_and_issue_types raises JiraGetProjectsError when projects request fails."""
+        """Test that get_jira_metadata raises JiraGetProjectsError when projects request fails."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1026,7 +1026,7 @@ class TestJiraIntegration:
         mock_get.return_value = mock_response
 
         with pytest.raises(JiraGetProjectsError):
-            self.jira_integration.get_projects_and_issue_types()
+            self.jira_integration.get_jira_metadata()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1036,7 +1036,7 @@ class TestJiraIntegration:
     def test_get_projects_and_issue_types_issue_types_response_error(
         self, mock_get, mock_cloud_id, mock_get_access_token
     ):
-        """Test that get_projects_and_issue_types raises JiraGetProjectsError when issue types request fails."""
+        """Test that get_jira_metadata raises JiraGetProjectsError when issue types request fails."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1055,7 +1055,7 @@ class TestJiraIntegration:
         mock_get.side_effect = [mock_projects_response, mock_issue_types_response]
 
         with pytest.raises(JiraGetProjectsError):
-            self.jira_integration.get_projects_and_issue_types()
+            self.jira_integration.get_jira_metadata()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1065,7 +1065,7 @@ class TestJiraIntegration:
     def test_get_projects_and_issue_types_no_project_metadata(
         self, mock_get, mock_cloud_id, mock_get_access_token
     ):
-        """Test that get_projects_and_issue_types returns empty issue_types when project metadata is empty."""
+        """Test that get_jira_metadata returns empty issue_types when project metadata is empty."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1084,7 +1084,7 @@ class TestJiraIntegration:
 
         mock_get.side_effect = [mock_projects_response, mock_issue_types_response]
 
-        projects_and_issue_types = self.jira_integration.get_projects_and_issue_types()
+        projects_and_issue_types = self.jira_integration.get_jira_metadata()
 
         expected_result = {
             "PROJ1": {
@@ -1103,12 +1103,12 @@ class TestJiraIntegration:
     def test_get_projects_and_issue_types_refresh_token_error(
         self, mock_get_access_token
     ):
-        """Test that get_projects_and_issue_types raises JiraRefreshTokenError when refreshing the token fails."""
+        """Test that get_jira_metadata raises JiraRefreshTokenError when refreshing the token fails."""
         # To disable vulture
         mock_get_access_token = mock_get_access_token
 
         with pytest.raises(JiraRefreshTokenError):
-            self.jira_integration.get_projects_and_issue_types()
+            self.jira_integration.get_jira_metadata()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1118,7 +1118,7 @@ class TestJiraIntegration:
     def test_get_projects_and_issue_types_mixed_scenarios(
         self, mock_get, mock_cloud_id, mock_get_access_token
     ):
-        """Test get_projects_and_issue_types with mixed success and empty metadata scenarios."""
+        """Test get_jira_metadata with mixed success and empty metadata scenarios."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1156,7 +1156,7 @@ class TestJiraIntegration:
             mock_issue_types_response_2,
         ]
 
-        projects_and_issue_types = self.jira_integration.get_projects_and_issue_types()
+        projects_and_issue_types = self.jira_integration.get_jira_metadata()
 
         expected_result = {
             "PROJ1": {

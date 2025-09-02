@@ -4,7 +4,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.12.0] (Prowler UNRELEASED)
 
 ### Added
-- Create method get_projects_and_issue_types inside Jira class [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
+- Create method get_jira_metadata inside Jira class [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
 
 
 ### Changed
