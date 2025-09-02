@@ -91,12 +91,14 @@ export default async function Compliance({
       }
     : undefined;
 
-  const metadataInfoData = await getComplianceOverviewMetadataInfo({
-    query,
-    filters: {
-      "filter[scan_id]": selectedScanId,
-    },
-  });
+  const metadataInfoData = selectedScanId
+    ? await getComplianceOverviewMetadataInfo({
+        query,
+        filters: {
+          "filter[scan_id]": selectedScanId,
+        },
+      })
+    : { data: { attributes: { regions: [] } } };
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
@@ -140,11 +142,15 @@ const SSRComplianceGrid = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const compliancesData = await getCompliancesOverview({
-    scanId,
-    region: regionFilter,
-    query,
-  });
+  // Only fetch compliance data if we have a valid scanId
+  const compliancesData =
+    scanId && scanId.trim() !== ""
+      ? await getCompliancesOverview({
+          scanId,
+          region: regionFilter,
+          query,
+        })
+      : { data: [], errors: [] };
 
   const type = compliancesData?.data?.type;
 
