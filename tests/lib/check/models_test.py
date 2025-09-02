@@ -590,7 +590,7 @@ class TestCheckMetada:
             ResourceType="resource1",
             Description="Description 1",
             Risk="risk1",
-            # RelatedUrl not provided - should default to empty string via default_factory
+            RelatedUrl="",
             Remediation={
                 "Code": {
                     "CLI": "cli1",

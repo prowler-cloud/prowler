@@ -113,7 +113,7 @@ class CheckMetadata(BaseModel):
     ResourceType: str
     Description: str
     Risk: str
-    RelatedUrl: str = Field(default_factory=str)
+    RelatedUrl: str
     Remediation: Remediation
     AdditionalUrls: list[str] = Field(default_factory=list)
     Categories: list[str]
