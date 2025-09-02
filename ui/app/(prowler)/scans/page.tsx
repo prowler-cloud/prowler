@@ -48,7 +48,8 @@ export default async function Scans({
         connected: provider.attributes.connection.connected,
       })) || [];
 
-  const thereIsNoProviders = !providersData?.data;
+  const thereIsNoProviders =
+    !providersData?.data || providersData.data.length === 0;
 
   const thereIsNoProvidersConnected = providersData?.data?.every(
     (provider: ProviderProps) => !provider.attributes.connection.connected,
