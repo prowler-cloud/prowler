@@ -5,7 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.12.0] (Prowler UNRELEASED)
 
 ### Added
-- `AdditionalUrls` field in CheckMetadata Pydantic model [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
+- `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 
 ---
 
