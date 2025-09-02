@@ -8,6 +8,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
 
+### 🐞 Fixed
+- Scan page shows NoProvidersAdded when no providers [(#8626)](https://github.com/prowler-cloud/prowler/pull/8626)
+
 ## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added
