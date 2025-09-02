@@ -325,9 +325,6 @@ def has_restrictive_source_arn_condition(
     return False
 
 
-
-
-
 def is_condition_restricting_ip_access(condition_statement: dict) -> bool:
     """Check if the policy condition restricts IP access (ALL IPs must be specific, not * or 0.0.0.0/0).
 
@@ -362,15 +359,12 @@ def is_condition_restricting_ip_access(condition_statement: dict) -> bool:
                         condition_statement[CONDITION_OPERATOR][CONDITION_KEY]
                     ]
 
-                # Security: If ANY IP is unrestricted (* or 0.0.0.0/0), the entire condition is NOT restrictive
-                # This prevents policies from being considered secure when they mix restricted and unrestricted IPs
+                # If any IP is unrestricted (* or 0.0.0.0/0), the condition is NOT restrictive
                 for ip in condition_statement[CONDITION_OPERATOR][CONDITION_KEY]:
                     if ip == "*" or ip == "0.0.0.0/0":
-                        # If any IP is unrestricted, the condition is NOT restrictive
                         is_ip_restricted = False
                         break
                 else:
-                    # If we get here, ALL IPs are restricted (none were * or 0.0.0.0/0)
                     is_ip_restricted = True
     except ValueError:
         logger.error(f"Invalid IP: {ip}")

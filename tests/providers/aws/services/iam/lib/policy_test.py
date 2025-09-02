@@ -2188,108 +2188,88 @@ class Test_Policy:
 
 
     def test_is_condition_restricting_ip_access_no_condition(self):
-        """Test is_condition_restricting_ip_access with no condition"""
         assert not is_condition_restricting_ip_access({})
 
     def test_is_condition_restricting_ip_access_restricted_single_ip(self):
-        """Test is_condition_restricting_ip_access with a single restricted IP"""
         condition_restricted_ip = {
             "IpAddress": {"aws:SourceIp": "192.168.1.1"},
         }
         assert is_condition_restricting_ip_access(condition_restricted_ip)
 
     def test_is_condition_restricting_ip_access_not_restricted_wildcard(self):
-        """Test is_condition_restricting_ip_access with wildcard (not restricted)"""
         condition_wildcard = {
             "IpAddress": {"aws:SourceIp": "*"},
         }
         assert not is_condition_restricting_ip_access(condition_wildcard)
 
     def test_is_condition_restricting_ip_access_not_restricted_internet(self):
-        """Test is_condition_restricting_ip_access with 0.0.0.0/0 (not restricted)"""
         condition_internet = {
             "IpAddress": {"aws:SourceIp": "0.0.0.0/0"},
         }
         assert not is_condition_restricting_ip_access(condition_internet)
 
     def test_is_condition_restricting_ip_access_restricted_ipv6(self):
-        """Test is_condition_restricting_ip_access with IPv6 (should be restricted)"""
         condition_restricted_ipv6 = {
             "IpAddress": {"aws:SourceIp": "2001:db8::1"},
         }
         assert is_condition_restricting_ip_access(condition_restricted_ipv6)
 
     def test_is_condition_restricting_ip_access_restricted_network(self):
-        """Test is_condition_restricting_ip_access with network range (should be restricted)"""
         condition_restricted_network = {
             "IpAddress": {"aws:SourceIp": "10.0.0.0/24"},
         }
         assert is_condition_restricting_ip_access(condition_restricted_network)
 
     def test_is_condition_restricting_ip_access_restricted_public_network(self):
-        """Test is_condition_restricting_ip_access with public network range (should be restricted)"""
         condition_restricted_public_network = {
             "IpAddress": {"aws:SourceIp": "203.0.113.0/24"},
         }
         assert is_condition_restricting_ip_access(condition_restricted_public_network)
 
     def test_is_condition_restricting_ip_access_restricted_array(self):
-        """Test is_condition_restricting_ip_access with array of restricted IPs"""
         condition_restricted_array = {
             "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1"]},
         }
         assert is_condition_restricting_ip_access(condition_restricted_array)
 
     def test_is_condition_restricting_ip_access_mixed_array_with_wildcard(self):
-        """Test is_condition_restricting_ip_access with mixed array containing wildcard (*)"""
         condition_mixed_array_with_wildcard = {
             "IpAddress": {"aws:SourceIp": ["*", "192.168.1.1"]},
         }
-        # Should return False because * makes it unrestricted
         assert not is_condition_restricting_ip_access(condition_mixed_array_with_wildcard)
 
     def test_is_condition_restricting_ip_access_mixed_array_not_restricted(self):
-        """Test is_condition_restricting_ip_access with mixed array containing only unrestricted IPs"""
         condition_mixed_array_not_restricted = {
             "IpAddress": {"aws:SourceIp": ["*", "0.0.0.0/0"]},
         }
         assert not is_condition_restricting_ip_access(condition_mixed_array_not_restricted)
 
     def test_is_condition_restricting_ip_access_mixed_array_with_unrestricted_ip(self):
-        """Test is_condition_restricting_ip_access with mixed array containing one unrestricted IP"""
         condition_mixed_array_with_unrestricted = {
             "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1", "*"]},
         }
-        # Should return False because * makes it unrestricted
         assert not is_condition_restricting_ip_access(condition_mixed_array_with_unrestricted)
 
     def test_is_condition_restricting_ip_access_mixed_array_with_internet_range(self):
-        """Test is_condition_restricting_ip_access with mixed array containing internet range"""
         condition_mixed_array_with_internet = {
             "IpAddress": {"aws:SourceIp": ["192.168.1.1", "10.0.0.1", "0.0.0.0/0"]},
         }
-        # Should return False because 0.0.0.0/0 makes it unrestricted
         assert not is_condition_restricting_ip_access(condition_mixed_array_with_internet)
 
     def test_is_condition_restricting_ip_access_case_insensitive(self):
-        """Test is_condition_restricting_ip_access with case insensitive keys"""
         condition_case_insensitive = {
             "IpAddress": {"AWS:SOURCEIP": "192.168.1.1"},
         }
         assert is_condition_restricting_ip_access(condition_case_insensitive)
 
     def test_is_condition_restricting_ip_access_invalid_ip_handling(self):
-        """Test is_condition_restricting_ip_access with invalid IP (should handle gracefully)"""
         condition_invalid_ip = {
             "IpAddress": {"aws:SourceIp": "invalid.ip.address"},
         }
-        # Should handle gracefully and not crash
         try:
             result = is_condition_restricting_ip_access(condition_invalid_ip)
-            # Function should return a boolean value
             assert isinstance(result, bool)
         except Exception:
-            # If it crashes, that's a bug
             assert False, "Function should handle invalid IPs gracefully"
 
 
