@@ -3,9 +3,11 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
+import { auth } from "@/auth.config";
 import { MutedFindingsConfigButton } from "@/components/providers";
 import {
   AutoRefresh,
+  NoPermission,
   NoProvidersAdded,
   NoProvidersConnected,
   ScansFilters,
@@ -26,6 +28,7 @@ export default async function Scans({
 }: {
   searchParams: SearchParamsProps;
 }) {
+  const session = await auth();
   const filteredParams = { ...searchParams };
   delete filteredParams.scanId;
   const searchParamsKey = JSON.stringify(filteredParams);
@@ -54,6 +57,8 @@ export default async function Scans({
     (provider: ProviderProps) => !provider.attributes.connection.connected,
   );
 
+  const hasManageScansPermission = session?.user?.permissions?.manage_scans;
+
   // Get scans data to check for executing scans
   const scansData = await getScansByState();
 
@@ -81,7 +86,9 @@ export default async function Scans({
     <ContentLayout title="Scans" icon="lucide:scan-search">
       <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
-        {thereIsNoProvidersConnected ? (
+        {!hasManageScansPermission ? (
+          <NoPermission />
+        ) : thereIsNoProvidersConnected ? (
           <>
             <Spacer y={8} />
             <NoProvidersConnected />
@@ -90,6 +97,7 @@ export default async function Scans({
         ) : (
           <LaunchScanWorkflow providers={providerInfo} />
         )}
+
         <ScansFilters
           providerUIDs={providerUIDs}
           providerDetails={providerDetails}
