@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that MongoDB Atlas projects don't have network access entries that allow unrestricted access from the internet. Projects without any network access entries are also flagged as they may default to allowing unrestricted access."
+  "Notes": ""
 }

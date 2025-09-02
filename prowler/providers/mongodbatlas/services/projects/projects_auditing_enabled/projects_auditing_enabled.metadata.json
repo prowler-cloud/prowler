@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Project",
+  "ResourceType": "MongoDBAtlasProject",
   "Description": "Ensure database auditing is enabled to track database operations and security events",
   "Risk": "Without auditing enabled, security events and database operations are not logged, making it difficult to detect unauthorized access or troubleshoot issues",
   "RelatedUrl": "",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check verifies that database auditing is enabled by checking the audit configuration for the project."
+  "Notes": ""
 }
