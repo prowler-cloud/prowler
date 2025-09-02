@@ -2,7 +2,17 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.11.0] (Prowler v5.11.0 - UNRELEASED)
+## [1.11.1] (Prowler v5.11.1)
+
+### 🐞 Added
+
+- Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
+
+### 🔄 Changed
+
+- Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
+
+## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added
 
@@ -24,8 +34,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Default value inside credentials form in AWS Provider add workflow properly set [(#8553)](https://github.com/prowler-cloud/prowler/pull/8553)
 - Auth callback route checking working as expected [(#8556)](https://github.com/prowler-cloud/prowler/pull/8556)
 - DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
-
-### ❌ Removed
 
 ---
 

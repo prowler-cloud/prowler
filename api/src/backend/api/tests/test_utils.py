@@ -199,6 +199,10 @@ class TestGetProwlerProviderKwargs:
                 Provider.ProviderChoices.M365.value,
                 {},
             ),
+            (
+                Provider.ProviderChoices.GITHUB.value,
+                {"organizations": ["provider_uid"]},
+            ),
         ],
     )
     def test_get_prowler_provider_kwargs(self, provider_type, expected_extra_kwargs):
@@ -498,3 +502,62 @@ class TestProwlerIntegrationConnectionTest:
         assert integration.configuration["regions"]["eu-west-1"] is True
         assert integration.configuration["regions"]["ap-south-1"] is False
         integration.save.assert_called_once()
+
+    @patch("api.utils.Jira")
+    def test_jira_connection_success_basic_auth(self, mock_jira_class):
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.JIRA
+        integration.credentials = {
+            "user_mail": "test@example.com",
+            "api_token": "test_api_token",
+        }
+        integration.configuration = {
+            "domain": "example.atlassian.net",
+        }
+
+        mock_connection = MagicMock()
+        mock_connection.is_connected = True
+        mock_connection.error = None
+        mock_jira_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is True
+        assert result.error is None
+
+        mock_jira_class.test_connection.assert_called_once_with(
+            user_mail="test@example.com",
+            api_token="test_api_token",
+            domain="example.atlassian.net",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.Jira")
+    def test_jira_connection_failure_invalid_credentials(self, mock_jira_class):
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.JIRA
+        integration.credentials = {
+            "user_mail": "invalid@example.com",
+            "api_token": "invalid_token",
+        }
+        integration.configuration = {
+            "domain": "invalid.atlassian.net",
+        }
+
+        # Mock failed JIRA connection
+        mock_connection = MagicMock()
+        mock_connection.is_connected = False
+        mock_connection.error = Exception("Authentication failed: Invalid credentials")
+        mock_jira_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is False
+        assert "Authentication failed: Invalid credentials" in str(result.error)
+
+        mock_jira_class.test_connection.assert_called_once_with(
+            user_mail="invalid@example.com",
+            api_token="invalid_token",
+            domain="invalid.atlassian.net",
+            raise_on_exception=False,
+        )

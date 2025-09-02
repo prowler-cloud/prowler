@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.11.0] (Prowler UNRELEASED)
+## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
 - Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `eks_cluster_deletion_protection_enabled` check for AWS provider [(#8536)](https://github.com/prowler-cloud/prowler/pull/8536)
 - ECS privilege escalation patterns (StartTask and RunTask) for AWS provider [(#8541)](https://github.com/prowler-cloud/prowler/pull/8541)
 - Resource Explorer enumeration v2 API actions in `cloudtrail_threat_detection_enumeration` check [(#8557)](https://github.com/prowler-cloud/prowler/pull/8557)
+- `apim_threat_detection_llm_jacking` check for Azure provider [(#8571)](https://github.com/prowler-cloud/prowler/pull/8571)
 - GCP `--skip-api-check` command line flag [(#8575)](https://github.com/prowler-cloud/prowler/pull/8575)
 - `AdditionalUrls` field in CheckMetadata Pydantic model [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 
@@ -24,12 +25,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
-
----
-
-## [v5.10.3] (Prowler UNRELEASED)
-
-### Fixed
+- GitHub App authentication through API fails with auth_method validation error [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
 - AWS resource-arn filtering [(#8533)](https://github.com/prowler-cloud/prowler/pull/8533)
 - GitHub App authentication for GitHub provider [(#8529)](https://github.com/prowler-cloud/prowler/pull/8529)
 - List all accessible organizations in GitHub provider [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
