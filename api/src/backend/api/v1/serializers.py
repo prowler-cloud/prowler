@@ -15,6 +15,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api.exceptions import ConflictException
 from api.models import (
     Finding,
     Integration,
@@ -1962,8 +1963,9 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 configuration=attrs.get("configuration")
             ).exists()
         ):
-            raise serializers.ValidationError(
-                {"configuration": "This integration already exists."}
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
             )
 
         if (
@@ -1975,8 +1977,9 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 }
             ).exists()
         ):
-            raise serializers.ValidationError(
-                {"configuration": "This integration already exists."}
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
             )
 
         # Check if any provider already has a SecurityHub integration
@@ -2000,11 +2003,10 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     query = query.exclude(integration=self.instance)
 
                 if query.exists():
-                    raise serializers.ValidationError(
-                        {
-                            "providers": f"Provider {provider.id} already has a Security Hub integration. Only one "
-                            f"Security Hub integration is allowed per provider."
-                        }
+                    raise ConflictException(
+                        detail=f"Provider {provider.id} already has a Security Hub integration. Only one "
+                        "Security Hub integration is allowed per provider.",
+                        pointer="/data/relationships/providers",
                     )
 
         return super().validate(attrs)
