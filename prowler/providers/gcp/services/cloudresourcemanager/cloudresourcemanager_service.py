@@ -24,9 +24,9 @@ class CloudResourceManager(GCPService):
                     .getIamPolicy(resource=project_id)
                     .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                 )
-                audit_logging = False
+                audit_logging = []
                 if policy.get("auditConfigs"):
-                    audit_logging = True
+                    audit_logging = policy.get("auditConfigs")
                 self.cloud_resource_manager_projects.append(
                     Project(id=project_id, audit_logging=audit_logging)
                 )
@@ -71,7 +71,7 @@ class Binding(BaseModel):
 
 class Project(BaseModel):
     id: str
-    audit_logging: bool
+    audit_logging: list
 
 
 class Organization(BaseModel):

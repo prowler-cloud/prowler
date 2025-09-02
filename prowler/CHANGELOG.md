@@ -31,6 +31,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.11.1] (Prowler UNRELEASED)
 
 ### Fixed
+- `iam_audit_logs_enabled` check for GCP provider [(#8633)](https://github.com/prowler-cloud/prowler/pull/8633)
 
 ---
 
