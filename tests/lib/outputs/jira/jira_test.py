@@ -903,3 +903,270 @@ class TestJiraIntegration:
     def test_get_severity_color(self, severity, expected_color):
         """Test that get_severity_color returns the correct color for a severity."""
         assert self.jira_integration.get_severity_color(severity) == expected_color
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_and_issue_types_successful(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test successful retrieval of projects and issue types from Jira."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        # Mock the projects response
+        mock_projects_response = MagicMock()
+        mock_projects_response.status_code = 200
+        mock_projects_response.json.return_value = [
+            {"key": "PROJ1", "name": "Project One"},
+            {"key": "PROJ2", "name": "Project Two"},
+        ]
+
+        # Mock the issue types responses
+        mock_issue_types_response_1 = MagicMock()
+        mock_issue_types_response_1.status_code = 200
+        mock_issue_types_response_1.json.return_value = {
+            "projects": [
+                {
+                    "issuetypes": [
+                        {"name": "Bug", "id": "1"},
+                        {"name": "Task", "id": "2"},
+                    ]
+                }
+            ]
+        }
+
+        mock_issue_types_response_2 = MagicMock()
+        mock_issue_types_response_2.status_code = 200
+        mock_issue_types_response_2.json.return_value = {
+            "projects": [
+                {
+                    "issuetypes": [
+                        {"name": "Story", "id": "3"},
+                        {"name": "Epic", "id": "4"},
+                    ]
+                }
+            ]
+        }
+
+        # Configure side_effect to return different responses for different calls
+        mock_get.side_effect = [
+            mock_projects_response,
+            mock_issue_types_response_1,
+            mock_issue_types_response_2,
+        ]
+
+        projects_and_issue_types = self.jira_integration.get_projects_and_issue_types()
+
+        expected_result = {
+            "PROJ1": {
+                "name": "Project One",
+                "issue_types": ["Bug", "Task"],
+            },
+            "PROJ2": {
+                "name": "Project Two",
+                "issue_types": ["Story", "Epic"],
+            },
+        }
+
+        assert projects_and_issue_types == expected_result
+
+        # Verify the correct number of calls were made
+        assert mock_get.call_count == 3
+
+        # Verify the URLs called
+        calls = mock_get.call_args_list
+        assert (
+            calls[0][0][0]
+            == "https://api.atlassian.com/ex/jira/test_cloud_id/rest/api/3/project"
+        )
+        assert "projectKeys=PROJ1" in calls[1][0][0]
+        assert "projectKeys=PROJ2" in calls[2][0][0]
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_and_issue_types_no_projects_found(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_projects_and_issue_types raises JiraNoProjectsError when no projects are found."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = []
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraNoProjectsError):
+            self.jira_integration.get_projects_and_issue_types()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_and_issue_types_projects_response_error(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_projects_and_issue_types raises JiraGetProjectsError when projects request fails."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.text = "Not Found"
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraGetProjectsError):
+            self.jira_integration.get_projects_and_issue_types()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_and_issue_types_issue_types_response_error(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_projects_and_issue_types raises JiraGetProjectsError when issue types request fails."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        # Mock successful projects response
+        mock_projects_response = MagicMock()
+        mock_projects_response.status_code = 200
+        mock_projects_response.json.return_value = [
+            {"key": "PROJ1", "name": "Project One"}
+        ]
+
+        # Mock failed issue types response
+        mock_issue_types_response = MagicMock()
+        mock_issue_types_response.status_code = 404
+
+        mock_get.side_effect = [mock_projects_response, mock_issue_types_response]
+
+        with pytest.raises(JiraGetProjectsError):
+            self.jira_integration.get_projects_and_issue_types()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_and_issue_types_no_project_metadata(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_projects_and_issue_types returns empty issue_types when project metadata is empty."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        # Mock successful projects response
+        mock_projects_response = MagicMock()
+        mock_projects_response.status_code = 200
+        mock_projects_response.json.return_value = [
+            {"key": "PROJ1", "name": "Project One"}
+        ]
+
+        # Mock issue types response with empty projects list
+        mock_issue_types_response = MagicMock()
+        mock_issue_types_response.status_code = 200
+        mock_issue_types_response.json.return_value = {"projects": []}
+
+        mock_get.side_effect = [mock_projects_response, mock_issue_types_response]
+
+        projects_and_issue_types = self.jira_integration.get_projects_and_issue_types()
+
+        expected_result = {
+            "PROJ1": {
+                "name": "Project One",
+                "issue_types": [],
+            }
+        }
+
+        assert projects_and_issue_types == expected_result
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenError("Failed to refresh the access token"),
+    )
+    def test_get_projects_and_issue_types_refresh_token_error(
+        self, mock_get_access_token
+    ):
+        """Test that get_projects_and_issue_types raises JiraRefreshTokenError when refreshing the token fails."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraRefreshTokenError):
+            self.jira_integration.get_projects_and_issue_types()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_and_issue_types_mixed_scenarios(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test get_projects_and_issue_types with mixed success and empty metadata scenarios."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        # Mock projects response with two projects
+        mock_projects_response = MagicMock()
+        mock_projects_response.status_code = 200
+        mock_projects_response.json.return_value = [
+            {"key": "PROJ1", "name": "Project One"},
+            {"key": "PROJ2", "name": "Project Two"},
+        ]
+
+        # Mock successful issue types response for first project
+        mock_issue_types_response_1 = MagicMock()
+        mock_issue_types_response_1.status_code = 200
+        mock_issue_types_response_1.json.return_value = {
+            "projects": [
+                {
+                    "issuetypes": [
+                        {"name": "Bug", "id": "1"},
+                        {"name": "Task", "id": "2"},
+                    ]
+                }
+            ]
+        }
+
+        # Mock empty issue types response for second project
+        mock_issue_types_response_2 = MagicMock()
+        mock_issue_types_response_2.status_code = 200
+        mock_issue_types_response_2.json.return_value = {"projects": []}
+
+        mock_get.side_effect = [
+            mock_projects_response,
+            mock_issue_types_response_1,
+            mock_issue_types_response_2,
+        ]
+
+        projects_and_issue_types = self.jira_integration.get_projects_and_issue_types()
+
+        expected_result = {
+            "PROJ1": {
+                "name": "Project One",
+                "issue_types": ["Bug", "Task"],
+            },
+            "PROJ2": {
+                "name": "Project Two",
+                "issue_types": [],
+            },
+        }
+
+        assert projects_and_issue_types == expected_result

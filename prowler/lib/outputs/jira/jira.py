@@ -682,6 +682,92 @@ class Jira:
                 file=os.path.basename(__file__),
             )
 
+    def get_projects_and_issue_types(self) -> dict:
+        """Get the projects and issue types from Jira
+
+        Returns:
+            - dict: The projects and issue types from Jira as a dictionary, the projects format is {"KEY": {"name": "NAME", "issue_types": ["ISSUE_TYPE_1", "ISSUE_TYPE_2"]}}
+        """
+        try:
+            access_token = self.get_access_token()
+
+            if not access_token:
+                return ValueError("Failed to get access token")
+
+            if self._using_basic_auth:
+                headers = {"Authorization": f"Basic {access_token}"}
+            else:
+                headers = {"Authorization": f"Bearer {access_token}"}
+
+            response = requests.get(
+                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
+                headers=headers,
+            )
+            if response.status_code == 200:
+                projects_data = {}
+                projects_list = response.json()
+                if not projects_list:
+                    logger.error("No projects found")
+                    raise JiraNoProjectsError(
+                        message="No projects found in Jira",
+                        file=os.path.basename(__file__),
+                    )
+                else:
+                    for project in projects_list:
+                        project_response = requests.get(
+                            f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project['key']}&expand=projects.issuetypes.fields",
+                            headers=headers,
+                        )
+                        if project_response.status_code == 200:
+                            project_metadata = project_response.json()
+                            if len(project_metadata["projects"]) == 0:
+                                logger.warning(
+                                    f"No project metadata found for project {project['key']}, setting empty issue types"
+                                )
+                                issue_types = []
+                            else:
+                                issue_types = [
+                                    issue_type["name"]
+                                    for issue_type in project_metadata["projects"][0][
+                                        "issuetypes"
+                                    ]
+                                ]
+                        else:
+                            raise JiraGetAvailableIssueTypesResponseError(
+                                message="Failed to get available issue types from Jira",
+                                file=os.path.basename(__file__),
+                            )
+                        projects_data[project["key"]] = {
+                            "name": project["name"],
+                            "issue_types": issue_types,
+                        }
+                    return projects_data
+            else:
+                logger.error(
+                    f"Failed to get projects: {response.status_code} - {response.text}"
+                )
+                raise JiraGetProjectsResponseError(
+                    message="Failed to get projects from Jira",
+                    file=os.path.basename(__file__),
+                )
+        except JiraNoProjectsError as no_projects_error:
+            raise no_projects_error
+        except JiraGetAvailableIssueTypesResponseError as issue_types_error:
+            raise JiraGetProjectsError(
+                message=f"Failed to get projects and issue types from Jira: {issue_types_error}",
+                file=os.path.basename(__file__),
+            )
+        except JiraRefreshTokenError as refresh_error:
+            raise refresh_error
+        except JiraRefreshTokenResponseError as response_error:
+            raise response_error
+        except Exception as e:
+            logger.error(f"Failed to get projects: {e}")
+            raise JiraGetProjectsError(
+                message="Failed to get projects from Jira",
+                file=os.path.basename(__file__),
+            )
+
     @staticmethod
     def get_color_from_status(status: str) -> str:
         """Get the color from the status
