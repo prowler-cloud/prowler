@@ -55,14 +55,16 @@ const validateAwsCredentialsCreate = (
     if (!data.aws_access_key_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Access Key ID is required when using access and secret key",
+        message:
+          "AWS Access Key ID is required when using access and secret key",
         path: ["aws_access_key_id"],
       });
     }
     if (!data.aws_secret_access_key) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Secret Access Key is required when using access and secret key",
+        message:
+          "AWS Secret Access Key is required when using access and secret key",
         path: ["aws_secret_access_key"],
       });
     }
@@ -78,7 +80,8 @@ const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
     if (hasAccessKey && !hasSecretKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Secret Access Key is required when providing Access Key ID",
+        message:
+          "AWS Secret Access Key is required when providing Access Key ID",
         path: ["aws_secret_access_key"],
       });
     }
@@ -86,7 +89,8 @@ const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
     if (hasSecretKey && !hasAccessKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "AWS Access Key ID is required when providing Secret Access Key",
+        message:
+          "AWS Access Key ID is required when providing Secret Access Key",
         path: ["aws_access_key_id"],
       });
     }
@@ -99,8 +103,10 @@ const validateIamRole = (
   ctx: z.RefinementCtx,
   checkShowSection: boolean = true,
 ) => {
-  const shouldValidate = checkShowSection ? data.show_role_section === true : true;
-  
+  const shouldValidate = checkShowSection
+    ? data.show_role_section === true
+    : true;
+
   if (shouldValidate && data.role_arn) {
     if (data.role_arn.trim() === "") {
       ctx.addIssue({
@@ -160,9 +166,14 @@ export const s3IntegrationFormSchema = baseS3IntegrationSchema
 export const editS3IntegrationFormSchema = baseS3IntegrationSchema
   .extend({
     bucket_name: z.string().min(1, "Bucket name is required").optional(),
-    output_directory: z.string().min(1, "Output directory is required").optional(),
+    output_directory: z
+      .string()
+      .min(1, "Output directory is required")
+      .optional(),
     providers: z.array(z.string()).optional(),
-    credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]).optional(),
+    credentials_type: z
+      .enum(["aws-sdk-default", "access-secret-key"])
+      .optional(),
   })
   .superRefine((data, ctx) => {
     validateAwsCredentialsEdit(data, ctx);
@@ -201,18 +212,21 @@ export const securityHubIntegrationFormSchema = baseSecurityHubIntegrationSchema
     }
   });
 
-export const editSecurityHubIntegrationFormSchema = baseSecurityHubIntegrationSchema
-  .extend({
-    provider_id: z.string().optional(),
-    send_only_fails: z.boolean().optional(),
-    archive_previous_findings: z.boolean().optional(),
-    use_custom_credentials: z.boolean().optional(),
-    credentials_type: z.enum(["aws-sdk-default", "access-secret-key"]).optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.use_custom_credentials !== false) {
-      validateAwsCredentialsEdit(data, ctx);
-    }
-    // Always validate role if role_arn is provided
-    validateIamRole(data, ctx, false);
-  });
+export const editSecurityHubIntegrationFormSchema =
+  baseSecurityHubIntegrationSchema
+    .extend({
+      provider_id: z.string().optional(),
+      send_only_fails: z.boolean().optional(),
+      archive_previous_findings: z.boolean().optional(),
+      use_custom_credentials: z.boolean().optional(),
+      credentials_type: z
+        .enum(["aws-sdk-default", "access-secret-key"])
+        .optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.use_custom_credentials !== false) {
+        validateAwsCredentialsEdit(data, ctx);
+      }
+      // Always validate role if role_arn is provided
+      validateIamRole(data, ctx, false);
+    });
