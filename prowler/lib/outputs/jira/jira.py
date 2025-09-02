@@ -1530,8 +1530,6 @@ class Jira:
                         "summary": f"[Prowler] {finding.metadata.Severity.value.upper()} - {finding.metadata.CheckID} - {finding.resource_uid}",
                         "description": adf_description,
                         "issuetype": {"name": issue_type},
-                        "customfield_10148": {"value": "SDK"},
-                        "customfield_10088": {"value": "Core"},
                     }
                 }
                 if issue_labels:
