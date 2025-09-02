@@ -191,6 +191,41 @@ def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
     return user
 
 
+# @pytest.fixture(scope="function")
+# def create_test_user_rbac_manage_account(django_db_setup, django_db_blocker):
+#     with django_db_blocker.unblock():
+#         user = User.objects.create_user(
+#             name="testing_limited",
+#             email="rbac_limited@rbac.com",
+#             password=TEST_PASSWORD,
+#         )
+#         tenant = Tenant.objects.create(
+#             name="Tenant Test",
+#         )
+#         Membership.objects.create(
+#             user=user,
+#             tenant=tenant,
+#             role=Membership.RoleChoices.OWNER,
+#         )
+#         Role.objects.create(
+#             name="manage_account",
+#             tenant_id=tenant.id,
+#             manage_users=False,
+#             manage_account=True,
+#             manage_billing=False,
+#             manage_providers=False,
+#             manage_integrations=False,
+#             manage_scans=False,
+#             unlimited_visibility=False,
+#         )
+#         UserRoleRelationship.objects.create(
+#             user=user,
+#             role=Role.objects.get(name="limited"),
+#             tenant_id=tenant.id,
+#         )
+#     return user
+
+
 @pytest.fixture
 def authenticated_client_rbac(create_test_user_rbac, tenants_fixture, client):
     client.user = create_test_user_rbac
