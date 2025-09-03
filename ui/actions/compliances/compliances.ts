@@ -48,8 +48,8 @@ export const getComplianceOverviewMetadataInfo = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    // Define filters to exclude
-    if (key !== "filter[search]") {
+    // Define filters to exclude and check for valid values
+    if (key !== "filter[search]" && value && String(value).trim() !== "") {
       url.searchParams.append(key, String(value));
     }
   });
