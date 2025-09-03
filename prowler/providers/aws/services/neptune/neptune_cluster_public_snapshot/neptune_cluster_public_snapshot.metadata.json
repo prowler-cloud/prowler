@@ -12,7 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRdsDbClusterSnapshot",
-  "Description": "*Neptune DB manual cluster snapshot* is evaluated to determine if its restore attributes allow access to *all AWS accounts* (public).\n\nA **FAIL** means the snapshot is publicly shared and can be copied or restored by any AWS account; **PASS** means it is not shared publicly.",
+  "Description": "Neptune DB manual cluster snapshot is evaluated to determine if its restore attributes allow access to all AWS accounts *(public)*.\n\nA failed status in the report means the snapshot is publicly shared and can be copied or restored by any AWS account; **PASS** means it is not shared publicly.",
   "Risk": "**Public snapshots** compromise confidentiality of stored data and metadata.\n\nAttackers or third parties can:\n- Copy or restore snapshots to external accounts.\n- Access sensitive data contained in the snapshot.",
   "RelatedUrl": "",
   "AdditionalURLs": [
