@@ -11,7 +11,12 @@ class kafka_cluster_mutual_tls_authentication_enabled(Check):
             report.status = "FAIL"
             report.status_extended = f"Kafka cluster '{cluster.name}' does not have mutual TLS authentication enabled."
 
-            if cluster.tls_authentication:
+            # Serverless clusters always have TLS authentication enabled by default
+            if cluster.kafka_version == "SERVERLESS":
+                report.status = "PASS"
+                report.status_extended = f"Kafka cluster '{cluster.name}' is serverless and always has TLS authentication enabled by default."
+            # For provisioned clusters, check the TLS configuration
+            elif cluster.tls_authentication:
                 report.status = "PASS"
                 report.status_extended = f"Kafka cluster '{cluster.name}' has mutual TLS authentication enabled."
 
