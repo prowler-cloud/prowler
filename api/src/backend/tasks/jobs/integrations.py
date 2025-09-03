@@ -7,7 +7,7 @@ from tasks.utils import batched
 
 from api.db_utils import rls_transaction
 from api.models import Finding, Integration, Provider
-from api.utils import initialize_prowler_provider
+from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
@@ -429,3 +429,35 @@ def upload_security_hub_integration(
             f"Security Hub integrations failed for provider {provider_id}: {str(e)}"
         )
         return False
+
+
+def send_findings_to_jira(
+    tenant_id: str,
+    integration_id: str,
+    project_key: str,
+    issue_type: str,
+    finding_ids: list[str],
+):
+    with rls_transaction(tenant_id):
+        integration = Integration.objects.get(id=integration_id)
+        jira_integration = initialize_prowler_integration(integration)
+
+    prowler_findings_list = []
+    # TODO: We need to optimize this later on
+    # 1/ Using iterator to avoid loading all findings in memory at once, but it's ok for now
+    #    because we are mainly sending one finding at a time
+    # 2/ We need to refactor the SDK to avoid initializing providers for every single finding
+    for finding_id in finding_ids:
+        with rls_transaction(tenant_id):
+            finding_instance = Finding.all_objects.get(id=finding_id)
+            prowler_provider = initialize_prowler_provider(
+                finding_instance.scan.provider
+            )
+            prowler_findings_list.append(
+                FindingOutput.transform_api_finding(finding_instance, prowler_provider)
+            )
+
+    jira_integration.send_findings(
+        findings=prowler_findings_list, project_key=project_key, issue_type=issue_type
+    )
+    return {"num_jira_tickets": len(prowler_findings_list)}
