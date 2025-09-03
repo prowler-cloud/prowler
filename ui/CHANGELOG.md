@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Added
 
 - Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
+- Jira integration[(#8640)](https://github.com/prowler-cloud/prowler/pull/8640)
 
 ### 🔄 Changed
 
