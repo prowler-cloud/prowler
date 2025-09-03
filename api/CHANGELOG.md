@@ -5,7 +5,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [1.13.0] (Prowler UNRELEASED)
 
 ### Added
-- Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622)
+- Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622), [(#8637)](https://github.com/prowler-cloud/prowler/pull/8637)
 
 ---
 

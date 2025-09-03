@@ -9134,23 +9134,10 @@ components:
                       the current execution.
               - type: object
                 title: JIRA
-                properties:
-                  project_key:
-                    type: string
-                    description: The JIRA project key where issues will be created
-                      (e.g., 'PROJ', 'SEC').
-                  issue_types:
-                    type: array
-                    items:
-                      type: string
-                    description: List of JIRA issue types to create for findings.
-                  issue_labels:
-                    type: array
-                    items:
-                      type: string
-                    description: List of labels to apply to created JIRA issues..
-                required:
-                - project_key
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9197,17 +9184,17 @@ components:
                     type: string
                     format: email
                     description: The email address of the JIRA user account.
-                  domain:
-                    type: string
-                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                   api_token:
                     type: string
                     description: The API token for authentication with JIRA. This
                       can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                 required:
                 - user_mail
-                - domain
                 - api_token
+                - domain
               writeOnly: true
           required:
           - integration_type
@@ -9331,23 +9318,10 @@ components:
                           in the current execution.
                   - type: object
                     title: JIRA
-                    properties:
-                      project_key:
-                        type: string
-                        description: The JIRA project key where issues will be created
-                          (e.g., 'PROJ', 'SEC').
-                      issue_types:
-                        type: array
-                        items:
-                          type: string
-                        description: List of JIRA issue types to create for findings.
-                      issue_labels:
-                        type: array
-                        items:
-                          type: string
-                        description: List of labels to apply to created JIRA issues..
-                    required:
-                    - project_key
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -9395,17 +9369,17 @@ components:
                         type: string
                         format: email
                         description: The email address of the JIRA user account.
-                      domain:
-                        type: string
-                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                       api_token:
                         type: string
                         description: The API token for authentication with JIRA. This
                           can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                     required:
                     - user_mail
-                    - domain
                     - api_token
+                    - domain
                   writeOnly: true
               required:
               - integration_type
@@ -9544,23 +9518,10 @@ components:
                       the current execution.
               - type: object
                 title: JIRA
-                properties:
-                  project_key:
-                    type: string
-                    description: The JIRA project key where issues will be created
-                      (e.g., 'PROJ', 'SEC').
-                  issue_types:
-                    type: array
-                    items:
-                      type: string
-                    description: List of JIRA issue types to create for findings.
-                  issue_labels:
-                    type: array
-                    items:
-                      type: string
-                    description: List of labels to apply to created JIRA issues..
-                required:
-                - project_key
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9607,17 +9568,17 @@ components:
                     type: string
                     format: email
                     description: The email address of the JIRA user account.
-                  domain:
-                    type: string
-                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                   api_token:
                     type: string
                     description: The API token for authentication with JIRA. This
                       can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                 required:
                 - user_mail
-                - domain
                 - api_token
+                - domain
               writeOnly: true
         relationships:
           type: object
@@ -10986,23 +10947,10 @@ components:
                           in the current execution.
                   - type: object
                     title: JIRA
-                    properties:
-                      project_key:
-                        type: string
-                        description: The JIRA project key where issues will be created
-                          (e.g., 'PROJ', 'SEC').
-                      issue_types:
-                        type: array
-                        items:
-                          type: string
-                        description: List of JIRA issue types to create for findings.
-                      issue_labels:
-                        type: array
-                        items:
-                          type: string
-                        description: List of labels to apply to created JIRA issues..
-                    required:
-                    - project_key
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -11050,17 +10998,17 @@ components:
                         type: string
                         format: email
                         description: The email address of the JIRA user account.
-                      domain:
-                        type: string
-                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                       api_token:
                         type: string
                         description: The API token for authentication with JIRA. This
                           can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                     required:
                     - user_mail
-                    - domain
                     - api_token
+                    - domain
                   writeOnly: true
             relationships:
               type: object
