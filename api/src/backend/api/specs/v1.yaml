@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.12.0
+  version: 1.13.0
   description: |-
     Prowler API specification.
 
@@ -9132,6 +9132,25 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                properties:
+                  project_key:
+                    type: string
+                    description: The JIRA project key where issues will be created
+                      (e.g., 'PROJ', 'SEC').
+                  issue_types:
+                    type: array
+                    items:
+                      type: string
+                    description: List of JIRA issue types to create for findings.
+                  issue_labels:
+                    type: array
+                    items:
+                      type: string
+                    description: List of labels to apply to created JIRA issues..
+                required:
+                - project_key
             credentials:
               oneOf:
               - type: object
@@ -9171,6 +9190,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                required:
+                - user_mail
+                - domain
+                - api_token
               writeOnly: true
           required:
           - integration_type
@@ -9292,6 +9329,25 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    properties:
+                      project_key:
+                        type: string
+                        description: The JIRA project key where issues will be created
+                          (e.g., 'PROJ', 'SEC').
+                      issue_types:
+                        type: array
+                        items:
+                          type: string
+                        description: List of JIRA issue types to create for findings.
+                      issue_labels:
+                        type: array
+                        items:
+                          type: string
+                        description: List of labels to apply to created JIRA issues..
+                    required:
+                    - project_key
                 credentials:
                   oneOf:
                   - type: object
@@ -9332,6 +9388,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                    required:
+                    - user_mail
+                    - domain
+                    - api_token
                   writeOnly: true
               required:
               - integration_type
@@ -9468,6 +9542,25 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                properties:
+                  project_key:
+                    type: string
+                    description: The JIRA project key where issues will be created
+                      (e.g., 'PROJ', 'SEC').
+                  issue_types:
+                    type: array
+                    items:
+                      type: string
+                    description: List of JIRA issue types to create for findings.
+                  issue_labels:
+                    type: array
+                    items:
+                      type: string
+                    description: List of labels to apply to created JIRA issues..
+                required:
+                - project_key
             credentials:
               oneOf:
               - type: object
@@ -9507,6 +9600,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                required:
+                - user_mail
+                - domain
+                - api_token
               writeOnly: true
         relationships:
           type: object
@@ -10873,6 +10984,25 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    properties:
+                      project_key:
+                        type: string
+                        description: The JIRA project key where issues will be created
+                          (e.g., 'PROJ', 'SEC').
+                      issue_types:
+                        type: array
+                        items:
+                          type: string
+                        description: List of JIRA issue types to create for findings.
+                      issue_labels:
+                        type: array
+                        items:
+                          type: string
+                        description: List of labels to apply to created JIRA issues..
+                    required:
+                    - project_key
                 credentials:
                   oneOf:
                   - type: object
@@ -10913,6 +11043,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                    required:
+                    - user_mail
+                    - domain
+                    - api_token
                   writeOnly: true
             relationships:
               type: object
