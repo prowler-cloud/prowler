@@ -4,23 +4,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.12.0] (Prowler UNRELEASED)
 
 ### Added
-
-### Changed
-
-### Fixed
-
----
-
-## [v5.11.1] (Prowler UNRELEASED)
-
-### Fixed
-
----
-
-## [v5.12.0] (Prowler UNRELEASED)
-
-### Added
+- Get Jira Project's metadata [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
 - Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
+- Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
 
 ### Changed
 

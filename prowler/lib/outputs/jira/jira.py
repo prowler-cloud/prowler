@@ -1,5 +1,6 @@
 import base64
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict
 
@@ -33,6 +34,17 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraTestConnectionError,
 )
 from prowler.providers.common.models import Connection
+
+
+@dataclass
+class JiraConnection(Connection):
+    """
+    Represents a Jira connection object.
+    Attributes:
+        projects (dict): Dictionary of projects in Jira.
+    """
+
+    projects: dict = None
 
 
 class Jira:
@@ -463,7 +475,7 @@ class Jira:
         api_token: str = None,
         domain: str = None,
         raise_on_exception: bool = True,
-    ) -> Connection:
+    ) -> JiraConnection:
         """Test the connection to Jira
 
         Args:
@@ -476,7 +488,7 @@ class Jira:
             - raise_on_exception: Whether to raise an exception or not
 
         Returns:
-            - Connection: The connection object
+            - JiraConnection: The connection object
 
         Raises:
             - JiraGetCloudIDNoResourcesError: No resources were found in Jira when getting the cloud id
@@ -484,6 +496,8 @@ class Jira:
             - JiraGetCloudIDError: Failed to get the cloud ID from Jira
             - JiraAuthenticationError: Failed to authenticate
             - JiraTestConnectionError: Failed to test the connection
+            - JiraNoProjectsError: No projects found in Jira
+            - JiraGetProjectsResponseError: Failed to get projects from Jira, response code did not match 200
         """
         try:
             jira = Jira(
@@ -494,60 +508,51 @@ class Jira:
                 api_token=api_token,
                 domain=domain,
             )
-            access_token = jira.get_access_token()
+            projects = jira.get_projects()
 
-            if not access_token:
-                return ValueError("Failed to get access token")
-
-            if jira.using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}"}
-
-            response = requests.get(
-                f"https://api.atlassian.com/ex/jira/{jira.cloud_id}/rest/api/3/myself",
-                headers=headers,
-            )
-
-            if response.status_code == 200:
-                return Connection(is_connected=True)
-            else:
-                return Connection(is_connected=False, error=response.json())
-        except JiraGetCloudIDNoResourcesError as no_resources_error:
+            return JiraConnection(is_connected=True, projects=projects)
+        except JiraNoProjectsError as no_projects_error:
             logger.error(
-                f"{no_resources_error.__class__.__name__}[{no_resources_error.__traceback__.tb_lineno}]: {no_resources_error}"
+                f"{no_projects_error.__class__.__name__}[{no_projects_error.__traceback__.tb_lineno}]: {no_projects_error}"
             )
             if raise_on_exception:
-                raise no_resources_error
-            return Connection(error=no_resources_error)
+                raise no_projects_error
+            return JiraConnection(error=no_projects_error)
         except JiraGetCloudIDResponseError as response_error:
             logger.error(
                 f"{response_error.__class__.__name__}[{response_error.__traceback__.tb_lineno}]: {response_error}"
             )
             if raise_on_exception:
                 raise response_error
-            return Connection(error=response_error)
+            return JiraConnection(error=response_error)
         except JiraGetCloudIDError as cloud_id_error:
             logger.error(
                 f"{cloud_id_error.__class__.__name__}[{cloud_id_error.__traceback__.tb_lineno}]: {cloud_id_error}"
             )
             if raise_on_exception:
                 raise cloud_id_error
-            return Connection(error=cloud_id_error)
+            return JiraConnection(error=cloud_id_error)
         except JiraAuthenticationError as auth_error:
             logger.error(
                 f"{auth_error.__class__.__name__}[{auth_error.__traceback__.tb_lineno}]: {auth_error}"
             )
             if raise_on_exception:
                 raise auth_error
-            return Connection(error=auth_error)
+            return JiraConnection(error=auth_error)
         except JiraBasicAuthError as basic_auth_error:
             logger.error(
                 f"{basic_auth_error.__class__.__name__}[{basic_auth_error.__traceback__.tb_lineno}]: {basic_auth_error}"
             )
             if raise_on_exception:
                 raise basic_auth_error
-            return Connection(error=basic_auth_error)
+            return JiraConnection(error=basic_auth_error)
+        except JiraGetProjectsResponseError as projects_response_error:
+            logger.error(
+                f"{projects_response_error.__class__.__name__}[{projects_response_error.__traceback__.tb_lineno}]: {projects_response_error}"
+            )
+            if raise_on_exception:
+                raise projects_response_error
+            return JiraConnection(error=projects_response_error)
         except Exception as error:
             logger.error(f"Failed to test connection: {error}")
             if raise_on_exception:
@@ -555,7 +560,7 @@ class Jira:
                     message="Failed to test connection on the Jira integration",
                     file=os.path.basename(__file__),
                 )
-            return Connection(is_connected=False, error=error)
+            return JiraConnection(is_connected=False, error=error)
 
     def get_projects(self) -> Dict[str, str]:
         """Get the projects from Jira
@@ -679,6 +684,92 @@ class Jira:
             logger.error(f"Failed to get available issue types: {e}")
             raise JiraGetAvailableIssueTypesError(
                 message="Failed to get available issue types",
+                file=os.path.basename(__file__),
+            )
+
+    def get_metadata(self) -> dict:
+        """Get the metadata from Jira
+
+        Returns:
+            - dict: The projects and issue types from Jira as a dictionary, the projects format is {"KEY": {"name": "NAME", "issue_types": ["ISSUE_TYPE_1", "ISSUE_TYPE_2"]}}
+        """
+        try:
+            access_token = self.get_access_token()
+
+            if not access_token:
+                return ValueError("Failed to get access token")
+
+            if self._using_basic_auth:
+                headers = {"Authorization": f"Basic {access_token}"}
+            else:
+                headers = {"Authorization": f"Bearer {access_token}"}
+
+            response = requests.get(
+                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
+                headers=headers,
+            )
+            if response.status_code == 200:
+                projects_data = {}
+                projects_list = response.json()
+                if not projects_list:
+                    logger.error("No projects found")
+                    raise JiraNoProjectsError(
+                        message="No projects found in Jira",
+                        file=os.path.basename(__file__),
+                    )
+                else:
+                    for project in projects_list:
+                        project_response = requests.get(
+                            f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project['key']}&expand=projects.issuetypes.fields",
+                            headers=headers,
+                        )
+                        if project_response.status_code == 200:
+                            project_metadata = project_response.json()
+                            if len(project_metadata["projects"]) == 0:
+                                logger.warning(
+                                    f"No project metadata found for project {project['key']}, setting empty issue types"
+                                )
+                                issue_types = []
+                            else:
+                                issue_types = [
+                                    issue_type["name"]
+                                    for issue_type in project_metadata["projects"][0][
+                                        "issuetypes"
+                                    ]
+                                ]
+                        else:
+                            raise JiraGetAvailableIssueTypesResponseError(
+                                message="Failed to get available issue types from Jira",
+                                file=os.path.basename(__file__),
+                            )
+                        projects_data[project["key"]] = {
+                            "name": project["name"],
+                            "issue_types": issue_types,
+                        }
+                    return projects_data
+            else:
+                logger.error(
+                    f"Failed to get projects: {response.status_code} - {response.text}"
+                )
+                raise JiraGetProjectsResponseError(
+                    message="Failed to get projects from Jira",
+                    file=os.path.basename(__file__),
+                )
+        except JiraNoProjectsError as no_projects_error:
+            raise no_projects_error
+        except JiraGetAvailableIssueTypesResponseError as issue_types_error:
+            raise JiraGetProjectsError(
+                message=f"Failed to get projects and issue types from Jira: {issue_types_error}",
+                file=os.path.basename(__file__),
+            )
+        except JiraRefreshTokenError as refresh_error:
+            raise refresh_error
+        except JiraRefreshTokenResponseError as response_error:
+            raise response_error
+        except Exception as e:
+            logger.error(f"Failed to get projects: {e}")
+            raise JiraGetProjectsError(
+                message="Failed to get projects from Jira",
                 file=os.path.basename(__file__),
             )
 
