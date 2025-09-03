@@ -68,10 +68,11 @@ class SecurityHubConfigSerializer(BaseValidateSerializer):
 
 
 class JiraConfigSerializer(BaseValidateSerializer):
-    project_key = serializers.CharField(required=True)
-    domain = serializers.CharField(required=True)
-    issue_types = serializers.ListField(required=False, child=serializers.CharField())
-    issue_labels = serializers.ListField(required=False, child=serializers.CharField())
+    domain = serializers.CharField(read_only=True)
+    issue_types = serializers.ListField(
+        read_only=True, child=serializers.CharField(), default=["Task", "Bug"]
+    )
+    projects = serializers.DictField(read_only=True)
 
     class Meta:
         resource_name = "integrations"
@@ -95,6 +96,7 @@ class AWSCredentialSerializer(BaseValidateSerializer):
 class JiraCredentialSerializer(BaseValidateSerializer):
     user_mail = serializers.EmailField(required=True)
     api_token = serializers.CharField(required=True)
+    domain = serializers.CharField(required=True)
 
     class Meta:
         resource_name = "integrations"
@@ -165,8 +167,12 @@ class JiraCredentialSerializer(BaseValidateSerializer):
                         "description": "The API token for authentication with JIRA. This can be generated from your "
                         "Atlassian account settings.",
                     },
+                    "domain": {
+                        "type": "string",
+                        "description": "The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').",
+                    },
                 },
-                "required": ["user_mail", "api_token"],
+                "required": ["user_mail", "api_token", "domain"],
             },
         ]
     }
@@ -218,27 +224,10 @@ class IntegrationCredentialField(serializers.JSONField):
             {
                 "type": "object",
                 "title": "JIRA",
-                "properties": {
-                    "project_key": {
-                        "type": "string",
-                        "description": "The JIRA project key where issues will be created (e.g., 'PROJ', 'SEC').",
-                    },
-                    "domain": {
-                        "type": "string",
-                        "description": "The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').",
-                    },
-                    "issue_types": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of JIRA issue types to create for findings.",
-                    },
-                    "issue_labels": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of labels to apply to created JIRA issues..",
-                    },
-                },
-                "required": ["project_key", "domain"],
+                "description": "JIRA integration does not accept any configuration in the payload. Leave it as an "
+                "empty JSON object (`{}`).",
+                "properties": {},
+                "additionalProperties": False,
             },
         ]
     }
