@@ -789,6 +789,9 @@ class Jira:
             return "#FF0000"
         if status == "MUTED":
             return "#FFA500"
+        if status == "MANUAL":
+            return "#FFFF00"
+        return "#000000"
 
     @staticmethod
     def get_severity_color(severity: str) -> str:
