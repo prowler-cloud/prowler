@@ -9,7 +9,7 @@
   ],
   "ServiceName": "config",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
   "Description": "**AWS accounts** have **AWS Config recorders** active and healthy in each Region. It identifies Regions with no recorder, a disabled recorder, or a recorder in a failure state.",
