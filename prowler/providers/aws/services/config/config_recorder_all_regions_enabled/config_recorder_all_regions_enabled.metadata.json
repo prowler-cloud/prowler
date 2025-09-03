@@ -16,7 +16,12 @@
   "Risk": "**Gaps in Config recording** create **blind spots**. Changes in unmonitored Regions aren't captured, weakening **integrity** and **auditability**. Adversaries can alter resources or stage assets unnoticed, enabling misconfigurations and delaying **incident response**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "[\"https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions\", \"https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#terraform\", \"https://repost.aws/es/questions/QUGcgeerhcTamRkwgdwh_tLQ/enable-aws-config\", \"https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v1.5.0_L2.audit:6a5136528bd329139e5969f8f1e5ffbc\", \"https://aws.amazon.com/blogs/mt/aws-config-best-practices/\", \"https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions/\"]"
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#terraform",
+    "https://repost.aws/es/questions/QUGcgeerhcTamRkwgdwh_tLQ/enable-aws-config",
+    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v1.5.0_L2.audit:6a5136528bd329139e5969f8f1e5ffbc",
+    "https://aws.amazon.com/blogs/mt/aws-config-best-practices/",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions/"
   ],
   "Remediation": {
     "Code": {
@@ -27,7 +32,7 @@
     },
     "Recommendation": {
       "Text": "Enable **AWS Config** in every Region with continuous recording and maintain healthy recorder status. Use **organization-wide enforcement** and **central aggregation**. Record global resources in one Region. Secure delivery channels and apply **least privilege**.",
-      "Url": "https://hub.prowler.com/checks/config_recorder_all_regions_enabled"
+      "Url": "https://hub.prowler.com/check/config_recorder_all_regions_enabled"
     }
   },
   "Categories": [
