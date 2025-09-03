@@ -6,6 +6,7 @@ import { CredentialsRoleHelper } from "@/components/providers/workflow";
 import { CustomInput } from "@/components/ui/custom";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AWSCredentialsRole } from "@/types";
+import { IntegrationType } from "@/types/integrations";
 
 export const AWSRoleCredentialsForm = ({
   control,
@@ -13,6 +14,7 @@ export const AWSRoleCredentialsForm = ({
   externalId,
   templateLinks,
   type = "providers",
+  integrationType,
 }: {
   control: Control<AWSCredentialsRole>;
   setValue: UseFormSetValue<AWSCredentialsRole>;
@@ -23,6 +25,7 @@ export const AWSRoleCredentialsForm = ({
     terraform: string;
   };
   type?: "providers" | "integrations";
+  integrationType?: IntegrationType;
 }) => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
   const defaultCredentialsType = isCloudEnv
@@ -187,7 +190,7 @@ export const AWSRoleCredentialsForm = ({
           <CredentialsRoleHelper
             externalId={externalId}
             templateLinks={templateLinks}
-            type={type}
+            integrationType={integrationType}
           />
 
           <Divider />

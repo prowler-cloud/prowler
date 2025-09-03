@@ -265,6 +265,7 @@ export const S3IntegrationForm = ({
           externalId={externalId}
           templateLinks={templateLinks}
           type="integrations"
+          integrationType="amazon_s3"
         />
       );
     }

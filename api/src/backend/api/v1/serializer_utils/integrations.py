@@ -67,6 +67,16 @@ class SecurityHubConfigSerializer(BaseValidateSerializer):
         resource_name = "integrations"
 
 
+class JiraConfigSerializer(BaseValidateSerializer):
+    project_key = serializers.CharField(required=True)
+    domain = serializers.CharField(required=True)
+    issue_types = serializers.ListField(required=False, child=serializers.CharField())
+    issue_labels = serializers.ListField(required=False, child=serializers.CharField())
+
+    class Meta:
+        resource_name = "integrations"
+
+
 class AWSCredentialSerializer(BaseValidateSerializer):
     role_arn = serializers.CharField(required=False)
     external_id = serializers.CharField(required=False)
@@ -77,6 +87,14 @@ class AWSCredentialSerializer(BaseValidateSerializer):
     aws_access_key_id = serializers.CharField(required=False)
     aws_secret_access_key = serializers.CharField(required=False)
     aws_session_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class JiraCredentialSerializer(BaseValidateSerializer):
+    user_mail = serializers.EmailField(required=True)
+    api_token = serializers.CharField(required=True)
 
     class Meta:
         resource_name = "integrations"
@@ -133,6 +151,23 @@ class AWSCredentialSerializer(BaseValidateSerializer):
                     },
                 },
             },
+            {
+                "type": "object",
+                "title": "JIRA Credentials",
+                "properties": {
+                    "user_mail": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The email address of the JIRA user account.",
+                    },
+                    "api_token": {
+                        "type": "string",
+                        "description": "The API token for authentication with JIRA. This can be generated from your "
+                        "Atlassian account settings.",
+                    },
+                },
+                "required": ["user_mail", "api_token"],
+            },
         ]
     }
 )
@@ -153,7 +188,10 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                     "output_directory": {
                         "type": "string",
-                        "description": 'The directory path within the bucket where files will be saved. Optional - defaults to "output" if not provided. Path will be normalized to remove excessive slashes and invalid characters are not allowed (< > : " | ? *). Maximum length is 900 characters.',
+                        "description": "The directory path within the bucket where files will be saved. Optional - "
+                        'defaults to "output" if not provided. Path will be normalized to remove '
+                        'excessive slashes and invalid characters are not allowed (< > : " | ? *). '
+                        "Maximum length is 900 characters.",
                         "maxLength": 900,
                         "pattern": '^[^<>:"|?*]+$',
                         "default": "output",
@@ -176,6 +214,31 @@ class IntegrationCredentialField(serializers.JSONField):
                         "description": "If true, archives findings that are not present in the current execution.",
                     },
                 },
+            },
+            {
+                "type": "object",
+                "title": "JIRA",
+                "properties": {
+                    "project_key": {
+                        "type": "string",
+                        "description": "The JIRA project key where issues will be created (e.g., 'PROJ', 'SEC').",
+                    },
+                    "domain": {
+                        "type": "string",
+                        "description": "The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').",
+                    },
+                    "issue_types": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of JIRA issue types to create for findings.",
+                    },
+                    "issue_labels": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of labels to apply to created JIRA issues..",
+                    },
+                },
+                "required": ["project_key", "domain"],
             },
         ]
     }

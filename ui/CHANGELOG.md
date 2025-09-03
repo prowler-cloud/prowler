@@ -2,7 +2,21 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.11.0] (Prowler v5.11.0 - UNRELEASED)
+## [1.11.1] (Prowler v5.11.1)
+
+### 🐞 Added
+
+- Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
+- No-permission message on the scan page [(#8624)](https://github.com/prowler-cloud/prowler/pull/8624)
+
+### 🔄 Changed
+
+- Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
+
+### 🐞 Fixed
+- Scan page shows NoProvidersAdded when no providers [(#8626)](https://github.com/prowler-cloud/prowler/pull/8626)
+
+## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added
 
@@ -11,6 +25,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - New menu item under Configuration section for quick access to the Mutelist [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
 - Resource agent to Lighthouse for querying resource information [(#8509)](https://github.com/prowler-cloud/prowler/pull/8509)
 - Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
+- Link to the configured S3 bucket and folder in each integration [(#8554)](https://github.com/prowler-cloud/prowler/pull/8554)
 
 ### 🔄 Changed
 
@@ -23,8 +38,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Default value inside credentials form in AWS Provider add workflow properly set [(#8553)](https://github.com/prowler-cloud/prowler/pull/8553)
 - Auth callback route checking working as expected [(#8556)](https://github.com/prowler-cloud/prowler/pull/8556)
 - DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
-
-### ❌ Removed
 
 ---
 

@@ -3,6 +3,7 @@
 import { IdIcon } from "@/components/icons";
 import { CustomButton } from "@/components/ui/custom";
 import { SnippetChip } from "@/components/ui/entities";
+import { IntegrationType } from "@/types/integrations";
 
 interface CredentialsRoleHelperProps {
   externalId: string;
@@ -11,20 +12,22 @@ interface CredentialsRoleHelperProps {
     cloudformationQuickLink: string;
     terraform: string;
   };
-  type?: "providers" | "integrations";
+  integrationType?: IntegrationType;
 }
 
 export const CredentialsRoleHelper = ({
   externalId,
   templateLinks,
-  type = "providers",
+  integrationType,
 }: CredentialsRoleHelperProps) => {
+  const isAmazonS3 = integrationType === "amazon_s3";
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           A <strong>read-only IAM role</strong> must be manually created
-          {type === "integrations" ? " or updated" : ""}.
+          {isAmazonS3 ? " or updated" : ""}
         </p>
 
         <CustomButton
@@ -46,9 +49,9 @@ export const CredentialsRoleHelper = ({
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {type === "providers"
-            ? "Use one of the following templates to create the IAM role"
-            : "Refer to the documentation"}
+          {isAmazonS3
+            ? "Refer to the documentation"
+            : "Use one of the following templates to create the IAM role"}
         </p>
 
         <div className="flex w-fit flex-col gap-2">
@@ -59,7 +62,7 @@ export const CredentialsRoleHelper = ({
             asLink={templateLinks.cloudformation}
             target="_blank"
           >
-            CloudFormation {type === "providers" ? "Template" : ""}
+            CloudFormation {integrationType ? "" : "Template"}
           </CustomButton>
           <CustomButton
             ariaLabel="Terraform Code"
@@ -68,7 +71,7 @@ export const CredentialsRoleHelper = ({
             asLink={templateLinks.terraform}
             target="_blank"
           >
-            Terraform {type === "providers" ? "Code" : ""}
+            Terraform {integrationType ? "" : "Code"}
           </CustomButton>
         </div>
 

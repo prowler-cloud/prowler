@@ -492,14 +492,17 @@ class TestProwlerIntegrationConnectionTest:
     def test_aws_security_hub_integration_connection_failure(
         self, mock_security_hub_class
     ):
-        """Test AWS Security Hub integration connection failure."""
+        """Test AWS Security Hub integration connection failure resets regions."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
         integration.credentials = {
             "aws_access_key_id": "invalid_key",
             "aws_secret_access_key": "invalid_secret",
         }
-        integration.configuration = {"send_only_fails": False}
+        integration.configuration = {
+            "send_only_fails": False,
+            "regions": {"us-east-1": True, "us-west-2": False},  # Existing regions
+        }
 
         # Mock integration provider relationship
         mock_provider = MagicMock()
@@ -524,8 +527,9 @@ class TestProwlerIntegrationConnectionTest:
 
         assert result.is_connected is False
         assert result.error == test_exception
-        # Verify regions were not saved when connection failed
-        integration.save.assert_not_called()
+        # Verify regions were reset to empty dict when connection failed
+        assert integration.configuration["regions"] == {}
+        integration.save.assert_called_once()
 
     @patch("api.utils.SecurityHub")
     def test_aws_security_hub_integration_with_provider_credentials(
@@ -574,6 +578,72 @@ class TestProwlerIntegrationConnectionTest:
         assert integration.configuration["regions"]["eu-central-1"]
         assert not integration.configuration["regions"]["ap-south-1"]
         integration.save.assert_called_once()
+
+    @patch("api.utils.SecurityHub")
+    def test_aws_security_hub_connection_failure_with_multiple_regions_clears_all(
+        self, mock_security_hub_class
+    ):
+        """Test that SecurityHub connection failure clears all existing regions data."""
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
+        integration.credentials = {
+            "aws_access_key_id": "test_key",
+            "aws_secret_access_key": "test_secret",
+        }
+        # Start with complex regions configuration
+        integration.configuration = {
+            "send_only_fails": True,
+            "regions": {
+                "us-east-1": True,
+                "us-east-2": False,
+                "us-west-1": True,
+                "us-west-2": True,
+                "eu-west-1": False,
+                "eu-west-2": True,
+                "eu-central-1": True,
+                "ap-northeast-1": False,
+                "ap-southeast-1": True,
+                "ap-southeast-2": False,
+            },
+        }
+
+        # Mock integration provider relationship
+        mock_provider = MagicMock()
+        mock_provider.uid = "987654321098"
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock failed SecurityHub connection
+        mock_connection = SecurityHubConnection(
+            is_connected=False,
+            error=Exception("Invalid credentials or permissions"),
+            enabled_regions=set(),
+            disabled_regions=set(),
+        )
+        mock_security_hub_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is False
+        assert str(result.error) == "Invalid credentials or permissions"
+
+        # Verify all regions were completely cleared
+        assert integration.configuration["regions"] == {}
+        assert len(integration.configuration["regions"]) == 0
+
+        # Verify save was called to persist the cleared regions
+        integration.save.assert_called_once()
+
+        # Verify the test_connection was called with correct parameters
+        mock_security_hub_class.test_connection.assert_called_once_with(
+            aws_account_id="987654321098",
+            raise_on_exception=False,
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret",
+        )
 
     def test_unsupported_integration_type(self):
         """Test unsupported integration type raises ValueError."""
@@ -674,15 +744,19 @@ class TestSecurityHubIntegrationUploads:
             "us-west-2",
         ]
 
+    @patch("tasks.jobs.integrations.rls_transaction")
     @patch("tasks.jobs.integrations.SecurityHub.test_connection")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")
     def test_get_security_hub_client_from_integration_failure(
-        self, mock_initialize_provider, mock_test_connection
+        self, mock_initialize_provider, mock_test_connection, mock_rls
     ):
-        """Test SecurityHub client creation failure."""
+        """Test SecurityHub client creation failure resets regions."""
         # Mock integration
         mock_integration = MagicMock()
-        mock_integration.configuration = {"send_only_fails": False}
+        mock_integration.configuration = {
+            "send_only_fails": False,
+            "regions": {"us-east-1": True, "us-west-2": False},  # Existing regions
+        }
         mock_integration.credentials = {}  # Empty credentials, use provider
 
         # Mock tenant_id
@@ -710,6 +784,9 @@ class TestSecurityHubIntegrationUploads:
         # Mock findings
         mock_findings = [{"finding": "test"}]
 
+        # Mock RLS context manager
+        mock_rls.return_value.__enter__.return_value = None
+
         connected, connection = get_security_hub_client_from_integration(
             mock_integration, tenant_id, mock_findings
         )
@@ -718,6 +795,93 @@ class TestSecurityHubIntegrationUploads:
         assert connection == mock_connection
 
         # Verify test_connection was called with correct parameters
+        mock_test_connection.assert_called_once_with(
+            aws_account_id="123456789012",
+            raise_on_exception=False,
+            aws_access_key_id="test_key_id",
+            aws_secret_access_key="test_secret_key",
+        )
+
+        # Verify regions were reset to empty when connection failed
+        assert mock_integration.configuration["regions"] == {}
+        mock_integration.save.assert_called_once()
+        # Verify RLS transaction was used for the reset
+        assert (
+            mock_rls.call_count == 2
+        )  # Once for getting provider, once for resetting regions
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.SecurityHub.test_connection")
+    def test_get_security_hub_client_from_integration_failure_clears_existing_regions(
+        self, mock_test_connection, mock_rls
+    ):
+        """Test that SecurityHub client creation failure clears existing regions configuration."""
+        # Mock integration with pre-existing regions configuration
+        mock_integration = MagicMock()
+        mock_integration.configuration = {
+            "send_only_fails": True,
+            "regions": {
+                "us-east-1": True,
+                "us-west-2": True,
+                "eu-west-1": False,
+                "ap-south-1": False,
+            },  # Pre-existing regions configuration
+        }
+        mock_integration.credentials = {
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
+        }
+
+        # Mock tenant_id
+        tenant_id = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Mock provider relationship
+        mock_provider = MagicMock()
+        mock_provider.uid = "123456789012"
+        mock_provider.secret.secret = {
+            "aws_access_key_id": "provider_key",
+            "aws_secret_access_key": "provider_secret",
+        }
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        mock_integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock failed connection with specific error
+        mock_connection = MagicMock()
+        mock_connection.is_connected = False
+        mock_connection.error = "Access denied: SecurityHub not enabled in region"
+        mock_test_connection.return_value = mock_connection
+
+        # Mock findings
+        mock_findings = [{"finding": "test1"}, {"finding": "test2"}]
+
+        # Mock RLS context manager
+        mock_rls.return_value.__enter__.return_value = None
+
+        # Call the function
+        connected, connection = get_security_hub_client_from_integration(
+            mock_integration, tenant_id, mock_findings
+        )
+
+        # Assertions
+        assert connected is False
+        assert connection == mock_connection
+        assert connection.error == "Access denied: SecurityHub not enabled in region"
+
+        # Verify that regions configuration was completely cleared
+        assert mock_integration.configuration["regions"] == {}
+
+        # Verify save was called to persist the change
+        mock_integration.save.assert_called_once()
+
+        # Verify RLS transaction was used correctly
+        # Should be called twice: once for getting provider info, once for resetting regions
+        assert mock_rls.call_count == 2
+        mock_rls.assert_any_call(tenant_id)
+
+        # Verify test_connection was called with integration credentials (not provider's)
         mock_test_connection.assert_called_once_with(
             aws_account_id="123456789012",
             raise_on_exception=False,
