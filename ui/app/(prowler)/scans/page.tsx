@@ -15,7 +15,7 @@ import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
-import { InfoBanner } from "@/components/ui/banners";
+import { CustomBanner } from "@/components/ui/custom/custom-banner";
 import { DataTable } from "@/components/ui/table";
 import {
   createProviderDetailsMapping,
@@ -88,7 +88,7 @@ export default async function Scans({
       <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
         {!hasManageScansPermission ? (
-          <InfoBanner
+          <CustomBanner
             title={"Access Denied"}
             message={"You don't have permission to launch the scan."}
           />

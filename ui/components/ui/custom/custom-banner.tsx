@@ -2,21 +2,21 @@
 
 import { InfoIcon } from "lucide-react";
 
-import { CustomButton } from "../custom";
+import { CustomButton } from ".";
 
-interface InfoBannerProps {
+interface CustomBannerProps {
   title: string;
   message: string;
   buttonLabel?: string;
   buttonLink?: string;
 }
 
-export const InfoBanner = ({
+export const CustomBanner = ({
   title,
   message,
   buttonLabel = "Go Home",
   buttonLink = "/",
-}: InfoBannerProps) => {
+}: CustomBannerProps) => {
   return (
     <div className="flex items-center justify-start rounded-lg border-1 border-system-warning-light px-4 py-6 shadow-box dark:bg-prowler-blue-400">
       <div className="flex w-full flex-col items-start gap-6 md:flex-row md:items-center md:justify-between md:gap-8">
