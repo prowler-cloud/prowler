@@ -3896,6 +3896,7 @@ class IntegrationViewSet(BaseRLSViewSet):
         summary="Send findings to a Jira integration",
         description="Send a set of filtered findings to the given integration. At least one finding filter must be "
         "provided.",
+        responses={202: OpenApiResponse(response=TaskSerializer)},
         filters=True,
     )
 )
@@ -3907,6 +3908,10 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
     filterset_class = IntegrationJiraFindingsFilter
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
