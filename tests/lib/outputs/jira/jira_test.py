@@ -976,7 +976,12 @@ class TestJiraIntegration:
 
     @pytest.mark.parametrize(
         "status, expected_color",
-        [("FAIL", "#FF0000"), ("PASS", "#008000"), ("MUTED", "#FFA500")],
+        [
+            ("FAIL", "#FF0000"),
+            ("PASS", "#008000"),
+            ("MUTED", "#FFA500"),
+            ("MANUAL", "#FFFF00"),
+        ],
     )
     def test_get_color_from_status(self, status, expected_color):
         """Test that get_color_from_status returns the correct color for a status."""
