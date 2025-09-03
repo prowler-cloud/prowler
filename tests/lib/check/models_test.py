@@ -330,7 +330,7 @@ class TestCheckMetada:
         assert result == set()
 
     def test_additional_urls_valid_empty_list(self):
-        """Test AdditionalUrls with valid empty list (default)"""
+        """Test AdditionalURLs with valid empty list (default)"""
         metadata = CheckMetadata(
             Provider="aws",
             CheckID="test_check",
@@ -357,13 +357,13 @@ class TestCheckMetada:
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
-            AdditionalUrls=[],
+            AdditionalURLs=[],
             Compliance=[],
         )
-        assert metadata.AdditionalUrls == []
+        assert metadata.AdditionalURLs == []
 
     def test_additional_urls_valid_with_urls(self):
-        """Test AdditionalUrls with valid URLs"""
+        """Test AdditionalURLs with valid URLs"""
         valid_urls = [
             "https://example.com/doc1",
             "https://example.com/doc2",
@@ -395,13 +395,13 @@ class TestCheckMetada:
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
-            AdditionalUrls=valid_urls,
+            AdditionalURLs=valid_urls,
             Compliance=[],
         )
-        assert metadata.AdditionalUrls == valid_urls
+        assert metadata.AdditionalURLs == valid_urls
 
     def test_additional_urls_invalid_not_list(self):
-        """Test AdditionalUrls with non-list value"""
+        """Test AdditionalURLs with non-list value"""
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(
                 Provider="aws",
@@ -429,13 +429,13 @@ class TestCheckMetada:
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
-                AdditionalUrls="not_a_list",
+                AdditionalURLs="not_a_list",
                 Compliance=[],
             )
-        assert "AdditionalUrls must be a list" in str(exc_info.value)
+        assert "AdditionalURLs must be a list" in str(exc_info.value)
 
     def test_additional_urls_invalid_empty_items(self):
-        """Test AdditionalUrls with empty string items"""
+        """Test AdditionalURLs with empty string items"""
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(
                 Provider="aws",
@@ -463,13 +463,13 @@ class TestCheckMetada:
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
-                AdditionalUrls=["https://example.com", "", "https://example2.com"],
+                AdditionalURLs=["https://example.com", "", "https://example2.com"],
                 Compliance=[],
             )
-        assert "AdditionalUrls cannot contain empty items" in str(exc_info.value)
+        assert "AdditionalURLs cannot contain empty items" in str(exc_info.value)
 
     def test_additional_urls_invalid_whitespace_items(self):
-        """Test AdditionalUrls with whitespace-only items"""
+        """Test AdditionalURLs with whitespace-only items"""
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(
                 Provider="aws",
@@ -497,13 +497,13 @@ class TestCheckMetada:
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
-                AdditionalUrls=["https://example.com", "   ", "https://example2.com"],
+                AdditionalURLs=["https://example.com", "   ", "https://example2.com"],
                 Compliance=[],
             )
-        assert "AdditionalUrls cannot contain empty items" in str(exc_info.value)
+        assert "AdditionalURLs cannot contain empty items" in str(exc_info.value)
 
     def test_additional_urls_invalid_duplicates(self):
-        """Test AdditionalUrls with duplicate items"""
+        """Test AdditionalURLs with duplicate items"""
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(
                 Provider="aws",
@@ -531,17 +531,17 @@ class TestCheckMetada:
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
-                AdditionalUrls=[
+                AdditionalURLs=[
                     "https://example.com",
                     "https://example2.com",
                     "https://example.com",
                 ],
                 Compliance=[],
             )
-        assert "AdditionalUrls cannot contain duplicate items" in str(exc_info.value)
+        assert "AdditionalURLs cannot contain duplicate items" in str(exc_info.value)
 
     def test_fields_with_explicit_empty_values(self):
-        """Test that RelatedUrl and AdditionalUrls can be set to explicit empty values"""
+        """Test that RelatedUrl and AdditionalURLs can be set to explicit empty values"""
         metadata = CheckMetadata(
             Provider="aws",
             CheckID="test_check_empty_fields",
@@ -568,16 +568,16 @@ class TestCheckMetada:
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
-            AdditionalUrls=[],  # Explicit empty list
+            AdditionalURLs=[],  # Explicit empty list
             Compliance=[],
         )
 
         # Assert that the fields are set to empty values
         assert metadata.RelatedUrl == ""
-        assert metadata.AdditionalUrls == []
+        assert metadata.AdditionalURLs == []
 
     def test_fields_default_values(self):
-        """Test that RelatedUrl and AdditionalUrls use proper defaults when not provided"""
+        """Test that RelatedUrl and AdditionalURLs use proper defaults when not provided"""
         metadata = CheckMetadata(
             Provider="aws",
             CheckID="test_check_defaults",
@@ -604,13 +604,13 @@ class TestCheckMetada:
             DependsOn=["dependency1"],
             RelatedTo=["related1"],
             Notes="notes1",
-            # AdditionalUrls not provided - should default to empty list via default_factory
+            # AdditionalURLs not provided - should default to empty list via default_factory
             Compliance=[],
         )
 
         # Assert that the fields use their default values
         assert metadata.RelatedUrl == ""  # Should default to empty string
-        assert metadata.AdditionalUrls == []  # Should default to empty list
+        assert metadata.AdditionalURLs == []  # Should default to empty list
 
     def test_related_url_none_fails(self):
         """Test that setting RelatedUrl to None raises a ValidationError"""
@@ -641,19 +641,19 @@ class TestCheckMetada:
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
-                AdditionalUrls=[],
+                AdditionalURLs=[],
                 Compliance=[],
             )
         # Should contain a validation error for RelatedUrl
         assert "RelatedUrl" in str(exc_info.value)
 
     def test_additional_urls_none_fails(self):
-        """Test that setting AdditionalUrls to None raises a ValidationError"""
+        """Test that setting AdditionalURLs to None raises a ValidationError"""
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(
                 Provider="aws",
                 CheckID="test_check_none_additional_urls",
-                CheckTitle="Test Check with None AdditionalUrls",
+                CheckTitle="Test Check with None AdditionalURLs",
                 CheckType=["type1"],
                 ServiceName="test",
                 SubServiceName="subservice1",
@@ -676,19 +676,19 @@ class TestCheckMetada:
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
-                AdditionalUrls=None,  # This should fail
+                AdditionalURLs=None,  # This should fail
                 Compliance=[],
             )
         # Should contain the validation error we set in the validator
-        assert "AdditionalUrls must be a list" in str(exc_info.value)
+        assert "AdditionalURLs must be a list" in str(exc_info.value)
 
     def test_additional_urls_invalid_type_fails(self):
-        """Test that setting AdditionalUrls to non-list value raises a ValidationError"""
+        """Test that setting AdditionalURLs to non-list value raises a ValidationError"""
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(
                 Provider="aws",
                 CheckID="test_check_invalid_additional_urls",
-                CheckTitle="Test Check with Invalid AdditionalUrls",
+                CheckTitle="Test Check with Invalid AdditionalURLs",
                 CheckType=["type1"],
                 ServiceName="test",
                 SubServiceName="subservice1",
@@ -711,8 +711,8 @@ class TestCheckMetada:
                 DependsOn=["dependency1"],
                 RelatedTo=["related1"],
                 Notes="notes1",
-                AdditionalUrls="not_a_list",  # This should fail
+                AdditionalURLs="not_a_list",  # This should fail
                 Compliance=[],
             )
         # Should contain the validation error we set in the validator
-        assert "AdditionalUrls must be a list" in str(exc_info.value)
+        assert "AdditionalURLs must be a list" in str(exc_info.value)
