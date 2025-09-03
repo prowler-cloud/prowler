@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 
 ### Fixed
+- Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
 
 ---
 
