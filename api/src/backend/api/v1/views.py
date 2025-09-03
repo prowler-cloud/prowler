@@ -62,6 +62,7 @@ from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
+    jira_integration_task,
     perform_scan_task,
 )
 
@@ -75,8 +76,10 @@ from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
+    CustomDjangoFilterBackend,
     FindingFilter,
     IntegrationFilter,
+    IntegrationJiraFindingsFilter,
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
@@ -142,6 +145,7 @@ from api.v1.serializers import (
     FindingMetadataSerializer,
     FindingSerializer,
     IntegrationCreateSerializer,
+    IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -3872,6 +3876,81 @@ class IntegrationViewSet(BaseRLSViewSet):
         with transaction.atomic():
             task = check_integration_connection_task.delay(
                 integration_id=pk, tenant_id=self.request.tenant_id
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+@extend_schema_view(
+    dispatches=extend_schema(
+        tags=["Integration"],
+        summary="Send findings to a Jira integration",
+        description="Send a set of filtered findings to the given integration. At least one finding filter must be "
+        "provided.",
+        filters=True,
+    )
+)
+class IntegrationJiraViewSet(BaseRLSViewSet):
+    queryset = Finding.all_objects.all()
+    serializer_class = IntegrationJiraDispatchSerializer
+    http_method_names = ["post"]
+    filter_backends = [CustomDjangoFilterBackend]
+    filterset_class = IntegrationJiraFindingsFilter
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    def get_queryset(self):
+        tenant_id = self.request.tenant_id
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
+        else:
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
+                scan__provider__in=get_providers(user_roles)
+            )
+
+        return queryset
+
+    @action(detail=False, methods=["post"], url_name="dispatches")
+    def dispatches(self, request, integration_pk=None):
+        get_object_or_404(Integration, pk=integration_pk)
+        serializer = self.get_serializer(
+            data=request.data, context={"integration_id": integration_pk}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        if self.filter_queryset(self.get_queryset()).count() == 0:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
+        finding_ids = [
+            str(finding_id)
+            for finding_id in self.filter_queryset(self.get_queryset()).values_list(
+                "id", flat=True
+            )
+        ]
+        project_key = serializer.validated_data["project_key"]
+        issue_type = serializer.validated_data["issue_type"]
+
+        with transaction.atomic():
+            task = jira_integration_task.delay(
+                tenant_id=self.request.tenant_id,
+                integration_id=integration_pk,
+                project_key=project_key,
+                issue_type=issue_type,
+                finding_ids=finding_ids,
             )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)

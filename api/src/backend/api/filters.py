@@ -793,3 +793,23 @@ class ProcessorFilter(FilterSet):
         field_name="processor_type",
         lookup_expr="in",
     )
+
+
+class IntegrationJiraFindingsFilter(FilterSet):
+    # To be expanded as needed
+    finding_id = UUIDFilter(field_name="id", lookup_expr="exact")
+    finding_id__in = UUIDInFilter(field_name="id", lookup_expr="in")
+
+    class Meta:
+        model = Finding
+        fields = {}
+
+    def filter_queryset(self, queryset):
+        # Validate that there is at least one filter provided
+        if not self.data:
+            raise ValidationError(
+                {
+                    "findings": "No finding filters provided. At least one filter is required."
+                }
+            )
+        return super().filter_queryset(queryset)
