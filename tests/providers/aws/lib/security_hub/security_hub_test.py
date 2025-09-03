@@ -1283,3 +1283,167 @@ class TestSecurityHub:
         assert connection.error is None
         assert len(connection.enabled_regions) == 1
         assert len(connection.disabled_regions) == 1
+
+    # Tests for _check_region_security_hub static method
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_check_region_security_hub_success(self):
+        # Test successful security hub check
+        mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+        region, client = SecurityHub._check_region_security_hub(
+            region=AWS_REGION_EU_WEST_1,
+            session=mock_session,
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+        )
+
+        assert region == AWS_REGION_EU_WEST_1
+        assert client is not None
+        assert hasattr(client, "_make_api_call")
+
+    def test_check_region_security_hub_invalid_access_exception(self, caplog):
+        caplog.set_level(WARNING)
+
+        with patch("boto3.Session.client") as mock_client:
+            error_message = (
+                f"Account {AWS_ACCOUNT_NUMBER} is not subscribed to AWS Security Hub"
+            )
+            error_code = "InvalidAccessException"
+            error_response = {
+                "Error": {
+                    "Code": error_code,
+                    "Message": error_message,
+                }
+            }
+            operation_name = "DescribeHub"
+            mock_client.side_effect = ClientError(error_response, operation_name)
+
+            mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+            region, client = SecurityHub._check_region_security_hub(
+                region=AWS_REGION_EU_WEST_1,
+                session=mock_session,
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+            )
+
+            assert region == AWS_REGION_EU_WEST_1
+            assert client is None
+
+            # Check that warning was logged for InvalidAccessException
+            log_pattern = re.compile(
+                r"ClientError -- \[\d+\]: An error occurred \({error_code}\) when calling the {operation_name} operation: {error_message}".format(
+                    error_code=re.escape(error_code),
+                    operation_name=re.escape(operation_name),
+                    error_message=re.escape(error_message),
+                )
+            )
+            assert any(
+                log_pattern.match(record.message) for record in caplog.records
+            ), "Expected log message not found"
+
+    def test_check_region_security_hub_prowler_integration_not_enabled(self, caplog):
+        from logging import INFO
+
+        caplog.set_level(INFO)
+
+        with patch("boto3.Session.client") as mock_client:
+            mock_security_hub_client = mock_client.return_value
+            mock_security_hub_client.describe_hub.return_value = {}
+            mock_security_hub_client.list_enabled_products_for_import.return_value = {
+                "ProductSubscriptions": []
+            }
+
+            mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+            region, client = SecurityHub._check_region_security_hub(
+                region=AWS_REGION_EU_WEST_1,
+                session=mock_session,
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+            )
+
+            assert region == AWS_REGION_EU_WEST_1
+            assert client is None
+
+            # Check that warning was logged for missing Prowler integration
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    INFO,
+                    f"Checking if the prowler/prowler is enabled in the {AWS_REGION_EU_WEST_1} region.",
+                ),
+                (
+                    "root",
+                    WARNING,
+                    f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/",
+                ),
+            ]
+
+    def test_check_region_security_hub_other_client_error(self, caplog):
+        caplog.set_level(WARNING)
+
+        with patch("boto3.Session.client") as mock_client:
+            error_message = "Some other error"
+            error_code = "SomeOtherException"
+            error_response = {
+                "Error": {
+                    "Code": error_code,
+                    "Message": error_message,
+                }
+            }
+            operation_name = "DescribeHub"
+            mock_client.side_effect = ClientError(error_response, operation_name)
+
+            mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+            region, client = SecurityHub._check_region_security_hub(
+                region=AWS_REGION_EU_WEST_1,
+                session=mock_session,
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+            )
+
+            assert region == AWS_REGION_EU_WEST_1
+            assert client is None
+
+            # Check that error was logged for other ClientError
+            log_pattern = re.compile(
+                r"ClientError -- \[\d+\]: An error occurred \({error_code}\) when calling the {operation_name} operation: {error_message}".format(
+                    error_code=re.escape(error_code),
+                    operation_name=re.escape(operation_name),
+                    error_message=re.escape(error_message),
+                )
+            )
+            assert any(
+                log_pattern.match(record.message) for record in caplog.records
+            ), "Expected log message not found"
+
+    def test_check_region_security_hub_generic_exception(self, caplog):
+        caplog.set_level(WARNING)
+
+        with patch("boto3.Session.client") as mock_client:
+            error_message = "Generic exception occurred"
+            mock_client.side_effect = Exception(error_message)
+
+            mock_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+            region, client = SecurityHub._check_region_security_hub(
+                region=AWS_REGION_EU_WEST_1,
+                session=mock_session,
+                aws_account_id=AWS_ACCOUNT_NUMBER,
+                aws_partition=AWS_COMMERCIAL_PARTITION,
+            )
+
+            assert region == AWS_REGION_EU_WEST_1
+            assert client is None
+
+            # Check that error was logged for generic exception
+            log_pattern = re.compile(
+                r"Exception -- \[\d+\]: {error_message}".format(
+                    error_message=re.escape(error_message),
+                )
+            )
+            assert any(
+                log_pattern.match(record.message) for record in caplog.records
+            ), "Expected log message not found"

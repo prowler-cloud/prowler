@@ -1,7 +1,7 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
 from boto3 import Session
 from botocore.client import ClientError
@@ -219,7 +219,7 @@ class SecurityHub:
         session: Session,
         aws_account_id: str,
         aws_partition: str,
-    ) -> tuple[str, Session | None]:
+    ) -> tuple[str, Union[Session, None]]:
         """
         Check if Security Hub is enabled in a specific region and if Prowler integration is active.
 
