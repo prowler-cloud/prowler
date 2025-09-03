@@ -14,18 +14,15 @@ import {
   IntegrationProps,
   jiraIntegrationFormSchema,
 } from "@/types/integrations";
-import { ProviderProps } from "@/types/providers";
 
 interface JiraIntegrationFormProps {
   integration?: IntegrationProps | null;
-  providers: ProviderProps[];
   onSuccess: (integrationId?: string, shouldTestConnection?: boolean) => void;
   onCancel: () => void;
 }
 
 export const JiraIntegrationForm = ({
   integration,
-  providers,
   onSuccess,
   onCancel,
 }: JiraIntegrationFormProps) => {

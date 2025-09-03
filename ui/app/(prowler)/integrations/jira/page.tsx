@@ -1,7 +1,6 @@
 import React from "react";
 
 import { getIntegrations } from "@/actions/integrations";
-import { getProviders } from "@/actions/providers";
 import { JiraIntegrationsManager } from "@/components/integrations/jira/jira-integrations-manager";
 import { ContentLayout } from "@/components/ui";
 
@@ -38,13 +37,9 @@ export default async function JiraIntegrations({
     }
   });
 
-  const [integrations, providers] = await Promise.all([
-    getIntegrations(urlSearchParams),
-    getProviders({ pageSize: 100 }),
-  ]);
+  const [integrations] = await Promise.all([getIntegrations(urlSearchParams)]);
 
   const jiraIntegrations = integrations?.data || [];
-  const availableProviders = providers?.data || [];
   const metadata = integrations?.meta;
 
   return (
@@ -83,7 +78,6 @@ export default async function JiraIntegrations({
 
         <JiraIntegrationsManager
           integrations={jiraIntegrations}
-          providers={availableProviders}
           metadata={metadata}
         />
       </div>

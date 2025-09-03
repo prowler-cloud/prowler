@@ -22,19 +22,16 @@ import { DataTablePagination } from "@/components/ui/table/data-table-pagination
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
-import { ProviderProps } from "@/types/providers";
 
 import { JiraIntegrationForm } from "./jira-integration-form";
 
 interface JiraIntegrationsManagerProps {
   integrations: IntegrationProps[];
-  providers: ProviderProps[];
   metadata?: MetaDataProps;
 }
 
 export const JiraIntegrationsManager = ({
   integrations,
-  providers,
   metadata,
 }: JiraIntegrationsManagerProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -247,7 +244,6 @@ export const JiraIntegrationsManager = ({
       >
         <JiraIntegrationForm
           integration={editingIntegration}
-          providers={providers}
           onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
         />
