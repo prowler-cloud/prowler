@@ -7,23 +7,18 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Get Jira Project's metadata [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
 - Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
 - Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
+- `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 
 ### Changed
 
 ### Fixed
+- Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
 
 ---
 
 ## [v5.11.1] (Prowler UNRELEASED)
 
 ### Fixed
-
----
-
-## [v5.12.0] (Prowler UNRELEASED)
-
-### Added
-- `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 
 ---
 

@@ -85,7 +85,7 @@ class CheckMetadata(BaseModel):
         Risk (str): The risk associated with the check.
         RelatedUrl (str): The URL related to the check.
         Remediation (Remediation): The remediation steps for the check.
-        AdditionalUrls (list[str]): Additional URLs related to the check. Defaults to an empty list.
+        AdditionalURLs (list[str]): Additional URLs related to the check. Defaults to an empty list.
         Categories (list[str]): The categories of the check.
         DependsOn (list[str]): The dependencies of the check.
         RelatedTo (list[str]): The related checks.
@@ -98,7 +98,7 @@ class CheckMetadata(BaseModel):
         valid_severity(severity): Validator function to validate the severity of the check.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
-        validate_additional_urls(additional_urls): Validator function to ensure AdditionalUrls contains no duplicates.
+        validate_additional_urls(additional_urls): Validator function to ensure AdditionalURLs contains no duplicates.
     """
 
     Provider: str
@@ -115,7 +115,7 @@ class CheckMetadata(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
-    AdditionalUrls: list[str] = Field(default_factory=list)
+    AdditionalURLs: list[str] = Field(default_factory=list)
     Categories: list[str]
     DependsOn: list[str]
     RelatedTo: list[str]
@@ -181,16 +181,16 @@ class CheckMetadata(BaseModel):
 
         return check_id
 
-    @validator("AdditionalUrls", pre=True, always=True)
+    @validator("AdditionalURLs", pre=True, always=True)
     def validate_additional_urls(cls, additional_urls):
         if not isinstance(additional_urls, list):
-            raise ValueError("AdditionalUrls must be a list")
+            raise ValueError("AdditionalURLs must be a list")
 
         if any(not url or not url.strip() for url in additional_urls):
-            raise ValueError("AdditionalUrls cannot contain empty items")
+            raise ValueError("AdditionalURLs cannot contain empty items")
 
         if len(additional_urls) != len(set(additional_urls)):
-            raise ValueError("AdditionalUrls cannot contain duplicate items")
+            raise ValueError("AdditionalURLs cannot contain duplicate items")
 
         return additional_urls
 
