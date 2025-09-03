@@ -9,7 +9,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
 - `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 
-
 ### Changed
 
 ### Fixed
