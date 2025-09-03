@@ -232,25 +232,17 @@ export const editSecurityHubIntegrationFormSchema =
     });
 
 // Jira Integration Schemas
-const baseJiraIntegrationSchema = z.object({
+export const jiraIntegrationFormSchema = z.object({
   integration_type: z.literal("jira"),
   domain: z.string().min(1, "Domain is required"),
-  project_key: z.string().min(1, "Project key is required"),
   user_mail: z.string().email("Invalid email format"),
   api_token: z.string().min(1, "API token is required"),
-  providers: z.array(z.string()).optional(),
-  enabled: z.boolean().optional(),
-});
-
-export const jiraIntegrationFormSchema = baseJiraIntegrationSchema.extend({
   enabled: z.boolean().default(true),
 });
 
-export const editJiraIntegrationFormSchema = baseJiraIntegrationSchema.extend({
+export const editJiraIntegrationFormSchema = z.object({
+  integration_type: z.literal("jira"),
   domain: z.string().min(1, "Domain is required").optional(),
-  project_key: z.string().min(1, "Project key is required").optional(),
   user_mail: z.string().email("Invalid email format").optional(),
   api_token: z.string().min(1, "API token is required").optional(),
-  providers: z.array(z.string()).optional(),
-  enabled: z.boolean().optional(),
 });

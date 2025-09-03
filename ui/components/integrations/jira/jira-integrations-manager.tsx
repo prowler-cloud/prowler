@@ -40,9 +40,6 @@ export const JiraIntegrationsManager = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIntegration, setEditingIntegration] =
     useState<IntegrationProps | null>(null);
-  const [editMode, setEditMode] = useState<
-    "configuration" | "credentials" | null
-  >(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isOperationLoading, setIsOperationLoading] = useState(false);
@@ -53,19 +50,11 @@ export const JiraIntegrationsManager = ({
 
   const handleAddIntegration = () => {
     setEditingIntegration(null);
-    setEditMode(null); // Creation mode
-    setIsModalOpen(true);
-  };
-
-  const handleEditConfiguration = (integration: IntegrationProps) => {
-    setEditingIntegration(integration);
-    setEditMode("configuration");
     setIsModalOpen(true);
   };
 
   const handleEditCredentials = (integration: IntegrationProps) => {
     setEditingIntegration(integration);
-    setEditMode("credentials");
     setIsModalOpen(true);
   };
 
@@ -169,7 +158,6 @@ export const JiraIntegrationsManager = ({
   const handleModalClose = () => {
     setIsModalOpen(false);
     setEditingIntegration(null);
-    setEditMode(null);
   };
 
   const handleFormSuccess = async (
@@ -179,7 +167,6 @@ export const JiraIntegrationsManager = ({
     // Close the modal immediately
     setIsModalOpen(false);
     setEditingIntegration(null);
-    setEditMode(null);
     setIsOperationLoading(true);
 
     // Set testing state for server-triggered test connections
@@ -253,13 +240,9 @@ export const JiraIntegrationsManager = ({
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
         title={
-          editMode === "configuration"
-            ? "Edit Configuration"
-            : editMode === "credentials"
-              ? "Edit Credentials"
-              : editingIntegration
-                ? "Edit Jira Integration"
-                : "Add Jira Integration"
+          editingIntegration
+            ? "Update Jira Credentials"
+            : "Add Jira Integration"
         }
       >
         <JiraIntegrationForm
@@ -267,7 +250,6 @@ export const JiraIntegrationsManager = ({
           providers={providers}
           onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
-          editMode={editMode}
         />
       </CustomAlertModal>
 
@@ -337,7 +319,6 @@ export const JiraIntegrationsManager = ({
                     <IntegrationActionButtons
                       integration={integration}
                       onTestConnection={handleTestConnection}
-                      onEditConfiguration={handleEditConfiguration}
                       onEditCredentials={handleEditCredentials}
                       onToggleEnabled={handleToggleEnabled}
                       onDelete={handleOpenDeleteModal}
