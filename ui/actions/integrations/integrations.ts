@@ -77,6 +77,8 @@ export const createIntegration = async (
         revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
         revalidatePath("/integrations/aws-security-hub");
+      } else if (integration_type === "jira") {
+        revalidatePath("/integrations/jira");
       }
 
       return {
@@ -160,6 +162,8 @@ export const updateIntegration = async (
         revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
         revalidatePath("/integrations/aws-security-hub");
+      } else if (integration_type === "jira") {
+        revalidatePath("/integrations/jira");
       }
 
       return {
@@ -194,6 +198,8 @@ export const deleteIntegration = async (
         revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
         revalidatePath("/integrations/aws-security-hub");
+      } else if (integration_type === "jira") {
+        revalidatePath("/integrations/jira");
       }
 
       return { success: "Integration deleted successfully!" };
