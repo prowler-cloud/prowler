@@ -330,7 +330,8 @@ def upload_security_hub_integration(
 
                                 if not connected:
                                     logger.error(
-                                        f"Security Hub connection failed for integration {integration.id}: {security_hub.error}"
+                                        f"Security Hub connection failed for integration {integration.id}: "
+                                        f"{security_hub.error}"
                                     )
                                     integration.connected = False
                                     integration.save()
@@ -338,7 +339,8 @@ def upload_security_hub_integration(
 
                                 security_hub_client = security_hub
                                 logger.info(
-                                    f"Sending {'fail' if send_only_fails else 'all'} findings to Security Hub via integration {integration.id}"
+                                    f"Sending {'fail' if send_only_fails else 'all'} findings to Security Hub via "
+                                    f"integration {integration.id}"
                                 )
                             else:
                                 # Update findings in existing client for this batch

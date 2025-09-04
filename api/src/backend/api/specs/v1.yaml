@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.12.0
+  version: 1.13.0
   description: |-
     Prowler API specification.
 
@@ -9132,6 +9132,12 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9171,6 +9177,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                required:
+                - user_mail
+                - api_token
+                - domain
               writeOnly: true
           required:
           - integration_type
@@ -9292,6 +9316,12 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -9332,6 +9362,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    required:
+                    - user_mail
+                    - api_token
+                    - domain
                   writeOnly: true
               required:
               - integration_type
@@ -9468,6 +9516,12 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9507,6 +9561,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                required:
+                - user_mail
+                - api_token
+                - domain
               writeOnly: true
         relationships:
           type: object
@@ -10873,6 +10945,12 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -10913,6 +10991,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    required:
+                    - user_mail
+                    - api_token
+                    - domain
                   writeOnly: true
             relationships:
               type: object
