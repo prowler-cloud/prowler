@@ -1,5 +1,3 @@
-import React from "react";
-
 import { getIntegrations } from "@/actions/integrations";
 import { JiraIntegrationsManager } from "@/components/integrations/jira/jira-integrations-manager";
 import { ContentLayout } from "@/components/ui";
