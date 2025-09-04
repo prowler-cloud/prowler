@@ -108,6 +108,12 @@ REST_FRAMEWORK = {
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
     "JSON_API_UNIFORM_EXCEPTIONS": True,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "token-obtain": env("DJANGO_TOKEN_OBTAIN_THROTTLE", default=None),
+    }
 }
 
 SPECTACULAR_SETTINGS = {
