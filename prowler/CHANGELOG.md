@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
 - Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
 - `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
+- Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
 
 ### Changed
 
@@ -19,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.11.1] (Prowler UNRELEASED)
 
 ### Fixed
+- TypeError from Python 3.9 in Security Hub module by updating type annotations [(#8619)](https://github.com/prowler-cloud/prowler/pull/8619)
 
 ---
 

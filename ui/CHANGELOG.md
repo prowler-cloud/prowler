@@ -16,6 +16,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 - Scan page shows NoProvidersAdded when no providers [(#8626)](https://github.com/prowler-cloud/prowler/pull/8626)
+- XML field in SAML configuration form validation [(#8638)](https://github.com/prowler-cloud/prowler/pull/8638)
 
 ## [1.11.0] (Prowler v5.11.0)
 
