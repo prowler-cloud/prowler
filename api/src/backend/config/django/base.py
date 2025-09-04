@@ -116,6 +116,9 @@ SPECTACULAR_SETTINGS = {
     "PREPROCESSING_HOOKS": [
         "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
     ],
+    "POSTPROCESSING_HOOKS": [
+        "api.schema_hooks.attach_task_202_examples",
+    ],
     "TITLE": "API Reference - Prowler",
 }
 
