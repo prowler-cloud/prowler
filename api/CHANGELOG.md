@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622), [(#8637)](https://github.com/prowler-cloud/prowler/pull/8637)
+- Throttling options for `/api/v1/tokens` using the `DJANGO_TOKEN_OBTAIN_THROTTLE` environment variable [(#8647)](https://github.com/prowler-cloud/prowler/pull/8647)
 
 ---
 

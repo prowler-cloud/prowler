@@ -113,7 +113,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {
         "token-obtain": env("DJANGO_TOKEN_OBTAIN_THROTTLE", default=None),
-    }
+    },
 }
 
 SPECTACULAR_SETTINGS = {
