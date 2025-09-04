@@ -768,8 +768,6 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             return queryset.annotate(status_count=F("fail"))
         elif value == OverviewStatusChoices.PASS:
             return queryset.annotate(status_count=F("_pass"))
-        elif value == OverviewStatusChoices.MUTED:
-            return queryset.annotate(status_count=F("muted"))
         else:
             return queryset.annotate(status_count=F("total"))
 
@@ -786,7 +784,6 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             >= {
                 OverviewStatusChoices.FAIL,
                 OverviewStatusChoices.PASS,
-                OverviewStatusChoices.MUTED,
             }
             or not value
         ):
@@ -799,8 +796,6 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
                 field_expr = F("fail")
             elif status == OverviewStatusChoices.PASS:
                 field_expr = F("_pass")
-            elif status == OverviewStatusChoices.MUTED:
-                field_expr = F("muted")
             else:
                 continue
 

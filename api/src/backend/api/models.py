@@ -77,13 +77,10 @@ class StatusChoices(models.TextChoices):
 class OverviewStatusChoices(models.TextChoices):
     """
     Status filters allowed in overview/severity endpoints.
-
-    Includes MUTED for aggregated views and excludes MANUAL.
     """
 
     FAIL = "FAIL", _("Fail")
     PASS = "PASS", _("Pass")
-    MUTED = "MUTED", _("Muted")
 
 
 class StateChoices(models.TextChoices):

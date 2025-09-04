@@ -3512,12 +3512,10 @@ paths:
           type: string
           enum:
           - FAIL
-          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
-          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:

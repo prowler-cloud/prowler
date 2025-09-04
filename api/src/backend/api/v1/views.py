@@ -3675,7 +3675,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
         # Load only required fields
         queryset = self.get_queryset().only(
-            "tenant_id", "scan_id", "severity", "fail", "_pass", "muted", "total"
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
         )
 
         filtered_queryset = self.filter_queryset(queryset)
