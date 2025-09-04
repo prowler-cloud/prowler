@@ -56,7 +56,13 @@ export const getFindingsByStatus = async ({
 
   // Handle multiple filters, but exclude muted filter as overviews endpoint doesn't support it
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]" && key !== "filter[muted]") {
+    // The overviews/findings endpoint does not support status or muted filters
+    // (allowed filters include date, region, provider fields). Exclude unsupported ones.
+    if (
+      key !== "filter[search]" &&
+      key !== "filter[muted]" &&
+      key !== "filter[status]"
+    ) {
       url.searchParams.append(key, String(value));
     }
   });

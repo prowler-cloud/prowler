@@ -127,7 +127,9 @@ const SSRFindingsBySeverity = async ({
 
   return (
     <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Findings by Severity</h3>
+      <h3 className="mb-4 text-sm font-bold uppercase">
+        Failed Findings by Severity
+      </h3>
       <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
     </>
   );
