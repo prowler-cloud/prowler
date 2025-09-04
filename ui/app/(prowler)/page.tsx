@@ -107,6 +107,10 @@ const SSRFindingsBySeverity = async ({
 }: {
   searchParams: SearchParamsProps | undefined | null;
 }) => {
+  const defaultFilters = {
+    "filter[status]": "FAIL",
+  } as const;
+
   const filters = searchParams
     ? Object.fromEntries(
         Object.entries(searchParams).filter(([key]) =>
@@ -115,7 +119,11 @@ const SSRFindingsBySeverity = async ({
       )
     : {};
 
-  const findingsBySeverity = await getFindingsBySeverity({ filters });
+  const combinedFilters = { ...defaultFilters, ...filters };
+
+  const findingsBySeverity = await getFindingsBySeverity({
+    filters: combinedFilters,
+  });
 
   return (
     <>
