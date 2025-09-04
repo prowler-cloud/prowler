@@ -703,6 +703,8 @@ class TestJiraIntegration:
             project_key="TEST-1",
             issue_type="Bug",
             issue_labels=["scan-mocked", "whatever"],
+            finding_url="https://prowler-cloud-link/findings/12345",
+            tenant_info="Tenant Info",
         )
 
         mock_post.assert_called_once()
@@ -780,6 +782,8 @@ class TestJiraIntegration:
             "Remediation Terraform",
             "Remediation CLI",
             "Remediation Other",
+            "Finding URL",
+            "Tenant Info",
         ]
 
         actual_keys = [key for key, _ in row_texts]
@@ -819,6 +823,8 @@ class TestJiraIntegration:
         assert "Owner=SecurityTeam" in row_dict["Resource Tags"]
         assert "CIS: 2.1.1, 2.1.2" in row_dict["Compliance"]
         assert "NIST: AC-3, AC-6" in row_dict["Compliance"]
+        assert "https://prowler-cloud-link/findings/12345" in row_dict["Finding URL"]
+        assert "Tenant Info" in row_dict["Tenant Info"]
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -923,7 +929,12 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraRequiredCustomFieldsError):
             self.jira_integration.send_findings(
-                findings=[finding], project_key="TEST-1", issue_type="Bug"
+                findings=[finding],
+                project_key="TEST-1",
+                issue_type="Bug",
+                issue_labels=["scan-mocked", "whatever"],
+                finding_url="https://prowler-cloud-link/findings/12345",
+                tenant_info="Tenant Info",
             )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
@@ -980,7 +991,12 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraCreateIssueError):
             self.jira_integration.send_findings(
-                findings=[finding], project_key="TEST-1", issue_type="Bug"
+                findings=[finding],
+                project_key="TEST-1",
+                issue_type="Bug",
+                issue_labels=["scan-mocked", "whatever"],
+                finding_url="https://prowler-cloud-link/findings/12345",
+                tenant_info="Tenant Info",
             )
 
     @pytest.mark.parametrize(
