@@ -52,19 +52,33 @@ export const JiraIntegrationForm = ({
       // Add integration type
       formData.append("integration_type", "jira");
 
-      // Prepare credentials object (domain goes here)
+      // Prepare credentials object
       const credentials: any = {};
-      if (data.domain) credentials.domain = data.domain;
-      if (data.user_mail) credentials.user_mail = data.user_mail;
-      if (data.api_token) credentials.api_token = data.api_token;
+      
+      // For editing, only add fields that have values
+      if (isEditing) {
+        // Only add domain if it's provided (for updates, domain might not be editable)
+        if (data.domain) credentials.domain = data.domain;
+        if (data.user_mail) credentials.user_mail = data.user_mail;
+        if (data.api_token) credentials.api_token = data.api_token;
+      } else {
+        // For creation, all credential fields are required
+        credentials.domain = data.domain;
+        credentials.user_mail = data.user_mail;
+        credentials.api_token = data.api_token;
+      }
 
       // Add credentials as JSON
       if (Object.keys(credentials).length > 0) {
         formData.append("credentials", JSON.stringify(credentials));
       }
 
-      // Add enabled status
-      formData.append("enabled", JSON.stringify(data.enabled));
+      // For creation, we need to provide configuration and providers
+      if (isCreating) {
+        formData.append("configuration", JSON.stringify({}));
+        formData.append("providers", JSON.stringify([]));
+        formData.append("enabled", JSON.stringify(data.enabled));
+      }
 
       let result;
       if (isEditing) {
@@ -126,6 +140,7 @@ export const JiraIntegrationForm = ({
             label="Jira Domain"
             labelPlacement="inside"
             placeholder="your-domain.atlassian.net"
+            isDisabled={isLoading}
             isInvalid={!!form.formState.errors.domain}
           />
         )}

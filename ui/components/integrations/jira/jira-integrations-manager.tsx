@@ -136,6 +136,22 @@ export const JiraIntegrationsManager = ({
           title: "Success!",
           description: `Integration ${newEnabledState ? "enabled" : "disabled"} successfully.`,
         });
+
+        // If enabling, trigger test connection automatically
+        if (newEnabledState) {
+          setIsTesting(integration.id);
+
+          triggerTestConnectionWithDelay(
+            integration.id,
+            true,
+            "jira",
+            toast,
+            500,
+            () => {
+              setIsTesting(null);
+            },
+          );
+        }
       } else if (result && "error" in result) {
         toast({
           variant: "destructive",

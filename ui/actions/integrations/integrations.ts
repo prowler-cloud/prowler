@@ -295,6 +295,7 @@ export const testIntegrationConnection = async (
 
         revalidatePath("/integrations/amazon-s3");
         revalidatePath("/integrations/aws-security-hub");
+        revalidatePath("/integrations/jira");
 
         if (pollResult.error) {
           return { error: pollResult.error };
@@ -337,6 +338,7 @@ export const pollConnectionTestStatus = async (taskId: string) => {
 
     revalidatePath("/integrations/amazon-s3");
     revalidatePath("/integrations/aws-security-hub");
+    revalidatePath("/integrations/jira");
 
     if (pollResult.error) {
       return { success: false, error: pollResult.error };
