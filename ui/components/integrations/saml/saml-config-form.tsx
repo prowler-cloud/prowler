@@ -284,7 +284,6 @@ export const SamlConfigForm = ({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const newValue = e.target.value;
           setEmailDomain(newValue);
-          validateFields(newValue, !!uploadedFile);
         }}
       />
 
