@@ -2,6 +2,27 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.12.0] (Prowler v5.12.0)
+
+### 🚀 Added
+
+- Jira integration[(#8640)](https://github.com/prowler-cloud/prowler/pull/8640)
+
+## [1.11.1] (Prowler v5.11.1)
+
+### 🐞 Added
+
+- Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
+- No-permission message on the scan page [(#8624)](https://github.com/prowler-cloud/prowler/pull/8624)
+
+### 🔄 Changed
+
+- Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
+
+### 🐞 Fixed
+- Scan page shows NoProvidersAdded when no providers [(#8626)](https://github.com/prowler-cloud/prowler/pull/8626)
+- XML field in SAML configuration form validation [(#8638)](https://github.com/prowler-cloud/prowler/pull/8638)
+
 ## [1.11.0] (Prowler v5.11.0)
 
 ### 🚀 Added
