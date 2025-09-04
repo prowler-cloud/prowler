@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock, patch
+from unittest import mock
 
 from prowler.providers.mongodbatlas.services.organizations.organizations_service import (
     Organization,
+    OrganizationSettings,
 )
 from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
     ORG_ID,
@@ -9,73 +10,116 @@ from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
 )
 
 
-class TestOrganizationsApiAccessListRequired:
-    def _create_organization(self, api_access_list_required=False):
-        """Helper method to create an organization with API access list settings"""
-        return Organization(
-            id=ORG_ID,
-            name="Test Organization",
-            settings={"apiAccessListRequired": api_access_list_required},
-        )
-
-    def _execute_check_with_organization(self, organization):
-        """Helper method to execute check with an organization"""
-        organizations_client = MagicMock()
-        organizations_client.organizations = {ORG_ID: organization}
+class Test_organizations_api_access_list_required:
+    def test_no_organizations(self):
+        organizations_client = mock.MagicMock
+        organizations_client.organizations = {}
 
         with (
-            patch(
+            mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_mongodbatlas_provider(),
             ),
-            patch(
+            mock.patch(
                 "prowler.providers.mongodbatlas.services.organizations.organizations_api_access_list_required.organizations_api_access_list_required.organizations_client",
                 new=organizations_client,
             ),
         ):
+
             from prowler.providers.mongodbatlas.services.organizations.organizations_api_access_list_required.organizations_api_access_list_required import (
                 organizations_api_access_list_required,
             )
 
             check = organizations_api_access_list_required()
-            return check.execute()
+            result = check.execute()
+            assert len(result) == 0
 
-    def test_check_with_api_access_list_required(self):
-        """Test check with API access list required"""
-        organization = self._create_organization(api_access_list_required=True)
-        reports = self._execute_check_with_organization(organization)
+    def test_organizations_api_access_list_required(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=True,
+                    ip_access_list_enabled=True,
+                    ip_access_list=["192.168.1.0/24"],
+                    multi_factor_auth_required=False,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=None,
+                ),
+                location="global",
+            )
+        }
 
-        assert len(reports) == 1
-        assert reports[0].status == "PASS"
-        assert (
-            "requires API operations to originate from an IP Address added to the API access list"
-            in reports[0].status_extended
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_api_access_list_required.organizations_api_access_list_required.organizations_client",
+                new=organizations_client,
+            ),
+        ):
 
-    def test_check_with_api_access_list_not_required(self):
-        """Test check with API access list not required"""
-        organization = self._create_organization(api_access_list_required=False)
-        reports = self._execute_check_with_organization(organization)
+            from prowler.providers.mongodbatlas.services.organizations.organizations_api_access_list_required.organizations_api_access_list_required import (
+                organizations_api_access_list_required,
+            )
 
-        assert len(reports) == 1
-        assert reports[0].status == "FAIL"
-        assert (
-            "does not require API operations to originate from an IP Address added to the API access list"
-            in reports[0].status_extended
-        )
+            check = organizations_api_access_list_required()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} requires API operations to originate from an IP Address added to the API access list."
+            )
 
-    def test_check_with_no_api_access_list_setting(self):
-        """Test check with no API access list setting"""
-        organization = Organization(
-            id=ORG_ID,
-            name="Test Organization",
-            settings={},
-        )
-        reports = self._execute_check_with_organization(organization)
+    def test_organizations_api_access_list_not_required(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=False,
+                    ip_access_list_enabled=False,
+                    ip_access_list=[],
+                    multi_factor_auth_required=False,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=None,
+                ),
+                location="global",
+            )
+        }
 
-        assert len(reports) == 1
-        assert reports[0].status == "FAIL"
-        assert (
-            "does not require API operations to originate from an IP Address added to the API access list"
-            in reports[0].status_extended
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_api_access_list_required.organizations_api_access_list_required.organizations_client",
+                new=organizations_client,
+            ),
+        ):
+
+            from prowler.providers.mongodbatlas.services.organizations.organizations_api_access_list_required.organizations_api_access_list_required import (
+                organizations_api_access_list_required,
+            )
+
+            check = organizations_api_access_list_required()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} does not require API operations to originate from an IP Address added to the API access list."
+            )

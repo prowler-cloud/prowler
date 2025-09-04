@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock, patch
+from unittest import mock
 
 from prowler.providers.mongodbatlas.services.organizations.organizations_service import (
     Organization,
+    OrganizationSettings,
 )
 from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
     ORG_ID,
@@ -9,108 +10,213 @@ from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
 )
 
 
-class TestOrganizationsServiceAccountSecretsExpiration:
-    def _create_organization(self, max_validity_hours=None):
-        """Helper method to create an organization with service account secrets expiration settings"""
-        settings = {}
-        if max_validity_hours is not None:
-            settings["maxServiceAccountSecretValidityInHours"] = max_validity_hours
-
-        return Organization(
-            id=ORG_ID,
-            name="Test Organization",
-            settings=settings,
-        )
-
-    def _execute_check_with_organization(self, organization, audit_config=None):
-        """Helper method to execute check with an organization"""
-        organizations_client = MagicMock()
-        organizations_client.organizations = {ORG_ID: organization}
-        organizations_client.audit_config = audit_config or {}
+class Test_organizations_service_account_secrets_expiration:
+    def test_no_organizations(self):
+        organizations_client = mock.MagicMock
+        organizations_client.organizations = {}
+        organizations_client.audit_config = {}
 
         with (
-            patch(
+            mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_mongodbatlas_provider(),
             ),
-            patch(
+            mock.patch(
                 "prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration.organizations_client",
                 new=organizations_client,
             ),
         ):
+
             from prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration import (
                 organizations_service_account_secrets_expiration,
             )
 
             check = organizations_service_account_secrets_expiration()
-            return check.execute()
+            result = check.execute()
+            assert len(result) == 0
 
-    def test_check_with_valid_expiration_hours(self):
-        """Test check with valid expiration hours (8 hours)"""
-        organization = self._create_organization(max_validity_hours=8)
-        reports = self._execute_check_with_organization(organization)
+    def test_organizations_service_account_secrets_expiration_valid(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=False,
+                    ip_access_list_enabled=False,
+                    ip_access_list=[],
+                    multi_factor_auth_required=False,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=8,
+                ),
+                location="global",
+            )
+        }
+        organizations_client.audit_config = {}
 
-        assert len(reports) == 1
-        assert reports[0].status == "PASS"
-        assert (
-            "within the recommended threshold of 8 hours" in reports[0].status_extended
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration.organizations_client",
+                new=organizations_client,
+            ),
+        ):
 
-    def test_check_with_valid_expiration_hours_lower(self):
-        """Test check with valid expiration hours (4 hours)"""
-        organization = self._create_organization(max_validity_hours=4)
-        reports = self._execute_check_with_organization(organization)
+            from prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration import (
+                organizations_service_account_secrets_expiration,
+            )
 
-        assert len(reports) == 1
-        assert reports[0].status == "PASS"
-        assert (
-            "within the recommended threshold of 8 hours" in reports[0].status_extended
-        )
+            check = organizations_service_account_secrets_expiration()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} has a maximum period expiration of 8 hours for Admin API Service Account secrets, which is within the recommended threshold of 8 hours."
+            )
 
-    def test_check_with_invalid_expiration_hours(self):
-        """Test check with invalid expiration hours (24 hours)"""
-        organization = self._create_organization(max_validity_hours=24)
-        reports = self._execute_check_with_organization(organization)
+    def test_organizations_service_account_secrets_expiration_invalid(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=False,
+                    ip_access_list_enabled=False,
+                    ip_access_list=[],
+                    multi_factor_auth_required=False,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=24,
+                ),
+                location="global",
+            )
+        }
+        organizations_client.audit_config = {}
 
-        assert len(reports) == 1
-        assert reports[0].status == "FAIL"
-        assert (
-            "exceeds the recommended threshold of 8 hours" in reports[0].status_extended
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration.organizations_client",
+                new=organizations_client,
+            ),
+        ):
 
-    def test_check_with_no_expiration_setting(self):
-        """Test check with no expiration setting"""
-        organization = self._create_organization()
-        reports = self._execute_check_with_organization(organization)
+            from prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration import (
+                organizations_service_account_secrets_expiration,
+            )
 
-        assert len(reports) == 1
-        assert reports[0].status == "FAIL"
-        assert (
-            "does not have a maximum period expiration configured"
-            in reports[0].status_extended
-        )
+            check = organizations_service_account_secrets_expiration()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} has a maximum period expiration of 24 hours for Admin API Service Account secrets, which exceeds the recommended threshold of 8 hours."
+            )
 
-    def test_check_with_custom_threshold_from_config(self):
-        """Test check with custom threshold from audit config"""
-        organization = self._create_organization(max_validity_hours=12)
-        audit_config = {"max_service_account_secret_validity_hours": 24}
-        reports = self._execute_check_with_organization(organization, audit_config)
+    def test_organizations_service_account_secrets_expiration_not_configured(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=False,
+                    ip_access_list_enabled=False,
+                    ip_access_list=[],
+                    multi_factor_auth_required=False,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=None,
+                ),
+                location="global",
+            )
+        }
+        organizations_client.audit_config = {}
 
-        assert len(reports) == 1
-        assert reports[0].status == "PASS"
-        assert (
-            "within the recommended threshold of 24 hours" in reports[0].status_extended
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration.organizations_client",
+                new=organizations_client,
+            ),
+        ):
 
-    def test_check_with_custom_threshold_exceeds_config(self):
-        """Test check where actual hours exceed custom threshold"""
-        organization = self._create_organization(max_validity_hours=36)
-        audit_config = {"max_service_account_secret_validity_hours": 24}
-        reports = self._execute_check_with_organization(organization, audit_config)
+            from prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration import (
+                organizations_service_account_secrets_expiration,
+            )
 
-        assert len(reports) == 1
-        assert reports[0].status == "FAIL"
-        assert (
-            "exceeds the recommended threshold of 24 hours"
-            in reports[0].status_extended
-        )
+            check = organizations_service_account_secrets_expiration()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} does not have a maximum period expiration configured for Admin API Service Account secrets."
+            )
+
+    def test_organizations_service_account_secrets_expiration_custom_threshold(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=False,
+                    ip_access_list_enabled=False,
+                    ip_access_list=[],
+                    multi_factor_auth_required=False,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=12,
+                ),
+                location="global",
+            )
+        }
+        organizations_client.audit_config = {
+            "max_service_account_secret_validity_hours": 24
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration.organizations_client",
+                new=organizations_client,
+            ),
+        ):
+
+            from prowler.providers.mongodbatlas.services.organizations.organizations_service_account_secrets_expiration.organizations_service_account_secrets_expiration import (
+                organizations_service_account_secrets_expiration,
+            )
+
+            check = organizations_service_account_secrets_expiration()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} has a maximum period expiration of 12 hours for Admin API Service Account secrets, which is within the recommended threshold of 24 hours."
+            )

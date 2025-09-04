@@ -21,7 +21,17 @@ prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,ku
 
 
 def mock_get_available_providers():
-    return ["aws", "azure", "gcp", "kubernetes", "m365", "github", "iac", "nhn"]
+    return [
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "m365",
+        "github",
+        "iac",
+        "nhn",
+        "mongodbatlas",
+    ]
 
 
 @pytest.mark.arg_parser

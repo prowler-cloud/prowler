@@ -1,7 +1,8 @@
-from unittest.mock import MagicMock, patch
+from unittest import mock
 
 from prowler.providers.mongodbatlas.services.organizations.organizations_service import (
     Organization,
+    OrganizationSettings,
 )
 from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
     ORG_ID,
@@ -9,73 +10,116 @@ from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
 )
 
 
-class TestOrganizationsMfaRequired:
-    def _create_organization(self, mfa_required=False):
-        """Helper method to create an organization with MFA settings"""
-        return Organization(
-            id=ORG_ID,
-            name="Test Organization",
-            settings={"multiFactorAuthRequired": mfa_required},
-        )
-
-    def _execute_check_with_organization(self, organization):
-        """Helper method to execute check with an organization"""
-        organizations_client = MagicMock()
-        organizations_client.organizations = {ORG_ID: organization}
+class Test_organizations_mfa_required:
+    def test_no_organizations(self):
+        organizations_client = mock.MagicMock
+        organizations_client.organizations = {}
 
         with (
-            patch(
+            mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_mongodbatlas_provider(),
             ),
-            patch(
+            mock.patch(
                 "prowler.providers.mongodbatlas.services.organizations.organizations_mfa_required.organizations_mfa_required.organizations_client",
                 new=organizations_client,
             ),
         ):
+
             from prowler.providers.mongodbatlas.services.organizations.organizations_mfa_required.organizations_mfa_required import (
                 organizations_mfa_required,
             )
 
             check = organizations_mfa_required()
-            return check.execute()
+            result = check.execute()
+            assert len(result) == 0
 
-    def test_check_with_mfa_required(self):
-        """Test check with MFA required"""
-        organization = self._create_organization(mfa_required=True)
-        reports = self._execute_check_with_organization(organization)
+    def test_organizations_mfa_required(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=False,
+                    ip_access_list_enabled=False,
+                    ip_access_list=[],
+                    multi_factor_auth_required=True,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=None,
+                ),
+                location="global",
+            )
+        }
 
-        assert len(reports) == 1
-        assert reports[0].status == "PASS"
-        assert (
-            "requires users to set up Multi-Factor Authentication"
-            in reports[0].status_extended
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_mfa_required.organizations_mfa_required.organizations_client",
+                new=organizations_client,
+            ),
+        ):
 
-    def test_check_with_mfa_not_required(self):
-        """Test check with MFA not required"""
-        organization = self._create_organization(mfa_required=False)
-        reports = self._execute_check_with_organization(organization)
+            from prowler.providers.mongodbatlas.services.organizations.organizations_mfa_required.organizations_mfa_required import (
+                organizations_mfa_required,
+            )
 
-        assert len(reports) == 1
-        assert reports[0].status == "FAIL"
-        assert (
-            "does not require users to set up Multi-Factor Authentication"
-            in reports[0].status_extended
-        )
+            check = organizations_mfa_required()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} requires users to set up Multi-Factor Authentication (MFA) before accessing the organization."
+            )
 
-    def test_check_with_no_mfa_setting(self):
-        """Test check with no MFA setting"""
-        organization = Organization(
-            id=ORG_ID,
-            name="Test Organization",
-            settings={},
-        )
-        reports = self._execute_check_with_organization(organization)
+    def test_organizations_mfa_not_required(self):
+        organizations_client = mock.MagicMock
+        org_name = "Test Organization"
+        organizations_client.organizations = {
+            ORG_ID: Organization(
+                id=ORG_ID,
+                name=org_name,
+                settings=OrganizationSettings(
+                    api_access_list_required=False,
+                    ip_access_list_enabled=False,
+                    ip_access_list=[],
+                    multi_factor_auth_required=False,
+                    security_contact=None,
+                    max_service_account_secret_validity_in_hours=None,
+                ),
+                location="global",
+            )
+        }
 
-        assert len(reports) == 1
-        assert reports[0].status == "FAIL"
-        assert (
-            "does not require users to set up Multi-Factor Authentication"
-            in reports[0].status_extended
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_mongodbatlas_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.mongodbatlas.services.organizations.organizations_mfa_required.organizations_mfa_required.organizations_client",
+                new=organizations_client,
+            ),
+        ):
+
+            from prowler.providers.mongodbatlas.services.organizations.organizations_mfa_required.organizations_mfa_required import (
+                organizations_mfa_required,
+            )
+
+            check = organizations_mfa_required()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == ORG_ID
+            assert result[0].resource_name == org_name
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Organization {org_name} does not require users to set up Multi-Factor Authentication (MFA) before accessing the organization."
+            )
