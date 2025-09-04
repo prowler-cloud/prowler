@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.12.0
+  version: 1.13.0
   description: |-
     Prowler API specification.
 
@@ -3027,8 +3027,8 @@ paths:
   /api/v1/lighthouse-configurations:
     get:
       operationId: lighthouse_configurations_list
-      description: Retrieve a list of all Lighthouse configurations.
-      summary: List all Lighthouse configurations
+      description: Retrieve a list of all Lighthouse AI configurations.
+      summary: List all Lighthouse AI configurations
       parameters:
       - in: query
         name: fields[lighthouse-configurations]
@@ -3087,7 +3087,7 @@ paths:
             - -is_active
         explode: false
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3099,10 +3099,10 @@ paths:
           description: ''
     post:
       operationId: lighthouse_configurations_create
-      description: Create a new Lighthouse configuration with the specified details.
-      summary: Create a new Lighthouse configuration
+      description: Create a new Lighthouse AI configuration with the specified details.
+      summary: Create a new Lighthouse AI configuration
       tags:
-      - Lighthouse
+      - Lighthouse AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3127,8 +3127,8 @@ paths:
   /api/v1/lighthouse-configurations/{id}:
     patch:
       operationId: lighthouse_configurations_partial_update
-      description: Update certain fields of an existing Lighthouse configuration.
-      summary: Partially update a Lighthouse configuration
+      description: Update certain fields of an existing Lighthouse AI configuration.
+      summary: Partially update a Lighthouse AI configuration
       parameters:
       - in: path
         name: id
@@ -3136,7 +3136,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3160,8 +3160,8 @@ paths:
           description: ''
     delete:
       operationId: lighthouse_configurations_destroy
-      description: Remove a Lighthouse configuration by its ID.
-      summary: Delete a Lighthouse configuration
+      description: Remove a Lighthouse AI configuration by its ID.
+      summary: Delete a Lighthouse AI configuration
       parameters:
       - in: path
         name: id
@@ -3169,7 +3169,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3179,7 +3179,7 @@ paths:
     post:
       operationId: lighthouse_configurations_connection_create
       description: Verify the connection to the OpenAI API for a specific Lighthouse
-        configuration.
+        AI configuration.
       summary: Check the connection to the OpenAI API
       parameters:
       - in: path
@@ -3188,7 +3188,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -9153,6 +9153,12 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9192,6 +9198,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                required:
+                - user_mail
+                - api_token
+                - domain
               writeOnly: true
           required:
           - integration_type
@@ -9313,6 +9337,12 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -9353,6 +9383,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    required:
+                    - user_mail
+                    - api_token
+                    - domain
                   writeOnly: true
               required:
               - integration_type
@@ -9489,6 +9537,12 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9528,6 +9582,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                required:
+                - user_mail
+                - api_token
+                - domain
               writeOnly: true
         relationships:
           type: object
@@ -10894,6 +10966,12 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -10934,6 +11012,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    required:
+                    - user_mail
+                    - api_token
+                    - domain
                   writeOnly: true
             relationships:
               type: object
@@ -15628,8 +15724,8 @@ tags:
   description: Endpoints for managing third-party integrations, including registration,
     configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
     services.
-- name: Lighthouse
-  description: Endpoints for managing Lighthouse configurations, including creation,
+- name: Lighthouse AI
+  description: Endpoints for managing Lighthouse AI configurations, including creation,
     retrieval, updating, and deletion of configurations such as OpenAI keys, models,
     and business context.
 - name: SAML
