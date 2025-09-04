@@ -54,7 +54,7 @@ export const JiraIntegrationForm = ({
 
       // Prepare credentials object
       const credentials: any = {};
-      
+
       // For editing, only add fields that have values
       if (isEditing) {
         // Only add domain if it's provided (for updates, domain might not be editable)
