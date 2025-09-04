@@ -324,9 +324,12 @@ For detailed writing guidelines and common mistakes to avoid, see [Risk Guidelin
 
 #### RelatedUrl
 
-*Deprecated*. Use `RelatedUrl` instead.
+*Deprecated*. Use `AdditionalURLs` for adding your URLs references.
 
 #### AdditionalURLs
+
+???+ warning
+    URLs must be valid and not repeated.
 
 A list of official documentation URLs for further reading. These should be authoritative sources that provide additional context, best practices, or detailed information about the security control being checked. Prefer official provider documentation, security standards, or well-established security resources. Avoid third-party blogs or unofficial sources unless they are highly reputable and directly relevant.
 
