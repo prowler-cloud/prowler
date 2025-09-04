@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.12.0] (Prowler v5.12.0)
 
+### 🚀 Added
+
+- Jira integration[(#8640)](https://github.com/prowler-cloud/prowler/pull/8640)
+
 ### 🔄 Changed
 
 - Overview chart "Findings by Severity" now shows only failing findings (defaults to `status=FAIL`) and chart links open the Findings page pre-filtered to fails per severity [(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
