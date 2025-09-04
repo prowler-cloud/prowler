@@ -74,6 +74,18 @@ class StatusChoices(models.TextChoices):
     MANUAL = "MANUAL", _("Manual")
 
 
+class OverviewStatusChoices(models.TextChoices):
+    """
+    Status filters allowed in overview/severity endpoints.
+
+    Includes MUTED for aggregated views and excludes MANUAL.
+    """
+
+    FAIL = "FAIL", _("Fail")
+    PASS = "PASS", _("Pass")
+    MUTED = "MUTED", _("Muted")
+
+
 class StateChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
     SCHEDULED = "scheduled", _("Scheduled")
@@ -1337,11 +1349,6 @@ class ScanSummary(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id", "severity"],
                 name="ss_tenant_scan_severity_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "scan_id", "severity"],
-                include=("fail", "_pass", "muted", "total"),
-                name="ss_tenant_scan_sev_status_idx",
             ),
         ]
 

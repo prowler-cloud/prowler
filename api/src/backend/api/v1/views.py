@@ -3480,7 +3480,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         summary="Get aggregated provider data",
         description=(
             "Retrieve an aggregated overview of findings and resources grouped by providers. "
-            "The response includes the count of passed, failed, and manual findings, along with "
+            "The response includes the count of passed, failed, and muted findings, along with "
             "the total number of resources managed by each provider. Only the latest findings for "
             "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
         ),
