@@ -11599,6 +11599,10 @@ components:
                       password:
                         type: string
                         description: User password.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
                     required:
                     - client_id
                     - client_secret
@@ -13372,6 +13376,10 @@ components:
                   password:
                     type: string
                     description: User password.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
                 required:
                 - client_id
                 - client_secret
@@ -13620,6 +13628,10 @@ components:
                       password:
                         type: string
                         description: User password.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
                     required:
                     - client_id
                     - client_secret
@@ -13884,6 +13896,10 @@ components:
                   password:
                     type: string
                     description: User password.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
                 required:
                 - client_id
                 - client_secret
