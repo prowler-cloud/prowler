@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.13.0] (Prowler 5.12.0 - UNRELEASED)
+
+### Added
+- `GET /overviews/findings_severity` now supports `filter[status]` and `filter[status__in]` to aggregate by specific statuses (`FAIL`, `PASS`, `MUTED`)[(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
+
 ## [1.12.0] (Prowler 5.11.0)
 
 ### Added
