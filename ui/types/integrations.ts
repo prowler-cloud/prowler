@@ -230,3 +230,19 @@ export const editSecurityHubIntegrationFormSchema =
       // Always validate role if role_arn is provided
       validateIamRole(data, ctx, false);
     });
+
+// Jira Integration Schemas
+export const jiraIntegrationFormSchema = z.object({
+  integration_type: z.literal("jira"),
+  domain: z.string().min(1, "Domain is required"),
+  user_mail: z.string().email("Invalid email format"),
+  api_token: z.string().min(1, "API token is required"),
+  enabled: z.boolean().default(true),
+});
+
+export const editJiraIntegrationFormSchema = z.object({
+  integration_type: z.literal("jira"),
+  domain: z.string().min(1, "Domain is required").optional(),
+  user_mail: z.string().email("Invalid email format").optional(),
+  api_token: z.string().min(1, "API token is required").optional(),
+});

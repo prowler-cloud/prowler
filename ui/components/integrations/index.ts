@@ -1,4 +1,7 @@
 export * from "../providers/enhanced-provider-selector";
+export * from "./jira/jira-integration-card";
+export * from "./jira/jira-integration-form";
+export * from "./jira/jira-integrations-manager";
 export * from "./s3/s3-integration-card";
 export * from "./s3/s3-integration-form";
 export * from "./s3/s3-integrations-manager";
