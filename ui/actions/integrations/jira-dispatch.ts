@@ -48,8 +48,10 @@ export const sendFindingToJira = async (
     `${apiBaseUrl}/integrations/${integrationId}/jira/dispatches`,
   );
 
-  // Add finding_id as query parameter using array notation
-  url.searchParams.append("filter[finding_id__in][]", findingId);
+  // Single finding: use direct filter without array notation
+  url.searchParams.append("filter[finding_id]", findingId);
+
+  console.log(url.toString());
 
   const payload = {
     data: {
@@ -60,7 +62,6 @@ export const sendFindingToJira = async (
       },
     },
   };
-  console.log("payload", JSON.stringify(payload, null, 2));
 
   try {
     const response = await fetch(url.toString(), {

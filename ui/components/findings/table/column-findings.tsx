@@ -5,7 +5,7 @@ import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
-import { DataTableRowActionsJira } from "@/components/findings/table/data-table-row-actions-jira";
+import { DataTableRowActions } from "@/components/findings/table/data-table-row-actions";
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
@@ -250,7 +250,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
-      return <DataTableRowActionsJira finding={row.original} />;
+      return <DataTableRowActions row={row} />;
     },
   },
 ];

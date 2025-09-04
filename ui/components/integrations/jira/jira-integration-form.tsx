@@ -45,6 +45,19 @@ export const JiraIntegrationForm = ({
 
   const isLoading = form.formState.isSubmitting;
 
+  const normalizeDomain = (raw: string): string => {
+    let v = (raw || "").trim().toLowerCase();
+    // strip protocol
+    v = v.replace(/^https?:\/\//, "");
+    // take hostname (drop path/query)
+    v = v.split("/")[0];
+    // if full host provided, strip Atlassian suffix to keep site name only
+    if (v.endsWith(".atlassian.net")) {
+      v = v.replace(/\.atlassian\.net$/, "");
+    }
+    return v;
+  };
+
   const onSubmit = async (data: any) => {
     try {
       const formData = new FormData();
@@ -58,12 +71,12 @@ export const JiraIntegrationForm = ({
       // For editing, only add fields that have values
       if (isEditing) {
         // Only add domain if it's provided (for updates, domain might not be editable)
-        if (data.domain) credentials.domain = data.domain;
+        if (data.domain) credentials.domain = normalizeDomain(data.domain);
         if (data.user_mail) credentials.user_mail = data.user_mail;
         if (data.api_token) credentials.api_token = data.api_token;
       } else {
         // For creation, all credential fields are required
-        credentials.domain = data.domain;
+        credentials.domain = normalizeDomain(data.domain);
         credentials.user_mail = data.user_mail;
         credentials.api_token = data.api_token;
       }
