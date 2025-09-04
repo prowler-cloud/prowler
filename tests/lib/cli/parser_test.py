@@ -17,11 +17,21 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac} ..."
+prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,dashboard,iac} ..."
 
 
 def mock_get_available_providers():
-    return ["aws", "azure", "gcp", "kubernetes", "m365", "github", "iac", "nhn"]
+    return [
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "m365",
+        "github",
+        "iac",
+        "nhn",
+        "mongodbatlas",
+    ]
 
 
 @pytest.mark.arg_parser

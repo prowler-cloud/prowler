@@ -1,0 +1,30 @@
+{
+  "Provider": "mongodbatlas",
+  "CheckID": "organizations_api_access_list_required",
+  "CheckTitle": "Ensure organization requires API access list",
+  "CheckType": [],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MongoDBAtlasOrganization",
+  "Description": "Ensure organization requires API operations to originate from an IP Address added to the API access list",
+  "Risk": "Without API access list requirement, API operations can originate from any IP address, increasing the risk of unauthorized access",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable API access list requirement for the organization by setting apiAccessListRequired to true in the organization settings.",
+      "Url": "https://www.mongodb.com/docs/atlas/security/ip-access-list/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "If you are running this check from Prowler Cloud, you will need to add our IP to the API access list of your API Key and then enable apiAccessListRequired to make this check pass."
+}

@@ -11,6 +11,7 @@ The official supported providers right now are:
 - **M365**
 - **Github**
 - **IaC**
+- **MongoDB Atlas**
 
 Unofficially, Prowler supports: NHN.
 

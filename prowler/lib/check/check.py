@@ -637,6 +637,10 @@ def execute(
                 )
             elif global_provider.type == "m365":
                 is_finding_muted_args["tenant_id"] = global_provider.identity.tenant_id
+            elif global_provider.type == "mongodbatlas":
+                is_finding_muted_args["organization_id"] = (
+                    global_provider.identity.organization_id
+                )
             for finding in check_findings:
                 if global_provider.type == "azure":
                     is_finding_muted_args["subscription_id"] = (

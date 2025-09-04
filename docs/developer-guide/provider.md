@@ -10,6 +10,7 @@ A provider is any platform or service that offers resources, data, or functional
 - Software as a Service (SaaS) Platforms (like Microsoft 365)
 - Development Platforms (like GitHub)
 - Container Orchestration Platforms (like Kubernetes)
+- Database-as-a-Service Platforms (like MongoDB Atlas)
 
 For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.com/).
 
@@ -63,6 +64,7 @@ Given the complexity and variability of providers, use existing provider impleme
 - [Kubernetes](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
 - [Microsoft365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/microsoft365/microsoft365_provider.py)
 - [GitHub](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/github/github_provider.py)
+- [MongoDB Atlas](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/mongodbatlas/mongodbatlas_provider.py)
 
 ### Basic Provider Implementation: Pseudocode Example
 
