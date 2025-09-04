@@ -24,12 +24,49 @@ export interface IntegrationProps {
         role_session_name?: string;
         session_duration?: number;
       };
+      // Jira specific configuration
+      domain?: string;
+      projects?: { [key: string]: string };
+      issue_types?: string[];
       [key: string]: any;
     };
     url?: string;
   };
   relationships?: { providers?: { data: { type: "providers"; id: string }[] } };
   links: { self: string };
+}
+
+// Jira dispatch types
+export interface JiraDispatchRequest {
+  data: {
+    type: "integrations-jira-dispatches";
+    attributes: {
+      project_key: string;
+      issue_type: string;
+    };
+  };
+}
+
+export interface JiraDispatchResponse {
+  data: {
+    type: "tasks";
+    id: string;
+    attributes: {
+      inserted_at: string;
+      completed_at: string | null;
+      name: string;
+      state: "available" | "executing" | "completed" | "failed";
+      result: {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        issue_url?: string;
+        issue_key?: string;
+      } | null;
+      task_args: any | null;
+      metadata: any | null;
+    };
+  };
 }
 
 // Shared AWS credential fields schema
