@@ -3512,12 +3512,12 @@ paths:
           type: string
           enum:
           - FAIL
-          - MANUAL
+          - MUTED
           - PASS
         description: |-
           * `FAIL` - Fail
           * `PASS` - Pass
-          * `MANUAL` - Manual
+          * `MUTED` - Muted
       - in: query
         name: filter[status__in]
         schema:
@@ -3564,7 +3564,7 @@ paths:
     get:
       operationId: overviews_providers_retrieve
       description: Retrieve an aggregated overview of findings and resources grouped
-        by providers. The response includes the count of passed, failed, and manual
+        by providers. The response includes the count of passed, failed, and muted
         findings, along with the total number of resources managed by each provider.
         Only the latest findings for each provider are considered in the aggregation
         to ensure accurate and up-to-date insights.
