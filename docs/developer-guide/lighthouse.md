@@ -1,6 +1,6 @@
-# Extending Prowler Lighthouse
+# Extending Prowler Lighthouse AI
 
-This guide helps developers customize and extend Prowler Lighthouse by adding or modifying AI agents.
+This guide helps developers customize and extend Prowler Lighthouse AI by adding or modifying AI agents.
 
 ## Understanding AI Agents
 
@@ -13,7 +13,7 @@ AI agents fall into two main categories:
 - **Autonomous Agents**: Freely chooses from available tools to complete tasks, adapting their approach based on context. They decide which tools to use and when.
 - **Workflow Agents**: Follows structured paths with predefined logic. They execute specific tool sequences and can include conditional logic.
 
-Prowler Lighthouse is an autonomous agent - selecting the right tool(s) based on the users query.
+Prowler Lighthouse AI is an autonomous agent - selecting the right tool(s) based on the users query.
 
 ???+ note
     To learn more about AI agents, read [Anthropic's blog post on building effective agents](https://www.anthropic.com/engineering/building-effective-agents).
@@ -24,15 +24,15 @@ The autonomous nature of agents depends on the underlying LLM. Autonomous agents
 
 After evaluating multiple LLM providers (OpenAI, Gemini, Claude, LLama) based on tool calling features and response accuracy, we recommend using the `gpt-4o` model.
 
-## Prowler Lighthouse Architecture
+## Prowler Lighthouse AI Architecture
 
-Prowler Lighthouse uses a multi-agent architecture orchestrated by the [Langgraph-Supervisor](https://www.npmjs.com/package/@langchain/langgraph-supervisor) library.
+Prowler Lighthouse AI uses a multi-agent architecture orchestrated by the [Langgraph-Supervisor](https://www.npmjs.com/package/@langchain/langgraph-supervisor) library.
 
 ### Architecture Components
 
 <img src="../../tutorials/img/lighthouse-architecture.png" alt="Prowler Lighthouse architecture">
 
-Prowler Lighthouse integrates with the NextJS application:
+Prowler Lighthouse AI integrates with the NextJS application:
 
 - The [Langgraph-Supervisor](https://www.npmjs.com/package/@langchain/langgraph-supervisor) library integrates directly with NextJS
 - The system uses the authenticated user session to interact with the Prowler API server
@@ -74,7 +74,7 @@ Modifying the supervisor prompt allows you to:
 
 The supervisor agent and all specialized agents are defined in the `route.ts` file. The supervisor agent uses [langgraph-supervisor](https://www.npmjs.com/package/@langchain/langgraph-supervisor), while other agents use the prebuilt [create-react-agent](https://langchain-ai.github.io/langgraphjs/how-tos/create-react-agent/).
 
-To add new capabilities or all Lighthouse to interact with other APIs, create additional specialized agents:
+To add new capabilities or all Lighthouse AI to interact with other APIs, create additional specialized agents:
 
 1. First determine what the new agent would do. Create a detailed prompt defining the agent's purpose and capabilities. You can see an example from [here](https://github.com/prowler-cloud/prowler/blob/master/ui/lib/lighthouse/prompts.ts#L359-L385).
 ???+ note

@@ -24,27 +24,27 @@ const chartConfig = {
   critical: {
     label: "Critical",
     color: "hsl(var(--chart-critical))",
-    link: "/findings?filter%5Bseverity__in%5D=critical",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=critical",
   },
   high: {
     label: "High",
     color: "hsl(var(--chart-fail))",
-    link: "/findings?filter%5Bseverity__in%5D=high",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=high",
   },
   medium: {
     label: "Medium",
     color: "hsl(var(--chart-medium))",
-    link: "/findings?filter%5Bseverity__in%5D=medium",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=medium",
   },
   low: {
     label: "Low",
     color: "hsl(var(--chart-low))",
-    link: "/findings?filter%5Bseverity__in%5D=low",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=low",
   },
   informational: {
     label: "Informational",
     color: "hsl(var(--chart-informational))",
-    link: "/findings?filter%5Bseverity__in%5D=informational",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=informational",
   },
 } satisfies ChartConfig;
 
@@ -73,15 +73,15 @@ export const FindingsBySeverityChart = ({
     <Card className="h-full dark:bg-prowler-blue-400">
       <CardBody>
         <div className="my-auto">
-          <ChartContainer config={chartConfig}>
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[450px] w-full"
+          >
             <BarChart
               accessibilityLayer
               data={chartData}
               layout="vertical"
-              barGap={2}
-              height={200}
-              margin={{ left: 50 }}
-              width={500}
+              margin={{ left: 72, right: 16, top: 8, bottom: 8 }}
             >
               <YAxis
                 dataKey="severity"
@@ -104,7 +104,7 @@ export const FindingsBySeverityChart = ({
                 dataKey="findings"
                 layout="vertical"
                 radius={12}
-                barSize={20}
+                barSize={26}
                 onClick={(data) => {
                   const severity = data.severity as keyof typeof chartConfig;
                   const link = chartConfig[severity]?.link;
@@ -119,6 +119,14 @@ export const FindingsBySeverityChart = ({
                   offset={5}
                   className="fill-foreground font-bold"
                   fontSize={11}
+                  formatter={(value: number) => (value === 0 ? "" : value)}
+                />
+                <LabelList
+                  position="insideLeft"
+                  offset={6}
+                  className="fill-foreground font-bold"
+                  fontSize={11}
+                  formatter={(value: number) => (value === 0 ? "0" : "")}
                 />
               </Bar>
             </BarChart>

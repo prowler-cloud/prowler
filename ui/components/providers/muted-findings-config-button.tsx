@@ -1,36 +1,38 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
-import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { useUIStore } from "@/store/ui/store";
 
 import { MutedFindingsConfigForm } from "./forms";
 
-interface MutedFindingsConfigButtonProps {
-  isDisabled?: boolean;
-}
-
-export const MutedFindingsConfigButton = ({
-  isDisabled = false,
-}: MutedFindingsConfigButtonProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const MutedFindingsConfigButton = () => {
+  const {
+    isMutelistModalOpen,
+    openMutelistModal,
+    closeMutelistModal,
+    hasProviders,
+  } = useUIStore();
 
   const handleOpenModal = () => {
-    if (!isDisabled) {
-      setIsOpen(true);
+    if (hasProviders) {
+      openMutelistModal();
     }
   };
 
   return (
     <>
       <CustomAlertModal
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
+        isOpen={isMutelistModalOpen}
+        onOpenChange={closeMutelistModal}
         title="Configure Mutelist"
         size="3xl"
       >
-        <MutedFindingsConfigForm setIsOpen={setIsOpen} />
+        <MutedFindingsConfigForm
+          setIsOpen={closeMutelistModal}
+          onCancel={closeMutelistModal}
+        />
       </CustomAlertModal>
 
       <CustomButton
@@ -40,7 +42,7 @@ export const MutedFindingsConfigButton = ({
         size="md"
         startContent={<SettingsIcon size={20} />}
         onPress={handleOpenModal}
-        isDisabled={isDisabled}
+        isDisabled={!hasProviders}
       >
         Configure Mutelist
       </CustomButton>

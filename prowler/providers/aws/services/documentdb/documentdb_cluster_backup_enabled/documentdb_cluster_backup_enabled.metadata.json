@@ -3,7 +3,7 @@
   "CheckID": "documentdb_cluster_backup_enabled",
   "CheckTitle": "Check if DocumentDB Clusters have backup enabled.",
   "CheckType": [],
-  "ServiceName": "DocumentDB",
+  "ServiceName": "documentdb",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",

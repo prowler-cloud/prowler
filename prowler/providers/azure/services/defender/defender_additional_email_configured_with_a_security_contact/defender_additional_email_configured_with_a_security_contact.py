@@ -14,6 +14,11 @@ class defender_additional_email_configured_with_a_security_contact(Check):
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=contact_configuration
                 )
+                report.resource_name = (
+                    contact_configuration.name
+                    if contact_configuration.name
+                    else "Security Contact"
+                )
                 report.subscription = subscription_name
 
                 if len(contact_configuration.emails) > 0:

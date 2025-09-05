@@ -51,6 +51,7 @@ class SQS(AWSService):
     def _get_queue_attributes(self):
         try:
             logger.info("SQS - describing queue attributes...")
+            non_existing_queues = []
             for queue in self.queues:
                 try:
                     regional_client = self.regional_clients[queue.region]
@@ -80,6 +81,7 @@ class SQS(AWSService):
                         logger.warning(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
+                        non_existing_queues.append(queue)
                     else:
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -88,6 +90,7 @@ class SQS(AWSService):
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+            self.queues = [q for q in self.queues if q not in non_existing_queues]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

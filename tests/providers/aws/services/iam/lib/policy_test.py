@@ -6,6 +6,8 @@ from prowler.providers.aws.services.iam.lib.policy import (
     check_full_service_access,
     get_effective_actions,
     has_codebuild_trusted_principal,
+    has_public_principal,
+    has_restrictive_source_arn_condition,
     is_codebuild_using_allowed_github_org,
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
@@ -2451,3 +2453,266 @@ def test_has_codebuild_trusted_principal_list():
         ],
     }
     assert has_codebuild_trusted_principal(trust_policy) is True
+
+
+class Test_has_public_principal:
+    """Tests for the has_public_principal function"""
+
+    def test_has_public_principal_wildcard_string(self):
+        """Test public principal detection with wildcard string"""
+        statement = {"Principal": "*"}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_root_arn_string(self):
+        """Test public principal detection with root ARN string"""
+        statement = {"Principal": "arn:aws:iam::*:root"}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_dict_wildcard(self):
+        """Test public principal detection with AWS dict containing wildcard"""
+        statement = {"Principal": {"AWS": "*"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_dict_root_arn(self):
+        """Test public principal detection with AWS dict containing root ARN"""
+        statement = {"Principal": {"AWS": "arn:aws:iam::*:root"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_list_wildcard(self):
+        """Test public principal detection with AWS list containing wildcard"""
+        statement = {"Principal": {"AWS": ["arn:aws:iam::123456789012:user/test", "*"]}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_aws_list_root_arn(self):
+        """Test public principal detection with AWS list containing root ARN"""
+        statement = {
+            "Principal": {
+                "AWS": ["arn:aws:iam::123456789012:user/test", "arn:aws:iam::*:root"]
+            }
+        }
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_canonical_user_wildcard(self):
+        """Test public principal detection with CanonicalUser wildcard"""
+        statement = {"Principal": {"CanonicalUser": "*"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_canonical_user_root_arn(self):
+        """Test public principal detection with CanonicalUser root ARN"""
+        statement = {"Principal": {"CanonicalUser": "arn:aws:iam::*:root"}}
+        assert has_public_principal(statement) is True
+
+    def test_has_public_principal_no_principal(self):
+        """Test with statement that has no Principal field"""
+        statement = {"Effect": "Allow", "Action": "s3:GetObject"}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_empty_principal(self):
+        """Test with empty principal"""
+        statement = {"Principal": ""}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_specific_account(self):
+        """Test with specific account principal (not public)"""
+        statement = {"Principal": {"AWS": "arn:aws:iam::123456789012:root"}}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_service_principal(self):
+        """Test with service principal (not public)"""
+        statement = {"Principal": {"Service": "lambda.amazonaws.com"}}
+        assert has_public_principal(statement) is False
+
+    def test_has_public_principal_mixed_principals(self):
+        """Test with mixed principals including public one"""
+        statement = {
+            "Principal": {
+                "AWS": ["arn:aws:iam::123456789012:user/test"],
+                "Service": "lambda.amazonaws.com",
+                "CanonicalUser": "*",
+            }
+        }
+        assert has_public_principal(statement) is True
+
+
+class Test_has_restrictive_source_arn_condition:
+    """Tests for the has_restrictive_source_arn_condition function"""
+
+    def test_no_condition_block(self):
+        """Test statement without Condition block"""
+        statement = {"Effect": "Allow", "Principal": "*", "Action": "s3:GetObject"}
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_no_source_arn_condition(self):
+        """Test with condition block but no aws:SourceArn"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Condition": {"StringEquals": {"aws:SourceAccount": "123456789012"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_restrictive_source_arn_s3_bucket(self):
+        """Test restrictive SourceArn condition with S3 bucket"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::my-bucket"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_restrictive_source_arn_lambda_function(self):
+        """Test restrictive SourceArn condition with Lambda function"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnEquals": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_non_restrictive_global_wildcard(self):
+        """Test non-restrictive SourceArn with global wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "*"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_non_restrictive_service_wildcard(self):
+        """Test non-restrictive SourceArn with service wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::*"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_non_restrictive_multi_wildcard(self):
+        """Test non-restrictive SourceArn with multiple wildcards"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:*:*:*:*"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_non_restrictive_resource_wildcard(self):
+        """Test non-restrictive SourceArn with resource wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {"aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:*"}
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_source_arn_list_with_valid_arn(self):
+        """Test SourceArn condition with list containing valid ARN"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": ["arn:aws:s3:::bucket1", "arn:aws:s3:::bucket2"]
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_source_arn_list_with_wildcard(self):
+        """Test SourceArn condition with list containing wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": ["arn:aws:s3:::bucket1", "*"]}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is False
+
+    def test_source_arn_with_account_validation_match(self):
+        """Test SourceArn with account validation - matching account"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "123456789012") is True
+
+    def test_source_arn_with_account_validation_mismatch(self):
+        """Test SourceArn with account validation - non-matching account"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "987654321098") is False
+
+    def test_source_arn_with_account_wildcard(self):
+        """Test SourceArn with account wildcard"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:lambda:us-east-1:*:function:MyFunction"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "123456789012") is False
+
+    def test_source_arn_s3_bucket_no_account_field(self):
+        """Test SourceArn with S3 bucket (no account field) - should be restrictive"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"aws:SourceArn": "arn:aws:s3:::my-bucket"}},
+        }
+        assert has_restrictive_source_arn_condition(statement, "123456789012") is True
+
+    def test_source_arn_case_insensitive(self):
+        """Test SourceArn condition key is case insensitive"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {"ArnLike": {"AWS:SourceArn": "arn:aws:s3:::my-bucket"}},
+        }
+        assert has_restrictive_source_arn_condition(statement) is True
+
+    def test_source_arn_mixed_operators(self):
+        """Test SourceArn with multiple condition operators"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnLike": {"aws:SourceArn": "arn:aws:s3:::my-bucket"},
+                "StringEquals": {"aws:SourceAccount": "123456789012"},
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement) is True

@@ -404,7 +404,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_all_ports:
                 new=EC2(aws_provider),
             ),
             mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_service.VPC",
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.vpc_client",
                 new=VPC(aws_provider),
             ),
             mock.patch(

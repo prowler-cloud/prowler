@@ -1,32 +1,22 @@
 # Getting Started with the IaC Provider
 
-Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Checkov](https://www.checkov.io/). This provider supports a wide range of IaC frameworks, allowing you to assess your code before deployment.
+Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Trivy](https://trivy.dev/). This provider supports a wide range of IaC frameworks, allowing you to assess your code before deployment.
 
-## Supported Frameworks
+## Supported Scanners
 
-The IaC provider leverages Checkov to support multiple frameworks, including:
+The IaC provider leverages Trivy to support multiple scanners, including:
 
-- Terraform
-- CloudFormation
-- Kubernetes
-- ARM (Azure Resource Manager)
-- Serverless
-- Dockerfile
-- YAML/JSON (generic IaC)
-- Bicep
-- Helm
-- GitHub Actions, GitLab CI, Bitbucket Pipelines, Azure Pipelines, CircleCI, Argo Workflows
-- Ansible
-- Kustomize
-- OpenAPI
-- SAST, SCA (Software Composition Analysis)
+- Vulnerability
+- Misconfiguration
+- Secret
+- License
 
 ## How It Works
 
 - The IaC provider scans your local directory (or a specified path) for supported IaC files, or scan a remote repository.
 - No cloud credentials or authentication are required for local scans.
 - For remote repository scans, authentication can be provided via [git URL](https://git-scm.com/docs/git-clone#_git_urls), CLI flags or environment variables.
-- Mutelist logic is handled by Checkov, not Prowler.
+- Mutelist logic is handled by Trivy, not Prowler.
 - Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
 
 ## Usage
@@ -67,12 +57,12 @@ You can provide authentication for private repositories using one of the followi
 #### Mutually Exclusive Flags
 - `--scan-path` and `--scan-repository-url` are mutually exclusive. Only one can be specified at a time.
 
-### Specify Frameworks
+### Specify Scanners
 
-Scan only Terraform and Kubernetes files:
+Scan only vulnerability and misconfiguration scanners:
 
 ```sh
-prowler iac --scan-path ./my-iac-directory --frameworks terraform kubernetes
+prowler iac --scan-path ./my-iac-directory --scanners vuln misconfig
 ```
 
 ### Exclude Paths
@@ -95,4 +85,4 @@ prowler iac --scan-path ./iac --output-formats csv json html
 - For remote repository scans, authentication is optional but required for private repos.
 - CLI flags override environment variables for authentication.
 - It is ideal for CI/CD pipelines and local development environments.
-- For more details on supported frameworks and rules, see the [Checkov documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html).
+- For more details on supported scanners, see the [Trivy documentation](https://trivy.dev/latest/docs/scanner/vulnerability/).

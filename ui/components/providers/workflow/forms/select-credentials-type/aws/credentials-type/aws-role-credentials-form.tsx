@@ -1,44 +1,84 @@
-import { Divider, Select, SelectItem, Spacer } from "@nextui-org/react";
+import { Chip, Divider, Select, SelectItem, Switch } from "@nextui-org/react";
+import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CredentialsRoleHelper } from "@/components/providers/workflow";
 import { CustomInput } from "@/components/ui/custom";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AWSCredentialsRole } from "@/types";
+import { IntegrationType } from "@/types/integrations";
 
 export const AWSRoleCredentialsForm = ({
   control,
   setValue,
   externalId,
+  templateLinks,
+  type = "providers",
+  integrationType,
 }: {
   control: Control<AWSCredentialsRole>;
   setValue: UseFormSetValue<AWSCredentialsRole>;
   externalId: string;
+  templateLinks: {
+    cloudformation: string;
+    cloudformationQuickLink: string;
+    terraform: string;
+  };
+  type?: "providers" | "integrations";
+  integrationType?: IntegrationType;
 }) => {
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const defaultCredentialsType = isCloudEnv
+    ? "aws-sdk-default"
+    : "access-secret-key";
+
   const credentialsType = useWatch({
     control,
     name: ProviderCredentialFields.CREDENTIALS_TYPE,
-    defaultValue: "aws-sdk-default",
+    defaultValue: defaultCredentialsType,
   });
+
+  const [showOptionalRole, setShowOptionalRole] = useState(false);
+
+  const showRoleSection =
+    type === "providers" ||
+    (isCloudEnv && credentialsType === "aws-sdk-default") ||
+    showOptionalRole;
+
+  // Track role section visibility and ensure external_id is set
+  useEffect(() => {
+    // Set show_role_section for validation
+    setValue("show_role_section" as any, showRoleSection);
+
+    // When role section is shown, ensure external_id is set
+    // This handles both initial mount and when the section becomes visible
+    if (showRoleSection && externalId) {
+      setValue(ProviderCredentialFields.EXTERNAL_ID, externalId, {
+        shouldValidate: false,
+        shouldDirty: false,
+      });
+    }
+  }, [showRoleSection, setValue, externalId]);
 
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
-          Connect assuming IAM Role
-        </div>
-        <div className="text-sm text-default-500">
-          Please provide the information for your AWS credentials.
-        </div>
+        {type === "providers" && (
+          <div className="text-md font-bold leading-9 text-default-foreground">
+            Connect assuming IAM Role
+          </div>
+        )}
       </div>
 
-      <span className="text-xs font-bold text-default-500">Authentication</span>
+      <span className="text-xs font-bold text-default-500">
+        Specify which AWS credentials to use
+      </span>
 
       <Select
         name={ProviderCredentialFields.CREDENTIALS_TYPE}
         label="Authentication Method"
         placeholder="Select credentials type"
-        defaultSelectedKeys={["aws-sdk-default"]}
+        selectedKeys={[credentialsType || defaultCredentialsType]}
         className="mb-4"
         variant="bordered"
         onSelectionChange={(keys) =>
@@ -48,8 +88,32 @@ export const AWSRoleCredentialsForm = ({
           )
         }
       >
-        <SelectItem key="aws-sdk-default">AWS SDK default</SelectItem>
-        <SelectItem key="access-secret-key">Access & secret key</SelectItem>
+        <SelectItem
+          key="aws-sdk-default"
+          textValue={
+            isCloudEnv
+              ? "Prowler Cloud will assume your IAM role"
+              : "AWS SDK Default"
+          }
+        >
+          <div className="flex w-full items-center justify-between">
+            <span>
+              {isCloudEnv
+                ? "Prowler Cloud will assume your IAM role"
+                : "AWS SDK Default"}
+            </span>
+            {isCloudEnv && (
+              <Chip size="sm" variant="flat" color="success" className="ml-2">
+                Recommended
+              </Chip>
+            )}
+          </div>
+        </SelectItem>
+        <SelectItem key="access-secret-key" textValue="Access & Secret Key">
+          <div className="flex w-full items-center justify-between">
+            <span>Access & Secret Key</span>
+          </div>
+        </SelectItem>
       </Select>
 
       {credentialsType === "access-secret-key" && (
@@ -101,74 +165,100 @@ export const AWSRoleCredentialsForm = ({
           />
         </>
       )}
-      <Divider />
-      <span className="text-xs font-bold text-default-500">Assume Role</span>
-      <CredentialsRoleHelper />
+      <Divider className="" />
 
-      <Spacer y={2} />
+      {type === "providers" ? (
+        <span className="text-xs font-bold text-default-500">Assume Role</span>
+      ) : (
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-default-500">
+            {isCloudEnv && credentialsType === "aws-sdk-default"
+              ? "Adding a role is required"
+              : "Optionally add a role"}
+          </span>
+          <Switch
+            size="sm"
+            isSelected={showRoleSection}
+            onValueChange={setShowOptionalRole}
+            isDisabled={isCloudEnv && credentialsType === "aws-sdk-default"}
+          />
+        </div>
+      )}
 
-      <CustomInput
-        control={control}
-        name={ProviderCredentialFields.ROLE_ARN}
-        type="text"
-        label="Role ARN"
-        labelPlacement="inside"
-        placeholder="Enter the Role ARN"
-        variant="bordered"
-        isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
-        }
-      />
-      <CustomInput
-        control={control}
-        name={ProviderCredentialFields.EXTERNAL_ID}
-        type="text"
-        label="External ID"
-        labelPlacement="inside"
-        placeholder={externalId}
-        variant="bordered"
-        defaultValue={externalId}
-        isDisabled
-        isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.EXTERNAL_ID]
-        }
-      />
+      {showRoleSection && (
+        <>
+          <CredentialsRoleHelper
+            externalId={externalId}
+            templateLinks={templateLinks}
+            integrationType={integrationType}
+          />
 
-      <span className="text-xs text-default-500">Optional fields</span>
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <CustomInput
-          control={control}
-          name={ProviderCredentialFields.ROLE_SESSION_NAME}
-          type="text"
-          label="Role Session Name"
-          labelPlacement="inside"
-          placeholder="Enter the Role Session Name"
-          variant="bordered"
-          isRequired={false}
-          isInvalid={
-            !!control._formState.errors[
-              ProviderCredentialFields.ROLE_SESSION_NAME
-            ]
-          }
-        />
-        <CustomInput
-          control={control}
-          name={ProviderCredentialFields.SESSION_DURATION}
-          type="number"
-          label="Session Duration (seconds)"
-          labelPlacement="inside"
-          placeholder="Enter the session duration (default: 3600)"
-          variant="bordered"
-          isRequired={false}
-          isInvalid={
-            !!control._formState.errors[
-              ProviderCredentialFields.SESSION_DURATION
-            ]
-          }
-        />
-      </div>
+          <Divider />
+
+          <CustomInput
+            control={control}
+            name={ProviderCredentialFields.ROLE_ARN}
+            type="text"
+            label="Role ARN"
+            labelPlacement="inside"
+            placeholder="Enter the Role ARN"
+            variant="bordered"
+            isRequired={showRoleSection}
+            isInvalid={
+              !!control._formState.errors[ProviderCredentialFields.ROLE_ARN]
+            }
+          />
+          <CustomInput
+            control={control}
+            name={ProviderCredentialFields.EXTERNAL_ID}
+            type="text"
+            label="External ID"
+            labelPlacement="inside"
+            placeholder={externalId}
+            variant="bordered"
+            defaultValue={externalId}
+            isDisabled
+            isRequired
+            isInvalid={
+              !!control._formState.errors[ProviderCredentialFields.EXTERNAL_ID]
+            }
+          />
+
+          <span className="text-xs text-default-500">Optional fields</span>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <CustomInput
+              control={control}
+              name={ProviderCredentialFields.ROLE_SESSION_NAME}
+              type="text"
+              label="Role session name"
+              labelPlacement="inside"
+              placeholder="Enter the role session name"
+              variant="bordered"
+              isRequired={false}
+              isInvalid={
+                !!control._formState.errors[
+                  ProviderCredentialFields.ROLE_SESSION_NAME
+                ]
+              }
+            />
+            <CustomInput
+              control={control}
+              name={ProviderCredentialFields.SESSION_DURATION}
+              type="number"
+              label="Session duration (seconds)"
+              labelPlacement="inside"
+              placeholder="Enter the session duration (default: 3600 seconds)"
+              variant="bordered"
+              isRequired={false}
+              isInvalid={
+                !!control._formState.errors[
+                  ProviderCredentialFields.SESSION_DURATION
+                ]
+              }
+            />
+          </div>
+        </>
+      )}
     </>
   );
 };

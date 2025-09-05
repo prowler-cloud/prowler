@@ -223,6 +223,108 @@ def check_full_service_access(service: str, policy: dict) -> bool:
     return all_target_service_actions.issubset(actions_allowed_on_all_resources)
 
 
+def has_public_principal(statement: dict) -> bool:
+    """
+    Check if a policy statement has a public principal.
+
+    Args:
+        statement (dict): IAM policy statement
+
+    Returns:
+        bool: True if the statement has a public principal, False otherwise
+    """
+    principal = statement.get("Principal", "")
+    return (
+        "*" in principal
+        or "arn:aws:iam::*:root" in principal
+        or (
+            isinstance(principal, dict)
+            and (
+                "*" in principal.get("AWS", "")
+                or "arn:aws:iam::*:root" in principal.get("AWS", "")
+                or (
+                    isinstance(principal.get("AWS"), list)
+                    and (
+                        "*" in principal["AWS"]
+                        or "arn:aws:iam::*:root" in principal["AWS"]
+                    )
+                )
+                or "*" in principal.get("CanonicalUser", "")
+                or "arn:aws:iam::*:root" in principal.get("CanonicalUser", "")
+            )
+        )
+    )
+
+
+def has_restrictive_source_arn_condition(
+    statement: dict, source_account: str = ""
+) -> bool:
+    """
+    Check if a policy statement has a restrictive aws:SourceArn condition.
+
+    A SourceArn condition is considered restrictive if:
+    1. It doesn't contain overly permissive wildcards (like "*" or "arn:aws:s3:::*")
+    2. When source_account is provided, the ARN either contains no account field (like S3 buckets)
+       or contains the source_account
+
+    Args:
+        statement (dict): IAM policy statement
+        source_account (str): The account to check restrictions for (optional)
+
+    Returns:
+        bool: True if the statement has a restrictive aws:SourceArn condition, False otherwise
+    """
+    if "Condition" not in statement:
+        return False
+
+    for condition_operator in statement["Condition"]:
+        for condition_key, condition_value in statement["Condition"][
+            condition_operator
+        ].items():
+            if condition_key.lower() == "aws:sourcearn":
+                arn_values = (
+                    condition_value
+                    if isinstance(condition_value, list)
+                    else [condition_value]
+                )
+
+                for arn_value in arn_values:
+                    if (
+                        arn_value == "*"  # Global wildcard
+                        or arn_value.count("*")
+                        >= 3  # Too many wildcards (e.g., arn:aws:*:*:*:*)
+                        or (
+                            isinstance(arn_value, str)
+                            and (
+                                arn_value.endswith(
+                                    ":::*"
+                                )  # Service-wide wildcard (e.g., arn:aws:s3:::*)
+                                or arn_value.endswith(
+                                    ":*"
+                                )  # Resource wildcard (e.g., arn:aws:sns:us-east-1:123456789012:*)
+                            )
+                        )
+                    ):
+                        return False
+
+                    if source_account:
+                        arn_parts = arn_value.split(":")
+                        if len(arn_parts) > 4 and arn_parts[4] and arn_parts[4] != "*":
+                            if arn_parts[4].isdigit():
+                                if source_account not in arn_value:
+                                    return False
+                            else:
+                                if arn_parts[4] != source_account:
+                                    return False
+                        elif len(arn_parts) > 4 and arn_parts[4] == "*":
+                            return False
+                        # else: ARN doesn't contain account field (like S3 bucket), so it's restrictive
+
+                return True
+
+    return False
+
+
 def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
     """Check if the policy condition is coming from a private IP address.
 
@@ -303,61 +405,49 @@ def is_policy_public(
         for statement in policy.get("Statement", []):
             # Only check allow statements
             if statement["Effect"] == "Allow":
+                has_public_access = has_public_principal(statement)
+
                 principal = statement.get("Principal", "")
-                if (
-                    "*" in principal
-                    or "arn:aws:iam::*:root" in principal
-                    or (
-                        isinstance(principal, dict)
-                        and (
-                            "*" in principal.get("AWS", "")
-                            or "arn:aws:iam::*:root" in principal.get("AWS", "")
-                            or (
-                                isinstance(principal.get("AWS"), str)
-                                and source_account
-                                and not is_cross_account_allowed
-                                and source_account not in principal.get("AWS", "")
-                            )
-                            or (
-                                isinstance(principal.get("AWS"), list)
-                                and (
-                                    "*" in principal["AWS"]
-                                    or "arn:aws:iam::*:root" in principal["AWS"]
-                                    or (
-                                        source_account
-                                        and not is_cross_account_allowed
-                                        and not any(
-                                            source_account in principal_aws
-                                            for principal_aws in principal["AWS"]
-                                        )
-                                    )
-                                )
-                            )
-                            or "*" in principal.get("CanonicalUser", "")
-                            or "arn:aws:iam::*:root"
-                            in principal.get("CanonicalUser", "")
-                            or check_cross_service_confused_deputy
-                            and (
-                                # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
-                                (
-                                    ".amazonaws.com" in principal.get("Service", "")
-                                    or ".amazon.com" in principal.get("Service", "")
-                                    or "*" in principal.get("Service", "")
-                                )
-                                and (
-                                    "secretsmanager.amazonaws.com"
-                                    not in principal.get(
-                                        "Service", ""
-                                    )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
-                                    or "eks.amazonaws.com"
-                                    not in principal.get(
-                                        "Service", ""
-                                    )  # AWS ensures that resources called by EKS are executed in the same AWS account
-                                )
-                            )
+                if not has_public_access and isinstance(principal, dict):
+                    # Check for cross-account access when not allowed
+                    if (
+                        isinstance(principal.get("AWS"), str)
+                        and source_account
+                        and not is_cross_account_allowed
+                        and source_account not in principal.get("AWS", "")
+                    ) or (
+                        isinstance(principal.get("AWS"), list)
+                        and source_account
+                        and not is_cross_account_allowed
+                        and not any(
+                            source_account in principal_aws
+                            for principal_aws in principal["AWS"]
                         )
-                    )
-                ) and (
+                    ):
+                        has_public_access = True
+
+                    # Check for cross-service confused deputy
+                    if check_cross_service_confused_deputy and (
+                        # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
+                        (
+                            ".amazonaws.com" in principal.get("Service", "")
+                            or ".amazon.com" in principal.get("Service", "")
+                            or "*" in principal.get("Service", "")
+                        )
+                        and (
+                            "secretsmanager.amazonaws.com"
+                            not in principal.get(
+                                "Service", ""
+                            )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
+                            or "eks.amazonaws.com"
+                            not in principal.get(
+                                "Service", ""
+                            )  # AWS ensures that resources called by EKS are executed in the same AWS account
+                        )
+                    ):
+                        has_public_access = True
+
+                if has_public_access and (
                     not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
                     or (
                         statement.get(
@@ -498,9 +588,29 @@ def is_condition_block_restrictive(
                                     "aws:sourcevpc" != value
                                     and "aws:sourcevpce" != value
                                 ):
-                                    if source_account not in item:
-                                        is_condition_key_restrictive = False
-                                        break
+                                    if value == "aws:sourcearn":
+                                        # Use the specialized function to properly validate SourceArn restrictions
+                                        # Create a minimal statement to test with our function
+                                        test_statement = {
+                                            "Condition": {
+                                                condition_operator: {
+                                                    value: condition_statement[
+                                                        condition_operator
+                                                    ][value]
+                                                }
+                                            }
+                                        }
+                                        is_condition_key_restrictive = (
+                                            has_restrictive_source_arn_condition(
+                                                test_statement, source_account
+                                            )
+                                        )
+                                        if not is_condition_key_restrictive:
+                                            break
+                                    else:
+                                        if source_account not in item:
+                                            is_condition_key_restrictive = False
+                                            break
 
                         if is_condition_key_restrictive:
                             is_condition_valid = True
@@ -516,11 +626,31 @@ def is_condition_block_restrictive(
                             if is_cross_account_allowed:
                                 is_condition_valid = True
                             else:
-                                if (
-                                    source_account
-                                    in condition_statement[condition_operator][value]
-                                ):
-                                    is_condition_valid = True
+                                if value == "aws:sourcearn":
+                                    # Use the specialized function to properly validate SourceArn restrictions
+                                    # Create a minimal statement to test with our function
+                                    test_statement = {
+                                        "Condition": {
+                                            condition_operator: {
+                                                value: condition_statement[
+                                                    condition_operator
+                                                ][value]
+                                            }
+                                        }
+                                    }
+                                    is_condition_valid = (
+                                        has_restrictive_source_arn_condition(
+                                            test_statement, source_account
+                                        )
+                                    )
+                                else:
+                                    if (
+                                        source_account
+                                        in condition_statement[condition_operator][
+                                            value
+                                        ]
+                                    ):
+                                        is_condition_valid = True
 
     return is_condition_valid
 

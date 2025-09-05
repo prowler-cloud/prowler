@@ -254,7 +254,7 @@ class AwsProvider(Provider):
             )
             # Assume the IAM Role
             logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
-            assumed_role_credentials = self.assume_role(
+            assumed_role_credentials = AwsProvider.assume_role(
                 self._session.current_session,
                 assumed_role_information,
             )
@@ -267,8 +267,10 @@ class AwsProvider(Provider):
             self._assumed_role_configuration = assumed_role_configuration
 
             # Store a new current session using the assumed IAM Role
-            self._session.current_session = self.setup_assumed_session(
-                assumed_role_configuration.credentials
+            self._session.current_session = AwsProvider.setup_assumed_session(
+                self._identity,
+                assumed_role_configuration,
+                self._session,
             )
             logger.info("Audit session is the new session created assuming an IAM Role")
 
@@ -316,8 +318,10 @@ class AwsProvider(Provider):
                 credentials=organizations_assumed_role_credentials,
             )
             # Get a new session using the AWS Organizations IAM Role assumed
-            aws_organizations_session = self.setup_assumed_session(
-                organizations_assumed_role_configuration.credentials
+            aws_organizations_session = AwsProvider.setup_assumed_session(
+                self._identity,
+                organizations_assumed_role_configuration,
+                self._session,
             )
             logger.info(
                 "Generated new session for to get the AWS Organizations metadata"
@@ -469,8 +473,8 @@ class AwsProvider(Provider):
 
         return profile_region
 
+    @staticmethod
     def set_identity(
-        self,
         caller_identity: AWSCallerIdentity,
         profile: str,
         regions: set,
@@ -576,9 +580,11 @@ class AwsProvider(Provider):
                 file=pathlib.Path(__file__).name,
             )
 
+    @staticmethod
     def setup_assumed_session(
-        self,
-        assumed_role_credentials: AWSCredentials,
+        identity: AWSIdentityInfo,
+        assumed_role_configuration: AWSAssumeRoleConfiguration,
+        session: AWSSession,
     ) -> Session:
         """
         Sets up an assumed session using the provided assumed role credentials.
@@ -588,7 +594,9 @@ class AwsProvider(Provider):
         refreshing of the assumed role credentials.
 
         Args:
+            identity (AWSIdentityInfo): The identity information.
             assumed_role_credentials (AWSCredentials): The assumed role credentials.
+            session (AWSSession): The AWS provider session.
 
         Returns:
             Session: The assumed session.
@@ -607,20 +615,22 @@ class AwsProvider(Provider):
             # that needs to be a method without arguments that retrieves a new set of fresh credentials
             # assuming the role again.
             assumed_refreshable_credentials = RefreshableCredentials(
-                access_key=assumed_role_credentials.aws_access_key_id,
-                secret_key=assumed_role_credentials.aws_secret_access_key,
-                token=assumed_role_credentials.aws_session_token,
-                expiry_time=assumed_role_credentials.expiration,
-                refresh_using=self.refresh_credentials,
+                access_key=assumed_role_configuration.credentials.aws_access_key_id,
+                secret_key=assumed_role_configuration.credentials.aws_secret_access_key,
+                token=assumed_role_configuration.credentials.aws_session_token,
+                expiry_time=assumed_role_configuration.credentials.expiration,
+                refresh_using=lambda: AwsProvider.refresh_credentials(
+                    assumed_role_configuration, session
+                ),
                 method="sts-assume-role",
             )
 
             # Here we need the botocore session since it needs to use refreshable credentials
             assumed_session = BotocoreSession()
             assumed_session._credentials = assumed_refreshable_credentials
-            assumed_session.set_config_variable("region", self._identity.profile_region)
+            assumed_session.set_config_variable("region", identity.profile_region)
             return Session(
-                profile_name=self._identity.profile,
+                profile_name=identity.profile,
                 botocore_session=assumed_session,
             )
         except Exception as error:
@@ -630,7 +640,10 @@ class AwsProvider(Provider):
             raise error
 
     # TODO: maybe this can be improved with botocore.credentials.DeferredRefreshableCredentials https://stackoverflow.com/a/75576540
-    def refresh_credentials(self) -> dict:
+    @staticmethod
+    def refresh_credentials(
+        assumed_role_configuration: AWSAssumeRoleConfiguration, session: AWSSession
+    ) -> dict:
         """
         Refresh credentials method using AWS STS Assume Role.
 
@@ -640,7 +653,7 @@ class AwsProvider(Provider):
         logger.info("Refreshing assumed credentials...")
 
         # Since this method does not accept arguments, we need to get the original_session and the assumed role credentials
-        current_credentials = self._assumed_role_configuration.credentials
+        current_credentials = assumed_role_configuration.credentials
         refreshed_credentials = {
             "access_key": current_credentials.aws_access_key_id,
             "secret_key": current_credentials.aws_secret_access_key,
@@ -655,8 +668,8 @@ class AwsProvider(Provider):
         if datetime.fromisoformat(refreshed_credentials["expiry_time"]) <= datetime.now(
             get_localzone()
         ):
-            assume_role_response = self.assume_role(
-                self._session.original_session, self._assumed_role_configuration.info
+            assume_role_response = AwsProvider.assume_role(
+                session.original_session, assumed_role_configuration.info
             )
             refreshed_credentials = dict(
                 # Keys of the dict has to be the same as those that are being searched in the parent class
@@ -991,7 +1004,8 @@ class AwsProvider(Provider):
         mfa_TOTP = input("Enter MFA code: ")
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
-    def set_session_config(self, retries_max_attempts: int) -> Config:
+    @staticmethod
+    def set_session_config(retries_max_attempts: int) -> Config:
         """
         set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
 

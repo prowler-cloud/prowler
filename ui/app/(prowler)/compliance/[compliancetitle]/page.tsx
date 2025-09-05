@@ -32,6 +32,8 @@ interface ComplianceDetailSearchParams {
   scanData?: string;
   "filter[region__in]"?: string;
   "filter[cis_profile_level]"?: string;
+  page?: string;
+  pageSize?: string;
 }
 
 const ComplianceIconSmall = ({
@@ -79,8 +81,13 @@ export default async function ComplianceDetail({
   const cisProfileFilter = searchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
-  // Create a key that includes region filter for Suspense
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
+  const paramsForKey = Object.fromEntries(
+    Object.entries(searchParams).filter(
+      ([key]) => key !== "page" && key !== "pageSize",
+    ),
+  );
+  const searchParamsKey = JSON.stringify(paramsForKey);
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version

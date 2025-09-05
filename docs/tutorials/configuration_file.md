@@ -1,10 +1,12 @@
 # Configuration File
+
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
+
 ```
 prowler/config/config.yaml
 ```
 
-Also you can input a custom configuration file using the `--config-file` argument.
+Additionally, you can input a custom configuration file using the `--config-file` argument.
 
 ## AWS
 
@@ -78,6 +80,12 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
+| `vm_sufficient_daily_backup_retention_period`                 | `vm_backup_min_daily_retention_days`             | Integer         |
+| `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
+| `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
+| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_threshold`    | Float           |
+| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_minutes`      | Integer         |
+| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_actions`      | List of Strings |
 
 
 ## GCP
@@ -478,6 +486,58 @@ azure:
     [
       "1.2",
       "1.3"
+    ]
+
+  # Azure Virtual Machines
+  # azure.vm_desired_sku_size
+  # List of desired VM SKU sizes that are allowed in the organization
+  desired_vm_sku_sizes:
+    [
+      "Standard_A8_v2",
+      "Standard_DS3_v2",
+      "Standard_D4s_v3",
+    ]
+  # Azure VM Backup Configuration
+  # azure.vm_sufficient_daily_backup_retention_period
+  vm_backup_min_daily_retention_days: 7
+
+  # Azure API Management Threat Detection Configuration
+  # azure.apim_threat_detection_llm_jacking
+  apim_threat_detection_llm_jacking_threshold: 0.1
+  apim_threat_detection_llm_jacking_minutes: 1440
+  apim_threat_detection_llm_jacking_actions:
+    [
+      # OpenAI API endpoints
+      "ImageGenerations_Create",
+      "ChatCompletions_Create",
+      "Completions_Create",
+      "Embeddings_Create",
+      "FineTuning_Jobs_Create",
+      "Models_List",
+
+      # Azure OpenAI endpoints
+      "Deployments_List",
+      "Deployments_Get",
+      "Deployments_Create",
+      "Deployments_Delete",
+
+      # Anthropic endpoints
+      "Messages_Create",
+      "Claude_Create",
+
+      # Google AI endpoints
+      "GenerateContent",
+      "GenerateText",
+      "GenerateImage",
+
+      # Meta AI endpoints
+      "Llama_Create",
+      "CodeLlama_Create",
+
+      # Other LLM endpoints
+      "Gemini_Generate",
+      "Claude_Generate",
+      "Llama_Generate"
     ]
 
 # GCP Configuration

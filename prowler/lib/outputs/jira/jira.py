@@ -1,5 +1,6 @@
 import base64
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict
 
@@ -28,10 +29,22 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraNoTokenError,
     JiraRefreshTokenError,
     JiraRefreshTokenResponseError,
+    JiraRequiredCustomFieldsError,
     JiraSendFindingsResponseError,
     JiraTestConnectionError,
 )
 from prowler.providers.common.models import Connection
+
+
+@dataclass
+class JiraConnection(Connection):
+    """
+    Represents a Jira connection object.
+    Attributes:
+        projects (dict): Dictionary of projects in Jira.
+    """
+
+    projects: dict = None
 
 
 class Jira:
@@ -66,6 +79,7 @@ class Jira:
         - test_connection: Test the connection to Jira and return a Connection object
         - get_projects: Get the projects from Jira
         - get_available_issue_types: Get the available issue types for a project
+        - get_available_issue_labels: Get the available labels for a project
         - send_findings: Send the findings to Jira and create an issue
 
     Raises:
@@ -364,7 +378,7 @@ class Jira:
                     )
             else:
                 response_error = f"Failed to get cloud id: {response.status_code} - {response.json()}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraGetCloudIDResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -441,7 +455,7 @@ class Jira:
                 return self._access_token
             else:
                 response_error = f"Failed to refresh access token: {response.status_code} - {response.json()}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraRefreshTokenResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -462,7 +476,7 @@ class Jira:
         api_token: str = None,
         domain: str = None,
         raise_on_exception: bool = True,
-    ) -> Connection:
+    ) -> JiraConnection:
         """Test the connection to Jira
 
         Args:
@@ -475,7 +489,7 @@ class Jira:
             - raise_on_exception: Whether to raise an exception or not
 
         Returns:
-            - Connection: The connection object
+            - JiraConnection: The connection object
 
         Raises:
             - JiraGetCloudIDNoResourcesError: No resources were found in Jira when getting the cloud id
@@ -483,6 +497,8 @@ class Jira:
             - JiraGetCloudIDError: Failed to get the cloud ID from Jira
             - JiraAuthenticationError: Failed to authenticate
             - JiraTestConnectionError: Failed to test the connection
+            - JiraNoProjectsError: No projects found in Jira
+            - JiraGetProjectsResponseError: Failed to get projects from Jira, response code did not match 200
         """
         try:
             jira = Jira(
@@ -493,60 +509,51 @@ class Jira:
                 api_token=api_token,
                 domain=domain,
             )
-            access_token = jira.get_access_token()
+            projects = jira.get_projects()
 
-            if not access_token:
-                return ValueError("Failed to get access token")
-
-            if jira.using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}"}
-
-            response = requests.get(
-                f"https://api.atlassian.com/ex/jira/{jira.cloud_id}/rest/api/3/myself",
-                headers=headers,
-            )
-
-            if response.status_code == 200:
-                return Connection(is_connected=True)
-            else:
-                return Connection(is_connected=False, error=response.json())
-        except JiraGetCloudIDNoResourcesError as no_resources_error:
+            return JiraConnection(is_connected=True, projects=projects)
+        except JiraNoProjectsError as no_projects_error:
             logger.error(
-                f"{no_resources_error.__class__.__name__}[{no_resources_error.__traceback__.tb_lineno}]: {no_resources_error}"
+                f"{no_projects_error.__class__.__name__}[{no_projects_error.__traceback__.tb_lineno}]: {no_projects_error}"
             )
             if raise_on_exception:
-                raise no_resources_error
-            return Connection(error=no_resources_error)
+                raise no_projects_error
+            return JiraConnection(error=no_projects_error)
         except JiraGetCloudIDResponseError as response_error:
             logger.error(
                 f"{response_error.__class__.__name__}[{response_error.__traceback__.tb_lineno}]: {response_error}"
             )
             if raise_on_exception:
                 raise response_error
-            return Connection(error=response_error)
+            return JiraConnection(error=response_error)
         except JiraGetCloudIDError as cloud_id_error:
             logger.error(
                 f"{cloud_id_error.__class__.__name__}[{cloud_id_error.__traceback__.tb_lineno}]: {cloud_id_error}"
             )
             if raise_on_exception:
                 raise cloud_id_error
-            return Connection(error=cloud_id_error)
+            return JiraConnection(error=cloud_id_error)
         except JiraAuthenticationError as auth_error:
             logger.error(
                 f"{auth_error.__class__.__name__}[{auth_error.__traceback__.tb_lineno}]: {auth_error}"
             )
             if raise_on_exception:
                 raise auth_error
-            return Connection(error=auth_error)
+            return JiraConnection(error=auth_error)
         except JiraBasicAuthError as basic_auth_error:
             logger.error(
                 f"{basic_auth_error.__class__.__name__}[{basic_auth_error.__traceback__.tb_lineno}]: {basic_auth_error}"
             )
             if raise_on_exception:
                 raise basic_auth_error
-            return Connection(error=basic_auth_error)
+            return JiraConnection(error=basic_auth_error)
+        except JiraGetProjectsResponseError as projects_response_error:
+            logger.error(
+                f"{projects_response_error.__class__.__name__}[{projects_response_error.__traceback__.tb_lineno}]: {projects_response_error}"
+            )
+            if raise_on_exception:
+                raise projects_response_error
+            return JiraConnection(error=projects_response_error)
         except Exception as error:
             logger.error(f"Failed to test connection: {error}")
             if raise_on_exception:
@@ -554,7 +561,7 @@ class Jira:
                     message="Failed to test connection on the Jira integration",
                     file=os.path.basename(__file__),
                 )
-            return Connection(is_connected=False, error=error)
+            return JiraConnection(is_connected=False, error=error)
 
     def get_projects(self) -> Dict[str, str]:
         """Get the projects from Jira
@@ -599,7 +606,7 @@ class Jira:
                 return projects
             else:
                 logger.error(
-                    f"Failed to get projects: {response.status_code} - {response.json()}"
+                    f"Failed to get projects: {response.status_code} - {response.text}"
                 )
                 raise JiraGetProjectsResponseError(
                     message="Failed to get projects from Jira",
@@ -665,8 +672,8 @@ class Jira:
                 issue_types = response.json()["projects"][0]["issuetypes"]
                 return [issue_type["name"] for issue_type in issue_types]
             else:
-                response_error = f"Failed to get available issue types: {response.status_code} - {response.json()}"
-                logger.warning(response_error)
+                response_error = f"Failed to get available issue types: {response.status_code} - {response.text}"
+                logger.error(response_error)
                 raise JiraGetAvailableIssueTypesResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -678,6 +685,92 @@ class Jira:
             logger.error(f"Failed to get available issue types: {e}")
             raise JiraGetAvailableIssueTypesError(
                 message="Failed to get available issue types",
+                file=os.path.basename(__file__),
+            )
+
+    def get_metadata(self) -> dict:
+        """Get the metadata from Jira
+
+        Returns:
+            - dict: The projects and issue types from Jira as a dictionary, the projects format is {"KEY": {"name": "NAME", "issue_types": ["ISSUE_TYPE_1", "ISSUE_TYPE_2"]}}
+        """
+        try:
+            access_token = self.get_access_token()
+
+            if not access_token:
+                return ValueError("Failed to get access token")
+
+            if self._using_basic_auth:
+                headers = {"Authorization": f"Basic {access_token}"}
+            else:
+                headers = {"Authorization": f"Bearer {access_token}"}
+
+            response = requests.get(
+                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
+                headers=headers,
+            )
+            if response.status_code == 200:
+                projects_data = {}
+                projects_list = response.json()
+                if not projects_list:
+                    logger.error("No projects found")
+                    raise JiraNoProjectsError(
+                        message="No projects found in Jira",
+                        file=os.path.basename(__file__),
+                    )
+                else:
+                    for project in projects_list:
+                        project_response = requests.get(
+                            f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project['key']}&expand=projects.issuetypes.fields",
+                            headers=headers,
+                        )
+                        if project_response.status_code == 200:
+                            project_metadata = project_response.json()
+                            if len(project_metadata["projects"]) == 0:
+                                logger.error(
+                                    f"No project metadata found for project {project['key']}, setting empty issue types"
+                                )
+                                issue_types = []
+                            else:
+                                issue_types = [
+                                    issue_type["name"]
+                                    for issue_type in project_metadata["projects"][0][
+                                        "issuetypes"
+                                    ]
+                                ]
+                        else:
+                            raise JiraGetAvailableIssueTypesResponseError(
+                                message="Failed to get available issue types from Jira",
+                                file=os.path.basename(__file__),
+                            )
+                        projects_data[project["key"]] = {
+                            "name": project["name"],
+                            "issue_types": issue_types,
+                        }
+                    return projects_data
+            else:
+                logger.error(
+                    f"Failed to get projects: {response.status_code} - {response.text}"
+                )
+                raise JiraGetProjectsResponseError(
+                    message="Failed to get projects from Jira",
+                    file=os.path.basename(__file__),
+                )
+        except JiraNoProjectsError as no_projects_error:
+            raise no_projects_error
+        except JiraGetAvailableIssueTypesResponseError as issue_types_error:
+            raise JiraGetProjectsError(
+                message=f"Failed to get projects and issue types from Jira: {issue_types_error}",
+                file=os.path.basename(__file__),
+            )
+        except JiraRefreshTokenError as refresh_error:
+            raise refresh_error
+        except JiraRefreshTokenResponseError as response_error:
+            raise response_error
+        except Exception as e:
+            logger.error(f"Failed to get projects: {e}")
+            raise JiraGetProjectsError(
+                message="Failed to get projects from Jira",
                 file=os.path.basename(__file__),
             )
 
@@ -697,12 +790,38 @@ class Jira:
             return "#FF0000"
         if status == "MUTED":
             return "#FFA500"
+        if status == "MANUAL":
+            return "#FFFF00"
+        return "#000000"
+
+    @staticmethod
+    def get_severity_color(severity: str) -> str:
+        """Get the color from the severity
+
+        Args:
+            - severity: The severity of the finding
+
+        Returns:
+            - str: The color of the severity
+        """
+        if severity == "critical":
+            return "#FF0000"
+        if severity == "high":
+            return "#FFA500"
+        if severity == "medium":
+            return "#FFFF00"
+        if severity == "low":
+            return "#008000"
+        if severity == "informational":
+            return "#0000FF"
+        return "#000000"  # Default black color for unknown severities
 
     @staticmethod
     def get_adf_description(
         check_id: str = None,
         check_title: str = None,
         severity: str = None,
+        severity_color: str = None,
         status: str = None,
         status_color: str = None,
         status_extended: str = None,
@@ -713,7 +832,678 @@ class Jira:
         risk: str = None,
         recommendation_text: str = None,
         recommendation_url: str = None,
+        remediation_code_native_iac: str = None,
+        remediation_code_terraform: str = None,
+        remediation_code_cli: str = None,
+        remediation_code_other: str = None,
+        resource_tags: dict = None,
+        compliance: dict = None,
+        finding_url: str = None,
+        tenant_info: str = None,
     ) -> dict:
+        table_rows = [
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Check Id",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": check_id,
+                                        "marks": [{"type": "code"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Check Title",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": check_title,
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Severity",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": severity,
+                                        "marks": [
+                                            {"type": "strong"},
+                                            {
+                                                "type": "backgroundColor",
+                                                "attrs": {
+                                                    "color": severity_color,
+                                                },
+                                            },
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Status",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": status,
+                                        "marks": [
+                                            {"type": "strong"},
+                                            {
+                                                "type": "textColor",
+                                                "attrs": {"color": status_color},
+                                            },
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Status Extended",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": status_extended,
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Provider",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": provider,
+                                        "marks": [{"type": "code"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Region",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": region,
+                                        "marks": [{"type": "code"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Resource UID",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": resource_uid,
+                                        "marks": [{"type": "code"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Resource Name",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": resource_name,
+                                        "marks": [{"type": "code"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Risk",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": risk,
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            },
+        ]
+
+        # Add resource tags row only if there are tags
+        if resource_tags:
+            tags_text = ", ".join([f"{k}={v}" for k, v in resource_tags.items()])
+            table_rows.append(
+                {
+                    "type": "tableRow",
+                    "content": [
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [1]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Resource Tags",
+                                            "marks": [{"type": "strong"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [3]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": tags_text,
+                                            "marks": [{"type": "code"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+
+        # Add compliance row only if there are compliance mappings
+        if compliance:
+            compliance_text = []
+            for framework, requirements in compliance.items():
+                if requirements:
+                    requirements_str = ", ".join(requirements)
+                    compliance_text.append(f"{framework}: {requirements_str}")
+
+            if compliance_text:
+                table_rows.append(
+                    {
+                        "type": "tableRow",
+                        "content": [
+                            {
+                                "type": "tableCell",
+                                "attrs": {"colwidth": [1]},
+                                "content": [
+                                    {
+                                        "type": "paragraph",
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": "Compliance",
+                                                "marks": [{"type": "strong"}],
+                                            }
+                                        ],
+                                    }
+                                ],
+                            },
+                            {
+                                "type": "tableCell",
+                                "attrs": {"colwidth": [3]},
+                                "content": [
+                                    {
+                                        "type": "paragraph",
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": "; ".join(compliance_text),
+                                                "marks": [{"type": "code"}],
+                                            }
+                                        ],
+                                    }
+                                ],
+                            },
+                        ],
+                    }
+                )
+
+        # Add recommendation row
+        table_rows.append(
+            {
+                "type": "tableRow",
+                "content": [
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [1]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "Recommendation",
+                                        "marks": [{"type": "strong"}],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "type": "tableCell",
+                        "attrs": {"colwidth": [3]},
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": recommendation_text + " ",
+                                    },
+                                    {
+                                        "type": "text",
+                                        "text": recommendation_url,
+                                        "marks": [
+                                            {
+                                                "type": "link",
+                                                "attrs": {"href": recommendation_url},
+                                            }
+                                        ],
+                                    },
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            }
+        )
+
+        # Add remediation code rows only if they have content
+        remediation_codes = [
+            ("Native IaC", remediation_code_native_iac),
+            ("Terraform", remediation_code_terraform),
+            ("CLI", remediation_code_cli),
+            ("Other", remediation_code_other),
+        ]
+
+        for code_type, code_value in remediation_codes:
+            if code_value and code_value.strip():
+                table_rows.append(
+                    {
+                        "type": "tableRow",
+                        "content": [
+                            {
+                                "type": "tableCell",
+                                "attrs": {"colwidth": [1]},
+                                "content": [
+                                    {
+                                        "type": "paragraph",
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": f"Remediation {code_type}",
+                                                "marks": [{"type": "strong"}],
+                                            }
+                                        ],
+                                    }
+                                ],
+                            },
+                            {
+                                "type": "tableCell",
+                                "attrs": {"colwidth": [3]},
+                                "content": [
+                                    {
+                                        "type": "paragraph",
+                                        "content": [
+                                            {
+                                                "type": "text",
+                                                "text": code_value,
+                                                "marks": [{"type": "code"}],
+                                            }
+                                        ],
+                                    }
+                                ],
+                            },
+                        ],
+                    }
+                )
+
+        if finding_url:
+            table_rows.append(
+                {
+                    "type": "tableRow",
+                    "content": [
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [1]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Finding URL",
+                                            "marks": [{"type": "strong"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [3]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": finding_url,
+                                            "marks": [
+                                                {
+                                                    "type": "link",
+                                                    "attrs": {"href": finding_url},
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+
+        if tenant_info:
+            table_rows.append(
+                {
+                    "type": "tableRow",
+                    "content": [
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [1]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Tenant Info",
+                                            "marks": [{"type": "strong"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [3]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": tenant_info,
+                                            "marks": [{"type": "code"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+
         return {
             "type": "doc",
             "version": 1,
@@ -730,430 +1520,7 @@ class Jira:
                 {
                     "type": "table",
                     "attrs": {"layout": "full-width"},
-                    "content": [
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Check Id",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": check_id,
-                                                    "marks": [{"type": "code"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Check Title",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": check_title,
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Severity",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": severity,
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Status",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": status,
-                                                    "marks": [
-                                                        {"type": "strong"},
-                                                        {
-                                                            "type": "textColor",
-                                                            "attrs": {
-                                                                "color": status_color
-                                                            },
-                                                        },
-                                                    ],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Status Extended",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": status_extended,
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Provider",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": provider,
-                                                    "marks": [{"type": "code"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Region",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": region,
-                                                    "marks": [{"type": "code"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Resource UID",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": resource_uid,
-                                                    "marks": [{"type": "code"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Resource Name",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": resource_name,
-                                                    "marks": [{"type": "code"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Risk",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": risk,
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                        {
-                            "type": "tableRow",
-                            "content": [
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [1]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": "Recommendation",
-                                                    "marks": [{"type": "strong"}],
-                                                }
-                                            ],
-                                        }
-                                    ],
-                                },
-                                {
-                                    "type": "tableCell",
-                                    "attrs": {"colwidth": [3]},
-                                    "content": [
-                                        {
-                                            "type": "paragraph",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": recommendation_text + " ",
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "text": recommendation_url,
-                                                    "marks": [
-                                                        {
-                                                            "type": "link",
-                                                            "attrs": {
-                                                                "href": recommendation_url
-                                                            },
-                                                        }
-                                                    ],
-                                                },
-                                            ],
-                                        }
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
+                    "content": table_rows,
                 },
             ],
         }
@@ -1163,6 +1530,9 @@ class Jira:
         findings: list[Finding] = None,
         project_key: str = None,
         issue_type: str = None,
+        issue_labels: list[str] = None,
+        finding_url: str = None,
+        tenant_info: str = None,
     ):
         """
         Send the findings to Jira
@@ -1171,12 +1541,16 @@ class Jira:
             - findings: The findings to send
             - project_key: The project key
             - issue_type: The issue type
+            - issue_labels: The issue labels
+            - finding_url: The finding URL
+            - tenant_info: The tenant info
 
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
             - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
             - JiraCreateIssueError: Failed to create an issue in Jira
             - JiraSendFindingsResponseError: Failed to send the findings to Jira
+            - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
         """
         try:
             access_token = self.get_access_token()
@@ -1217,10 +1591,14 @@ class Jira:
 
             for finding in findings:
                 status_color = self.get_color_from_status(finding.status.value)
+                severity_color = self.get_severity_color(
+                    finding.metadata.Severity.value.lower()
+                )
                 adf_description = self.get_adf_description(
                     check_id=finding.metadata.CheckID,
                     check_title=finding.metadata.CheckTitle,
                     severity=finding.metadata.Severity.value.upper(),
+                    severity_color=severity_color,
                     status=finding.status.value,
                     status_color=status_color,
                     status_extended=finding.status_extended,
@@ -1231,6 +1609,14 @@ class Jira:
                     risk=finding.metadata.Risk,
                     recommendation_text=finding.metadata.Remediation.Recommendation.Text,
                     recommendation_url=finding.metadata.Remediation.Recommendation.Url,
+                    remediation_code_native_iac=finding.metadata.Remediation.Code.NativeIaC,
+                    remediation_code_terraform=finding.metadata.Remediation.Code.Terraform,
+                    remediation_code_cli=finding.metadata.Remediation.Code.CLI,
+                    remediation_code_other=finding.metadata.Remediation.Code.Other,
+                    resource_tags=finding.resource_tags,
+                    compliance=finding.compliance,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
                 )
                 payload = {
                     "fields": {
@@ -1240,6 +1626,8 @@ class Jira:
                         "issuetype": {"name": issue_type},
                     }
                 }
+                if issue_labels:
+                    payload["fields"]["labels"] = issue_labels
 
                 response = requests.post(
                     f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
@@ -1248,13 +1636,51 @@ class Jira:
                 )
 
                 if response.status_code != 201:
-                    response_error = f"Failed to send finding: {response.status_code} - {response.json()}"
-                    logger.warning(response_error)
+                    try:
+                        response_json = response.json()
+                    except (ValueError, requests.exceptions.JSONDecodeError):
+                        response_error = f"Failed to send finding: {response.status_code} - {response.text}"
+                        logger.error(response_error)
+                        raise JiraSendFindingsResponseError(
+                            message=response_error, file=os.path.basename(__file__)
+                        )
+
+                    # Check if the error is due to required custom fields
+                    if response.status_code == 400 and "errors" in response_json:
+                        errors = response_json.get("errors", {})
+                        # Look for custom field errors (fields starting with "customfield_")
+                        custom_field_errors = {
+                            k: v
+                            for k, v in errors.items()
+                            if k.startswith("customfield_")
+                        }
+                        if custom_field_errors:
+                            custom_fields_formatted = ", ".join(
+                                [
+                                    f"'{k}': '{v}'"
+                                    for k, v in custom_field_errors.items()
+                                ]
+                            )
+                            raise JiraRequiredCustomFieldsError(
+                                message=f"Jira project requires custom fields that are not supported: {custom_fields_formatted}",
+                                file=os.path.basename(__file__),
+                            )
+
+                    response_error = f"Failed to send finding: {response.status_code} - {response_json}"
+                    logger.error(response_error)
                     raise JiraSendFindingsResponseError(
                         message=response_error, file=os.path.basename(__file__)
                     )
                 else:
-                    logger.info(f"Finding sent successfully: {response.json()}")
+                    try:
+                        response_json = response.json()
+                        logger.info(f"Finding sent successfully: {response_json}")
+                    except (ValueError, requests.exceptions.JSONDecodeError):
+                        logger.info(
+                            f"Finding sent successfully: Status {response.status_code}"
+                        )
+        except JiraRequiredCustomFieldsError as custom_fields_error:
+            raise custom_fields_error
         except JiraRefreshTokenError as refresh_error:
             raise refresh_error
         except JiraRefreshTokenResponseError as response_error:

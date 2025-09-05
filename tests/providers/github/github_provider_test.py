@@ -27,6 +27,7 @@ from tests.providers.github.github_fixtures import (
     ACCOUNT_URL,
     APP_ID,
     APP_KEY,
+    APP_NAME,
     OAUTH_TOKEN,
     PAT_TOKEN,
 )
@@ -135,6 +136,8 @@ class TestGitHubProvider:
                 "prowler.providers.github.github_provider.GithubProvider.setup_identity",
                 return_value=GithubAppIdentityInfo(
                     app_id=APP_ID,
+                    app_name=APP_NAME,
+                    installations=["test-org"],
                 ),
             ),
         ):
@@ -147,7 +150,9 @@ class TestGitHubProvider:
 
             assert provider._type == "github"
             assert provider.session == GithubSession(token="", id=APP_ID, key=APP_KEY)
-            assert provider.identity == GithubAppIdentityInfo(app_id=APP_ID)
+            assert provider.identity == GithubAppIdentityInfo(
+                app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+            )
             assert provider._audit_config == {
                 "inactive_not_archived_days_threshold": 180,
             }
@@ -206,7 +211,9 @@ class TestGitHubProvider:
             ),
             patch(
                 "prowler.providers.github.github_provider.GithubProvider.setup_identity",
-                return_value=GithubAppIdentityInfo(app_id=APP_ID),
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+                ),
             ),
         ):
             connection = GithubProvider.test_connection(
@@ -641,3 +648,63 @@ class TestGitHubProvider:
 
             with pytest.raises(GithubInvalidProviderIdError):
                 GithubProvider.validate_provider_id(mock_session, "invalid-org")
+
+
+class Test_GithubProvider_Scoping:
+    def setup_method(self):
+        """Setup mock session and identity for testing"""
+        self.mock_session = GithubSession(
+            token=PAT_TOKEN,
+            key="",
+            id=0,
+        )
+        self.mock_identity = GithubIdentityInfo(
+            account_id=ACCOUNT_ID,
+            account_name=ACCOUNT_NAME,
+            account_url=ACCOUNT_URL,
+        )
+
+    def test_provider_scoping_integration(self):
+        """Test that provider correctly handles scoping parameters and integrates with services"""
+        repositories = ["owner1/repo1", "owner2/repo2"]
+        organizations = ["org1", "org2"]
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=self.mock_session,
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=self.mock_identity,
+            ),
+        ):
+            # Test with both scoping parameters
+            provider = GithubProvider(
+                personal_access_token=PAT_TOKEN,
+                repositories=repositories,
+                organizations=organizations,
+            )
+
+            assert provider.repositories == repositories
+            assert provider.organizations == organizations
+            assert provider.type == "github"
+            assert provider.auth_method == "Personal Access Token"
+
+            # Test with no scoping (backward compatibility)
+            provider_no_scoping = GithubProvider(
+                personal_access_token=PAT_TOKEN,
+            )
+
+            assert provider_no_scoping.repositories == []
+            assert provider_no_scoping.organizations == []
+
+            # Test with None values (should convert to empty lists)
+            provider_none = GithubProvider(
+                personal_access_token=PAT_TOKEN,
+                repositories=None,
+                organizations=None,
+            )
+
+            assert provider_none.repositories == []
+            assert provider_none.organizations == []

@@ -6,7 +6,7 @@ from prowler.providers.aws.services.iam.lib.policy import check_admin_access
 class iam_inline_policy_no_administrative_privileges(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
-        for policy in iam_client.policies:
+        for policy in iam_client.policies.values():
             if policy.type == "Inline":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
