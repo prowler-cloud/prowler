@@ -1,4 +1,4 @@
-# Managing Users and Roles
+# Managing Users and Roles (RBAC)
 
 **Prowler App** supports multiple users within a single tenant, enabling seamless collaboration by allowing team members to easily share insights and manage security findings.
 
