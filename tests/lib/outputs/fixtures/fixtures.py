@@ -91,7 +91,7 @@ def generate_finding_output(
             RelatedTo=related_to,
             Categories=categories,
             Notes=notes,
-            AdditionalUrls=additional_urls,
+            AdditionalURLs=additional_urls,
         ),
         prowler_version=prowler_version,
     )
