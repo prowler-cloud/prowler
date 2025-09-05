@@ -378,7 +378,7 @@ class Jira:
                     )
             else:
                 response_error = f"Failed to get cloud id: {response.status_code} - {response.json()}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraGetCloudIDResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -455,7 +455,7 @@ class Jira:
                 return self._access_token
             else:
                 response_error = f"Failed to refresh access token: {response.status_code} - {response.json()}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraRefreshTokenResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -673,7 +673,7 @@ class Jira:
                 return [issue_type["name"] for issue_type in issue_types]
             else:
                 response_error = f"Failed to get available issue types: {response.status_code} - {response.text}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraGetAvailableIssueTypesResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -727,7 +727,7 @@ class Jira:
                         if project_response.status_code == 200:
                             project_metadata = project_response.json()
                             if len(project_metadata["projects"]) == 0:
-                                logger.warning(
+                                logger.error(
                                     f"No project metadata found for project {project['key']}, setting empty issue types"
                                 )
                                 issue_types = []
@@ -1640,7 +1640,7 @@ class Jira:
                         response_json = response.json()
                     except (ValueError, requests.exceptions.JSONDecodeError):
                         response_error = f"Failed to send finding: {response.status_code} - {response.text}"
-                        logger.warning(response_error)
+                        logger.error(response_error)
                         raise JiraSendFindingsResponseError(
                             message=response_error, file=os.path.basename(__file__)
                         )
@@ -1667,7 +1667,7 @@ class Jira:
                             )
 
                     response_error = f"Failed to send finding: {response.status_code} - {response_json}"
-                    logger.warning(response_error)
+                    logger.error(response_error)
                     raise JiraSendFindingsResponseError(
                         message=response_error, file=os.path.basename(__file__)
                     )
