@@ -21,7 +21,7 @@ export default async function ChatbotConfigPage() {
   const configExists = !!lighthouseConfig;
 
   return (
-    <ContentLayout title="Configure Lighthouse AI" icon="lucide:settings">
+    <ContentLayout title="Settings">
       <ChatbotConfig
         initialValues={initialValues}
         configExists={configExists}
