@@ -7,7 +7,7 @@ from prowler.providers.aws.services.ec2.lib.security_groups import check_securit
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21(Check):
+class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21(Check):
     def execute(self):
         findings = []
         check_ports = [20, 21]

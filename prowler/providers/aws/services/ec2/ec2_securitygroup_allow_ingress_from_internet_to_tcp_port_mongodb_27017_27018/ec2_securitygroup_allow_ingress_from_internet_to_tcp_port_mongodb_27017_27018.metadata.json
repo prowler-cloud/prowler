@@ -1,7 +1,10 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
-  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to FTP ports 20 or 21.",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+  "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MongoDB ports 27017 and 27018.",
+  "CheckAliases": [
+    "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018"
+  ],
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,7 +13,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "high",
   "ResourceType": "AwsEc2SecurityGroup",
-  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to FTP ports 20 or 21.",
+  "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to MongoDB ports 27017 and 27018.",
   "Risk": "If Security groups are not properly configured the attack surface is increased.",
   "RelatedUrl": "",
   "Remediation": {
