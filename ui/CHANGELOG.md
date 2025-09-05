@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Jira integration[(#8640)](https://github.com/prowler-cloud/prowler/pull/8640)
+- Jira integration[(#8640)](https://github.com/prowler-cloud/prowler/pull/8640),[(#8649)](https://github.com/prowler-cloud/prowler/pull/8649)
 
 ### 🔄 Changed
 
