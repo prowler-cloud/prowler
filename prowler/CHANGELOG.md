@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Send finding in Jira integration with the needed values [(#8648)](https://github.com/prowler-cloud/prowler/pull/8648)
 
 ### Changed
+- Outputs content for new Metadata fields [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
 
 ### Fixed
 - Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)

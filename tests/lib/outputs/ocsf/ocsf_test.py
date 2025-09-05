@@ -104,6 +104,7 @@ class TestOCSF:
             "categories": findings[0].metadata.Categories,
             "depends_on": findings[0].metadata.DependsOn,
             "related_to": findings[0].metadata.RelatedTo,
+            "additional_urls": findings[0].metadata.AdditionalURLs,
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
         }
@@ -189,6 +190,7 @@ class TestOCSF:
                     "categories": ["test-category"],
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],
+                    "additional_urls": ["test-url"],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
                 },
@@ -316,6 +318,7 @@ class TestOCSF:
             "categories": finding_output.metadata.Categories,
             "depends_on": finding_output.metadata.DependsOn,
             "related_to": finding_output.metadata.RelatedTo,
+            "additional_urls": finding_output.metadata.AdditionalURLs,
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
         }
