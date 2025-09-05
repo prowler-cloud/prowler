@@ -48,22 +48,18 @@ test.describe("Login Flow", () => {
   test("should handle empty form submission", async ({ page }) => {
     // Submit empty form
     await submitLoginForm(page);
-    await verifyLoginError(page, ERROR_MESSAGES.INVALID_CREDENTIALS);
+    await verifyLoginError(page, ERROR_MESSAGES.INVALID_EMAILID);
     // Verify we're still on login page
     await expect(page).toHaveURL(URLS.LOGIN);
   });
 
-  /*
-  TODO: This test is failing, need UI work before.
   test("should validate email format", async ({ page }) => {
     // Attempt login with invalid email format
     await login(page, TEST_CREDENTIALS.INVALID_EMAIL_FORMAT);
-    // Verify error message (application shows generic error for invalid email format too)
-    await verifyLoginError(page, ERROR_MESSAGES.INVALID_CREDENTIALS);
+    await verifyLoginError(page, ERROR_MESSAGES.INVALID_EMAILID);
     // Verify we're still on login page
     await expect(page).toHaveURL(URLS.LOGIN);
   });
-  */
 
   test("should toggle SAML SSO mode", async ({ page }) => {
     // Toggle to SAML mode
