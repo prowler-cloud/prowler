@@ -215,6 +215,8 @@ class RelationshipViewSchema(JsonApiAutoSchema):
     description="Obtain a token by providing valid credentials and an optional tenant ID.",
 )
 class CustomTokenObtainView(GenericAPIView):
+    throttle_scope = "token-obtain"
+
     resource_name = "tokens"
     serializer_class = TokenSerializer
     http_method_names = ["post"]
