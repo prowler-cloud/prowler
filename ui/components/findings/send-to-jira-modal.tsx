@@ -1,9 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input, Select, SelectItem, type Selection } from "@nextui-org/react";
+import { Input, Select, type Selection, SelectItem } from "@nextui-org/react";
 import { Search, Send } from "lucide-react";
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -15,7 +21,13 @@ import {
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal } from "@/components/ui/custom";
-import { Form, FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { CustomBanner } from "@/components/ui/custom/custom-banner";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
 import { IntegrationProps } from "@/types/integrations";
 
@@ -61,7 +73,7 @@ export const SendToJiraModal = ({
   const getSelectedValue = (keys: Selection): string => {
     if (keys === "all") return "";
     const first = Array.from(keys)[0];
-    return first != null ? String(first) : "";
+    return first !== null ? String(first) : "";
   };
 
   const setOpenForFormButtons: Dispatch<SetStateAction<boolean>> = (value) => {
@@ -85,24 +97,23 @@ export const SendToJiraModal = ({
     setIsFetchingIntegrations(true);
     try {
       const result = await getJiraIntegrations();
-      if (result.success) {
-        setIntegrations(result.data);
-        // Auto-select if only one integration
-        if (result.data.length === 1) {
-          form.setValue("integration", result.data[0].id);
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Failed to load integrations",
-          description: result.error || "Unable to fetch Jira integrations",
-        });
+      if (!result.success) {
+        throw new Error(result.error || "Unable to fetch Jira integrations");
+      }
+      setIntegrations(result.data);
+      // Auto-select if only one integration
+      if (result.data.length === 1) {
+        form.setValue("integration", result.data[0].id);
       }
     } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to load Jira integrations";
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to load Jira integrations",
+        title: "Failed to load integrations",
+        description: message,
       });
     } finally {
       setIsFetchingIntegrations(false);
@@ -110,54 +121,47 @@ export const SendToJiraModal = ({
   };
 
   const handleSubmit = async (data: SendToJiraFormData) => {
-    try {
-      // Send the finding to Jira
-      const result = await sendFindingToJira(
-        data.integration,
-        findingId,
-        data.project,
-        data.issueType,
-      );
+    // Close modal immediately; continue processing in background
+    onOpenChange(false);
 
-      if (result.success) {
-        // Show initial success message
-        toast({
-          title: "Sending to Jira...",
-          description: "Creating issue in Jira. Please wait...",
-        });
+    void (async () => {
+      try {
+        // Send the finding to Jira
+        const result = await sendFindingToJira(
+          data.integration,
+          findingId,
+          data.project,
+          data.issueType,
+        );
 
-        // Poll for task completion
+        if (!result.success) {
+          throw new Error(result.error || "Failed to send to Jira");
+        }
+
+        // Poll for task completion and notify once
         const taskResult = await pollJiraDispatchTask(result.taskId);
 
-        if (taskResult.success) {
-          toast({
-            title: "Success!",
-            description: taskResult.message || "Finding sent to Jira successfully",
-          });
-
-          // Close the modal
-          onOpenChange(false);
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Failed to create Jira issue",
-            description: taskResult.error || "An error occurred",
-          });
+        if (!taskResult.success) {
+          throw new Error(taskResult.error || "Failed to create Jira issue");
         }
-      } else {
+
+        toast({
+          title: "Success!",
+          description:
+            taskResult.message || "Finding sent to Jira successfully",
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : "Failed to send finding to Jira";
         toast({
           variant: "destructive",
-          title: "Failed to send to Jira",
-          description: result.error || "An error occurred",
+          title: "Error",
+          description: message,
         });
       }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to send finding to Jira",
-      });
-    }
+    })();
   };
 
   const selectedIntegrationData = integrations.find(
@@ -165,29 +169,32 @@ export const SendToJiraModal = ({
   );
 
   const projects: Record<string, string> =
-    selectedIntegrationData?.attributes.configuration.projects || ({} as Record<string, string>);
+    selectedIntegrationData?.attributes.configuration.projects ||
+    ({} as Record<string, string>);
   const issueTypes: string[] =
-    selectedIntegrationData?.attributes.configuration.issue_types || ([] as string[]);
+    selectedIntegrationData?.attributes.configuration.issue_types ||
+    ([] as string[]);
 
   // Filter projects based on search
   const filteredProjects = useMemo(() => {
     const projectEntries = Object.entries(projects);
     if (!searchProjectValue) return projectEntries;
-    
+
     const lowerSearch = searchProjectValue.toLowerCase();
-    return projectEntries.filter(([key, name]) => 
-      key.toLowerCase().includes(lowerSearch) || 
-      name.toLowerCase().includes(lowerSearch)
+    return projectEntries.filter(
+      ([key, name]) =>
+        key.toLowerCase().includes(lowerSearch) ||
+        name.toLowerCase().includes(lowerSearch),
     );
   }, [projects, searchProjectValue]);
 
   // Filter issue types based on search
   const filteredIssueTypes = useMemo(() => {
     if (!searchIssueTypeValue) return issueTypes;
-    
+
     const lowerSearch = searchIssueTypeValue.toLowerCase();
-    return issueTypes.filter(type => 
-      type.toLowerCase().includes(lowerSearch)
+    return issueTypes.filter((type) =>
+      type.toLowerCase().includes(lowerSearch),
     );
   }, [issueTypes, searchIssueTypeValue]);
 
@@ -215,7 +222,9 @@ export const SendToJiraModal = ({
                     <Select
                       label="Jira Integration"
                       placeholder="Select a Jira integration"
-                      selectedKeys={field.value ? new Set([field.value]) : new Set()}
+                      selectedKeys={
+                        field.value ? new Set([field.value]) : new Set()
+                      }
                       onSelectionChange={(keys: Selection) => {
                         const value = getSelectedValue(keys);
                         field.onChange(value);
@@ -233,18 +242,23 @@ export const SendToJiraModal = ({
                       classNames={{
                         trigger: "min-h-12",
                         popoverContent: "dark:bg-gray-800",
-                        label: "tracking-tight font-light !text-default-500 text-xs !z-0",
+                        label:
+                          "tracking-tight font-light !text-default-500 text-xs !z-0",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                     >
                       {integrations.map((integration) => (
                         <SelectItem
                           key={integration.id}
-                          textValue={integration.attributes.configuration.domain}
+                          textValue={
+                            integration.attributes.configuration.domain
+                          }
                         >
                           <div className="flex items-center gap-2">
                             <JiraIcon size={16} />
-                            <span>{integration.attributes.configuration.domain}</span>
+                            <span>
+                              {integration.attributes.configuration.domain}
+                            </span>
                           </div>
                         </SelectItem>
                       ))}
@@ -267,7 +281,9 @@ export const SendToJiraModal = ({
                     <Select
                       label="Project"
                       placeholder="Select a Jira project"
-                      selectedKeys={field.value ? new Set([field.value]) : new Set()}
+                      selectedKeys={
+                        field.value ? new Set([field.value]) : new Set()
+                      }
                       onSelectionChange={(keys: Selection) => {
                         const value = getSelectedValue(keys);
                         field.onChange(value);
@@ -282,28 +298,31 @@ export const SendToJiraModal = ({
                         trigger: "min-h-12",
                         popoverContent: "dark:bg-gray-800",
                         listboxWrapper: "max-h-[300px] dark:bg-gray-800",
-                        label: "tracking-tight font-light !text-default-500 text-xs !z-0",
+                        label:
+                          "tracking-tight font-light !text-default-500 text-xs !z-0",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                       listboxProps={{
-                        topContent: filteredProjects.length > 5 ? (
-                          <div className="sticky top-0 z-10 bg-content1 py-2 dark:bg-gray-800">
-                            <Input
-                              isClearable
-                              placeholder="Search projects..."
-                              size="sm"
-                              variant="bordered"
-                              startContent={<Search size={16} />}
-                              value={searchProjectValue}
-                              onValueChange={setSearchProjectValue}
-                              onClear={() => setSearchProjectValue("")}
-                              classNames={{
-                                inputWrapper: "border-default-200 bg-transparent hover:bg-default-100/50",
-                                input: "text-small",
-                              }}
-                            />
-                          </div>
-                        ) : null,
+                        topContent:
+                          filteredProjects.length > 5 ? (
+                            <div className="sticky top-0 z-10 bg-content1 py-2 dark:bg-gray-800">
+                              <Input
+                                isClearable
+                                placeholder="Search projects..."
+                                size="sm"
+                                variant="bordered"
+                                startContent={<Search size={16} />}
+                                value={searchProjectValue}
+                                onValueChange={setSearchProjectValue}
+                                onClear={() => setSearchProjectValue("")}
+                                classNames={{
+                                  inputWrapper:
+                                    "border-default-200 bg-transparent hover:bg-default-100/50",
+                                  input: "text-small",
+                                }}
+                              />
+                            </div>
+                          ) : null,
                       }}
                     >
                       {filteredProjects.map(([key, name]) => (
@@ -312,9 +331,15 @@ export const SendToJiraModal = ({
                             <div className="flex min-w-0 flex-1 items-center gap-3">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-small">{key}</span>
-                                  <span className="text-tiny text-default-500">-</span>
-                                  <span className="truncate text-small">{name}</span>
+                                  <span className="text-small font-semibold">
+                                    {key}
+                                  </span>
+                                  <span className="text-tiny text-default-500">
+                                    -
+                                  </span>
+                                  <span className="truncate text-small">
+                                    {name}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -340,7 +365,9 @@ export const SendToJiraModal = ({
                     <Select
                       label="Issue Type"
                       placeholder="Select an issue type"
-                      selectedKeys={field.value ? new Set([field.value]) : new Set()}
+                      selectedKeys={
+                        field.value ? new Set([field.value]) : new Set()
+                      }
                       onSelectionChange={(keys: Selection) => {
                         const value = getSelectedValue(keys);
                         field.onChange(value);
@@ -352,28 +379,31 @@ export const SendToJiraModal = ({
                         trigger: "min-h-12",
                         popoverContent: "dark:bg-gray-800",
                         listboxWrapper: "max-h-[300px] dark:bg-gray-800",
-                        label: "tracking-tight font-light !text-default-500 text-xs !z-0",
+                        label:
+                          "tracking-tight font-light !text-default-500 text-xs !z-0",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                       listboxProps={{
-                        topContent: filteredIssueTypes.length > 5 ? (
-                          <div className="sticky top-0 z-10 bg-content1 py-2 dark:bg-gray-800">
-                            <Input
-                              isClearable
-                              placeholder="Search issue types..."
-                              size="sm"
-                              variant="bordered"
-                              startContent={<Search size={16} />}
-                              value={searchIssueTypeValue}
-                              onValueChange={setSearchIssueTypeValue}
-                              onClear={() => setSearchIssueTypeValue("")}
-                              classNames={{
-                                inputWrapper: "border-default-200 bg-transparent hover:bg-default-100/50",
-                                input: "text-small",
-                              }}
-                            />
-                          </div>
-                        ) : null,
+                        topContent:
+                          filteredIssueTypes.length > 5 ? (
+                            <div className="sticky top-0 z-10 bg-content1 py-2 dark:bg-gray-800">
+                              <Input
+                                isClearable
+                                placeholder="Search issue types..."
+                                size="sm"
+                                variant="bordered"
+                                startContent={<Search size={16} />}
+                                value={searchIssueTypeValue}
+                                onValueChange={setSearchIssueTypeValue}
+                                onClear={() => setSearchIssueTypeValue("")}
+                                classNames={{
+                                  inputWrapper:
+                                    "border-default-200 bg-transparent hover:bg-default-100/50",
+                                  input: "text-small",
+                                }}
+                              />
+                            </div>
+                          ) : null,
                       }}
                     >
                       {filteredIssueTypes.map((type) => (
@@ -393,14 +423,14 @@ export const SendToJiraModal = ({
 
           {/* No integrations message */}
           {!isFetchingIntegrations && integrations.length === 0 && (
-            <div className="rounded-lg border border-warning-200 bg-warning-50 p-4 dark:border-warning-800 dark:bg-warning-900/20">
-              <p className="text-sm text-warning-800 dark:text-warning-200">
-                No Jira integrations found. Please configure a Jira integration first.
-              </p>
-            </div>
+            <CustomBanner
+              title="No Jira integrations found"
+              message="Please configure a Jira integration first."
+              buttonLabel="Configure"
+              buttonLink="/integrations/jira"
+            />
           )}
 
-          {/* Action Buttons using FormButtons */}
           <FormButtons
             setIsOpen={setOpenForFormButtons}
             onCancel={() => onOpenChange(false)}

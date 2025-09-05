@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getTask } from "@/actions/task";
+import { pollTaskUntilSettled } from "@/actions/task/poll";
 import {
   apiBaseUrl,
   getAuthHeaders,
@@ -265,58 +265,38 @@ export const deleteIntegration = async (
   }
 };
 
-type PollResult =
+type PollConnectionResult =
   | { success: true; message: string; taskState: string; result: unknown }
   | { success: false; message: string; taskState?: string; result?: unknown }
   | { error: string };
 
-const pollTaskUntilComplete = async (taskId: string): Promise<PollResult> => {
-  const maxAttempts = 10;
-  let attempts = 0;
+const pollTaskUntilComplete = async (
+  taskId: string,
+): Promise<PollConnectionResult> => {
+  const settled = await pollTaskUntilSettled(taskId, {
+    maxAttempts: 10,
+    delayMs: 3000,
+  });
 
-  while (attempts < maxAttempts) {
-    try {
-      const taskResponse = await getTask(taskId);
-
-      if (taskResponse.error) {
-        return { error: taskResponse.error };
-      }
-
-      const task = taskResponse.data;
-      const taskState = task?.attributes?.state;
-
-      // Continue polling while task is executing
-      if (taskState === "executing") {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        attempts++;
-        continue;
-      }
-
-      const result = task?.attributes?.result;
-      const isSuccessful =
-        taskState === "completed" &&
-        result?.connected === true &&
-        result?.error === null;
-
-      let message;
-      if (isSuccessful) {
-        message = "Connection test completed successfully.";
-      } else {
-        message = result?.error || "Connection test failed.";
-      }
-
-      return {
-        success: isSuccessful,
-        message,
-        taskState,
-        result,
-      };
-    } catch (error) {
-      return { error: "Failed to monitor connection test." };
-    }
+  if (!settled.ok) {
+    return { error: settled.error };
   }
 
-  return { error: "Connection test timeout. Test took too long to complete." };
+  const taskState = settled.state;
+  const result = settled.result as
+    | { connected?: boolean; error?: string }
+    | undefined;
+
+  const isSuccessful =
+    taskState === "completed" &&
+    result?.connected === true &&
+    result?.error === null;
+
+  const message = isSuccessful
+    ? "Connection test completed successfully."
+    : result?.error || "Connection test failed.";
+
+  return { success: isSuccessful, message, taskState, result };
 };
 
 export const testIntegrationConnection = async (

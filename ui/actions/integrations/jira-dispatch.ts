@@ -1,5 +1,6 @@
 "use server";
 
+import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders, handleApiError } from "@/lib";
 
 export const getJiraIntegrations = async (): Promise<
@@ -51,8 +52,6 @@ export const sendFindingToJira = async (
   // Single finding: use direct filter without array notation
   url.searchParams.append("filter[finding_id]", findingId);
 
-  console.log(url.toString());
-
   const payload = {
     data: {
       type: "integrations-jira-dispatches",
@@ -102,69 +101,30 @@ export const sendFindingToJira = async (
 export const pollJiraDispatchTask = async (
   taskId: string,
 ): Promise<
-  | { success: true; message: string; issueUrl?: string; issueKey?: string }
-  | { success: false; error: string }
+  { success: true; message: string } | { success: false; error: string }
 > => {
-  const { getTask } = await import("@/actions/task");
-  const maxAttempts = 10;
-  let attempts = 0;
+  const res = await pollTaskUntilSettled(taskId, {
+    maxAttempts: 10,
+    delayMs: 2000,
+  });
+  if (!res.ok) {
+    return { success: false, error: res.error };
+  }
+  const { state, result } = res;
 
-  while (attempts < maxAttempts) {
-    try {
-      const taskResponse = await getTask(taskId);
-
-      if (taskResponse.error) {
-        return { success: false, error: taskResponse.error };
-      }
-
-      const task = taskResponse.data;
-      const taskState = task?.attributes?.state;
-
-      // Continue polling while task is executing or available
-      if (taskState === "executing" || taskState === "available") {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        attempts++;
-        continue;
-      }
-
-      // Task completed
-      if (taskState === "completed") {
-        const result = task?.attributes?.result;
-        if (result?.success) {
-          return {
-            success: true,
-            message: result.message || "Finding successfully sent to Jira!",
-            issueUrl: result.issue_url,
-            issueKey: result.issue_key,
-          };
-        } else {
-          return {
-            success: false,
-            error: result?.error || "Failed to create Jira issue.",
-          };
-        }
-      }
-
-      // Task failed
-      if (taskState === "failed") {
-        return {
-          success: false,
-          error: task?.attributes?.result?.error || "Task failed.",
-        };
-      }
-
-      // Unknown state
-      return {
-        success: false,
-        error: `Unknown task state: ${taskState}`,
-      };
-    } catch (error) {
-      return { success: false, error: "Failed to check task status." };
+  if (state === "completed") {
+    if (!result?.error) {
+      return { success: true, message: "Finding successfully sent to Jira!" };
     }
+    return {
+      success: false,
+      error: result?.error || "Failed to create Jira issue.",
+    };
   }
 
-  return {
-    success: false,
-    error: "Task timeout. Please check Jira for the issue.",
-  };
+  if (state === "failed") {
+    return { success: false, error: result?.error || "Task failed." };
+  }
+
+  return { success: false, error: `Unknown task state: ${state}` };
 };

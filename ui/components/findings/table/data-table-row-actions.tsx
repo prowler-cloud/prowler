@@ -8,13 +8,12 @@ import {
   DropdownSection,
   DropdownTrigger,
 } from "@nextui-org/react";
-import { Send } from "lucide-react";
 import { Row } from "@tanstack/react-table";
 import { useState } from "react";
 
+import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import type { FindingProps } from "@/types/components";
 
 interface DataTableRowActionsProps {
