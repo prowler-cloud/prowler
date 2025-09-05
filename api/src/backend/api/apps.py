@@ -53,16 +53,19 @@ class ApiConfig(AppConfig):
         if self._keys_initialized:
             return
 
-        # TODO: Comment
+        # Check if both JWT keys are set; if not, generate them
         if not all(env.str(key, default="").strip() for key in [SIGNING_KEY_ENV, VERIFYING_KEY_ENV]):
             logger.info(
-                f"Generating JWT RSA key pair. In production, set '{SIGNING_KEY_ENV}' and '{VERIFYING_KEY_ENV}' environment variables."
+                f"Generating JWT RSA key pair. In production, set '{SIGNING_KEY_ENV}' and '{VERIFYING_KEY_ENV}' "
+                "environment variables."
             )
             self._ensure_jwt_keys()
 
+        # Check if the Fernet encryption key is set; if not, generate it
         if not env.str(ENCRYPTION_KEY_ENV, default="").strip():
             logger.info(
-                f"Generating Fernet encryption key for secrets encryption. In production, set '{ENCRYPTION_KEY_ENV}' environment variable."
+                f"Generating Fernet encryption key for secrets encryption. In production, set '{ENCRYPTION_KEY_ENV}' "
+                "environment variable."
             )
             self._ensure_secrets_encryption_key()
 
@@ -70,17 +73,26 @@ class ApiConfig(AppConfig):
         self._keys_initialized = True
 
 
-    def _read_file(self, file_path):
+    def _keys_directory(self):
+        """
+        Utility method to get the keys directory.
+        """
+        return Path.cwd().parent / KEYS_DIRECTORY  # `/home/prowler/.keys` inside the container
+
+
+    def _read_key_file(self, file_name):
         """
         Utility method to read the contents of a file.
         """
+        file_path = self._keys_directory() / file_name
         return file_path.read_text().strip() if file_path.is_file() else None
 
 
-    def _write_file(self, file_path, content):
+    def _write_key_file(self, file_name, content):
         """
         Utility method to write content to a file.
         """
+        file_path = self._keys_directory() / file_name
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content)
 
@@ -90,25 +102,24 @@ class ApiConfig(AppConfig):
         Generate RSA key pairs for JWT token signing and verification
         if they are not already set in environment variables.
         """
-        signing_key_file_path = Path.cwd() / KEYS_DIRECTORY / SIGNING_KEY_ENV
-        verifying_key_file_path = Path.cwd() / KEYS_DIRECTORY / VERIFYING_KEY_ENV
-
-        signing_key = self._read_file(signing_key_file_path)
-        verifying_key = self._read_file(verifying_key_file_path)
+        # Read existing keys from files if they exist
+        signing_key = self._read_key_file(SIGNING_KEY_ENV)
+        verifying_key = self._read_key_file(VERIFYING_KEY_ENV)
 
         if not signing_key or not verifying_key:
             # Generate and store the RSA key pair
             signing_key, verifying_key = self._generate_jwt_keys()
-            self._write_file(signing_key_file_path, signing_key)
-            self._write_file(verifying_key_file_path, verifying_key)
+            self._write_key_file(SIGNING_KEY_ENV, signing_key)
+            self._write_key_file(VERIFYING_KEY_ENV, verifying_key)
 
         else:
             logger.debug("JWT keys already configured, skipping generation")
 
         # Set environment variables and Django settings
         os.environ[SIGNING_KEY_ENV] = signing_key
-        os.environ[VERIFYING_KEY_ENV] = verifying_key
         settings.TOKEN_SIGNING_KEY = signing_key
+
+        os.environ[VERIFYING_KEY_ENV] = verifying_key
         settings.TOKEN_VERIFYING_KEY = verifying_key
 
     def _ensure_secrets_encryption_key(self):
@@ -116,13 +127,13 @@ class ApiConfig(AppConfig):
         Generate Fernet encryption key for secrets encryption
         if it is not already set in environment variables.
         """
-        encryption_key_file_path = Path.cwd() / KEYS_DIRECTORY / ENCRYPTION_KEY_ENV
-        encryption_key = self._read_file(encryption_key_file_path)
+        # Read existing key from file if it exists
+        encryption_key = self._read_key_file(ENCRYPTION_KEY_ENV)
 
         if not encryption_key:
             # Generate and store the encryption key
             encryption_key = self._generate_secrets_encryption_key()
-            self._write_file(encryption_key_file_path, encryption_key)
+            self._write_key_file(ENCRYPTION_KEY_ENV, encryption_key)
 
         else:
             logger.debug("Fernet encryption key already configured, skipping generation")
@@ -158,10 +169,6 @@ class ApiConfig(AppConfig):
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             ).decode("utf-8")
-
-            # Set environment variables
-            os.environ[SIGNING_KEY_ENV] = private_pem
-            os.environ[VERIFYING_KEY_ENV] = public_pem
 
             logger.debug("JWT RSA key pair generated successfully.")
             return private_pem, public_pem
