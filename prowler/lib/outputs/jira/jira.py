@@ -818,48 +818,29 @@ class Jira:
 
     @staticmethod
     def get_adf_description(
-        check_id: str = None,
-        check_title: str = None,
-        severity: str = None,
-        severity_color: str = None,
-        status: str = None,
-        status_color: str = None,
-        status_extended: str = None,
-        provider: str = None,
-        region: str = None,
-        resource_uid: str = None,
-        resource_name: str = None,
-        risk: str = None,
-        recommendation_text: str = None,
-        recommendation_url: str = None,
-        remediation_code_native_iac: str = None,
-        remediation_code_terraform: str = None,
-        remediation_code_cli: str = None,
-        remediation_code_other: str = None,
-        resource_tags: dict = None,
-        compliance: dict = None,
-        finding_url: str = None,
-        tenant_info: str = None,
+        check_id: str = "",
+        check_title: str = "",
+        severity: str = "",
+        severity_color: str = "",
+        status: str = "",
+        status_color: str = "",
+        status_extended: str = "",
+        provider: str = "",
+        region: str = "",
+        resource_uid: str = "",
+        resource_name: str = "",
+        risk: str = "",
+        recommendation_text: str = "",
+        recommendation_url: str = "",
+        remediation_code_native_iac: str = "",
+        remediation_code_terraform: str = "",
+        remediation_code_cli: str = "",
+        remediation_code_other: str = "",
+        resource_tags: dict = "",
+        compliance: dict = "",
+        finding_url: str = "",
+        tenant_info: str = "",
     ) -> dict:
-        # Handle None values by converting them to empty strings
-        check_id = check_id or ""
-        check_title = check_title or ""
-        severity = severity or ""
-        status = status or ""
-        status_extended = status_extended or ""
-        provider = provider or ""
-        region = region or ""
-        resource_uid = resource_uid or ""
-        resource_name = resource_name or ""
-        risk = risk or ""
-        recommendation_text = recommendation_text or ""
-        recommendation_url = recommendation_url or ""
-        remediation_code_native_iac = remediation_code_native_iac or ""
-        remediation_code_terraform = remediation_code_terraform or ""
-        remediation_code_cli = remediation_code_cli or ""
-        remediation_code_other = remediation_code_other or ""
-        finding_url = finding_url or ""
-        tenant_info = tenant_info or ""
 
         table_rows = [
             {
@@ -1725,29 +1706,29 @@ class Jira:
 
     def send_finding(
         self,
-        check_id: str = None,
-        check_title: str = None,
-        severity: str = None,
-        status: str = None,
-        status_extended: str = None,
-        provider: str = None,
-        region: str = None,
-        resource_uid: str = None,
-        resource_name: str = None,
-        risk: str = None,
-        recommendation_text: str = None,
-        recommendation_url: str = None,
-        remediation_code_native_iac: str = None,
-        remediation_code_terraform: str = None,
-        remediation_code_cli: str = None,
-        remediation_code_other: str = None,
-        resource_tags: dict = None,
-        compliance: dict = None,
-        project_key: str = None,
-        issue_type: str = None,
-        issue_labels: list[str] = None,
-        finding_url: str = None,
-        tenant_info: str = None,
+        check_id: str = "",
+        check_title: str = "",
+        severity: str = "",
+        status: str = "",
+        status_extended: str = "",
+        provider: str = "",
+        region: str = "",
+        resource_uid: str = "",
+        resource_name: str = "",
+        risk: str = "",
+        recommendation_text: str = "",
+        recommendation_url: str = "",
+        remediation_code_native_iac: str = "",
+        remediation_code_terraform: str = "",
+        remediation_code_cli: str = "",
+        remediation_code_other: str = "",
+        resource_tags: dict = "",
+        compliance: dict = "",
+        project_key: str = "",
+        issue_type: str = "",
+        issue_labels: list[str] = "",
+        finding_url: str = "",
+        tenant_info: str = "",
     ) -> bool:
         """
         Send the finding to Jira
