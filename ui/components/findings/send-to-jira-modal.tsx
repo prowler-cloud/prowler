@@ -63,7 +63,8 @@ export const SendToJiraModal = ({
     defaultValues: {
       integration: "",
       project: "",
-      issueType: "",
+      // Default to Task while issue types are not fetched/required
+      issueType: "Task",
     },
   });
 
@@ -193,15 +194,16 @@ export const SendToJiraModal = ({
     );
   }, [projects, searchProjectValue]);
 
+  // TODO: Uncomment this when issue types are fetched/required
   // Filter issue types based on search
-  const filteredIssueTypes = useMemo(() => {
-    if (!searchIssueTypeValue) return issueTypes;
+  // const filteredIssueTypes = useMemo(() => {
+  //   if (!searchIssueTypeValue) return issueTypes;
 
-    const lowerSearch = searchIssueTypeValue.toLowerCase();
-    return issueTypes.filter((type) =>
-      type.toLowerCase().includes(lowerSearch),
-    );
-  }, [issueTypes, searchIssueTypeValue]);
+  //   const lowerSearch = searchIssueTypeValue.toLowerCase();
+  //   return issueTypes.filter((type) =>
+  //     type.toLowerCase().includes(lowerSearch),
+  //   );
+  // }, [issueTypes, searchIssueTypeValue]);
 
   return (
     <CustomAlertModal
@@ -235,7 +237,8 @@ export const SendToJiraModal = ({
                         field.onChange(value);
                         // Reset dependent fields
                         form.setValue("project", "");
-                        form.setValue("issueType", "");
+                        // Keep issue type defaulting to Task
+                        form.setValue("issueType", "Task");
                         setSearchProjectValue("");
                         setSearchIssueTypeValue("");
                       }}
@@ -292,8 +295,8 @@ export const SendToJiraModal = ({
                       onSelectionChange={(keys: Selection) => {
                         const value = getSelectedValue(keys);
                         field.onChange(value);
-                        // Reset issue type when project changes
-                        form.setValue("issueType", "");
+                        // Keep issue type defaulting to Task when project changes
+                        form.setValue("issueType", "Task");
                         setSearchIssueTypeValue("");
                       }}
                       variant="bordered"
@@ -360,7 +363,7 @@ export const SendToJiraModal = ({
           )}
 
           {/* Issue Type Selection - Enhanced Style */}
-          {selectedProject && issueTypes.length > 0 && (
+          {/* {selectedProject && issueTypes.length > 0 && (
             <FormField
               control={form.control}
               name="issueType"
@@ -424,7 +427,7 @@ export const SendToJiraModal = ({
                 </>
               )}
             />
-          )}
+          )} */}
 
           {/* No integrations or none connected message */}
           {!isFetchingIntegrations &&

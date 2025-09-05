@@ -57,7 +57,8 @@ export const sendFindingToJira = async (
       type: "integrations-jira-dispatches",
       attributes: {
         project_key: projectKey,
-        issue_type: issueType,
+        // Temporarily hardcode to "Task" regardless of the provided value
+        issue_type: "Task",
       },
     },
   };
