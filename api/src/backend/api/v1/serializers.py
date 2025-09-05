@@ -2051,7 +2051,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 )
             config_serializer = JiraConfigSerializer
             # Create non-editable configuration for JIRA integration
-            default_jira_issue_types = ["Task", "Bug"]
+            default_jira_issue_types = ["Task"]
             configuration.update(
                 {
                     "projects": {},
@@ -2276,7 +2276,7 @@ class IntegrationJiraDispatchSerializer(serializers.Serializer):
     """
 
     project_key = serializers.CharField(required=True)
-    issue_type = serializers.ChoiceField(required=True, choices=["Task", "Bug"])
+    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"

@@ -501,6 +501,6 @@ def send_findings_to_jira(
                 logger.error(f"Failed to send finding {finding_id} to Jira")
 
     return {
-        "num_sent_jira_tickets": num_tickets_created,
-        "num_failed_jira_tickets": len(finding_ids) - num_tickets_created,
+        "created_count": num_tickets_created,
+        "failed_count": len(finding_ids) - num_tickets_created,
     }

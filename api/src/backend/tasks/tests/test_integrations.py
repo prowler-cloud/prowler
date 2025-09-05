@@ -1577,7 +1577,7 @@ class TestJiraIntegration:
         tenant_id = "tenant-123"
         integration_id = "integration-456"
         project_key = "PROJ"
-        issue_type = "Bug"
+        issue_type = "Task"
         finding_ids = ["finding-1", "finding-2"]
 
         # Mock RLS transaction
@@ -1665,7 +1665,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"num_sent_jira_tickets": 2, "num_failed_jira_tickets": 0}
+        assert result == {"created_count": 2, "failed_count": 0}
 
         # Verify Jira integration was initialized
         mock_initialize_integration.assert_called_once_with(integration)
@@ -1709,7 +1709,7 @@ class TestJiraIntegration:
         tenant_id = "tenant-123"
         integration_id = "integration-456"
         project_key = "PROJ"
-        issue_type = "Bug"
+        issue_type = "Task"
         finding_ids = ["finding-1", "finding-2", "finding-3"]
 
         # Mock RLS transaction
@@ -1759,7 +1759,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"num_sent_jira_tickets": 2, "num_failed_jira_tickets": 1}
+        assert result == {"created_count": 2, "failed_count": 1}
 
         # Verify error was logged for the failed finding
         mock_logger.error.assert_called_with("Failed to send finding finding-2 to Jira")
@@ -1833,7 +1833,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"num_sent_jira_tickets": 1, "num_failed_jira_tickets": 0}
+        assert result == {"created_count": 1, "failed_count": 0}
 
         # Verify send_finding was called with empty resource fields
         call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
@@ -1857,7 +1857,7 @@ class TestJiraIntegration:
         tenant_id = "tenant-123"
         integration_id = "integration-456"
         project_key = "PROJ"
-        issue_type = "Bug"
+        issue_type = "Task"
         finding_ids = ["finding-1"]
 
         # Mock RLS transaction
@@ -1896,7 +1896,7 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"num_sent_jira_tickets": 1, "num_failed_jira_tickets": 0}
+        assert result == {"created_count": 1, "failed_count": 0}
 
         # Verify send_finding was called with default/empty values
         call_kwargs = mock_jira_integration.send_finding.call_args.kwargs

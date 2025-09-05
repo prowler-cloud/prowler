@@ -9534,12 +9534,9 @@ components:
                 issue_type:
                   enum:
                   - Task
-                  - Bug
                   type: string
-                  description: |-
-                    * `Task` - Task
-                    * `Bug` - Bug
-                  x-spec-enum-id: a64aee1f4842953e
+                  description: '* `Task` - Task'
+                  x-spec-enum-id: b527b0cec62087c1
               required:
               - project_key
               - issue_type
