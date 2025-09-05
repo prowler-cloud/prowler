@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
 - `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 - Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
+- `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
 
 ### Changed
 
@@ -126,7 +127,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.9.0] (Prowler v5.9.0)
 
 ### Added
-- `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
 - `storage_smb_channel_encryption_with_secure_algorithm` check for Azure provider [(#8123)](https://github.com/prowler-cloud/prowler/pull/8123)
 - `storage_smb_protocol_version_is_latest` check for Azure provider [(#8128)](https://github.com/prowler-cloud/prowler/pull/8128)
 - `vm_backup_enabled` check for Azure provider [(#8182)](https://github.com/prowler-cloud/prowler/pull/8182)
