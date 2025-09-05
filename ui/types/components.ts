@@ -20,6 +20,8 @@ export type SubmenuProps = {
   label: string;
   active?: boolean;
   icon: IconComponent;
+  disabled?: boolean;
+  onClick?: () => void;
 };
 
 export type MenuProps = {
@@ -190,7 +192,7 @@ export type AWSCredentials = {
 };
 
 export type AWSCredentialsRole = {
-  [ProviderCredentialFields.ROLE_ARN]: string;
+  [ProviderCredentialFields.ROLE_ARN]?: string;
   [ProviderCredentialFields.AWS_ACCESS_KEY_ID]?: string;
   [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]?: string;
   [ProviderCredentialFields.AWS_SESSION_TOKEN]?: string;

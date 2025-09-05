@@ -3,7 +3,7 @@
   "CheckID": "rbac_minimize_wildcard_use_roles",
   "CheckTitle": "Minimize wildcard use in Roles and ClusterRoles",
   "CheckType": [],
-  "ServiceName": "RBAC",
+  "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

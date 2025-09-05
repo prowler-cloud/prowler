@@ -2,7 +2,7 @@
 
 In this page you can find all the details about [Microsoft Azure](https://azure.microsoft.com/) provider implementation in Prowler.
 
-By default, Prowler will audit all the subscriptions that it is able to list in the Microsoft Entra tenant, and tenant Entra ID service. To configure it, follow the [getting started](../index.md#azure) page.
+By default, Prowler will audit all the subscriptions that it is able to list in the Microsoft Entra tenant, and tenant Entra ID service. To configure it, follow the [Azure getting started guide](../tutorials/azure/getting-started-azure.md).
 
 ## Azure Provider Classes Architecture
 

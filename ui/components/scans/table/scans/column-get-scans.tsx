@@ -47,7 +47,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
   {
     accessorKey: "cloudProvider",
-    header: () => <p className="pr-8">Cloud provider</p>,
+    header: () => <p className="pr-8">Cloud Provider</p>,
     cell: ({ row }) => {
       const providerInfo = row.original.providerInfo;
 
@@ -123,7 +123,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return (
         <TableLink
           href={`/compliance?scanId=${id}`}
-          isDisabled={!["completed", "executing"].includes(scanState)}
+          isDisabled={!["completed"].includes(scanState)}
           label="See Compliance"
         />
       );
@@ -136,7 +136,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         <p className="w-fit text-xs">Download</p>
         <Tooltip
           className="text-xs"
-          content="Download a ZIP file containing the JSON (OCSF), CSV, and HTML reports."
+          content="Download a ZIP file that includes the JSON (OCSF), CSV, and HTML scan reports, along with the compliance report."
         >
           <div className="flex items-center gap-2">
             <InfoIcon className="mb-1 text-primary" size={12} />

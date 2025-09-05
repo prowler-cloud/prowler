@@ -1,257 +1,290 @@
-from checkov.common.models.enums import CheckResult
-from checkov.common.output.record import Record
-from checkov.common.output.report import Report
-
 # IAC Provider Constants
 DEFAULT_SCAN_PATH = "."
 
+# Sample Trivy Output
+SAMPLE_TRIVY_OUTPUT = {
+    "Results": [
+        {
+            "Target": "main.tf",
+            "Type": "terraform",
+            "Misconfigurations": [
+                {
+                    "ID": "AVD-AWS-0001",
+                    "Title": "S3 bucket should have encryption enabled",
+                    "Description": "S3 bucket should have encryption enabled",
+                    "Message": "S3 bucket should have encryption enabled",
+                    "Resolution": "Enable encryption on the S3 bucket",
+                    "Severity": "LOW",
+                    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0001",
+                    "RuleID": "AVD-AWS-0001",
+                },
+                {
+                    "ID": "AVD-AWS-0002",
+                    "Title": "S3 bucket should have public access blocked",
+                    "Description": "S3 bucket should have public access blocked",
+                    "Message": "S3 bucket should have public access blocked",
+                    "Resolution": "Block public access on the S3 bucket",
+                    "Severity": "LOW",
+                    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0002",
+                    "RuleID": "AVD-AWS-0002",
+                },
+            ],
+            "Vulnerabilities": [],
+            "Secrets": [],
+            "Licenses": [],
+        },
+        {
+            "Target": "main.tf",
+            "Type": "terraform",
+            "Misconfigurations": [
+                {
+                    "ID": "AVD-AWS-0003",
+                    "Title": "S3 bucket should have versioning enabled",
+                    "Description": "S3 bucket should have versioning enabled",
+                    "Message": "S3 bucket should have versioning enabled",
+                    "Resolution": "Enable versioning on the S3 bucket",
+                    "Severity": "LOW",
+                    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0003",
+                    "RuleID": "AVD-AWS-0003",
+                }
+            ],
+            "Vulnerabilities": [],
+            "Secrets": [],
+            "Licenses": [],
+        },
+    ]
+}
+
 # Sample Finding Data
-SAMPLE_FINDING = Report(check_type="terraform")
-SAMPLE_FAILED_CHECK = Record(
-    check_id="CKV_AWS_1",
-    check_name="Ensure S3 bucket has encryption enabled",
-    severity="low",
-    file_path="test.tf",
-    file_line_range=[1, 2],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_FAILED_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_1-s3-bucket-has-encryption-enabled"
-)
+SAMPLE_FINDING = SAMPLE_TRIVY_OUTPUT["Results"][0]
 
-SAMPLE_PASSED_CHECK = Record(
-    check_id="CKV_AWS_3",
-    check_name="Ensure S3 bucket has versioning enabled",
-    severity="low",
-    file_path="test.tf",
-    file_line_range=[1, 2],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.PASSED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_PASSED_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_3-s3-bucket-has-versioning-enabled"
-)
+SAMPLE_FAILED_CHECK = {
+    "ID": "AVD-AWS-0001",
+    "Title": "S3 bucket should have encryption enabled",
+    "Description": "S3 bucket should have encryption enabled",
+    "Message": "S3 bucket should have encryption enabled",
+    "Resolution": "Enable encryption on the S3 bucket",
+    "Severity": "low",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0001",
+    "RuleID": "AVD-AWS-0001",
+}
 
-# Additional test fixtures for comprehensive testing
-SAMPLE_SKIPPED_CHECK = Record(
-    check_id="CKV_AWS_2",
-    check_name="Ensure S3 bucket has public access blocked",
-    severity="high",
-    file_path="test.tf",
-    file_line_range=[3, 4],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.SKIPPED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_SKIPPED_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_2-s3-bucket-has-public-access-blocked"
-)
+SAMPLE_PASSED_CHECK = {
+    "ID": "AVD-AWS-0003",
+    "Title": "S3 bucket should have versioning enabled",
+    "Description": "S3 bucket should have versioning enabled",
+    "Message": "S3 bucket should have versioning enabled",
+    "Resolution": "Enable versioning on the S3 bucket",
+    "Severity": "low",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0003",
+    "RuleID": "AVD-AWS-0003",
+}
 
-SAMPLE_HIGH_SEVERITY_CHECK = Record(
-    check_id="CKV_AWS_4",
-    check_name="Ensure S3 bucket has logging enabled",
-    severity="HIGH",
-    file_path="test.tf",
-    file_line_range=[5, 6],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_HIGH_SEVERITY_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_4-s3-bucket-has-logging-enabled"
-)
+# Additional sample checks
+SAMPLE_ANOTHER_FAILED_CHECK = {
+    "ID": "AVD-AWS-0004",
+    "Title": "S3 bucket should have logging enabled",
+    "Description": "S3 bucket should have logging enabled",
+    "Message": "S3 bucket should have logging enabled",
+    "Resolution": "Enable logging on the S3 bucket",
+    "Severity": "medium",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0004",
+    "RuleID": "AVD-AWS-0004",
+}
 
-SAMPLE_KUBERNETES_CHECK = Record(
-    check_id="CKV_K8S_1",
-    check_name="Ensure API server has audit logging enabled",
-    severity="medium",
-    file_path="deployment.yaml",
-    file_line_range=[1, 10],
-    resource="kubernetes_deployment.test_deployment",
-    evaluations=[],
-    check_class="kubernetes",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="deployment.yaml",
-)
-SAMPLE_KUBERNETES_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/k8s_1-api-server-has-audit-logging-enabled"
-)
+SAMPLE_ANOTHER_PASSED_CHECK = {
+    "ID": "AVD-AWS-0005",
+    "Title": "S3 bucket should have lifecycle policy",
+    "Description": "S3 bucket should have lifecycle policy",
+    "Message": "S3 bucket should have lifecycle policy",
+    "Resolution": "Configure lifecycle policy on the S3 bucket",
+    "Severity": "low",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0005",
+    "RuleID": "AVD-AWS-0005",
+}
 
-SAMPLE_CLOUDFORMATION_CHECK = Record(
-    check_id="CKV_AWS_5",
-    check_name="Ensure CloudFormation stacks are not publicly accessible",
-    severity="critical",
-    file_path="template.yaml",
-    file_line_range=[1, 20],
-    resource="AWS::CloudFormation::Stack",
-    evaluations=[],
-    check_class="cloudformation",
-    check_result=CheckResult.PASSED,
-    code_block=[],
-    file_abs_path="template.yaml",
-)
-SAMPLE_CLOUDFORMATION_CHECK.guideline = "https://docs.bridgecrew.io/docs/cfn_1-cloudformation-stacks-are-not-publicly-accessible"
+SAMPLE_ANOTHER_SKIPPED_CHECK = {
+    "ID": "AVD-AWS-0006",
+    "Title": "S3 bucket should have object lock enabled",
+    "Description": "S3 bucket should have object lock enabled",
+    "Message": "S3 bucket should have object lock enabled",
+    "Resolution": "Enable object lock on the S3 bucket",
+    "Severity": "high",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0006",
+    "RuleID": "AVD-AWS-0006",
+    "Status": "MUTED",
+}
 
-# Sample findings for different frameworks
-SAMPLE_KUBERNETES_FINDING = Report(check_type="kubernetes")
-SAMPLE_CLOUDFORMATION_FINDING = Report(check_type="cloudformation")
+SAMPLE_SKIPPED_CHECK = {
+    "ID": "AVD-AWS-0007",
+    "Title": "S3 bucket should have server-side encryption",
+    "Description": "S3 bucket should have server-side encryption",
+    "Message": "S3 bucket should have server-side encryption",
+    "Resolution": "Enable server-side encryption on the S3 bucket",
+    "Severity": "medium",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0007",
+    "RuleID": "AVD-AWS-0007",
+    "Status": "MUTED",
+}
 
-# Additional fixtures for different test scenarios
-SAMPLE_CHECK_WITHOUT_GUIDELINE = Record(
-    check_id="CKV_AWS_6",
-    check_name="Test check without guideline",
-    severity="low",
-    file_path="test.tf",
-    file_line_range=[1, 2],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-# Note: No guideline attribute set
+SAMPLE_HIGH_SEVERITY_CHECK = {
+    "ID": "AVD-AWS-0008",
+    "Title": "S3 bucket should have public access blocked",
+    "Description": "S3 bucket should have public access blocked",
+    "Message": "S3 bucket should have public access blocked",
+    "Resolution": "Block public access on the S3 bucket",
+    "Severity": "high",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/s3/avd-aws-0008",
+    "RuleID": "AVD-AWS-0008",
+}
 
-SAMPLE_MEDIUM_SEVERITY_CHECK = Record(
-    check_id="CKV_AWS_7",
-    check_name="Ensure S3 bucket has proper access controls",
-    severity="MEDIUM",
-    file_path="test.tf",
-    file_line_range=[7, 8],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_MEDIUM_SEVERITY_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_7-s3-bucket-has-proper-access-controls"
-)
+# Dockerfile samples
+SAMPLE_DOCKERFILE_REPORT = {
+    "Target": "Dockerfile",
+    "Type": "dockerfile",
+    "Misconfigurations": [
+        {
+            "ID": "AVD-DOCKER-0001",
+            "Title": "Base image should not use latest tag",
+            "Description": "Base image should not use latest tag",
+            "Message": "Base image should not use latest tag",
+            "Resolution": "Use a specific version tag instead of latest",
+            "Severity": "medium",
+            "PrimaryURL": "https://avd.aquasec.com/misconfig/docker/dockerfile/avd-docker-0001",
+            "RuleID": "AVD-DOCKER-0001",
+        }
+    ],
+    "Vulnerabilities": [],
+    "Secrets": [],
+    "Licenses": [],
+}
 
-SAMPLE_CRITICAL_SEVERITY_CHECK = Record(
-    check_id="CKV_AWS_8",
-    check_name="Ensure S3 bucket has encryption at rest",
-    severity="CRITICAL",
-    file_path="test.tf",
-    file_line_range=[9, 10],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_CRITICAL_SEVERITY_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_8-s3-bucket-has-encryption-at-rest"
-)
+SAMPLE_DOCKERFILE_CHECK = {
+    "ID": "AVD-DOCKER-0001",
+    "Title": "Base image should not use latest tag",
+    "Description": "Base image should not use latest tag",
+    "Message": "Base image should not use latest tag",
+    "Resolution": "Use a specific version tag instead of latest",
+    "Severity": "medium",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/docker/dockerfile/avd-docker-0001",
+    "RuleID": "AVD-DOCKER-0001",
+}
 
-# Sample reports for different frameworks
-SAMPLE_TERRAFORM_REPORT = Report(check_type="terraform")
-SAMPLE_KUBERNETES_REPORT = Report(check_type="kubernetes")
-SAMPLE_CLOUDFORMATION_REPORT = Report(check_type="cloudformation")
-SAMPLE_DOCKERFILE_REPORT = Report(check_type="dockerfile")
-SAMPLE_YAML_REPORT = Report(check_type="yaml")
+# YAML samples
+SAMPLE_YAML_REPORT = {
+    "Target": "deployment.yaml",
+    "Type": "kubernetes",
+    "Misconfigurations": [
+        {
+            "ID": "AVD-K8S-0001",
+            "Title": "API server should not be exposed",
+            "Description": "API server should not be exposed",
+            "Message": "API server should not be exposed",
+            "Resolution": "Do not expose the API server",
+            "Severity": "high",
+            "PrimaryURL": "https://avd.aquasec.com/misconfig/kubernetes/avd-k8s-0001",
+            "RuleID": "AVD-K8S-0001",
+        }
+    ],
+    "Vulnerabilities": [],
+    "Secrets": [],
+    "Licenses": [],
+}
 
-# Sample checks for different frameworks
-SAMPLE_DOCKERFILE_CHECK = Record(
-    check_id="CKV_DOCKER_1",
-    check_name="Ensure base image is not using latest tag",
-    severity="high",
-    file_path="Dockerfile",
-    file_line_range=[1, 1],
-    resource="Dockerfile",
-    evaluations=[],
-    check_class="dockerfile",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="Dockerfile",
-)
-SAMPLE_DOCKERFILE_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/docker_1-base-image-not-using-latest-tag"
-)
+SAMPLE_YAML_CHECK = {
+    "ID": "AVD-K8S-0001",
+    "Title": "API server should not be exposed",
+    "Description": "API server should not be exposed",
+    "Message": "API server should not be exposed",
+    "Resolution": "Do not expose the API server",
+    "Severity": "high",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/kubernetes/avd-k8s-0001",
+    "RuleID": "AVD-K8S-0001",
+}
 
-SAMPLE_YAML_CHECK = Record(
-    check_id="CKV_YAML_1",
-    check_name="Ensure YAML file has proper indentation",
-    severity="low",
-    file_path="config.yaml",
-    file_line_range=[1, 5],
-    resource="config.yaml",
-    evaluations=[],
-    check_class="yaml",
-    check_result=CheckResult.PASSED,
-    code_block=[],
-    file_abs_path="config.yaml",
-)
-SAMPLE_YAML_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/yaml_1-proper-indentation"
-)
+# CloudFormation samples
+SAMPLE_CLOUDFORMATION_CHECK = {
+    "ID": "AVD-AWS-0009",
+    "Title": "CloudFormation stack should have drift detection enabled",
+    "Description": "CloudFormation stack should have drift detection enabled",
+    "Message": "CloudFormation stack should have drift detection enabled",
+    "Resolution": "Enable drift detection on the CloudFormation stack",
+    "Severity": "low",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/aws/cloudformation/avd-aws-0009",
+    "RuleID": "AVD-AWS-0009",
+}
 
-# Sample checks with different statuses for comprehensive testing
-SAMPLE_ANOTHER_FAILED_CHECK = Record(
-    check_id="CKV_AWS_9",
-    check_name="Ensure S3 bucket has lifecycle policy",
-    severity="medium",
-    file_path="test.tf",
-    file_line_range=[11, 12],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.FAILED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_ANOTHER_FAILED_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_9-s3-bucket-has-lifecycle-policy"
-)
+# Kubernetes samples
+SAMPLE_KUBERNETES_CHECK = {
+    "ID": "AVD-K8S-0002",
+    "Title": "RBAC should be enabled",
+    "Description": "RBAC should be enabled",
+    "Message": "RBAC should be enabled",
+    "Resolution": "Enable RBAC on the cluster",
+    "Severity": "medium",
+    "PrimaryURL": "https://avd.aquasec.com/misconfig/kubernetes/avd-k8s-0002",
+    "RuleID": "AVD-K8S-0002",
+}
 
-SAMPLE_ANOTHER_PASSED_CHECK = Record(
-    check_id="CKV_AWS_10",
-    check_name="Ensure S3 bucket has proper tags",
-    severity="low",
-    file_path="test.tf",
-    file_line_range=[13, 14],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.PASSED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_ANOTHER_PASSED_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_10-s3-bucket-has-proper-tags"
-)
+# Sample Trivy output with vulnerabilities
+SAMPLE_TRIVY_VULNERABILITY_OUTPUT = {
+    "Results": [
+        {
+            "Target": "package.json",
+            "Type": "nodejs",
+            "Misconfigurations": [],
+            "Vulnerabilities": [
+                {
+                    "VulnerabilityID": "CVE-2023-1234",
+                    "Title": "Example vulnerability",
+                    "Description": "This is an example vulnerability",
+                    "Severity": "high",
+                    "PrimaryURL": "https://example.com/cve-2023-1234",
+                }
+            ],
+            "Secrets": [],
+            "Licenses": [],
+        }
+    ]
+}
 
-SAMPLE_ANOTHER_SKIPPED_CHECK = Record(
-    check_id="CKV_AWS_11",
-    check_name="Ensure S3 bucket has cross-region replication",
-    severity="high",
-    file_path="test.tf",
-    file_line_range=[15, 16],
-    resource="aws_s3_bucket.test_bucket",
-    evaluations=[],
-    check_class="terraform",
-    check_result=CheckResult.SKIPPED,
-    code_block=[],
-    file_abs_path="test.tf",
-)
-SAMPLE_ANOTHER_SKIPPED_CHECK.guideline = (
-    "https://docs.bridgecrew.io/docs/s3_11-s3-bucket-has-cross-region-replication"
-)
+# Sample Trivy output with secrets
+SAMPLE_TRIVY_SECRET_OUTPUT = {
+    "Results": [
+        {
+            "Target": "config.yaml",
+            "Class": "secret",
+            "Misconfigurations": [],
+            "Vulnerabilities": [],
+            "Secrets": [
+                {
+                    "ID": "aws-access-key-id",
+                    "Title": "AWS Access Key ID",
+                    "Description": "AWS Access Key ID found in configuration",
+                    "Severity": "critical",
+                    "PrimaryURL": "https://example.com/secret-aws-access-key-id",
+                }
+            ],
+            "Licenses": [],
+        }
+    ]
+}
+
+
+def get_sample_trivy_json_output():
+    """Return sample Trivy JSON output as string"""
+    import json
+
+    return json.dumps(SAMPLE_TRIVY_OUTPUT)
+
+
+def get_empty_trivy_output():
+    """Return empty Trivy output as string"""
+    import json
+
+    return json.dumps({"Results": []})
+
+
+def get_invalid_trivy_output():
+    """Return invalid JSON output as string"""
+    return "invalid json output"

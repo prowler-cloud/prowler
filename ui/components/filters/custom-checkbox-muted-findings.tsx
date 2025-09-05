@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
 export const CustomCheckboxMutedFindings = () => {
-  const { updateFilter } = useUrlFilters();
+  const { updateFilter, clearFilter } = useUrlFilters();
   const searchParams = useSearchParams();
   const [excludeMuted, setExcludeMuted] = useState(
     searchParams.get("filter[muted]") === "false",
@@ -15,7 +15,13 @@ export const CustomCheckboxMutedFindings = () => {
 
   const handleMutedChange = (value: boolean) => {
     setExcludeMuted(value);
-    updateFilter("muted", value ? "false" : "true");
+
+    // Only URL  update if value is false else remove filter
+    if (value) {
+      updateFilter("muted", "false");
+    } else {
+      clearFilter("muted");
+    }
   };
 
   return (

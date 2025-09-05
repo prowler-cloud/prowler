@@ -36,6 +36,7 @@ export const AddRoleForm = ({
       name: "",
       manage_users: false,
       manage_providers: false,
+      manage_integrations: false,
       manage_scans: false,
       unlimited_visibility: false,
       groups: [],
@@ -68,7 +69,7 @@ export const AddRoleForm = ({
       "manage_account",
       "manage_billing",
       "manage_providers",
-      // "manage_integrations",
+      "manage_integrations",
       "manage_scans",
       "unlimited_visibility",
     ];
@@ -87,6 +88,7 @@ export const AddRoleForm = ({
     formData.append("name", values.name);
     formData.append("manage_users", String(values.manage_users));
     formData.append("manage_providers", String(values.manage_providers));
+    formData.append("manage_integrations", String(values.manage_integrations));
     formData.append("manage_scans", String(values.manage_scans));
     formData.append("manage_account", String(values.manage_account));
     formData.append(

@@ -6,7 +6,7 @@ from prowler.providers.aws.services.iam.lib.policy import check_admin_access
 class iam_customer_attached_policy_no_administrative_privileges(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
-        for policy in iam_client.policies:
+        for policy in iam_client.policies.values():
             # Check only for attached custom policies
             if policy.attached and policy.type == "Custom":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)

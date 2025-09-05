@@ -21,17 +21,17 @@ export const EditTenantForm = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (state?.success) {
+    if (state && "success" in state) {
       toast({
         title: "Changed successfully",
         description: state.success,
       });
       setIsOpen(false);
-    } else if (state?.errors?.general) {
+    } else if (state && "error" in state) {
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: state.errors.general,
+        description: state.error,
       });
     }
   }, [state, toast, setIsOpen]);
@@ -49,8 +49,8 @@ export const EditTenantForm = ({
         labelPlacement="outside"
         variant="bordered"
         isRequired={true}
-        isInvalid={!!state?.errors?.name}
-        errorMessage={state?.errors?.name}
+        isInvalid={!!(state && "error" in state)}
+        errorMessage={state && "error" in state ? state.error : undefined}
       />
 
       {/* Hidden inputs for Server Action */}

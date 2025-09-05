@@ -84,7 +84,7 @@ class TestGCPMutelist:
         mutelist = GCPMutelist(mutelist_content=mutelist_content)
 
         finding_1 = generate_finding_output(
-            check_id="check_test",
+            check_id="service_check_test",
             status="FAIL",
             account_uid="project_1",
             region="test-region",

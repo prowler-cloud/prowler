@@ -3,7 +3,7 @@
   "CheckID": "rbac_minimize_webhook_config_access",
   "CheckTitle": "Minimize access to webhook configuration objects",
   "CheckType": [],
-  "ServiceName": "RBAC",
+  "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

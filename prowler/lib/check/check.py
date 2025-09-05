@@ -635,6 +635,8 @@ def execute(
                 is_finding_muted_args["account_name"] = (
                     global_provider.identity.account_name
                 )
+            elif global_provider.type == "m365":
+                is_finding_muted_args["tenant_id"] = global_provider.identity.tenant_id
             for finding in check_findings:
                 if global_provider.type == "azure":
                     is_finding_muted_args["subscription_id"] = (

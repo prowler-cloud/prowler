@@ -22,7 +22,7 @@ import React, {
 
 import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
 import { EntityInfoShort } from "@/components/ui/entities";
-import { isScanEntity } from "@/lib/helper-filters";
+import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
 import {
   CustomDropdownFilterProps,
   FilterEntity,
@@ -189,6 +189,10 @@ export const CustomDropdownFilter = ({
       )?.[value];
       if (!entity) return value;
 
+      if (isConnectionStatus(entity)) {
+        return entity.label;
+      }
+
       if (isScanEntity(entity as ScanEntity)) {
         return (
           (entity as ScanEntity).attributes?.name ||
@@ -320,7 +324,9 @@ export const CustomDropdownFilter = ({
                         value={value}
                       >
                         {entity ? (
-                          isScanEntity(entity as ScanEntity) ? (
+                          isConnectionStatus(entity) ? (
+                            getDisplayLabel(value)
+                          ) : isScanEntity(entity as ScanEntity) ? (
                             <ComplianceScanInfo scan={entity as ScanEntity} />
                           ) : (
                             <EntityInfoShort
@@ -335,7 +341,7 @@ export const CustomDropdownFilter = ({
                             />
                           )
                         ) : (
-                          value
+                          getDisplayLabel(value)
                         )}
                       </Checkbox>
                     );

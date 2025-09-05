@@ -1,7 +1,6 @@
 "use client";
 
 import { Textarea } from "@nextui-org/react";
-import Link from "next/link";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 
@@ -14,9 +13,14 @@ import {
 import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { FormButtons } from "@/components/ui/form";
 import { fontMono } from "@/config/fonts";
-import { convertToYaml, parseYamlValidation } from "@/lib/yaml";
+import {
+  convertToYaml,
+  defaultMutedFindingsConfig,
+  parseYamlValidation,
+} from "@/lib/yaml";
 import {
   MutedFindingsConfigActionState,
   ProcessorData,
@@ -24,10 +28,12 @@ import {
 
 interface MutedFindingsConfigFormProps {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
+  onCancel?: () => void;
 }
 
 export const MutedFindingsConfigForm = ({
   setIsOpen,
+  onCancel,
 }: MutedFindingsConfigFormProps) => {
   const [config, setConfig] = useState<ProcessorData | null>(null);
   const [configText, setConfigText] = useState("");
@@ -178,13 +184,9 @@ export const MutedFindingsConfigForm = ({
             </li>
             <li>
               Learn more about configuring the Mutelist{" "}
-              <Link
-                href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/mutelist/"
-                target="_blank"
-                className="text-primary-600 hover:underline"
-              >
+              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-mute-findings">
                 here
-              </Link>
+              </CustomLink>
               .
             </li>
             <li>
@@ -205,7 +207,7 @@ export const MutedFindingsConfigForm = ({
             <Textarea
               id="configuration"
               name="configuration"
-              placeholder="Enter your YAML configuration..."
+              placeholder={defaultMutedFindingsConfig}
               variant="bordered"
               value={configText}
               onChange={(e) => handleConfigChange(e.target.value)}
@@ -237,6 +239,7 @@ export const MutedFindingsConfigForm = ({
       <div className="flex flex-col space-y-4">
         <FormButtons
           setIsOpen={setIsOpen}
+          onCancel={onCancel}
           submitText={config ? "Update" : "Save"}
           isDisabled={!yamlValidation.isValid || !configText.trim()}
         />

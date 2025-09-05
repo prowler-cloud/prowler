@@ -45,6 +45,13 @@ def check_security_group(
             if _is_cidr_public(ip_ingress_rule["CidrIpv6"], any_address):
                 return True
 
+    if (
+        ingress_rule["IpProtocol"] != "-1"
+        and protocol != "-1"
+        and ingress_rule["IpProtocol"] != protocol
+    ):
+        return False
+
     # Check for specific ports in ingress rules
     if "FromPort" in ingress_rule:
         # If there is a port range

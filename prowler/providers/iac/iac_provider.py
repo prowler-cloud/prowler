@@ -1,43 +1,12 @@
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 from os import environ
 from typing import List
 
 from alive_progress import alive_bar
-from checkov.ansible.runner import Runner as AnsibleRunner
-from checkov.argo_workflows.runner import Runner as ArgoWorkflowsRunner
-from checkov.arm.runner import Runner as ArmRunner
-from checkov.azure_pipelines.runner import Runner as AzurePipelinesRunner
-from checkov.bicep.runner import Runner as BicepRunner
-from checkov.bitbucket.runner import Runner as BitbucketRunner
-from checkov.bitbucket_pipelines.runner import Runner as BitbucketPipelinesRunner
-from checkov.cdk.runner import CdkRunner
-from checkov.circleci_pipelines.runner import Runner as CircleciPipelinesRunner
-from checkov.cloudformation.runner import Runner as CfnRunner
-from checkov.common.output.record import Record
-from checkov.common.output.report import Report
-from checkov.common.runners.runner_registry import RunnerRegistry
-from checkov.dockerfile.runner import Runner as DockerfileRunner
-from checkov.github.runner import Runner as GithubRunner
-from checkov.github_actions.runner import Runner as GithubActionsRunner
-from checkov.gitlab.runner import Runner as GitlabRunner
-from checkov.gitlab_ci.runner import Runner as GitlabCiRunner
-from checkov.helm.runner import Runner as HelmRunner
-from checkov.json_doc.runner import Runner as JsonDocRunner
-from checkov.kubernetes.runner import Runner as K8sRunner
-from checkov.kustomize.runner import Runner as KustomizeRunner
-from checkov.openapi.runner import Runner as OpenapiRunner
-from checkov.runner_filter import RunnerFilter
-from checkov.sast.runner import Runner as SastRunner
-from checkov.sca_image.runner import Runner as ScaImageRunner
-from checkov.sca_package_2.runner import Runner as ScaPackage2Runner
-from checkov.secrets.runner import Runner as SecretsRunner
-from checkov.serverless.runner import Runner as ServerlessRunner
-from checkov.terraform.runner import Runner as TerraformRunner
-from checkov.terraform_json.runner import TerraformJsonRunner
-from checkov.yaml_doc.runner import Runner as YamlDocRunner
 from colorama import Fore, Style
 from dulwich import porcelain
 
@@ -60,7 +29,7 @@ class IacProvider(Provider):
         self,
         scan_path: str = ".",
         scan_repository_url: str = None,
-        frameworks: list[str] = ["all"],
+        scanners: list[str] = ["vuln", "misconfig", "secret"],
         exclude_path: list[str] = [],
         config_path: str = None,
         config_content: dict = None,
@@ -73,7 +42,7 @@ class IacProvider(Provider):
 
         self.scan_path = scan_path
         self.scan_repository_url = scan_repository_url
-        self.frameworks = frameworks
+        self.scanners = scanners
         self.exclude_path = exclude_path
         self.region = "global"
         self.audited_account = "local-iac"
@@ -121,7 +90,7 @@ class IacProvider(Provider):
         # Fixer Config
         self._fixer_config = fixer_config
 
-        # Mutelist (not needed for IAC since Checkov has its own mutelist logic)
+        # Mutelist (not needed for IAC since Trivy has its own mutelist logic)
         self._mutelist = None
 
         self.audit_metadata = Audit_Metadata(
@@ -162,37 +131,50 @@ class IacProvider(Provider):
         return self._fixer_config
 
     def setup_session(self):
-        """IAC provider doesn't need a session since it uses Checkov directly"""
+        """IAC provider doesn't need a session since it uses Trivy directly"""
         return None
 
-    def _process_check(
-        self, finding: Report, check: Record, status: str
+    def _process_finding(
+        self, finding: dict, file_path: str, type: str
     ) -> CheckReportIAC:
         """
         Process a single check (failed or passed) and create a CheckReportIAC object.
 
         Args:
-            finding: The finding object from Checkov output
-            check: The individual check data (failed_check or passed_check)
-            status: The status of the check ("FAIL" or "PASS")
+            finding: The finding object from Trivy output
+            file_path: The path to the file that contains the finding
+            type: The type of the finding
 
         Returns:
             CheckReportIAC: The processed check report
         """
         try:
+            if "VulnerabilityID" in finding:
+                finding_id = finding["VulnerabilityID"]
+                finding_description = finding["Description"]
+                finding_status = finding.get("Status", "FAIL")
+            elif "RuleID" in finding:
+                finding_id = finding["RuleID"]
+                finding_description = finding["Title"]
+                finding_status = finding.get("Status", "FAIL")
+            else:
+                finding_id = finding["ID"]
+                finding_description = finding["Description"]
+                finding_status = finding["Status"]
+
             metadata_dict = {
                 "Provider": "iac",
-                "CheckID": check.check_id,
-                "CheckTitle": check.check_name,
+                "CheckID": finding_id,
+                "CheckTitle": finding["Title"],
                 "CheckType": ["Infrastructure as Code"],
-                "ServiceName": finding.check_type,
+                "ServiceName": type,
                 "SubServiceName": "",
                 "ResourceIdTemplate": "",
-                "Severity": (check.severity.lower() if check.severity else "low"),
-                "ResourceType": finding.check_type,
-                "Description": check.check_name,
+                "Severity": finding["Severity"],
+                "ResourceType": "iac",
+                "Description": finding_description,
                 "Risk": "",
-                "RelatedUrl": (check.guideline if check.guideline else ""),
+                "RelatedUrl": finding.get("PrimaryURL", ""),
                 "Remediation": {
                     "Code": {
                         "NativeIaC": "",
@@ -201,8 +183,8 @@ class IacProvider(Provider):
                         "Other": "",
                     },
                     "Recommendation": {
-                        "Text": "",
-                        "Url": (check.guideline if check.guideline else ""),
+                        "Text": finding.get("Resolution", ""),
+                        "Url": finding.get("PrimaryURL", ""),
                     },
                 },
                 "Categories": [],
@@ -214,11 +196,16 @@ class IacProvider(Provider):
             # Convert metadata dict to JSON string
             metadata = json.dumps(metadata_dict)
 
-            report = CheckReportIAC(metadata=metadata, resource=check)
-            report.status = status
-            report.resource_tags = check.entity_tags
-            report.status_extended = check.check_name
-            if status == "MUTED":
+            report = CheckReportIAC(
+                metadata=metadata, finding=finding, file_path=file_path
+            )
+            report.status = finding_status
+            report.status_extended = (
+                finding.get("Message", "")
+                if finding.get("Message")
+                else finding.get("Description", "")
+            )
+            if finding_status == "MUTED":
                 report.muted = True
             return report
         except Exception as error:
@@ -238,6 +225,8 @@ class IacProvider(Provider):
         Clone a git repository to a temporary directory, supporting GitHub authentication.
         """
         try:
+            original_url = repository_url
+
             if github_username and personal_access_token:
                 repository_url = repository_url.replace(
                     "https://github.com/",
@@ -251,7 +240,7 @@ class IacProvider(Provider):
 
             temporary_directory = tempfile.mkdtemp()
             logger.info(
-                f"Cloning repository {repository_url} into {temporary_directory}..."
+                f"Cloning repository {original_url} into {temporary_directory}..."
             )
             with alive_bar(
                 ctrl_c=False,
@@ -261,7 +250,7 @@ class IacProvider(Provider):
                 enrich_print=False,
             ) as bar:
                 try:
-                    bar.title = f"-> Cloning {repository_url}..."
+                    bar.title = f"-> Cloning {original_url}..."
                     porcelain.clone(repository_url, temporary_directory, depth=1)
                     bar.title = "-> Repository cloned successfully!"
                 except Exception as clone_error:
@@ -286,7 +275,7 @@ class IacProvider(Provider):
             scan_dir = self.scan_path
 
         try:
-            reports = self.run_scan(scan_dir, self.frameworks, self.exclude_path)
+            reports = self.run_scan(scan_dir, self.scanners, self.exclude_path)
         finally:
             if temp_dir:
                 logger.info(f"Removing temporary directory {temp_dir}...")
@@ -295,62 +284,121 @@ class IacProvider(Provider):
         return reports
 
     def run_scan(
-        self, directory: str, frameworks: list[str], exclude_path: list[str]
+        self, directory: str, scanners: list[str], exclude_path: list[str]
     ) -> List[CheckReportIAC]:
         try:
-            logger.info(f"Running IaC scan on {directory}...")
-            runners = [
-                TerraformRunner(),
-                CfnRunner(),
-                K8sRunner(),
-                ArmRunner(),
-                ServerlessRunner(),
-                DockerfileRunner(),
-                YamlDocRunner(),
-                OpenapiRunner(),
-                SastRunner(),
-                ScaImageRunner(),
-                ScaPackage2Runner(),
-                SecretsRunner(),
-                AnsibleRunner(),
-                ArgoWorkflowsRunner(),
-                BitbucketRunner(),
-                BitbucketPipelinesRunner(),
-                CdkRunner(),
-                CircleciPipelinesRunner(),
-                GithubRunner(),
-                GithubActionsRunner(),
-                GitlabRunner(),
-                GitlabCiRunner(),
-                HelmRunner(),
-                JsonDocRunner(),
-                TerraformJsonRunner(),
-                KustomizeRunner(),
-                AzurePipelinesRunner(),
-                BicepRunner(),
+            logger.info(f"Running IaC scan on {directory} ...")
+            trivy_command = [
+                "trivy",
+                "fs",
+                directory,
+                "--format",
+                "json",
+                "--scanners",
+                ",".join(scanners),
+                "--parallel",
+                "0",
+                "--include-non-failures",
             ]
-            runner_filter = RunnerFilter(
-                framework=frameworks, excluded_paths=exclude_path
-            )
+            if exclude_path:
+                trivy_command.extend(["--skip-dirs", ",".join(exclude_path)])
+            with alive_bar(
+                ctrl_c=False,
+                bar="blocks",
+                spinner="classic",
+                stats=False,
+                enrich_print=False,
+            ) as bar:
+                try:
+                    bar.title = f"-> Running IaC scan on {directory} ..."
+                    # Run Trivy with JSON output
+                    process = subprocess.run(
+                        trivy_command,
+                        capture_output=True,
+                        text=True,
+                    )
+                    bar.title = "-> Scan completed!"
+                except Exception as error:
+                    bar.title = "-> Scan failed!"
+                    raise error
+            # Log Trivy's stderr output with preserved log levels
+            if process.stderr:
+                for line in process.stderr.strip().split("\n"):
+                    if line.strip():
+                        # Parse Trivy's log format to extract level and message
+                        # Trivy format: timestamp level message
+                        parts = line.split()
+                        if len(parts) >= 3:
+                            # Extract level and message
+                            level = parts[1]
+                            message = " ".join(parts[2:])
 
-            registry = RunnerRegistry("", runner_filter, *runners)
-            checkov_reports = registry.run(root_folder=directory)
+                            # Map Trivy log levels to Python logging levels
+                            if level == "ERROR":
+                                logger.error(f"{message}")
+                            elif level == "WARN":
+                                logger.warning(f"{message}")
+                            elif level == "INFO":
+                                logger.info(f"{message}")
+                            elif level == "DEBUG":
+                                logger.debug(f"{message}")
+                            else:
+                                # Default to info for unknown levels
+                                logger.info(f"{message}")
+                        else:
+                            # If we can't parse the format, log as info
+                            logger.info(f"{line}")
 
-            reports: List[CheckReportIAC] = []
-            for report in checkov_reports:
+            try:
+                output = json.loads(process.stdout)["Results"]
 
-                for failed in report.failed_checks:
-                    reports.append(self._process_check(report, failed, "FAIL"))
+                if not output:
+                    logger.warning("No findings returned from Trivy scan")
+                    return []
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
+                sys.exit(1)
 
-                for passed in report.passed_checks:
-                    reports.append(self._process_check(report, passed, "PASS"))
+            reports = []
 
-                for skipped in report.skipped_checks:
-                    reports.append(self._process_check(report, skipped, "MUTED"))
+            # Process all trivy findings
+            for finding in output:
+
+                # Process Misconfigurations
+                for misconfiguration in finding.get("Misconfigurations", []):
+                    report = self._process_finding(
+                        misconfiguration, finding["Target"], finding["Type"]
+                    )
+                    reports.append(report)
+                # Process Vulnerabilities
+                for vulnerability in finding.get("Vulnerabilities", []):
+                    report = self._process_finding(
+                        vulnerability, finding["Target"], finding["Type"]
+                    )
+                    reports.append(report)
+                # Process Secrets
+                for secret in finding.get("Secrets", []):
+                    report = self._process_finding(
+                        secret, finding["Target"], finding["Class"]
+                    )
+                    reports.append(report)
+                # Process Licenses
+                for license in finding.get("Licenses", []):
+                    report = self._process_finding(
+                        license, finding["Target"], finding["Type"]
+                    )
+                    reports.append(report)
 
             return reports
 
         except Exception as error:
+            if "No such file or directory: 'trivy'" in str(error):
+                logger.critical(
+                    "Trivy binary not found. Please install Trivy from https://trivy.dev/latest/getting-started/installation/ or use your system package manager (e.g., 'brew install trivy' on macOS, 'apt-get install trivy' on Ubuntu)"
+                )
+                sys.exit(1)
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
@@ -378,7 +426,7 @@ class IacProvider(Provider):
             )
 
         report_lines.append(
-            f"Frameworks: {Fore.YELLOW}{', '.join(self.frameworks)}{Style.RESET_ALL}"
+            f"Scanners: {Fore.YELLOW}{', '.join(self.scanners)}{Style.RESET_ALL}"
         )
 
         report_lines.append(

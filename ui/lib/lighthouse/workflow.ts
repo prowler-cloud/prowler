@@ -8,6 +8,7 @@ import {
   findingsAgentPrompt,
   overviewAgentPrompt,
   providerAgentPrompt,
+  resourcesAgentPrompt,
   rolesAgentPrompt,
   scansAgentPrompt,
   supervisorPrompt,
@@ -35,34 +36,39 @@ import {
   getProvidersTool,
   getProviderTool,
 } from "@/lib/lighthouse/tools/providers";
+import {
+  getLatestResourcesTool,
+  getResourcesTool,
+  getResourceTool,
+} from "@/lib/lighthouse/tools/resources";
 import { getRolesTool, getRoleTool } from "@/lib/lighthouse/tools/roles";
 import { getScansTool, getScanTool } from "@/lib/lighthouse/tools/scans";
 import {
   getMyProfileInfoTool,
   getUsersTool,
 } from "@/lib/lighthouse/tools/users";
+import { getModelParams } from "@/lib/lighthouse/utils";
 
 export async function initLighthouseWorkflow() {
   const apiKey = await getAIKey();
-  const aiConfig = await getLighthouseConfig();
-  const modelConfig = aiConfig?.data?.attributes;
+  const lighthouseConfig = await getLighthouseConfig();
+
+  const modelParams = getModelParams(lighthouseConfig);
 
   // Initialize models without API keys
   const llm = new ChatOpenAI({
-    model: modelConfig?.model || "gpt-4o",
-    temperature: modelConfig?.temperature || 0,
-    maxTokens: modelConfig?.max_tokens || 4000,
+    model: lighthouseConfig.model,
     apiKey: apiKey,
     tags: ["agent"],
+    ...modelParams,
   });
 
   const supervisorllm = new ChatOpenAI({
-    model: modelConfig?.model || "gpt-4o",
-    temperature: modelConfig?.temperature || 0,
-    maxTokens: modelConfig?.max_tokens || 4000,
+    model: lighthouseConfig.model,
     apiKey: apiKey,
     streaming: true,
     tags: ["supervisor"],
+    ...modelParams,
   });
 
   const providerAgent = createReactAgent({
@@ -127,6 +133,13 @@ export async function initLighthouseWorkflow() {
     prompt: rolesAgentPrompt,
   });
 
+  const resourcesAgent = createReactAgent({
+    llm: llm,
+    tools: [getResourceTool, getResourcesTool, getLatestResourcesTool],
+    name: "resources_agent",
+    prompt: resourcesAgentPrompt,
+  });
+
   const agents = [
     userInfoAgent,
     providerAgent,
@@ -135,6 +148,7 @@ export async function initLighthouseWorkflow() {
     complianceAgent,
     findingsAgent,
     rolesAgent,
+    resourcesAgent,
   ];
 
   // Create supervisor workflow

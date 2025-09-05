@@ -7,6 +7,7 @@ from googleapiclient import discovery
 from googleapiclient.discovery import Resource
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 
 
@@ -28,7 +29,10 @@ class GCPService:
             self.service, api_version, self.credentials
         )
         # Only project ids that have their API enabled will be scanned
-        self.project_ids = self.__is_api_active__(provider.project_ids)
+        if provider.skip_api_check:
+            self.project_ids = provider.project_ids
+        else:
+            self.project_ids = self.__is_api_active__(provider.project_ids)
         self.projects = provider.projects
         self.default_project_id = provider.default_project_id
         self.audit_config = provider.audit_config
@@ -61,7 +65,7 @@ class GCPService:
                 request = client.services().get(
                     name=f"projects/{project_id}/services/{self.service}.googleapis.com"
                 )
-                response = request.execute()
+                response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                 if response.get("state") != "DISABLED":
                     project_ids.append(project_id)
                 else:
@@ -81,7 +85,12 @@ class GCPService:
         credentials: Credentials,
     ) -> Resource:
         try:
-            return discovery.build(service, api_version, credentials=credentials)
+            return discovery.build(
+                service,
+                api_version,
+                credentials=credentials,
+                num_retries=DEFAULT_RETRY_ATTEMPTS,
+            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

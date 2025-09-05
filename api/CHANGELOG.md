@@ -2,7 +2,50 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [v1.10.0] (Prowler UNRELEASED)
+## [1.13.0] (Prowler UNRELEASED)
+
+### Added
+- Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622), [(#8637)](https://github.com/prowler-cloud/prowler/pull/8637)
+- `GET /overviews/findings_severity` now supports `filter[status]` and `filter[status__in]` to aggregate by specific statuses (`FAIL`, `PASS`)[(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
+
+---
+
+## [1.12.0] (Prowler 5.11.0)
+
+### Added
+- Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
+- Integration with Amazon Security Hub, enabling sending findings to Security Hub [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
+- Generate ASFF output for AWS providers with SecurityHub integration enabled [(#8569)](https://github.com/prowler-cloud/prowler/pull/8569)
+
+### Fixed
+- GitHub provider always scans user instead of organization when using provider UID [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
+
+## [1.11.0] (Prowler 5.10.0)
+
+### Added
+- Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
+- Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
+
+### Fixed
+- Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
+
+---
+
+## [1.10.2] (Prowler v5.9.2)
+
+### Changed
+- Optimized queries for resources views [(#8336)](https://github.com/prowler-cloud/prowler/pull/8336)
+
+---
+
+## [v1.10.1] (Prowler v5.9.1)
+
+### Fixed
+- Calculate failed findings during scans to prevent heavy database queries [(#8322)](https://github.com/prowler-cloud/prowler/pull/8322)
+
+---
+
+## [v1.10.0] (Prowler v5.9.0)
 
 ### Added
 - SSO with SAML support [(#8175)](https://github.com/prowler-cloud/prowler/pull/8175)
@@ -12,6 +55,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `/processors` endpoints to post-process findings. Currently, only the Mutelist processor is supported to allow to mute findings.
 - Optimized the underlying queries for resources endpoints [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
 - Optimized include parameters for resources view [(#8229)](https://github.com/prowler-cloud/prowler/pull/8229)
+- Optimized overview background tasks [(#8300)](https://github.com/prowler-cloud/prowler/pull/8300)
 
 ### Fixed
 - Search filter for findings and resources [(#8112)](https://github.com/prowler-cloud/prowler/pull/8112)
