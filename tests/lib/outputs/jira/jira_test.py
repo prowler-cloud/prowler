@@ -1293,3 +1293,128 @@ class TestJiraIntegration:
         }
 
         assert projects_and_issue_types == expected_result
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_successful(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding returns True when the finding is sent successfully."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        # Mock successful response
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {"id": "ISSUE-123", "key": "TEST-123"}
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result is True
+        mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_failure(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding returns False when the request fails."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        # Mock failed response
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {"errors": {"summary": "Required field"}}
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result is False
+        mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_custom_fields_error(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding returns False when custom fields cause an error."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        # Mock response with custom fields error
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {
+            "errors": {
+                "customfield_10001": "This custom field is required",
+                "customfield_10002": "Invalid value for custom field",
+            }
+        }
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result is False
+        mock_post.assert_called_once()
