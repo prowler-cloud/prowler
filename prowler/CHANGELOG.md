@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
 
 ### Changed
+- Rename ftp and mongo checks to follow pattern `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_*` [(#8293)](https://github.com/prowler-cloud/prowler/pull/8293)
 
 ### Fixed
 - Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
