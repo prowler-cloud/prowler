@@ -34,10 +34,20 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
-# plugins:
-#   - search
-#   - git-revision-date-localized:
-#       enable_creation_date: true
+plugins:
+- llmstxt:
+    full_output: llms-full.txt
+    sections:
+      Basic Usage:
+      - basic-usage/*.md
+      Installation:
+      - installation/*.md
+      Products:
+      - products/*.md
+      Usage documentation:
+      - tutorials/*.md
+      Developer guide:
+      - developer-guide/*.md
 
 edit_uri: "https://github.com/prowler-cloud/prowler/tree/master/docs"
 # Prowler OSS Repository
