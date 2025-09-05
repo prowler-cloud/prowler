@@ -699,8 +699,17 @@ class TestJiraIntegration:
         self.jira_integration.cloud_id = "valid_cloud_id"
 
         self.jira_integration.send_findings(
-            findings=[finding], project_key="TEST-1", issue_type="Bug"
+            findings=[finding],
+            project_key="TEST-1",
+            issue_type="Bug",
+            issue_labels=["scan-mocked", "whatever"],
+            finding_url="https://prowler-cloud-link/findings/12345",
+            tenant_info="Tenant Info",
         )
+
+        mock_post.assert_called_once()
+
+        call_args = mock_post.call_args
 
         mock_post.assert_called_once()
 
@@ -722,6 +731,7 @@ class TestJiraIntegration:
         assert payload["fields"]["summary"] == "[Prowler] HIGH - CHECK-1 - resource-1"
         assert payload["fields"]["issuetype"]["name"] == "Bug"
         assert payload["fields"]["description"]["type"] == "doc"
+        assert payload["fields"]["labels"] == ["scan-mocked", "whatever"]
 
         description_content = payload["fields"]["description"]["content"]
 
@@ -772,6 +782,8 @@ class TestJiraIntegration:
             "Remediation Terraform",
             "Remediation CLI",
             "Remediation Other",
+            "Finding URL",
+            "Tenant Info",
         ]
 
         actual_keys = [key for key, _ in row_texts]
@@ -811,6 +823,8 @@ class TestJiraIntegration:
         assert "Owner=SecurityTeam" in row_dict["Resource Tags"]
         assert "CIS: 2.1.1, 2.1.2" in row_dict["Compliance"]
         assert "NIST: AC-3, AC-6" in row_dict["Compliance"]
+        assert "https://prowler-cloud-link/findings/12345" in row_dict["Finding URL"]
+        assert "Tenant Info" in row_dict["Tenant Info"]
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -824,6 +838,7 @@ class TestJiraIntegration:
         # To disable vulture
         mock_get_available_issue_types = mock_get_available_issue_types
         mock_get_access_token = mock_get_access_token
+        mock_post = mock_post
         mock_post = mock_post
 
         with pytest.raises(JiraCreateIssueError):
@@ -914,7 +929,12 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraRequiredCustomFieldsError):
             self.jira_integration.send_findings(
-                findings=[finding], project_key="TEST-1", issue_type="Bug"
+                findings=[finding],
+                project_key="TEST-1",
+                issue_type="Bug",
+                issue_labels=["scan-mocked", "whatever"],
+                finding_url="https://prowler-cloud-link/findings/12345",
+                tenant_info="Tenant Info",
             )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
@@ -971,7 +991,12 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraCreateIssueError):
             self.jira_integration.send_findings(
-                findings=[finding], project_key="TEST-1", issue_type="Bug"
+                findings=[finding],
+                project_key="TEST-1",
+                issue_type="Bug",
+                issue_labels=["scan-mocked", "whatever"],
+                finding_url="https://prowler-cloud-link/findings/12345",
+                tenant_info="Tenant Info",
             )
 
     @pytest.mark.parametrize(

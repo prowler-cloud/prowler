@@ -79,6 +79,7 @@ class Jira:
         - test_connection: Test the connection to Jira and return a Connection object
         - get_projects: Get the projects from Jira
         - get_available_issue_types: Get the available issue types for a project
+        - get_available_issue_labels: Get the available labels for a project
         - send_findings: Send the findings to Jira and create an issue
 
     Raises:
@@ -377,7 +378,7 @@ class Jira:
                     )
             else:
                 response_error = f"Failed to get cloud id: {response.status_code} - {response.json()}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraGetCloudIDResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -454,7 +455,7 @@ class Jira:
                 return self._access_token
             else:
                 response_error = f"Failed to refresh access token: {response.status_code} - {response.json()}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraRefreshTokenResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -672,7 +673,7 @@ class Jira:
                 return [issue_type["name"] for issue_type in issue_types]
             else:
                 response_error = f"Failed to get available issue types: {response.status_code} - {response.text}"
-                logger.warning(response_error)
+                logger.error(response_error)
                 raise JiraGetAvailableIssueTypesResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
@@ -726,7 +727,7 @@ class Jira:
                         if project_response.status_code == 200:
                             project_metadata = project_response.json()
                             if len(project_metadata["projects"]) == 0:
-                                logger.warning(
+                                logger.error(
                                     f"No project metadata found for project {project['key']}, setting empty issue types"
                                 )
                                 issue_types = []
@@ -837,6 +838,8 @@ class Jira:
         remediation_code_other: str = None,
         resource_tags: dict = None,
         compliance: dict = None,
+        finding_url: str = None,
+        tenant_info: str = None,
     ) -> dict:
         table_rows = [
             {
@@ -1414,6 +1417,93 @@ class Jira:
                     }
                 )
 
+        if finding_url:
+            table_rows.append(
+                {
+                    "type": "tableRow",
+                    "content": [
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [1]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Finding URL",
+                                            "marks": [{"type": "strong"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [3]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": finding_url,
+                                            "marks": [
+                                                {
+                                                    "type": "link",
+                                                    "attrs": {"href": finding_url},
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+
+        if tenant_info:
+            table_rows.append(
+                {
+                    "type": "tableRow",
+                    "content": [
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [1]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": "Tenant Info",
+                                            "marks": [{"type": "strong"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "tableCell",
+                            "attrs": {"colwidth": [3]},
+                            "content": [
+                                {
+                                    "type": "paragraph",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": tenant_info,
+                                            "marks": [{"type": "code"}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            )
+
         return {
             "type": "doc",
             "version": 1,
@@ -1440,6 +1530,9 @@ class Jira:
         findings: list[Finding] = None,
         project_key: str = None,
         issue_type: str = None,
+        issue_labels: list[str] = None,
+        finding_url: str = None,
+        tenant_info: str = None,
     ):
         """
         Send the findings to Jira
@@ -1448,6 +1541,9 @@ class Jira:
             - findings: The findings to send
             - project_key: The project key
             - issue_type: The issue type
+            - issue_labels: The issue labels
+            - finding_url: The finding URL
+            - tenant_info: The tenant info
 
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
@@ -1519,6 +1615,8 @@ class Jira:
                     remediation_code_other=finding.metadata.Remediation.Code.Other,
                     resource_tags=finding.resource_tags,
                     compliance=finding.compliance,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
                 )
                 payload = {
                     "fields": {
@@ -1528,6 +1626,8 @@ class Jira:
                         "issuetype": {"name": issue_type},
                     }
                 }
+                if issue_labels:
+                    payload["fields"]["labels"] = issue_labels
 
                 response = requests.post(
                     f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
@@ -1536,7 +1636,15 @@ class Jira:
                 )
 
                 if response.status_code != 201:
-                    response_json = response.json()
+                    try:
+                        response_json = response.json()
+                    except (ValueError, requests.exceptions.JSONDecodeError):
+                        response_error = f"Failed to send finding: {response.status_code} - {response.text}"
+                        logger.error(response_error)
+                        raise JiraSendFindingsResponseError(
+                            message=response_error, file=os.path.basename(__file__)
+                        )
+
                     # Check if the error is due to required custom fields
                     if response.status_code == 400 and "errors" in response_json:
                         errors = response_json.get("errors", {})
@@ -1559,12 +1667,18 @@ class Jira:
                             )
 
                     response_error = f"Failed to send finding: {response.status_code} - {response_json}"
-                    logger.warning(response_error)
+                    logger.error(response_error)
                     raise JiraSendFindingsResponseError(
                         message=response_error, file=os.path.basename(__file__)
                     )
                 else:
-                    logger.info(f"Finding sent successfully: {response.json()}")
+                    try:
+                        response_json = response.json()
+                        logger.info(f"Finding sent successfully: {response_json}")
+                    except (ValueError, requests.exceptions.JSONDecodeError):
+                        logger.info(
+                            f"Finding sent successfully: Status {response.status_code}"
+                        )
         except JiraRequiredCustomFieldsError as custom_fields_error:
             raise custom_fields_error
         except JiraRefreshTokenError as refresh_error:

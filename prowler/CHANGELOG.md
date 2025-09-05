@@ -4,8 +4,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.12.0] (Prowler UNRELEASED)
 
 ### Added
-- Get Jira Project's metadata [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
 - Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
+- Support labels on Jira tickets [(#8603)](https://github.com/prowler-cloud/prowler/pull/8603)
+- Add finding url and tenant info inside Jira tickets [(#8607)](https://github.com/prowler-cloud/prowler/pull/8607)
+- Get Jira Project's metadata [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
 - Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
 - `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 - Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
