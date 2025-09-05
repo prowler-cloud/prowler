@@ -23,7 +23,7 @@ Standard results will be shown and additionally the framework information as the
 
 ## List Available Compliance Frameworks
 
-In order to see which compliance frameworks are covered by Prowler, you can use option `--list-compliance`:
+To see which compliance frameworks are covered by Prowler, use the `--list-compliance` option:
 
 ```sh
 prowler <provider> --list-compliance
@@ -32,7 +32,7 @@ prowler <provider> --list-compliance
 Or you can visit [Prowler Hub](https://hub.prowler.com/compliance).
 
 ## List Requirements of Compliance Frameworks
-For each compliance framework, you can use the `--list-compliance-requirements` option to list its requirements:
+To list requirements for a compliance framework, use the `--list-compliance-requirements` option:
 
 ```sh
 prowler <provider> --list-compliance-requirements <compliance_framework(s)>
