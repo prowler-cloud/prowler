@@ -1,31 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "config_recorder_using_aws_service_role",
-  "CheckTitle": "Ensure Config Recorder is using service-linked AWS Config role",
+  "CheckTitle": "AWS Config recorder uses the AWSServiceRoleForConfig service-linked role",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices/AWS Foundational Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "config",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "AWS Config uses an IAM role to access other AWS services. This role should be AWSServiceRoleForConfig, not a custom role. Using AWSServiceRoleForConfig ensures that the Config recorder has the necessary permissions to record configuration changes and that the role is managed by AWS, reducing the risk of misconfiguration.",
-  "Risk": "If the Config recorder is not using AWSServiceRoleForConfig, it may not have the necessary permissions to record configuration changes, which could lead in not following the principle of least privilege, which could lead to misconfiguration and potential security vulnerabilities.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/using-service-linked-roles.html",
+  "Description": "**AWS Config recorders** are evaluated for use of the service‑linked IAM role `AWSServiceRoleForConfig` linked to `config.amazonaws.com` rather than a custom role.\n\nThe evaluation inspects active recorders and their role ARN to confirm the AWS‑managed service‑linked role is in use.",
+  "Risk": "Using a custom or incorrect role can break recording or create blind spots, undermining the **integrity** and **availability** of configuration history. Over‑privileged roles weaken **least privilege**, increasing risk of unauthorized access, stealthy changes, and delayed incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/config-controls.html#config-1",
+    "https://docs.aws.amazon.com/config/latest/developerguide/using-service-linked-roles.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws configservice put-configuration-recorder --configuration-recorder- name=<recorder-name>,roleARN=arn:<audited_partition>:iam::<account_number>:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/config-controls.html#config-1",
-      "Terraform": ""
+      "CLI": "aws configservice put-configuration-recorder --configuration-recorder name=<RECORDER_NAME>,roleARN=arn:<PARTITION>:iam::<ACCOUNT_ID>:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::Config::ConfigurationRecorder\n    Properties:\n      Name: example_resource\n      RoleARN: arn:<PARTITION>:iam::<ACCOUNT_ID>:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig  # This line fixes the security issue\n```",
+      "Other": "1. Open the AWS Console and go to AWS Config\n2. Choose Settings (or Recording) and click Edit\n3. For IAM role, select Use service-linked role (AWSServiceRoleForConfig)\n4. Save changes",
+      "Terraform": "```hcl\nresource \"aws_config_configuration_recorder\" \"example_resource\" {\n  name     = \"example_resource\"\n  role_arn = \"arn:<PARTITION>:iam::<ACCOUNT_ID>:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig\"  # This line fixes the security issue\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use service-linked role AWSServiceRoleForConfig for AWS Config recorders.",
-      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/using-service-linked-roles.html"
+      "Text": "Use the AWS‑managed service‑linked role `AWSServiceRoleForConfig` for all recorders to enforce **least privilege** and consistent trust.\n\nAvoid custom roles; restrict who can modify the recorder or role; monitor for drift and ensure recording remains enabled as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/config_recorder_using_aws_service_role"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
