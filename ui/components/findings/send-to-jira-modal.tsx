@@ -70,6 +70,11 @@ export const SendToJiraModal = ({
   const selectedIntegration = form.watch("integration");
   const selectedProject = form.watch("project");
 
+  const hasConnectedIntegration = useMemo(
+    () => integrations.some((i) => i.attributes.connected === true),
+    [integrations],
+  );
+
   const getSelectedValue = (keys: Selection): string => {
     if (keys === "all") return "";
     const first = Array.from(keys)[0];
@@ -421,15 +426,16 @@ export const SendToJiraModal = ({
             />
           )}
 
-          {/* No integrations message */}
-          {!isFetchingIntegrations && integrations.length === 0 && (
-            <CustomBanner
-              title="No Jira integrations found"
-              message="Please configure a Jira integration first."
-              buttonLabel="Configure"
-              buttonLink="/integrations/jira"
-            />
-          )}
+          {/* No integrations or none connected message */}
+          {!isFetchingIntegrations &&
+            (integrations.length === 0 || !hasConnectedIntegration) && (
+              <CustomBanner
+                title="Jira integration is not available"
+                message="Please add or connect an integration first"
+                buttonLabel="Configure"
+                buttonLink="/integrations/jira"
+              />
+            )}
 
           <FormButtons
             setIsOpen={setOpenForFormButtons}
@@ -441,7 +447,8 @@ export const SendToJiraModal = ({
               !form.formState.isValid ||
               form.formState.isSubmitting ||
               isFetchingIntegrations ||
-              integrations.length === 0
+              integrations.length === 0 ||
+              !hasConnectedIntegration
             }
             rightIcon={<Send size={20} />}
           />
