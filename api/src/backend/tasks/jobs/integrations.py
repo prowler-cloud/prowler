@@ -464,14 +464,10 @@ def send_findings_to_jira(
                 resource_tags = resource.get_tags(tenant_id)
 
             # Get region
-            region = ""
-            if finding_instance.resource_regions:
-                region = finding_instance.resource_regions[0]
-            elif resource:
-                region = resource.region
+            region = resource.region if resource and resource.region else ""
 
             # Extract remediation information from check_metadata
-            check_metadata = finding_instance.check_metadata or {}
+            check_metadata = finding_instance.check_metadata
             remediation = check_metadata.get("remediation", {})
             recommendation = remediation.get("recommendation", {})
             remediation_code = remediation.get("code", {})
