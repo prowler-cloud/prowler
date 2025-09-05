@@ -14,7 +14,7 @@ import { IntegrationProps } from "@/types/integrations";
 interface IntegrationActionButtonsProps {
   integration: IntegrationProps;
   onTestConnection: (id: string) => void;
-  onEditConfiguration: (integration: IntegrationProps) => void;
+  onEditConfiguration?: (integration: IntegrationProps) => void;
   onEditCredentials: (integration: IntegrationProps) => void;
   onToggleEnabled: (integration: IntegrationProps) => void;
   onDelete: (integration: IntegrationProps) => void;
@@ -46,16 +46,18 @@ export const IntegrationActionButtons = ({
       >
         Test
       </CustomButton>
-      <CustomButton
-        size="sm"
-        variant="bordered"
-        startContent={<SettingsIcon size={14} />}
-        onPress={() => onEditConfiguration(integration)}
-        ariaLabel="Edit configuration"
-        className="w-full sm:w-auto"
-      >
-        Config
-      </CustomButton>
+      {onEditConfiguration && (
+        <CustomButton
+          size="sm"
+          variant="bordered"
+          startContent={<SettingsIcon size={14} />}
+          onPress={() => onEditConfiguration(integration)}
+          ariaLabel="Edit configuration"
+          className="w-full sm:w-auto"
+        >
+          Config
+        </CustomButton>
+      )}
       {showCredentialsButton && (
         <CustomButton
           size="sm"

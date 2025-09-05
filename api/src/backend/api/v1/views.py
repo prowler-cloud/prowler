@@ -89,6 +89,7 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
@@ -370,8 +371,8 @@ class SchemaView(SpectacularAPIView):
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
             {
-                "name": "Lighthouse",
-                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
+                "name": "Lighthouse AI",
+                "description": "Endpoints for managing Lighthouse AI configurations, including creation, retrieval, "
                 "updating, and deletion of configurations such as OpenAI keys, models, and business "
                 "context.",
             },
@@ -3546,8 +3547,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "findings_severity"]:
+        elif self.action == "findings":
             return ScanSummaryFilter
+        elif self.action == "findings_severity":
+            return ScanSummarySeverityFilter
         elif self.action == "services":
             return ServiceOverviewFilter
         return None
@@ -3669,7 +3672,12 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
         tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
+
+        # Load only required fields
+        queryset = self.get_queryset().only(
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
+        )
+
         filtered_queryset = self.filter_queryset(queryset)
         provider_filter = (
             {"provider__in": self.allowed_providers}
@@ -3689,16 +3697,22 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
+        # The filter will have added a status_count annotation if any status filter was used
+        if "status_count" in filtered_queryset.query.annotations:
+            sum_expression = Sum("status_count")
+        else:
+            sum_expression = Sum("total")
+
         severity_counts = (
             filtered_queryset.values("severity")
-            .annotate(count=Sum("total"))
+            .annotate(count=sum_expression)
             .order_by("severity")
         )
 
         severity_data = {sev[0]: 0 for sev in SeverityChoices}
-
-        for item in severity_counts:
-            severity_data[item["severity"]] = item["count"]
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
 
         serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -3888,29 +3902,29 @@ class IntegrationViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse"],
-        summary="List all Lighthouse configurations",
-        description="Retrieve a list of all Lighthouse configurations.",
+        tags=["Lighthouse AI"],
+        summary="List all Lighthouse AI configurations",
+        description="Retrieve a list of all Lighthouse AI configurations.",
     ),
     create=extend_schema(
-        tags=["Lighthouse"],
-        summary="Create a new Lighthouse configuration",
-        description="Create a new Lighthouse configuration with the specified details.",
+        tags=["Lighthouse AI"],
+        summary="Create a new Lighthouse AI configuration",
+        description="Create a new Lighthouse AI configuration with the specified details.",
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse"],
-        summary="Partially update a Lighthouse configuration",
-        description="Update certain fields of an existing Lighthouse configuration.",
+        tags=["Lighthouse AI"],
+        summary="Partially update a Lighthouse AI configuration",
+        description="Update certain fields of an existing Lighthouse AI configuration.",
     ),
     destroy=extend_schema(
-        tags=["Lighthouse"],
-        summary="Delete a Lighthouse configuration",
-        description="Remove a Lighthouse configuration by its ID.",
+        tags=["Lighthouse AI"],
+        summary="Delete a Lighthouse AI configuration",
+        description="Remove a Lighthouse AI configuration by its ID.",
     ),
     connection=extend_schema(
-        tags=["Lighthouse"],
+        tags=["Lighthouse AI"],
         summary="Check the connection to the OpenAI API",
-        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
