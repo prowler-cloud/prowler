@@ -112,7 +112,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "token-obtain": env("DJANGO_TOKEN_OBTAIN_THROTTLE", default=None),
+        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
     },
 }
 
