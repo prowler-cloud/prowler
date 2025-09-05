@@ -1,26 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_public_snapshot",
-  "CheckTitle": "Check if NeptuneDB manual cluster snapshot is public.",
-  "CheckType": [],
+  "CheckTitle": "NeptuneDB cluster snapshot is not publicly shared",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Effects/Data Exposure",
+    "TTPs/Initial Access/Unauthorized Access"
+  ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRdsDbClusterSnapshot",
-  "Description": "Check if NeptuneDB manual cluster snapshot is public.",
-  "Risk": "If you share an unencrypted manual snapshot as public, the snapshot is available to all AWS accounts. Public snapshots may result in unintended data exposure.",
-  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/security-considerations.html",
+  "Description": "Neptune DB manual cluster snapshot is evaluated to determine if its restore attributes allow access to all AWS accounts *(public)*.\n\nA failed status in the report means the snapshot is publicly shared and can be copied or restored by any AWS account; **PASS** means it is not shared publicly.",
+  "Risk": "**Public snapshots** compromise confidentiality of stored data and metadata.\n\nAttackers or third parties can:\n- Copy or restore snapshots to external accounts.\n- Access sensitive data contained in the snapshot.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-3",
+    "https://docs.aws.amazon.com/config/latest/developerguide/neptune-cluster-snapshot-public-prohibited.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws neptune modify-db-cluster-snapshot-attribute --db-cluster-snapshot-identifier <snapshot_id> --attribute-name restore --values-to-remove all",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-3",
-      "Terraform": ""
+      "Terraform": "",
+      "Other": "1. Sign in to the AWS Management Console and open the Amazon RDS console\n2. In the left navigation, choose Snapshots > DB cluster snapshots\n3. Select the snapshot, choose Actions > Manage snapshot permissions\n4. In the permissions dialog remove the Public/all-accounts permission and click Save"
     },
     "Recommendation": {
-      "Text": "To remove public access from a manual snapshot, follow the AWS documentation on NeptuneDB snapshots.",
-      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/security-considerations.html"
+      "Text": "Avoid public sharing and apply **least privilege** when granting snapshot access: share only with specific AWS accounts or roles.\n\nUse **encryption**, enforce automated policies and regular audits, and apply **separation of duties** and tagging to control and track snapshot access.",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_public_snapshot"
     }
   },
   "Categories": [

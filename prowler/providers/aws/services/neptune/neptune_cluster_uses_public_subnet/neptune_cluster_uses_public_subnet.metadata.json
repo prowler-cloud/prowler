@@ -1,30 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_uses_public_subnet",
-  "CheckTitle": "Ensure Neptune Cluster is not using a public subnet",
-  "CheckType": [],
+  "CheckTitle": "Neptune cluster is not using public subnets",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access/Unauthorized Access"
+  ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:<region>:<account>:cluster:<resource_name>",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Ensure Neptune Cluster is not using a public subnet",
-  "Risk": "There is a risk of exposing sensitive data if Neptune Cluster uses a public subnet.",
-  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html",
+  "Description": "Neptune cluster is associated with one or more **public subnets**.",
+  "Risk": "A Neptune cluster in a **public subnet** increases exposure across the CIA triad:\n\n- **Confidentiality**: Direct access enables credential attacks and data exfiltration\n- **Integrity**: Attackers may modify or inject graph data\n- **Availability**: Public reachability allows DDoS or remote exploitation, causing downtime",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html",
+    "https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\nResources:\n  NeptuneSubnetGroup:\n    Type: AWS::Neptune::DBSubnetGroup\n    Properties:\n      DBSubnetGroupDescription: \"Private subnets for Neptune\"\n      SubnetIds:  # Use only private subnet IDs to prevent public access\n        - <PRIVATE_SUBNET_ID_1>\n        - <PRIVATE_SUBNET_ID_2>\n\n  NeptuneDBCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBSubnetGroupName: !Ref NeptuneSubnetGroup  # Associate cluster with private subnet group\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_subnet_group\" \"neptune\" {\n  name       = \"neptune-private-subnets\"\n  subnet_ids = [\"<PRIVATE_SUBNET_ID_1>\", \"<PRIVATE_SUBNET_ID_2>\"]  # Use only private subnet IDs to prevent public access\n}\n\nresource \"aws_neptune_cluster\" \"example_cluster\" {\n  neptune_subnet_group_name = aws_neptune_subnet_group.neptune.name  # Associate cluster with private subnet group\n}\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Neptune > Subnet groups\n2. Click Create DB Subnet Group\n3. Enter a name and description, select the VPC, and add only private subnet IDs (at least two)\n4. Click Create\n5. Go to Amazon Neptune > DB clusters > Select the cluster > Actions > Modify\n6. Set DB subnet group to the newly created subnet group and save (Apply immediately if required)\n7. Verify the cluster subnet group now lists only private subnets"
     },
     "Recommendation": {
-      "Text": "To ensure your Neptune cluster is not using a public subnet, follow the recommended remediation steps based on your preferred method.",
-      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/get-started-vpc.html"
+      "Text": "Place Neptune clusters in **private subnets** and remove public routability to reduce attack surface.\n\n- Apply **least privilege** and network segmentation\n- Restrict inbound access with scoped network controls and minimal trusted paths\n- Enforce logging, monitoring, and private connectivity for administrative and application access",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_uses_public_subnet"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

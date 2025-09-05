@@ -1,30 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_multi_az",
-  "CheckTitle": "Check if Neptune Clusters have multi-AZ enabled.",
-  "CheckType": [],
+  "CheckTitle": "Neptune cluster has Multi-AZ enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Denial of Service"
+  ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if Neptune Clusters have multi-AZ enabled.",
-  "Risk": "Ensure that your Amazon Neptune graph database clusters are using Multi-AZ deployment configurations to enhance High Availability (HA) through automatic failover to read replicas in the event of a failure such as an Availability Zone (AZ) outage, an internal hardware or network outage, a software failure or in case of planned system maintenance.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-9",
+  "Description": "Amazon Neptune DB clusters are evaluated for `Multi-AZ` deployment by checking whether the cluster has read-replica instances distributed across multiple Availability Zones.\n\nA failing result indicates the cluster is deployed in a single AZ and lacks read-replicas that enable automatic promotion and cross-AZ failover.",
+  "Risk": "**Single-AZ deployment** creates a clear availability single point of failure.\n\n- **Availability**: AZ outage or maintenance can cause prolonged downtime until the primary is rebuilt.\n- **Integrity/Recovery**: Manual recovery increases risk of configuration errors and longer RTOs, impacting operations and compliance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-9",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/multi-az.html#"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/multi-az.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/multi-az.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/multi-az.html#"
+      "NativeIaC": "```yaml\nResources:\n NeptuneCluster:\n Type: AWS::Neptune::DBCluster\n Properties:\n DBClusterIdentifier: \"<DB_CLUSTER_IDENTIFIER>\"\n # Deploy across multiple AZs for high availability and failover\n AvailabilityZones:\n - \"<AZ_1>\"\n - \"<AZ_2>\"\n - \"<AZ_3>\"\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example\" {\n cluster_identifier = \"<db_cluster_identifier>\"\n availability_zones = [\"<AZ_1>\", \"<AZ_2>\", \"<AZ_3>\"]  # Deploy across multiple AZs for high availability\n}\n```",
+      "Other": ""
     },
     "Recommendation": {
-      "Text": "Enable multi-AZ deployment for production Neptune Clusters.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-9"
+      "Text": "Adopt a **high availability** deployment model for production Neptune clusters by placing read-replicas in separate Availability Zones to avoid single points of failure.\n\nRegularly test automated failover and combine HA with robust backup and recovery practices as part of a defense-in-depth strategy.",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_multi_az"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],
