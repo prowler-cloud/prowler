@@ -22,6 +22,7 @@ from tasks.jobs.export import (
     _upload_to_s3,
 )
 from tasks.jobs.integrations import (
+    send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
 )
@@ -595,3 +596,20 @@ def security_hub_integration_task(
         scan_id (str): The scan identifier
     """
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+
+@shared_task(
+    base=RLSTask,
+    name="integration-jira",
+    queue="integrations",
+)
+def jira_integration_task(
+    tenant_id: str,
+    integration_id: str,
+    project_key: str,
+    issue_type: str,
+    finding_ids: list[str],
+):
+    return send_findings_to_jira(
+        tenant_id, integration_id, project_key, issue_type, finding_ids
+    )
