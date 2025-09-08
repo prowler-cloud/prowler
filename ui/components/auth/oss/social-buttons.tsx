@@ -18,7 +18,10 @@ export const SocialButtons = ({
     <Tooltip
       content={
         <div className="flex-inline text-small">
-          Social Login with Google is not enabled. <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration">Read the docs</CustomLink>
+          Social Login with Google is not enabled.{" "}
+          <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration">
+            Read the docs
+          </CustomLink>
         </div>
       }
       placement="right-start"
@@ -42,7 +45,10 @@ export const SocialButtons = ({
     <Tooltip
       content={
         <div className="flex-inline text-small">
-          Social Login with Github is not enabled. <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration">Read the docs</CustomLink>
+          Social Login with Github is not enabled.{" "}
+          <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration">
+            Read the docs
+          </CustomLink>
         </div>
       }
       placement="right-start"
@@ -67,4 +73,3 @@ export const SocialButtons = ({
     </Tooltip>
   </>
 );
-
