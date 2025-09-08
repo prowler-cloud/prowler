@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Tooltip } from "@nextui-org/react";
+import { Button, Checkbox, Divider } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,7 @@ import { z } from "zod";
 import { authenticate, createNewUser } from "@/actions/auth";
 import { initiateSamlAuth } from "@/actions/integrations/saml";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
+import { SocialButtons } from "@/components/auth/oss/social-buttons";
 import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
@@ -23,7 +24,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
-import { SocialButtons } from "@/components/auth/oss/social-buttons";
 
 export const AuthForm = ({
   type,
