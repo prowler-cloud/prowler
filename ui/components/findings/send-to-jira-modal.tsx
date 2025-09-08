@@ -46,6 +46,7 @@ const sendToJiraSchema = z.object({
 
 type SendToJiraFormData = z.infer<typeof sendToJiraSchema>;
 
+// The commented code is related to issue types, which are not required for the first implementation, but will be used in the future
 export const SendToJiraModal = ({
   isOpen,
   onOpenChange,
@@ -56,7 +57,7 @@ export const SendToJiraModal = ({
   const [integrations, setIntegrations] = useState<IntegrationProps[]>([]);
   const [isFetchingIntegrations, setIsFetchingIntegrations] = useState(false);
   const [searchProjectValue, setSearchProjectValue] = useState("");
-  const [searchIssueTypeValue, setSearchIssueTypeValue] = useState("");
+  // const [searchIssueTypeValue, setSearchIssueTypeValue] = useState("");
 
   const form = useForm<SendToJiraFormData>({
     resolver: zodResolver(sendToJiraSchema),
@@ -69,7 +70,7 @@ export const SendToJiraModal = ({
   });
 
   const selectedIntegration = form.watch("integration");
-  const selectedProject = form.watch("project");
+  // const selectedProject = form.watch("project");
 
   const hasConnectedIntegration = useMemo(
     () => integrations.some((i) => i.attributes.connected === true),
@@ -95,7 +96,7 @@ export const SendToJiraModal = ({
       // Reset form when modal closes
       form.reset();
       setSearchProjectValue("");
-      setSearchIssueTypeValue("");
+      // setSearchIssueTypeValue("");
     }
   }, [isOpen, form]);
 
@@ -177,9 +178,9 @@ export const SendToJiraModal = ({
   const projects: Record<string, string> =
     selectedIntegrationData?.attributes.configuration.projects ||
     ({} as Record<string, string>);
-  const issueTypes: string[] =
-    selectedIntegrationData?.attributes.configuration.issue_types ||
-    ([] as string[]);
+  // const issueTypes: string[] =
+  //   selectedIntegrationData?.attributes.configuration.issue_types ||
+  //   ([] as string[]);
 
   // Filter projects based on search
   const filteredProjects = useMemo(() => {
@@ -194,7 +195,6 @@ export const SendToJiraModal = ({
     );
   }, [projects, searchProjectValue]);
 
-  // TODO: Uncomment this when issue types are fetched/required
   // Filter issue types based on search
   // const filteredIssueTypes = useMemo(() => {
   //   if (!searchIssueTypeValue) return issueTypes;
@@ -240,7 +240,7 @@ export const SendToJiraModal = ({
                         // Keep issue type defaulting to Task
                         form.setValue("issueType", "Task");
                         setSearchProjectValue("");
-                        setSearchIssueTypeValue("");
+                        // setSearchIssueTypeValue("");
                       }}
                       variant="bordered"
                       labelPlacement="inside"
@@ -297,7 +297,7 @@ export const SendToJiraModal = ({
                         field.onChange(value);
                         // Keep issue type defaulting to Task when project changes
                         form.setValue("issueType", "Task");
-                        setSearchIssueTypeValue("");
+                        // setSearchIssueTypeValue("");
                       }}
                       variant="bordered"
                       labelPlacement="inside"
