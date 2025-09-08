@@ -117,10 +117,10 @@ class ApiConfig(AppConfig):
 
         # Set environment variables and Django settings
         os.environ[SIGNING_KEY_ENV] = signing_key
-        settings.TOKEN_SIGNING_KEY = signing_key
+        settings.SIMPLE_JWT["SIGNING_KEY"] = signing_key
 
         os.environ[VERIFYING_KEY_ENV] = verifying_key
-        settings.TOKEN_VERIFYING_KEY = verifying_key
+        settings.SIMPLE_JWT["VERIFYING_KEY"] = verifying_key
 
     def _ensure_secrets_encryption_key(self):
         """
