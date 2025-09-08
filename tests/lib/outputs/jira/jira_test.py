@@ -721,6 +721,8 @@ class TestJiraIntegration:
         expected_headers = {
             "Authorization": "Bearer valid_access_token",
             "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
         }
 
         assert call_args[0][0] == expected_url

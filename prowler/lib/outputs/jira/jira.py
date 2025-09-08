@@ -583,9 +583,9 @@ class Jira:
                 return ValueError("Failed to get access token")
 
             if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
+                headers = {"Authorization": f"Basic {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
             else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+                headers = {"Authorization": f"Bearer {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
@@ -653,9 +653,9 @@ class Jira:
                 )
 
             if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
+                headers = {"Authorization": f"Basic {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
             else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+                headers = {"Authorization": f"Bearer {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
@@ -701,9 +701,9 @@ class Jira:
                 return ValueError("Failed to get access token")
 
             if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
+                headers = {"Authorization": f"Basic {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
             else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+                headers = {"Authorization": f"Bearer {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
@@ -1583,11 +1583,15 @@ class Jira:
                 headers = {
                     "Authorization": f"Basic {access_token}",
                     "Content-Type": "application/json",
+                    "X-Force-Accept-Language": "true",
+                    "Accept-Language": "en",
                 }
             else:
                 headers = {
                     "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
+                    "X-Force-Accept-Language": "true",
+                    "Accept-Language": "en",
                 }
 
             for finding in findings:
@@ -1799,11 +1803,15 @@ class Jira:
                 headers = {
                     "Authorization": f"Basic {access_token}",
                     "Content-Type": "application/json",
+                    "X-Force-Accept-Language": "true",
+                    "Accept-Language": "en",
                 }
             else:
                 headers = {
                     "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
+                    "X-Force-Accept-Language": "true",
+                    "Accept-Language": "en",
                 }
 
             status_color = self.get_color_from_status(status)
