@@ -6,6 +6,7 @@ import { Search, Send } from "lucide-react";
 import {
   type Dispatch,
   type SetStateAction,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -88,20 +89,9 @@ export const SendToJiraModal = ({
     onOpenChange(next);
   };
 
-  // Fetch Jira integrations when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchJiraIntegrations();
-    } else {
-      // Reset form when modal closes
-      form.reset();
-      setSearchProjectValue("");
-      // setSearchIssueTypeValue("");
-    }
-  }, [isOpen, form]);
-
-  const fetchJiraIntegrations = async () => {
+  const fetchJiraIntegrations = useCallback(async () => {
     setIsFetchingIntegrations(true);
+
     try {
       const result = await getJiraIntegrations();
       if (!result.success) {
@@ -125,7 +115,19 @@ export const SendToJiraModal = ({
     } finally {
       setIsFetchingIntegrations(false);
     }
-  };
+  }, [form, toast]);
+
+  // Fetch Jira integrations when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchJiraIntegrations();
+    } else {
+      // Reset form when modal closes
+      form.reset();
+      setSearchProjectValue("");
+      // setSearchIssueTypeValue("");
+    }
+  }, [isOpen, form, fetchJiraIntegrations]);
 
   const handleSubmit = async (data: SendToJiraFormData) => {
     // Close modal immediately; continue processing in background
@@ -175,9 +177,12 @@ export const SendToJiraModal = ({
     (i) => i.id === selectedIntegration,
   );
 
-  const projects: Record<string, string> =
-    selectedIntegrationData?.attributes.configuration.projects ||
-    ({} as Record<string, string>);
+  const projects: Record<string, string> = useMemo(
+    () =>
+      selectedIntegrationData?.attributes.configuration.projects ??
+      ({} as Record<string, string>),
+    [selectedIntegrationData],
+  );
   // const issueTypes: string[] =
   //   selectedIntegrationData?.attributes.configuration.issue_types ||
   //   ([] as string[]);

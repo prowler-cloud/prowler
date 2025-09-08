@@ -10,8 +10,11 @@ import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
 import {
+  type CreateValues,
   editJiraIntegrationFormSchema,
+  type FormValues,
   IntegrationProps,
+  type JiraCredentialsPayload,
   jiraIntegrationFormSchema,
 } from "@/types/integrations";
 
@@ -30,7 +33,7 @@ export const JiraIntegrationForm = ({
   const isEditing = !!integration;
   const isCreating = !isEditing;
 
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(
       isCreating ? jiraIntegrationFormSchema : editJiraIntegrationFormSchema,
     ),
@@ -58,7 +61,7 @@ export const JiraIntegrationForm = ({
     return v;
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: FormValues) => {
     try {
       const formData = new FormData();
 
@@ -66,7 +69,7 @@ export const JiraIntegrationForm = ({
       formData.append("integration_type", "jira");
 
       // Prepare credentials object
-      const credentials: any = {};
+      const credentials: JiraCredentialsPayload = {};
 
       // For editing, only add fields that have values
       if (isEditing) {
@@ -76,9 +79,10 @@ export const JiraIntegrationForm = ({
         if (data.api_token) credentials.api_token = data.api_token;
       } else {
         // For creation, all credential fields are required
-        credentials.domain = normalizeDomain(data.domain);
-        credentials.user_mail = data.user_mail;
-        credentials.api_token = data.api_token;
+        const createData = data as CreateValues;
+        credentials.domain = normalizeDomain(createData.domain);
+        credentials.user_mail = createData.user_mail;
+        credentials.api_token = createData.api_token;
       }
 
       // Add credentials as JSON
@@ -90,10 +94,17 @@ export const JiraIntegrationForm = ({
       if (isCreating) {
         formData.append("configuration", JSON.stringify({}));
         formData.append("providers", JSON.stringify([]));
-        formData.append("enabled", JSON.stringify(data.enabled));
+        // enabled exists only in create schema
+        formData.append(
+          "enabled",
+          JSON.stringify((data as CreateValues).enabled),
+        );
       }
 
-      let result;
+      type IntegrationResult =
+        | { success: string; integrationId?: string }
+        | { error: string };
+      let result: IntegrationResult;
       if (isEditing) {
         result = await updateIntegration(integration.id, formData);
       } else {

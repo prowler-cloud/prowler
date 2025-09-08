@@ -344,7 +344,7 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
                   >
@@ -362,7 +362,7 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
                   >

@@ -2,9 +2,14 @@
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders, handleApiError } from "@/lib";
+import type {
+  IntegrationProps,
+  JiraDispatchRequest,
+  JiraDispatchResponse,
+} from "@/types/integrations";
 
 export const getJiraIntegrations = async (): Promise<
-  { success: true; data: any[] } | { success: false; error: string }
+  { success: true; data: IntegrationProps[] } | { success: false; error: string }
 > => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/integrations`);
@@ -16,17 +21,17 @@ export const getJiraIntegrations = async (): Promise<
     const response = await fetch(url.toString(), { method: "GET", headers });
 
     if (response.ok) {
-      const data = await response.json();
+      const data: { data: IntegrationProps[] } = await response.json();
       // Filter for enabled integrations on the client side
       const enabledIntegrations = (data.data || []).filter(
-        (integration: any) => integration.attributes.enabled === true,
+        (integration: IntegrationProps) => integration.attributes.enabled === true,
       );
       return { success: true, data: enabledIntegrations };
     }
 
-    const errorData = await response.json().catch(() => ({}));
+    const errorData: unknown = await response.json().catch(() => ({}));
     const errorMessage =
-      errorData.errors?.[0]?.detail ||
+      (errorData as { errors?: { detail?: string }[] }).errors?.[0]?.detail ||
       `Unable to fetch Jira integrations: ${response.statusText}`;
     return { success: false, error: errorMessage };
   } catch (error) {
@@ -52,7 +57,7 @@ export const sendFindingToJira = async (
   // Single finding: use direct filter without array notation
   url.searchParams.append("filter[finding_id]", findingId);
 
-  const payload = {
+  const payload: JiraDispatchRequest = {
     data: {
       type: "integrations-jira-dispatches",
       attributes: {
@@ -71,7 +76,7 @@ export const sendFindingToJira = async (
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data: JiraDispatchResponse = await response.json();
       const taskId = data?.data?.id;
 
       if (taskId) {
@@ -88,9 +93,9 @@ export const sendFindingToJira = async (
       }
     }
 
-    const errorData = await response.json().catch(() => ({}));
+    const errorData: unknown = await response.json().catch(() => ({}));
     const errorMessage =
-      errorData.errors?.[0]?.detail ||
+      (errorData as { errors?: { detail?: string }[] }).errors?.[0]?.detail ||
       `Unable to send finding to Jira: ${response.statusText}`;
     return { success: false, error: errorMessage };
   } catch (error) {
@@ -112,19 +117,21 @@ export const pollJiraDispatchTask = async (
     return { success: false, error: res.error };
   }
   const { state, result } = res;
+  type JiraTaskResult = JiraDispatchResponse["data"]["attributes"]["result"];
+  const jiraResult = result as JiraTaskResult | undefined;
 
   if (state === "completed") {
-    if (!result?.error) {
+    if (!jiraResult?.error) {
       return { success: true, message: "Finding successfully sent to Jira!" };
     }
     return {
       success: false,
-      error: result?.error || "Failed to create Jira issue.",
+      error: jiraResult?.error || "Failed to create Jira issue.",
     };
   }
 
   if (state === "failed") {
-    return { success: false, error: result?.error || "Task failed." };
+    return { success: false, error: jiraResult?.error || "Task failed." };
   }
 
   return { success: false, error: `Unknown task state: ${state}` };

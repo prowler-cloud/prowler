@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
+import type { TaskState } from "@/types/tasks";
 import {
   apiBaseUrl,
   getAuthHeaders,
@@ -12,11 +13,15 @@ import {
 } from "@/lib";
 import { IntegrationType } from "@/types/integrations";
 
+type TaskStartResponse = {
+  data: { id: string; type: "tasks" };
+};
+
 type TestConnectionResponse = {
   success: boolean;
   message?: string;
   taskId?: string;
-  data?: unknown;
+  data?: TaskStartResponse;
   error?: string;
 };
 
@@ -265,15 +270,27 @@ export const deleteIntegration = async (
   }
 };
 
+type ConnectionTaskResult = { connected?: boolean; error?: string | null };
+
 type PollConnectionResult =
-  | { success: true; message: string; taskState: string; result: unknown }
-  | { success: false; message: string; taskState?: string; result?: unknown }
+  | {
+      success: true;
+      message: string;
+      taskState: TaskState;
+      result: ConnectionTaskResult | undefined;
+    }
+  | {
+      success: false;
+      message: string;
+      taskState?: TaskState;
+      result?: ConnectionTaskResult;
+    }
   | { error: string };
 
 const pollTaskUntilComplete = async (
   taskId: string,
 ): Promise<PollConnectionResult> => {
-  const settled = await pollTaskUntilSettled(taskId, {
+  const settled = await pollTaskUntilSettled<ConnectionTaskResult>(taskId, {
     maxAttempts: 10,
     delayMs: 3000,
   });
@@ -283,9 +300,7 @@ const pollTaskUntilComplete = async (
   }
 
   const taskState = settled.state;
-  const result = settled.result as
-    | { connected?: boolean; error?: string }
-    | undefined;
+  const result = settled.result;
 
   const isSuccessful =
     taskState === "completed" &&
