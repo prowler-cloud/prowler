@@ -1654,6 +1654,39 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                     [
                                         html.Div(
                                             [
+                                                # Description as first details item
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Description: ",
+                                                                style={
+                                                                    "margin-bottom": "8px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.Div(
+                                                            dcc.Markdown(
+                                                                str(
+                                                                    data.get(
+                                                                        "DESCRIPTION",
+                                                                        "",
+                                                                    )
+                                                                ),
+                                                                dangerously_allow_html=True,
+                                                                style={
+                                                                    "margin-left": "0px",
+                                                                    "padding-left": "10px",
+                                                                },
+                                                            ),
+                                                            className="markdown-content",
+                                                            style={
+                                                                "margin-left": "0px",
+                                                                "padding-left": "10px",
+                                                            },
+                                                        ),
+                                                    ],
+                                                ),
                                                 html.Div(
                                                     [
                                                         html.P(
@@ -1793,19 +1826,27 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                         html.P(
                                                             html.Strong(
                                                                 "Risk: ",
-                                                                style={
-                                                                    "margin-right": "5px"
-                                                                },
+                                                                style={},
                                                             )
                                                         ),
-                                                        html.P(
-                                                            str(data.get("RISK", "")),
+                                                        html.Div(
+                                                            dcc.Markdown(
+                                                                str(
+                                                                    data.get("RISK", "")
+                                                                ),
+                                                                dangerously_allow_html=True,
+                                                                style={
+                                                                    "margin-left": "0px",
+                                                                    "padding-left": "10px",
+                                                                },
+                                                            ),
+                                                            className="markdown-content",
                                                             style={
-                                                                "margin-left": "5px"
+                                                                "margin-left": "0px",
+                                                                "padding-left": "10px",
                                                             },
                                                         ),
                                                     ],
-                                                    style={"display": "flex"},
                                                 ),
                                                 html.Div(
                                                     [
@@ -1847,23 +1888,32 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                             html.Strong(
                                                                 "Recommendation: ",
                                                                 style={
-                                                                    "margin-right": "5px"
+                                                                    "margin-bottom": "8px"
                                                                 },
                                                             )
                                                         ),
-                                                        html.P(
-                                                            str(
-                                                                data.get(
-                                                                    "REMEDIATION_RECOMMENDATION_TEXT",
-                                                                    "",
-                                                                )
+                                                        html.Div(
+                                                            dcc.Markdown(
+                                                                str(
+                                                                    data.get(
+                                                                        "REMEDIATION_RECOMMENDATION_TEXT",
+                                                                        "",
+                                                                    )
+                                                                ),
+                                                                dangerously_allow_html=True,
+                                                                style={
+                                                                    "margin-left": "0px",
+                                                                    "padding-left": "10px",
+                                                                },
                                                             ),
+                                                            className="markdown-content",
                                                             style={
-                                                                "margin-left": "5px"
+                                                                "margin-left": "0px",
+                                                                "padding-left": "10px",
                                                             },
                                                         ),
                                                     ],
-                                                    style={"display": "flex"},
+                                                    style={"margin-bottom": "15px"},
                                                 ),
                                                 html.Div(
                                                     [
