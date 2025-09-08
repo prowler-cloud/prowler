@@ -24,27 +24,27 @@ const chartConfig = {
   critical: {
     label: "Critical",
     color: "hsl(var(--chart-critical))",
-    link: "/findings?filter%5Bseverity__in%5D=critical",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=critical",
   },
   high: {
     label: "High",
     color: "hsl(var(--chart-fail))",
-    link: "/findings?filter%5Bseverity__in%5D=high",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=high",
   },
   medium: {
     label: "Medium",
     color: "hsl(var(--chart-medium))",
-    link: "/findings?filter%5Bseverity__in%5D=medium",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=medium",
   },
   low: {
     label: "Low",
     color: "hsl(var(--chart-low))",
-    link: "/findings?filter%5Bseverity__in%5D=low",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=low",
   },
   informational: {
     label: "Informational",
     color: "hsl(var(--chart-informational))",
-    link: "/findings?filter%5Bseverity__in%5D=informational",
+    link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=informational",
   },
 } satisfies ChartConfig;
 
