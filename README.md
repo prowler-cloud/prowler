@@ -80,15 +80,16 @@ prowler dashboard
 > For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
 
 
-| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
-|---|---|---|---|---|
-| AWS | 576 | 82 | 36 | 10 |
-| GCP | 79 | 13 | 10 | 3 |
-| Azure | 162 | 19 | 11 | 4 |
-| Kubernetes | 83 | 7 | 5 | 7 |
-| GitHub | 17 | 2 | 1 | 0 |
-| M365 | 70 | 7 | 3 | 2 |
-| NHN (Unofficial) | 6 | 2 | 1 | 0 |
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Stage |
+|---|---|---|---|---|---|---|
+| AWS | 576 | 82 | 36 | 10 | Official | Stable |
+| GCP | 79 | 13 | 10 | 3 | Official | Stable |
+| Azure | 162 | 19 | 11 | 4 | Official | Stable |
+| Kubernetes | 83 | 7 | 5 | 7 | Official | Stable |
+| GitHub | 17 | 2 | 1 | 0 | Official | Stable |
+| M365 | 70 | 7 | 3 | 2 | Official | Stable |
+| IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | Beta |
+| NHN | 6 | 2 | 1 | 0 | Unofficial | Beta |
 
 > [!Note]
 > The numbers in the table are updated periodically.
