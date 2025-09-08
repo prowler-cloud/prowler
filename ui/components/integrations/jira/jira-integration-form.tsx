@@ -195,7 +195,7 @@ export const JiraIntegrationForm = ({
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            To generate an API token, visit your{" "}
+            To generate an API token with scopes, visit your{" "}
             <a
               href="https://id.atlassian.com/manage-profile/security/api-tokens"
               target="_blank"
