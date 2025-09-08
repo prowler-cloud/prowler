@@ -1,7 +1,7 @@
 # Prowler SDK Changelog
 
 All notable changes to the **Prowler SDK** are documented in this file.
-## [v5.12.0] (Prowler UNRELEASED)
+## [v5.12.0] (Prowler v5.12.0)
 
 ### Added
 - Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
@@ -19,12 +19,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
-
----
-
-## [v5.11.1] (Prowler UNRELEASED)
-
-### Fixed
 - TypeError from Python 3.9 in Security Hub module by updating type annotations [(#8619)](https://github.com/prowler-cloud/prowler/pull/8619)
 
 ---
