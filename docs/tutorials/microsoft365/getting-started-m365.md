@@ -2,6 +2,9 @@
 
 Set up your M365 account to enable security scanning using Prowler Cloud/App.
 
+???+ note "Government Cloud Support"
+Government cloud accounts or tenants (Microsoft 365 Government) are not currently supported, but we expect to add support for them in the near future.
+
 ## Requirements
 
 To configure your M365 account, you'll need:
