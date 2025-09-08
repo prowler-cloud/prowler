@@ -134,7 +134,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   // Global keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (messageValue?.trim()) {
           onFormSubmit();
