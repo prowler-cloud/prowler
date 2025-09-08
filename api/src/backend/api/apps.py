@@ -17,7 +17,9 @@ VERIFYING_KEY_ENV = "DJANGO_TOKEN_VERIFYING_KEY"
 SIGNING_KEY_FILE = "jwt_signing_key.pem"
 VERIFYING_KEY_FILE = "jwt_verifying_key.pem"
 
-KEYS_DIRECTORY = Path.home() / ".keys" / "prowler-api"  # `/home/prowler/.keys/prowler-api` inside the container
+KEYS_DIRECTORY = (
+    Path.home() / ".keys" / "prowler-api"
+)  # `/home/prowler/.keys/prowler-api` inside the container
 
 _keys_initialized = False  # Flag to prevent multiple executions within the same process
 
@@ -74,7 +76,6 @@ class ApiConfig(AppConfig):
         file_path = KEYS_DIRECTORY / file_name
         return file_path.read_text().strip() if file_path.is_file() else None
 
-
     def _write_key_file(self, file_name, content):
         """
         Utility method to write content to a file.
@@ -82,7 +83,6 @@ class ApiConfig(AppConfig):
         file_path = KEYS_DIRECTORY / file_name
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content)
-
 
     def _ensure_jwt_keys(self):
         """
@@ -128,21 +128,23 @@ class ApiConfig(AppConfig):
             private_pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             ).decode("utf-8")
 
             # Serialize public key (for verification)
             public_key = private_key.public_key()
             public_pem = public_key.public_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             ).decode("utf-8")
 
             logger.debug("JWT RSA key pair generated successfully.")
             return private_pem, public_pem
 
         except ImportError as e:
-            logger.warning("The 'cryptography' package is required for automatic JWT key generation.")
+            logger.warning(
+                "The 'cryptography' package is required for automatic JWT key generation."
+            )
             raise e
 
         except Exception as e:
