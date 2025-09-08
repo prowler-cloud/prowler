@@ -7,7 +7,9 @@ from prowler.providers.aws.services.ec2.lib.security_groups import check_securit
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018(Check):
+class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018(
+    Check
+):
     def execute(self):
         findings = []
         check_ports = [27017, 27018]
