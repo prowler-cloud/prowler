@@ -113,6 +113,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {
         "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
+        "dj_rest_auth": None,
     },
 }
 
