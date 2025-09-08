@@ -1,6 +1,7 @@
 import React from "react";
 
 import {
+  JiraIntegrationCard,
   S3IntegrationCard,
   SecurityHubIntegrationCard,
 } from "@/components/integrations";
@@ -23,6 +24,9 @@ export default async function Integrations() {
 
           {/* AWS Security Hub Integration */}
           <SecurityHubIntegrationCard />
+
+          {/* Jira Integration */}
+          <JiraIntegrationCard />
         </div>
       </div>
     </ContentLayout>

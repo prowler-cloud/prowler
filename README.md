@@ -273,7 +273,7 @@ python prowler-cli.py -v
 - **Prowler API**: A backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
 
-![Prowler App Architecture](docs/img/prowler-app-architecture.png)
+![Prowler App Architecture](docs/products/img/prowler-app-architecture.png)
 
 ## Prowler CLI
 

@@ -5720,6 +5720,47 @@ class TestIntegrationViewSet:
             == data["data"]["relationships"]["providers"]["data"][0]["id"]
         )
 
+    def test_integrations_create_valid_jira(
+        self,
+        authenticated_client,
+    ):
+        """Jira integrations are special"""
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "domain": "prowlerdomain",
+                        "api_token": "this-is-an-api-token-for-jira-that-works-for-sure",
+                        "user_mail": "testing@prowler.com",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.count() == 1
+        integration = Integration.objects.first()
+        integration_configuration = response.json()["data"]["attributes"][
+            "configuration"
+        ]
+        assert "projects" in integration_configuration
+        assert "issue_types" in integration_configuration
+        assert "domain" in integration_configuration
+        assert integration.enabled == data["data"]["attributes"]["enabled"]
+        assert (
+            integration.integration_type
+            == data["data"]["attributes"]["integration_type"]
+        )
+        assert "credentials" not in response.json()["data"]["attributes"]
+
     def test_integrations_create_valid_relationships(
         self,
         authenticated_client,
@@ -5817,6 +5858,46 @@ class TestIntegrationViewSet:
                     },
                     "invalid",
                     None,
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {
+                            "projects": ["JIRA"],
+                        },
+                        "credentials": {"domain": "prowlerdomain"},
+                    },
+                    "invalid",
+                    "configuration",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "credentialss": {
+                            "domain": "prowlerdomain",
+                            "api_token": "api-token",
+                            "user_mail": "test@prowler.com",
+                        },
+                    },
+                    "required",
+                    "configuration",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {},
+                    },
+                    "required",
+                    "credentials",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {},
+                        "credentials": {"api_token": "api-token"},
+                    },
+                    "invalid",
+                    "credentials",
                 ),
             ]
         ),
@@ -6006,6 +6087,217 @@ class TestIntegrationViewSet:
             {f"filter[{filter_name}]": "whatever"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_integrations_create_duplicate_amazon_s3(
+        self, authenticated_client, providers_fixture
+    ):
+        provider = providers_fixture[0]
+
+        # Create first S3 integration
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.AMAZON_S3,
+                    "configuration": {
+                        "bucket_name": "test-bucket",
+                        "output_directory": "test-output",
+                    },
+                    "credentials": {
+                        "role_arn": "arn:aws:iam::123456789012:role/test-role",
+                        "external_id": "test-external-id",
+                    },
+                    "enabled": True,
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [{"type": "providers", "id": str(provider.id)}]
+                    }
+                },
+            }
+        }
+
+        # First creation should succeed
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Attempt to create duplicate should return 409
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert (
+            "This integration already exists" in response.json()["errors"][0]["detail"]
+        )
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/configuration"
+        )
+
+    def test_integrations_create_duplicate_jira(self, authenticated_client):
+        # Create first JIRA integration
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "test-api-token",
+                        "domain": "prowlerdomain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        # First creation should succeed
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Attempt to create duplicate should return 409
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert (
+            "This integration already exists" in response.json()["errors"][0]["detail"]
+        )
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/configuration"
+        )
+
+    def test_integrations_update_jira_configuration_readonly(
+        self, authenticated_client
+    ):
+        # Create JIRA integration first
+        create_data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "test-api-token",
+                        "domain": "initial-domain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        # Create the integration
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(create_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        integration_id = response.json()["data"]["id"]
+
+        # Attempt to update configuration - should be ignored/not allowed
+        update_data = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": {
+                    "configuration": {
+                        "projects": {"NEW_PROJECT": "New Project"},
+                        "issue_types": ["Epic", "Story"],
+                        "domain": "malicious-domain",
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration_id}),
+            data=json.dumps(update_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_integrations_update_jira_credentials_domain_reflects_in_configuration(
+        self, authenticated_client
+    ):
+        # Create JIRA integration first
+        create_data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "test-api-token",
+                        "domain": "original-domain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        # Create the integration
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(create_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        integration_id = response.json()["data"]["id"]
+
+        # Verify initial domain in configuration
+        initial_integration = response.json()["data"]
+        assert (
+            initial_integration["attributes"]["configuration"]["domain"]
+            == "original-domain"
+        )
+
+        # Update credentials with new domain
+        update_data = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": {
+                    "credentials": {
+                        "user_mail": "updated@example.com",
+                        "api_token": "updated-api-token",
+                        "domain": "updated-domain",
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration_id}),
+            data=json.dumps(update_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify the new domain is reflected in configuration
+        updated_integration = response.json()["data"]
+        configuration = updated_integration["attributes"]["configuration"]
+        assert configuration["domain"] == "updated-domain"
+
+        # Verify other configuration fields are preserved
+        assert "projects" in configuration
+        assert "issue_types" in configuration
 
 
 @pytest.mark.django_db
