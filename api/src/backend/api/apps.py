@@ -15,6 +15,10 @@ SIGNING_KEY_ENV = "DJANGO_TOKEN_SIGNING_KEY"
 VERIFYING_KEY_ENV = "DJANGO_TOKEN_VERIFYING_KEY"
 ENCRYPTION_KEY_ENV = "DJANGO_SECRETS_ENCRYPTION_KEY"
 
+SIGNING_KEY_FILE = "jwt_signing_key.pem"
+VERIFYING_KEY_FILE = "jwt_verifying_key.pem"
+ENCRYPTION_KEY_FILE = "django_encryption.key"
+
 KEYS_DIRECTORY = ".keys"
 
 
@@ -77,7 +81,7 @@ class ApiConfig(AppConfig):
         """
         Utility method to get the keys directory.
         """
-        return Path.cwd().parent / KEYS_DIRECTORY  # `/home/prowler/.keys` inside the container
+        return Path.home() / KEYS_DIRECTORY  # `/home/prowler/.keys` inside the container
 
 
     def _read_key_file(self, file_name):
@@ -103,14 +107,14 @@ class ApiConfig(AppConfig):
         if they are not already set in environment variables.
         """
         # Read existing keys from files if they exist
-        signing_key = self._read_key_file(SIGNING_KEY_ENV)
-        verifying_key = self._read_key_file(VERIFYING_KEY_ENV)
+        signing_key = self._read_key_file(SIGNING_KEY_FILE)
+        verifying_key = self._read_key_file(VERIFYING_KEY_FILE)
 
         if not signing_key or not verifying_key:
             # Generate and store the RSA key pair
             signing_key, verifying_key = self._generate_jwt_keys()
-            self._write_key_file(SIGNING_KEY_ENV, signing_key)
-            self._write_key_file(VERIFYING_KEY_ENV, verifying_key)
+            self._write_key_file(SIGNING_KEY_FILE, signing_key)
+            self._write_key_file(VERIFYING_KEY_FILE, verifying_key)
 
         else:
             logger.debug("JWT keys already configured, skipping generation")
@@ -128,12 +132,12 @@ class ApiConfig(AppConfig):
         if it is not already set in environment variables.
         """
         # Read existing key from file if it exists
-        encryption_key = self._read_key_file(ENCRYPTION_KEY_ENV)
+        encryption_key = self._read_key_file(ENCRYPTION_KEY_FILE)
 
         if not encryption_key:
             # Generate and store the encryption key
             encryption_key = self._generate_secrets_encryption_key()
-            self._write_key_file(ENCRYPTION_KEY_ENV, encryption_key)
+            self._write_key_file(ENCRYPTION_KEY_FILE, encryption_key)
 
         else:
             logger.debug("Fernet encryption key already configured, skipping generation")
