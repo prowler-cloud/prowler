@@ -37,7 +37,8 @@ def generate_finding_output(
     related_to: list[str] = ["test-related-to"],
     notes: str = "test-notes",
     additional_urls: list[str] = [
-        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html"
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html",
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html",
     ],
     service_name: str = "service",
     check_id: str = "service_test_check_id",

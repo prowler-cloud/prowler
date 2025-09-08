@@ -191,7 +191,8 @@ class TestOCSF:
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],
                     "additional_urls": [
-                        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html"
+                        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html",
+                        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html",
                     ],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
