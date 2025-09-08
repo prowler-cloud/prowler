@@ -16,6 +16,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
 
 ### 🐞 Fixed
+
 - Scan page shows NoProvidersAdded when no providers [(#8626)](https://github.com/prowler-cloud/prowler/pull/8626)
 - XML field in SAML configuration form validation [(#8638)](https://github.com/prowler-cloud/prowler/pull/8638)
 
