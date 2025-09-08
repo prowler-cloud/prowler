@@ -9,7 +9,8 @@ import type {
 } from "@/types/integrations";
 
 export const getJiraIntegrations = async (): Promise<
-  { success: true; data: IntegrationProps[] } | { success: false; error: string }
+  | { success: true; data: IntegrationProps[] }
+  | { success: false; error: string }
 > => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/integrations`);
@@ -24,7 +25,8 @@ export const getJiraIntegrations = async (): Promise<
       const data: { data: IntegrationProps[] } = await response.json();
       // Filter for enabled integrations on the client side
       const enabledIntegrations = (data.data || []).filter(
-        (integration: IntegrationProps) => integration.attributes.enabled === true,
+        (integration: IntegrationProps) =>
+          integration.attributes.enabled === true,
       );
       return { success: true, data: enabledIntegrations };
     }
@@ -44,7 +46,7 @@ export const sendFindingToJira = async (
   integrationId: string,
   findingId: string,
   projectKey: string,
-  issueType: string,
+  _issueType: string,
 ): Promise<
   | { success: true; taskId: string; message: string }
   | { success: false; error: string }
