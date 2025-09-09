@@ -617,7 +617,7 @@ class TestProwlerIntegrationConnectionTest:
             "domain": "example.atlassian.net",
         }
         integration.configuration = {
-            "issue_types": ["Bug", "Task"],  # Existing configuration
+            "issue_types": ["Task"],  # Existing configuration
             "projects": {"OLD_PROJ": "Old Project"},  # Will be overwritten
         }
 
@@ -647,7 +647,7 @@ class TestProwlerIntegrationConnectionTest:
         }
 
         # Verify other configuration fields were preserved
-        assert integration.configuration["issue_types"] == ["Bug", "Task"]
+        assert integration.configuration["issue_types"] == ["Task"]
 
         # Verify integration.save() was called
         integration.save.assert_called_once()

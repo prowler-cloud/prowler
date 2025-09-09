@@ -236,6 +236,11 @@ Detailed documentation at https://docs.prowler.com
             help="Checks to exclude",
         )
         exclude_checks_parser.add_argument(
+            "--excluded-checks-file",
+            nargs="?",
+            help="JSON file containing the checks to be excluded. See config/checklist_example.json",
+        )
+        exclude_checks_parser.add_argument(
             "--excluded-service",
             "--excluded-services",
             nargs="+",

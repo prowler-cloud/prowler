@@ -70,7 +70,7 @@ class SecurityHubConfigSerializer(BaseValidateSerializer):
 class JiraConfigSerializer(BaseValidateSerializer):
     domain = serializers.CharField(read_only=True)
     issue_types = serializers.ListField(
-        read_only=True, child=serializers.CharField(), default=["Task", "Bug"]
+        read_only=True, child=serializers.CharField(), default=["Task"]
     )
     projects = serializers.DictField(read_only=True)
 
