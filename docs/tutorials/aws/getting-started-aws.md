@@ -44,15 +44,15 @@ Before proceeding, choose the preferred authentication mode:
 
 **Credentials**
 
-* Quick scan as current user ✅
-* No extra setup ✅
-* Credentials time out ❌
+* Quick scan as current user
+* No extra setup
+* Credentials time out
 
 **Assumed Role**
 
-* Preferred Setup ✅
-* Permanent Credentials ✅
-* Requires access to create role ❌
+* Preferred Setup
+* Permanent Credentials
+* Requires access to create role
 
 
 ---
