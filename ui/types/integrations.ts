@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { TaskState } from "@/types/tasks";
 
 export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";

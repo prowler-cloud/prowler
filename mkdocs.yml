@@ -134,6 +134,9 @@ nav:
         - IaC:
             - Getting Started: tutorials/iac/getting-started-iac.md
             - Authentication: tutorials/iac/authentication.md
+        - MongoDB Atlas:
+            - Getting Started: tutorials/mongodbatlas/getting-started-mongodbatlas.md
+            - Authentication: tutorials/mongodbatlas/authentication.md
   - Developer Guide:
       - Concepts:
         - Introduction: developer-guide/introduction.md

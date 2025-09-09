@@ -80,16 +80,17 @@ prowler dashboard
 > For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
 
 
-| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Stage |
-|---|---|---|---|---|---|---|
-| AWS | 576 | 82 | 36 | 10 | Official | Stable |
-| GCP | 79 | 13 | 10 | 3 | Official | Stable |
-| Azure | 162 | 19 | 11 | 4 | Official | Stable |
-| Kubernetes | 83 | 7 | 5 | 7 | Official | Stable |
-| GitHub | 17 | 2 | 1 | 0 | Official | Stable |
-| M365 | 70 | 7 | 3 | 2 | Official | Stable |
-| IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | Beta |
-| NHN | 6 | 2 | 1 | 0 | Unofficial | Beta |
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Stage | Interface |
+|---|---|---|---|---|---|---|---|
+| AWS | 576 | 82 | 36 | 10 | Official | Stable | UI, API, CLI |
+| GCP | 79 | 13 | 10 | 3 | Official | Stable | UI, API, CLI |
+| Azure | 162 | 19 | 11 | 4 | Official | Stable | UI, API, CLI |
+| Kubernetes | 83 | 7 | 5 | 7 | Official | Stable | UI, API, CLI |
+| GitHub | 17 | 2 | 1 | 0 | Official | Stable | UI, API, CLI |
+| M365 | 70 | 7 | 3 | 2 | Official | Stable | UI, API, CLI |
+| IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | Beta | CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | Beta | CLI |
+| NHN | 6 | 2 | 1 | 0 | Unofficial | Beta | CLI |
 
 > [!Note]
 > The numbers in the table are updated periodically.

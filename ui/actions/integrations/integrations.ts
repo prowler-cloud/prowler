@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
-import type { TaskState } from "@/types/tasks";
 import {
   apiBaseUrl,
   getAuthHeaders,
@@ -12,6 +11,7 @@ import {
   parseStringify,
 } from "@/lib";
 import { IntegrationType } from "@/types/integrations";
+import type { TaskState } from "@/types/tasks";
 
 type TaskStartResponse = {
   data: { id: string; type: "tasks" };

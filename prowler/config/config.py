@@ -32,6 +32,7 @@ class Provider(str, Enum):
     GITHUB = "github"
     IAC = "iac"
     NHN = "nhn"
+    MONGODBATLAS = "mongodbatlas"
 
 
 # Compliance
