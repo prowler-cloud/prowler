@@ -73,7 +73,7 @@ Each Jira integration provides management actions through dedicated buttons:
 
 ## Troubleshooting
 
-### Connection test fails:
+### Connection test fails
 
 - Verify Jira instance domain is correct and accessible
 - Confirm API token or credentials are valid
