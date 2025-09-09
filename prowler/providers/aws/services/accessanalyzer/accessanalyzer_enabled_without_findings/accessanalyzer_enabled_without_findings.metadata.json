@@ -1,31 +1,50 @@
 {
   "Provider": "aws",
   "CheckID": "accessanalyzer_enabled_without_findings",
-  "CheckTitle": "Check if IAM Access Analyzer is enabled without findings",
+  "CheckTitle": "IAM Access Analyzer analyzer is active and has no active findings",
   "CheckType": [
-    "IAM"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "accessanalyzer",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
-  "Description": "Check if IAM Access Analyzer is enabled without findings",
-  "Risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
-  "RelatedUrl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+  "Description": "**IAM Access Analyzer** analyzers are in `Active` state and currently report zero `Active` findings within their scope of monitored resources.",
+  "Risk": "Unresolved `Active` findings indicate unintended external or internal access paths.\n- **Confidentiality**: public/cross\u2011account reads of data (buckets, snapshots, secrets)\n- **Integrity**: rogue role assumption or KMS use enabling policy/data changes\n- **Lateral movement** across accounts",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-findings-remediate.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-findings-view.html",
+    "https://aws.amazon.com/iam/access-analyzer/",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-getting-started.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-concepts.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-dashboard.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-findings.html",
+    "https://aws.amazon.com/blogs/security/automate-resolution-for-iam-access-analyzer-cross-account-access-findings-on-iam-roles/",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AccessAnalyzer/findings.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::AccessAnalyzer::Analyzer\n    Properties:\n      AnalyzerName: example_resource\n      Type: ACCOUNT  # This line fixes the security issue\n```",
+      "Other": "1. In the AWS Console, go to IAM > Access analyzer\n2. If no analyzer exists, click Create analyzer, select Type: Account, name it example_resource, and click Create\n3. To clear active findings: under Resource analysis, select your analyzer, select all Active findings, choose Actions > Archive\n4. For unintended access findings, open the finding and follow the linked resource to remove the offending permission (edit the resource policy or role trust policy), then return to the finding and choose Rescan\n5. Confirm the dashboard shows 0 Active findings",
+      "Terraform": "```hcl\nresource \"aws_accessanalyzer_analyzer\" \"example_resource\" {\n  analyzer_name = \"example_resource\"\n  type          = \"ACCOUNT\" # This line fixes the security issue\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost).",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html"
+      "Text": "Enable **IAM Access Analyzer** in all relevant Regions and org/account scopes. Triage every `Active` finding:\n- Remove unintended access by tightening resource and trust policies\n- Enforce **least privilege** and separation of duties\n- Archive only validated, intended access\n- Continuously monitor and automate reviews",
+      "Url": "https://hub.prowler.com/check/accessanalyzer_enabled_without_findings"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "trust-boundaries",
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
