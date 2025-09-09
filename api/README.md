@@ -20,7 +20,7 @@ Valkey exposes a Redis 7.2 compliant API. Any service that exposes the Redis API
 
 Under the root path of the project, you can find a file called `.env.example`. This file shows all the environment variables that the project uses. You *must* create a new file called `.env` and set the values for the variables.
 
-If you don’t set `DJANGO_TOKEN_SIGNING_KEY` or `DJANGO_TOKEN_VERIFYING_KEY`, the API will generate them at `~/.keys/prowler-api/` with `0600` and `0644` permissions; back up these files to persist identity across redeploys.
+If you don’t set `DJANGO_TOKEN_SIGNING_KEY` or `DJANGO_TOKEN_VERIFYING_KEY`, the API will generate them at `~/.config/prowler-api/` with `0600` and `0644` permissions; back up these files to persist identity across redeploys.
 
 ## Local deployment
 Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the Poetry interpreter, not before. Otherwise, variables will not be loaded properly.

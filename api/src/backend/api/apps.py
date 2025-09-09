@@ -18,8 +18,8 @@ PRIVATE_KEY_FILE = "jwt_private.pem"
 PUBLIC_KEY_FILE = "jwt_public.pem"
 
 KEYS_DIRECTORY = (
-    Path.home() / ".keys" / "prowler-api"
-)  # `/home/prowler/.keys/prowler-api` inside the container
+    Path.home() / ".config" / "prowler-api"
+)  # `/home/prowler/.config/prowler-api` inside the container
 
 _keys_initialized = False  # Flag to prevent multiple executions within the same process
 

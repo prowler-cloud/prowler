@@ -17,7 +17,7 @@ services:
       - ./api/src/backend:/home/prowler/backend
       - ./api/pyproject.toml:/home/prowler/pyproject.toml
       - ./api/docker-entrypoint.sh:/home/prowler/docker-entrypoint.sh
-      - ./_data/api/keys:/home/prowler/.keys/prowler-api
+      - ./_data/api:/home/prowler/.config/prowler-api
       - outputs:/tmp/prowler_api_output
     depends_on:
       postgres:
