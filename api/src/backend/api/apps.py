@@ -14,8 +14,8 @@ logger = logging.getLogger(BackendLogger.API)
 SIGNING_KEY_ENV = "DJANGO_TOKEN_SIGNING_KEY"
 VERIFYING_KEY_ENV = "DJANGO_TOKEN_VERIFYING_KEY"
 
-SIGNING_KEY_FILE = "jwt_signing_key.pem"
-VERIFYING_KEY_FILE = "jwt_verifying_key.pem"
+PRIVATE_KEY_FILE = "jwt_private.pem"
+PUBLIC_KEY_FILE = "jwt_public.pem"
 
 KEYS_DIRECTORY = (
     Path.home() / ".keys" / "prowler-api"
@@ -76,13 +76,22 @@ class ApiConfig(AppConfig):
         file_path = KEYS_DIRECTORY / file_name
         return file_path.read_text().strip() if file_path.is_file() else None
 
-    def _write_key_file(self, file_name, content):
+    def _write_key_file(self, file_name, content, private=True):
         """
         Utility method to write content to a file.
         """
-        file_path = KEYS_DIRECTORY / file_name
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content)
+        try:
+            file_path = KEYS_DIRECTORY / file_name
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(content)
+            file_path.chmod(0o600 if private else 0o644)
+
+        except Exception as e:
+            logger.error(
+                f"Error writing key file '{file_name}': {e}. "
+                f"Please set '{SIGNING_KEY_ENV}' and '{VERIFYING_KEY_ENV}' manually."
+            )
+            raise e
 
     def _ensure_jwt_keys(self):
         """
@@ -90,14 +99,14 @@ class ApiConfig(AppConfig):
         if they are not already set in environment variables.
         """
         # Read existing keys from files if they exist
-        signing_key = self._read_key_file(SIGNING_KEY_FILE)
-        verifying_key = self._read_key_file(VERIFYING_KEY_FILE)
+        signing_key = self._read_key_file(PRIVATE_KEY_FILE)
+        verifying_key = self._read_key_file(PUBLIC_KEY_FILE)
 
         if not signing_key or not verifying_key:
             # Generate and store the RSA key pair
             signing_key, verifying_key = self._generate_jwt_keys()
-            self._write_key_file(SIGNING_KEY_FILE, signing_key)
-            self._write_key_file(VERIFYING_KEY_FILE, verifying_key)
+            self._write_key_file(PRIVATE_KEY_FILE, signing_key, private=True)
+            self._write_key_file(PUBLIC_KEY_FILE, verifying_key, private=False)
             logger.info("JWT keys generated and stored successfully")
 
         else:
@@ -119,7 +128,7 @@ class ApiConfig(AppConfig):
             from cryptography.hazmat.primitives.asymmetric import rsa
 
             # Generate RSA key pair
-            private_key = rsa.generate_private_key(
+            private_key = rsa.generate_private_key(  # Future improvement: we could read the next values from env vars
                 public_exponent=65537,
                 key_size=2048,
             )
