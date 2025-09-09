@@ -1,6 +1,20 @@
 # Prowler SDK Changelog
 
 All notable changes to the **Prowler SDK** are documented in this file.
+
+## [v5.13.0] (Prowler UNRELEASED)
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [v5.12.1] (Prowler UNRELEASED)
+
+### Fixed
+- Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+
 ## [v5.12.0] (Prowler v5.12.0)
 
 ### Added
