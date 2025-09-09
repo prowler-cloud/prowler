@@ -258,6 +258,9 @@ class Scan:
             Exception: If any other error occurs during the execution of a check.
         """
         try:
+            # Initialize check_name for error handling
+            check_name = None
+            
             # Using SimpleNamespace to create a mocked object
             arguments = SimpleNamespace()
 
@@ -291,27 +294,30 @@ class Scan:
                     # Convert IaC reports to Finding objects
                     findings = []
                     for report in iac_reports:
+                        # Extract metadata from CheckReportIAC
+                        check_metadata = report.check_metadata
+                        
                         finding = Finding(
                             provider=self._provider.type,
-                            check_id=report.check_id,
-                            check_title=report.check_title,
-                            check_type=report.check_type,
+                            check_id=check_metadata.CheckID,
+                            check_title=check_metadata.CheckTitle,
+                            check_type=check_metadata.CheckType,
                             status=report.status,
                             status_extended=report.status_extended,
-                            severity=report.severity,
-                            resource_type=report.resource_type,
-                            resource_uid=report.resource_uid,
+                            severity=check_metadata.Severity,
+                            resource_type=check_metadata.ResourceType,
+                            resource_uid=report.resource_name,  # For IaC, the file path is the UID
                             resource_name=report.resource_name,
                             resource_details=report.resource_details,
                             resource_tags=report.resource_tags,
-                            resource_metadata=report.resource_metadata,
-                            service_name=report.service_name,
-                            region=report.region,
-                            raw=report.finding,
-                            metadata=report.metadata,
+                            resource_metadata=report.resource,  # The raw finding dict
+                            service_name=check_metadata.ServiceName,
+                            region="global",  # IaC doesn't have regions
+                            raw=report.resource,  # The raw finding dict
+                            metadata=check_metadata.dict(),
                             muted=report.muted,
-                            uid=report.uid,
-                            compliance=report.compliance,
+                            uid=f"{check_metadata.CheckID}-{report.resource_name}-{report.resource_line_range}",  # Create unique UID
+                            compliance={},  # IaC doesn't have compliance mappings yet
                         )
                         findings.append(finding)
                     
@@ -400,9 +406,14 @@ class Scan:
             # Update the scan duration when all checks are completed
             self._duration = int((datetime.datetime.now() - start_time).total_seconds())
         except Exception as error:
-            logger.error(
-                f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if check_name:
+                logger.error(
+                    f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"Scan error - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def get_completed_services(self) -> set[str]:
         """
