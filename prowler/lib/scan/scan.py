@@ -294,31 +294,37 @@ class Scan:
 
                     # Convert IaC reports to Finding objects
                     findings = []
+                    from prowler.lib.outputs.finding import Finding
+                    from prowler.lib.outputs.common import Status
+                    from datetime import timezone
+                    
                     for report in iac_reports:
-                        # Extract metadata from CheckReportIAC
-                        check_metadata = report.check_metadata
-
+                        # Generate unique UID for the finding
+                        finding_uid = f"{report.check_metadata.CheckID}-{report.resource_name}-{report.resource_line_range}"
+                        
+                        # Convert status string to Status enum
+                        status_enum = Status.FAIL if report.status == "FAIL" else Status.PASS
+                        if report.muted:
+                            status_enum = Status.MUTED
+                        
                         finding = Finding(
-                            provider=self._provider.type,
-                            check_id=check_metadata.CheckID,
-                            check_title=check_metadata.CheckTitle,
-                            check_type=check_metadata.CheckType,
-                            status=report.status,
+                            auth_method="Repository",  # IaC uses repository as auth method
+                            timestamp=datetime.datetime.now(timezone.utc),
+                            account_uid=self._provider.scan_repository_url or "local",
+                            account_name="IaC Repository",
+                            metadata=report.check_metadata,  # Pass the CheckMetadata object directly
+                            uid=finding_uid,
+                            status=status_enum,
                             status_extended=report.status_extended,
-                            severity=check_metadata.Severity,
-                            resource_type=check_metadata.ResourceType,
+                            muted=report.muted,
                             resource_uid=report.resource_name,  # For IaC, the file path is the UID
+                            resource_metadata=report.resource,  # The raw finding dict
                             resource_name=report.resource_name,
                             resource_details=report.resource_details,
-                            resource_tags=report.resource_tags,
-                            resource_metadata=report.resource,  # The raw finding dict
-                            service_name=check_metadata.ServiceName,
+                            resource_tags={},  # IaC doesn't have resource tags
                             region="global",  # IaC doesn't have regions
-                            raw=report.resource,  # The raw finding dict
-                            metadata=check_metadata.dict(),
-                            muted=report.muted,
-                            uid=f"{check_metadata.CheckID}-{report.resource_name}-{report.resource_line_range}",  # Create unique UID
                             compliance={},  # IaC doesn't have compliance mappings yet
+                            raw=report.resource,  # The raw finding dict
                         )
                         findings.append(finding)
 
