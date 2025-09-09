@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
 - `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
 - Send finding in Jira integration with the needed values [(#8648)](https://github.com/prowler-cloud/prowler/pull/8648)
+- Add language enforcement for Jira requests [(#8674)](https://github.com/prowler-cloud/prowler/pull/8674)
 - MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
   - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
   - `clusters_backup_enabled` - Ensure clusters have backup enabled
