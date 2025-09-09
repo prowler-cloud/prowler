@@ -1,3 +1,5 @@
+"use client";
+
 import { CheckCheck, Link } from "lucide-react";
 import { useState } from "react";
 
