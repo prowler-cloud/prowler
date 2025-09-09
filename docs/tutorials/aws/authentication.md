@@ -2,7 +2,11 @@
 
 Prowler requires AWS credentials to function properly. Authentication is available through the following methods:
 
+- Static Credentials
+- Assumed Role
+
 ## Required Permissions
+
 To ensure full functionality, attach the following AWS managed policies to the designated user or role:
 
 - `arn:aws:iam::aws:policy/SecurityAudit`
@@ -13,37 +17,113 @@ To ensure full functionality, attach the following AWS managed policies to the d
 For certain checks, additional read-only permissions are required. Attach the following custom policy to your role: [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json)
 
 
-## Configure AWS Credentials
+## 🔐 Assume Role (Recommended)
 
-Use one of the following methods to authenticate:
+This method grants permanent access and is the recommended setup for production environments.
 
-```console
-aws configure
-```
+=== "CloudFormation"
 
-or
+    1. Download the [Prowler Scan Role Template](https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/permissions/templates/cloudformation/prowler-scan-role.yml)
 
-```console
-export AWS_ACCESS_KEY_ID="ASXXXXXXX"
-export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
-export AWS_SESSION_TOKEN="XXXXXXXXX"
-```
+        ![Prowler Scan Role Template](./img/prowler-scan-role-template.png)
 
-These credentials must be associated with a user or role with the necessary permissions to perform security checks.
+        ![Download Role Template](./img/download-role-template.png)
 
+    2. Open the [AWS Console](https://console.aws.amazon.com), search for **CloudFormation**
 
+        ![CloudFormation Search](./img/cloudformation-nav.png)
 
-## AWS Profiles
+    3. Go to **Stacks** and click `Create stack` > `With new resources (standard)`
 
-Specify a custom AWS profile using the following command:
+        ![Create Stack](./img/create-stack.png)
 
-```console
-prowler aws -p/--profile <profile_name>
-```
+    4. In **Specify Template**, choose `Upload a template file` and select the downloaded file
 
-## Multi-Factor Authentication (MFA)
+        ![Upload a template file](./img/upload-template-file.png)
+        ![Upload file from downloads](./img/upload-template-from-downloads.png)
 
-For IAM entities requiring Multi-Factor Authentication (MFA), use the `--mfa` flag. Prowler prompts for the following values to initiate a new session:
+    5. Click `Next`, provide a stack name and the **External ID** shown in the Prowler Cloud setup screen
 
-- **ARN of your MFA device**
-- **TOTP (Time-Based One-Time Password)**
+        ![External ID](./img/prowler-cloud-external-id.png)
+        ![Stack Data](./img/fill-stack-data.png)
+
+        !!! info
+            An **External ID** is required when assuming the *ProwlerScan* role to comply with AWS [confused deputy prevention](https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html).
+
+    6. Acknowledge the IAM resource creation warning and proceed
+
+        ![Stack Creation Second Step](./img/stack-creation-second-step.png)
+
+    7. Click `Submit` to deploy the stack
+
+        ![Click on submit](./img/submit-third-page.png)
+
+=== "Terraform"
+
+    To provision the scan role using Terraform:
+
+    1. Run the following commands:
+
+        ```bash
+        terraform init
+        terraform plan
+        terraform apply
+        ```
+
+    2. During `plan` and `apply`, you will be prompted for the **External ID**, which is available in the Prowler Cloud/App UI:
+
+        ![Get External ID](./img/get-external-id-prowler-cloud.png)
+
+    > 💡 Note: Terraform will use the AWS credentials of your default profile.
+
+---
+
+## 🔑 Credentials
+=== "Long term credentials"
+
+    1. Go to the [AWS Console](https://console.aws.amazon.com), open **CloudShell**
+
+        ![AWS CloudShell](./img/aws-cloudshell.png)
+
+    2. Run:
+
+        ```bash
+        aws iam create-access-key
+        ```
+
+    3. Copy the output containing:
+
+        - `AccessKeyId`
+        - `SecretAccessKey`
+
+        ![CloudShell Output](./img/cloudshell-output.png)
+
+=== "Short term credentials (Recommended)"
+
+    You can use your [AWS Access Portal](https://docs.aws.amazon.com/singlesignon/latest/userguide/howtogetcredentials.html) or the CLI:
+
+    1. Retrieve short-term credentials for the IAM identity using this command:
+
+        ```bash
+        aws sts get-session-token --duration-seconds 900
+        ```
+
+        ???+ note
+            Check the aws documentation [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/sts_example_sts_GetSessionToken_section.html)
+
+    2. Copy the output containing:
+
+        - `AccessKeyId`
+        - `SecretAccessKey`
+
+        > Sample output:
+            ```json
+            {
+                "Credentials": {
+                    "AccessKeyId": "ASIAIOSFODNN7EXAMPLE",
+                    "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY",
+                    "SessionToken": "AQoEXAMPLEH4aoAH0gNCAPyJxz4BlCFFxWNE1OPTgk5TthT+FvwqnKwRcOIfrRh3c/LTo6UDdyJwOOvEVPvLXCrrrUtdnniCEXAMPLE/IvU1dYUg2RVAJBanLiHb4IgRmpRV3zrkuWJOgQs8IZZaIv2BXIa2R4OlgkBN9bkUDNCJiBeb/AXlzBBko7b15fjrBs2+cTQtpZ3CYWFXG8C5zqx37wnOE49mRl/+OtkIKGO7fAE",
+                    "Expiration": "2020-05-19T18:06:10+00:00"
+                }
+            }
+            ```
