@@ -33,16 +33,16 @@ This method grants permanent access and is the recommended setup for production 
 
         ![CloudFormation Search](./img/cloudformation-nav.png)
 
-    3. Go to **Stacks** and click `Create stack` > `With new resources (standard)`
+    3. Go to **Stacks** and click "Create stack" > "With new resources (standard)"
 
         ![Create Stack](./img/create-stack.png)
 
-    4. In **Specify Template**, choose `Upload a template file` and select the downloaded file
+    4. In **Specify Template**, choose "Upload a template file" and select the downloaded file
 
         ![Upload a template file](./img/upload-template-file.png)
         ![Upload file from downloads](./img/upload-template-from-downloads.png)
 
-    5. Click `Next`, provide a stack name and the **External ID** shown in the Prowler Cloud setup screen
+    5. Click "Next", provide a stack name and the **External ID** shown in the Prowler Cloud setup screen
 
         ![External ID](./img/prowler-cloud-external-id.png)
         ![Stack Data](./img/fill-stack-data.png)
@@ -54,7 +54,7 @@ This method grants permanent access and is the recommended setup for production 
 
         ![Stack Creation Second Step](./img/stack-creation-second-step.png)
 
-    7. Click `Submit` to deploy the stack
+    7. Click "Submit" to deploy the stack
 
         ![Click on submit](./img/submit-third-page.png)
 
@@ -70,11 +70,11 @@ This method grants permanent access and is the recommended setup for production 
         terraform apply
         ```
 
-    2. During `plan` and `apply`, you will be prompted for the **External ID**, which is available in the Prowler Cloud/App UI:
+    2. During `plan` and `apply`, provide the **External ID** when prompted, which is available in the Prowler Cloud or Prowler App UI:
 
         ![Get External ID](./img/get-external-id-prowler-cloud.png)
 
-    > 💡 Note: Terraform will use the AWS credentials of your default profile.
+    > 💡 Note: Terraform will use the AWS credentials of the default profile.
 
 ---
 
@@ -100,7 +100,7 @@ This method grants permanent access and is the recommended setup for production 
 
 === "Short term credentials (Recommended)"
 
-    You can use your [AWS Access Portal](https://docs.aws.amazon.com/singlesignon/latest/userguide/howtogetcredentials.html) or the CLI:
+    Use the [AWS Access Portal](https://docs.aws.amazon.com/singlesignon/latest/userguide/howtogetcredentials.html) or the CLI:
 
     1. Retrieve short-term credentials for the IAM identity using this command:
 
@@ -115,6 +115,7 @@ This method grants permanent access and is the recommended setup for production 
 
         - `AccessKeyId`
         - `SecretAccessKey`
+        - `SessionToken`
 
         > Sample output:
             ```json
