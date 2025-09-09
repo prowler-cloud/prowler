@@ -42,4 +42,4 @@ prowler mongodbatlas
       - Note the public key and private key
       - Store credentials securely
 
-For more details about MongoDB Atlas, see the [MongoDB Atlas Tutorial](../tutorials/mongodbatlas/getting-started-mongodbatlas.md).
+For more details about MongoDB Atlas, see the [MongoDB Atlas Tutorial](./getting-started-mongodbatlas.md).
