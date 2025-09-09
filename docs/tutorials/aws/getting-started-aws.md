@@ -122,6 +122,7 @@ export AWS_SESSION_TOKEN="XXXXXXXXX"
 
 These credentials must be associated with a user or role with the necessary permissions to perform security checks.
 
+More details on Assume Role settings from the CLI in [Assume Role](./role-assumption.md) page.
 
 
 ### AWS Profiles
