@@ -1,20 +1,19 @@
 # Jira Integration
 
-Prowler App enables automatic export of security findings to Jira, providing seamless integration with Atlassian's issue tracking and project management platform. This comprehensive guide demonstrates how to configure and manage Jira integrations to streamline security incident management and enhance team collaboration across security workflows.
+Prowler App enables automatic export of security findings to Jira, providing seamless integration with Atlassian's work item tracking and project management platform. This comprehensive guide demonstrates how to configure and manage Jira integrations to streamline security incident management and enhance team collaboration across security workflows.
 
 Integrating Prowler App with Jira provides:
 
-* **Streamlined incident management:** Convert security findings directly into actionable Jira issues
+* **Streamlined management:** Convert security findings directly into actionable Jira work items
 * **Enhanced team collaboration:** Leverage existing project management workflows for security remediation
-* **Automated ticket creation:** Reduce manual effort in tracking and assigning security issues
+* **Automated ticket creation:** Reduce manual effort in tracking and assigning security work items
 
 ## How It Works
 
 When enabled and configured:
 
-1. Security findings can be manually sent to Jira from the Findings table
-2. Each finding creates a corresponding Jira issue with detailed information
-3. Issues are populated with all the metadata from the finding
+1. Security findings can be manually sent to Jira from the Findings table.
+2. Each finding creates a Jira work item with all the check's metadata, including guidance on how to remediate it.
 
 ## Configuration
 
@@ -26,14 +25,13 @@ To configure Jira integration in Prowler App:
     ![Integrations tab](./img/jira/integrations-tab.png)
 
 3. Complete the integration settings:
+    * **Jira domain:** Enter the Jira domain (e.g., from `https://your-domain.atlassian.net` -> `your-domain`)
+    * **Email:** Your Jira account email
+    * **API Token:** API token with the following scopes: `read:jira-user`, `read:jira-work`, `write:jira-work`
+        ![Connection settings](./img/jira/connection-settings.png)
 
-### Connection Settings
-
-* **Jira domain:** Enter the Jira domain (e.g., from `https://your-domain.atlassian.net` -> `your-domain`)
-* **Email:** Your Jira account email
-* **API Token:** API token with the following scopes: `read:jira-user`, `read:jira-work`, `write:jira-work` [How to generate an API token](https://id.atlassian.com/manage-profile/security/api-tokens)
-
-    ![Connection settings](./img/jira/connection-settings.png)
+!!! note "Generate Jira API Token"
+    To generate a Jira API token, visit: https://id.atlassian.com/manage-profile/security/api-tokens
 
 
 Once configured successfully, the integration is ready to send findings to Jira.
@@ -68,7 +66,7 @@ Each Jira integration provides management actions through dedicated buttons:
 
 | Button | Purpose | Available Actions | Notes |
 |--------|---------|------------------|-------|
-| **Test** | Verify integration connectivity | • Test Jira API access<br/>• Validate credentials<br/>• Check project permissions<br/>• Verify issue creation capability | Results displayed in notification message |
+| **Test** | Verify integration connectivity | • Test Jira API access<br/>• Validate credentials<br/>• Check project permissions<br/>• Verify work item creation capability | Results displayed in notification message |
 | **Credentials** | Update authentication settings | • Change API token<br/>• Update email<br/>• Update Jira domain | Click "Update Credentials" to save changes |
 | **Enable/Disable** | Toggle integration status | • Enable or disable integration<br/>| Status change takes effect immediately |
 | **Delete** | Remove integration permanently | • Permanently delete integration<br/>• Remove all configuration data | ⚠️ **Cannot be undone** - confirm before deleting |
