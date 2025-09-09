@@ -70,6 +70,7 @@ nav:
           - Integrations:
             - Amazon S3: tutorials/prowler-app-s3-integration.md
             - AWS Security Hub: tutorials/prowler-app-security-hub-integration.md
+            - Jira: tutorials/prowler-app-jira-integration.md
           - Lighthouse AI: tutorials/prowler-app-lighthouse.md
           - Tutorials:
             - SSO with Entra: tutorials/prowler-app-sso-entra.md
