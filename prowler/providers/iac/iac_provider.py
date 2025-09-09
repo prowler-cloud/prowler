@@ -242,20 +242,36 @@ class IacProvider(Provider):
             logger.info(
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
-            with alive_bar(
-                ctrl_c=False,
-                bar="blocks",
-                spinner="classic",
-                stats=False,
-                enrich_print=False,
-            ) as bar:
-                try:
-                    bar.title = f"-> Cloning {original_url}..."
+            
+            # Check if we're in an environment with a TTY (terminal)
+            # Celery workers and other non-interactive environments don't have TTY
+            try:
+                if sys.stdout.isatty():
+                    with alive_bar(
+                        ctrl_c=False,
+                        bar="blocks",
+                        spinner="classic",
+                        stats=False,
+                        enrich_print=False,
+                    ) as bar:
+                        try:
+                            bar.title = f"-> Cloning {original_url}..."
+                            porcelain.clone(repository_url, temporary_directory, depth=1)
+                            bar.title = "-> Repository cloned successfully!"
+                        except Exception as clone_error:
+                            bar.title = "-> Cloning failed!"
+                            raise clone_error
+                else:
+                    # No TTY, just clone without progress bar
+                    logger.info(f"Cloning {original_url}...")
                     porcelain.clone(repository_url, temporary_directory, depth=1)
-                    bar.title = "-> Repository cloned successfully!"
-                except Exception as clone_error:
-                    bar.title = "-> Cloning failed!"
-                    raise clone_error
+                    logger.info("Repository cloned successfully!")
+            except (AttributeError, OSError):
+                # Fallback if isatty() check fails
+                logger.info(f"Cloning {original_url}...")
+                porcelain.clone(repository_url, temporary_directory, depth=1)
+                logger.info("Repository cloned successfully!")
+            
             return temporary_directory
         except Exception as error:
             logger.critical(
@@ -302,25 +318,47 @@ class IacProvider(Provider):
             ]
             if exclude_path:
                 trivy_command.extend(["--skip-dirs", ",".join(exclude_path)])
-            with alive_bar(
-                ctrl_c=False,
-                bar="blocks",
-                spinner="classic",
-                stats=False,
-                enrich_print=False,
-            ) as bar:
-                try:
-                    bar.title = f"-> Running IaC scan on {directory} ..."
-                    # Run Trivy with JSON output
+            
+            # Check if we're in an environment with a TTY (terminal)
+            try:
+                if sys.stdout.isatty():
+                    with alive_bar(
+                        ctrl_c=False,
+                        bar="blocks",
+                        spinner="classic",
+                        stats=False,
+                        enrich_print=False,
+                    ) as bar:
+                        try:
+                            bar.title = f"-> Running IaC scan on {directory} ..."
+                            # Run Trivy with JSON output
+                            process = subprocess.run(
+                                trivy_command,
+                                capture_output=True,
+                                text=True,
+                            )
+                            bar.title = "-> Scan completed!"
+                        except Exception as error:
+                            bar.title = "-> Scan failed!"
+                            raise error
+                else:
+                    # No TTY, just run without progress bar
+                    logger.info(f"Running Trivy scan on {directory}...")
                     process = subprocess.run(
                         trivy_command,
                         capture_output=True,
                         text=True,
                     )
-                    bar.title = "-> Scan completed!"
-                except Exception as error:
-                    bar.title = "-> Scan failed!"
-                    raise error
+                    logger.info("Trivy scan completed!")
+            except (AttributeError, OSError):
+                # Fallback if isatty() check fails
+                logger.info(f"Running Trivy scan on {directory}...")
+                process = subprocess.run(
+                    trivy_command,
+                    capture_output=True,
+                    text=True,
+                )
+                logger.info("Trivy scan completed!")
             # Log Trivy's stderr output with preserved log levels
             if process.stderr:
                 for line in process.stderr.strip().split("\n"):
