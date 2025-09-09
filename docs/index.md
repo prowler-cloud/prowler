@@ -13,6 +13,7 @@ The official supported providers right now are:
 | **M365** | Official | Stable | UI, API, CLI |
 | **Github** | Official | Stable | UI, API, CLI |
 | **IaC** | Official | Beta | CLI |
+| **MongoDB Atlas** | Official | Beta | CLI |
 | **NHN** | Unofficial | Beta | CLI |
 
 Prowler supports **auditing, incident response, continuous monitoring, hardening, forensic readiness, and remediation**.

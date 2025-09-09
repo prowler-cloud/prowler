@@ -39,7 +39,7 @@ Upon logging in, the Overview page will display. At this stage, no data is prese
 
 ## **Step 3: Add a Provider**
 
-To perform security scans, link a cloud provider account. Prowler supports the following providers:
+To perform security scans, link a cloud provider account. Prowler supports the following providers and more:
 
 - **AWS**
 
@@ -50,6 +50,8 @@ To perform security scans, link a cloud provider account. Prowler supports the f
 - **Kubernetes**
 
 - **M365**
+
+- **GitHub**
 
 Steps to add a provider:
 
