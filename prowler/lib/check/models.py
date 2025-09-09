@@ -436,17 +436,31 @@ class Check(ABC, CheckMetadata):
 
     def __init__(self, **data):
         """Check's init function. Calls the CheckMetadataModel init."""
+        file_path = os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
+
         # Parse the Check's metadata file
-        metadata_file = (
-            os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
-            + ".metadata.json"
-        )
+        metadata_file = file_path + ".metadata.json"
         # Store it to validate them with Pydantic
         data = CheckMetadata.parse_file(metadata_file).dict()
         # Calls parents init function
         super().__init__(**data)
-        # TODO: verify that the CheckID is the same as the filename and classname
-        # to mimic the test done at test_<provider>_checks_metadata_is_valid
+
+        # Verify names consistency
+        check_id = self.CheckID
+        class_name = self.__class__.__name__
+        file_name = file_path.split(sep="/")[-1]
+
+        errors = []
+        if check_id != class_name:
+            errors.append(f"CheckID '{check_id}' != class name '{class_name}'")
+        if check_id != file_name:
+            errors.append(f"CheckID '{check_id}' != file name '{file_name}'")
+
+        if errors:
+            logger.error(
+                "Name consistency error. The CheckID in the metadata, the class name "
+                "and the file name must all match.  -- " + " | ".join(errors)
+            )
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""
