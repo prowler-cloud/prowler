@@ -260,7 +260,7 @@ class Scan:
         try:
             # Initialize check_name for error handling
             check_name = None
-            
+
             # Using SimpleNamespace to create a mocked object
             arguments = SimpleNamespace()
 
@@ -286,17 +286,18 @@ class Scan:
             if self._provider.type == "iac":
                 # IaC provider doesn't use regular checks, it runs Trivy directly
                 from prowler.providers.iac.iac_provider import IacProvider
+
                 if isinstance(self._provider, IacProvider):
                     logger.info("Running IaC scan with Trivy...")
                     # Run the IaC scan
                     iac_reports = self._provider.run()
-                    
+
                     # Convert IaC reports to Finding objects
                     findings = []
                     for report in iac_reports:
                         # Extract metadata from CheckReportIAC
                         check_metadata = report.check_metadata
-                        
+
                         finding = Finding(
                             provider=self._provider.type,
                             check_id=check_metadata.CheckID,
@@ -320,12 +321,12 @@ class Scan:
                             compliance={},  # IaC doesn't have compliance mappings yet
                         )
                         findings.append(finding)
-                    
+
                     # Update progress and yield findings
                     self._number_of_checks_completed = 1
                     self._number_of_checks_to_execute = 1
                     yield (100.0, findings)
-                    
+
                     # Calculate duration
                     end_time = datetime.datetime.now()
                     self._duration = int((end_time - start_time).total_seconds())

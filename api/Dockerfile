@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -35,6 +36,25 @@ RUN ARCH=$(uname -m) && \
     chmod +x /opt/microsoft/powershell/7/pwsh && \
     ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
     rm /tmp/powershell.tar.gz
+
+# Install Trivy for IaC scanning
+ARG TRIVY_VERSION=0.66.0
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        TRIVY_ARCH="Linux-64bit" ; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+        TRIVY_ARCH="Linux-ARM64" ; \
+    else \
+        echo "Unsupported architecture for Trivy: $ARCH" && exit 1 ; \
+    fi && \
+    wget --progress=dot:giga "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${TRIVY_ARCH}.tar.gz" -O /tmp/trivy.tar.gz && \
+    tar zxf /tmp/trivy.tar.gz -C /tmp && \
+    mv /tmp/trivy /usr/local/bin/trivy && \
+    chmod +x /usr/local/bin/trivy && \
+    rm /tmp/trivy.tar.gz && \
+    # Create trivy cache directory with proper permissions
+    mkdir -p /tmp/.cache/trivy && \
+    chmod 777 /tmp/.cache/trivy
 
 # Add prowler user
 RUN addgroup --gid 1000 prowler && \

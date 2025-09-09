@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [Unreleased]
+
+### Added
+- IaC (Infrastructure as Code) provider support for remote repositories [(#TBD)](https://github.com/prowler-cloud/prowler/pull/TBD)
+
+---
+
 ## [1.13.0] (Prowler 5.12.0)
 
 ### Added

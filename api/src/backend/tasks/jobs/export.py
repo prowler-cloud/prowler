@@ -100,6 +100,10 @@ COMPLIANCE_CLASS_MAP = {
     "github": [
         (lambda name: name.startswith("cis_"), GithubCIS),
     ],
+    "iac": [
+        # IaC provider doesn't have specific compliance frameworks yet
+        # Trivy handles its own compliance checks
+    ],
 }
 
 
