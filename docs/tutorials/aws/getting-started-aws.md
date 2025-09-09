@@ -57,7 +57,7 @@ Before proceeding, choose the preferred authentication mode:
 
 ---
 
-#### 🔐 Assume Role (Recommended)
+#### Assume Role (Recommended)
 
 This method grants permanent access and is the recommended setup for production environments.
 
@@ -84,7 +84,7 @@ For detailed instructions on how to create the role, see [Authentication > Assum
 
 ---
 
-#### 🔑 Credentials (Static Access Keys)
+#### Credentials (Static Access Keys)
 
 AWS accounts can also be configured using static credentials (not recommended for long-term use):
 

@@ -17,7 +17,7 @@ To ensure full functionality, attach the following AWS managed policies to the d
 For certain checks, additional read-only permissions are required. Attach the following custom policy to your role: [prowler-additions-policy.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-additions-policy.json)
 
 
-## 🔐 Assume Role (Recommended)
+## Assume Role (Recommended)
 
 This method grants permanent access and is the recommended setup for production environments.
 
@@ -78,7 +78,7 @@ This method grants permanent access and is the recommended setup for production 
 
 ---
 
-## 🔑 Credentials
+## Credentials
 === "Long term credentials"
 
     1. Go to the [AWS Console](https://console.aws.amazon.com), open **CloudShell**
