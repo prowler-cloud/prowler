@@ -136,6 +136,11 @@ class Jira:
     }
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
+    HEADER_TEMPLATE = {
+        "Content-Type": "application/json",
+        "X-Force-Accept-Language": "true",
+        "Accept-Language": "en",
+    }
 
     def __init__(
         self,
@@ -199,6 +204,31 @@ class Jira:
     @property
     def using_basic_auth(self):
         return self._using_basic_auth
+
+    def get_headers(
+        self, access_token: str = None, content_type_json: bool = False
+    ) -> dict:
+        """Get headers for API requests
+
+        Args:
+            access_token: The access token to use for authorization
+            content_type_json: Whether to include Content-Type: application/json
+
+        Returns:
+            dict: Headers for API requests
+        """
+        headers = self.HEADER_TEMPLATE.copy()
+
+        if not content_type_json:
+            headers.pop("Content-Type", None)
+
+        if access_token:
+            if self._using_basic_auth:
+                headers["Authorization"] = f"Basic {access_token}"
+            else:
+                headers["Authorization"] = f"Bearer {access_token}"
+
+        return headers
 
     def get_params(self, state_encoded):
         return {
@@ -303,7 +333,7 @@ class Jira:
                 "redirect_uri": self.redirect_uri,
             }
 
-            headers = {"Content-Type": "application/json"}
+            headers = self.get_headers(content_type_json=True)
             response = requests.post(self.TOKEN_URL, json=body, headers=headers)
 
             if response.status_code == 200:
@@ -352,7 +382,7 @@ class Jira:
         """
         try:
             if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
+                headers = self.get_headers(access_token)
                 response = requests.get(
                     f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
@@ -360,7 +390,7 @@ class Jira:
                 response = response.json()
                 return response.get("cloudId")
             else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+                headers = self.get_headers(access_token)
                 response = requests.get(self.API_TOKEN_URL, headers=headers)
 
             if response.status_code == 200:
@@ -442,7 +472,7 @@ class Jira:
                 "refresh_token": self._refresh_token,
             }
 
-            headers = {"Content-Type": "application/json"}
+            headers = self.get_headers(content_type_json=True)
             response = requests.post(url, json=body, headers=headers)
 
             if response.status_code == 200:
@@ -582,10 +612,7 @@ class Jira:
             if not access_token:
                 return ValueError("Failed to get access token")
 
-            if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
+            headers = self.get_headers(access_token)
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
@@ -652,10 +679,7 @@ class Jira:
                     file=os.path.basename(__file__),
                 )
 
-            if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
+            headers = self.get_headers(access_token)
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
@@ -700,10 +724,7 @@ class Jira:
             if not access_token:
                 return ValueError("Failed to get access token")
 
-            if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}", "X-Force-Accept-Language": "true", "Accept-Language": "en"}
+            headers = self.get_headers(access_token)
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
@@ -1579,20 +1600,7 @@ class Jira:
                     message="The issue type is invalid", file=os.path.basename(__file__)
                 )
 
-            if self._using_basic_auth:
-                headers = {
-                    "Authorization": f"Basic {access_token}",
-                    "Content-Type": "application/json",
-                    "X-Force-Accept-Language": "true",
-                    "Accept-Language": "en",
-                }
-            else:
-                headers = {
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                    "X-Force-Accept-Language": "true",
-                    "Accept-Language": "en",
-                }
+            headers = self.get_headers(access_token, content_type_json=True)
 
             for finding in findings:
                 status_color = self.get_color_from_status(finding.status.value)
@@ -1799,20 +1807,7 @@ class Jira:
                     message="The issue type is invalid", file=os.path.basename(__file__)
                 )
 
-            if self._using_basic_auth:
-                headers = {
-                    "Authorization": f"Basic {access_token}",
-                    "Content-Type": "application/json",
-                    "X-Force-Accept-Language": "true",
-                    "Accept-Language": "en",
-                }
-            else:
-                headers = {
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                    "X-Force-Accept-Language": "true",
-                    "Accept-Language": "en",
-                }
+            headers = self.get_headers(access_token, content_type_json=True)
 
             status_color = self.get_color_from_status(status)
             severity_color = self.get_severity_color(severity.lower())

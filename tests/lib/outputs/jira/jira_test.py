@@ -1420,3 +1420,103 @@ class TestJiraIntegration:
 
         assert result is False
         mock_post.assert_called_once()
+
+    def test_get_headers_oauth_with_access_token(self):
+        """Test get_headers returns correct OAuth headers with access token."""
+        self.jira_integration._using_basic_auth = False
+
+        headers = self.jira_integration.get_headers(
+            access_token="test_oauth_token", content_type_json=True
+        )
+
+        expected_headers = {
+            "Authorization": "Bearer test_oauth_token",
+            "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+
+    def test_get_headers_oauth_without_content_type(self):
+        """Test get_headers returns OAuth headers without Content-Type when content_type_json=False."""
+        self.jira_integration._using_basic_auth = False
+
+        headers = self.jira_integration.get_headers(
+            access_token="test_oauth_token", content_type_json=False
+        )
+
+        expected_headers = {
+            "Authorization": "Bearer test_oauth_token",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Content-Type" not in headers
+
+    def test_get_headers_basic_auth_with_access_token(self):
+        """Test get_headers returns correct Basic Auth headers with access token."""
+        self.jira_integration_basic_auth._using_basic_auth = True
+
+        headers = self.jira_integration_basic_auth.get_headers(
+            access_token="test_basic_token", content_type_json=True
+        )
+
+        expected_headers = {
+            "Authorization": "Basic test_basic_token",
+            "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+
+    def test_get_headers_basic_auth_without_content_type(self):
+        """Test get_headers returns Basic Auth headers without Content-Type when content_type_json=False."""
+        self.jira_integration_basic_auth._using_basic_auth = True
+
+        headers = self.jira_integration_basic_auth.get_headers(
+            access_token="test_basic_token", content_type_json=False
+        )
+
+        expected_headers = {
+            "Authorization": "Basic test_basic_token",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Content-Type" not in headers
+
+    def test_get_headers_without_access_token_with_content_type(self):
+        """Test get_headers returns headers without Authorization when no access token provided."""
+        headers = self.jira_integration.get_headers(content_type_json=True)
+
+        expected_headers = {
+            "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Authorization" not in headers
+
+    def test_get_headers_without_access_token_without_content_type(self):
+        """Test get_headers returns minimal headers when no access token and no content type."""
+        headers = self.jira_integration.get_headers(content_type_json=False)
+
+        expected_headers = {
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Authorization" not in headers
+        assert "Content-Type" not in headers
+
+    def test_get_headers_default_parameters(self):
+        """Test get_headers with default parameters (no access token, no content type)."""
+        headers = self.jira_integration.get_headers()
+
+        expected_headers = {
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Authorization" not in headers
+        assert "Content-Type" not in headers
