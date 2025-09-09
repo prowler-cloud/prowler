@@ -7,9 +7,6 @@ Integrating Prowler App with Jira provides:
 * **Streamlined incident management:** Convert security findings directly into actionable Jira issues
 * **Enhanced team collaboration:** Leverage existing project management workflows for security remediation
 * **Automated ticket creation:** Reduce manual effort in tracking and assigning security issues
-* **Customizable issue mapping:** Configure how findings translate to Jira fields and properties
-* **Real-time synchronization:** Keep security findings and Jira issues aligned automatically
-* **Flexible project routing:** Direct findings to appropriate Jira projects based on severity or type
 
 ## How It Works
 
@@ -17,11 +14,7 @@ When enabled and configured:
 
 1. Security findings can be manually sent to Jira from the Findings table
 2. Each finding creates a corresponding Jira issue with detailed information
-3. Issues are populated with finding details including severity, description, and remediation steps
-
-## Prerequisites
-
-Before configuring Jira Integration in Prowler App, ensure you have a Jira instance and API access enabled.
+3. Issues are populated with all the metadata from the finding
 
 ## Configuration
 
@@ -38,7 +31,7 @@ To configure Jira integration in Prowler App:
 
 * **Jira domain:** Enter the Jira domain (e.g., from `https://your-domain.atlassian.net` -> `your-domain`)
 * **Email:** Your Jira account email
-* **API Token:** API token with the following scopes: `read:jira-user`, `read:jira-work`, `write:jira-work`
+* **API Token:** API token with the following scopes: `read:jira-user`, `read:jira-work`, `write:jira-work` [How to generate an API token](https://id.atlassian.com/manage-profile/security/api-tokens)
 
     ![Connection settings](./img/jira/connection-settings.png)
 
