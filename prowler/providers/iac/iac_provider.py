@@ -434,3 +434,99 @@ class IacProvider(Provider):
         )
 
         print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def test_connection(
+        scan_repository_url: str = None,
+        oauth_app_token: str = None,
+        access_token: str = None,
+        raise_on_exception: bool = True,
+        provider_id: str = None,
+    ) -> "Connection":
+        """Test connection to IaC repository.
+
+        Test the connection to the IaC repository using the provided credentials.
+
+        Args:
+            scan_repository_url (str): Repository URL to scan.
+            oauth_app_token (str): OAuth App token for authentication.
+            access_token (str): Access token for authentication (alias for oauth_app_token).
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            provider_id (str): The provider ID, in this case it's the repository URL.
+
+        Returns:
+            Connection: Connection object with success status or error information.
+
+        Raises:
+            Exception: If failed to test the connection to the repository.
+
+        Examples:
+            >>> IacProvider.test_connection(scan_repository_url="https://github.com/user/repo")
+            Connection(is_connected=True)
+        """
+        from prowler.providers.common.models import Connection
+
+        try:
+            # If provider_id is provided and scan_repository_url is not, use provider_id as the repository URL
+            if provider_id and not scan_repository_url:
+                scan_repository_url = provider_id
+
+            # Handle both oauth_app_token and access_token parameters
+            if access_token and not oauth_app_token:
+                oauth_app_token = access_token
+
+            if not scan_repository_url:
+                return Connection(
+                    is_connected=False,
+                    error="Repository URL is required"
+                )
+
+            # Try to clone the repository to test the connection
+            with tempfile.TemporaryDirectory() as temp_dir:
+                try:
+                    if oauth_app_token:
+                        # If token is provided, use it for authentication
+                        # Extract the domain and path from the URL
+                        import re
+                        url_pattern = r"(https?://)([^/]+)/(.+)"
+                        match = re.match(url_pattern, scan_repository_url)
+                        if match:
+                            protocol, domain, path = match.groups()
+                            # Construct URL with token
+                            auth_url = f"{protocol}x-access-token:{oauth_app_token}@{domain}/{path}"
+                        else:
+                            auth_url = scan_repository_url
+                    else:
+                        # Public repository
+                        auth_url = scan_repository_url
+
+                    # Use dulwich to test the connection
+                    porcelain.ls_remote(auth_url)
+
+                    return Connection(is_connected=True)
+
+                except Exception as e:
+                    error_msg = str(e)
+                    if "authentication" in error_msg.lower() or "401" in error_msg:
+                        return Connection(
+                            is_connected=False,
+                            error="Authentication failed. Please check your access token."
+                        )
+                    elif "404" in error_msg or "not found" in error_msg.lower():
+                        return Connection(
+                            is_connected=False,
+                            error="Repository not found or not accessible."
+                        )
+                    else:
+                        return Connection(
+                            is_connected=False,
+                            error=f"Failed to connect to repository: {error_msg}"
+                        )
+
+        except Exception as error:
+            if raise_on_exception:
+                raise
+            return Connection(
+                is_connected=False,
+                error=f"Unexpected error testing connection: {str(error)}"
+            )

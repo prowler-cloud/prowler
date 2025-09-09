@@ -94,11 +94,15 @@ class Scan:
         self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
 
         # Get bulk checks metadata for the provider
-        self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
-        # Complete checks metadata with the compliance framework specification
-        self._bulk_checks_metadata = update_checks_metadata_with_compliance(
-            self._bulk_compliance_frameworks, self._bulk_checks_metadata
-        )
+        # IaC provider doesn't have traditional checks metadata
+        if provider.type == "iac":
+            self._bulk_checks_metadata = {}
+        else:
+            self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
+            # Complete checks metadata with the compliance framework specification
+            self._bulk_checks_metadata = update_checks_metadata_with_compliance(
+                self._bulk_compliance_frameworks, self._bulk_checks_metadata
+            )
 
         # Create a list of valid categories
         valid_categories = set()
@@ -107,14 +111,14 @@ class Scan:
                 if category not in valid_categories:
                     valid_categories.add(category)
 
-        # Validate checks
-        if checks:
+        # Validate checks (skip for IaC provider)
+        if checks and provider.type != "iac":
             for check in checks:
                 if check not in self._bulk_checks_metadata.keys():
                     raise ScanInvalidCheckError(f"Invalid check provided: {check}.")
 
-        # Validate services
-        if services:
+        # Validate services (skip for IaC provider)
+        if services and provider.type != "iac":
             for service in services:
                 if service not in list_services(provider.type):
                     raise ScanInvalidServiceError(
@@ -148,22 +152,26 @@ class Scan:
                     )
 
         # Load checks to execute
-        self._checks_to_execute = sorted(
-            load_checks_to_execute(
-                bulk_checks_metadata=self._bulk_checks_metadata,
-                bulk_compliance_frameworks=self._bulk_compliance_frameworks,
-                check_list=checks,
-                service_list=services,
-                compliance_frameworks=compliances,
-                categories=categories,
-                severities=severities,
-                provider=provider.type,
-                checks_file=None,
+        # Special handling for IaC provider - it doesn't have traditional checks
+        if provider.type == "iac":
+            self._checks_to_execute = ["iac_scan"]  # Dummy check name for IaC
+        else:
+            self._checks_to_execute = sorted(
+                load_checks_to_execute(
+                    bulk_checks_metadata=self._bulk_checks_metadata,
+                    bulk_compliance_frameworks=self._bulk_compliance_frameworks,
+                    check_list=checks,
+                    service_list=services,
+                    compliance_frameworks=compliances,
+                    categories=categories,
+                    severities=severities,
+                    provider=provider.type,
+                    checks_file=None,
+                )
             )
-        )
 
-        # Exclude checks
-        if excluded_checks:
+        # Exclude checks (skip for IaC provider)
+        if excluded_checks and provider.type != "iac":
             for check in excluded_checks:
                 if check in self._checks_to_execute:
                     self._checks_to_execute.remove(check)
@@ -172,8 +180,8 @@ class Scan:
                         f"Invalid check provided: {check}. Check does not exist in the provider."
                     )
 
-        # Exclude services
-        if excluded_services:
+        # Exclude services (skip for IaC provider)
+        if excluded_services and provider.type != "iac":
             for check in self._checks_to_execute:
                 if get_service_name_from_check_name(check) in excluded_services:
                     self._checks_to_execute.remove(check)
@@ -184,10 +192,15 @@ class Scan:
 
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
-        service_checks_to_execute = get_service_checks_to_execute(
-            self._checks_to_execute
-        )
-        service_checks_completed = dict()
+        # IaC provider doesn't have service-based checks
+        if provider.type == "iac":
+            service_checks_to_execute = {"iac": set(["iac_scan"])}
+            service_checks_completed = dict()
+        else:
+            service_checks_to_execute = get_service_checks_to_execute(
+                self._checks_to_execute
+            )
+            service_checks_completed = dict()
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
@@ -265,6 +278,52 @@ class Scan:
             )
 
             start_time = datetime.datetime.now()
+
+            # Special handling for IaC provider
+            if self._provider.type == "iac":
+                # IaC provider doesn't use regular checks, it runs Trivy directly
+                from prowler.providers.iac.iac_provider import IacProvider
+                if isinstance(self._provider, IacProvider):
+                    logger.info("Running IaC scan with Trivy...")
+                    # Run the IaC scan
+                    iac_reports = self._provider.run()
+                    
+                    # Convert IaC reports to Finding objects
+                    findings = []
+                    for report in iac_reports:
+                        finding = Finding(
+                            provider=self._provider.type,
+                            check_id=report.check_id,
+                            check_title=report.check_title,
+                            check_type=report.check_type,
+                            status=report.status,
+                            status_extended=report.status_extended,
+                            severity=report.severity,
+                            resource_type=report.resource_type,
+                            resource_uid=report.resource_uid,
+                            resource_name=report.resource_name,
+                            resource_details=report.resource_details,
+                            resource_tags=report.resource_tags,
+                            resource_metadata=report.resource_metadata,
+                            service_name=report.service_name,
+                            region=report.region,
+                            raw=report.finding,
+                            metadata=report.metadata,
+                            muted=report.muted,
+                            uid=report.uid,
+                            compliance=report.compliance,
+                        )
+                        findings.append(finding)
+                    
+                    # Update progress and yield findings
+                    self._number_of_checks_completed = 1
+                    self._number_of_checks_to_execute = 1
+                    yield (100.0, findings)
+                    
+                    # Calculate duration
+                    end_time = datetime.datetime.now()
+                    self._duration = int((end_time - start_time).total_seconds())
+                    return
 
             for check_name in checks_to_execute:
                 try:
