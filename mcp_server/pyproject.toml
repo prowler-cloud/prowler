@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prowler-mcp"
-version = "0.0.1"
+version = "0.1.0"
 description = "MCP server for Prowler ecosystem"
 readme = "README.md"
 requires-python = ">=3.12"
