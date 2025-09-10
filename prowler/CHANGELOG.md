@@ -10,6 +10,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 - Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
 
+### Changed
+- Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
 ### Fixed
 
 ## [v5.12.1] (Prowler v5.12.1)
