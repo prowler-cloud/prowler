@@ -173,7 +173,7 @@ async def get_check_raw_metadata(
         check_id: Prowler check ID (folder and base filename).
 
     Returns:
-        Raw metadata dict as stored in Prowler, plus the source URL.
+        Raw metadata JSON as stored in Prowler.
     """
     if provider_id and check_id:
         url = github_check_path(provider_id, check_id, ".metadata.json")
@@ -206,14 +206,14 @@ async def get_check_code(
     check_id: str,
 ) -> dict[str, Any]:
     """
-    Fetch the check implementation source code from GitHub.
+    Fetch the check implementation Python code from Prowler.
 
     Args:
-        provider_id: Prowler provider ID.
-        check_id: Prowler check ID.
+        provider_id: Prowler provider ID (e.g., "aws", "azure").
+        check_id: Prowler check ID (e.g., "opensearch_service_domains_not_publicly_accessible").
 
     Returns:
-        Dict with the code content as text and source URL.
+        Dict with the code content as text.
     """
     if provider_id and check_id:
         url = github_check_path(provider_id, check_id, ".py")
@@ -248,14 +248,14 @@ async def get_check_fixer(
     check_id: str,
 ) -> dict[str, Any]:
     """
-    Fetch the check fixer source code from GitHub, if it exists.
+    Fetch the check fixer Python code from Prowler, if it exists.
 
     Args:
-        provider_id: Prowler provider ID.
-        check_id: Prowler check ID.
+        provider_id: Prowler provider ID (e.g., "aws", "azure").
+        check_id: Prowler check ID (e.g., "opensearch_service_domains_not_publicly_accessible").
 
     Returns:
-        Dict with fixer content as text if present, existence flag, and source URL.
+        Dict with fixer content as text if present, existence flag.
     """
     if provider_id and check_id:
         url = github_check_path(provider_id, check_id, "_fixer.py")
