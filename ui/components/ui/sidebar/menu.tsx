@@ -105,7 +105,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 className={cn(
                   "w-full",
                   groupLabel ? "pt-2" : "",
-                  "last:!mt-auto",
+                  menus.some((menu) => menu.label === "Prowler Hub")
+                    ? "!mt-auto"
+                    : "",
                 )}
                 key={index}
               >
@@ -138,7 +140,12 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                     active,
                     submenus,
                     defaultOpen,
+                    target,
+                    tooltip,
                   } = menu;
+                  const singleMenuItemTooltipText = isOpen
+                    ? tooltip || ""
+                    : tooltip || label || "";
 
                   return !submenus || submenus.length === 0 ? (
                     <div className="w-full" key={index}>
@@ -156,7 +163,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               className="mb-1 h-8 w-full justify-start"
                               asChild
                             >
-                              <Link href={href}>
+                              <Link href={href} target={target}>
                                 <span
                                   className={cn(isOpen === false ? "" : "mr-4")}
                                 >
@@ -175,9 +182,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               </Link>
                             </Button>
                           </TooltipTrigger>
-                          {isOpen === false && (
+                          {singleMenuItemTooltipText && (
                             <TooltipContent side="right">
-                              {label}
+                              {singleMenuItemTooltipText}
                             </TooltipContent>
                           )}
                         </Tooltip>
