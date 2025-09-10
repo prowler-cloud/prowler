@@ -1,7 +1,22 @@
 # Prowler SDK Changelog
 
 All notable changes to the **Prowler SDK** are documented in this file.
-## [v5.12.0] (Prowler UNRELEASED)
+
+## [v5.13.0] (Prowler UNRELEASED)
+
+### Added
+- Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
+
+### Changed
+
+### Fixed
+
+## [v5.12.1] (Prowler v5.12.1)
+
+### Fixed
+- Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+
+## [v5.12.0] (Prowler v5.12.0)
 
 ### Added
 - Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
@@ -12,21 +27,28 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
 - Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
 - `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
-- Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
 - Send finding in Jira integration with the needed values [(#8648)](https://github.com/prowler-cloud/prowler/pull/8648)
+- Add language enforcement for Jira requests [(#8674)](https://github.com/prowler-cloud/prowler/pull/8674)
+- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
+  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
+  - `clusters_backup_enabled` - Ensure clusters have backup enabled
+  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
+  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
+  - `organizations_api_access_list_required` - Ensure organization requires API access list
+  - `organizations_mfa_required` - Ensure organization requires MFA
+  - `organizations_security_contact_defined` - Ensure organization has security contact defined
+  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
+  - `projects_auditing_enabled` - Ensure database auditing is enabled
+  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
 
 ### Changed
 - Rename ftp and mongo checks to follow pattern `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_*` [(#8293)](https://github.com/prowler-cloud/prowler/pull/8293)
 
 ### Fixed
 - Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
-
----
-
-## [v5.11.1] (Prowler UNRELEASED)
-
-### Fixed
 - TypeError from Python 3.9 in Security Hub module by updating type annotations [(#8619)](https://github.com/prowler-cloud/prowler/pull/8619)
+- KeyError when SecurityGroups field is missing in MemoryDB check [(#8666)](https://github.com/prowler-cloud/prowler/pull/8666)
+- NoneType error in Opensearch, Firehose and Cognito checks [(#8670)](https://github.com/prowler-cloud/prowler/pull/8670)
 
 ---
 

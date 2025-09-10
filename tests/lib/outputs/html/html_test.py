@@ -16,6 +16,9 @@ from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
 from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
+from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
+    set_mocked_mongodbatlas_provider,
+)
 
 html_stats = {
     "total_pass": 25,
@@ -314,6 +317,34 @@ m365_html_assessment_summary = """
                             </li>
                             <li class="list-group-item">
                                 <b>M365 User:</b> user@email.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+mongodbatlas_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas organization:</b> test_org_name
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas authentication method:</b> API Key
                             </li>
                         </ul>
                     </div>
@@ -754,3 +785,13 @@ class TestHTML:
         assert "<b>Installations:</b> test-org" in summary
         assert "<b>GitHub authentication method:</b> GitHub App Token" in summary
         assert f"<b>GitHub App ID:</b> {APP_ID}" in summary
+
+    def test_mongodbatlas_get_assessment_summary(self):
+        """Test MongoDB Atlas HTML assessment summary generation."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_mongodbatlas_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        assert summary == mongodbatlas_html_assessment_summary

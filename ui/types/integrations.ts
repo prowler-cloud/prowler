@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { TaskState } from "@/types/tasks";
+
 export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
 
 export interface IntegrationProps {
@@ -24,12 +26,49 @@ export interface IntegrationProps {
         role_session_name?: string;
         session_duration?: number;
       };
-      [key: string]: any;
+      // Jira specific configuration
+      domain?: string;
+      projects?: { [key: string]: string };
+      issue_types?: string[];
+      [key: string]: unknown;
     };
     url?: string;
   };
   relationships?: { providers?: { data: { type: "providers"; id: string }[] } };
   links: { self: string };
+}
+
+// Jira dispatch types
+export interface JiraDispatchRequest {
+  data: {
+    type: "integrations-jira-dispatches";
+    attributes: {
+      project_key: string;
+      issue_type: string;
+    };
+  };
+}
+
+export interface JiraDispatchResponse {
+  data: {
+    type: "tasks";
+    id: string;
+    attributes: {
+      inserted_at: string;
+      completed_at: string | null;
+      name: string;
+      state: TaskState;
+      result: {
+        success?: boolean;
+        error?: string;
+        message?: string;
+        issue_url?: string;
+        issue_key?: string;
+      } | null;
+      task_args: Record<string, unknown> | null;
+      metadata: Record<string, unknown> | null;
+    };
+  };
 }
 
 // Shared AWS credential fields schema
@@ -46,8 +85,20 @@ const awsCredentialFields = {
 };
 
 // Shared validation helper for AWS credentials (create mode)
+type AwsCredentialsData = {
+  credentials_type?: "aws-sdk-default" | "access-secret-key";
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
+  aws_session_token?: string;
+  role_arn?: string;
+  external_id?: string;
+  role_session_name?: string;
+  session_duration?: string;
+  show_role_section?: boolean;
+};
+
 const validateAwsCredentialsCreate = (
-  data: any,
+  data: AwsCredentialsData,
   ctx: z.RefinementCtx,
   requireCredentials: boolean = true,
 ) => {
@@ -72,7 +123,10 @@ const validateAwsCredentialsCreate = (
 };
 
 // Shared validation helper for AWS credentials (edit mode)
-const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
+const validateAwsCredentialsEdit = (
+  data: AwsCredentialsData,
+  ctx: z.RefinementCtx,
+) => {
   if (data.credentials_type === "access-secret-key") {
     const hasAccessKey = !!data.aws_access_key_id;
     const hasSecretKey = !!data.aws_secret_access_key;
@@ -99,7 +153,7 @@ const validateAwsCredentialsEdit = (data: any, ctx: z.RefinementCtx) => {
 
 // Shared validation helper for IAM Role fields
 const validateIamRole = (
-  data: any,
+  data: AwsCredentialsData,
   ctx: z.RefinementCtx,
   checkShowSection: boolean = true,
 ) => {
@@ -246,3 +300,13 @@ export const editJiraIntegrationFormSchema = z.object({
   user_mail: z.string().email("Invalid email format").optional(),
   api_token: z.string().min(1, "API token is required").optional(),
 });
+
+export type CreateValues = z.infer<typeof jiraIntegrationFormSchema>;
+export type EditValues = z.infer<typeof editJiraIntegrationFormSchema>;
+export type FormValues = CreateValues | EditValues;
+
+export interface JiraCredentialsPayload {
+  domain?: string;
+  user_mail?: string;
+  api_token?: string;
+}
