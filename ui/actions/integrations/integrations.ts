@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getTask } from "@/actions/task";
+import { pollTaskUntilSettled } from "@/actions/task/poll";
 import {
   apiBaseUrl,
   getAuthHeaders,
@@ -11,6 +11,19 @@ import {
   parseStringify,
 } from "@/lib";
 import { IntegrationType } from "@/types/integrations";
+import type { TaskState } from "@/types/tasks";
+
+type TaskStartResponse = {
+  data: { id: string; type: "tasks" };
+};
+
+type TestConnectionResponse = {
+  success: boolean;
+  message?: string;
+  taskId?: string;
+  data?: TaskStartResponse;
+  error?: string;
+};
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -40,27 +53,49 @@ export const createIntegration = async (
 
   try {
     const integration_type = formData.get("integration_type") as string;
-    const configuration = JSON.parse(formData.get("configuration") as string);
-    const credentials = JSON.parse(formData.get("credentials") as string);
-    const providers = JSON.parse(formData.get("providers") as string);
+    const configuration = JSON.parse(
+      formData.get("configuration") as string,
+    ) as Record<string, unknown>;
+    const credentials = JSON.parse(
+      formData.get("credentials") as string,
+    ) as Record<string, unknown>;
+    const providers = JSON.parse(
+      formData.get("providers") as string,
+    ) as string[];
     const enabled = formData.get("enabled")
       ? JSON.parse(formData.get("enabled") as string)
       : true;
 
-    const integrationData = {
+    const integrationData: {
+      data: {
+        type: "integrations";
+        attributes: {
+          integration_type: string;
+          configuration: Record<string, unknown>;
+          credentials: Record<string, unknown>;
+          enabled: boolean;
+        };
+        relationships?: {
+          providers: { data: { id: string; type: "providers" }[] };
+        };
+      };
+    } = {
       data: {
         type: "integrations",
         attributes: { integration_type, configuration, credentials, enabled },
-        relationships: {
-          providers: {
-            data: providers.map((providerId: string) => ({
-              id: providerId,
-              type: "providers",
-            })),
-          },
-        },
       },
     };
+
+    if (Array.isArray(providers) && providers.length > 0) {
+      integrationData.data.relationships = {
+        providers: {
+          data: providers.map((providerId: string) => ({
+            id: providerId,
+            type: "providers",
+          })),
+        },
+      };
+    }
 
     const response = await fetch(url.toString(), {
       method: "POST",
@@ -77,6 +112,8 @@ export const createIntegration = async (
         revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
         revalidatePath("/integrations/aws-security-hub");
+      } else if (integration_type === "jira") {
+        revalidatePath("/integrations/jira");
       }
 
       return {
@@ -105,19 +142,39 @@ export const updateIntegration = async (
   try {
     const integration_type = formData.get("integration_type") as string;
     const configuration = formData.get("configuration")
-      ? JSON.parse(formData.get("configuration") as string)
+      ? (JSON.parse(formData.get("configuration") as string) as Record<
+          string,
+          unknown
+        >)
       : undefined;
     const credentials = formData.get("credentials")
-      ? JSON.parse(formData.get("credentials") as string)
+      ? (JSON.parse(formData.get("credentials") as string) as Record<
+          string,
+          unknown
+        >)
       : undefined;
     const providers = formData.get("providers")
-      ? JSON.parse(formData.get("providers") as string)
+      ? (JSON.parse(formData.get("providers") as string) as string[])
       : undefined;
     const enabled = formData.get("enabled")
       ? JSON.parse(formData.get("enabled") as string)
       : undefined;
 
-    const integrationData: any = {
+    const integrationData: {
+      data: {
+        type: "integrations";
+        id: string;
+        attributes: {
+          integration_type: string;
+          configuration?: Record<string, unknown>;
+          credentials?: Record<string, unknown>;
+          enabled?: boolean;
+        };
+        relationships?: {
+          providers: { data: { id: string; type: "providers" }[] };
+        };
+      };
+    } = {
       data: {
         type: "integrations",
         id,
@@ -160,6 +217,8 @@ export const updateIntegration = async (
         revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
         revalidatePath("/integrations/aws-security-hub");
+      } else if (integration_type === "jira") {
+        revalidatePath("/integrations/jira");
       }
 
       return {
@@ -194,6 +253,8 @@ export const deleteIntegration = async (
         revalidatePath("/integrations/amazon-s3");
       } else if (integration_type === "aws_security_hub") {
         revalidatePath("/integrations/aws-security-hub");
+      } else if (integration_type === "jira") {
+        revalidatePath("/integrations/jira");
       }
 
       return { success: "Integration deleted successfully!" };
@@ -209,59 +270,54 @@ export const deleteIntegration = async (
   }
 };
 
-const pollTaskUntilComplete = async (taskId: string): Promise<any> => {
-  const maxAttempts = 10;
-  let attempts = 0;
+type ConnectionTaskResult = { connected?: boolean; error?: string | null };
 
-  while (attempts < maxAttempts) {
-    try {
-      const taskResponse = await getTask(taskId);
-
-      if (taskResponse.error) {
-        return { error: taskResponse.error };
-      }
-
-      const task = taskResponse.data;
-      const taskState = task?.attributes?.state;
-
-      // Continue polling while task is executing
-      if (taskState === "executing") {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        attempts++;
-        continue;
-      }
-
-      const result = task?.attributes?.result;
-      const isSuccessful =
-        taskState === "completed" &&
-        result?.connected === true &&
-        result?.error === null;
-
-      let message;
-      if (isSuccessful) {
-        message = "Connection test completed successfully.";
-      } else {
-        message = result?.error || "Connection test failed.";
-      }
-
-      return {
-        success: isSuccessful,
-        message,
-        taskState,
-        result,
-      };
-    } catch (error) {
-      return { error: "Failed to monitor connection test." };
+type PollConnectionResult =
+  | {
+      success: true;
+      message: string;
+      taskState: TaskState;
+      result: ConnectionTaskResult | undefined;
     }
+  | {
+      success: false;
+      message: string;
+      taskState?: TaskState;
+      result?: ConnectionTaskResult;
+    }
+  | { error: string };
+
+const pollTaskUntilComplete = async (
+  taskId: string,
+): Promise<PollConnectionResult> => {
+  const settled = await pollTaskUntilSettled<ConnectionTaskResult>(taskId, {
+    maxAttempts: 10,
+    delayMs: 3000,
+  });
+
+  if (!settled.ok) {
+    return { error: settled.error };
   }
 
-  return { error: "Connection test timeout. Test took too long to complete." };
+  const taskState = settled.state;
+  const result = settled.result;
+
+  const isSuccessful =
+    taskState === "completed" &&
+    result?.connected === true &&
+    result?.error === null;
+
+  const message = isSuccessful
+    ? "Connection test completed successfully."
+    : result?.error || "Connection test failed.";
+
+  return { success: isSuccessful, message, taskState, result };
 };
 
 export const testIntegrationConnection = async (
   id: string,
   waitForCompletion = true,
-) => {
+): Promise<TestConnectionResponse> => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}/connection`);
 
@@ -289,9 +345,10 @@ export const testIntegrationConnection = async (
 
         revalidatePath("/integrations/amazon-s3");
         revalidatePath("/integrations/aws-security-hub");
+        revalidatePath("/integrations/jira");
 
-        if (pollResult.error) {
-          return { error: pollResult.error };
+        if ("error" in pollResult) {
+          return { success: false, error: pollResult.error };
         }
 
         if (pollResult.success) {
@@ -321,18 +378,22 @@ export const testIntegrationConnection = async (
       `Unable to test integration connection: ${response.statusText}`;
     return { success: false, error: errorMessage };
   } catch (error) {
-    return handleApiError(error);
+    const handled = handleApiError(error);
+    return { success: false, error: handled.error };
   }
 };
 
-export const pollConnectionTestStatus = async (taskId: string) => {
+export const pollConnectionTestStatus = async (
+  taskId: string,
+): Promise<TestConnectionResponse> => {
   try {
     const pollResult = await pollTaskUntilComplete(taskId);
 
     revalidatePath("/integrations/amazon-s3");
     revalidatePath("/integrations/aws-security-hub");
+    revalidatePath("/integrations/jira");
 
-    if (pollResult.error) {
+    if ("error" in pollResult) {
       return { success: false, error: pollResult.error };
     }
 

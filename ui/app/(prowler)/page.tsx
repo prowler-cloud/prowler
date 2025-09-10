@@ -25,6 +25,18 @@ import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
+const FILTER_PREFIX = "filter[";
+
+// Extract only query params that start with "filter[" for API calls
+function pickFilterParams(
+  params: SearchParamsProps | undefined | null,
+): Record<string, string | string[] | undefined> {
+  if (!params) return {};
+  return Object.fromEntries(
+    Object.entries(params).filter(([key]) => key.startsWith(FILTER_PREFIX)),
+  );
+}
+
 export default function Home({
   searchParams,
 }: {
@@ -84,13 +96,7 @@ const SSRFindingsByStatus = async ({
 }: {
   searchParams: SearchParamsProps | undefined | null;
 }) => {
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
+  const filters = pickFilterParams(searchParams);
 
   const findingsByStatus = await getFindingsByStatus({ filters });
 
@@ -107,19 +113,23 @@ const SSRFindingsBySeverity = async ({
 }: {
   searchParams: SearchParamsProps | undefined | null;
 }) => {
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
+  const defaultFilters = {
+    "filter[status]": "FAIL",
+  } as const;
 
-  const findingsBySeverity = await getFindingsBySeverity({ filters });
+  const filters = pickFilterParams(searchParams);
+
+  const combinedFilters = { ...defaultFilters, ...filters };
+
+  const findingsBySeverity = await getFindingsBySeverity({
+    filters: combinedFilters,
+  });
 
   return (
     <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Findings by Severity</h3>
+      <h3 className="mb-4 text-sm font-bold uppercase">
+        Failed Findings by Severity
+      </h3>
       <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
     </>
   );
@@ -138,13 +148,7 @@ const SSRDataNewFindingsTable = async ({
     "filter[delta]": "new",
   };
 
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
+  const filters = pickFilterParams(searchParams);
 
   const combinedFilters = { ...defaultFilters, ...filters };
 

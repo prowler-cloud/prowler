@@ -284,7 +284,7 @@ export const S3IntegrationForm = ({
               placeholder="Select providers to integrate with"
               isInvalid={!!form.formState.errors.providers}
               selectionMode="multiple"
-              enableSearch={providers.length > 10}
+              enableSearch={true}
             />
           </div>
 
