@@ -40,7 +40,7 @@ pass_html_finding = """
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -62,7 +62,7 @@ fail_html_finding = """
 </td>
                             <td>test-status-extended</td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -80,7 +80,7 @@ muted_html_finding = """
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -98,7 +98,7 @@ manual_html_finding = """
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -573,6 +573,7 @@ class TestHTML:
                 status_extended="test-status-extended",
                 risk="test-risk",
                 remediation_recommendation_text="test-remediation-recommendation-text",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
                 compliance={"test-compliance": "test-compliance"},
             )
         ]
@@ -583,21 +584,35 @@ class TestHTML:
         assert output_data == fail_html_finding
 
     def test_transform_pass_finding(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
         assert output_data == pass_html_finding
 
     def test_transform_muted_finding(self):
-        findings = [generate_finding_output(muted=True)]
+        findings = [
+            generate_finding_output(
+                muted=True,
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
         assert output_data == muted_html_finding
 
     def test_transform_manual_finding(self):
-        findings = [generate_finding_output(status="MANUAL")]
+        findings = [
+            generate_finding_output(
+                status="MANUAL",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
@@ -605,7 +620,11 @@ class TestHTML:
 
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -623,7 +642,11 @@ class TestHTML:
 
     def test_write_header(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -637,7 +660,11 @@ class TestHTML:
 
     def test_write_footer(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
 
@@ -648,7 +675,11 @@ class TestHTML:
         assert content == html_footer
 
     def test_aws_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
@@ -657,7 +688,11 @@ class TestHTML:
         assert summary == aws_html_assessment_summary
 
     def test_azure_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_azure_provider()
 
@@ -666,7 +701,11 @@ class TestHTML:
         assert summary == summary
 
     def test_gcp_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
 
@@ -675,7 +714,11 @@ class TestHTML:
         assert summary == gcp_html_assessment_summary
 
     def test_kubernetes_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_kubernetes_provider()
 
@@ -684,7 +727,11 @@ class TestHTML:
         assert summary == kubernetes_html_assessment_summary
 
     def test_m365_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_m365_provider()
 
@@ -695,7 +742,11 @@ class TestHTML:
 
     def test_github_personal_access_token_get_assessment_summary(self):
         """Test GitHub HTML assessment summary generation with Personal Access Token authentication."""
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_github_provider(auth_method="Personal Access Token")
 
@@ -710,7 +761,11 @@ class TestHTML:
 
     def test_github_app_get_assessment_summary(self):
         """Test GitHub HTML assessment summary generation with GitHub App authentication."""
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
 
         provider = set_mocked_github_provider(
