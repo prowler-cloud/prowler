@@ -31,6 +31,8 @@ export type MenuProps = {
   icon: IconComponent;
   submenus?: SubmenuProps[];
   defaultOpen?: boolean;
+  target?: string;
+  tooltip?: string;
 };
 
 export type GroupProps = {
