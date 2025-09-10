@@ -18,6 +18,7 @@ function getInstalledVersion(pkgName) {
 
 function collect(sectionName, obj) {
   if (!obj) return [];
+  const generatedAt = new Date().toISOString();
   return Object.entries(obj).map(([name, declared]) => {
     const installed = getInstalledVersion(name);
     return {
@@ -26,6 +27,7 @@ function collect(sectionName, obj) {
       from: declared,
       to: installed || null,
       strategy: 'installed',
+      generatedAt,
     };
   });
 }
