@@ -19,6 +19,34 @@ client = httpx.Client(
     base_url=BASE_URL, timeout=30.0, headers={"Accept": "application/json"}
 )
 
+# GitHub raw content base URL for Prowler checks
+GITHUB_RAW_BASE = (
+    "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/"
+    "prowler/providers"
+)
+
+# Separate HTTP client for GitHub raw content
+github_client = httpx.Client(
+    timeout=30.0,
+    headers={
+        "Accept": "*/*",
+        "User-Agent": "prowler-mcp-server/1.0",
+    },
+)
+
+
+def github_check_path(provider_id: str, check_id: str, suffix: str) -> str:
+    """Build the GitHub raw URL for a given check artifact suffix using provider
+    and check_id.
+
+    Suffix examples: ".metadata.json", ".py", "_fixer.py"
+    """
+    try:
+        service_id = check_id.split("_", 1)[0]
+    except IndexError:
+        service_id = check_id
+    return f"{GITHUB_RAW_BASE}/{provider_id}/services/{service_id}/{check_id}/{check_id}{suffix}"
+
 
 @hub_mcp_server.tool()
 async def get_check_filters() -> dict[str, Any]:
@@ -129,6 +157,135 @@ async def get_checks(
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+@hub_mcp_server.tool()
+async def get_check_raw_metadata(
+    provider_id: str,
+    check_id: str,
+) -> dict[str, Any]:
+    """
+    Fetch the raw check metadata JSON, this is a low level version of the tool `get_checks`.
+    It is recommended to use the tool `get_checks` instead of this tool.
+
+    Args:
+        provider_id: Prowler provider ID (e.g., "aws", "azure").
+        check_id: Prowler check ID (folder and base filename).
+
+    Returns:
+        Raw metadata dict as stored in Prowler, plus the source URL.
+    """
+    if provider_id and check_id:
+        url = github_check_path(provider_id, check_id, ".metadata.json")
+        try:
+            resp = github_client.get(url)
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return {
+                    "error": f"Check {check_id} not found in Prowler",
+                }
+            else:
+                return {
+                    "error": f"HTTP error {e.response.status_code}: {e.response.text}",
+                }
+        except Exception as e:
+            return {
+                "error": f"Error fetching check {check_id} from Prowler: {str(e)}",
+            }
+    else:
+        return {
+            "error": "Provider ID and check ID are required",
+        }
+
+
+@hub_mcp_server.tool()
+async def get_check_code(
+    provider_id: str,
+    check_id: str,
+) -> dict[str, Any]:
+    """
+    Fetch the check implementation source code from GitHub.
+
+    Args:
+        provider_id: Prowler provider ID.
+        check_id: Prowler check ID.
+
+    Returns:
+        Dict with the code content as text and source URL.
+    """
+    if provider_id and check_id:
+        url = github_check_path(provider_id, check_id, ".py")
+        try:
+            resp = github_client.get(url)
+            resp.raise_for_status()
+            return {
+                "content": resp.text,
+            }
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return {
+                    "error": f"Check {check_id} not found in Prowler",
+                }
+            else:
+                return {
+                    "error": f"HTTP error {e.response.status_code}: {e.response.text}",
+                }
+        except Exception as e:
+            return {
+                "error": str(e),
+            }
+    else:
+        return {
+            "error": "Provider ID and check ID are required",
+        }
+
+
+@hub_mcp_server.tool()
+async def get_check_fixer(
+    provider_id: str,
+    check_id: str,
+) -> dict[str, Any]:
+    """
+    Fetch the check fixer source code from GitHub, if it exists.
+
+    Args:
+        provider_id: Prowler provider ID.
+        check_id: Prowler check ID.
+
+    Returns:
+        Dict with fixer content as text if present, existence flag, and source URL.
+    """
+    if provider_id and check_id:
+        url = github_check_path(provider_id, check_id, "_fixer.py")
+        try:
+            resp = github_client.get(url)
+            if resp.status_code == 404:
+                return {
+                    "error": f"Fixer not found for check {check_id}",
+                }
+            resp.raise_for_status()
+            return {
+                "content": resp.text,
+            }
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return {
+                    "error": f"Check {check_id} not found in Prowler",
+                }
+            else:
+                return {
+                    "error": f"HTTP error {e.response.status_code}: {e.response.text}",
+                }
+        except Exception as e:
+            return {
+                "error": str(e),
+            }
+    else:
+        return {
+            "error": "Provider ID and check ID are required",
+        }
 
 
 @hub_mcp_server.tool()
