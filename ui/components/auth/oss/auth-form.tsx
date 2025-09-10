@@ -115,7 +115,7 @@ export const AuthForm = ({
       } else if (result?.errors && "credentials" in result.errors) {
         const message =
           result.errors.credentials ?? "Invalid email or password";
-        // Set error on both fields to display consistent field-level messages
+
         form.setError("email", { type: "server", message });
         form.setError("password", { type: "server", message });
       } else if (result?.message === "User email is not verified") {
@@ -322,7 +322,7 @@ export const AuthForm = ({
                   )}
                 </>
               )}
-              {/* No global banner; use field-level messages for consistency */}
+
               <CustomButton
                 type="submit"
                 ariaLabel={type === "sign-in" ? "Log in" : "Sign up"}
