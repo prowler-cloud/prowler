@@ -64,15 +64,18 @@ function main() {
   const merged = entries.map((e) => {
     const key = `${e.section}::${e.name}`;
     const prev = prevMap.get(key);
-    if (
-      prev &&
-      prev.from === e.from &&
-      prev.to === e.to &&
-      prev.strategy === e.strategy
-    ) {
-      return { ...e, generatedAt: prev.generatedAt || now };
+    if (!prev) {
+      // New entry: keep declared as from
+      return { ...e, generatedAt: now };
     }
-    return { ...e, generatedAt: now };
+
+    // If installed version changed, set from to previous installed version
+    if (prev.to !== e.to) {
+      return { ...e, from: prev.to, generatedAt: now };
+    }
+
+    // Otherwise preserve previous 'from' and timestamp
+    return { ...e, from: prev.from, generatedAt: prev.generatedAt || now };
   });
 
   const nextContent = JSON.stringify(merged, null, 2) + '\n';
