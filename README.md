@@ -90,6 +90,7 @@ prowler dashboard
 | M365 | 70 | 7 | 3 | 2 | Official | Stable | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | Beta | CLI |
 | MongoDB Atlas | 10 | 3 | 0 | 0 | Official | Beta | CLI |
+| LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | Beta | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | Beta | CLI |
 
 > [!Note]
