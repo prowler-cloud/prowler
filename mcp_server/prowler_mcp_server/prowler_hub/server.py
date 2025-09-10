@@ -46,40 +46,14 @@ async def get_check_filters() -> dict[str, Any]:
 # Security Check Tools
 @hub_mcp_server.tool()
 async def get_checks(
-    providers: Optional[list[str]] = None,
-    types: Optional[list[str]] = None,
-    services: Optional[list[str]] = None,
-    severities: Optional[list[Literal["low", "medium", "high", "critical"]]] = None,
-    categories: Optional[list[str]] = None,
-    compliances: Optional[list[str]] = None,
-    ids: Optional[list[str]] = None,
-    fields: Optional[
-        list[
-            Literal[
-                "id",
-                "title",
-                "description",
-                "provider",
-                "type",
-                "service",
-                "subservice",
-                "severity",
-                "risk",
-                "reference",
-                "remediation",
-                "services_required",
-                "aws_arn_template",
-                "notes",
-                "categories",
-                "default_value",
-                "resource_type",
-                "related_url",
-                "depends_on",
-                "related_to",
-                "fixer",
-            ]
-        ]
-    ] = ["id", "title", "description"],
+    providers: Optional[str] = None,
+    types: Optional[str] = None,
+    services: Optional[str] = None,
+    severities: Optional[str] = None,
+    categories: Optional[str] = None,
+    compliances: Optional[str] = None,
+    ids: Optional[str] = None,
+    fields: Optional[str] = "id,service,severity,title,description,risk",
 ) -> dict[str, Any]:
     """
     List security Prowler Checks. The list can be filtered by the parameters defined for the tool.
@@ -87,14 +61,17 @@ async def get_checks(
     A not filtered request will return more than 1000 checks, so it is recommended to use the filters.
 
     Args:
-        providers: Filter by Prowler provider IDs. Example: ["aws", "azure"]. Use the tool `list_providers` to get the available providers IDs.
+        providers: Filter by Prowler provider IDs. Example: "aws,azure". Use the tool `list_providers` to get the available providers IDs.
         types: Filter by check types.
-        services: Filter by provider services IDs. Example: ["s3", "keyvault"]. Use the tool `list_providers` to get the available services IDs in a provider.
-        severities: Filter by severity levels. Example: ["medium", "high"].
-        categories: Filter by categories. Example: ["cluster-security", "encryption"].
-        compliances: Filter by compliance framework IDs. Example: ["cis_4.0_aws", "ens_rd2022_azure"].
-        ids: Filter by specific check IDs. Example: ["s3_bucket_level_public_access_block"].
-        fields: Specify which fields from checks metadata to return (id is always included). Example: ["id", "title", "description", "risk"].
+        services: Filter by provider services IDs. Example: "s3,keyvault". Use the tool `list_providers` to get the available services IDs in a provider.
+        severities: Filter by severity levels. Example: "medium,high". Available values are "low", "medium", "high", "critical".
+        categories: Filter by categories. Example: "cluster-security,encryption".
+        compliances: Filter by compliance framework IDs. Example: "cis_4.0_aws,ens_rd2022_azure".
+        ids: Filter by specific check IDs. Example: "s3_bucket_level_public_access_block".
+        fields: Specify which fields from checks metadata to return (id is always included). Example: "id,title,description,risk".
+            Available values are "id", "title", "description", "provider", "type", "service", "subservice", "severity", "risk", "reference", "remediation", "services_required", "aws_arn_template", "notes", "categories", "default_value", "resource_type", "related_url", "depends_on", "related_to", "fixer".
+            The default parameters are "id,title,description".
+            If null, all fields will be returned.
 
     Returns:
         List of security checks matching the filters. The structure is as follows:
@@ -111,21 +88,21 @@ async def get_checks(
     params: dict[str, str] = {}
 
     if providers:
-        params["providers"] = ",".join(providers)
+        params["providers"] = providers
     if types:
-        params["types"] = ",".join(types)
+        params["types"] = types
     if services:
-        params["services"] = ",".join(services)
+        params["services"] = services
     if severities:
-        params["severities"] = ",".join(severities)
+        params["severities"] = severities
     if categories:
-        params["categories"] = ",".join(categories)
+        params["categories"] = categories
     if compliances:
-        params["compliances"] = ",".join(compliances)
+        params["compliances"] = compliances
     if ids:
-        params["ids"] = ",".join(ids)
+        params["ids"] = ids
     if fields:
-        params["fields"] = ",".join(fields)
+        params["fields"] = fields
 
     try:
         response = client.get("/check", params=params)
@@ -140,7 +117,7 @@ async def get_checks(
                 check_data["id"] = check["id"]
 
             # Include other requested fields
-            for field in fields:
+            for field in fields.split(","):
                 if field != "id" and field in check:  # Skip id since it's already added
                     check_data[field] = check[field]
             checks_dict[check["id"]] = check_data
@@ -185,38 +162,21 @@ async def search_checks(term: str) -> dict[str, Any]:
 # Compliance Framework Tools
 @hub_mcp_server.tool()
 async def get_compliance_frameworks(
-    provider: Optional[list[str]] = None,
+    provider: Optional[str] = None,
     fields: Optional[
-        list[
-            Literal[
-                "id",
-                "framework",
-                "provider",
-                "description",
-                "requirements",
-                "version",
-                "total_checks",
-                "total_requirements",
-                "created_at",
-                "updated_at",
-            ]
-        ]
-    ] = [
-        "id",
-        "framework",
-        "provider",
-        "description",
-        "total_checks",
-        "total_requirements",
-    ],
+        str
+    ] = "id,framework,provider,description,total_checks,total_requirements",
 ) -> dict[str, Any]:
     """
     List and filter compliance frameworks. The list can be filtered by the parameters defined for the tool.
 
     Args:
-        provider: Filter by Prowler provider IDs. Example: ["aws", "azure", "gcp"]. Use the tool `list_providers` to get the available providers IDs.
-        fields: Specify which fields to return (id is always included). Example: ["id", "provider", "description", "version"].
+        provider: Filter by one Prowler provider ID. Example: "aws". Use the tool `list_providers` to get the available providers IDs.
+        fields: Specify which fields to return (id is always included). Example: "id,provider,description,version".
                 It is recommended to run with the default parameters because the full response is too large.
+                Available values are "id", "framework", "provider", "description", "total_checks", "total_requirements", "created_at", "updated_at".
+                The default parameters are "id,framework,provider,description,total_checks,total_requirements".
+                If null, all fields will be returned.
 
     Returns:
         List of compliance frameworks. The structure is as follows:
@@ -235,9 +195,9 @@ async def get_compliance_frameworks(
     params = {}
 
     if provider:
-        params["provider"] = ",".join(provider)
+        params["provider"] = provider
     if fields:
-        params["fields"] = ",".join(fields)
+        params["fields"] = fields
 
     try:
         response = client.get("/compliance", params=params)
@@ -252,7 +212,7 @@ async def get_compliance_frameworks(
                 framework_data["id"] = framework["id"]
 
             # Include other requested fields
-            for field in fields:
+            for field in fields.split(","):
                 if (
                     field != "id" and field in framework
                 ):  # Skip id since it's already added
