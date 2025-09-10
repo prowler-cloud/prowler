@@ -5,7 +5,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [1.13.1] (Prowler 5.12.0)
 
 ### Fixed
-- Django updated to the latest 5.1 security release, 5.1.12, due to [problems](https://www.djangoproject.com/weblog/2025/sep/03/security-releases/) with potential SQL injection in FilteredRelation column aliases [(#8693)](https://github.com/prowler-cloud/prowler/discussions/8693)
+- Django updated to the latest 5.1 security release, 5.1.12, due to [problems](https://www.djangoproject.com/weblog/2025/sep/03/security-releases/) with potential SQL injection in FilteredRelation column aliases [(#8693)](https://github.com/prowler-cloud/prowler/pull/8693)
 
 ## [1.13.0] (Prowler 5.12.0)
 
