@@ -18,7 +18,6 @@ function getInstalledVersion(pkgName) {
 
 function collect(sectionName, obj) {
   if (!obj) return [];
-  const generatedAt = new Date().toISOString();
   return Object.entries(obj).map(([name, declared]) => {
     const installed = getInstalledVersion(name);
     return {
@@ -27,7 +26,6 @@ function collect(sectionName, obj) {
       from: declared,
       to: installed || null,
       strategy: 'installed',
-      generatedAt,
     };
   });
 }
@@ -51,7 +49,33 @@ function main() {
   );
 
   const outPath = path.join(process.cwd(), 'dependency-log.json');
-  const nextContent = JSON.stringify(entries, null, 2) + '\n';
+  // Merge with previous to preserve generatedAt when unchanged
+  let prevMap = new Map();
+  if (fs.existsSync(outPath)) {
+    try {
+      const prev = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+      for (const e of prev) {
+        prevMap.set(`${e.section}::${e.name}`, e);
+      }
+    } catch {}
+  }
+
+  const now = new Date().toISOString();
+  const merged = entries.map((e) => {
+    const key = `${e.section}::${e.name}`;
+    const prev = prevMap.get(key);
+    if (
+      prev &&
+      prev.from === e.from &&
+      prev.to === e.to &&
+      prev.strategy === e.strategy
+    ) {
+      return { ...e, generatedAt: prev.generatedAt || now };
+    }
+    return { ...e, generatedAt: now };
+  });
+
+  const nextContent = JSON.stringify(merged, null, 2) + '\n';
   if (fs.existsSync(outPath)) {
     try {
       const prevContent = fs.readFileSync(outPath, 'utf8');
