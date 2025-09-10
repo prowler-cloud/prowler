@@ -1,6 +1,6 @@
 # Prowler App
 
-**Prowler App** is a user-friendly interface for Prowler CLI, providing a visual dashboard to monitor your cloud security posture. This tutorial will guide you through setting up and using Prowler App.
+**Prowler App** is a web application that simplifies running Prowler. This tutorial will guide you through setting up and using it.
 
 ## Accessing Prowler App and API Documentation
 

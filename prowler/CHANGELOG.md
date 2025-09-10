@@ -5,7 +5,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.13.0] (Prowler UNRELEASED)
 
 ### Added
-
+- Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
 ### Changed
 
 ### Fixed
