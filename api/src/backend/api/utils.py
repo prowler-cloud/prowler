@@ -6,10 +6,11 @@ from django.db.models import Subquery
 from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
-from prowler.lib.outputs.jira.jira import Jira
+from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
@@ -238,11 +239,15 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
 
         return connection
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
-        return Jira.test_connection(
+        jira_connection = Jira.test_connection(
             **integration.credentials,
-            domain=integration.configuration["domain"],
             raise_on_exception=False,
         )
+        project_keys = jira_connection.projects if jira_connection.is_connected else {}
+        with rls_transaction(str(integration.tenant_id)):
+            integration.configuration["projects"] = project_keys
+            integration.save()
+        return jira_connection
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
         pass
     else:
@@ -342,3 +347,17 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     serializer.is_valid(raise_exception=True)
 
     return serializer.data
+
+
+def initialize_prowler_integration(integration: Integration) -> Jira:
+    # TODO Refactor other integrations to use this function
+    if integration.integration_type == Integration.IntegrationChoices.JIRA:
+        try:
+            return Jira(**integration.credentials)
+        except JiraBasicAuthError as jira_auth_error:
+            with rls_transaction(str(integration.tenant_id)):
+                integration.configuration["projects"] = {}
+                integration.connected = False
+                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.save()
+            raise jira_auth_error

@@ -2846,6 +2846,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/IntegrationCreateResponse'
           description: ''
+  /api/v1/integrations/{integration_pk}/jira/dispatches:
+    post:
+      operationId: integrations_jira_dispatches_create
+      description: Send a set of filtered findings to the given integration. At least
+        one finding filter must be provided.
+      summary: Send findings to a Jira integration
+      parameters:
+      - in: query
+        name: filter[finding_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[finding_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: path
+        name: integration_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - Integration
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
+          description: ''
   /api/v1/integrations/{id}:
     get:
       operationId: integrations_retrieve
@@ -3027,8 +3092,8 @@ paths:
   /api/v1/lighthouse-configurations:
     get:
       operationId: lighthouse_configurations_list
-      description: Retrieve a list of all Lighthouse configurations.
-      summary: List all Lighthouse configurations
+      description: Retrieve a list of all Lighthouse AI configurations.
+      summary: List all Lighthouse AI configurations
       parameters:
       - in: query
         name: fields[lighthouse-configurations]
@@ -3087,7 +3152,7 @@ paths:
             - -is_active
         explode: false
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3099,10 +3164,10 @@ paths:
           description: ''
     post:
       operationId: lighthouse_configurations_create
-      description: Create a new Lighthouse configuration with the specified details.
-      summary: Create a new Lighthouse configuration
+      description: Create a new Lighthouse AI configuration with the specified details.
+      summary: Create a new Lighthouse AI configuration
       tags:
-      - Lighthouse
+      - Lighthouse AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3127,8 +3192,8 @@ paths:
   /api/v1/lighthouse-configurations/{id}:
     patch:
       operationId: lighthouse_configurations_partial_update
-      description: Update certain fields of an existing Lighthouse configuration.
-      summary: Partially update a Lighthouse configuration
+      description: Update certain fields of an existing Lighthouse AI configuration.
+      summary: Partially update a Lighthouse AI configuration
       parameters:
       - in: path
         name: id
@@ -3136,7 +3201,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3160,8 +3225,8 @@ paths:
           description: ''
     delete:
       operationId: lighthouse_configurations_destroy
-      description: Remove a Lighthouse configuration by its ID.
-      summary: Delete a Lighthouse configuration
+      description: Remove a Lighthouse AI configuration by its ID.
+      summary: Delete a Lighthouse AI configuration
       parameters:
       - in: path
         name: id
@@ -3169,7 +3234,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3179,7 +3244,7 @@ paths:
     post:
       operationId: lighthouse_configurations_connection_create
       description: Verify the connection to the OpenAI API for a specific Lighthouse
-        configuration.
+        AI configuration.
       summary: Check the connection to the OpenAI API
       parameters:
       - in: path
@@ -3188,7 +3253,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3506,6 +3571,25 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: sort
         required: false
         in: query
@@ -9134,23 +9218,10 @@ components:
                       the current execution.
               - type: object
                 title: JIRA
-                properties:
-                  project_key:
-                    type: string
-                    description: The JIRA project key where issues will be created
-                      (e.g., 'PROJ', 'SEC').
-                  issue_types:
-                    type: array
-                    items:
-                      type: string
-                    description: List of JIRA issue types to create for findings.
-                  issue_labels:
-                    type: array
-                    items:
-                      type: string
-                    description: List of labels to apply to created JIRA issues..
-                required:
-                - project_key
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9197,17 +9268,17 @@ components:
                     type: string
                     format: email
                     description: The email address of the JIRA user account.
-                  domain:
-                    type: string
-                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                   api_token:
                     type: string
                     description: The API token for authentication with JIRA. This
                       can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                 required:
                 - user_mail
-                - domain
                 - api_token
+                - domain
               writeOnly: true
           required:
           - integration_type
@@ -9331,23 +9402,10 @@ components:
                           in the current execution.
                   - type: object
                     title: JIRA
-                    properties:
-                      project_key:
-                        type: string
-                        description: The JIRA project key where issues will be created
-                          (e.g., 'PROJ', 'SEC').
-                      issue_types:
-                        type: array
-                        items:
-                          type: string
-                        description: List of JIRA issue types to create for findings.
-                      issue_labels:
-                        type: array
-                        items:
-                          type: string
-                        description: List of labels to apply to created JIRA issues..
-                    required:
-                    - project_key
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -9395,17 +9453,17 @@ components:
                         type: string
                         format: email
                         description: The email address of the JIRA user account.
-                      domain:
-                        type: string
-                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                       api_token:
                         type: string
                         description: The API token for authentication with JIRA. This
                           can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                     required:
                     - user_mail
-                    - domain
                     - api_token
+                    - domain
                   writeOnly: true
               required:
               - integration_type
@@ -9449,6 +9507,39 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/IntegrationCreate'
+      required:
+      - data
+    IntegrationJiraDispatchRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - integrations-jira-dispatches
+            attributes:
+              type: object
+              properties:
+                project_key:
+                  type: string
+                  minLength: 1
+                issue_type:
+                  enum:
+                  - Task
+                  type: string
+                  description: '* `Task` - Task'
+                  x-spec-enum-id: b527b0cec62087c1
+              required:
+              - project_key
+              - issue_type
       required:
       - data
     IntegrationResponse:
@@ -9544,23 +9635,10 @@ components:
                       the current execution.
               - type: object
                 title: JIRA
-                properties:
-                  project_key:
-                    type: string
-                    description: The JIRA project key where issues will be created
-                      (e.g., 'PROJ', 'SEC').
-                  issue_types:
-                    type: array
-                    items:
-                      type: string
-                    description: List of JIRA issue types to create for findings.
-                  issue_labels:
-                    type: array
-                    items:
-                      type: string
-                    description: List of labels to apply to created JIRA issues..
-                required:
-                - project_key
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9607,17 +9685,17 @@ components:
                     type: string
                     format: email
                     description: The email address of the JIRA user account.
-                  domain:
-                    type: string
-                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                   api_token:
                     type: string
                     description: The API token for authentication with JIRA. This
                       can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                 required:
                 - user_mail
-                - domain
                 - api_token
+                - domain
               writeOnly: true
         relationships:
           type: object
@@ -10986,23 +11064,10 @@ components:
                           in the current execution.
                   - type: object
                     title: JIRA
-                    properties:
-                      project_key:
-                        type: string
-                        description: The JIRA project key where issues will be created
-                          (e.g., 'PROJ', 'SEC').
-                      issue_types:
-                        type: array
-                        items:
-                          type: string
-                        description: List of JIRA issue types to create for findings.
-                      issue_labels:
-                        type: array
-                        items:
-                          type: string
-                        description: List of labels to apply to created JIRA issues..
-                    required:
-                    - project_key
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -11050,17 +11115,17 @@ components:
                         type: string
                         format: email
                         description: The email address of the JIRA user account.
-                      domain:
-                        type: string
-                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                       api_token:
                         type: string
                         description: The API token for authentication with JIRA. This
                           can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
                     required:
                     - user_mail
-                    - domain
                     - api_token
+                    - domain
                   writeOnly: true
             relationships:
               type: object
@@ -15755,8 +15820,8 @@ tags:
   description: Endpoints for managing third-party integrations, including registration,
     configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
     services.
-- name: Lighthouse
-  description: Endpoints for managing Lighthouse configurations, including creation,
+- name: Lighthouse AI
+  description: Endpoints for managing Lighthouse AI configurations, including creation,
     retrieval, updating, and deletion of configurations such as OpenAI keys, models,
     and business context.
 - name: SAML

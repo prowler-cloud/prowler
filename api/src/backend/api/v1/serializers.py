@@ -1972,8 +1972,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
             integration_type == Integration.IntegrationChoices.JIRA
             and Integration.objects.filter(
                 configuration__contains={
-                    "domain": attrs.get("configuration").get("domain"),
-                    "project_key": attrs.get("configuration").get("project_key"),
+                    "domain": attrs.get("configuration").get("domain")
                 }
             ).exists()
         ):
@@ -2038,7 +2037,28 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
             config_serializer = SecurityHubConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
         elif integration_type == Integration.IntegrationChoices.JIRA:
+            if providers:
+                raise serializers.ValidationError(
+                    {
+                        "providers": "Relationship field is not accepted. This integration applies to all providers."
+                    }
+                )
+            if configuration:
+                raise serializers.ValidationError(
+                    {
+                        "configuration": "This integration does not support custom configuration."
+                    }
+                )
             config_serializer = JiraConfigSerializer
+            # Create non-editable configuration for JIRA integration
+            default_jira_issue_types = ["Task"]
+            configuration.update(
+                {
+                    "projects": {},
+                    "issue_types": default_jira_issue_types,
+                    "domain": credentials.get("domain"),
+                }
+            )
             credentials_serializers = [JiraCredentialSerializer]
         else:
             raise serializers.ValidationError(
@@ -2103,6 +2123,10 @@ class IntegrationSerializer(RLSSerializer):
                 for provider in representation["providers"]
                 if provider["id"] in allowed_provider_ids
             ]
+        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+            representation["configuration"].update(
+                {"domain": instance.credentials.get("domain")}
+            )
         return representation
 
 
@@ -2203,7 +2227,10 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
     def validate(self, attrs):
         integration_type = self.instance.integration_type
         providers = attrs.get("providers")
-        configuration = attrs.get("configuration") or self.instance.configuration
+        if integration_type != Integration.IntegrationChoices.JIRA:
+            configuration = attrs.get("configuration") or self.instance.configuration
+        else:
+            configuration = attrs.get("configuration", {})
         credentials = attrs.get("credentials") or self.instance.credentials
 
         self.validate_integration_data(
@@ -2232,6 +2259,53 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
                 validated_data["configuration"]["regions"] = existing_regions
 
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Ensure JIRA integrations show updated domain in configuration from credentials
+        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+            representation["configuration"].update(
+                {"domain": instance.credentials.get("domain")}
+            )
+        return representation
+
+
+class IntegrationJiraDispatchSerializer(serializers.Serializer):
+    """
+    Serializer for dispatching findings to JIRA integration.
+    """
+
+    project_key = serializers.CharField(required=True)
+    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+
+    class JSONAPIMeta:
+        resource_name = "integrations-jira-dispatches"
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        integration_instance = Integration.objects.get(
+            id=self.context.get("integration_id")
+        )
+        if integration_instance.integration_type != Integration.IntegrationChoices.JIRA:
+            raise ValidationError(
+                {"integration_type": "The given integration is not a JIRA integration"}
+            )
+
+        if not integration_instance.enabled:
+            raise ValidationError(
+                {"integration": "The given integration is not enabled"}
+            )
+
+        project_key = attrs.get("project_key")
+        if project_key not in integration_instance.configuration.get("projects", {}):
+            raise ValidationError(
+                {
+                    "project_key": "The given project key is not available for this JIRA integration. Refresh the "
+                    "connection if this is an error."
+                }
+            )
+
+        return validated_attrs
 
 
 # Processors

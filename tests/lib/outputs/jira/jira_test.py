@@ -699,8 +699,17 @@ class TestJiraIntegration:
         self.jira_integration.cloud_id = "valid_cloud_id"
 
         self.jira_integration.send_findings(
-            findings=[finding], project_key="TEST-1", issue_type="Bug"
+            findings=[finding],
+            project_key="TEST-1",
+            issue_type="Bug",
+            issue_labels=["scan-mocked", "whatever"],
+            finding_url="https://prowler-cloud-link/findings/12345",
+            tenant_info="Tenant Info",
         )
+
+        mock_post.assert_called_once()
+
+        call_args = mock_post.call_args
 
         mock_post.assert_called_once()
 
@@ -712,6 +721,8 @@ class TestJiraIntegration:
         expected_headers = {
             "Authorization": "Bearer valid_access_token",
             "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
         }
 
         assert call_args[0][0] == expected_url
@@ -722,6 +733,7 @@ class TestJiraIntegration:
         assert payload["fields"]["summary"] == "[Prowler] HIGH - CHECK-1 - resource-1"
         assert payload["fields"]["issuetype"]["name"] == "Bug"
         assert payload["fields"]["description"]["type"] == "doc"
+        assert payload["fields"]["labels"] == ["scan-mocked", "whatever"]
 
         description_content = payload["fields"]["description"]["content"]
 
@@ -772,6 +784,8 @@ class TestJiraIntegration:
             "Remediation Terraform",
             "Remediation CLI",
             "Remediation Other",
+            "Finding URL",
+            "Tenant Info",
         ]
 
         actual_keys = [key for key, _ in row_texts]
@@ -811,6 +825,8 @@ class TestJiraIntegration:
         assert "Owner=SecurityTeam" in row_dict["Resource Tags"]
         assert "CIS: 2.1.1, 2.1.2" in row_dict["Compliance"]
         assert "NIST: AC-3, AC-6" in row_dict["Compliance"]
+        assert "https://prowler-cloud-link/findings/12345" in row_dict["Finding URL"]
+        assert "Tenant Info" in row_dict["Tenant Info"]
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -824,6 +840,7 @@ class TestJiraIntegration:
         # To disable vulture
         mock_get_available_issue_types = mock_get_available_issue_types
         mock_get_access_token = mock_get_access_token
+        mock_post = mock_post
         mock_post = mock_post
 
         with pytest.raises(JiraCreateIssueError):
@@ -914,7 +931,12 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraRequiredCustomFieldsError):
             self.jira_integration.send_findings(
-                findings=[finding], project_key="TEST-1", issue_type="Bug"
+                findings=[finding],
+                project_key="TEST-1",
+                issue_type="Bug",
+                issue_labels=["scan-mocked", "whatever"],
+                finding_url="https://prowler-cloud-link/findings/12345",
+                tenant_info="Tenant Info",
             )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
@@ -971,12 +993,22 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraCreateIssueError):
             self.jira_integration.send_findings(
-                findings=[finding], project_key="TEST-1", issue_type="Bug"
+                findings=[finding],
+                project_key="TEST-1",
+                issue_type="Bug",
+                issue_labels=["scan-mocked", "whatever"],
+                finding_url="https://prowler-cloud-link/findings/12345",
+                tenant_info="Tenant Info",
             )
 
     @pytest.mark.parametrize(
         "status, expected_color",
-        [("FAIL", "#FF0000"), ("PASS", "#008000"), ("MUTED", "#FFA500")],
+        [
+            ("FAIL", "#FF0000"),
+            ("PASS", "#008000"),
+            ("MUTED", "#FFA500"),
+            ("MANUAL", "#FFFF00"),
+        ],
     )
     def test_get_color_from_status(self, status, expected_color):
         """Test that get_color_from_status returns the correct color for a status."""
@@ -1263,3 +1295,228 @@ class TestJiraIntegration:
         }
 
         assert projects_and_issue_types == expected_result
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_successful(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding returns True when the finding is sent successfully."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        # Mock successful response
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {"id": "ISSUE-123", "key": "TEST-123"}
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result is True
+        mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_failure(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding returns False when the request fails."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        # Mock failed response
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {"errors": {"summary": "Required field"}}
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result is False
+        mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_custom_fields_error(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding returns False when custom fields cause an error."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        # Mock response with custom fields error
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {
+            "errors": {
+                "customfield_10001": "This custom field is required",
+                "customfield_10002": "Invalid value for custom field",
+            }
+        }
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result is False
+        mock_post.assert_called_once()
+
+    def test_get_headers_oauth_with_access_token(self):
+        """Test get_headers returns correct OAuth headers with access token."""
+        self.jira_integration._using_basic_auth = False
+
+        headers = self.jira_integration.get_headers(
+            access_token="test_oauth_token", content_type_json=True
+        )
+
+        expected_headers = {
+            "Authorization": "Bearer test_oauth_token",
+            "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+
+    def test_get_headers_oauth_without_content_type(self):
+        """Test get_headers returns OAuth headers without Content-Type when content_type_json=False."""
+        self.jira_integration._using_basic_auth = False
+
+        headers = self.jira_integration.get_headers(
+            access_token="test_oauth_token", content_type_json=False
+        )
+
+        expected_headers = {
+            "Authorization": "Bearer test_oauth_token",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Content-Type" not in headers
+
+    def test_get_headers_basic_auth_with_access_token(self):
+        """Test get_headers returns correct Basic Auth headers with access token."""
+        self.jira_integration_basic_auth._using_basic_auth = True
+
+        headers = self.jira_integration_basic_auth.get_headers(
+            access_token="test_basic_token", content_type_json=True
+        )
+
+        expected_headers = {
+            "Authorization": "Basic test_basic_token",
+            "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+
+    def test_get_headers_basic_auth_without_content_type(self):
+        """Test get_headers returns Basic Auth headers without Content-Type when content_type_json=False."""
+        self.jira_integration_basic_auth._using_basic_auth = True
+
+        headers = self.jira_integration_basic_auth.get_headers(
+            access_token="test_basic_token", content_type_json=False
+        )
+
+        expected_headers = {
+            "Authorization": "Basic test_basic_token",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Content-Type" not in headers
+
+    def test_get_headers_without_access_token_with_content_type(self):
+        """Test get_headers returns headers without Authorization when no access token provided."""
+        headers = self.jira_integration.get_headers(content_type_json=True)
+
+        expected_headers = {
+            "Content-Type": "application/json",
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Authorization" not in headers
+
+    def test_get_headers_without_access_token_without_content_type(self):
+        """Test get_headers returns minimal headers when no access token and no content type."""
+        headers = self.jira_integration.get_headers(content_type_json=False)
+
+        expected_headers = {
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Authorization" not in headers
+        assert "Content-Type" not in headers
+
+    def test_get_headers_default_parameters(self):
+        """Test get_headers with default parameters (no access token, no content type)."""
+        headers = self.jira_integration.get_headers()
+
+        expected_headers = {
+            "X-Force-Accept-Language": "true",
+            "Accept-Language": "en",
+        }
+        assert headers == expected_headers
+        assert "Authorization" not in headers
+        assert "Content-Type" not in headers
