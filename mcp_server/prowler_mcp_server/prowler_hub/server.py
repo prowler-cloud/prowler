@@ -4,7 +4,7 @@ Prowler Hub MCP module
 Provides access to Prowler Hub API for security checks and compliance frameworks.
 """
 
-from typing import Optional, Any, Literal
+from typing import Optional, Any
 import httpx
 from fastmcp import FastMCP
 
