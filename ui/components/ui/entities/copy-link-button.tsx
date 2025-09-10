@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCheck, Link } from "lucide-react";
+import { Tooltip } from "@nextui-org/react";
+import { CheckCheck, ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 type CopyLinkButtonProps = {
@@ -15,25 +16,26 @@ export const CopyLinkButton = ({ url }: CopyLinkButtonProps) => {
       await navigator.clipboard.writeText(url);
       setCopied(true);
 
-      // Reset copied state after 2 seconds
-      setTimeout(() => setCopied(false), 1000);
+      setTimeout(() => setCopied(false), 500);
     } catch (err) {
       console.error("Failed to copy URL to clipboard:", err);
     }
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="ml-2 cursor-pointer p-0"
-      aria-label="Copy URL to clipboard"
-    >
-      {copied ? (
-        <CheckCheck size={16} className="inline" />
-      ) : (
-        <Link size={16} className="inline" />
-      )}
-    </button>
+    <Tooltip content="Copy URL to clipboard" size="sm">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="ml-2 cursor-pointer p-0"
+        aria-label="Copy URL to clipboard"
+      >
+        {copied ? (
+          <CheckCheck size={16} className="inline" />
+        ) : (
+          <ExternalLink size={16} className="inline" />
+        )}
+      </button>
+    </Tooltip>
   );
 };
