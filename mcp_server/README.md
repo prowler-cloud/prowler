@@ -56,7 +56,8 @@ Configure your MCP client to launch the server with the `uvx` command. Below is 
 {
   "mcpServers": {
     "prowler": {
-      "command": "uvx /path/to/prowler/mcp_server/"
+      "command": "uvx",
+      "args": ["/path/to/prowler/mcp_server/"]
     }
   }
 }
@@ -75,7 +76,8 @@ Example content to append/merge:
 {
   "mcpServers": {
     "prowler": {
-      "command": "uvx /path/to/prowler/mcp_server/"
+      "command": "uvx",
+      "args": ["/path/to/prowler/mcp_server/"]
     }
   }
 }
