@@ -166,7 +166,7 @@ async def get_check_raw_metadata(
 ) -> dict[str, Any]:
     """
     Fetch the raw check metadata JSON, this is a low level version of the tool `get_checks`.
-    It is recommended to use the tool `get_checks` instead of this tool.
+    It is recommended to use the tool `get_checks` filtering about the `ids` parameter instead of using this tool.
 
     Args:
         provider_id: Prowler provider ID (e.g., "aws", "azure").
