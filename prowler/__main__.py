@@ -88,7 +88,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -320,7 +320,18 @@ def prowler():
 
     if provider == "iac" or provider == "llm":
         # For IAC and LLM providers, run the scan directly
-        findings = global_provider.run()
+        if provider == "llm":
+
+            def streaming_callback(findings_batch):
+                """Callback to report findings as they are processed in real-time."""
+                report(findings_batch, global_provider, output_options)
+
+            findings = global_provider.run_scan(streaming_callback=streaming_callback)
+        else:
+            # Original behavior for IAC or non-verbose LLM
+            findings = global_provider.run()
+            # Report findings for verbose output
+            report(findings, global_provider, output_options)
     elif len(checks_to_execute):
         findings = execute_checks(
             checks_to_execute,

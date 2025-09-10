@@ -262,9 +262,7 @@ class Provider(ABC):
                     )
                 elif "llm" in provider_class_name.lower():
                     provider_class(
-                        model_type=arguments.model_type,
-                        model_name=arguments.model_name,
-                        probes=arguments.probes,
+                        max_concurrency=arguments.max_concurrency,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                     )

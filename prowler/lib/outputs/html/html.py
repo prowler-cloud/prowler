@@ -791,6 +791,49 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_llm_assessment_summary(provider: Provider) -> str:
+        """
+        get_llm_assessment_summary gets the HTML assessment summary for the LLM provider
+
+        Args:
+            provider (Provider): the LLM provider object
+
+        Returns:
+            str: HTML assessment summary for the LLM provider
+        """
+        try:
+            return f"""
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-robot"></i> LLM Security Assessment Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Target LLM:</b> {provider.model}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Plugins:</b> {", ".join(provider.plugins)}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Max concurrency:</b> {provider.max_concurrency}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Config file:</b> {provider.config_path if provider.config_path else "Using promptfoo defaults"}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider

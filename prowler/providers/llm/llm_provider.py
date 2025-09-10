@@ -1,12 +1,16 @@
 import json
 import os
 import subprocess
+import sys
 from typing import List
 
+import yaml
+from alive_progress import alive_bar
 from colorama import Fore, Style
 
 from prowler.config.config import (
     default_config_file_path,
+    default_redteam_config_file_path,
     load_and_validate_config_file,
 )
 from prowler.lib.check.models import CheckReportLLM
@@ -19,34 +23,34 @@ from prowler.providers.common.provider import Provider
 class LlmProvider(Provider):
     _type: str = "llm"
     audit_metadata: Audit_Metadata
+    model: str = ""
 
     def __init__(
         self,
-        model_type: str = "openai",
-        model_name: str = "gpt-4o",
-        probes: list[str] = [
-            "promptinject.HijackLongPrompt",
-            "promptinject.HijackKillHumans",
-            "latentinjection.LatentJailbreak",
-            "latentinjection.LatentInjectionReport",
-            "encoding.InjectBase64",
-            "encoding.InjectHex",
-            "encoding.InjectROT13",
-            "exploitation.JinjaTemplatePythonInjection",
-            "xss.MarkdownImageExfil",
-            "xss.MdExfil20230929",
-            "ansiescape.AnsiEscaped",
-            "suffix.GCGCached",
-        ],
+        max_concurrency: int = 10,
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
     ):
         logger.info("Instantiating LLM Provider...")
+        logger.info(f"Received config_path: {config_path}")
 
-        self.model_type = model_type
-        self.model_name = model_name
-        self.probes = probes
+        self.max_concurrency = max_concurrency
+        # For LLM provider, only use config_path if it's not the default Prowler config
+        if config_path and config_path != default_config_file_path:
+            self.config_path = config_path
+        else:
+            self.config_path = default_redteam_config_file_path
+
+        # Read config file and extract model
+        with open(self.config_path, "r") as config_file:
+            config = yaml.safe_load(config_file)
+            self.model = config.get("targets", [])[0].get("id", "No model available.")
+            # Extract only the plugin IDs
+            plugins_data = config.get("redteam", {}).get("plugins", [])
+            self.plugins = [
+                plugin.get("id") for plugin in plugins_data if plugin.get("id")
+            ]
         self.region = "global"
         self.audited_account = "local-llm"
         self._session = None
@@ -56,15 +60,18 @@ class LlmProvider(Provider):
         # Audit Config
         if config_content:
             self._audit_config = config_content
+        elif self.config_path:
+            self._audit_config = load_and_validate_config_file(
+                self._type, self.config_path
+            )
         else:
-            if not config_path:
-                config_path = default_config_file_path
-            self._audit_config = load_and_validate_config_file(self._type, config_path)
+            # For LLM provider, use empty config if no config file provided
+            self._audit_config = {}
 
         # Fixer Config
         self._fixer_config = fixer_config
 
-        # Mutelist (not needed for LLM since Garak has its own logic)
+        # Mutelist (not needed for LLM since promptfoo has its own logic)
         self._mutelist = None
 
         self.audit_metadata = Audit_Metadata(
@@ -80,10 +87,6 @@ class LlmProvider(Provider):
 
         # Set this provider as the global provider
         Provider.set_global_provider(self)
-
-    @property
-    def auth_method(self):
-        return self._auth_method
 
     @property
     def type(self):
@@ -105,47 +108,122 @@ class LlmProvider(Provider):
     def fixer_config(self):
         return self._fixer_config
 
+    @property
+    def auth_method(self):
+        return self._auth_method
+
     def setup_session(self):
-        """LLM provider doesn't need a session since it uses Garak directly"""
+        """LLM provider doesn't need a session since it uses promptfoo directly"""
 
-    def _process_check(self, finding: dict, check: dict, status: str) -> CheckReportLLM:
-        """Process a Garak finding and convert it to a CheckReportLLM"""
+    def _process_check(self, finding: dict) -> CheckReportLLM:
+        """
+        Process a single check (failed or passed) and create a CheckReportIAC object.
+
+        Args:
+            finding: The finding object from Trivy output
+            file_path: The path to the file that contains the finding
+            type: The type of the finding
+
+        Returns:
+            CheckReportIAC: The processed check report
+        """
         try:
-            probe_name = finding.get("probe", "unknown_probe")
-            detector = finding.get("detector_triggered", "unknown_detector")
+            status = "FAIL"
+            if finding.get("success"):
+                status = "PASS"
 
-            check_id = probe_name
-            check_title = f"Garak Vulnerability Detected by Probe: {probe_name}"
+            metadata_dict = {
+                "Provider": "llm",
+                "CheckID": finding["metadata"]["pluginId"],
+                "CheckTitle": finding["metadata"]["goal"],
+                "CheckType": ["LLM Security"],
+                "ServiceName": finding["metadata"]["pluginId"].split(":")[0],
+                "SubServiceName": "",
+                "ResourceIdTemplate": "",
+                "Severity": finding["metadata"]["severity"],
+                "ResourceType": "llm",
+                "Description": finding["metadata"]["goal"],
+                "Risk": "",
+                "RelatedUrl": "",
+                "Remediation": {
+                    "Code": {
+                        "NativeIaC": "",
+                        "Terraform": "",
+                        "CLI": "",
+                        "Other": "",
+                    },
+                    "Recommendation": {
+                        "Text": "",
+                        "Url": "",
+                    },
+                },
+                "Categories": [],
+                "DependsOn": [],
+                "RelatedTo": [],
+                "Notes": "",
+            }
 
-            prompt = finding.get("prompt", "No prompt available.")
-            llm_output = finding.get("output", "No output available.")
-            description = (
-                f"The probe '{probe_name}' detected a potential vulnerability "
-                f"triggered by the detector '{detector}'.\n\n"
-                f"Prompt Sent:\n---\n{prompt}\n---\n\n"
-                f"LLM Output:\n---\n{llm_output}\n---"
+            # Convert metadata dict to JSON string
+            metadata = json.dumps(metadata_dict)
+
+            report = CheckReportLLM(
+                metadata=metadata,
+                finding=finding,
             )
-
-            resource = f"{self.model_type}:{self.model_name}"
-
-            severity = "MEDIUM"
-
-            return CheckReportLLM(
-                check_id=check_id,
-                check_title=check_title,
-                check_type="LLM Security",
-                status=status,
-                severity=severity,
-                description=description,
-                resource=resource,
-                file_path=self.audited_account,
-                line_number=0,
-                check_output=json.dumps(finding, indent=2),
-                audit_metadata=self.audit_metadata,
+            report.status = status
+            status_extended = (
+                finding.get("gradingResult", {})
+                .get("componentResults", [{}])[0]
+                .get("reason", "No assertions found.")
             )
+            report.status_extended = status_extended
+            return report
         except Exception as error:
-            logger.error(f"Error processing check: {error}")
-            return None
+            logger.critical(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+            sys.exit(1)
+
+    def _process_finding_line(
+        self, line: str, reports: list, streaming_callback=None, progress_counter=None
+    ) -> bool:
+        """
+        Process a single line from the report file and add to reports if valid.
+
+        Args:
+            line: JSON line from the report file
+            reports: List to append the processed report to
+            streaming_callback: Optional callback for streaming mode
+            progress_counter: Optional dict to track progress {'completed': int, 'total': int}
+
+        Returns:
+            bool: True if a valid finding was processed, False otherwise
+        """
+        try:
+            finding = json.loads(line.strip())
+            if finding.get("prompt", {}).get("raw"):
+                if finding.get("response", {}).get("error"):
+                    logger.critical(
+                        f"Error: {finding.get('response', {}).get('error')}"
+                    )
+                    return False
+                if finding.get("error"):
+                    logger.critical(f"Error: {finding.get('error')}")
+                    return False
+                report = self._process_check(finding)
+                if report:
+                    reports.append(report)
+                    if streaming_callback:
+                        streaming_callback([report])
+                    # Increment progress counter if provided
+                    if progress_counter is not None:
+                        progress_counter["completed"] += 1
+                    return True
+        except json.JSONDecodeError as json_error:
+            logger.error(
+                f"Error decoding JSON line: {json_error} - Line content: {line.strip()}"
+            )
+        return False
 
     def run(self) -> List[CheckReportLLM]:
         """Main method to run the LLM security scan"""
@@ -155,33 +233,40 @@ class LlmProvider(Provider):
             logger.error(f"Error running LLM scan: {error}")
             return []
 
-    def run_scan(self) -> List[CheckReportLLM]:
-        """Run Garak scan and stream its output in real-time."""
+    def run_scan(self, streaming_callback) -> List[CheckReportLLM]:
+        """Run promptfoo red team scan and process its output."""
         report_path = None
         try:
-            logger.info(
-                f"Running LLM security scan with {self.model_type}:{self.model_name} ..."
-            )
+            logger.info("Running LLM security scan...")
 
-            garak_command = [
-                "garak",
-                "--model_type",
-                self.model_type,
-                "--model_name",
-                self.model_name,
-                "--probes",
-                ",".join(self.probes),
-                "--narrow_output",
-                "--parallel_attempts",
-                "10",
-                "--parallel_requests",
-                "10",
+            # Use config file if provided, otherwise let promptfoo use its defaults
+            if self.config_path:
+                if not os.path.exists(self.config_path):
+                    logger.error(f"Config file not found: {self.config_path}")
+                    return []
+                config_path = self.config_path
+                logger.info(f"Using provided config file: {config_path}")
+
+            # Set output path for the scan results
+            report_path = "/tmp/prowler_promptfoo_results.jsonl"
+
+            promptfoo_command = [
+                "promptfoo",
+                "redteam",
+                "eval",
+                "--output",
+                report_path,
+                "--max-concurrency",
+                str(self.max_concurrency),
+                "--no-cache",
+                "--config",
+                config_path,
             ]
 
-            logger.info(f"Running Garak command: {' '.join(garak_command)}")
+            logger.info(f"Running promptfoo command: {' '.join(promptfoo_command)}")
 
             process = subprocess.Popen(
-                garak_command,
+                promptfoo_command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -189,60 +274,7 @@ class LlmProvider(Provider):
                 env=os.environ,
             )
 
-            output_lines = []
-            for line in process.stdout:
-                print(line, end="", flush=True)
-
-                output_lines.append(line)
-
-            process.wait()
-            stderr = process.stderr.read()
-
-            if stderr:
-                logger.error(f"Garak stderr:\n{stderr}")
-
-            stdout = "".join(output_lines)
-
-            for line in stdout.splitlines():
-                if "reporting to" in line:
-                    report_path = line.split("reporting to ")[1].strip()
-                    logger.info(f"\nGarak report file found at: {report_path}")
-                    break
-
-            if not report_path:
-                logger.critical(
-                    "Could not find Garak report file path in stdout. Aborting."
-                )
-                if "No evaluations to report" in stdout:
-                    logger.warning("Garak reported no evaluations.")
-                if process.returncode != 0:
-                    logger.error(
-                        f"Garak exited with a non-zero exit code: {process.returncode}"
-                    )
-                return []
-
-            reports = []
-            with open(report_path, "r", encoding="utf-8") as report_file:
-                json_lines = report_file.readlines()
-                if not json_lines:
-                    logger.warning(
-                        "No findings returned from Garak scan (report file was empty)."
-                    )
-                    return []
-
-                for line in json_lines:
-                    try:
-                        finding = json.loads(line)
-                        if finding.get("status") == "FAIL":
-                            report = self._process_check(finding, finding, "FAIL")
-                            if report:
-                                reports.append(report)
-                    except json.JSONDecodeError as json_error:
-                        logger.error(
-                            f"Error decoding JSON line: {json_error} - Line content: {line.strip()}"
-                        )
-
-            return reports
+            return self._stream_findings(process, report_path, streaming_callback)
 
         except Exception as error:
             logger.critical(
@@ -250,17 +282,179 @@ class LlmProvider(Provider):
             )
             return []
         finally:
+            # Clean up temporary report file
             if report_path and os.path.exists(report_path):
                 os.remove(report_path)
-                logger.info(f"Cleaned up Garak report file: {report_path}")
+                logger.info(f"Cleaned up promptfoo report file: {report_path}")
+
+    def _stream_findings(self, process, report_path, streaming_callback):
+        """Stream findings in real-time as they are written to the output file."""
+        import re
+        import threading
+        import time
+
+        reports = []
+        processed_lines = set()  # Track which lines we've already processed
+
+        def monitor_file():
+            """Monitor the output file for new findings."""
+            while process.poll() is None:  # While process is still running
+                if os.path.exists(report_path):
+                    try:
+                        with open(report_path, "r", encoding="utf-8") as report_file:
+                            lines = report_file.readlines()
+
+                            # Process only new lines
+                            for i, line in enumerate(lines):
+                                if i not in processed_lines and line.strip():
+                                    if self._process_finding_line(
+                                        line,
+                                        reports,
+                                        streaming_callback,
+                                        progress_counter,
+                                    ):
+                                        processed_lines.add(i)
+                    except Exception as e:
+                        logger.debug(f"Error reading report file: {e}")
+
+                time.sleep(0.5)  # Check every 500ms
+
+        def process_stdout():
+            """Process stdout to extract test count information."""
+            for line in process.stdout:
+                if "No promptfooconfig found" in line:
+                    logger.critical(
+                        "No config file found. Please, provide a valid promptfoo config file."
+                    )
+                    sys.exit(1)
+                if (
+                    "Warning: Config file has a redteam section but no test cases."
+                    in line
+                ):
+                    logger.critical(
+                        "Please, generate first the test cases using promptfoo redteam generate command."
+                    )
+                    sys.exit(1)
+
+                # Extract total number of tests from stdout
+                test_count_match = re.search(
+                    r"Running (\d+) test cases \(up to \d+ at a time\)", line
+                )
+                if test_count_match and progress_counter["total"] == 0:
+                    progress_counter["total"] = int(test_count_match.group(1))
+                    logger.info(f"Found {progress_counter['total']} test cases to run")
+
+        # Create progress counter dictionary
+        progress_counter = {"completed": 0, "total": 0}
+        previous_completed = 0  # Track previous completed count for bar updates
+
+        # Start monitoring in separate threads
+        monitor_thread = threading.Thread(target=monitor_file)
+        monitor_thread.daemon = True
+        monitor_thread.start()
+
+        stdout_thread = threading.Thread(target=process_stdout)
+        stdout_thread.daemon = True
+        stdout_thread.start()
+
+        # Wait for total number of tests to be detected
+        while process.poll() is None and progress_counter["total"] == 0:
+            time.sleep(0.5)  # Wait for total to be detected
+
+        # If process finished before we detected total, handle it
+        if process.poll() is not None and progress_counter["total"] == 0:
+            process.wait()
+            logger.critical(
+                f"Promptfoo exited with a non-zero exit code {process.returncode} {process.stderr.read()}"
+            )
+            sys.exit(1)
+
+        # Now create the progress bar with the known total
+        with alive_bar(
+            total=progress_counter["total"],
+            ctrl_c=False,
+            bar="blocks",
+            spinner="classic",
+            stats=False,
+            enrich_print=False,
+        ) as bar:
+            try:
+                bar.title = f"-> Running LLM security scan on {self.model}..."
+
+                # Update progress bar while process is running
+                while process.poll() is None:
+                    # Update the progress by incrementing by the difference
+                    if progress_counter["completed"] > previous_completed:
+                        bar(progress_counter["completed"] - previous_completed)
+                        previous_completed = progress_counter["completed"]
+
+                    time.sleep(0.5)  # Update every 500ms
+
+                # Wait for process to complete
+                process.wait()
+
+                # Wait a bit more for any final findings to be written
+                time.sleep(1)
+
+                # Process any remaining findings
+                if os.path.exists(report_path):
+                    try:
+                        with open(report_path, "r", encoding="utf-8") as report_file:
+                            lines = report_file.readlines()
+                            for i, line in enumerate(lines):
+                                if i not in processed_lines and line.strip():
+                                    self._process_finding_line(
+                                        line,
+                                        reports,
+                                        streaming_callback,
+                                        progress_counter,
+                                    )
+                    except Exception as e:
+                        logger.error(f"Error processing final findings: {e}")
+
+                bar.title = "-> LLM security scan completed!"
+
+            except Exception as error:
+                bar.title = "-> LLM security scan failed!"
+                raise error
+
+        # Check for errors
+        stderr = process.stderr.read()
+        if stderr:
+            logger.error(f"Promptfoo stderr:\n{stderr}")
+
+        if (
+            process.returncode != 0
+            and process.returncode != 100
+            and process.returncode is not None
+            and process.returncode != -2
+        ):
+            logger.error(
+                f"Promptfoo exited with a non-zero exit code: {process.returncode}"
+            )
+            sys.exit(1)
+
+        return reports
 
     def print_credentials(self):
         """Print the LLM provider credentials and configuration"""
         report_title = f"{Style.BRIGHT}Scanning LLM:{Style.RESET_ALL}"
         report_lines = [
-            f"Model type: {Fore.YELLOW}{self.model_type}{Style.RESET_ALL}",
-            f"Model name: {Fore.YELLOW}{self.model_name}{Style.RESET_ALL}",
-            f"Probes: {Fore.YELLOW}{', '.join(self.probes)}{Style.RESET_ALL}",
+            f"Target LLM: {Fore.YELLOW}{self.model}{Style.RESET_ALL}",
         ]
+        if self.plugins:
+            report_lines.append(
+                f"Plugins: {Fore.YELLOW}{', '.join(self.plugins)}{Style.RESET_ALL}"
+            )
+        if self.config_path:
+            report_lines.append(
+                f"Config file: {Fore.YELLOW}{self.config_path}{Style.RESET_ALL}"
+            )
+        else:
+            report_lines.append("Using promptfoo default configuration")
+
+        report_lines.append(
+            f"Max concurrency: {Fore.YELLOW}{self.max_concurrency}{Style.RESET_ALL}"
+        )
 
         print_boxes(report_lines, report_title)
