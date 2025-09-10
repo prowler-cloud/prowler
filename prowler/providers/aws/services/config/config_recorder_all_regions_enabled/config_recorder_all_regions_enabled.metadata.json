@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "config_recorder_all_regions_enabled",
-  "CheckTitle": "AWS Config recorder is enabled and not in failure state",
+  "CheckTitle": "AWS Config recorder is enabled and not in failure state or disabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
@@ -16,12 +16,9 @@
   "Risk": "**Gaps in Config recording** create **blind spots**. Changes in unmonitored Regions aren't captured, weakening **integrity** and **auditability**. Adversaries can alter resources or stage assets unnoticed, enabling misconfigurations and delaying **incident response**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#terraform",
     "https://repost.aws/es/questions/QUGcgeerhcTamRkwgdwh_tLQ/enable-aws-config",
     "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v1.5.0_L2.audit:6a5136528bd329139e5969f8f1e5ffbc",
-    "https://aws.amazon.com/blogs/mt/aws-config-best-practices/",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions/"
+    "https://aws.amazon.com/blogs/mt/aws-config-best-practices/"
   ],
   "Remediation": {
     "Code": {
@@ -31,7 +28,7 @@
       "Terraform": "```hcl\nresource \"aws_iam_service_linked_role\" \"example_resource\" {\n  aws_service_name = \"config.amazonaws.com\"\n}\n\nresource \"aws_config_configuration_recorder\" \"example_resource\" {\n  name     = \"example_resource\"\n  role_arn = aws_iam_service_linked_role.example_resource.arn\n}\n\nresource \"aws_config_delivery_channel\" \"example_resource\" {\n  s3_bucket_name = \"example_resource\"\n}\n\nresource \"aws_config_configuration_recorder_status\" \"example_resource\" {\n  name         = aws_config_configuration_recorder.example_resource.name\n  is_recording = true  # This line fixes the security issue\n  depends_on   = [aws_config_delivery_channel.example_resource]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable **AWS Config** in every Region with continuous recording and maintain healthy recorder status. Use **organization-wide enforcement** and **central aggregation**. Record global resources in one Region. Secure delivery channels and apply **least privilege**.",
+      "Text": "Enable **AWS Config** in every Region with continuous recording and maintain healthy recorder status.",
       "Url": "https://hub.prowler.com/check/config_recorder_all_regions_enabled"
     }
   },
