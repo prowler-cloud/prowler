@@ -330,9 +330,9 @@
   },
   {
     "section": "dependencies",
-    "name": "shadcn-ui",
-    "from": "0.2.3",
-    "to": "0.2.3",
+    "name": "shadcn",
+    "from": "3.2.1",
+    "to": "3.2.1",
     "strategy": "installed"
   },
   {
