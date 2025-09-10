@@ -105,9 +105,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 className={cn(
                   "w-full",
                   groupLabel ? "pt-2" : "",
-                  menus.some((menu) => menu.label === "Prowler Hub")
-                    ? "!mt-auto"
-                    : "",
+                  index === filteredMenuList.length - 2 && "!mt-auto",
                 )}
                 key={index}
               >
@@ -143,10 +141,6 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                     target,
                     tooltip,
                   } = menu;
-                  const singleMenuItemTooltipText = isOpen
-                    ? tooltip || ""
-                    : tooltip || label || "";
-
                   return !submenus || submenus.length === 0 ? (
                     <div className="w-full" key={index}>
                       <TooltipProvider disableHoverableContent>
@@ -182,9 +176,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               </Link>
                             </Button>
                           </TooltipTrigger>
-                          {singleMenuItemTooltipText && (
+                          {tooltip && (
                             <TooltipContent side="right">
-                              {singleMenuItemTooltipText}
+                              {tooltip}
                             </TooltipContent>
                           )}
                         </Tooltip>
