@@ -37,7 +37,7 @@ export const S3IntegrationCard = () => {
               size="sm"
               variant="bordered"
               startContent={<SettingsIcon size={14} />}
-              asLink="/integrations/s3"
+              asLink="/integrations/amazon-s3"
               ariaLabel="Manage S3 integrations"
             >
               Manage

@@ -5,7 +5,11 @@ import { Snippet } from "@nextui-org/react";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomSection } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { EntityInfoShort, InfoField } from "@/components/ui/entities";
+import {
+  CopyLinkButton,
+  EntityInfoShort,
+  InfoField,
+} from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps, ProviderType } from "@/types";
@@ -42,6 +46,10 @@ export const FindingDetail = ({
   const resource = finding.relationships.resource.attributes;
   const scan = finding.relationships.scan.attributes;
   const providerDetails = finding.relationships.provider.attributes;
+  const currentUrl = new URL(window.location.href);
+  const params = new URLSearchParams(currentUrl.search);
+  params.set("id", findingDetails.id);
+  const url = `${window.location.origin}${currentUrl.pathname}?${params.toString()}`;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
@@ -50,6 +58,7 @@ export const FindingDetail = ({
         <div>
           <h2 className="line-clamp-2 text-lg font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
             {renderValue(attributes.check_metadata.checktitle)}
+            <CopyLinkButton url={url} />
           </h2>
         </div>
         <div className="flex items-center gap-x-4">

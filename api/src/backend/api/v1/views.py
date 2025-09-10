@@ -62,6 +62,7 @@ from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
+    jira_integration_task,
     perform_scan_task,
 )
 
@@ -75,8 +76,10 @@ from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
+    CustomDjangoFilterBackend,
     FindingFilter,
     IntegrationFilter,
+    IntegrationJiraFindingsFilter,
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
@@ -89,6 +92,7 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
@@ -142,6 +146,7 @@ from api.v1.serializers import (
     FindingMetadataSerializer,
     FindingSerializer,
     IntegrationCreateSerializer,
+    IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -214,6 +219,8 @@ class RelationshipViewSchema(JsonApiAutoSchema):
     description="Obtain a token by providing valid credentials and an optional tenant ID.",
 )
 class CustomTokenObtainView(GenericAPIView):
+    throttle_scope = "token-obtain"
+
     resource_name = "tokens"
     serializer_class = TokenSerializer
     http_method_names = ["post"]
@@ -293,7 +300,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.11.0"
+        spectacular_settings.VERSION = "1.13.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -314,6 +321,11 @@ class SchemaView(SpectacularAPIView):
                 "invitations, creating new invitations, accepting and revoking them.",
             },
             {
+                "name": "Role",
+                "description": "Endpoints for managing RBAC roles within tenants, allowing creation, retrieval, "
+                "updating, and deletion of role configurations and permissions.",
+            },
+            {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
             },
@@ -322,8 +334,18 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing provider groups.",
             },
             {
+                "name": "Task",
+                "description": "Endpoints for task management, allowing retrieval of task status and "
+                "revoking tasks that have not started.",
+            },
+            {
                 "name": "Scan",
                 "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Schedule",
+                "description": "Endpoints for managing scan schedules, allowing configuration of automated "
+                "scans with different scheduling options.",
             },
             {
                 "name": "Resource",
@@ -336,8 +358,9 @@ class SchemaView(SpectacularAPIView):
                 "findings that result from scans.",
             },
             {
-                "name": "Overview",
-                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
+                "name": "Processor",
+                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
+                "registration, configuration, and deletion of post-processing actions.",
             },
             {
                 "name": "Compliance Overview",
@@ -345,9 +368,8 @@ class SchemaView(SpectacularAPIView):
                 " compliance framework ID.",
             },
             {
-                "name": "Task",
-                "description": "Endpoints for task management, allowing retrieval of task status and "
-                "revoking tasks that have not started.",
+                "name": "Overview",
+                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
             },
             {
                 "name": "Integration",
@@ -355,14 +377,15 @@ class SchemaView(SpectacularAPIView):
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
             {
-                "name": "Lighthouse",
-                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
-                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
+                "name": "Lighthouse AI",
+                "description": "Endpoints for managing Lighthouse AI configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business "
+                "context.",
             },
             {
-                "name": "Processor",
-                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
-                "registration, configuration, and deletion of post-processing actions.",
+                "name": "SAML",
+                "description": "Endpoints for Single Sign-On authentication management via SAML for seamless user "
+                "authentication.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -3033,7 +3056,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews metadata obtained successfully",
                 response=ComplianceOverviewMetadataSerializer,
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3065,7 +3090,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance requirement details obtained successfully",
                 response=ComplianceOverviewDetailSerializer(many=True),
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3526,8 +3553,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "findings_severity"]:
+        elif self.action == "findings":
             return ScanSummaryFilter
+        elif self.action == "findings_severity":
+            return ScanSummarySeverityFilter
         elif self.action == "services":
             return ServiceOverviewFilter
         return None
@@ -3649,7 +3678,12 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
         tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
+
+        # Load only required fields
+        queryset = self.get_queryset().only(
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
+        )
+
         filtered_queryset = self.filter_queryset(queryset)
         provider_filter = (
             {"provider__in": self.allowed_providers}
@@ -3669,16 +3703,22 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
+        # The filter will have added a status_count annotation if any status filter was used
+        if "status_count" in filtered_queryset.query.annotations:
+            sum_expression = Sum("status_count")
+        else:
+            sum_expression = Sum("total")
+
         severity_counts = (
             filtered_queryset.values("severity")
-            .annotate(count=Sum("total"))
+            .annotate(count=sum_expression)
             .order_by("severity")
         )
 
         severity_data = {sev[0]: 0 for sev in SeverityChoices}
-
-        for item in severity_counts:
-            severity_data[item["severity"]] = item["count"]
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
 
         serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -3867,30 +3907,110 @@ class IntegrationViewSet(BaseRLSViewSet):
 
 
 @extend_schema_view(
+    dispatches=extend_schema(
+        tags=["Integration"],
+        summary="Send findings to a Jira integration",
+        description="Send a set of filtered findings to the given integration. At least one finding filter must be "
+        "provided.",
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+        filters=True,
+    )
+)
+class IntegrationJiraViewSet(BaseRLSViewSet):
+    queryset = Finding.all_objects.all()
+    serializer_class = IntegrationJiraDispatchSerializer
+    http_method_names = ["post"]
+    filter_backends = [CustomDjangoFilterBackend]
+    filterset_class = IntegrationJiraFindingsFilter
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    def get_queryset(self):
+        tenant_id = self.request.tenant_id
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
+        else:
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
+                scan__provider__in=get_providers(user_roles)
+            )
+
+        return queryset
+
+    @action(detail=False, methods=["post"], url_name="dispatches")
+    def dispatches(self, request, integration_pk=None):
+        get_object_or_404(Integration, pk=integration_pk)
+        serializer = self.get_serializer(
+            data=request.data, context={"integration_id": integration_pk}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        if self.filter_queryset(self.get_queryset()).count() == 0:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
+        finding_ids = [
+            str(finding_id)
+            for finding_id in self.filter_queryset(self.get_queryset()).values_list(
+                "id", flat=True
+            )
+        ]
+        project_key = serializer.validated_data["project_key"]
+        issue_type = serializer.validated_data["issue_type"]
+
+        with transaction.atomic():
+            task = jira_integration_task.delay(
+                tenant_id=self.request.tenant_id,
+                integration_id=integration_pk,
+                project_key=project_key,
+                issue_type=issue_type,
+                finding_ids=finding_ids,
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+@extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse"],
-        summary="List all Lighthouse configurations",
-        description="Retrieve a list of all Lighthouse configurations.",
+        tags=["Lighthouse AI"],
+        summary="List all Lighthouse AI configurations",
+        description="Retrieve a list of all Lighthouse AI configurations.",
     ),
     create=extend_schema(
-        tags=["Lighthouse"],
-        summary="Create a new Lighthouse configuration",
-        description="Create a new Lighthouse configuration with the specified details.",
+        tags=["Lighthouse AI"],
+        summary="Create a new Lighthouse AI configuration",
+        description="Create a new Lighthouse AI configuration with the specified details.",
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse"],
-        summary="Partially update a Lighthouse configuration",
-        description="Update certain fields of an existing Lighthouse configuration.",
+        tags=["Lighthouse AI"],
+        summary="Partially update a Lighthouse AI configuration",
+        description="Update certain fields of an existing Lighthouse AI configuration.",
     ),
     destroy=extend_schema(
-        tags=["Lighthouse"],
-        summary="Delete a Lighthouse configuration",
-        description="Remove a Lighthouse configuration by its ID.",
+        tags=["Lighthouse AI"],
+        summary="Delete a Lighthouse AI configuration",
+        description="Remove a Lighthouse AI configuration by its ID.",
     ),
     connection=extend_schema(
-        tags=["Lighthouse"],
+        tags=["Lighthouse AI"],
         summary="Check the connection to the OpenAI API",
-        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),

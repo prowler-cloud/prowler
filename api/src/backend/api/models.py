@@ -74,6 +74,15 @@ class StatusChoices(models.TextChoices):
     MANUAL = "MANUAL", _("Manual")
 
 
+class OverviewStatusChoices(models.TextChoices):
+    """
+    Status filters allowed in overview/severity endpoints.
+    """
+
+    FAIL = "FAIL", _("Fail")
+    PASS = "PASS", _("Pass")
+
+
 class StateChoices(models.TextChoices):
     AVAILABLE = "available", _("Available")
     SCHEDULED = "scheduled", _("Scheduled")
@@ -1372,10 +1381,6 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
-            models.UniqueConstraint(
-                fields=("configuration", "tenant"),
-                name="unique_configuration_per_tenant",
-            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",

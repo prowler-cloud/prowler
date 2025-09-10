@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Set
 
-from pydantic.v1 import BaseModel, ValidationError, validator
+from pydantic.v1 import BaseModel, Field, ValidationError, validator
 
 from prowler.config.config import Provider
 from prowler.lib.check.compliance_models import Compliance
@@ -85,6 +85,7 @@ class CheckMetadata(BaseModel):
         Risk (str): The risk associated with the check.
         RelatedUrl (str): The URL related to the check.
         Remediation (Remediation): The remediation steps for the check.
+        AdditionalURLs (list[str]): Additional URLs related to the check. Defaults to an empty list.
         Categories (list[str]): The categories of the check.
         DependsOn (list[str]): The dependencies of the check.
         RelatedTo (list[str]): The related checks.
@@ -97,13 +98,14 @@ class CheckMetadata(BaseModel):
         valid_severity(severity): Validator function to validate the severity of the check.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
+        validate_additional_urls(additional_urls): Validator function to ensure AdditionalURLs contains no duplicates.
     """
 
     Provider: str
     CheckID: str
     CheckTitle: str
     CheckType: list[str]
-    CheckAliases: list[str] = []
+    CheckAliases: list[str] = Field(default_factory=list)
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str
@@ -113,13 +115,14 @@ class CheckMetadata(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
+    AdditionalURLs: list[str] = Field(default_factory=list)
     Categories: list[str]
     DependsOn: list[str]
     RelatedTo: list[str]
     Notes: str
     # We set the compliance to None to
     # store the compliance later if supplied
-    Compliance: Optional[list[Any]] = []
+    Compliance: Optional[list[Any]] = Field(default_factory=list)
 
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
@@ -185,6 +188,19 @@ class CheckMetadata(BaseModel):
                 )
 
         return check_id
+
+    @validator("AdditionalURLs", pre=True, always=True)
+    def validate_additional_urls(cls, additional_urls):
+        if not isinstance(additional_urls, list):
+            raise ValueError("AdditionalURLs must be a list")
+
+        if any(not url or not url.strip() for url in additional_urls):
+            raise ValueError("AdditionalURLs cannot contain empty items")
+
+        if len(additional_urls) != len(set(additional_urls)):
+            raise ValueError("AdditionalURLs cannot contain duplicate items")
+
+        return additional_urls
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
@@ -732,6 +748,31 @@ class CheckReportNHN(Check_Report):
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "kr1")
+
+
+@dataclass
+class CheckReportMongoDBAtlas(Check_Report):
+    """Contains the MongoDB Atlas Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the MongoDB Atlas Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.location = getattr(resource, "location", self.project_id)
 
 
 # Testing Pending

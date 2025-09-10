@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
+import { auth } from "@/auth.config";
 import { MutedFindingsConfigButton } from "@/components/providers";
 import {
   AutoRefresh,
@@ -14,6 +15,7 @@ import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
+import { CustomBanner } from "@/components/ui/custom/custom-banner";
 import { DataTable } from "@/components/ui/table";
 import {
   createProviderDetailsMapping,
@@ -26,31 +28,37 @@ export default async function Scans({
 }: {
   searchParams: SearchParamsProps;
 }) {
+  const session = await auth();
   const filteredParams = { ...searchParams };
   delete filteredParams.scanId;
   const searchParamsKey = JSON.stringify(filteredParams);
 
   const providersData = await getProviders({
-    filters: {
-      "filter[connected]": true,
-    },
     pageSize: 50,
   });
 
   const providerInfo =
-    providersData?.data?.map((provider: ProviderProps) => ({
-      providerId: provider.id,
-      alias: provider.attributes.alias,
-      providerType: provider.attributes.provider,
-      uid: provider.attributes.uid,
-      connected: provider.attributes.connection.connected,
-    })) || [];
+    providersData?.data
+      ?.filter(
+        (provider: ProviderProps) =>
+          provider.attributes.connection.connected === true,
+      )
+      .map((provider: ProviderProps) => ({
+        providerId: provider.id,
+        alias: provider.attributes.alias,
+        providerType: provider.attributes.provider,
+        uid: provider.attributes.uid,
+        connected: provider.attributes.connection.connected,
+      })) || [];
 
-  const thereIsNoProviders = !providersData?.data;
+  const thereIsNoProviders =
+    !providersData?.data || providersData.data.length === 0;
 
   const thereIsNoProvidersConnected = providersData?.data?.every(
     (provider: ProviderProps) => !provider.attributes.connection.connected,
   );
+
+  const hasManageScansPermission = session?.user?.permissions?.manage_scans;
 
   // Get scans data to check for executing scans
   const scansData = await getScansByState();
@@ -79,7 +87,12 @@ export default async function Scans({
     <ContentLayout title="Scans" icon="lucide:scan-search">
       <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
-        {thereIsNoProvidersConnected ? (
+        {!hasManageScansPermission ? (
+          <CustomBanner
+            title={"Access Denied"}
+            message={"You don't have permission to launch the scan."}
+          />
+        ) : thereIsNoProvidersConnected ? (
           <>
             <Spacer y={8} />
             <NoProvidersConnected />
@@ -88,6 +101,7 @@ export default async function Scans({
         ) : (
           <LaunchScanWorkflow providers={providerInfo} />
         )}
+
         <ScansFilters
           providerUIDs={providerUIDs}
           providerDetails={providerDetails}

@@ -1,6 +1,6 @@
 ## Running Prowler
 
-Running Prowler requires specifying the provider (e.g `aws`, `gcp`, `azure`, `m365`, `github` or `kubernetes`):
+Running Prowler requires specifying the provider (e.g `aws`, `gcp`, `azure`, `kubernetes`, `m365`, `github`, `iac` or `mongodbatlas`):
 
 ???+ note
     If no provider is specified, AWS is used by default for backward compatibility with Prowler v2.
@@ -11,7 +11,7 @@ prowler <provider>
 ![Prowler Execution](../img/short-display.png)
 
 ???+ note
-    Running the `prowler` command without options will uses environment variable credentials. Refer to the [Requirements](../getting-started/requirements.md) section for credential configuration details.
+    Running the `prowler` command without options will uses environment variable credentials. Refer to the Authentication section of each provider for credential configuration details.
 
 ## Verbose Output
 
@@ -77,7 +77,7 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ???+ note
     By default, `prowler` will scan all AWS regions.
 
-See more details about AWS Authentication in the [Requirements](../getting-started/requirements.md#aws) section.
+See more details about AWS Authentication in the [Authentication Section](../tutorials/aws/authentication.md) section.
 
 ## Azure
 
@@ -97,7 +97,7 @@ prowler azure --browser-auth --tenant-id "XXXXXXXX"
 prowler azure --managed-identity-auth
 ```
 
-See more details about Azure Authentication in [Requirements](../getting-started/requirements.md#azure)
+See more details about Azure Authentication in the [Authentication Section](../tutorials/azure/authentication.md)
 
 By default, Prowler scans all accessible subscriptions. Scan specific subscriptions using the following flag (using az cli auth as example):
 
@@ -193,7 +193,7 @@ prowler m365 --browser-auth --tenant-id "XXXXXXXX"
 
 ```
 
-See more details about M365 Authentication in the [Requirements](../getting-started/requirements.md#microsoft-365) section.
+See more details about M365 Authentication in the [Authentication Section](../tutorials/microsoft365/authentication.md) section.
 
 ## GitHub
 
@@ -255,3 +255,28 @@ prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/tes
     - For more details on supported scanners, see the [Trivy documentation](https://trivy.dev/latest/docs/scanner/vulnerability/)
 
 See more details about IaC scanning in the [IaC Tutorial](../tutorials/iac/getting-started-iac.md) section.
+
+## MongoDB Atlas
+
+Prowler allows you to scan your MongoDB Atlas cloud database deployments for security and compliance issues.
+
+Authentication is done using MongoDB Atlas API key pairs:
+
+```console
+# Using command-line arguments
+prowler mongodbatlas --atlas-public-key <public_key> --atlas-private-key <private_key>
+
+# Using environment variables
+export ATLAS_PUBLIC_KEY=<public_key>
+export ATLAS_PRIVATE_KEY=<private_key>
+prowler mongodbatlas
+```
+
+You can filter scans to specific organizations or projects:
+
+```console
+# Scan specific project
+prowler mongodbatlas --atlas-project-id <project_id>
+```
+
+See more details about MongoDB Atlas Authentication in [MongoDB Atlas Authentication](../tutorials/mongodbatlas/authentication.md)

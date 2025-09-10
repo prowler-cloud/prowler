@@ -21,7 +21,7 @@ Prowler allows you to specify one or more subscriptions for scanning (up to N), 
 
 To perform scans, ensure that the identity assumed by Prowler has the appropriate permissions.
 
-By default, Prowler scans all accessible subscriptions. If you need to audit specific subscriptions, you must assign the necessary role `Reader` for each one. For streamlined and less repetitive role assignments in multi-subscription environments, refer to the [following section](#recommendation-for-multiple-subscriptions).
+By default, Prowler scans all accessible subscriptions. If you need to audit specific subscriptions, you must assign the necessary role `Reader` for each one. For streamlined and less repetitive role assignments in multi-subscription environments, refer to the [following section](#recommendation-for-managing-multiple-subscriptions).
 
 ### Assigning the Reader Role in Azure Portal
 
@@ -76,7 +76,7 @@ Navigate to the subscription you want to audit with Prowler.
 
 Some read-only permissions required for specific security checks are not included in the built-in Reader role. To support these checks, Prowler utilizes a custom role, defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Once created, this role can be assigned following the same process as the `Reader` role.
 
-The checks requiring this `ProwlerRole` can be found in the [requirements section](../../getting-started/requirements.md#checks-that-require-prowlerrole).
+The checks requiring this `ProwlerRole` can be found in this [section](../../tutorials/azure/authentication.md#checks-requiring-prowlerrole).
 
 #### Create ProwlerRole via Azure Portal
 
@@ -152,7 +152,7 @@ Scanning multiple subscriptions requires creating and assigning roles for each, 
 
     ![Create management group](../../img/create-management-group.gif)
 
-2. **Assign Roles**: Assign necessary roles to the management group, similar to the [role assignment process](#assign-the-appropriate-permissions-to-the-identity-that-is-going-to-be-assumed-by-prowler).
+2. **Assign Roles**: Assign necessary roles to the management group, similar to the [role assignment process](#assigning-permissions-for-subscription-scans).
 
     Role assignment should be done at the management group level instead of per subscription.
 

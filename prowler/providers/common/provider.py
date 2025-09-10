@@ -202,6 +202,7 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        skip_api_check=arguments.skip_api_check,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
@@ -264,6 +265,15 @@ class Provider(ABC):
                     provider_class(
                         max_concurrency=arguments.max_concurrency,
                         config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "mongodbatlas" in provider_class_name.lower():
+                    provider_class(
+                        atlas_public_key=arguments.atlas_public_key,
+                        atlas_private_key=arguments.atlas_private_key,
+                        atlas_project_id=arguments.atlas_project_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
 

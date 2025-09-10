@@ -2,7 +2,60 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.11.0] (Prowler UNRELEASED)
+## [v5.13.0] (Prowler UNRELEASED)
+
+### Added
+- Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
+- Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
+### Changed
+- Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
+
+### Changed
+- Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
+### Fixed
+
+## [v5.12.1] (Prowler v5.12.1)
+
+### Fixed
+- Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+
+## [v5.12.0] (Prowler v5.12.0)
+
+### Added
+- Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
+- Support labels on Jira tickets [(#8603)](https://github.com/prowler-cloud/prowler/pull/8603)
+- Add finding url and tenant info inside Jira tickets [(#8607)](https://github.com/prowler-cloud/prowler/pull/8607)
+- Get Jira Project's metadata [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
+- Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
+- `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
+- Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
+- `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
+- Send finding in Jira integration with the needed values [(#8648)](https://github.com/prowler-cloud/prowler/pull/8648)
+- Add language enforcement for Jira requests [(#8674)](https://github.com/prowler-cloud/prowler/pull/8674)
+- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
+  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
+  - `clusters_backup_enabled` - Ensure clusters have backup enabled
+  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
+  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
+  - `organizations_api_access_list_required` - Ensure organization requires API access list
+  - `organizations_mfa_required` - Ensure organization requires MFA
+  - `organizations_security_contact_defined` - Ensure organization has security contact defined
+  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
+  - `projects_auditing_enabled` - Ensure database auditing is enabled
+  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
+
+### Changed
+- Rename ftp and mongo checks to follow pattern `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_*` [(#8293)](https://github.com/prowler-cloud/prowler/pull/8293)
+
+### Fixed
+- Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
+- TypeError from Python 3.9 in Security Hub module by updating type annotations [(#8619)](https://github.com/prowler-cloud/prowler/pull/8619)
+- KeyError when SecurityGroups field is missing in MemoryDB check [(#8666)](https://github.com/prowler-cloud/prowler/pull/8666)
+- NoneType error in Opensearch, Firehose and Cognito checks [(#8670)](https://github.com/prowler-cloud/prowler/pull/8670)
+
+---
+
+## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
 - Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
@@ -11,24 +64,25 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Bedrock AgentCore privilege escalation combination for AWS provider [(#8526)](https://github.com/prowler-cloud/prowler/pull/8526)
 - Add User Email and APP name/installations information in GitHub provider [(#8501)](https://github.com/prowler-cloud/prowler/pull/8501)
 - Remove standalone iam:PassRole from privesc detection and add missing patterns [(#8530)](https://github.com/prowler-cloud/prowler/pull/8530)
+- Support session/profile/role/static credentials in Security Hub integration [(#8539)](https://github.com/prowler-cloud/prowler/pull/8539)
 - `eks_cluster_deletion_protection_enabled` check for AWS provider [(#8536)](https://github.com/prowler-cloud/prowler/pull/8536)
 - ECS privilege escalation patterns (StartTask and RunTask) for AWS provider [(#8541)](https://github.com/prowler-cloud/prowler/pull/8541)
-
+- Resource Explorer enumeration v2 API actions in `cloudtrail_threat_detection_enumeration` check [(#8557)](https://github.com/prowler-cloud/prowler/pull/8557)
+- `apim_threat_detection_llm_jacking` check for Azure provider [(#8571)](https://github.com/prowler-cloud/prowler/pull/8571)
+- GCP `--skip-api-check` command line flag [(#8575)](https://github.com/prowler-cloud/prowler/pull/8575)
 
 ### Changed
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
+- Improve AWS Security Hub region check using multiple threads [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 
 ### Fixed
-
----
-
-## [v5.10.3] (Prowler UNRELEASED)
-
-### Fixed
+- Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
+- GitHub App authentication through API fails with auth_method validation error [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
 - AWS resource-arn filtering [(#8533)](https://github.com/prowler-cloud/prowler/pull/8533)
 - GitHub App authentication for GitHub provider [(#8529)](https://github.com/prowler-cloud/prowler/pull/8529)
 - List all accessible organizations in GitHub provider [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
 - Only evaluate enabled accounts in `entra_users_mfa_capable` check [(#8544)](https://github.com/prowler-cloud/prowler/pull/8544)
+- GitHub Personal Access Token authentication fails without `user:email` scope [(#8580)](https://github.com/prowler-cloud/prowler/pull/8580)
 
 ---
 

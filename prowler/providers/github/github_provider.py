@@ -156,7 +156,7 @@ class GithubProvider(Provider):
             self._auth_method = "Personal Access Token"
         elif oauth_app_token:
             self._auth_method = "OAuth App Token"
-        elif github_app_id and github_app_key:
+        elif github_app_id and (github_app_key or github_app_key_content):
             self._auth_method = "GitHub App Token"
         elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
             self._auth_method = "Environment Variable for Personal Access Token"
@@ -351,11 +351,21 @@ class GithubProvider(Provider):
                 g = Github(auth=auth, retry=retry_config)
                 try:
                     user = g.get_user()
+                    # Try to get email if the token has the necessary scope
+                    account_email = None
+                    try:
+                        emails = user.get_emails()
+                        if emails:
+                            account_email = emails[0].email
+                    except Exception:
+                        # Token doesn't have user:email scope or other API error
+                        pass
+
                     identity = GithubIdentityInfo(
                         account_id=user.id,
                         account_name=user.login,
                         account_url=user.url,
-                        account_email=user.get_emails()[0].email,
+                        account_email=account_email,
                     )
                     return identity
 
@@ -405,9 +415,14 @@ class GithubProvider(Provider):
             report_lines = [
                 f"GitHub Account: {Fore.YELLOW}{self.identity.account_name}{Style.RESET_ALL}",
                 f"GitHub Account ID: {Fore.YELLOW}{self.identity.account_id}{Style.RESET_ALL}",
-                f"GitHub Account Email: {Fore.YELLOW}{self.identity.account_email}{Style.RESET_ALL}",
-                f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
+            if self.identity.account_email:
+                report_lines.append(
+                    f"GitHub Account Email: {Fore.YELLOW}{self.identity.account_email}{Style.RESET_ALL}"
+                )
+            report_lines.append(
+                f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}"
+            )
         elif isinstance(self.identity, GithubAppIdentityInfo):
             report_lines = [
                 f"GitHub App ID: {Fore.YELLOW}{self.identity.app_id}{Style.RESET_ALL}",

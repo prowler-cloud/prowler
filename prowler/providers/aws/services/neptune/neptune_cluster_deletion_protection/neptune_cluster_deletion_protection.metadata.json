@@ -1,29 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_deletion_protection",
-  "CheckTitle": "Check if Neptune Clusters storage has deletion protection enabled.",
-  "CheckType": [],
+  "CheckTitle": "Neptune cluster has deletion protection enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Destruction"
+  ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if Neptune Clusters storage has deletion protection enabled.",
-  "Risk": "Enabling cluster deletion protection offers an additional layer of protection against accidental database deletion or deletion by an unauthorized user. A Neptune DB cluster can't be deleted while deletion protection is enabled. You must first disable deletion protection before a delete request can succeed.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-4",
+  "ResourceType": "Other",
+  "Description": "Neptune DB cluster has **deletion protection** enabled.",
+  "Risk": "Absence of **deletion protection** weakens **availability** and **integrity**: clusters can be removed by accidental admin actions, rogue automation, or compromised credentials.\n\nCluster deletion causes immediate service outage, potential permanent data loss, and extended recovery time if backups or restores are insufficient.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-4"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_IDENTIFIER> --deletion-protection --apply-immediately",
+      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: <CLUSTER_ID>\n      DeletionProtection: true  # Prevent accidental or malicious cluster deletion\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier  = \"<CLUSTER_ID>\"\n  deletion_protection = true  # Prevent accidental or malicious cluster deletion\n}\n```",
+      "Other": "1. Sign in to the AWS Management Console and open Amazon Neptune\n2. In the navigation pane, choose Databases\n3. Select the DB cluster and choose Modify\n4. Enable Deletion protection\n5. Choose Apply immediately (if shown) and then Modify DB cluster"
     },
     "Recommendation": {
-      "Text": "Enable deletion protection for production Neptune Clusters.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-4"
+      "Text": "Enable **deletion protection** for production Neptune clusters and apply the principles of **least privilege** and **separation of duties** for delete operations.\n\nEnforce change-control approvals, restrict delete permissions to audited roles, and limit automated workflows that can perform destructive actions to prevent accidental or malicious deletions.",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_deletion_protection"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
