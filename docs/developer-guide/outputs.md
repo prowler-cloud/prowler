@@ -101,6 +101,7 @@ Prowler supports multiple output formats, allowing users to tailor findings pres
                     finding_dict["DESCRIPTION"] = finding.metadata.Description
                     finding_dict["RISK"] = finding.metadata.Risk
                     finding_dict["RELATED_URL"] = finding.metadata.RelatedUrl
+                    finding_dict["ADDITIONAL_URLS"] = unroll_list(finding.metadata.AdditionalURLs)
                     finding_dict["REMEDIATION_RECOMMENDATION_TEXT"] = (
                         finding.metadata.Remediation.Recommendation.Text
                     )

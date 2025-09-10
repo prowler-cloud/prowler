@@ -15,6 +15,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api.exceptions import ConflictException
 from api.models import (
     Finding,
     Integration,
@@ -45,6 +46,8 @@ from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
     IntegrationConfigField,
     IntegrationCredentialField,
+    JiraConfigSerializer,
+    JiraCredentialSerializer,
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
 )
@@ -1952,18 +1955,33 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
     def validate(self, attrs):
+        integration_type = attrs.get("integration_type")
+
         if (
-            attrs.get("integration_type") == Integration.IntegrationChoices.AMAZON_S3
+            integration_type == Integration.IntegrationChoices.AMAZON_S3
             and Integration.objects.filter(
                 configuration=attrs.get("configuration")
             ).exists()
         ):
-            raise serializers.ValidationError(
-                {"configuration": "This integration already exists."}
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
+            )
+
+        if (
+            integration_type == Integration.IntegrationChoices.JIRA
+            and Integration.objects.filter(
+                configuration__contains={
+                    "domain": attrs.get("configuration").get("domain")
+                }
+            ).exists()
+        ):
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
             )
 
         # Check if any provider already has a SecurityHub integration
-        integration_type = attrs.get("integration_type")
         if hasattr(self, "instance") and self.instance and not integration_type:
             integration_type = self.instance.integration_type
 
@@ -1984,10 +2002,10 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     query = query.exclude(integration=self.instance)
 
                 if query.exists():
-                    raise serializers.ValidationError(
-                        {
-                            "providers": f"Provider {provider.id} already has a Security Hub integration. Only one Security Hub integration is allowed per provider."
-                        }
+                    raise ConflictException(
+                        detail=f"Provider {provider.id} already has a Security Hub integration. Only one "
+                        "Security Hub integration is allowed per provider.",
+                        pointer="/data/relationships/providers",
                     )
 
         return super().validate(attrs)
@@ -2018,6 +2036,30 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     )
             config_serializer = SecurityHubConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
+        elif integration_type == Integration.IntegrationChoices.JIRA:
+            if providers:
+                raise serializers.ValidationError(
+                    {
+                        "providers": "Relationship field is not accepted. This integration applies to all providers."
+                    }
+                )
+            if configuration:
+                raise serializers.ValidationError(
+                    {
+                        "configuration": "This integration does not support custom configuration."
+                    }
+                )
+            config_serializer = JiraConfigSerializer
+            # Create non-editable configuration for JIRA integration
+            default_jira_issue_types = ["Task"]
+            configuration.update(
+                {
+                    "projects": {},
+                    "issue_types": default_jira_issue_types,
+                    "domain": credentials.get("domain"),
+                }
+            )
+            credentials_serializers = [JiraCredentialSerializer]
         else:
             raise serializers.ValidationError(
                 {
@@ -2081,6 +2123,10 @@ class IntegrationSerializer(RLSSerializer):
                 for provider in representation["providers"]
                 if provider["id"] in allowed_provider_ids
             ]
+        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+            representation["configuration"].update(
+                {"domain": instance.credentials.get("domain")}
+            )
         return representation
 
 
@@ -2122,9 +2168,7 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
             and integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
         ):
             raise serializers.ValidationError(
-                {
-                    "providers": "At least one provider is required for the Security Hub integration."
-                }
+                {"providers": "At least one provider is required for this integration."}
             )
 
         self.validate_integration_data(
@@ -2183,7 +2227,10 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
     def validate(self, attrs):
         integration_type = self.instance.integration_type
         providers = attrs.get("providers")
-        configuration = attrs.get("configuration") or self.instance.configuration
+        if integration_type != Integration.IntegrationChoices.JIRA:
+            configuration = attrs.get("configuration") or self.instance.configuration
+        else:
+            configuration = attrs.get("configuration", {})
         credentials = attrs.get("credentials") or self.instance.credentials
 
         self.validate_integration_data(
@@ -2212,6 +2259,53 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
                 validated_data["configuration"]["regions"] = existing_regions
 
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Ensure JIRA integrations show updated domain in configuration from credentials
+        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+            representation["configuration"].update(
+                {"domain": instance.credentials.get("domain")}
+            )
+        return representation
+
+
+class IntegrationJiraDispatchSerializer(serializers.Serializer):
+    """
+    Serializer for dispatching findings to JIRA integration.
+    """
+
+    project_key = serializers.CharField(required=True)
+    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+
+    class JSONAPIMeta:
+        resource_name = "integrations-jira-dispatches"
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        integration_instance = Integration.objects.get(
+            id=self.context.get("integration_id")
+        )
+        if integration_instance.integration_type != Integration.IntegrationChoices.JIRA:
+            raise ValidationError(
+                {"integration_type": "The given integration is not a JIRA integration"}
+            )
+
+        if not integration_instance.enabled:
+            raise ValidationError(
+                {"integration": "The given integration is not enabled"}
+            )
+
+        project_key = attrs.get("project_key")
+        if project_key not in integration_instance.configuration.get("projects", {}):
+            raise ValidationError(
+                {
+                    "project_key": "The given project key is not available for this JIRA integration. Refresh the "
+                    "connection if this is an error."
+                }
+            )
+
+        return validated_attrs
 
 
 # Processors

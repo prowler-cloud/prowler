@@ -108,6 +108,13 @@ REST_FRAMEWORK = {
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
     "JSON_API_UNIFORM_EXCEPTIONS": True,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
+        "dj_rest_auth": None,
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -115,6 +122,9 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "PREPROCESSING_HOOKS": [
         "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
+    ],
+    "POSTPROCESSING_HOOKS": [
+        "api.schema_hooks.attach_task_202_examples",
     ],
     "TITLE": "API Reference - Prowler",
 }

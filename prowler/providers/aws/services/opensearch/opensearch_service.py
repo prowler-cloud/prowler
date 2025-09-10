@@ -79,7 +79,7 @@ class OpenSearchService(AWSService):
                 "AdvancedSecurityOptions"
             ].get("Enabled", False)
             cluster_config = describe_domain["DomainStatus"].get("ClusterConfig", {})
-            domain.instance_count = cluster_config.get("InstanceCount", None)
+            domain.instance_count = cluster_config.get("InstanceCount", 0)
             domain.zone_awareness_enabled = cluster_config.get(
                 "ZoneAwarenessEnabled", False
             )
@@ -155,10 +155,10 @@ class OpenSearchDomain(BaseModel):
     saml_enabled: bool = None
     update_available: bool = None
     version: str = None
-    instance_count: Optional[int]
+    instance_count: int = 0
     zone_awareness_enabled: Optional[bool]
     tags: Optional[list] = []
     advanced_settings_enabled: bool = None
     dedicated_master_enabled: Optional[bool]
-    dedicated_master_count: Optional[int]
+    dedicated_master_count: int = 0
     tags: Optional[list] = []
