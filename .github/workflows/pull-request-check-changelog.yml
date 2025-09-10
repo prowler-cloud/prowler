@@ -13,7 +13,7 @@ jobs:
       contents: read
       pull-requests: write
     env:
-      MONITORED_FOLDERS: "api ui prowler"
+      MONITORED_FOLDERS: "api ui prowler dashboard"
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

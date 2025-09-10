@@ -1,6 +1,21 @@
 # Prowler SDK Changelog
 
 All notable changes to the **Prowler SDK** are documented in this file.
+
+## [v5.13.0] (Prowler UNRELEASED)
+
+### Added
+- Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
+### Changed
+- Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
+
+### Fixed
+
+## [v5.12.1] (Prowler v5.12.1)
+
+### Fixed
+- Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+
 ## [v5.12.0] (Prowler v5.12.0)
 
 ### Added
