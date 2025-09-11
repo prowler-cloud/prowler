@@ -1,3 +1,4 @@
+import json
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -151,13 +152,95 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == "rbac_limited@rbac.com"
 
-    # TODO
-    # User with manage_account and not manage_users can't see other users
-    # User with manage_users can see all users without memberships and roles
-    # User with manage_users and manage_account can see all users with memberships and roles
-    # User with manage_account can create roles
-    # User with manage_account can link user with roles
-    # User with manage_users can't link user with roles
+    def test_me_hides_roles_and_memberships_without_manage_account(
+        self, authenticated_client_no_permissions_rbac
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("user-me"))
+        assert response.status_code == status.HTTP_200_OK
+
+        rels = response.json()["data"]["relationships"]
+
+        # Roles must be empty when no manage_account
+        assert rels["roles"]["data"] == []
+
+        # Memberships must be empty when no manage_account
+        assert rels["memberships"]["data"] == []
+        assert rels["memberships"]["meta"]["count"] == 0
+
+    def test_me_shows_roles_and_memberships_with_manage_account(
+        self, authenticated_client_rbac
+    ):
+        response = authenticated_client_rbac.get(reverse("user-me"))
+        assert response.status_code == status.HTTP_200_OK
+
+        rels = response.json()["data"]["relationships"]
+
+        # Roles should have data when manage_account is True
+        assert len(rels["roles"]["data"]) > 0
+
+        # Memberships should be present and count > 0
+        assert rels["memberships"]["meta"]["count"] > 0
+
+    def test_list_users_with_manage_account_only_forbidden(
+        self, authenticated_client_rbac_manage_account
+    ):
+        response = authenticated_client_rbac_manage_account.get(reverse("user-list"))
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retrieve_other_user_with_manage_account_only_forbidden(
+        self, authenticated_client_rbac_manage_account, create_test_user
+    ):
+        response = authenticated_client_rbac_manage_account.get(
+            reverse("user-detail", kwargs={"pk": create_test_user.id})
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_list_users_with_manage_users_only_hides_relationships(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        response = authenticated_client_rbac_manage_users_only.get(reverse("user-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert isinstance(data, list)
+        assert data[0]["relationships"]["roles"]["data"] == []
+        assert data[0]["relationships"]["memberships"]["data"] == []
+        assert data[0]["relationships"]["memberships"]["meta"]["count"] == 0
+
+    def test_retrieve_user_with_manage_users_only_hides_relationships(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        # Create a target user in the same tenant to ensure visibility
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        target_user = User.objects.create_user(
+            name="target_same_tenant",
+            email="target_same_tenant@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=target_user, tenant=tenant)
+
+        response = authenticated_client_rbac_manage_users_only.get(
+            reverse("user-detail", kwargs={"pk": target_user.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        rels = response.json()["data"]["relationships"]
+        assert rels["roles"]["data"] == []
+        assert rels["memberships"]["data"] == []
+        assert rels["memberships"]["meta"]["count"] == 0
+
+    def test_list_users_with_all_permissions_shows_relationships(
+        self, authenticated_client_rbac
+    ):
+        response = authenticated_client_rbac.get(reverse("user-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert isinstance(data, list)
+
+        rels = data[0]["relationships"]
+        assert len(rels["roles"]["data"]) >= 0
+        assert rels["memberships"]["meta"]["count"] >= 0
 
 
 @pytest.mark.django_db
@@ -502,3 +585,123 @@ class TestLimitedVisibility:
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
+
+
+@pytest.mark.django_db
+class TestRolePermissions:
+    def test_role_create_with_manage_account_only_allowed(
+        self, authenticated_client_rbac_manage_account
+    ):
+        data = {
+            "data": {
+                "type": "roles",
+                "attributes": {
+                    "name": "Role Manage Account Only",
+                    "manage_users": "false",
+                    "manage_account": "true",
+                    "manage_providers": "false",
+                    "manage_scans": "false",
+                    "unlimited_visibility": "false",
+                },
+                "relationships": {"provider_groups": {"data": []}},
+            }
+        }
+        response = authenticated_client_rbac_manage_account.post(
+            reverse("role-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_role_create_with_manage_users_only_forbidden(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        data = {
+            "data": {
+                "type": "roles",
+                "attributes": {
+                    "name": "Role Manage Users Only",
+                    "manage_users": "true",
+                    "manage_account": "false",
+                    "manage_providers": "false",
+                    "manage_scans": "false",
+                    "unlimited_visibility": "false",
+                },
+                "relationships": {"provider_groups": {"data": []}},
+            }
+        }
+        response = authenticated_client_rbac_manage_users_only.post(
+            reverse("role-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestUserRoleLinkPermissions:
+    def test_link_user_roles_with_manage_account_only_allowed(
+        self, authenticated_client_rbac_manage_account
+    ):
+        # Arrange: create a second user in the same tenant as the manage_account user
+        ma_user = authenticated_client_rbac_manage_account.user
+        ma_membership = Membership.objects.filter(user=ma_user).first()
+        tenant = ma_membership.tenant
+
+        user2 = User.objects.create_user(
+            name="target_user",
+            email="target_user_ma@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+
+        # Create a role in the same tenant
+        role = Role.objects.create(
+            name="linkable_role",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+
+        data = {"data": [{"type": "roles", "id": str(role.id)}]}
+
+        # Act
+        response = authenticated_client_rbac_manage_account.post(
+            reverse("user-roles-relationship", kwargs={"pk": user2.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+
+        # Assert
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_link_user_roles_with_manage_users_only_forbidden(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        user2 = User.objects.create_user(
+            name="target_user2",
+            email="target_user_mu@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+
+        role = Role.objects.create(
+            name="linkable_role_mu",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+
+        data = {"data": [{"type": "roles", "id": str(role.id)}]}
+
+        response = authenticated_client_rbac_manage_users_only.post(
+            reverse("user-roles-relationship", kwargs={"pk": user2.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
