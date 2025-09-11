@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Tooltip } from "@nextui-org/react";
+import { Button, Checkbox, Divider } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,7 @@ import { z } from "zod";
 import { authenticate, createNewUser } from "@/actions/auth";
 import { initiateSamlAuth } from "@/actions/integrations/saml";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
+import { SocialButtons } from "@/components/auth/oss/social-buttons";
 import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
@@ -354,70 +355,12 @@ export const AuthForm = ({
               </div>
               <div className="flex flex-col gap-2">
                 {!isSamlMode && (
-                  <>
-                    <Tooltip
-                      content={
-                        <div className="flex-inline text-small">
-                          Social Login with Google is not enabled.{" "}
-                          <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration">
-                            Read the docs
-                          </CustomLink>
-                        </div>
-                      }
-                      placement="right-start"
-                      shadow="sm"
-                      isDisabled={isGoogleOAuthEnabled}
-                      className="w-96"
-                    >
-                      <span>
-                        <Button
-                          startContent={
-                            <Icon icon="flat-color-icons:google" width={24} />
-                          }
-                          variant="bordered"
-                          className="w-full"
-                          as="a"
-                          href={googleAuthUrl}
-                          isDisabled={!isGoogleOAuthEnabled}
-                        >
-                          Continue with Google
-                        </Button>
-                      </span>
-                    </Tooltip>
-                    <Tooltip
-                      content={
-                        <div className="flex-inline text-small">
-                          Social Login with Github is not enabled.{" "}
-                          <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration">
-                            Read the docs
-                          </CustomLink>
-                        </div>
-                      }
-                      placement="right-start"
-                      shadow="sm"
-                      isDisabled={isGithubOAuthEnabled}
-                      className="w-96"
-                    >
-                      <span>
-                        <Button
-                          startContent={
-                            <Icon
-                              className="text-default-500"
-                              icon="fe:github"
-                              width={24}
-                            />
-                          }
-                          variant="bordered"
-                          className="w-full"
-                          as="a"
-                          href={githubAuthUrl}
-                          isDisabled={!isGithubOAuthEnabled}
-                        >
-                          Continue with Github
-                        </Button>
-                      </span>
-                    </Tooltip>
-                  </>
+                  <SocialButtons
+                    googleAuthUrl={googleAuthUrl}
+                    githubAuthUrl={githubAuthUrl}
+                    isGoogleOAuthEnabled={isGoogleOAuthEnabled}
+                    isGithubOAuthEnabled={isGithubOAuthEnabled}
+                  />
                 )}
                 <Button
                   startContent={
@@ -437,6 +380,23 @@ export const AuthForm = ({
                 >
                   {isSamlMode ? "Back" : "Continue with SAML SSO"}
                 </Button>
+              </div>
+            </>
+          )}
+          {!invitationToken && type === "sign-up" && (
+            <>
+              <div className="flex items-center gap-4 py-2">
+                <Divider className="flex-1" />
+                <p className="shrink-0 text-tiny text-default-500">OR</p>
+                <Divider className="flex-1" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <SocialButtons
+                  googleAuthUrl={googleAuthUrl}
+                  githubAuthUrl={githubAuthUrl}
+                  isGoogleOAuthEnabled={isGoogleOAuthEnabled}
+                  isGithubOAuthEnabled={isGithubOAuthEnabled}
+                />
               </div>
             </>
           )}

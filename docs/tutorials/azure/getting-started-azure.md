@@ -4,6 +4,9 @@
 
 Set up your Azure subscription to enable security scanning using Prowler Cloud/App.
 
+???+ note "Government Cloud Support"
+    Government cloud subscriptions (Azure Government) are not currently supported, but we expect to add support for them in the near future.
+
 ## Requirements
 
 To configure your Azure subscription, you’ll need:

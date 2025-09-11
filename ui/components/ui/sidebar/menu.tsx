@@ -105,7 +105,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 className={cn(
                   "w-full",
                   groupLabel ? "pt-2" : "",
-                  "last:!mt-auto",
+                  index === filteredMenuList.length - 2 && "!mt-auto",
                 )}
                 key={index}
               >
@@ -138,8 +138,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                     active,
                     submenus,
                     defaultOpen,
+                    target,
+                    tooltip,
                   } = menu;
-
                   return !submenus || submenus.length === 0 ? (
                     <div className="w-full" key={index}>
                       <TooltipProvider disableHoverableContent>
@@ -156,7 +157,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               className="mb-1 h-8 w-full justify-start"
                               asChild
                             >
-                              <Link href={href}>
+                              <Link href={href} target={target}>
                                 <span
                                   className={cn(isOpen === false ? "" : "mr-4")}
                                 >
@@ -175,9 +176,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               </Link>
                             </Button>
                           </TooltipTrigger>
-                          {isOpen === false && (
+                          {tooltip && (
                             <TooltipContent side="right">
-                              {label}
+                              {tooltip}
                             </TooltipContent>
                           )}
                         </Tooltip>

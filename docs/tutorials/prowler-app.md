@@ -1,6 +1,6 @@
 # Prowler App
 
-**Prowler App** is a user-friendly interface for Prowler CLI, providing a visual dashboard to monitor your cloud security posture. This tutorial will guide you through setting up and using Prowler App.
+**Prowler App** is a web application that simplifies running Prowler. This tutorial will guide you through setting up and using it.
 
 ## Accessing Prowler App and API Documentation
 
@@ -39,7 +39,7 @@ Upon logging in, the Overview page will display. At this stage, no data is prese
 
 ## **Step 3: Add a Provider**
 
-To perform security scans, link a cloud provider account. Prowler supports the following providers:
+To perform security scans, link a cloud provider account. Prowler supports the following providers and more:
 
 - **AWS**
 
@@ -50,6 +50,8 @@ To perform security scans, link a cloud provider account. Prowler supports the f
 - **Kubernetes**
 
 - **M365**
+
+- **GitHub**
 
 Steps to add a provider:
 
