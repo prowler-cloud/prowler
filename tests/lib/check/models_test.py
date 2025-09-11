@@ -720,9 +720,8 @@ class TestCheckMetada:
 
 
 class TestCheck:
-    @mock.patch("prowler.lib.check.models.logger")
     @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
-    def test_verify_names_consistency_all_match(self, mock_parse_file, mock_logger):
+    def test_verify_names_consistency_all_match(self, mock_parse_file):
         """Case where everything matches: CheckID == class_name == file_name"""
         mock_parse_file.return_value = mock_metadata.copy(
             update={
@@ -741,13 +740,8 @@ class TestCheck:
 
         accessanalyzer_enabled()
 
-        mock_logger.error.assert_not_called()
-
-    @mock.patch("prowler.lib.check.models.logger")
     @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
-    def test_verify_names_consistency_class_mismatch(
-        self, mock_parse_file, mock_logger
-    ):
+    def test_verify_names_consistency_class_mismatch(self, mock_parse_file):
         """CheckID != class name, but matches file_name"""
         mock_parse_file.return_value = mock_metadata.copy(
             update={
@@ -764,15 +758,13 @@ class TestCheck:
         fake_module.__file__ = "/path/to/accessanalyzer_enabled.py"
         sys.modules[WrongClass.__module__] = fake_module
 
-        WrongClass()
+        with pytest.raises(ValidationError) as excinfo:
+            WrongClass()
 
-        mock_logger.error.assert_called()
-        msg = mock_logger.error.call_args[0][0]
-        assert "!= class name" in msg
+        assert "!= class name" in str(excinfo.value)
 
-    @mock.patch("prowler.lib.check.models.logger")
     @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
-    def test_verify_names_consistency_file_mismatch(self, mock_parse_file, mock_logger):
+    def test_verify_names_consistency_file_mismatch(self, mock_parse_file):
         """CheckID == class name, but != file_name"""
         mock_parse_file.return_value = mock_metadata.copy(
             update={
@@ -789,15 +781,13 @@ class TestCheck:
         fake_module.__file__ = "/path/to/OtherFile.py"
         sys.modules[accessanalyzer_enabled.__module__] = fake_module
 
-        accessanalyzer_enabled()
+        with pytest.raises(ValidationError) as excinfo:
+            accessanalyzer_enabled()
 
-        mock_logger.error.assert_called()
-        msg = mock_logger.error.call_args[0][0]
-        assert "!= file name" in msg
+        assert "!= file name" in str(excinfo.value)
 
-    @mock.patch("prowler.lib.check.models.logger")
     @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
-    def test_verify_names_consistency_both_mismatch(self, mock_parse_file, mock_logger):
+    def test_verify_names_consistency_both_mismatch(self, mock_parse_file):
         """Neither class name nor file name match the CheckID"""
         mock_parse_file.return_value = mock_metadata.copy(
             update={
@@ -814,9 +804,9 @@ class TestCheck:
         fake_module.__file__ = "/path/to/OtherFile.py"
         sys.modules[WrongClass.__module__] = fake_module
 
-        WrongClass()
+        with pytest.raises(ValidationError) as excinfo:
+            WrongClass()
 
-        mock_logger.error.assert_called()
-        msg = mock_logger.error.call_args[0][0]
+        msg = str(excinfo.value)
         assert "!= class name" in msg
         assert "!= file name" in msg

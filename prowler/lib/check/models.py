@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Any, Dict, Optional, Set
 
 from pydantic.v1 import BaseModel, Field, ValidationError, validator
+from pydantic.v1.error_wrappers import ErrorWrapper
 
 from prowler.config.config import Provider
 from prowler.lib.check.compliance_models import Compliance
@@ -457,10 +458,10 @@ class Check(ABC, CheckMetadata):
             errors.append(f"CheckID '{check_id}' != file name '{file_name}'")
 
         if errors:
-            logger.error(
-                "Name consistency error. The CheckID in the metadata, the class name "
-                "and the file name must all match.  -- " + " | ".join(errors)
-            )
+            formatted_errors = [
+                ErrorWrapper(ValueError(err), loc=("CheckID",)) for err in errors
+            ]
+            raise ValidationError(formatted_errors, model=CheckMetadata)
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""
