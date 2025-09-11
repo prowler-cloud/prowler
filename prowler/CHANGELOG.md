@@ -2,10 +2,26 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [v5.13.0] (Prowler UNRELEASED)
+
+### Added
+- Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
+- Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
+
+### Changed
+- Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
+- Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
+
+### Fixed
+
+>>>>>>> 14c2334e1 (fix(defender): change policies rules key (#8702))
 ## [v5.12.1] (Prowler v5.12.1)
 
 ### Fixed
 - Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+- Replace defender rules policies key to use old name [(#8702)](https://github.com/prowler-cloud/prowler/pull/8702)
 
 ## [v5.12.0] (Prowler v5.12.0)
 
