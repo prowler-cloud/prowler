@@ -2,6 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.13.0] (Prowler unreleased)
+
+### 🚀 Added
+- Support for AdditionalURLs in findings detail page [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+- Support for AdditionalURLs in UI [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
+
 ## [1.12.1] (Prowler v5.12.1)
 
 ### 🚀 Added
