@@ -16,6 +16,15 @@ import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
+import ReactMarkdown from "react-markdown";
+
+const MarkdownContainer = ({ children }: { children: string }) => {
+  return (
+    <div className="prose prose-sm max-w-none whitespace-normal break-words dark:prose-invert">
+      <ReactMarkdown>{children}</ReactMarkdown>
+    </div>
+  );
+};
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -131,15 +140,17 @@ export const FindingDetail = ({
               hideCopyButton
               hideSymbol
             >
-              <p className="whitespace-pre-line">
+              <MarkdownContainer>
                 {attributes.check_metadata.risk}
-              </p>
+              </MarkdownContainer>
             </Snippet>
           </InfoField>
         )}
 
         <InfoField label="Description">
-          {renderValue(attributes.check_metadata.description)}
+          <MarkdownContainer>
+            {attributes.check_metadata.description}
+          </MarkdownContainer>
         </InfoField>
 
         <InfoField label="Status Extended">
@@ -156,9 +167,10 @@ export const FindingDetail = ({
             {attributes.check_metadata.remediation.recommendation.text && (
               <InfoField label="Recommendation">
                 <div className="flex flex-col gap-2">
-                  <p>
+                  <MarkdownContainer>
                     {attributes.check_metadata.remediation.recommendation.text}
-                  </p>
+                  </MarkdownContainer>
+
                   {attributes.check_metadata.remediation.recommendation.url && (
                     <CustomLink
                       href={
@@ -184,15 +196,12 @@ export const FindingDetail = ({
               </InfoField>
             )}
 
-            {/* Additional Resources section */}
+            {/* Remediation Steps section */}
             {attributes.check_metadata.remediation.code.other && (
-              <InfoField label="Additional Resources">
-                <CustomLink
-                  href={attributes.check_metadata.remediation.code.other}
-                  size="sm"
-                >
-                  View documentation
-                </CustomLink>
+              <InfoField label="Remediation Steps">
+                <MarkdownContainer>
+                  {attributes.check_metadata.remediation.code.other}
+                </MarkdownContainer>
               </InfoField>
             )}
 
