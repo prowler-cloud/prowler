@@ -285,7 +285,8 @@ class UserSerializer(BaseSerializerV1):
         representation = super().to_representation(instance)
         role = self.context.get("role")
 
-        if not role.manage_account:
+        # If the user has no role or the role does not have manage_account permission
+        if role and not role.manage_account:
             representation["memberships"] = []
             representation["roles"] = []
 
