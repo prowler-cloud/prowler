@@ -1,9 +1,10 @@
+import sys
 from unittest import mock
 
 import pytest
 from pydantic.v1 import ValidationError
 
-from prowler.lib.check.models import CheckMetadata
+from prowler.lib.check.models import Check, CheckMetadata
 from tests.lib.check.compliance_check_test import custom_compliance_metadata
 
 mock_metadata = CheckMetadata(
@@ -716,3 +717,106 @@ class TestCheckMetada:
             )
         # Should contain the validation error we set in the validator
         assert "AdditionalURLs must be a list" in str(exc_info.value)
+
+
+class TestCheck:
+    @mock.patch("prowler.lib.check.models.logger")
+    @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
+    def test_verify_names_consistency_all_match(self, mock_parse_file, mock_logger):
+        """Case where everything matches: CheckID == class_name == file_name"""
+        mock_parse_file.return_value = mock_metadata.copy(
+            update={
+                "CheckID": "accessanalyzer_enabled",
+                "ServiceName": "accessanalyzer",
+            }
+        )
+
+        class accessanalyzer_enabled(Check):
+            def execute(self):
+                pass
+
+        fake_module = mock.Mock()
+        fake_module.__file__ = "/path/to/accessanalyzer_enabled.py"
+        sys.modules[accessanalyzer_enabled.__module__] = fake_module
+
+        accessanalyzer_enabled()
+
+        mock_logger.error.assert_not_called()
+
+    @mock.patch("prowler.lib.check.models.logger")
+    @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
+    def test_verify_names_consistency_class_mismatch(
+        self, mock_parse_file, mock_logger
+    ):
+        """CheckID != class name, but matches file_name"""
+        mock_parse_file.return_value = mock_metadata.copy(
+            update={
+                "CheckID": "accessanalyzer_enabled",
+                "ServiceName": "accessanalyzer",
+            }
+        )
+
+        class WrongClass(Check):
+            def execute(self):
+                pass
+
+        fake_module = mock.Mock()
+        fake_module.__file__ = "/path/to/accessanalyzer_enabled.py"
+        sys.modules[WrongClass.__module__] = fake_module
+
+        WrongClass()
+
+        mock_logger.error.assert_called()
+        msg = mock_logger.error.call_args[0][0]
+        assert "!= class name" in msg
+
+    @mock.patch("prowler.lib.check.models.logger")
+    @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
+    def test_verify_names_consistency_file_mismatch(self, mock_parse_file, mock_logger):
+        """CheckID == class name, but != file_name"""
+        mock_parse_file.return_value = mock_metadata.copy(
+            update={
+                "CheckID": "accessanalyzer_enabled",
+                "ServiceName": "accessanalyzer",
+            }
+        )
+
+        class accessanalyzer_enabled(Check):
+            def execute(self):
+                pass
+
+        fake_module = mock.Mock()
+        fake_module.__file__ = "/path/to/OtherFile.py"
+        sys.modules[accessanalyzer_enabled.__module__] = fake_module
+
+        accessanalyzer_enabled()
+
+        mock_logger.error.assert_called()
+        msg = mock_logger.error.call_args[0][0]
+        assert "!= file name" in msg
+
+    @mock.patch("prowler.lib.check.models.logger")
+    @mock.patch("prowler.lib.check.models.CheckMetadata.parse_file")
+    def test_verify_names_consistency_both_mismatch(self, mock_parse_file, mock_logger):
+        """Neither class name nor file name match the CheckID"""
+        mock_parse_file.return_value = mock_metadata.copy(
+            update={
+                "CheckID": "accessanalyzer_enabled",
+                "ServiceName": "accessanalyzer",
+            }
+        )
+
+        class WrongClass(Check):
+            def execute(self):
+                pass
+
+        fake_module = mock.Mock()
+        fake_module.__file__ = "/path/to/OtherFile.py"
+        sys.modules[WrongClass.__module__] = fake_module
+
+        WrongClass()
+
+        mock_logger.error.assert_called()
+        msg = mock_logger.error.call_args[0][0]
+        assert "!= class name" in msg
+        assert "!= file name" in msg
