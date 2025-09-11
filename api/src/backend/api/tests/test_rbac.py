@@ -152,7 +152,7 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == "rbac_limited@rbac.com"
 
-    def test_me_hides_roles_and_memberships_without_manage_account(
+    def test_me_shows_own_roles_and_memberships_without_manage_account(
         self, authenticated_client_no_permissions_rbac
     ):
         response = authenticated_client_no_permissions_rbac.get(reverse("user-me"))
@@ -160,12 +160,9 @@ class TestUserViewSet:
 
         rels = response.json()["data"]["relationships"]
 
-        # Roles must be empty when no manage_account
-        assert rels["roles"]["data"] == []
-
-        # Memberships must be empty when no manage_account
-        assert rels["memberships"]["data"] == []
-        assert rels["memberships"]["meta"]["count"] == 0
+        # Self should see own roles and memberships even without manage_account
+        assert isinstance(rels["roles"]["data"], list)
+        assert rels["memberships"]["meta"]["count"] == 1
 
     def test_me_shows_roles_and_memberships_with_manage_account(
         self, authenticated_client_rbac
@@ -198,13 +195,37 @@ class TestUserViewSet:
     def test_list_users_with_manage_users_only_hides_relationships(
         self, authenticated_client_rbac_manage_users_only
     ):
+        # Ensure there is at least one other user in the same tenant
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        other_user = User.objects.create_user(
+            name="other_in_tenant",
+            email="other_in_tenant@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+
         response = authenticated_client_rbac_manage_users_only.get(reverse("user-list"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert isinstance(data, list)
-        assert data[0]["relationships"]["roles"]["data"] == []
-        assert data[0]["relationships"]["memberships"]["data"] == []
-        assert data[0]["relationships"]["memberships"]["meta"]["count"] == 0
+
+        current_user_id = str(mu_user.id)
+        assert any(item["id"] == current_user_id for item in data)
+
+        for item in data:
+            rels = item["relationships"]
+            if item["id"] == current_user_id:
+                # Self should see own relationships
+                assert isinstance(rels["roles"]["data"], list)
+                assert rels["memberships"]["meta"].get("count", 0) >= 1
+            else:
+                # Others should be hidden without manage_account
+                assert rels["roles"]["data"] == []
+                assert rels["memberships"]["data"] == []
+                assert rels["memberships"]["meta"]["count"] == 0
 
     def test_retrieve_user_with_manage_users_only_hides_relationships(
         self, authenticated_client_rbac_manage_users_only
