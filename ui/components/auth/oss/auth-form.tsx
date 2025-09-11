@@ -209,11 +209,8 @@ export const AuthForm = ({
 
           <Form {...form}>
             <form
-<<<<<<< HEAD
-=======
               noValidate
               method="post"
->>>>>>> 6f967c6da (fix(auth): validate email field (#8698))
               className="flex flex-col gap-4"
               onSubmit={form.handleSubmit(onSubmit)}
             >
