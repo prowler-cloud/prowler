@@ -1,7 +1,7 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
 import { Snippet } from "@nextui-org/react";
+import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomSection } from "@/components/ui/custom";
