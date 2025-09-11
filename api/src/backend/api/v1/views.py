@@ -794,7 +794,8 @@ class UserViewSet(BaseUserViewset):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["role"] = get_role(self.request.user)
+        if self.request.user.is_authenticated:
+            context["role"] = get_role(self.request.user)
         return context
 
     @action(detail=False, methods=["get"], url_name="me")
