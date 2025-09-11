@@ -6,7 +6,11 @@ import { Snippet } from "@nextui-org/react";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomSection } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { CopyLinkButton, EntityInfoShort, InfoField } from "@/components/ui/entities";
+import {
+  CopyLinkButton,
+  EntityInfoShort,
+  InfoField,
+} from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps, ProviderType } from "@/types";
