@@ -203,7 +203,12 @@ export const FindingDetail = ({
                   <div className="flex flex-col gap-1">
                     {attributes.check_metadata.additionalurls.map(
                       (link, idx) => (
-                        <CustomLink key={idx} href={link} size="sm">
+                        <CustomLink
+                          key={idx}
+                          href={link}
+                          size="sm"
+                          className="!whitespace-normal break-all"
+                        >
                           {link}
                         </CustomLink>
                       ),
