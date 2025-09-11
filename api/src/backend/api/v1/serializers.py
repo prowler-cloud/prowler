@@ -284,9 +284,15 @@ class UserSerializer(BaseSerializerV1):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         role = self.context.get("role")
+        request = self.context.get("request")
+        is_self = bool(
+            request
+            and getattr(request, "user", None)
+            and getattr(instance, "id", None) == request.user.id
+        )
 
-        # If the user has no role (at this point) or the role does not have manage_account permission
-        if role and not role.manage_account:
+        # Hide relationships for other users if no manage_account, but always show for self
+        if role and not role.manage_account and not is_self:
             representation["memberships"] = []
             representation["roles"] = []
 
