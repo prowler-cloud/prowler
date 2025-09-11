@@ -7,11 +7,12 @@ class defender_ensure_defender_for_cosmosdb_is_on(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             if "CosmosDbs" in pricings:
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=pricings["CosmosDbs"]
+                )
                 report.subscription = subscription
-                report.resource_id = pricings["CosmosDbs"].resource_id
                 report.resource_name = "Defender plan Cosmos DB"
+                report.status = "PASS"
                 report.status_extended = f"Defender plan Defender for Cosmos DB from subscription {subscription} is set to ON (pricing tier standard)."
                 if pricings["CosmosDbs"].pricing_tier != "Standard":
                     report.status = "FAIL"

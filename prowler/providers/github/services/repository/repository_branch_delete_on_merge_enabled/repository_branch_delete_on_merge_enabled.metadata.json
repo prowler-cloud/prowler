@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_branch_delete_on_merge_enabled",
+  "CheckTitle": "Check if a repository deletes the branch after merging",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "GitHubRepository",
+  "Description": "Ensure that the repository deletes the branch after merging.",
+  "Risk": "Inactive branches pose a security risk as they can accumulate outdated code, dependencies, and potential vulnerabilities over time. Malicious actors may exploit these branches, and they can clutter the repository, making it harder to manage and track the active code. Additionally, stale branches may unintentionally be accessed or used inappropriately, leading to potential security breaches.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly review and remove inactive branches from your repositories. This helps reduce the risk of malicious code injection, sensitive data leaks, and unnecessary clutter in the repository. By keeping branches active and up to date, you ensure that your codebase remains secure and manageable.",
+      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-the-automatic-deletion-of-branches"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

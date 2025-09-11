@@ -8,11 +8,10 @@ class shield_advanced_protection_in_route53_hosted_zones(Check):
         findings = []
         if shield_client.enabled:
             for hosted_zone in route53_client.hosted_zones.values():
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=hosted_zone
+                )
                 report.region = shield_client.region
-                report.resource_id = hosted_zone.id
-                report.resource_arn = hosted_zone.arn
-                report.resource_tags = hosted_zone.tags
                 report.status = "FAIL"
                 report.status_extended = f"Route53 Hosted Zone {hosted_zone.id} is not protected by AWS Shield Advanced."
 

@@ -2,11 +2,85 @@ import re
 from abc import ABC, abstractmethod
 
 import yaml
+from jsonschema import validate
 
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.models import mutelist_schema
 from prowler.lib.outputs.common import Status
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
+
+mutelist_schema = {
+    "type": "object",
+    "properties": {
+        "Accounts": {
+            "type": "object",
+            "patternProperties": {
+                ".*": {  # Match any account
+                    "type": "object",
+                    "properties": {
+                        "Checks": {
+                            "type": "object",
+                            "patternProperties": {
+                                ".*": {  # Match any check
+                                    "type": "object",
+                                    "properties": {
+                                        "Regions": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Resources": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Tags": {  # Optional field
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Exceptions": {  # Optional field
+                                            "type": "object",
+                                            "properties": {
+                                                "Accounts": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Regions": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Resources": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Tags": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                            },
+                                            "additionalProperties": False,
+                                        },
+                                        "Description": {  # Optional field
+                                            "type": "string",
+                                        },
+                                    },
+                                    "required": [
+                                        "Regions",
+                                        "Resources",
+                                    ],  # Mandatory within a check
+                                    "additionalProperties": False,
+                                }
+                            },
+                            "additionalProperties": False,
+                        },
+                    },
+                    "required": ["Checks"],  # Mandatory within an account
+                    "additionalProperties": False,
+                }
+            },
+            "additionalProperties": False,
+        }
+    },
+    "required": ["Accounts"],  # Accounts is mandatory at the root level
+    "additionalProperties": False,
+}
 
 
 class Mutelist(ABC):
@@ -24,7 +98,6 @@ class Mutelist(ABC):
         mutelist_file_path: Property that returns the mutelist file path.
         is_finding_muted: Abstract method to check if a finding is muted.
         get_mutelist_file_from_local_file: Retrieves the mutelist file from a local file.
-        validate_mutelist: Validates the mutelist against a schema.
         is_muted: Checks if a finding is muted for the audited account, check, region, resource, and tags.
         is_muted_in_check: Checks if a check is muted.
         is_excepted: Checks if the account, region, resource, and tags are excepted based on the exceptions.
@@ -45,7 +118,7 @@ class Mutelist(ABC):
             self._mutelist = mutelist_content
 
         if self._mutelist:
-            self.validate_mutelist()
+            self._mutelist = Mutelist.validate_mutelist(self._mutelist)
 
     @property
     def mutelist(self) -> dict:
@@ -67,17 +140,6 @@ class Mutelist(ABC):
             logger.error(
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
-
-    def validate_mutelist(self) -> bool:
-        try:
-            self._mutelist = mutelist_schema.validate(self._mutelist)
-            return True
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
-            )
-            self._mutelist = {}
-            return False
 
     def is_muted(
         self,
@@ -106,6 +168,7 @@ class Mutelist(ABC):
                             - 'i-123456789'
                         Tags:
                             - 'Name=AdminInstance | Environment=Prod'
+                        Description: 'Field to describe why the findings associated with these values are muted'
         ```
         The check `ec2_instance_detailed_monitoring_enabled` will be muted for all accounts and regions and for the resource_id 'i-123456789' with at least one of the tags 'Name=AdminInstance' or 'Environment=Prod'.
 
@@ -358,8 +421,8 @@ class Mutelist(ABC):
                 if tag:
                     is_item_matched = True
                 for item in matched_items:
-                    if item.startswith("*"):
-                        item = ".*" + item[1:]
+                    if "*" in item:
+                        item = item.replace("*", ".*")
                     if tag:
                         if not re.search(item, finding_items):
                             is_item_matched = False
@@ -374,3 +437,27 @@ class Mutelist(ABC):
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
             return False
+
+    @staticmethod
+    def validate_mutelist(mutelist: dict, raise_on_exception: bool = False) -> dict:
+        """
+        Validate the mutelist against the schema.
+
+        Args:
+            mutelist (dict): The mutelist to be validated.
+            raise_on_exception (bool): Whether to raise an exception if the mutelist is invalid.
+
+        Returns:
+            dict: The mutelist itself.
+        """
+        try:
+            validate(mutelist, schema=mutelist_schema)
+            return mutelist
+        except Exception as error:
+            if raise_on_exception:
+                raise error
+            else:
+                logger.error(
+                    f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+                )
+            return {}

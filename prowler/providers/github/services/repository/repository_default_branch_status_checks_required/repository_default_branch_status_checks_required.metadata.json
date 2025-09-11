@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_default_branch_status_checks_required",
+  "CheckTitle": "Check if repository enforces status checks to pass",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GithubRepository",
+  "Description": "Ensure that the repository enforces status checks to pass before merging code into the main branch.",
+  "Risk": "Merging code without requiring all checks to pass increases the risk of introducing bugs, vulnerabilities, or unstable changes into the codebase. This can compromise the quality, security, and functionality of the application.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require all predefined status checks to pass successfully before allowing code changes to be merged. This ensures that all quality, stability, and security conditions are met, reducing the likelihood of errors or vulnerabilities being introduced into the project.",
+      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "codebuild_project_not_publicly_accessible",
+  "CheckTitle": "Ensure AWS CodeBuild projects are not public",
+  "CheckType": [],
+  "ServiceName": "codebuild",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:codebuild:region:account-id:project:project-name",
+  "Severity": "high",
+  "ResourceType": "AwsCodeBuildProject",
+  "Description": "Check for CodeBuild projects ensuring that the project visibility is appropriate",
+  "Risk": "Public CodeBuild Project ensures all build logs and artifacts are available to the public. Environment variables, source code, and other sensitive information may have been output to the build logs and artifacts. You must be careful about what information is output to the build logs.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "NativeIaC": "",
+      "Terraform": "",
+      "CLI": "aws codebuild update-project --name <project-name> --project-visibility PRIVATE",
+      "Other": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that all CodeBuild projects are private to avoid fact gathering about builds from an Attacker.",
+      "Url": "https://docs.aws.amazon.com/codebuild/latest/userguide/public-builds.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

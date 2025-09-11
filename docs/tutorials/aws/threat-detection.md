@@ -1,28 +1,32 @@
-# Threat Detection
+# Threat Detection in AWS with Prowler
 
-Prowler allows you to do threat detection in AWS based on the CloudTrail log records. To run checks related with threat detection use:
+Prowler enables threat detection in AWS by analyzing CloudTrail log records. To execute threat detection checks, use the following command:
+
 ```
 prowler aws --category threat-detection
 ```
-This command will run these checks:
 
-* `cloudtrail_threat_detection_privilege_escalation` -> Detects privilege escalation attacks.
-* `cloudtrail_threat_detection_enumeration` -> Detects enumeration attacks.
-* `cloudtrail_threat_detection_llm_jacking` -> Detects LLM Jacking attacks.
+This command runs checks to detect:
+
+* `cloudtrail_threat_detection_privilege_escalation`: Privilege escalation attacks
+* `cloudtrail_threat_detection_enumeration`: Enumeration attacks
+* `cloudtrail_threat_detection_llm_jacking`: LLM Jacking attacks
 
 ???+ note
-    Threat Detection checks will be only executed using `--category threat-detection` flag due to performance.
+    Threat detection checks are executed only when the `--category threat-detection` flag is used, due to performance considerations.
 
-## Config File
+## Config File for Threat Detection
 
-If you want to manage the behavior of the Threat Detection checks you can edit `config.yaml` file from `/prowler/config`. In this file you can edit the following attributes related with Threat Detection:
+To manage the behavior of threat detection checks, edit the configuration file located in `config.yaml` file from `/prowler/config`. The following attributes can be modified, all related to threat detection:
 
-* `threat_detection_privilege_escalation_threshold`: determines the percentage of actions found to decide if it is an privilege_scalation attack event, by default is 0.2 (20%)
-* `threat_detection_privilege_escalation_minutes`: it is the past minutes to search from now for privilege_escalation attacks, by default is 1440 minutes (24 hours)
-* `threat_detection_privilege_escalation_actions`: these are the default actions related with privilege escalation.
-* `threat_detection_enumeration_threshold`: determines the percentage of actions found to decide if it is an enumeration attack event, by default is 0.3 (30%)
-* `threat_detection_enumeration_minutes`: it is the past minutes to search from now for enumeration attacks, by default is 1440 minutes (24 hours)
-* `threat_detection_enumeration_actions`: these are the default actions related with enumeration attacks.
-* `threat_detection_llm_jacking_threshold`: determines the percentage of actions found to decide if it is an LLM Jacking attack event, by default is 0.4 (40%)
-* `threat_detection_llm_jacking_minutes`: it is the past minutes to search from now for LLM Jacking attacks, by default is 1440 minutes (24 hours)
-* `threat_detection_llm_jacking_actions`: these are the default actions related with LLM Jacking attacks.
+* `threat_detection_privilege_escalation_threshold`: Defines the percentage of actions required to classify an event as a privilege escalation attack. Default: 0.2 (20%)
+* `threat_detection_privilege_escalation_minutes`: Specifies the time window (in minutes) to search for privilege escalation attack patterns. Default: 1440 minutes (24 hours).
+* `threat_detection_privilege_escalation_actions`: Lists the default actions associated with privilege escalation attacks.
+* `threat_detection_enumeration_threshold`: Defines the percentage of actions required to classify an event as an enumeration attack. Default: 0.3 (30%)
+* `threat_detection_enumeration_minutes`: Specifies the time window (in minutes) to search for enumeration attack patterns. Default: 1440 minutes (24 hours).
+* `threat_detection_enumeration_actions`: Lists the default actions associated with enumeration attacks.
+* `threat_detection_llm_jacking_threshold`: Defines the percentage of actions required to classify an event as LLM jacking attack. Default: 0.4 (40%)
+* `threat_detection_llm_jacking_minutes`: Specifies the time window (in minutes) to search for LLM jacking attack patterns. Default: 1440 minutes (24 hours).
+* `threat_detection_llm_jacking_actions`: Lists the default actions associated with LLM jacking attacks.
+
+Modify these attributes in the configuration file to fine-tune threat detection checks based on your security requirements.

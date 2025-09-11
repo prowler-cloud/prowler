@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from kubernetes import client
 from prowler.lib.logger import logger
@@ -8,7 +8,6 @@ from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 
 
-################## Rbac ##################
 class Rbac(KubernetesService):
     def __init__(self, provider: KubernetesProvider):
         super().__init__(provider)
@@ -96,7 +95,7 @@ class Rbac(KubernetesService):
                             "resources": rule.resources,
                             "verbs": rule.verbs,
                         }
-                        for rule in role.rules
+                        for rule in (role.rules or [])
                     ],
                 }
                 roles[role.metadata.uid] = Role(**formatted_role)
@@ -163,9 +162,9 @@ class RoleBinding(BaseModel):
 
 
 class Rule(BaseModel):
-    apiGroups: Optional[List[str]]
-    resources: Optional[List[str]]
-    verbs: Optional[List[str]]
+    apiGroups: Optional[List[str]] = None
+    resources: Optional[List[str]] = None
+    verbs: Optional[List[str]] = None
 
 
 class Role(BaseModel):

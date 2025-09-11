@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prowler-ns
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prowler-sa
+  namespace: prowler-ns

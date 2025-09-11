@@ -6,11 +6,11 @@ class compute_firewall_ssh_access_from_the_internet_allowed(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for firewall in compute_client.firewalls:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = firewall.project_id
-            report.resource_id = firewall.id
-            report.resource_name = firewall.name
-            report.location = compute_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=firewall,
+                location=compute_client.region,
+            )
             report.status = "PASS"
             report.status_extended = f"Firewall {firewall.name} does not expose port 22 (SSH) to the internet."
             opened_port = False

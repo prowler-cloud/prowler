@@ -17,15 +17,14 @@ class app_function_identity_without_admin_privileges(Check):
             subscription_name,
             functions,
         ) in app_client.functions.items():
-            for function_id, function in functions.items():
+            for function in functions.values():
                 if function.identity:
-                    report = Check_Report_Azure(self.metadata())
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=function
+                    )
+                    report.subscription = subscription_name
                     report.status = "PASS"
                     report.status_extended = f"Function {function.name} has a managed identity enabled but without admin privileges."
-                    report.subscription = subscription_name
-                    report.resource_name = function.name
-                    report.resource_id = function_id
-                    report.location = function.location
 
                     admin_roles_assigned = []
 
@@ -42,9 +41,15 @@ class app_function_identity_without_admin_privileges(Check):
                                 USER_ACCESS_ADMINISTRATOR_ROLE_ID,
                             ]
                         ):
-                            for role in iam_client.roles[subscription_name]:
-                                if role.id.split("/")[-1] == role_assignment.role_id:
-                                    admin_roles_assigned.append(role.name)
+                            admin_roles_assigned.append(
+                                getattr(
+                                    iam_client.roles[subscription_name].get(
+                                        f"/subscriptions/{iam_client.subscriptions[subscription_name]}/providers/Microsoft.Authorization/roleDefinitions/{role_assignment.role_id}"
+                                    ),
+                                    "name",
+                                    "",
+                                )
+                            )
 
                     if admin_roles_assigned:
                         report.status = "FAIL"

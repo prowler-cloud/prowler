@@ -13,7 +13,6 @@ from tests.providers.aws.utils import (
 class Test_macie_automated_sensitive_data_discovery_enabled:
     @mock_aws
     def test_macie_disabled(self):
-
         macie_client = mock.MagicMock
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -31,14 +30,19 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
         macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
-            new=macie_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
+                new=macie_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled import (
@@ -52,7 +56,6 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
 
     @mock_aws
     def test_macie_enabled_automated_discovery_disabled(self):
-
         macie_client = mock.MagicMock
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -70,14 +73,19 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
         macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
-            new=macie_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
+                new=macie_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled import (
@@ -101,7 +109,6 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
 
     @mock_aws
     def test_macie_enabled_automated_discovery_enabled(self):
-
         macie_client = mock.MagicMock
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -119,14 +126,19 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
         macie_client._get_session_arn_template = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
-            new=macie_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled.macie_client",
+                new=macie_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.macie.macie_automated_sensitive_data_discovery_enabled.macie_automated_sensitive_data_discovery_enabled import (

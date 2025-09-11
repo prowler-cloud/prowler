@@ -7,7 +7,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## MySQL
 class MySQL(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(MySQLManagementClient, provider)
@@ -24,8 +23,9 @@ class MySQL(AzureService):
                 for server in servers_list:
                     servers[subscription_name].update(
                         {
-                            server.name: FlexibleServer(
+                            server.id: FlexibleServer(
                                 resource_id=server.id,
+                                name=server.name,
                                 location=server.location,
                                 version=server.version,
                                 configurations=self._get_configurations(
@@ -74,6 +74,7 @@ class Configuration:
 @dataclass
 class FlexibleServer:
     resource_id: str
+    name: str
     location: str
     version: str
     configurations: dict[Configuration]

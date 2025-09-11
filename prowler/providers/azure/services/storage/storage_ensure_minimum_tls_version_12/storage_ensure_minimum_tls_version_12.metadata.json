@@ -13,14 +13,14 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/minimum-tls-version.html",
+      "Other": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2",
       "Terraform": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that all your Microsoft Azure Storage accounts are using the latest available version of the TLS protocol.",
-      "Url": ""
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/minimum-tls-version.html"
     }
   },
   "Categories": [

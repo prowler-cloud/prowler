@@ -6,8 +6,9 @@ from prowler.providers.azure.services.defender.defender_service import (
     AutoProvisioningSetting,
     Defender,
     IoTSecuritySolution,
+    JITPolicy,
     Pricing,
-    SecurityContacts,
+    SecurityContactConfiguration,
     Setting,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -21,6 +22,7 @@ def mock_defender_get_pricings(_):
         AZURE_SUBSCRIPTION_ID: {
             "Standard": Pricing(
                 resource_id="resource_id",
+                resource_name="resource_name",
                 pricing_tier="pricing_tier",
                 free_trial_remaining_time=timedelta(days=1),
                 extensions={},
@@ -54,17 +56,24 @@ def mock_defender_get_assessments(_):
     }
 
 
-def mock_defender_get_security_contacts(_):
+def mock_defender_get_security_contacts(*args, **kwargs):
+    from prowler.providers.azure.services.defender.defender_service import (
+        NotificationsByRole,
+    )
+
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "default": SecurityContacts(
-                resource_id="/subscriptions/resource_id",
-                emails="user@user.com, test@test.es",
+            "/subscriptions/resource_id": SecurityContactConfiguration(
+                id="/subscriptions/resource_id",
+                name="default",
+                enabled=True,
+                emails=["user@user.com", "test@test.es"],
                 phone="666666666",
-                alert_notifications_minimal_severity="High",
-                alert_notifications_state="On",
-                notified_roles=["Owner", "Contributor"],
-                notified_roles_state="On",
+                notifications_by_role=NotificationsByRole(
+                    state=True, roles=["Owner", "Contributor"]
+                ),
+                alert_minimal_severity="High",
+                attack_path_minimal_risk_level=None,
             )
         }
     }
@@ -86,9 +95,23 @@ def mock_defender_get_settings(_):
 def mock_defender_get_iot_security_solutions(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "iot_sec_solution": IoTSecuritySolution(
+            "/subscriptions/resource_id": IoTSecuritySolution(
                 resource_id="/subscriptions/resource_id",
+                name="iot_sec_solution",
                 status="Enabled",
+            )
+        }
+    }
+
+
+def mock_defender_get_jit_policies(_):
+    return {
+        AZURE_SUBSCRIPTION_ID: {
+            "policy-1": JITPolicy(
+                id="policy-1",
+                name="JITPolicy1",
+                location="eastus",
+                vm_ids=["vm-1", "vm-2"],
             )
         }
     }
@@ -118,6 +141,10 @@ def mock_defender_get_iot_security_solutions(_):
     "prowler.providers.azure.services.defender.defender_service.Defender._get_iot_security_solutions",
     new=mock_defender_get_iot_security_solutions,
 )
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender._get_jit_policies",
+    new=mock_defender_get_jit_policies,
+)
 class Test_Defender_Service:
     def test_get_client(self):
         defender = Defender(set_mocked_azure_provider())
@@ -137,6 +164,10 @@ class Test_Defender_Service:
         assert (
             defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].resource_id
             == "resource_id"
+        )
+        assert (
+            defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].resource_name
+            == "resource_name"
         )
         assert (
             defender.pricings[AZURE_SUBSCRIPTION_ID]["Standard"].pricing_tier
@@ -209,53 +240,46 @@ class Test_Defender_Service:
 
     def test_get_security_contacts(self):
         defender = Defender(set_mocked_azure_provider())
-        assert len(defender.security_contacts) == 1
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID]["default"].resource_id
-            == "/subscriptions/resource_id"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID]["default"].emails
-            == "user@user.com, test@test.es"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID]["default"].phone
-            == "666666666"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "default"
-            ].alert_notifications_minimal_severity
-            == "High"
-        )
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "default"
-            ].alert_notifications_state
-            == "On"
-        )
-        assert defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-            "default"
-        ].notified_roles == ["Owner", "Contributor"]
-        assert (
-            defender.security_contacts[AZURE_SUBSCRIPTION_ID][
-                "default"
-            ].notified_roles_state
-            == "On"
-        )
+        assert len(defender.security_contact_configurations) == 1
+        contact = defender.security_contact_configurations[AZURE_SUBSCRIPTION_ID][
+            "/subscriptions/resource_id"
+        ]
+        assert contact.id == "/subscriptions/resource_id"
+        assert contact.name == "default"
+        assert contact.emails == ["user@user.com", "test@test.es"]
+        assert contact.phone == "666666666"
+        assert contact.alert_minimal_severity == "High"
+        assert contact.notifications_by_role.state is True
+        assert contact.notifications_by_role.roles == ["Owner", "Contributor"]
 
     def test_get_iot_security_solutions(self):
         defender = Defender(set_mocked_azure_provider())
         assert len(defender.iot_security_solutions) == 1
         assert (
             defender.iot_security_solutions[AZURE_SUBSCRIPTION_ID][
-                "iot_sec_solution"
+                "/subscriptions/resource_id"
             ].resource_id
             == "/subscriptions/resource_id"
         )
         assert (
             defender.iot_security_solutions[AZURE_SUBSCRIPTION_ID][
-                "iot_sec_solution"
+                "/subscriptions/resource_id"
+            ].name
+            == "iot_sec_solution"
+        )
+        assert (
+            defender.iot_security_solutions[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
             ].status
             == "Enabled"
         )
+
+    def test_get_jit_policies(self):
+        defender = Defender(set_mocked_azure_provider())
+        assert AZURE_SUBSCRIPTION_ID in defender.jit_policies
+        assert "policy-1" in defender.jit_policies[AZURE_SUBSCRIPTION_ID]
+        policy1 = defender.jit_policies[AZURE_SUBSCRIPTION_ID]["policy-1"]
+        assert policy1.id == "policy-1"
+        assert policy1.name == "JITPolicy1"
+        assert policy1.location == "eastus"
+        assert set(policy1.vm_ids) == {"vm-1", "vm-2"}

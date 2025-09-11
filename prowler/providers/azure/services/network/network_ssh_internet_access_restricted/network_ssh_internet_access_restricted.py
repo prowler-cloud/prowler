@@ -7,18 +7,20 @@ class network_ssh_internet_access_restricted(Check):
         findings = []
         for subscription, security_groups in network_client.security_groups.items():
             for security_group in security_groups:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=security_group
+                )
                 report.subscription = subscription
-                report.resource_name = security_group.name
-                report.resource_id = security_group.id
                 report.status = "PASS"
-                report.location = security_group.location
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has SSH internet access restricted."
                 rule_fail_condition = any(
                     (
                         rule.destination_port_range == "22"
                         or (
-                            "-" in rule.destination_port_range
+                            (
+                                rule.destination_port_range
+                                and "-" in rule.destination_port_range
+                            )
                             and int(rule.destination_port_range.split("-")[0]) <= 22
                             and int(rule.destination_port_range.split("-")[1]) >= 22
                         )

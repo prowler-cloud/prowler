@@ -6,11 +6,7 @@ class compute_instance_default_service_account_in_use_with_full_api_access(Check
     def execute(self) -> Check_Report_GCP:
         findings = []
         for instance in compute_client.instances:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = instance.project_id
-            report.resource_id = instance.id
-            report.resource_name = instance.name
-            report.location = instance.zone
+            report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
             report.status = "PASS"
             report.status_extended = f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs."
             for service_account in instance.service_accounts:

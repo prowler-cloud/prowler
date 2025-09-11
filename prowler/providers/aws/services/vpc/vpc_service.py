@@ -2,14 +2,13 @@ import json
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## VPC
 class VPC(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -422,6 +421,7 @@ class VPC(AWSService):
                         )
                     self.vpn_connections[arn] = VpnConnection(
                         id=vpn_connection["VpnConnectionId"],
+                        arn=arn,
                         tunnels=tunnels,
                         region=regional_client.region,
                         tags=vpn_connection.get("Tags"),
@@ -510,6 +510,7 @@ class VpnTunnel(BaseModel):
 
 class VpnConnection(BaseModel):
     id: str
+    arn: str
     tunnels: list[VpnTunnel]
     region: str
     tags: Optional[list] = []

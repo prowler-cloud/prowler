@@ -7,11 +7,12 @@ class defender_ensure_defender_for_keyvault_is_on(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             if "KeyVaults" in pricings:
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=pricings["KeyVaults"]
+                )
                 report.subscription = subscription
                 report.resource_name = "Defender plan KeyVaults"
-                report.resource_id = pricings["KeyVaults"].resource_id
+                report.status = "PASS"
                 report.status_extended = f"Defender plan Defender for KeyVaults from subscription {subscription} is set to ON (pricing tier standard)."
                 if pricings["KeyVaults"].pricing_tier != "Standard":
                     report.status = "FAIL"

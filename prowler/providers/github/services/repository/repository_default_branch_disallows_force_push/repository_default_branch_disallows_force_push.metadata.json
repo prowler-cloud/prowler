@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_default_branch_disallows_force_push",
+  "CheckTitle": "Check if repository denies force push",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GithubRepository",
+  "Description": "Ensure that the repository denies force push to protected branches.",
+  "Risk": "Permitting force pushes to branches can lead to accidental or intentional overwrites of the commit history, resulting in potential data loss, code inconsistencies, or the introduction of malicious changes. This compromises the stability and security of the repository.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-force-pushes",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable force pushes on protected branches to preserve the commit history and ensure the integrity of the repository. This measure helps prevent unintentional data loss and protects the repository from malicious changes.",
+      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

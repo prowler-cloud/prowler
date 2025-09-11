@@ -7,7 +7,8 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 def fixer(region):
     """
     NOTE: Define the S3 bucket name in the fixer_config.yaml file.
-    Enable CloudTrail in a region. Requires the cloudtrail:CreateTrail permission:
+    Enable CloudTrail in a region. Requires the cloudtrail:CreateTrail permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [

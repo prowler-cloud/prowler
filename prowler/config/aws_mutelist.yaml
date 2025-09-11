@@ -10,6 +10,7 @@ Mutelist:
             - "*"
           Resources:
             - "aws-controltower-NotificationForwarder"
+          Description: "Checks from AWS lambda functions muted by default"
         "cloudformation_stack*":
           Regions:
             - "*"

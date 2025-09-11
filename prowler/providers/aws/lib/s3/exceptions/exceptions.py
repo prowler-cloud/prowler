@@ -26,6 +26,10 @@ class S3BaseException(ProwlerException):
             "message": "The specified location constraint is not valid.",
             "remediation": "Check the location constraint.",
         },
+        (6005, "S3InvalidBucketRegionError"): {
+            "message": "The specified bucket region is invalid.",
+            "remediation": "Check the bucket region.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -74,4 +78,11 @@ class S3IllegalLocationConstraintError(S3BaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6004, file=file, original_exception=original_exception, message=message
+        )
+
+
+class S3InvalidBucketRegionError(S3BaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6005, file=file, original_exception=original_exception, message=message
         )

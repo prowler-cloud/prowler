@@ -3,7 +3,7 @@
   "CheckID": "controllermanager_bind_address",
   "CheckTitle": "Ensure that the --bind-address argument is set to 127.0.0.1",
   "CheckType": [],
-  "ServiceName": "controller-manager",
+  "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

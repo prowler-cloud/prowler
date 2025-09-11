@@ -1,17 +1,17 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## CloudResourceManager
 class CloudResourceManager(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
 
         self.bindings = []
-        self.projects = []
+        self.cloud_resource_manager_projects = []
         self.organizations = []
         self._get_iam_policy()
         self._get_organizations()
@@ -20,12 +20,14 @@ class CloudResourceManager(GCPService):
         for project_id in self.project_ids:
             try:
                 policy = (
-                    self.client.projects().getIamPolicy(resource=project_id).execute()
+                    self.client.projects()
+                    .getIamPolicy(resource=project_id)
+                    .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                 )
                 audit_logging = False
                 if policy.get("auditConfigs"):
                     audit_logging = True
-                self.projects.append(
+                self.cloud_resource_manager_projects.append(
                     Project(id=project_id, audit_logging=audit_logging)
                 )
                 for binding in policy["bindings"]:
@@ -43,11 +45,18 @@ class CloudResourceManager(GCPService):
 
     def _get_organizations(self):
         try:
-            response = self.client.organizations().search().execute()
-            for org in response.get("organizations", []):
-                self.organizations.append(
-                    Organization(id=org["name"].split("/")[-1], name=org["displayName"])
+            if self.project_ids:
+                response = (
+                    self.client.organizations()
+                    .search()
+                    .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                 )
+                for org in response.get("organizations", []):
+                    self.organizations.append(
+                        Organization(
+                            id=org["name"].split("/")[-1], name=org["displayName"]
+                        )
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

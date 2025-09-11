@@ -15,6 +15,7 @@ Mutelist:
           Resources:
             - "instance1"           # Will ignore instance1 in check compute_instance_public_ip located in europe-southwest1
             - "instance2"           # Will ignore instance2 in check compute_instance_public_ip located in europe-southwest1
+          Description: "Findings related with the check compute_instance_public_ip will be muted for europe-southwest1 region and instance1, instance2 resources"
         "iam_*":
           Regions:
             - "*"

@@ -10,20 +10,18 @@ class defender_assessments_vm_endpoint_protection_installed(Check):
             subscription_name,
             assessments,
         ) in defender_client.assessments.items():
-
             if (
                 "Install endpoint protection solution on virtual machines"
                 in assessments
             ):
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(),
+                    resource=assessments[
+                        "Install endpoint protection solution on virtual machines"
+                    ],
+                )
                 report.subscription = subscription_name
-                report.resource_name = assessments[
-                    "Install endpoint protection solution on virtual machines"
-                ].resource_name
-                report.resource_id = assessments[
-                    "Install endpoint protection solution on virtual machines"
-                ].resource_id
+                report.status = "PASS"
                 report.status_extended = f"Endpoint protection is set up in all VMs in subscription {subscription_name}."
 
                 if (

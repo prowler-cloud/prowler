@@ -13,12 +13,15 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestCloudResourceManagerService:
     def test_service(self):
-        with patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-            new=mock_is_api_active,
-        ), patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-            new=mock_api_client,
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
         ):
             api_keys_client = CloudResourceManager(
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
@@ -26,9 +29,11 @@ class TestCloudResourceManagerService:
             assert api_keys_client.service == "cloudresourcemanager"
             assert api_keys_client.project_ids == [GCP_PROJECT_ID]
 
-            assert len(api_keys_client.projects) == 1
-            assert api_keys_client.projects[0].id == GCP_PROJECT_ID
-            assert api_keys_client.projects[0].audit_logging
+            assert len(api_keys_client.cloud_resource_manager_projects) == 1
+            assert (
+                api_keys_client.cloud_resource_manager_projects[0].id == GCP_PROJECT_ID
+            )
+            assert api_keys_client.cloud_resource_manager_projects[0].audit_logging
 
             assert len(api_keys_client.bindings) == 2
             assert (

@@ -13,9 +13,9 @@
   "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
+      "CLI": "aws dms modify-replication-instance --region <REGION> --replication-instance-arn arn:aws:dms:<REGION>:<ACCOUNT_ID>:rep:<REPLICATION_ID> --multi-az --apply-immediately",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#"
     },
     "Recommendation": {

@@ -8,12 +8,15 @@ class Test_entra_policy_guest_users_access_restrictions:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
                 entra_policy_guest_users_access_restrictions,
@@ -28,12 +31,15 @@ class Test_entra_policy_guest_users_access_restrictions:
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
                 entra_policy_guest_users_access_restrictions,
@@ -57,12 +63,15 @@ class Test_entra_policy_guest_users_access_restrictions:
         entra_client = mock.MagicMock
         id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
                 entra_policy_guest_users_access_restrictions,
@@ -76,8 +85,7 @@ class Test_entra_policy_guest_users_access_restrictions:
                     id=id,
                     name="Authorization Policy",
                     description="",
-                    default_user_role_permissions=None,
-                    guest_invite_settings=None,
+                    guest_invite_settings="none",
                     guest_user_role_id=UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970"),
                 )
             }
@@ -98,12 +106,15 @@ class Test_entra_policy_guest_users_access_restrictions:
         entra_client = mock.MagicMock
         id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
                 entra_policy_guest_users_access_restrictions,
@@ -117,8 +128,7 @@ class Test_entra_policy_guest_users_access_restrictions:
                     id=id,
                     name="Authorization Policy",
                     description="",
-                    default_user_role_permissions=None,
-                    guest_invite_settings=None,
+                    guest_invite_settings="none",
                     guest_user_role_id=UUID("10dae51f-b6af-4016-8d66-8c2a99b929b3"),
                 )
             }
@@ -139,12 +149,15 @@ class Test_entra_policy_guest_users_access_restrictions:
         entra_client = mock.MagicMock
         id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
                 entra_policy_guest_users_access_restrictions,
@@ -158,8 +171,7 @@ class Test_entra_policy_guest_users_access_restrictions:
                     id=id,
                     name="Authorization Policy",
                     description="",
-                    default_user_role_permissions=None,
-                    guest_invite_settings=None,
+                    guest_invite_settings="none",
                     guest_user_role_id=UUID("2af84b1e-32c8-42b7-82bc-daa82404023b"),
                 )
             }

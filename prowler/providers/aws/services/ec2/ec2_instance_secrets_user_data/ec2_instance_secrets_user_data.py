@@ -16,11 +16,7 @@ class ec2_instance_secrets_user_data(Check):
         )
         for instance in ec2_client.instances:
             if instance.state != "terminated":
-                report = Check_Report_AWS(self.metadata())
-                report.region = instance.region
-                report.resource_id = instance.id
-                report.resource_arn = instance.arn
-                report.resource_tags = instance.tags
+                report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
                 if instance.user_data:
                     user_data = b64decode(instance.user_data)
                     try:
@@ -41,7 +37,11 @@ class ec2_instance_secrets_user_data(Check):
                         )
                         continue
                     detect_secrets_output = detect_secrets_scan(
-                        data=user_data, excluded_secrets=secrets_ignore_patterns
+                        data=user_data,
+                        excluded_secrets=secrets_ignore_patterns,
+                        detect_secrets_plugins=ec2_client.audit_config.get(
+                            "detect_secrets_plugins"
+                        ),
                     )
                     if detect_secrets_output:
                         secrets_string = ", ".join(

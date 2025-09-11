@@ -9,11 +9,9 @@ class apigateway_restapi_tracing_enabled(Check):
         findings = []
         for rest_api in apigateway_client.rest_apis:
             for stage in rest_api.stages:
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(metadata=self.metadata(), resource=stage)
                 report.region = rest_api.region
                 report.resource_id = rest_api.name
-                report.resource_arn = stage.arn
-                report.resource_tags = stage.tags
                 report.status = "FAIL"
                 report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} does not have X-Ray tracing enabled."
                 if stage.tracing_enabled:

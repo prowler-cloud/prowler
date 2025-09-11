@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -147,6 +147,12 @@ class ElastiCache(AWSService):
                     logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                except (
+                    regional_client.exceptions.InvalidReplicationGroupStateFault
+                ) as error:
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -159,6 +165,12 @@ class ElastiCache(AWSService):
                     )["TagList"]
                 except (
                     regional_client.exceptions.ReplicationGroupNotFoundFault
+                ) as error:
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                except (
+                    regional_client.exceptions.InvalidReplicationGroupStateFault
                 ) as error:
                     logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

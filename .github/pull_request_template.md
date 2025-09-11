@@ -8,6 +8,10 @@ If fixes an issue please add it with `Fix #XXXX`
 
 Please include a summary of the change and which issue is fixed. List any dependencies that are required for this change.
 
+### Steps to review
+
+Please add a detailed description of how to review this PR.
+
 ### Checklist
 
 - Are there new checks included in this PR? Yes / No
@@ -15,6 +19,13 @@ Please include a summary of the change and which issue is fixed. List any depend
 - [ ] Review if the code is being covered by tests.
 - [ ] Review if code is being documented following this specification https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - [ ] Review if backport is needed.
+- [ ] Review if is needed to change the [Readme.md](https://github.com/prowler-cloud/prowler/blob/master/README.md)
+- [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/prowler/CHANGELOG.md), if applicable.
+
+#### API
+- [ ] Verify if API specs need to be regenerated.
+- [ ] Check if version updates are required (e.g., specs, Poetry, etc.).
+- [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/api/CHANGELOG.md), if applicable.
 
 ### License
 

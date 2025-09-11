@@ -1,14 +1,13 @@
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## DocumentDB
 class DocumentDB(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -65,6 +64,17 @@ class DocumentDB(AWSService):
     def _list_tags_for_resource(self):
         logger.info("DocumentDB - List Tags...")
         try:
+            for cluster_arn, cluster in self.db_clusters.items():
+                try:
+                    regional_client = self.regional_clients[cluster.region]
+                    response = regional_client.list_tags_for_resource(
+                        ResourceName=cluster_arn
+                    )["TagList"]
+                    cluster.tags = response
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             for instance_arn, instance in self.db_instances.items():
                 try:
                     regional_client = self.regional_clients[instance.region]

@@ -8,11 +8,7 @@ class opensearch_service_domains_access_control_enabled(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = domain.region
-            report.resource_id = domain.name
-            report.resource_arn = domain.arn
-            report.resource_tags = domain.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             report.status = "FAIL"
             report.status_extended = f"Opensearch domain {domain.name} does not have fine grained access control enabled."
             if domain.advanced_settings_enabled:

@@ -4,14 +4,13 @@ from enum import Enum
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## SSM
 class SSM(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -100,6 +99,21 @@ class SSM(AWSService):
                         "AccountIds"
                     ]
 
+        except ClientError as error:
+            if error.response["Error"]["Code"] in [
+                "InvalidDocumentOperation",
+            ]:
+                logger.warning(
+                    f"{regional_client.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"

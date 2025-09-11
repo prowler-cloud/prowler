@@ -43,12 +43,15 @@ class Test_directconnect_connection_redundancy:
                 region="eu-west-1",
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
-            new=dx_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
-            return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
+                new=dx_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
+                return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.directconnect.directconnect_connection_redundancy.directconnect_connection_redundancy import (
@@ -96,12 +99,15 @@ class Test_directconnect_connection_redundancy:
                 region="eu-west-1",
             ),
         }
-        with mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
-            new=dx_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
-            return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
+                new=dx_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
+                return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.directconnect.directconnect_connection_redundancy.directconnect_connection_redundancy import (
@@ -149,12 +155,15 @@ class Test_directconnect_connection_redundancy:
                 region="eu-west-1",
             ),
         }
-        with mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
-            new=dx_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
-            return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
+                new=dx_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
+                return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.directconnect.directconnect_connection_redundancy.directconnect_connection_redundancy import (

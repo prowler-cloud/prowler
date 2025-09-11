@@ -72,6 +72,7 @@ class Test_ELB_Service:
         aws_provider = set_mocked_aws_provider()
         elb = ELB(aws_provider)
         assert len(elb.loadbalancers) == 1
+        assert elb.loadbalancers[elb_arn].arn == elb_arn
         assert elb.loadbalancers[elb_arn].name == "my-lb"
         assert elb.loadbalancers[elb_arn].region == AWS_REGION_US_EAST_1
         assert elb.loadbalancers[elb_arn].scheme == "internal"
@@ -130,6 +131,7 @@ class Test_ELB_Service:
         # ELB client for this test class
         aws_provider = set_mocked_aws_provider()
         elb = ELB(aws_provider)
+        assert elb.loadbalancers[elb_arn].arn == elb_arn
         assert elb.loadbalancers[elb_arn].name == "my-lb"
         assert elb.loadbalancers[elb_arn].region == AWS_REGION_US_EAST_1
         assert elb.loadbalancers[elb_arn].scheme == "internal"
@@ -170,6 +172,7 @@ class Test_ELB_Service:
         # ELB client for this test class
         aws_provider = set_mocked_aws_provider()
         elb = ELB(aws_provider)
+        assert elb.loadbalancers[elb_arn].arn == elb_arn
         assert elb.loadbalancers[elb_arn].name == "my-lb"
         assert elb.loadbalancers[elb_arn].region == AWS_REGION_US_EAST_1
         assert elb.loadbalancers[elb_arn].scheme == "internal"

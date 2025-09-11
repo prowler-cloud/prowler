@@ -225,3 +225,54 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                 == f"CloudFront Distribution {DISTRIBUTION_ID} does encrypt traffic to custom origins."
             )
             assert result[0].resource_tags == []
+
+    def test_distribution_traffic_encrypted_with_s3_config(self):
+        cloudfront_client = mock.MagicMock
+        cloudfront_client.distributions = {
+            DISTRIBUTION_ID: Distribution(
+                arn=DISTRIBUTION_ARN,
+                id=DISTRIBUTION_ID,
+                region=REGION,
+                origins=[
+                    Origin(
+                        id="origin1",
+                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        origin_protocol_policy="",
+                        origin_ssl_protocols=[],
+                        s3_origin_config={
+                            "OriginAccessIdentity": "origin-access-identity/cloudfront/1234567890123456"
+                        },
+                    )
+                ],
+                default_cache_config=DefaultCacheConfigBehaviour(
+                    realtime_log_config_arn="",
+                    viewer_protocol_policy=ViewerProtocolPolicy.redirect_to_https,
+                    field_level_encryption_id="",
+                ),
+                default_root_object="index.html",
+                viewer_protocol_policy="redirect-to-https",
+            )
+        }
+
+        with mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_origin_traffic_encrypted.cloudfront_distributions_origin_traffic_encrypted import (
+                cloudfront_distributions_origin_traffic_encrypted,
+            )
+
+            check = cloudfront_distributions_origin_traffic_encrypted()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].region == REGION
+            assert result[0].resource_arn == DISTRIBUTION_ARN
+            assert result[0].resource_id == DISTRIBUTION_ID
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"CloudFront Distribution {DISTRIBUTION_ID} does encrypt traffic to custom origins."
+            )
+            assert result[0].resource_tags == []

@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_public_has_securitymd_file",
+  "CheckTitle": "Check if public repositories have a SECURITY.md file",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "Severity": "low",
+  "ResourceType": "GitHubRepository",
+  "Description": "Ensure that public repositories have a SECURITY.md file",
+  "Risk": "Not having a SECURITY.md file in a public repository may lead to security vulnerabilities being overlooked by users and contributors.",
+  "RelatedUrl": "https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add a SECURITY.md file to the root of the repository. The file should contain information on how to report a security vulnerability, the security policy of the repository, and any other relevant information.",
+      "Url": "https://github.blog/changelog/2019-05-23-security-policy/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

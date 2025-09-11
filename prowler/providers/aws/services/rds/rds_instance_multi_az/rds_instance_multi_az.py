@@ -5,12 +5,8 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 class rds_instance_multi_az(Check):
     def execute(self):
         findings = []
-        for db_instance_arn, db_instance in rds_client.db_instances.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = db_instance.region
-            report.resource_id = db_instance.id
-            report.resource_arn = db_instance_arn
-            report.resource_tags = db_instance.tags
+        for db_instance in rds_client.db_instances.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             # Check if is member of a cluster
             if db_instance.cluster_id:
                 if (

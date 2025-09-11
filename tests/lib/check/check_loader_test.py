@@ -14,11 +14,18 @@ S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_CUSTOM_ALIAS = (
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY = "medium"
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_SERVICE = "s3"
 
+IAM_USER_NO_MFA_NAME = "iam_user_no_mfa"
+IAM_USER_NO_MFA_NAME_CUSTOM_ALIAS = "iam_user_no_mfa"
+IAM_USER_NO_MFA_NAME_SERVICE = "iam"
+IAM_USER_NO_MFA_SEVERITY = "high"
+
+CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME = "cloudtrail_threat_detection_enumeration"
+
 
 class TestCheckLoader:
     provider = "aws"
 
-    def get_custom_check_metadata(self):
+    def get_custom_check_s3_metadata(self):
         return CheckMetadata(
             Provider="aws",
             CheckID=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
@@ -52,9 +59,71 @@ class TestCheckLoader:
             Compliance=[],
         )
 
+    def get_custom_check_iam_metadata(self):
+        return CheckMetadata(
+            Provider="aws",
+            CheckID=IAM_USER_NO_MFA_NAME,
+            CheckTitle="Check IAM User No MFA.",
+            CheckType=["Data Protection"],
+            CheckAliases=[IAM_USER_NO_MFA_NAME_CUSTOM_ALIAS],
+            ServiceName=IAM_USER_NO_MFA_NAME_SERVICE,
+            SubServiceName="",
+            ResourceIdTemplate="arn:partition:iam::account-id:user/user_name",
+            Severity=IAM_USER_NO_MFA_SEVERITY,
+            ResourceType="AwsIamUser",
+            Description="Check IAM User No MFA.",
+            Risk="IAM users should have Multi-Factor Authentication (MFA) enabled.",
+            RelatedUrl="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+            Remediation=Remediation(
+                Code=Code(
+                    NativeIaC="",
+                    Terraform="https://docs.prowler.com/checks/aws/iam-policies/bc_aws_iam_20#terraform",
+                    CLI="aws iam create-virtual-mfa-device --user-name <USER_NAME> --serial-number <SERIAL_NUMBER>",
+                    Other="https://github.com/cloudmatos/matos/tree/master/remediations/aws/iam/iam/enable-mfa",
+                ),
+                Recommendation=Recommendation(
+                    Text="You can enable MFA for your IAM user to prevent unauthorized access to your AWS account.",
+                    Url="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html",
+                ),
+            ),
+            Categories=[],
+            DependsOn=[],
+            RelatedTo=[],
+            Notes="",
+            Compliance=[],
+        )
+
+    def get_threat_detection_check_metadata(self):
+        return CheckMetadata(
+            Provider="aws",
+            CheckID=CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME,
+            CheckTitle="Ensure there are no potential enumeration threats in CloudTrail",
+            CheckType=[],
+            ServiceName="cloudtrail",
+            SubServiceName="",
+            ResourceIdTemplate="arn:partition:service:region:account-id:resource-id",
+            Severity="critical",
+            ResourceType="AwsCloudTrailTrail",
+            Description="This check ensures that there are no potential enumeration threats in CloudTrail.",
+            Risk="Potential enumeration threats in CloudTrail can lead to unauthorized access to resources.",
+            RelatedUrl="",
+            Remediation=Remediation(
+                Code=Code(CLI="", NativeIaC="", Other="", Terraform=""),
+                Recommendation=Recommendation(
+                    Text="To remediate this issue, ensure that there are no potential enumeration threats in CloudTrail.",
+                    Url="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html#cloudtrail-concepts-logging-data-events",
+                ),
+            ),
+            Categories=["threat-detection"],
+            DependsOn=[],
+            RelatedTo=[],
+            Notes="",
+            Compliance=[],
+        )
+
     def test_load_checks_to_execute(self):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
 
         assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
@@ -64,7 +133,7 @@ class TestCheckLoader:
 
     def test_load_checks_to_execute_with_check_list(self):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         check_list = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME]
 
@@ -76,7 +145,7 @@ class TestCheckLoader:
 
     def test_load_checks_to_execute_with_severities(self):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
 
@@ -88,7 +157,7 @@ class TestCheckLoader:
 
     def test_load_checks_to_execute_with_severities_and_services(self):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         service_list = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_SERVICE]
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
@@ -100,11 +169,29 @@ class TestCheckLoader:
             provider=self.provider,
         )
 
+    def test_load_checks_to_execute_with_severities_and_services_multiple(self):
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            IAM_USER_NO_MFA_NAME: self.get_custom_check_iam_metadata(),
+        }
+        service_list = ["s3", "iam"]
+        severities = ["medium", "high"]
+
+        assert {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+            IAM_USER_NO_MFA_NAME,
+        } == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
+            service_list=service_list,
+            severities=severities,
+            provider=self.provider,
+        )
+
     def test_load_checks_to_execute_with_severities_and_services_not_within_severity(
         self,
     ):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         service_list = ["ec2"]
         severities = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY]
@@ -120,7 +207,7 @@ class TestCheckLoader:
         self,
     ):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         checks_file = "path/to/test_file"
         with patch(
@@ -137,7 +224,7 @@ class TestCheckLoader:
         self,
     ):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         service_list = [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME_SERVICE]
 
@@ -150,6 +237,9 @@ class TestCheckLoader:
     def test_load_checks_to_execute_with_compliance_frameworks(
         self,
     ):
+        bulk_checks_metatada = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
         bulk_compliance_frameworks = {
             "soc2_aws": Compliance(
                 Framework="SOC2",
@@ -169,6 +259,7 @@ class TestCheckLoader:
         compliance_frameworks = ["soc2_aws"]
 
         assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_frameworks=compliance_frameworks,
             provider=self.provider,
@@ -178,7 +269,7 @@ class TestCheckLoader:
         self,
     ):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         categories = {"internet-exposed"}
 
@@ -190,7 +281,7 @@ class TestCheckLoader:
 
     def test_load_checks_to_execute_no_bulk_checks_metadata(self):
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
         with patch(
             "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
@@ -221,14 +312,17 @@ class TestCheckLoader:
         compliance_frameworks = ["soc2_aws"]
 
         bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
         }
-        with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
-            return_value=bulk_checks_metatada,
-        ), patch(
-            "prowler.lib.check.checks_loader.Compliance.get_bulk",
-            return_value=bulk_compliance_frameworks,
+        with (
+            patch(
+                "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
+                return_value=bulk_checks_metatada,
+            ),
+            patch(
+                "prowler.lib.check.checks_loader.Compliance.get_bulk",
+                return_value=bulk_compliance_frameworks,
+            ),
         ):
             assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
                 compliance_frameworks=compliance_frameworks,
@@ -247,4 +341,42 @@ class TestCheckLoader:
         check_aliases = {"renamed_check": ["check1_name", "check2_name"]}
         assert {"check1_name", "check2_name"} == update_checks_to_execute_with_aliases(
             checks_to_execute, check_aliases
+        )
+
+    def test_threat_detection_category(self):
+        bulk_checks_metatada = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        categories = {"threat-detection"}
+
+        assert {CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME} == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
+            categories=categories,
+            provider=self.provider,
+        )
+
+    def test_discard_threat_detection_checks(self):
+        bulk_checks_metatada = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        categories = {}
+
+        assert set() == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
+            categories=categories,
+            provider=self.provider,
+        )
+
+    def test_threat_detection_single_check(self):
+        bulk_checks_metatada = {
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()
+        }
+        categories = {}
+        check_list = [CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME]
+
+        assert {CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME} == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metatada,
+            check_list=check_list,
+            categories=categories,
+            provider=self.provider,
         )

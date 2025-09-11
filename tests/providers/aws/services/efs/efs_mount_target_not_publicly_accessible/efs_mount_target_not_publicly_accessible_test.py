@@ -19,12 +19,15 @@ class Test_efs_mount_target_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
-            new=EFS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
+                new=EFS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
                 efs_mount_target_not_publicly_accessible,
@@ -43,12 +46,15 @@ class Test_efs_mount_target_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
-            new=EFS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
+                new=EFS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
                 efs_mount_target_not_publicly_accessible,
@@ -107,15 +113,19 @@ class Test_efs_mount_target_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
-            new=EFS(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
+                new=EFS(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
                 efs_mount_target_not_publicly_accessible,
@@ -159,15 +169,19 @@ class Test_efs_mount_target_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
-            new=EFS(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.efs_client",
+                new=EFS(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.efs.efs_mount_target_not_publicly_accessible.efs_mount_target_not_publicly_accessible import (
                 efs_mount_target_not_publicly_accessible,

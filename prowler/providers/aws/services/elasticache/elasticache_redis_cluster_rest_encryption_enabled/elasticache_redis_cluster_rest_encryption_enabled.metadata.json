@@ -13,10 +13,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-4",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_9/"
+      "CLI": "",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_9#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_9#terraform"
     },
     "Recommendation": {
       "Text": "Ensure your Elasticache Redis cache clusters have at rest encryption enabled.",

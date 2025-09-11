@@ -9,14 +9,17 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class Test_cloudsql_instance_mysql_skip_show_database_flag:
     def test_no_cloudsql_instances(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag import (
                 cloudsql_instance_mysql_skip_show_database_flag,
@@ -29,14 +32,17 @@ class Test_cloudsql_instance_mysql_skip_show_database_flag:
             assert len(result) == 0
 
     def test_cloudsql_postgres_instance(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag import (
                 cloudsql_instance_mysql_skip_show_database_flag,
@@ -66,14 +72,17 @@ class Test_cloudsql_instance_mysql_skip_show_database_flag:
             assert len(result) == 0
 
     def test_cloudsql_instance_no_flags(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag import (
                 cloudsql_instance_mysql_skip_show_database_flag,
@@ -112,14 +121,17 @@ class Test_cloudsql_instance_mysql_skip_show_database_flag:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_cloudsql_instance_with_skip_show_databases_off(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag import (
                 cloudsql_instance_mysql_skip_show_database_flag,
@@ -158,14 +170,17 @@ class Test_cloudsql_instance_mysql_skip_show_database_flag:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_cloudsql_instance_with_skip_show_databases_on(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_skip_show_database_flag.cloudsql_instance_mysql_skip_show_database_flag import (
                 cloudsql_instance_mysql_skip_show_database_flag,

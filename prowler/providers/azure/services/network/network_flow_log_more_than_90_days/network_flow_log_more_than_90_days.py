@@ -7,11 +7,10 @@ class network_flow_log_more_than_90_days(Check):
         findings = []
         for subscription, network_watchers in network_client.network_watchers.items():
             for network_watcher in network_watchers:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=network_watcher
+                )
                 report.subscription = subscription
-                report.resource_name = network_watcher.name
-                report.resource_id = network_watcher.id
-                report.location = network_watcher.location
                 if network_watcher.flow_logs:
                     report.status = "PASS"
                     report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs enabled for more than 90 days"
@@ -22,7 +21,10 @@ class network_flow_log_more_than_90_days(Check):
                                 report.status = "FAIL"
                                 report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs disabled"
                                 has_failed = True
-                            elif flow_log.retention_policy.days < 90 and not has_failed:
+                            elif (
+                                flow_log.retention_policy.days < 90
+                                and flow_log.retention_policy.days != 0
+                            ) and not has_failed:
                                 report.status = "FAIL"
                                 report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} flow logs retention policy is less than 90 days"
                                 has_failed = True

@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_default_branch_requires_signed_commits",
+  "CheckTitle": "Check if repository requires signed commits",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "Severity": "medium",
+  "ResourceType": "GitHubRepository",
+  "Description": "Ensure that every commit in a pull request is signed and verified before merging to the default branch.",
+  "Risk": "If repositories do not require signed commits, there is no way to verify the authenticity and integrity of code changes. This could allow malicious actors to impersonate legitimate contributors and introduce unauthorized or harmful changes to the codebase.",
+  "RelatedUrl": "https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the 'Require signed commits' option in branch protection rules to ensure that all commits are cryptographically signed and verified before they can be merged.",
+      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-signed-commits"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

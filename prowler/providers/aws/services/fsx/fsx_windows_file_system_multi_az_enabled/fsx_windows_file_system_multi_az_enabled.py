@@ -7,11 +7,9 @@ class fsx_windows_file_system_multi_az_enabled(Check):
         findings = []
         for file_system in fsx_client.file_systems.values():
             if file_system.type == "WINDOWS":
-                report = Check_Report_AWS(self.metadata())
-                report.region = file_system.region
-                report.resource_id = file_system.id
-                report.resource_arn = file_system.arn
-                report.resource_tags = file_system.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=file_system
+                )
                 if len(file_system.subnet_ids) > 1:
                     report.status = "PASS"
                     report.status_extended = f"FSx Windows file system {file_system.id} is configured for Multi-AZ deployment."

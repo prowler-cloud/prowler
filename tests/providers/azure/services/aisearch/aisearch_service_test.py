@@ -14,6 +14,7 @@ def mock_storage_get_aisearch_services(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
             "aisearch_service_id-1": AISearchService(
+                id="aisearch_service_id-1",
                 name="name",
                 location="westeurope",
                 public_network_access=True,

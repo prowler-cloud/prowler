@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -42,6 +42,7 @@ class ELBv2(AWSService):
                         )
                     ):
                         self.loadbalancersv2[elbv2["LoadBalancerArn"]] = LoadBalancerv2(
+                            arn=elbv2["LoadBalancerArn"],
                             name=elbv2["LoadBalancerName"],
                             region=regional_client.region,
                             type=elbv2["Type"],
@@ -197,6 +198,7 @@ class Listenerv2(BaseModel):
 
 
 class LoadBalancerv2(BaseModel):
+    arn: str
     name: str
     region: str
     type: str

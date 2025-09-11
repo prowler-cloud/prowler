@@ -6,7 +6,8 @@ from prowler.providers.aws.services.securityhub.securityhub_client import (
 
 def fixer(region):
     """
-    Enable Security Hub in a region. Requires the securityhub:EnableSecurityHub permission:
+    Enable Security Hub in a region. Requires the securityhub:EnableSecurityHub permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [

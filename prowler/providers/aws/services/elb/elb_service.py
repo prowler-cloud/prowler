@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -43,6 +43,7 @@ class ELB(AWSService):
                             )
 
                         self.loadbalancers[arn] = LoadBalancer(
+                            arn=arn,
                             name=elb["LoadBalancerName"],
                             dns=elb["DNSName"],
                             region=regional_client.region,
@@ -104,6 +105,7 @@ class Listener(BaseModel):
 
 
 class LoadBalancer(BaseModel):
+    arn: str
     name: str
     dns: str
     region: str

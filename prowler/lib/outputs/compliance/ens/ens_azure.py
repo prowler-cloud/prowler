@@ -1,3 +1,4 @@
+from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.ens.models import AzureENSModel
@@ -44,7 +45,7 @@ class AzureENS(ComplianceOutput):
                             Description=compliance.Description,
                             SubscriptionId=finding.account_name,
                             Location=finding.region,
-                            AssessmentDate=str(finding.timestamp),
+                            AssessmentDate=str(timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
                             Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
@@ -77,7 +78,7 @@ class AzureENS(ComplianceOutput):
                         Description=compliance.Description,
                         SubscriptionId="",
                         Location="",
-                        AssessmentDate=str(finding.timestamp),
+                        AssessmentDate=str(timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
                         Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,

@@ -15,12 +15,15 @@ class Test_secretsmanager_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible import (
@@ -47,12 +50,15 @@ class Test_secretsmanager_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible import (
@@ -87,12 +93,15 @@ class Test_secretsmanager_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.secretsmanager.secretsmanager_not_publicly_accessible.secretsmanager_not_publicly_accessible import (

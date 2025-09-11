@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "prowler-api.fullname" . }}
+  labels:
+    {{- include "prowler-api.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  {{- range $name,$config := .Values.containers }}
+    {{- if $config.ports }}
+    {{- range $p := $config.ports }}
+    - port: {{ $p.containerPort }}
+      targetPort: {{ $p.containerPort }}
+      protocol: TCP
+      name: {{ $config.name }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+  selector:
+    {{- include "prowler-api.selectorLabels" . | nindent 4 }}

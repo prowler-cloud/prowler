@@ -14,12 +14,15 @@ class Test_lightsail_database_public:
         lightsail_client = MagicMock
         lightsail_client.databases = {}
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
-            new=lightsail_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
+                new=lightsail_client,
+            ),
         ):
             from prowler.providers.aws.services.lightsail.lightsail_database_public.lightsail_database_public import (
                 lightsail_database_public,
@@ -36,6 +39,7 @@ class Test_lightsail_database_public:
             f"{BASE_LIGHTSAIL_ARN}:Database/test-database": Database(
                 name="test-database",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:Database/test-database",
                 tags=[],
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
@@ -48,12 +52,15 @@ class Test_lightsail_database_public:
             )
         }
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
-            new=lightsail_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
+                new=lightsail_client,
+            ),
         ):
             from prowler.providers.aws.services.lightsail.lightsail_database_public.lightsail_database_public import (
                 lightsail_database_public,
@@ -78,6 +85,7 @@ class Test_lightsail_database_public:
             f"{BASE_LIGHTSAIL_ARN}:Database/test-database": Database(
                 name="test-database",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:Database/test-database",
                 tags=[],
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
@@ -90,12 +98,15 @@ class Test_lightsail_database_public:
             )
         }
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
-            new=lightsail_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
+                new=lightsail_client,
+            ),
         ):
             from prowler.providers.aws.services.lightsail.lightsail_database_public.lightsail_database_public import (
                 lightsail_database_public,

@@ -5,7 +5,8 @@ from prowler.providers.aws.services.s3.s3control_client import s3control_client
 def fixer(resource_id: str) -> bool:
     """
     Enable S3 Block Public Access for the account. NOTE: By blocking all S3 public access you may break public S3 buckets.
-    Requires the s3:PutAccountPublicAccessBlock permission:
+    Requires the s3:PutAccountPublicAccessBlock permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [
@@ -16,6 +17,8 @@ def fixer(resource_id: str) -> bool:
             }
         ]
     }
+    Args:
+        resource_id (str): The AWS account ID.
     Returns:
         bool: True if S3 Block Public Access is enabled, False otherwise
     """

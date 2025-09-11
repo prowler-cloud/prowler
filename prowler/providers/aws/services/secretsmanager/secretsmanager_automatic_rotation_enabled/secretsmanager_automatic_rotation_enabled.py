@@ -8,11 +8,7 @@ class secretsmanager_automatic_rotation_enabled(Check):
     def execute(self):
         findings = []
         for secret in secretsmanager_client.secrets.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = secret.region
-            report.resource_id = secret.name
-            report.resource_arn = secret.arn
-            report.resource_tags = secret.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=secret)
             if secret.rotation_enabled:
                 report.status = "PASS"
                 report.status_extended = (

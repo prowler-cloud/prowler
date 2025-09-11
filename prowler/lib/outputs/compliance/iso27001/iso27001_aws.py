@@ -1,3 +1,4 @@
+from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.iso27001.models import AWSISO27001Model
@@ -13,7 +14,7 @@ class AWSISO27001(ComplianceOutput):
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into AWS ENS compliance format.
+        - transform: Transforms findings into AWS ISO 27001 compliance format.
     """
 
     def transform(
@@ -23,7 +24,7 @@ class AWSISO27001(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into AWS ENS compliance format.
+        Transforms a list of findings into AWS ISO 27001 compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -44,7 +45,10 @@ class AWSISO27001(ComplianceOutput):
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
-                            AssessmentDate=str(finding.timestamp),
+                            AssessmentDate=str(timestamp),
+                            Requirements_Id=requirement.Id,
+                            Requirements_Name=requirement.Name,
+                            Requirements_Description=requirement.Description,
                             Requirements_Attributes_Category=attribute.Category,
                             Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
                             Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,
@@ -66,7 +70,10 @@ class AWSISO27001(ComplianceOutput):
                         Description=compliance.Description,
                         AccountId="",
                         Region="",
-                        AssessmentDate=str(finding.timestamp),
+                        AssessmentDate=str(timestamp),
+                        Requirements_Id=requirement.Id,
+                        Requirements_Name=requirement.Name,
+                        Requirements_Description=requirement.Description,
                         Requirements_Attributes_Category=attribute.Category,
                         Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
                         Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,

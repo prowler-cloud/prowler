@@ -6,12 +6,8 @@ class lightsail_instance_public(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
 
-        for arn_instance, instance in lightsail_client.instances.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
-            report.resource_id = instance.id
-            report.resource_arn = arn_instance
-            report.resource_tags = instance.tags
+        for instance in lightsail_client.instances.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
             report.status = "PASS"
             report.status_extended = (
                 f"Instance '{instance.name}' is not publicly exposed."

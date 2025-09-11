@@ -6,15 +6,18 @@ from tests.providers.gcp.gcp_fixtures import set_mocked_gcp_provider
 
 class Test_iam_organization_essential_contacts_configured:
     def test_iam_no_organizations(self):
-        essentialcontacts_client = mock.MagicMock
+        essentialcontacts_client = mock.MagicMock()
         essentialcontacts_client.organizations = []
         essentialcontacts_client.region = "global"
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
-            new=essentialcontacts_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
+                new=essentialcontacts_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured import (
                 iam_organization_essential_contacts_configured,
@@ -25,15 +28,18 @@ class Test_iam_organization_essential_contacts_configured:
             assert len(result) == 0
 
     def test_iam_org_with_contacts(self):
-        essentialcontacts_client = mock.MagicMock
+        essentialcontacts_client = mock.MagicMock()
         essentialcontacts_client.region = "global"
         essentialcontacts_client.organizations = []
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
-            new=essentialcontacts_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
+                new=essentialcontacts_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_service import Organization
 
@@ -59,15 +65,18 @@ class Test_iam_organization_essential_contacts_configured:
             assert result[0].location == "global"
 
     def test_iam_org_without_contacts(self):
-        essentialcontacts_client = mock.MagicMock
+        essentialcontacts_client = mock.MagicMock()
         essentialcontacts_client.region = "global"
         essentialcontacts_client.organizations = []
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
-            new=essentialcontacts_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
+                new=essentialcontacts_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_service import Organization
 

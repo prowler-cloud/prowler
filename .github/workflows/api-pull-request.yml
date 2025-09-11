@@ -1,0 +1,239 @@
+name: API - Pull Request
+
+on:
+  push:
+    branches:
+      - "master"
+      - "v5.*"
+    paths:
+      - ".github/workflows/api-pull-request.yml"
+      - "api/**"
+  pull_request:
+    branches:
+      - "master"
+      - "v5.*"
+    paths:
+      - ".github/workflows/api-pull-request.yml"
+      - "api/**"
+
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_ADMIN_USER: prowler
+  POSTGRES_ADMIN_PASSWORD: S3cret
+  POSTGRES_USER: prowler_user
+  POSTGRES_PASSWORD: prowler
+  POSTGRES_DB: postgres-db
+  VALKEY_HOST: localhost
+  VALKEY_PORT: 6379
+  VALKEY_DB: 0
+  API_WORKING_DIR: ./api
+  IMAGE_NAME: prowler-api
+  IGNORE_FILES: |
+    api/docs/**
+    api/README.md
+    api/CHANGELOG.md
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    # Service containers to run with `test`
+    services:
+      # Label used to access the service container
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        # Set health checks to wait until postgres has started
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:7-alpine3.19
+        env:
+          VALKEY_HOST: ${{ env.VALKEY_HOST }}
+          VALKEY_PORT: ${{ env.VALKEY_PORT }}
+          VALKEY_DB: ${{ env.VALKEY_DB }}
+        # Set health checks to wait until postgres has started
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test if changes are in not ignored paths
+        id: are-non-ignored-files-changed
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            api/**
+            .github/workflows/api-pull-request.yml
+          files_ignore: ${{ env.IGNORE_FILES }}
+
+      - name: Replace @master with current branch in pyproject.toml
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using branch: $BRANCH_NAME"
+          sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
+
+      - name: Install poetry
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pipx install poetry==2.1.1
+
+      - name: Update poetry.lock after the branch name change
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry lock
+
+      - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push'
+        run: |
+          # Get the latest commit hash from the prowler-cloud/prowler repository
+          LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+          echo "Latest commit hash: $LATEST_COMMIT"
+
+          # Update the resolved_reference specifically for prowler-cloud/prowler repository
+          sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+            s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+          }' poetry.lock
+
+          # Verify the change was made
+          echo "Updated resolved_reference:"
+          grep -A2 -B2 "resolved_reference" poetry.lock
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
+      - name: Install system dependencies for xmlsec
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
+
+      - name: Install dependencies
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry install --no-root
+          poetry run pip list
+          VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
+            grep '"tag_name":' | \
+            sed -E 's/.*"v([^"]+)".*/\1/' \
+            ) && curl -L -o /tmp/hadolint "https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64" \
+            && chmod +x /tmp/hadolint
+
+      - name: Poetry check
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry check --lock
+
+      - name: Lint with ruff
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run ruff check . --exclude contrib
+
+      - name: Check Format with ruff
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run ruff format --check . --exclude contrib
+
+      - name: Lint with pylint
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
+
+      - name: Bandit
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+
+      - name: Safety
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
+        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
+        run: |
+          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
+
+      - name: Vulture
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+
+      - name: Hadolint
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          /tmp/hadolint Dockerfile --ignore=DL3013
+
+      - name: Test with pytest
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest --cov=./src/backend --cov-report=xml src/backend
+
+      - name: Upload coverage reports to Codecov
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: api
+  test-container-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test if changes are in not ignored paths
+        id: are-non-ignored-files-changed
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: api/**
+          files_ignore: ${{ env.IGNORE_FILES }}
+      - name: Set up Docker Buildx
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+      - name: Build Container
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: ${{ env.API_WORKING_DIR }}
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:latest
+          outputs: type=docker
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -4,7 +4,6 @@ from prowler.providers.kubernetes.lib.service.service import KubernetesService
 from prowler.providers.kubernetes.services.core.core_client import core_client
 
 
-################## Etcd ##################
 class Etcd(KubernetesService):
     def __init__(self, provider: KubernetesProvider):
         super().__init__(provider)

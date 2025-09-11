@@ -1,34 +1,100 @@
-# How to create Prowler Service Principal
+# Creating a Prowler Service Principal Application
 
-To allow Prowler assume an identity to start the scan with the required privileges is necesary to create a Service Principal. To create one follow the next steps:
+To enable Prowler to assume an identity for scanning with the required privileges, a Service Principal must be created. This Service Principal authenticates against Azure and retrieves necessary metadata for checks.
 
-1. Access to Microsoft Entra ID
-2. In the left menu bar, go to "App registrations"
-3. Once there, in the menu bar click on "+ New registration" to register a new application
-4. Fill the "Name, select the "Supported account types" and click on "Register. You will be redirected to the applications page.
-5. Once in the application page, in the left menu bar, select "Certificates & secrets"
-6. In the "Certificates & secrets" view, click on "+ New client secret"
-7. Fill the "Description" and "Expires" fields and click on "Add"
-8. Copy the value of the secret, it is going to be used as `AZURE_CLIENT_SECRET` environment variable.
+### Methods for Creating a Service Principal
 
-![Register an Application page](../../img/create-sp.gif)
+Service Principal Applications can be created using either the Azure Portal or the Azure CLI.
 
-## Assigning the proper permissions
+## Creating a Service Principal via Azure Portal / Entra Admin Center
 
-To allow Prowler to retrieve metadata from the identity assumed and specific Entra checks, it is needed to assign the following permissions:
+1. Access Microsoft Entra ID.
+2. In the left menu bar, navigate to **"App registrations"**.
+3. Click **"+ New registration"** in the menu bar to register a new application
+4. Fill the **"Name"**, select the **"Supported account types"** and click **"Register"**. You will be redirected to the applications page.
+5. In the left menu bar, select **"Certificates & secrets"**.
+6. Under the **"Certificates & secrets"** view, click **"+ New client secret"**.
+7. Fill the **"Description"** and **"Expires"** fields, then click **"Add"**.
+8. Copy the secret value, as it will be used as `AZURE_CLIENT_SECRET` environment variable.
 
-1. Access to Microsoft Entra ID
-2. In the left menu bar, go to "App registrations"
-3. Once there, select the application that you have created
-4. In the left menu bar, select "API permissions"
-5. Then click on "+ Add a permission" and select "Microsoft Graph"
-6. Once in the "Microsoft Graph" view, select "Application permissions"
+![Registering an Application in Azure CLI for Prowler](../img/create-sp.gif)
+
+## From Azure CLI
+
+### Creating a Service Principal
+
+To create a Service Principal using the Azure CLI, follow these steps:
+
+1. Open a terminal and execute the following command:
+
+      ```console
+      az ad sp create-for-rbac --name "ProwlerApp"
+      ```
+
+2. The output will be similar to:
+
+      ```json
+      {
+      "appId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+      "displayName": "ProwlerApp",
+      "password": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "tenant": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+      }
+      ```
+
+3. Save the values of `appId`, `password` and `tenant`, as they will be used as credentials in Prowler.
+
+## Assigning Proper Permissions
+
+To allow Prowler to retrieve metadata from the assumed identity and run Entra checks, assign the following permissions:
+
+- `Directory.Read.All`
+- `Policy.Read.All`
+- `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
+
+Permissions can be assigned via the Azure Portal or the Azure CLI.
+
+???+ note
+      After creating and assigning the necessary Entra permissions, follow this [tutorial](../azure/subscriptions.md) to add subscription permissions to the application and start scanning your resources.
+
+### Assigning the Reader Role in Azure Portal
+
+1. Access Microsoft Entra ID.
+
+2. In the left menu bar, navigate to “App registrations”.
+
+3. Select the created application.
+
+4. In the left menu bar, select “API permissions”.
+
+5. Click “+ Add a permission” and select “Microsoft Graph”.
+
+6. In the “Microsoft Graph” view, select “Application permissions”.
+
 7. Finally, search for "Directory", "Policy" and "UserAuthenticationMethod" select the following permissions:
+
     - `Directory.Read.All`
+
     - `Policy.Read.All`
+
     - `UserAuthenticationMethod.Read.All`
-8. Click on "Add permissions" to apply the new permissions.
-9. Finally, click on "Grant admin consent for [your tenant]" to apply the permissions.
 
+8. Click “Add permissions” to apply the new permissions.
 
-![EntraID Permissions](../../img/AAD-permissions.png)
+9. Finally, an admin must click “Grant admin consent for \[your tenant]” to apply the permissions.
+
+![Entra ID Permissions in Prowler](../../img/AAD-permissions.png)
+
+### From Azure CLI
+
+1. To grant permissions to a Service Principal, execute the following command in a terminal:
+
+      ```console
+      az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role 38d9df27-64da-44fd-b7c5-a6fbac20248f=Role
+      ```
+
+2. Once the permissions are assigned, admin consent is required to finalize the changes. An administrator should run:
+
+      ```console
+      az ad app permission admin-consent --id {appId}
+      ```

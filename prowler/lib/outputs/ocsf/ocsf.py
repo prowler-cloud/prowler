@@ -1,10 +1,11 @@
 import os
+from datetime import datetime
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
-from py_ocsf_models.events.findings.detection_finding import DetectionFinding
 from py_ocsf_models.events.findings.detection_finding import (
-    TypeID as DetectionFindingTypeID,
+    DetectionFinding,
+    DetectionFindingTypeID,
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
@@ -39,7 +40,7 @@ class OCSF(Output):
         - get_finding_status_id(muted: bool) -> StatusID: Returns the StatusID based on the muted value.
 
     References:
-        - OCSF: https://schema.ocsf.io/1.2.0/classes/detection_finding
+        - OCSF: https://schema.ocsf.io/classes/detection_finding
         - PY-OCSF-Model: https://github.com/prowler-cloud/py-ocsf-models
     """
 
@@ -68,26 +69,29 @@ class OCSF(Output):
                     activity_name=finding_activity.name,
                     finding_info=FindingInformation(
                         created_time_dt=finding.timestamp,
-                        created_time=int(finding.timestamp.timestamp()),
+                        created_time=(
+                            int(finding.timestamp.timestamp())
+                            if isinstance(finding.timestamp, datetime)
+                            else finding.timestamp
+                        ),
                         desc=finding.metadata.Description,
                         title=finding.metadata.CheckTitle,
                         uid=finding.uid,
                         name=finding.resource_name,
-                        product_uid="prowler",
                         types=finding.metadata.CheckType,
                     ),
                     time_dt=finding.timestamp,
-                    time=int(finding.timestamp.timestamp()),
+                    time=(
+                        int(finding.timestamp.timestamp())
+                        if isinstance(finding.timestamp, datetime)
+                        else finding.timestamp
+                    ),
                     remediation=Remediation(
                         desc=finding.metadata.Remediation.Recommendation.Text,
                         references=list(
                             filter(
                                 None,
                                 [
-                                    finding.metadata.Remediation.Code.NativeIaC,
-                                    finding.metadata.Remediation.Code.Terraform,
-                                    finding.metadata.Remediation.Code.CLI,
-                                    finding.metadata.Remediation.Code.Other,
                                     finding.metadata.Remediation.Recommendation.Url,
                                 ],
                             )
@@ -111,7 +115,10 @@ class OCSF(Output):
                                 # TODO: this should be included only if using the Cloud profile
                                 cloud_partition=finding.partition,
                                 region=finding.region,
-                                data={"details": finding.resource_details},
+                                data={
+                                    "details": finding.resource_details,
+                                    "metadata": finding.resource_metadata,
+                                },
                             )
                         ]
                         if finding.metadata.Provider != "kubernetes"
@@ -122,7 +129,10 @@ class OCSF(Output):
                                 uid=finding.resource_uid,
                                 group=Group(name=finding.metadata.ServiceName),
                                 type=finding.metadata.ResourceType,
-                                data={"details": finding.resource_details},
+                                data={
+                                    "details": finding.resource_details,
+                                    "metadata": finding.resource_metadata,
+                                },
                                 namespace=finding.region.replace("namespace: ", ""),
                             )
                         ]
@@ -149,6 +159,7 @@ class OCSF(Output):
                         "categories": finding.metadata.Categories,
                         "depends_on": finding.metadata.DependsOn,
                         "related_to": finding.metadata.RelatedTo,
+                        "additional_urls": finding.metadata.AdditionalURLs,
                         "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
                     },
@@ -185,20 +196,26 @@ class OCSF(Output):
                 and not self._file_descriptor.closed
                 and self._data
             ):
-                self._file_descriptor.write("[")
+                if self._file_descriptor.tell() == 0:
+                    self._file_descriptor.write("[")
                 for finding in self._data:
-                    self._file_descriptor.write(
-                        finding.json(exclude_none=True, indent=4)
-                    )
-                    self._file_descriptor.write(",")
-                if self._file_descriptor.tell() > 0:
+                    try:
+                        self._file_descriptor.write(
+                            finding.json(exclude_none=True, indent=4)
+                        )
+                        self._file_descriptor.write(",")
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                if self.close_file or self._from_cli:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(
                             self._file_descriptor.tell() - 1, os.SEEK_SET
                         )
                     self._file_descriptor.truncate()
                     self._file_descriptor.write("]")
-                self._file_descriptor.close()
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

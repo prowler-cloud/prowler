@@ -37,12 +37,15 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
-            new=Logs(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
+                new=Logs(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs import (
@@ -87,12 +90,15 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
-            new=Logs(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
+                new=Logs(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs import (
@@ -108,10 +114,10 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_tags == [{"test": "test"}]
+            assert result[0].resource_tags == [{}]
 
     @mock_aws
     def test_cloudwatch_log_group_with_secrets(self):
@@ -146,12 +152,15 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
-            new=Logs(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
+                new=Logs(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs import (
@@ -170,10 +179,10 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_tags == [{"test": "test"}]
+            assert result[0].resource_tags == [{}]
 
     @mock_aws
     def test_access_denied(self):
@@ -193,13 +202,16 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
-            new=Logs(aws_provider),
-        ) as logs_client:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs.logs_client",
+                new=Logs(aws_provider),
+            ) as logs_client,
+        ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_no_secrets_in_logs.cloudwatch_log_group_no_secrets_in_logs import (
                 cloudwatch_log_group_no_secrets_in_logs,

@@ -15,7 +15,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#cli-command",
+      "CLI": "aws s3 put-object-lock-configuration --bucket <BUCKET_NAME> --object-lock-configuration '{\"ObjectLockEnabled\":\"Enabled\",\"Rule\":{\"DefaultRetention\":{\"Mode\":\"GOVERNANCE\",\"Days\":1}}}'",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/object-lock.html",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#terraform"

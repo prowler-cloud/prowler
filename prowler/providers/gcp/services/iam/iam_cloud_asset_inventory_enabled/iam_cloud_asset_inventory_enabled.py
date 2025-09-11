@@ -8,11 +8,14 @@ class iam_cloud_asset_inventory_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for project_id in serviceusage_client.project_ids:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project_id
-            report.resource_id = "cloudasset.googleapis.com"
-            report.resource_name = "Cloud Asset Inventory"
-            report.location = serviceusage_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=serviceusage_client.projects[project_id],
+                resource_id="cloudasset.googleapis.com",
+                resource_name="Cloud Asset Inventory",
+                project_id=project_id,
+                location=serviceusage_client.region,
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"Cloud Asset Inventory is not enabled in project {project_id}."

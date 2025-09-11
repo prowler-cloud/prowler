@@ -3,14 +3,13 @@ from ipaddress import IPv4Address, IPv6Address, ip_address
 from typing import Optional, Union
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## EC2
 class EC2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -103,6 +102,7 @@ class EC2(AWSService):
                                     security_groups=[
                                         sg["GroupId"]
                                         for sg in instance.get("SecurityGroups", [])
+                                        if isinstance(sg, dict) and "GroupId" in sg
                                     ],
                                     subnet_id=instance.get("SubnetId", ""),
                                     network_interfaces=enis,
@@ -138,6 +138,7 @@ class EC2(AWSService):
                             name=sg["GroupName"],
                             region=regional_client.region,
                             id=sg["GroupId"],
+                            arn=arn,
                             ingress_rules=sg["IpPermissions"],
                             egress_rules=sg["IpPermissionsEgress"],
                             associated_sgs=associated_sgs,
@@ -569,6 +570,12 @@ class EC2(AWSService):
                                 ),
                                 network_interfaces=enis,
                                 associate_public_ip_address=associate_public_ip,
+                                http_tokens=template_version["LaunchTemplateData"]
+                                .get("MetadataOptions", {})
+                                .get("HttpTokens", ""),
+                                http_endpoint=template_version["LaunchTemplateData"]
+                                .get("MetadataOptions", {})
+                                .get("HttpEndpoint", ""),
                             ),
                         )
                     )
@@ -621,6 +628,7 @@ class EC2(AWSService):
                         self.transit_gateways[transit_gateway["TransitGatewayArn"]] = (
                             TransitGateway(
                                 id=transit_gateway["TransitGatewayId"],
+                                arn=transit_gateway["TransitGatewayArn"],
                                 auto_accept_shared_attachments=(
                                     transit_gateway["Options"][
                                         "AutoAcceptSharedAttachments"
@@ -703,6 +711,7 @@ class NetworkInterface(BaseModel):
 class SecurityGroup(BaseModel):
     name: str
     region: str
+    arn: str
     id: str
     vpc_id: str
     associated_sgs: list
@@ -763,6 +772,8 @@ class TemplateData(BaseModel):
     user_data: str
     network_interfaces: Optional[list[NetworkInterface]]
     associate_public_ip_address: Optional[bool]
+    http_tokens: Optional[str]
+    http_endpoint: Optional[str]
 
 
 class LaunchTemplateVersion(BaseModel):
@@ -781,6 +792,7 @@ class LaunchTemplate(BaseModel):
 
 class VpnEndpoint(BaseModel):
     id: str
+    arn: str
     connection_logging: bool
     region: str
     tags: Optional[list] = []
@@ -788,6 +800,7 @@ class VpnEndpoint(BaseModel):
 
 class TransitGateway(BaseModel):
     id: str
+    arn: str
     auto_accept_shared_attachments: bool
     region: str
     tags: Optional[list] = []

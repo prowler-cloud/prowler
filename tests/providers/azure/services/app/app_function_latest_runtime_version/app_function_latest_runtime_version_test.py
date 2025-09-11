@@ -11,12 +11,15 @@ class Test_app_function_latest_runtime_version:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version import (
                 app_function_latest_runtime_version,
@@ -31,12 +34,15 @@ class Test_app_function_latest_runtime_version:
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version import (
                 app_function_latest_runtime_version,
@@ -51,12 +57,15 @@ class Test_app_function_latest_runtime_version:
     def test_app_function_runtime_is_latest(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version import (
                 app_function_latest_runtime_version,
@@ -68,6 +77,7 @@ class Test_app_function_latest_runtime_version:
             app_client.functions = {
                 AZURE_SUBSCRIPTION_ID: {
                     function_id: FunctionApp(
+                        id=function_id,
                         name="function1",
                         location="West Europe",
                         kind="functionapp,linux",
@@ -96,12 +106,15 @@ class Test_app_function_latest_runtime_version:
     def test_app_function_runtime_is_not_latest(self):
         app_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
-            new=app_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version.app_client",
+                new=app_client,
+            ),
         ):
             from prowler.providers.azure.services.app.app_function_latest_runtime_version.app_function_latest_runtime_version import (
                 app_function_latest_runtime_version,
@@ -113,6 +126,7 @@ class Test_app_function_latest_runtime_version:
             app_client.functions = {
                 AZURE_SUBSCRIPTION_ID: {
                     function_id: FunctionApp(
+                        id=function_id,
                         name="function1",
                         location="West Europe",
                         kind="functionapp,linux",

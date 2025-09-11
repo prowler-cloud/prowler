@@ -5,12 +5,8 @@ from prowler.providers.aws.services.elb.elb_client import elb_client
 class elb_desync_mitigation_mode(Check):
     def execute(self):
         findings = []
-        for lb_arn, lb in elb_client.loadbalancers.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = lb.region
-            report.resource_id = lb.name
-            report.resource_arn = lb_arn
-            report.resource_tags = lb.tags
+        for lb in elb_client.loadbalancers.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             if (
                 lb.desync_mitigation_mode == "defensive"
                 or lb.desync_mitigation_mode == "strictest"

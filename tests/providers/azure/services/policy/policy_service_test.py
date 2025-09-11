@@ -13,7 +13,9 @@ from tests.providers.azure.azure_fixtures import (
 def mock_policy_assigments(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "policy-1": PolicyAssigment(id="id-1", enforcement_mode="Default")
+            "policy-1": PolicyAssigment(
+                id="id-1", name="policy-1", enforcement_mode="Default"
+            )
         }
     }
 

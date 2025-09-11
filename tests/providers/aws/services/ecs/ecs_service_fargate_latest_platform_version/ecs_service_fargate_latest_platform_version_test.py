@@ -128,12 +128,15 @@ class Test_ecs_service_fargate_latest_platform_version:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version import (
                 ecs_service_fargate_latest_platform_version,
@@ -162,12 +165,15 @@ class Test_ecs_service_fargate_latest_platform_version:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version import (
                 ecs_service_fargate_latest_platform_version,
@@ -199,12 +205,15 @@ class Test_ecs_service_fargate_latest_platform_version:
 
         mocked_ecs_client = ECS(mocked_aws_provider)
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
-            new=mocked_ecs_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
+                new=mocked_ecs_client,
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version import (
                 ecs_service_fargate_latest_platform_version,
@@ -217,7 +226,7 @@ class Test_ecs_service_fargate_latest_platform_version:
             assert result[0].status_extended == (
                 "ECS Service test-latest-linux-service is using latest FARGATE Linux version 1.4.0."
             )
-            assert result[0].resource_id == "test-latest-linux-service"
+            assert result[0].resource_id == "test-cluster/test-latest-linux-service"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:service/test-cluster/test-latest-linux-service"
@@ -249,12 +258,15 @@ class Test_ecs_service_fargate_latest_platform_version:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version import (
                 ecs_service_fargate_latest_platform_version,
@@ -267,7 +279,7 @@ class Test_ecs_service_fargate_latest_platform_version:
             assert result[0].status_extended == (
                 "ECS Service test-latest-windows-service is using latest FARGATE Windows version 1.0.0."
             )
-            assert result[0].resource_id == "test-latest-windows-service"
+            assert result[0].resource_id == "test-cluster/test-latest-windows-service"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:service/test-cluster/test-latest-windows-service"
@@ -295,12 +307,15 @@ class Test_ecs_service_fargate_latest_platform_version:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version import (
                 ecs_service_fargate_latest_platform_version,
@@ -313,7 +328,7 @@ class Test_ecs_service_fargate_latest_platform_version:
             assert result[0].status_extended == (
                 "ECS Service test-no-latest-linux-service is not using latest FARGATE Linux version 1.4.0, currently using 1.2.0."
             )
-            assert result[0].resource_id == "test-no-latest-linux-service"
+            assert result[0].resource_id == "test-cluster/test-no-latest-linux-service"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:service/test-cluster/test-no-latest-linux-service"
@@ -341,12 +356,15 @@ class Test_ecs_service_fargate_latest_platform_version:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_service_fargate_latest_platform_version.ecs_service_fargate_latest_platform_version import (
                 ecs_service_fargate_latest_platform_version,
@@ -359,7 +377,9 @@ class Test_ecs_service_fargate_latest_platform_version:
             assert result[0].status_extended == (
                 "ECS Service test-no-latest-windows-service is not using latest FARGATE Windows version 1.0.0, currently using 0.9.0."
             )
-            assert result[0].resource_id == "test-no-latest-windows-service"
+            assert (
+                result[0].resource_id == "test-cluster/test-no-latest-windows-service"
+            )
             assert (
                 result[0].resource_arn
                 == f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:service/test-cluster/test-no-latest-windows-service"

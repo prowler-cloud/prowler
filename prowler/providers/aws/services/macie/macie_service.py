@@ -1,10 +1,9 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Macie
 class Macie(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__

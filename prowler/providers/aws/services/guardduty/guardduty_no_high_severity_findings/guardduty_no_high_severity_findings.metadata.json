@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/findings.html",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/findings.html",
       "Terraform": ""

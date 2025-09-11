@@ -24,7 +24,8 @@
     }
   },
   "Categories": [
-    "encryption"
+    "encryption",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

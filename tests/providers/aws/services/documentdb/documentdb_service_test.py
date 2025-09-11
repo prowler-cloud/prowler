@@ -179,7 +179,7 @@ class Test_DocumentDB_Service:
                 parameter_group="default.docdb3.6",
                 deletion_protection=True,
                 region=AWS_REGION_US_EAST_1,
-                tags=[],
+                tags=[{"Key": "environment", "Value": "test"}],
             )
         }
 

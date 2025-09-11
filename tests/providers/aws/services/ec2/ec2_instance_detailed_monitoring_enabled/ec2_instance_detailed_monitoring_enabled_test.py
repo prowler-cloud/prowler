@@ -21,12 +21,15 @@ class Test_ec2_instance_detailed_monitoring_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled import (
@@ -54,12 +57,15 @@ class Test_ec2_instance_detailed_monitoring_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled import (
                 ec2_instance_detailed_monitoring_enabled,
@@ -99,13 +105,16 @@ class Test_ec2_instance_detailed_monitoring_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled.ec2_client",
-            new=EC2(aws_provider),
-        ) as ec2_service:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled.ec2_client",
+                new=EC2(aws_provider),
+            ) as ec2_service,
+        ):
             from prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled import (
                 ec2_instance_detailed_monitoring_enabled,
             )

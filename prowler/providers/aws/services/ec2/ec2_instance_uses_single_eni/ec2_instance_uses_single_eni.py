@@ -6,11 +6,7 @@ class ec2_instance_uses_single_eni(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
-            report.resource_id = instance.id
-            report.resource_arn = instance.arn
-            report.resource_tags = instance.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
             eni_types = {"efa": [], "interface": [], "trunk": []}
             if not instance.network_interfaces:
                 report.status = "PASS"
@@ -19,7 +15,10 @@ class ec2_instance_uses_single_eni(Check):
                 )
             else:
                 for eni_id in instance.network_interfaces:
-                    if ec2_client.network_interfaces[eni_id].type in eni_types:
+                    if (
+                        eni_id in ec2_client.network_interfaces
+                        and ec2_client.network_interfaces[eni_id].type in eni_types
+                    ):
                         eni_types[ec2_client.network_interfaces[eni_id].type].append(
                             eni_id
                         )

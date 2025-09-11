@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_cmk_not_multi_region",
+  "CheckTitle": "AWS KMS customer managed keys should not be multi-Region",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:kms:region:account-id:key/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsKmsKey",
+  "Description": "Ensure that AWS KMS customer managed keys (CMKs) are not multi-region to maintain strict data control and compliance with security best practices.",
+  "Risk": "Multi-region KMS keys can increase the risk of unauthorized access and data exposure, as managing access controls and auditing across multiple regions becomes more complex. This expanded attack surface may lead to compliance violations and data breaches.",
+  "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html#multi-region-concepts",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms create-key --no-multi-region",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"aws_kms_key\" \"example\" { description = \"Single-region key\" multi_region = false }"
+    },
+    "Recommendation": {
+      "Text": "Identify and replace multi-region keys with single-region KMS keys to enhance security and access control.",
+      "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/mrk-when-to-use.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Multi-region keys should be used only when absolutely necessary, such as for cross-region disaster recovery, and should be carefully managed with strict access controls."
+}

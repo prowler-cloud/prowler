@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-4",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
+      "CLI": "",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/snapshot-encrypted.html#"
     },
     "Recommendation": {

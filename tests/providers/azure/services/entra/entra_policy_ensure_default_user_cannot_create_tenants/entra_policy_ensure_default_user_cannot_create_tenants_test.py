@@ -9,12 +9,15 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
                 entra_policy_ensure_default_user_cannot_create_tenants,
@@ -28,12 +31,15 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {DOMAIN: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
                 entra_policy_ensure_default_user_cannot_create_tenants,
@@ -55,18 +61,22 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         id = str(uuid4())
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
                 entra_policy_ensure_default_user_cannot_create_tenants,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
+                DefaultUserRolePermissions,
             )
 
             entra_client.authorization_policy = {
@@ -74,11 +84,11 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                     id=id,
                     name="Test",
                     description="Test",
-                    default_user_role_permissions=mock.MagicMock(
+                    default_user_role_permissions=DefaultUserRolePermissions(
                         allowed_to_create_tenants=False
                     ),
                     guest_invite_settings="everyone",
-                    guest_user_role_id=None,
+                    guest_user_role_id=uuid4(),
                 )
             }
 
@@ -98,18 +108,22 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         id = str(uuid4())
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
                 entra_policy_ensure_default_user_cannot_create_tenants,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
+                DefaultUserRolePermissions,
             )
 
             entra_client.authorization_policy = {
@@ -117,11 +131,11 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                     id=id,
                     name="Test",
                     description="Test",
-                    default_user_role_permissions=mock.MagicMock(
+                    default_user_role_permissions=DefaultUserRolePermissions(
                         allowed_to_create_tenants=True
                     ),
                     guest_invite_settings="everyone",
-                    guest_user_role_id=None,
+                    guest_user_role_id=uuid4(),
                 )
             }
 

@@ -26,14 +26,19 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,dashboard} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,dashboard,iac} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes}
+  {aws,azure,gcp,kubernetes,m365,github,iac,nhn,mongodbatlas}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
+    m365                Microsoft 365 Provider
+    github              GitHub Provider
+    iac                 IaC Provider (Preview)
+    nhn                 NHN Provider (Unofficial)
+    mongodbatlas        MongoDB Atlas Provider
 
 Available components:
     dashboard           Local dashboard
@@ -72,7 +77,7 @@ Detailed documentation at https://docs.prowler.com
         # Init Providers Arguments
         init_providers_parser(self)
 
-        # Dahboard Parser
+        # Dashboard Parser
         init_dashboard_parser(self)
 
     def parse(self, args=None) -> argparse.Namespace:
@@ -101,6 +106,11 @@ Detailed documentation at https://docs.prowler.com
             # a flag, starting by "-", is supplied
             if "-" in sys.argv[1]:
                 sys.argv = self.__set_default_provider__(sys.argv)
+
+            # Provider aliases mapping
+            # Microsoft 365
+            elif sys.argv[1] == "microsoft365":
+                sys.argv[1] = "m365"
 
         # Parse arguments
         args = self.parser.parse_args()
@@ -224,6 +234,11 @@ Detailed documentation at https://docs.prowler.com
             "-e",
             nargs="+",
             help="Checks to exclude",
+        )
+        exclude_checks_parser.add_argument(
+            "--excluded-checks-file",
+            nargs="?",
+            help="JSON file containing the checks to be excluded. See config/checklist_example.json",
         )
         exclude_checks_parser.add_argument(
             "--excluded-service",

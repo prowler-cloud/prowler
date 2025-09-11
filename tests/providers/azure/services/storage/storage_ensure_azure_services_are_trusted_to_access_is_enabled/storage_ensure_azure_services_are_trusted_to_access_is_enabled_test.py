@@ -1,9 +1,10 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
-
-from prowler.providers.azure.services.storage.storage_service import Account
+from prowler.providers.azure.services.storage.storage_service import (
+    Account,
+    NetworkRuleSet,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -15,12 +16,15 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
-            new=storage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
+                new=storage_client,
+            ),
         ):
             from prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled import (
                 storage_ensure_azure_services_are_trusted_to_access_is_enabled,
@@ -39,26 +43,31 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=NetworkRuleSet(bypass=[None]),
-                    encryption_type=None,
-                    minimum_tls_version=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="None", default_action="Deny"
+                    ),
+                    encryption_type="None",
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                 )
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
-            new=storage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
+                new=storage_client,
+            ),
         ):
             from prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled import (
                 storage_ensure_azure_services_are_trusted_to_access_is_enabled,
@@ -86,26 +95,31 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=NetworkRuleSet(bypass=["AzureServices"]),
-                    encryption_type=None,
-                    minimum_tls_version=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
+                    encryption_type="None",
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                 )
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
-            new=storage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
+                new=storage_client,
+            ),
         ):
             from prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled import (
                 storage_ensure_azure_services_are_trusted_to_access_is_enabled,

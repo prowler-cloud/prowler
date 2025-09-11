@@ -8,11 +8,7 @@ class kms_cmk_are_used(Check):
         for key in kms_client.keys:
             # Only check CMKs keys
             if key.manager == "CUSTOMER":
-                report = Check_Report_AWS(self.metadata())
-                report.region = key.region
-                report.resource_id = key.id
-                report.resource_arn = key.arn
-                report.resource_tags = key.tags
+                report = Check_Report_AWS(metadata=self.metadata(), resource=key)
                 if key.state != "Enabled":
                     if key.state == "PendingDeletion":
                         report.status = "PASS"

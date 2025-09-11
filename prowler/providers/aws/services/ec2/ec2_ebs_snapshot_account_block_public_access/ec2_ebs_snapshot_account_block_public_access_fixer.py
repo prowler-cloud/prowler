@@ -5,7 +5,8 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 def fixer(region):
     """
     Enable EBS snapshot block public access in a region.
-    Requires the ec2:EnableSnapshotBlockPublicAccess permission:
+    Requires the ec2:EnableSnapshotBlockPublicAccess permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [

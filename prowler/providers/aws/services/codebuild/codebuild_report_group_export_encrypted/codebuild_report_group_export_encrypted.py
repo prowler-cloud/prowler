@@ -7,11 +7,9 @@ class codebuild_report_group_export_encrypted(Check):
         findings = []
         for report_group in codebuild_client.report_groups.values():
             if report_group.export_config and report_group.export_config.type == "S3":
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = report_group.name
-                report.resource_arn = report_group.arn
-                report.region = report_group.region
-                report.resource_tags = report_group.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=report_group
+                )
                 report.status = "PASS"
                 report.status_extended = f"CodeBuild report group {report_group.name} exports are encrypted at {report_group.export_config.bucket_location} with KMS key {report_group.export_config.encryption_key}."
 

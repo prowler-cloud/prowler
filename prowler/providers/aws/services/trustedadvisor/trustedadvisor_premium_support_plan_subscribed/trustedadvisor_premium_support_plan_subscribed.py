@@ -13,7 +13,10 @@ class trustedadvisor_premium_support_plan_subscribed(Check):
                 "verify_premium_support_plans", True
             )
         ):
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource=trustedadvisor_client.premium_support,
+            )
             report.status = "FAIL"
             report.status_extended = (
                 "Amazon Web Services Premium Support Plan isn't subscribed."

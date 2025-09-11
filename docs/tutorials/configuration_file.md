@@ -1,10 +1,12 @@
 # Configuration File
+
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
+
 ```
 prowler/config/config.yaml
 ```
 
-Also you can input a custom configuration file using the `--config-file` argument.
+Additionally, you can input a custom configuration file using the `--config-file` argument.
 
 ## AWS
 
@@ -31,6 +33,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
 | `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
+| `codebuild_github_allowed_organizations`                      | `github_allowed_organizations`                   | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
 | `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                       | Boolean         |
@@ -41,12 +44,13 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_launch_template_no_secrets`                              | `secrets_ignore_patterns`                        | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_sg_high_risk_ports`                 | List of Integer |
+| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_high_risk_ports`                    | List of Integer |
 | `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
 | `ecs_task_definitions_no_environment_secrets`                 | `secrets_ignore_patterns`                        | List of Strings |
 | `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
 | `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
+| `elasticache_redis_cluster_backup_enabled`                    | `minimum_snapshot_retention_period`              | Integer         |
 | `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
 | `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
@@ -75,6 +79,13 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
+| `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
+| `vm_sufficient_daily_backup_retention_period`                 | `vm_backup_min_daily_retention_days`             | Integer         |
+| `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
+| `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
+| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_threshold`    | Float           |
+| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_minutes`      | Integer         |
+| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_actions`      | List of Strings |
 
 
 ## GCP
@@ -84,7 +95,7 @@ The following list includes all the Azure checks with configurable variables tha
 ## Kubernetes
 
 ### Configurable Checks
-The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
+The following list includes all the Kubernetes checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
@@ -93,6 +104,28 @@ The following list includes all the Azure checks with configurable variables tha
 | `audit_log_maxage`                                            | `audit_log_maxage`                               | String          |
 | `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
 | `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
+
+
+## M365
+
+### Configurable Checks
+The following list includes all the Microsoft 365 checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
+| `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
+| `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
+
+
+## GitHub
+
+### Configurable Checks
+The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                 | Value                                       | Type    |
+|--------------------------------------------|---------------------------------------------|---------|
+| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
 
 ## Config YAML File Structure
 
@@ -144,7 +177,7 @@ aws:
         "amazon-elb"
     ]
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
-  ec2_sg_high_risk_ports:
+  ec2_high_risk_ports:
     [
         25,
         110,
@@ -447,6 +480,66 @@ azure:
   # azure.app_ensure_java_version_is_latest
   java_latest_version: "17"
 
+  # Azure SQL Server
+  # azure.sqlserver_minimal_tls_version
+  recommended_minimal_tls_versions:
+    [
+      "1.2",
+      "1.3"
+    ]
+
+  # Azure Virtual Machines
+  # azure.vm_desired_sku_size
+  # List of desired VM SKU sizes that are allowed in the organization
+  desired_vm_sku_sizes:
+    [
+      "Standard_A8_v2",
+      "Standard_DS3_v2",
+      "Standard_D4s_v3",
+    ]
+  # Azure VM Backup Configuration
+  # azure.vm_sufficient_daily_backup_retention_period
+  vm_backup_min_daily_retention_days: 7
+
+  # Azure API Management Threat Detection Configuration
+  # azure.apim_threat_detection_llm_jacking
+  apim_threat_detection_llm_jacking_threshold: 0.1
+  apim_threat_detection_llm_jacking_minutes: 1440
+  apim_threat_detection_llm_jacking_actions:
+    [
+      # OpenAI API endpoints
+      "ImageGenerations_Create",
+      "ChatCompletions_Create",
+      "Completions_Create",
+      "Embeddings_Create",
+      "FineTuning_Jobs_Create",
+      "Models_List",
+
+      # Azure OpenAI endpoints
+      "Deployments_List",
+      "Deployments_Get",
+      "Deployments_Create",
+      "Deployments_Delete",
+
+      # Anthropic endpoints
+      "Messages_Create",
+      "Claude_Create",
+
+      # Google AI endpoints
+      "GenerateContent",
+      "GenerateText",
+      "GenerateImage",
+
+      # Meta AI endpoints
+      "Llama_Create",
+      "CodeLlama_Create",
+
+      # Other LLM endpoints
+      "Gemini_Generate",
+      "Claude_Generate",
+      "Llama_Generate"
+    ]
+
 # GCP Configuration
 gcp:
   # GCP Compute Configuration
@@ -482,5 +575,30 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+# M365 Configuration
+m365:
+  # Entra Conditional Access Policy
+  # m365.entra_admin_users_sign_in_frequency_enabled
+  sign_in_frequency: 4 # 4 hours
+  # Teams Settings
+  # m365.teams_external_file_sharing_restricted
+  allowed_cloud_storage_services:
+    [
+      #"allow_box",
+      #"allow_drop_box",
+      #"allow_egnyte",
+      #"allow_google_drive",
+      #"allow_share_file",
+    ]
+  # Exchange Organization Settings
+  # m365.exchange_organization_mailtips_enabled
+  recommended_mailtips_large_audience_threshold: 25 # maximum number of recipients
+
+# GitHub Configuration
+github:
+  # github.repository_inactive_not_archived
+  inactive_not_archived_days_threshold: 180
+
 
 ```

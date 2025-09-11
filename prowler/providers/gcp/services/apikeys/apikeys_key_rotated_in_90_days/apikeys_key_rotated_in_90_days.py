@@ -8,11 +8,11 @@ class apikeys_key_rotated_in_90_days(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for key in apikeys_client.keys:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = key.project_id
-            report.resource_id = key.id
-            report.resource_name = key.name
-            report.location = apikeys_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=key,
+                location=apikeys_client.region,
+            )
             report.status = "PASS"
             report.status_extended = f"API key {key.name} created in less than 90 days."
             if (

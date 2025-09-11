@@ -139,12 +139,15 @@ class Test_organizations_tags_policies_enabled_and_attached:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
-                new=organizations_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client.get_unknown_arn",
-                return_value="arn:aws:organizations:eu-west-1:0123456789012:unknown",
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+                    new=organizations_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client.get_unknown_arn",
+                    return_value="arn:aws:organizations:eu-west-1:0123456789012:unknown",
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (

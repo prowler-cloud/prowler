@@ -9,11 +9,8 @@ class apigateway_restapi_public_with_authorizer(Check):
         findings = []
         for rest_api in apigateway_client.rest_apis:
             if rest_api.public_endpoint:
-                report = Check_Report_AWS(self.metadata())
-                report.region = rest_api.region
+                report = Check_Report_AWS(metadata=self.metadata(), resource=rest_api)
                 report.resource_id = rest_api.name
-                report.resource_arn = rest_api.arn
-                report.resource_tags = rest_api.tags
 
                 report.status = "PASS"
                 report.status_extended = f"API Gateway REST API {rest_api.name} with ID {rest_api.id} has a public endpoint with an authorizer."

@@ -15,9 +15,10 @@ class organizations_scp_check_deny_regions(Check):
             if (
                 organizations_client.organization.policies is not None
             ):  # Access denied to list policies
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = organizations_client.organization.id
-                report.resource_arn = organizations_client.organization.arn
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource=organizations_client.organization,
+                )
                 report.region = organizations_client.region
                 report.status = "FAIL"
                 report.status_extended = (
@@ -32,11 +33,10 @@ class organizations_scp_check_deny_regions(Check):
                     for policy in organizations_client.organization.policies.get(
                         "SERVICE_CONTROL_POLICY", []
                     ):
-
                         # Statements are not always list
-                        statements = policy.content.get("Statement")
-                        if type(policy.content["Statement"]) is not list:
-                            statements = [policy.content.get("Statement")]
+                        statements = policy.content.get("Statement", [])
+                        if type(statements) is not list:
+                            statements = [statements]
 
                         for statement in statements:
                             # Deny if Condition = {"StringNotEquals": {"aws:RequestedRegion": [region1, region2]}}

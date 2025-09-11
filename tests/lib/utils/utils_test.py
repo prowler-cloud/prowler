@@ -111,7 +111,7 @@ class Test_utils_validate_ip_address:
 class Test_detect_secrets_scan:
     def test_detect_secrets_scan_data(self):
         data = "password=password"
-        secrets_detected = detect_secrets_scan(data=data)
+        secrets_detected = detect_secrets_scan(data=data, excluded_secrets=[])
         assert type(secrets_detected) is list
         assert len(secrets_detected) == 1
         assert "filename" in secrets_detected[0]
@@ -128,7 +128,9 @@ class Test_detect_secrets_scan:
         temp_data_file = tempfile.NamedTemporaryFile(delete=False)
         temp_data_file.write(b"password=password")
         temp_data_file.seek(0)
-        secrets_detected = detect_secrets_scan(file=temp_data_file.name)
+        secrets_detected = detect_secrets_scan(
+            file=temp_data_file.name, excluded_secrets=[]
+        )
         assert type(secrets_detected) is list
         assert len(secrets_detected) == 1
         assert "filename" in secrets_detected[0]
@@ -219,7 +221,7 @@ class TestFilePermissions:
 
 class TestStripAnsiCodes:
     def test_strip_ansi_codes_no_alteration(self):
-        input_string = "\x1B[31mHello\x1B[0m World"
+        input_string = "\x1b[31mHello\x1b[0m World"
         expected_output = "Hello World"
 
         actual_output = strip_ansi_codes(input_string)

@@ -17,11 +17,9 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
                 if len(repository.images_details) > 0:
                     # We only want to check the latest image pushed that is scannable
                     image = repository.images_details[-1]
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = repository.region
-                    report.resource_id = repository.name
-                    report.resource_arn = repository.arn
-                    report.resource_tags = repository.tags
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource=repository
+                    )
                     report.status = "PASS"
                     status_extended_prefix = f"ECR repository '{repository.name}' has scanned the {image.type} container image with digest '{image.latest_digest}' and tag '{image.latest_tag}' "
                     report.status_extended = (

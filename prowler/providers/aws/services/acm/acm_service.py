@@ -1,14 +1,13 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## ACM
 class ACM(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -58,7 +57,7 @@ class ACM(AWSService):
                             certificate_expiration_time = 0
                         self.certificates[certificate["CertificateArn"]] = Certificate(
                             arn=certificate["CertificateArn"],
-                            name=certificate["DomainName"],
+                            name=certificate.get("DomainName", ""),
                             id=certificate["CertificateArn"].split("/")[-1],
                             type=certificate["Type"],
                             key_algorithm=certificate["KeyAlgorithm"],
@@ -112,5 +111,5 @@ class Certificate(BaseModel):
     tags: Optional[list] = []
     expiration_days: int
     in_use: bool
-    transparency_logging: Optional[bool]
+    transparency_logging: Optional[bool] = None
     region: str

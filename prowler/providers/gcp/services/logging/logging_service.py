@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## Logging
 class Logging(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider, api_version="v2")
@@ -19,7 +19,7 @@ class Logging(GCPService):
             try:
                 request = self.client.sinks().list(parent=f"projects/{project_id}")
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for sink in response.get("sinks", []):
                         self.sinks.append(
@@ -48,7 +48,7 @@ class Logging(GCPService):
                     .list(parent=f"projects/{project_id}")
                 )
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for metric in response.get("metrics", []):
                         self.metrics.append(

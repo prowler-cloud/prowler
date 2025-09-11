@@ -1,7 +1,7 @@
 from json import JSONDecodeError, loads
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -10,13 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class OpenSearchService(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__("opensearch", provider)
         self.opensearch_domains = {}
         self.__threading_call__(self._list_domain_names)
-        self.__threading_call__(
-            self._describe_domain_config, self.opensearch_domains.values()
-        )
         self.__threading_call__(self._describe_domain, self.opensearch_domains.values())
         self.__threading_call__(self._list_tags, self.opensearch_domains.values())
 
@@ -34,43 +30,6 @@ class OpenSearchService(AWSService):
                         name=domain["DomainName"],
                         region=regional_client.region,
                     )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _describe_domain_config(self, domain):
-        logger.info("OpenSearch - describing domain configurations...")
-        try:
-            regional_client = self.regional_clients[domain.region]
-            describe_domain = regional_client.describe_domain_config(
-                DomainName=domain.name
-            )
-            for logging_key in [
-                "SEARCH_SLOW_LOGS",
-                "INDEX_SLOW_LOGS",
-                "AUDIT_LOGS",
-            ]:
-                if logging_key in describe_domain["DomainConfig"].get(
-                    "LogPublishingOptions", {}
-                ).get("Options", {}):
-                    domain.logging.append(
-                        PublishingLoggingOption(
-                            name=logging_key,
-                            enabled=describe_domain["DomainConfig"][
-                                "LogPublishingOptions"
-                            ]["Options"][logging_key]["Enabled"],
-                        )
-                    )
-            try:
-                domain.access_policy = loads(
-                    describe_domain["DomainConfig"]["AccessPolicies"]["Options"]
-                )
-            except JSONDecodeError as error:
-                logger.warning(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -120,7 +79,7 @@ class OpenSearchService(AWSService):
                 "AdvancedSecurityOptions"
             ].get("Enabled", False)
             cluster_config = describe_domain["DomainStatus"].get("ClusterConfig", {})
-            domain.instance_count = cluster_config.get("InstanceCount", None)
+            domain.instance_count = cluster_config.get("InstanceCount", 0)
             domain.zone_awareness_enabled = cluster_config.get(
                 "ZoneAwarenessEnabled", False
             )
@@ -130,6 +89,32 @@ class OpenSearchService(AWSService):
             domain.dedicated_master_count = cluster_config.get(
                 "DedicatedMasterCount", 0
             )
+            for logging_key in [
+                "SEARCH_SLOW_LOGS",
+                "INDEX_SLOW_LOGS",
+                "AUDIT_LOGS",
+            ]:
+                if logging_key in describe_domain["DomainStatus"].get(
+                    "LogPublishingOptions", {}
+                ):
+                    domain.logging.append(
+                        PublishingLoggingOption(
+                            name=logging_key,
+                            enabled=describe_domain["DomainStatus"][
+                                "LogPublishingOptions"
+                            ][logging_key]["Enabled"],
+                        )
+                    )
+            try:
+                if describe_domain["DomainStatus"].get("AccessPolicies"):
+                    domain.access_policy = loads(
+                        describe_domain["DomainStatus"]["AccessPolicies"]
+                    )
+            except JSONDecodeError as error:
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -170,10 +155,10 @@ class OpenSearchDomain(BaseModel):
     saml_enabled: bool = None
     update_available: bool = None
     version: str = None
-    instance_count: Optional[int]
+    instance_count: int = 0
     zone_awareness_enabled: Optional[bool]
     tags: Optional[list] = []
     advanced_settings_enabled: bool = None
     dedicated_master_enabled: Optional[bool]
-    dedicated_master_count: Optional[int]
+    dedicated_master_count: int = 0
     tags: Optional[list] = []

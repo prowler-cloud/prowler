@@ -60,12 +60,15 @@ class Test_elasticbeanstalk_environment_managed_updates_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
-            new=ElasticBeanstalk(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
+                new=ElasticBeanstalk(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled import (
                 elasticbeanstalk_environment_managed_updates_enabled,
@@ -89,12 +92,15 @@ class Test_elasticbeanstalk_environment_managed_updates_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
-            new=ElasticBeanstalk(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
+                new=ElasticBeanstalk(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled import (
                 elasticbeanstalk_environment_managed_updates_enabled,
@@ -126,12 +132,15 @@ class Test_elasticbeanstalk_environment_managed_updates_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
-            new=ElasticBeanstalk(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_client",
+                new=ElasticBeanstalk(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_managed_updates_enabled.elasticbeanstalk_environment_managed_updates_enabled import (
                 elasticbeanstalk_environment_managed_updates_enabled,

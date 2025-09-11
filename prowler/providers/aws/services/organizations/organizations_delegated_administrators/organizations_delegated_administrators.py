@@ -18,9 +18,10 @@ class organizations_delegated_administrators(Check):
             organizations_client.organization
             and organizations_client.organization.status == "ACTIVE"
         ):
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = organizations_client.organization.id
-            report.resource_arn = organizations_client.organization.arn
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource=organizations_client.organization,
+            )
             report.region = organizations_client.region
             if (
                 organizations_client.organization.delegated_administrators is not None

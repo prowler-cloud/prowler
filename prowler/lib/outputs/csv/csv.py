@@ -79,6 +79,9 @@ class CSV(Output):
                 finding_dict["RELATED_TO"] = unroll_list(finding.metadata.RelatedTo)
                 finding_dict["NOTES"] = finding.metadata.Notes
                 finding_dict["PROWLER_VERSION"] = finding.prowler_version
+                finding_dict["ADDITIONAL_URLS"] = unroll_list(
+                    finding.metadata.AdditionalURLs
+                )
                 self._data.append(finding_dict)
         except Exception as error:
             logger.error(
@@ -98,10 +101,12 @@ class CSV(Output):
                     fieldnames=self._data[0].keys(),
                     delimiter=";",
                 )
-                csv_writer.writeheader()
+                if self._file_descriptor.tell() == 0:
+                    csv_writer.writeheader()
                 for finding in self._data:
                     csv_writer.writerow(finding)
-                self._file_descriptor.close()
+                if self.close_file or self._from_cli:
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

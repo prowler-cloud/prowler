@@ -1,0 +1,496 @@
+{
+  "Framework": "SOC2",
+  "Version": "",
+  "Provider": "GCP",
+  "Description": "System and Organization Controls (SOC), defined by the American Institute of Certified Public Accountants (AICPA), is the name of a set of reports that's produced during an audit. It's intended for use by service organizations (organizations that provide information systems as a service to other organizations) to issue validated reports of internal controls over those information systems to the users of those services. The reports focus on controls grouped into five categories known as Trust Service Principles.",
+  "Requirements": [
+    {
+      "Id": "cc_1_3",
+      "Name": "CC1.3 COSO Principle 3: Management establishes, with board oversight, structures, reporting lines, and appropriate authorities and responsibilities in the pursuit of objectives",
+      "Description": "Considers All Structures of the Entity - Management and the board of directors consider the multiple structures used (including operating units, legal entities, geographic distribution, and outsourced service providers) to support the achievement of objectives. Establishes Reporting Lines - Management designs and evaluates lines of reporting for each entity structure to enable execution of authorities and responsibilities and flow of information to manage the activities of the entity. Defines, Assigns, and Limits Authorities and Responsibilities - Management and the board of directors delegate authority, define responsibilities, and use appropriate processes and technology to assign responsibility and segregate duties as necessary at the various levels of the organization. Additional points of focus specifically related to all engagements using the trust services criteria: Addresses Specific Requirements When Defining Authorities and Responsibilities—Management and the board of directors consider requirements relevant to security, availability, processing integrity, confidentiality, and privacy when defining authorities and responsibilities. Considers Interactions With External Parties When Establishing Structures, Reporting Lines, Authorities, and Responsibilities — Management and the board of directors consider the need for the entity to interact with and monitor the activities of external parties when establishing structures, reporting lines, authorities, and responsibilities.",
+      "Attributes": [
+        {
+          "ItemId": "cc_1_3",
+          "Section": "CC1.0 - Common Criteria Related to Control Environment",
+          "Service": "iam",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_organization_essential_contacts_configured",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_unused"
+      ]
+    },
+    {
+      "Id": "cc_2_1",
+      "Name": "CC2.1 COSO Principle 13: The entity obtains or generates and uses relevant, quality information to support the functioning of internal control",
+      "Description": "Identifies Information Requirements - A process is in place to identify the information required and expected to support the functioning of the other components of internal control and the achievement of the entity’s objectives. Captures Internal and External Sources of Data - Information systems capture internal and external sources of data. Processes Relevant Data Into Information - Information systems process and transform relevant data into information. Maintains Quality Throughout Processing - Information systems produce information that is timely, current, accurate, complete, accessible, protected, verifiable, and retained. Information is reviewed to assess its relevance in supporting the internal control components.",
+      "Attributes": [
+        {
+          "ItemId": "cc_2_1",
+          "Section": "CC2.0 - Common Criteria Related to Communication and Information",
+          "Service": "logging",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "cc_3_1",
+      "Name": "CC3.1 COSO Principle 6: The entity specifies objectives with sufficient clarity to enable the identification and assessment of risks relating to objectives",
+      "Description": "Operations Objectives: Reflects Management's Choices - Operations objectives reflect management's choices about structure, industry considerations, and performance of the entity. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. External Financial Reporting Objectives: Complies With Applicable Accounting Standards - Financial reporting objectives are consistent with accounting principles suitable and available for that entity. The accounting principles selected are appropriate in the circumstances. External Nonfinancial Reporting Objectives: Complies With Externally Established Frameworks - Management establishes objectives consistent with lgcp and regulations or standards and frameworks of recognized external organizations. Reflects Entity Activities - External reporting reflects the underlying transactions and events within a range of acceptable limits. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs and based on criteria established by third parties in nonfinancial reporting. Internal Reporting Objectives: Reflects Management's Choices - Internal reporting provides management with accurate and complete information regarding management's choices and information needed in managing the entity. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs in nonfinancial reporting objectives and materiality within financial reporting objectives. Reflects Entity Activities—Internal reporting reflects the underlying transactions and events within a range of acceptable limits. Compliance Objectives: Reflects External Lgcp and Regulations - Lgcp and regulations establish minimum standards of conduct, which the entity integrates into compliance objectives. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. Additional point of focus specifically related to all engagements using the trust services criteria: Establishes Sub-objectives to Support Objectives—Management identifies sub-objectives related to security, availability, processing integrity, confidentiality, and privacy to support the achievement of the entity’s objectives related to reporting, operations, and compliance.",
+      "Attributes": [
+        {
+          "ItemId": "cc_3_1",
+          "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "gcr_container_scanning_enabled",
+        "artifacts_container_analysis_enabled"
+      ]
+    },
+    {
+      "Id": "cc_3_2",
+      "Name": "CC3.2 COSO Principle 7: The entity identifies risks to the achievement of its objectives across the entity and analyzes risks as a basis for determining how the risks should be managed",
+      "Description": "Includes Entity, Subsidiary, Division, Operating Unit, and Functional Levels - The entity identifies and assesses risk at the entity, subsidiary, division, operating unit, and functional levels relevant to the achievement of objectives. Analyzes Internal and External Factors - Risk identification considers both internal and external factors and their impact on the achievement of objectives. Involves Appropriate Levels of Management - The entity puts into place effective risk assessment mechanisms that involve appropriate levels of management. Estimates Significance of Risks Identified - Identified risks are analyzed through a process that includes estimating the potential significance of the risk. Determines How to Respond to Risks - Risk assessment includes considering how the risk should be managed and whether to accept, avoid, reduce, or share the risk. Additional points of focus specifically related to all engagements using the trust services criteria: Identifies and Assesses Criticality of Information Assets and Identifies Threats and Vulnerabilities - The entity's risk identification and assessment process includes (1) identifying information assets, including physical devices and systems, virtual devices, software, data and data flows, external information systems, and organizational roles; (2) assessing the criticality of those information assets; (3) identifying the threats to the assets from intentional (including malicious) and unintentional acts and environmental events; and (4) identifying the vulnerabilities of the identified assets.",
+      "Attributes": [
+        {
+          "ItemId": "cc_3_2",
+          "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
+          "Service": "gcr",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "cc_3_3",
+      "Name": "CC3.3 COSO Principle 8: The entity considers the potential for fraud in assessing risks to the achievement of objectives",
+      "Description": "Considers Various Types of Fraud - The assessment of fraud considers fraudulent reporting, possible loss of assets, and corruption resulting from the various ways that fraud and misconduct can occur. Assesses Incentives and Pressures - The assessment of fraud risks considers incentives and pressures. Assesses Opportunities - The assessment of fraud risk considers opportunities for unauthorized acquisition,use, or disposal of assets, altering the entity’s reporting records, or committing other inappropriate acts. Assesses Attitudes and Rationalizations - The assessment of fraud risk considers how management and other personnel might engage in or justify inappropriate actions. Additional point of focus specifically related to all engagements using the trust services criteria: Considers the Risks Related to the Use of IT and Access to Information - The assessment of fraud risks includes consideration of threats and vulnerabilities that arise specifically from the use of IT and access to information.",
+      "Attributes": [
+        {
+          "ItemId": "cc_3_3",
+          "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
+          "Service": "logging",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ]
+    },
+    {
+      "Id": "cc_3_4",
+      "Name": "CC3.4 COSO Principle 9: The entity identifies and assesses changes that could significantly impact the system of internal control",
+      "Description": "Assesses Changes in the External Environment - The risk identification process considers changes to the regulatory, economic, and physical environment in which the entity operates. Assesses Changes in the Business Model - The entity considers the potential impacts of new business lines, dramatically altered compositions of existing business lines, acquired or divested business operations on the system of internal control, rapid growth, changing reliance on foreign geographies, and new technologies. Assesses Changes in Leadership - The entity considers changes in management and respective attitudes and philosophies on the system of internal control. Assess Changes in Systems and Technology - The risk identification process considers changes arising from changes in the entity’s systems and changes in the technology environment. Assess Changes in Vendor and Business Partner Relationships - The risk identification process considers changes in vendor and business partner relationships.",
+      "Attributes": [
+        {
+          "ItemId": "cc_3_4",
+          "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
+          "Service": "iam",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "cc_4_2",
+      "Name": "CC4.2 COSO Principle 17: The entity evaluates and communicates internal control deficiencies in a timely manner to those parties responsible for taking corrective action, including senior management and the board of directors, as appropriate",
+      "Description": "Assesses Results - Management and the board of directors, as appropriate, assess results of ongoing and separate evaluations. Communicates Deficiencies - Deficiencies are communicated to parties responsible for taking corrective action and to senior management and the board of directors, as appropriate. Monitors Corrective Action - Management tracks whether deficiencies are remedied on a timely basis.",
+      "Attributes": [
+        {
+          "ItemId": "cc_4_2",
+          "Section": "CC4.0 - Monitoring Activities",
+          "Service": "iam",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "cc_5_2",
+      "Name": "CC5.2 COSO Principle 11: The entity also selects and develops general control activities over technology to support the achievement of objectives",
+      "Description": "Determines Dependency Between the Use of Technology in Business Processes and Technology General Controls - Management understands and determines the dependency and linkage between business processes, automated control activities, and technology general controls. Establishes Relevant Technology Infrastructure Control Activities - Management selects and develops control activities over the technology infrastructure, which are designed and implemented to help ensure the completeness, accuracy, and availability of technology processing. Establishes Relevant Security Management Process Controls Activities - Management selects and develops control activities that are designed and implemented to restrict technology access rights to authorized users commensurate with their job responsibilities and to protect the entity’s assets from external threats. Establishes Relevant Technology Acquisition, Development, and Maintenance Process Control Activities - Management selects and develops control activities over the acquisition, development, and maintenance of technology and its infrastructure to achieve management’s objectives.",
+      "Attributes": [
+        {
+          "ItemId": "cc_5_2",
+          "Section": "CC5.0 - Control Activities",
+          "Service": "logging",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "cc_6_1",
+      "Name": "CC6.1 The entity implements logical access security software, infrastructure, and architectures over protected information assets to protect them from security events to meet the entity's objectives",
+      "Description": "Identifies and Manages the Inventory of Information Assets - The entity identifies, inventories, classifies, and manages information assets. Restricts Logical Access - Logical access to information assets, including hardware, data (at-rest, during processing, or in transmission), software, administrative authorities, mobile devices, output, and offline system components is restricted through the use of access control software and rule sets. Identifies and Authenticates Users - Persons, infrastructure and software are identified and authenticated prior to accessing information assets, whether locally or remotely. Considers Network Segmentation - Network segmentation permits unrelated portions of the entity's information system to be isolated from each other. Manages Points of Access - Points of access by outside entities and the types of data that flow through the points of access are identified, inventoried, and managed. The types of individuals and systems using each point of access are identified, documented, and managed. Restricts Access to Information Assets - Combinations of data classification, separate data structures, port restrictions, access protocol restrictions, user identification, and digital certificates are used to establish access control rules for information assets. Manages Identification and Authentication - Identification and authentication requirements are established, documented, and managed for individuals and systems accessing entity information, infrastructure and software. Manages Credentials for Infrastructure and Software - New internal and external infrastructure and software are registered, authorized, and documented prior to being granted access credentials and implemented on the network or access point. Credentials are removed and access is disabled when access is no longer required or the infrastructure and software are no longer in use. Uses Encryption to Protect Data - The entity uses encryption to supplement other measures used to protect data-at-rest, when such protections are deemed appropriate based on assessed risk. Protects Encryption Keys - Processes are in place to protect encryption keys during generation, storage, use, and destruction.",
+      "Attributes": [
+        {
+          "ItemId": "cc_6_1",
+          "Section": "CC6.0 - Logical and Physical Access",
+          "Service": "cloudstorage",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "cc_6_2",
+      "Name": "CC6.2 Prior to issuing system credentials and granting system access, the entity registers and authorizes new internal and external users whose access is administered by the entity",
+      "Description": "Prior to issuing system credentials and granting system access, the entity registers and authorizes new internal and external users whose access is administered by the entity. For those users whose access is administered by the entity, user system credentials are removed when user access is no longer authorized. Controls Access Credentials to Protected Assets - Information asset access credentials are created based on an authorization from the system's asset owner or authorized custodian. Removes Access to Protected Assets When Appropriate - Processes are in place to remove credential access when an individual no longer requires such access. Reviews Appropriateness of Access Credentials - The appropriateness of access credentials is reviewed on a periodic basis for unnecessary and inappropriate individuals with credentials.",
+      "Attributes": [
+        {
+          "ItemId": "cc_6_2",
+          "Section": "CC6.0 - Logical and Physical Access",
+          "Service": "cloudsql",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_public_access"
+      ]
+    },
+    {
+      "Id": "cc_6_3",
+      "Name": "CC6.3 The entity authorizes, modifies, or removes access to data, software, functions, and other protected information assets based on roles, responsibilities, or the system design and changes, giving consideration to the concepts of least privilege and segregation of duties, to meet the entity’s objectives",
+      "Description": "Creates or Modifies Access to Protected Information Assets - Processes are in place to create or modify access to protected information assets based on authorization from the asset’s owner. Removes Access to Protected Information Assets - Processes are in place to remove access to protected information assets when an individual no longer requires access. Uses Role-Based Access Controls - Role-based access control is utilized to support segregation of incompatible functions.",
+      "Attributes": [
+        {
+          "ItemId": "cc_6_3",
+          "Section": "CC6.0 - Logical and Physical Access",
+          "Service": "iam",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_user_managed_key_unused"
+      ]
+    },
+    {
+      "Id": "cc_6_6",
+      "Name": "CC6.6 The entity implements logical access security measures to protect against threats from sources outside its system boundaries",
+      "Description": "Restricts Access — The types of activities that can occur through a communication channel (for example, FTP site, router port) are restricted. Protects Identification and Authentication Credentials — Identification and authentication credentials are protected during transmission outside its system boundaries. Requires Additional Authentication or Credentials — Additional authentication information or credentials are required when accessing the system from outside its boundaries. Implements Boundary Protection Systems — Boundary protection systems (for example, firewalls, demilitarized zones, and intrusion detection systems) are implemented to protect external access points from attempts and unauthorized access and are monitored to detect such attempts.",
+      "Attributes": [
+        {
+          "ItemId": "cc_6_6",
+          "Section": "CC6.0 - Logical and Physical Access",
+          "Service": "compute",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_instance_ip_forwarding_is_enabled",
+        "compute_instance_public_ip",
+        "compute_instance_serial_ports_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_public_address_shodan"
+      ]
+    },
+    {
+      "Id": "cc_6_7",
+      "Name": "CC6.7 The entity restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission, movement, or removal to meet the entity’s objectives",
+      "Description": "Restricts the Ability to Perform Transmission - Data loss prevention processes and technologies are used to restrict ability to authorize and execute transmission, movement and removal of information. Uses Encryption Technologies or Secure Communication Channels to Protect Data - Encryption technologies or secured communication channels are used to protect transmission of data and other communications beyond connectivity access points. Protects Removal Media - Encryption technologies and physical asset protections are used for removable media (such as USB drives and back-up tapes), as appropriate. Protects Mobile Devices - Processes are in place to protect mobile devices (such as laptops, smart phones and tablets) that serve as information assets.",
+      "Attributes": [
+        {
+          "ItemId": "cc_6_7",
+          "Section": "CC6.0 - Logical and Physical Access",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudsql_instance_ssl_connections"
+      ]
+    },
+    {
+      "Id": "cc_6_8",
+      "Name": "CC6.8 The entity implements controls to prevent or detect and act upon the introduction of unauthorized or malicious software to meet the entity’s objectives",
+      "Description": "Restricts Application and Software Installation - The ability to install applications and software is restricted to authorized individuals. Detects Unauthorized Changes to Software and Configuration Parameters - Processes are in place to detect changes to software and configuration parameters that may be indicative of unauthorized or malicious software. Uses a Defined Change Control Process - A management-defined change control process is used for the implementation of software. Uses Antivirus and Anti-Malware Software - Antivirus and anti-malware software is implemented and maintained to provide for the interception or detection and remediation of malware. Scans Information Assets from Outside the Entity for Malware and Other Unauthorized Software - Procedures are in place to scan information assets that have been transferred or returned to the entity’s custody for malware and other unauthorized software and to remove any items detected prior to its implementation on the network.",
+      "Attributes": [
+        {
+          "ItemId": "cc_6_8",
+          "Section": "CC6.0 - Logical and Physical Access",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "cc_7_1",
+      "Name": "CC7.1 To meet its objectives, the entity uses detection and monitoring procedures to identify (1) changes to configurations that result in the introduction of new vulnerabilities, and (2) susceptibilities to newly discovered vulnerabilities",
+      "Description": "Uses Defined Configuration Standards - Management has defined configuration standards. Monitors Infrastructure and Software - The entity monitors infrastructure and software for noncompliance with the standards, which could threaten the achievement of the entity's objectives. Implements Change-Detection Mechanisms - The IT system includes a change-detection mechanism (for example, file integrity monitoring tools) to alert personnel to unauthorized modifications of critical system files, configuration files, or content files. Detects Unknown or Unauthorized Components - Procedures are in place to detect the introduction of unknown or unauthorized components. Conducts Vulnerability Scans - The entity conducts vulnerability scans designed to identify potential vulnerabilities or misconfigurations on a periodic basis and after any significant change in the environment and takes action to remediate identified deficiencies on a timely basis.",
+      "Attributes": [
+        {
+          "ItemId": "cc_7_1",
+          "Section": "CC7.0 - System Operations",
+          "Service": "iam",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "cc_7_2",
+      "Name": "CC7.2 The entity monitors system components and the operation of those components for anomalies that are indicative of malicious acts, natural disasters, and errors affecting the entity's ability to meet its objectives; anomalies are analyzed to determine whether they represent security events",
+      "Description": "Implements Detection Policies, Procedures, and Tools - Detection policies and procedures are defined and implemented, and detection tools are implemented on Infrastructure and software to identify anomalies in the operation or unusual activity on systems. Procedures may include (1) a defined governance process for security event detection and management that includes provision of resources; (2) use of intelligence sources to identify newly discovered threats and vulnerabilities; and (3) logging of unusual system activities. Designs Detection Measures - Detection measures are designed to identify anomalies that could result from actual or attempted (1) compromise of physical barriers; (2) unauthorized actions of authorized personnel; (3) use of compromised identification and authentication credentials; (4) unauthorized access from outside the system boundaries; (5) compromise of authorized external parties; and (6) implementation or connection of unauthorized hardware and software. Implements Filters to Analyze Anomalies - Management has implemented procedures to filter, summarize, and analyze anomalies to identify security events. Monitors Detection Tools for Effective Operation - Management has implemented processes to monitor the effectiveness of detection tools.",
+      "Attributes": [
+        {
+          "ItemId": "cc_7_2",
+          "Section": "CC7.0 - System Operations",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "cc_7_3",
+      "Name": "CC7.3 The entity evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives (security incidents) and, if so, takes actions to prevent or address such failures",
+      "Description": "Responds to Security Incidents - Procedures are in place for responding to security incidents and evaluating the effectiveness of those policies and procedures on a periodic basis. Communicates and Reviews Detected Security Events - Detected security events are communicated to and reviewed by the individuals responsible for the management of the security program and actions are taken, if necessary. Develops and Implements Procedures to Analyze Security Incidents - Procedures are in place to analyze security incidents and determine system impact. Assesses the Impact on Personal Information - Detected security events are evaluated to determine whether they could or did result in the unauthorized disclosure or use of personal information and whether there has been a failure to comply with applicable lgcp or regulations. Determines Personal Information Used or Disclosed - When an unauthorized use or disclosure of personal information has occurred, the affected information is identified.",
+      "Attributes": [
+        {
+          "ItemId": "cc_7_3",
+          "Section": "CC7.0 - System Operations",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "cc_7_4",
+      "Name": "CC7.4 The entity responds to identified security incidents by executing a defined incident response program to understand, contain, remediate, and communicate security incidents, as appropriate",
+      "Description": "Assigns Roles and Responsibilities - Roles and responsibilities for the design, implementation, maintenance, and execution of the incident response program are assigned, including the use of external resources when necessary. Contains Security Incidents - Procedures are in place to contain security incidents that actively threaten entity objectives. Mitigates Ongoing Security Incidents - Procedures are in place to mitigate the effects of ongoing security incidents. Ends Threats Posed by Security Incidents - Procedures are in place to end the threats posed by security incidents through closure of the vulnerability, removal of unauthorized access, and other remediation actions. Restores Operations - Procedures are in place to restore data and business operations to an interim state that permits the achievement of entity objectives. Develops and Implements Communication Protocols for Security Incidents - Protocols for communicating security incidents and actions taken to affected parties are developed and implemented to meet the entity's objectives. Obtains Understanding of Nature of Incident and Determines Containment Strategy - An understanding of the nature (for example, the method by which the incident occurred and the affected system resources) and severity of the security incident is obtained to determine the appropriate containment strategy, including (1) a determination of the appropriate response time frame, and (2) the determination and execution of the containment approach. Remediates Identified Vulnerabilities - Identified vulnerabilities are remediated through the development and execution of remediation activities. Communicates Remediation Activities - Remediation activities are documented and communicated in accordance with the incident response program. Evaluates the Effectiveness of Incident Response - The design of incident response activities is evaluated for effectiveness on a periodic basis. Periodically Evaluates Incidents - Periodically, management reviews incidents related to security, availability, processing integrity, confidentiality, and privacy and identifies the need for system changes based on incident patterns and root causes. Communicates Unauthorized Use and Disclosure - Events that resulted in unauthorized use or disclosure of personal information are communicated to the data subjects, legal and regulatory authorities, and others as required. Application of Sanctions - The conduct of individuals and organizations operating under the authority of the entity and involved in the unauthorized use or disclosure of personal information is evaluated and, if appropriate, sanctioned in accordance with entity policies and legal and regulatory requirements.",
+      "Attributes": [
+        {
+          "ItemId": "cc_7_4",
+          "Section": "CC7.0 - System Operations",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "cc_7_5",
+      "Name": "CC7.5 The entity identifies, develops, and implements activities to recover from identified security incidents",
+      "Description": "Restores the Affected Environment - The activities restore the affected environment to functional operation by rebuilding systems, updating software, installing patches, and changing configurations, as needed. Communicates Information About the Event - Communications about the nature of the incident, recovery actions taken, and activities required for the prevention of future security events are made to management and others as appropriate (internal and external). Determines Root Cause of the Event - The root cause of the event is determined. Implements Changes to Prevent and Detect Recurrences - Additional architecture or changes to preventive and detective controls, or both, are implemented to prevent and detect recurrences on a timely basis. Improves Response and Recovery Procedures - Lessons learned are analyzed, and the incident response plan and recovery procedures are improved. Implements Incident Recovery Plan Testing - Incident recovery plan testing is performed on a periodic basis. The testing includes (1) development of testing scenarios based on threat likelihood and magnitude; (2) consideration of relevant system components from across the entity that can impair availability; (3) scenarios that consider the potential for the lack of availability of key personnel; and (4) revision of continuity plans and systems based on test results.",
+      "Attributes": [
+        {
+          "ItemId": "cc_7_5",
+          "Section": "CC7.0 - System Operations",
+          "Service": "cloudsql",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "cc_8_1",
+      "Name": "CC8.1 The entity authorizes, designs, develops or acquires, configures, documents, tests, approves, and implements changes to infrastructure, data, software, and procedures to meet its objectives",
+      "Description": "Manages Changes Throughout the System Lifecycle - A process for managing system changes throughout the lifecycle of the system and its components (infrastructure, data, software and procedures) is used to support system availability and processing integrity. Authorizes Changes - A process is in place to authorize system changes prior to development. Designs and Develops Changes - A process is in place to design and develop system changes. Documents Changes - A process is in place to document system changes to support ongoing maintenance of the system and to support system users in performing their responsibilities. Tracks System Changes - A process is in place to track system changes prior to implementation. Configures Software - A process is in place to select and implement the configuration parameters used to control the functionality of software. Tests System Changes - A process is in place to test system changes prior to implementation. Approves System Changes - A process is in place to approve system changes prior to implementation. Deploys System Changes - A process is in place to implement system changes. Identifies and Evaluates System Changes - Objectives affected by system changes are identified, and the ability of the modified system to meet the objectives is evaluated throughout the system development life cycle. Identifies Changes in Infrastructure, Data, Software, and Procedures Required to Remediate Incidents - Changes in infrastructure, data, software, and procedures required to remediate incidents to continue to meet objectives are identified, and the change process is initiated upon identification. Creates Baseline Configuration of IT Technology - A baseline configuration of IT and control systems is created and maintained. Provides for Changes Necessary in Emergency Situations - A process is in place for authorizing, designing, testing, approving and implementing changes necessary in emergency situations (that is, changes that need to be implemented in an urgent timeframe). Protects Confidential Information - The entity protects confidential information during system design, development, testing, implementation, and change processes to meet the entity’s objectives related to confidentiality. Protects Personal Information - The entity protects personal information during system design, development, testing, implementation, and change processes to meet the entity’s objectives related to privacy.",
+      "Attributes": [
+        {
+          "ItemId": "cc_8_1",
+          "Section": "CC8.0 - Change Management",
+          "Service": "iam",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "cc_a_1_1",
+      "Name": "A1.2 The entity authorizes, designs, develops or acquires, implements, operates, approves, maintains, and monitors environmental protections, software, data back-up processes, and recovery infrastructure to meet its objectives",
+      "Description": "Measures Current Usage - The use of the system components is measured to establish a baseline for capacity management and to use when evaluating the risk of impaired availability due to capacity constraints. Forecasts Capacity - The expected average and peak use of system components is forecasted and compared to system capacity and associated tolerances. Forecasting considers capacity in the event of the failure of system components that constrain capacity. Makes Changes Based on Forecasts - The system change management process is initiated when forecasted usage exceeds capacity tolerances.",
+      "Attributes": [
+        {
+          "ItemId": "cc_a_1_1",
+          "Section": "CCA1.0 - Additional Criterial for Availability",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "cc_c_1_1",
+      "Name": "C1.1 The entity identifies and maintains confidential information to meet the entity’s objectives related to confidentiality",
+      "Description": "Identifies Confidential information - Procedures are in place to identify and designate confidential information when it is received or created and to determine the period over which the confidential information is to be retained. Protects Confidential Information from Destruction - Procedures are in place to protect confidential information from erasure or destruction during the specified retention period of the information",
+      "Attributes": [
+        {
+          "ItemId": "cc_c_1_1",
+          "Section": "CCC1.0 - Additional Criterial for Confidentiality",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "compute_instance_confidential_computing_enabled",
+        "bigquery_table_cmk_encryption",
+        "bigquery_dataset_cmk_encryption",
+        "compute_instance_encryption_with_csek_enabled",
+        "dataproc_encrypted_with_cmks_disabled"
+      ]
+    },
+    {
+      "Id": "cc_c_1_2",
+      "Name": "C1.2 The entity disposes of confidential information to meet the entity’s objectives related to confidentiality",
+      "Description": "Identifies Confidential Information for Destruction - Procedures are in place to identify confidential information requiring destruction when the end of the retention period is reached. Destroys Confidential Information - Procedures are in place to erase or otherwise destroy confidential information that has been identified for destruction.",
+      "Attributes": [
+        {
+          "ItemId": "cc_c_1_2",
+          "Section": "CCC1.0 - Additional Criterial for Confidentiality",
+          "Service": "cloudstorage",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    }
+  ]
+}

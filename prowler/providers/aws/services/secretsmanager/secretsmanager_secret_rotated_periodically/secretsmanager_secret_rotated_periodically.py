@@ -25,11 +25,7 @@ class secretsmanager_secret_rotated_periodically(Check):
         """
         findings = []
         for secret in secretsmanager_client.secrets.values():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = secret.name
-            report.resource_arn = secret.arn
-            report.region = secret.region
-            report.resource_tags = secret.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=secret)
             report.status = "PASS"
             report.status_extended = f"Secret {secret.name} was last rotated on {secret.last_rotated_date.strftime('%B %d, %Y')}."
 

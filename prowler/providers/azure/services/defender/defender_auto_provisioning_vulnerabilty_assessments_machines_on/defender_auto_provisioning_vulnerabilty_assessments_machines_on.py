@@ -14,15 +14,14 @@ class defender_auto_provisioning_vulnerabilty_assessments_machines_on(Check):
                 "Machines should have a vulnerability assessment solution"
                 in assessments
             ):
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(),
+                    resource=assessments[
+                        "Machines should have a vulnerability assessment solution"
+                    ],
+                )
                 report.subscription = subscription_name
-                report.resource_name = assessments[
-                    "Machines should have a vulnerability assessment solution"
-                ].resource_name
-                report.resource_id = assessments[
-                    "Machines should have a vulnerability assessment solution"
-                ].resource_id
+                report.status = "PASS"
                 report.status_extended = f"Vulnerability assessment is set up in all VMs in subscription {subscription_name}."
 
                 if (

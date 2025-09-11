@@ -286,6 +286,22 @@ class Test_IAM_Service:
                 }
             ],
         }
+        # Hybrid role - assumable by both service and AWS account
+        hybrid_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"Service": "cloudformation.amazonaws.com"},
+                    "Action": "sts:AssumeRole",
+                },
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "arn:aws:iam::123456789012:root"},
+                    "Action": "sts:AssumeRole",
+                },
+            ],
+        }
         service_role = iam_client.create_role(
             RoleName="test-1",
             AssumeRolePolicyDocument=dumps(service_policy_document),
@@ -296,6 +312,13 @@ class Test_IAM_Service:
         role = iam_client.create_role(
             RoleName="test-2",
             AssumeRolePolicyDocument=dumps(policy_document),
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
+        )["Role"]
+        hybrid_role = iam_client.create_role(
+            RoleName="test-3",
+            AssumeRolePolicyDocument=dumps(hybrid_policy_document),
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
@@ -314,6 +337,8 @@ class Test_IAM_Service:
         ]
         assert is_service_role(service_role)
         assert not is_service_role(role)
+        # Hybrid role should return False even though it has a service principal
+        assert not is_service_role(hybrid_role)
 
     # Test IAM Get Groups
     @mock_aws
@@ -735,7 +760,7 @@ class Test_IAM_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = IAM(aws_provider)
         custom_policies = 0
-        for policy in iam.policies:
+        for policy in iam.policies.values():
             if policy.type == "Custom":
                 custom_policies += 1
                 assert policy.name == "policy1"
@@ -761,7 +786,7 @@ class Test_IAM_Service:
         iam = IAM(aws_provider)
 
         custom_policies = 0
-        for policy in iam.policies:
+        for policy in iam.policies.values():
             if policy.type == "Custom":
                 custom_policies += 1
                 assert policy.name == "policy2"
@@ -847,7 +872,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.users[0].tags == []
 
         # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies:
+        for policy in iam.policies.values():
             if policy.name == policy_name:
                 assert policy == Policy(
                     name=policy_name,
@@ -889,7 +914,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.groups[0].users == []
 
         # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies:
+        for policy in iam.policies.values():
             if policy.name == policy_name:
                 assert policy == Policy(
                     name=policy_name,
@@ -935,7 +960,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.roles[0].tags == []
 
         # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies:
+        for policy in iam.policies.values():
             if policy.name == policy_name:
                 assert policy == Policy(
                     name=policy_name,

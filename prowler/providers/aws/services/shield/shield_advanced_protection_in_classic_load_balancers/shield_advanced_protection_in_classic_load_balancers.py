@@ -7,22 +7,19 @@ class shield_advanced_protection_in_classic_load_balancers(Check):
     def execute(self):
         findings = []
         if shield_client.enabled:
-            for elb_arn, elb in elb_client.loadbalancers.items():
-                report = Check_Report_AWS(self.metadata())
+            for lb in elb_client.loadbalancers.values():
+                report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
                 report.region = shield_client.region
-                report.resource_id = elb.name
-                report.resource_arn = elb_arn
-                report.resource_tags = elb.tags
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"ELB {elb.name} is not protected by AWS Shield Advanced."
+                    f"ELB {lb.name} is not protected by AWS Shield Advanced."
                 )
 
                 for protection in shield_client.protections.values():
-                    if elb_arn == protection.resource_arn:
+                    if lb.arn == protection.resource_arn:
                         report.status = "PASS"
                         report.status_extended = (
-                            f"ELB {elb.name} is protected by AWS Shield Advanced."
+                            f"ELB {lb.name} is protected by AWS Shield Advanced."
                         )
                         break
 

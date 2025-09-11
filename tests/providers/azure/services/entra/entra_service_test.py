@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from uuid import uuid4
 
 from prowler.providers.azure.models import AzureIdentityInfo
 from prowler.providers.azure.services.entra.entra_service import (
@@ -28,9 +29,8 @@ async def mock_entra_get_authorization_policy(_):
             id="id-1",
             name="Name 1",
             description="Description 1",
-            default_user_role_permissions=None,
             guest_invite_settings="none",
-            guest_user_role_id=None,
+            guest_user_role_id=uuid4(),
         )
     }
 
@@ -61,6 +61,7 @@ async def mock_entra_get_named_locations(_):
     return {
         DOMAIN: {
             "id-1": NamedLocation(
+                id="id-1",
                 name="Test",
                 ip_ranges_addresses=[],
                 is_trusted=False,
@@ -92,7 +93,7 @@ async def mock_entra_get_conditional_access_policy(_):
                     "include": ["797f4846-ba00-4fd7-ba43-dac1f8f63013"],
                     "exclude": [],
                 },
-                access_controls={"grant": ["MFA"], "block": []},
+                access_controls={"grant": ["MFA", "compliantDevice"], "block": []},
             )
         }
     }
@@ -215,7 +216,7 @@ class Test_Entra_Service:
         )
         assert entra_client.conditional_access_policy[DOMAIN]["id-1"].access_controls[
             "grant"
-        ] == ["MFA"]
+        ] == ["MFA", "compliantDevice"]
         assert (
             entra_client.conditional_access_policy[DOMAIN]["id-1"].access_controls[
                 "block"

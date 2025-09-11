@@ -1,7 +1,15 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.vm.vm_service import VirtualMachine
+from prowler.providers.azure.services.vm.vm_service import (
+    DataDisk,
+    ManagedDiskParameters,
+    OSDisk,
+    SecurityProfile,
+    StorageProfile,
+    UefiSettings,
+    VirtualMachine,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -13,12 +21,15 @@ class Test_vm_ensure_using_managed_disks:
         vm_client = mock.MagicMock
         vm_client.virtual_machines = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks import (
                 vm_ensure_using_managed_disks,
@@ -32,12 +43,15 @@ class Test_vm_ensure_using_managed_disks:
         vm_client = mock.MagicMock
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks import (
                 vm_ensure_using_managed_disks,
@@ -53,33 +67,39 @@ class Test_vm_ensure_using_managed_disks:
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
-                    resource_id="/subscriptions/resource_id",
+                    resource_id=vm_id,
                     resource_name="VMTest",
                     location="location",
-                    security_profile=mock.MagicMock(
+                    security_profile=SecurityProfile(
                         security_type="TrustedLaunch",
-                        uefi_settings=mock.MagicMock(
+                        uefi_settings=UefiSettings(
                             secure_boot_enabled=True,
                             v_tpm_enabled=True,
                         ),
                     ),
-                    storage_profile=mock.MagicMock(
-                        os_disk=mock.MagicMock(
-                            create_option="FromImage",
-                            managed_disk=mock.MagicMock(id="managed_disk_id"),
+                    extensions=[],
+                    storage_profile=StorageProfile(
+                        os_disk=OSDisk(
+                            name="os_disk_name",
+                            operating_system_type="Linux",
+                            managed_disk=ManagedDiskParameters(id="managed_disk_id"),
                         ),
                         data_disks=[],
                     ),
+                    linux_configuration=None,
                 ),
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks import (
                 vm_ensure_using_managed_disks,
@@ -104,33 +124,39 @@ class Test_vm_ensure_using_managed_disks:
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
-                    resource_id="/subscriptions/resource_id",
+                    resource_id=vm_id,
                     resource_name="VMTest",
                     location="location",
-                    security_profile=mock.MagicMock(
+                    security_profile=SecurityProfile(
                         security_type="TrustedLaunch",
-                        uefi_settings=mock.MagicMock(
+                        uefi_settings=UefiSettings(
                             secure_boot_enabled=True,
                             v_tpm_enabled=True,
                         ),
                     ),
-                    storage_profile=mock.MagicMock(
-                        os_disk=mock.MagicMock(
-                            create_option="FromImage",
+                    extensions=[],
+                    storage_profile=StorageProfile(
+                        os_disk=OSDisk(
+                            name="os_disk_name",
+                            operating_system_type="Linux",
                             managed_disk=None,
                         ),
                         data_disks=[],
                     ),
+                    linux_configuration=None,
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks import (
                 vm_ensure_using_managed_disks,
@@ -155,33 +181,41 @@ class Test_vm_ensure_using_managed_disks:
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
-                    resource_id="/subscriptions/resource_id",
+                    resource_id=vm_id,
                     resource_name="VMTest",
                     location="location",
-                    security_profile=mock.MagicMock(
+                    security_profile=SecurityProfile(
                         security_type="TrustedLaunch",
-                        uefi_settings=mock.MagicMock(
+                        uefi_settings=UefiSettings(
                             secure_boot_enabled=True,
                             v_tpm_enabled=True,
                         ),
                     ),
-                    storage_profile=mock.MagicMock(
-                        os_disk=mock.MagicMock(
-                            create_option="FromImage",
-                            managed_disk=mock.MagicMock(id="managed_disk_id"),
+                    extensions=[],
+                    storage_profile=StorageProfile(
+                        os_disk=OSDisk(
+                            name="os_disk_name",
+                            operating_system_type="Linux",
+                            managed_disk=ManagedDiskParameters(id="managed_disk_id"),
                         ),
-                        data_disks=[mock.MagicMock(managed_disk=None)],
+                        data_disks=[
+                            DataDisk(lun=0, name="data_disk_1", managed_disk=None)
+                        ],
                     ),
+                    linux_configuration=None,
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_using_managed_disks.vm_ensure_using_managed_disks import (
                 vm_ensure_using_managed_disks,

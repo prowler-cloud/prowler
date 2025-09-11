@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## BigQuery
 class BigQuery(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider, api_version="v2")
@@ -20,7 +20,7 @@ class BigQuery(GCPService):
             try:
                 request = self.client.datasets().list(projectId=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for dataset in response.get("datasets", []):
                         dataset_info = (
@@ -29,7 +29,7 @@ class BigQuery(GCPService):
                                 projectId=project_id,
                                 datasetId=dataset["datasetReference"]["datasetId"],
                             )
-                            .execute()
+                            .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                         )
                         cmk_encryption = False
                         public = False
@@ -66,7 +66,7 @@ class BigQuery(GCPService):
                     projectId=dataset.project_id, datasetId=dataset.name
                 )
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for table in response.get("tables", []):
                         cmk_encryption = False
@@ -77,7 +77,7 @@ class BigQuery(GCPService):
                                 datasetId=dataset.name,
                                 tableId=table["tableReference"]["tableId"],
                             )
-                            .execute()
+                            .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                             .get("encryptionConfiguration")
                         ):
                             cmk_encryption = True

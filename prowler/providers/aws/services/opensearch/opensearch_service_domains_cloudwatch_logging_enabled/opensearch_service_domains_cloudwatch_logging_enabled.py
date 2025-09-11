@@ -8,11 +8,7 @@ class opensearch_service_domains_cloudwatch_logging_enabled(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = domain.region
-            report.resource_id = domain.name
-            report.resource_arn = domain.arn
-            report.resource_tags = domain.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             report.status = "FAIL"
             report.status_extended = f"Opensearch domain {domain.name} SEARCH_SLOW_LOGS and INDEX_SLOW_LOGS disabled."
             has_SEARCH_SLOW_LOGS = False

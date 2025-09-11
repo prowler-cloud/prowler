@@ -41,12 +41,15 @@ class Test_elasticache_replication_group_multi_az_enabled:
         elasticache_service = MagicMock
         elasticache_service.replication_groups = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_service,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_service,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
                 elasticache_redis_cluster_multi_az_enabled,
@@ -79,12 +82,15 @@ class Test_elasticache_replication_group_multi_az_enabled:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_service,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_service,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
                 elasticache_redis_cluster_multi_az_enabled,
@@ -127,12 +133,15 @@ class Test_elasticache_replication_group_multi_az_enabled:
             )
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-            new=elasticache_service,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+                new=elasticache_service,
+            ),
         ):
             from prowler.providers.aws.services.elasticache.elasticache_redis_cluster_multi_az_enabled.elasticache_redis_cluster_multi_az_enabled import (
                 elasticache_redis_cluster_multi_az_enabled,

@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## CloudSQL
 class CloudSQL(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("sqladmin", provider)
@@ -17,7 +17,7 @@ class CloudSQL(GCPService):
             try:
                 request = self.client.instances().list(project=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for instance in response.get("items", []):
                         public_ip = False
@@ -31,18 +31,18 @@ class CloudSQL(GCPService):
                                 region=instance["region"],
                                 ip_addresses=instance.get("ipAddresses", []),
                                 public_ip=public_ip,
-                                require_ssl=instance["settings"]["ipConfiguration"].get(
-                                    "requireSsl", False
-                                ),
-                                ssl_mode=instance["settings"]["ipConfiguration"].get(
-                                    "sslMode", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
-                                ),
+                                require_ssl=instance["settings"]
+                                .get("ipConfiguration", {})
+                                .get("requireSsl", False),
+                                ssl_mode=instance["settings"]
+                                .get("ipConfiguration", {})
+                                .get("sslMode", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"),
                                 automated_backups=instance["settings"][
                                     "backupConfiguration"
                                 ]["enabled"],
-                                authorized_networks=instance["settings"][
-                                    "ipConfiguration"
-                                ]["authorizedNetworks"],
+                                authorized_networks=instance["settings"]
+                                .get("ipConfiguration", {})
+                                .get("authorizedNetworks", []),
                                 flags=instance["settings"].get("databaseFlags", []),
                                 project_id=project_id,
                             )

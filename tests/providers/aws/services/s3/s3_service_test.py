@@ -90,6 +90,7 @@ class Test_S3_Service:
         s3 = S3(aws_provider)
 
         assert len(s3.buckets) == 1
+        assert s3.buckets[bucket_arn].arn == bucket_arn
         assert s3.buckets[bucket_arn].name == bucket_name
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
         assert not s3.buckets[bucket_arn].object_lock

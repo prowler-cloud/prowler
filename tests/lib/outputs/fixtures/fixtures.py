@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Union
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import CheckMetadata, Code, Recommendation, Remediation
@@ -19,7 +20,7 @@ def generate_finding_output(
     resource_name: str = "",
     resource_tags: dict = {},
     compliance: dict = {"test-compliance": "test-compliance"},
-    timestamp: datetime = None,
+    timestamp: Union[int, datetime] = None,
     provider: str = "aws",
     partition: str = "aws",
     description: str = "check description",
@@ -35,9 +36,13 @@ def generate_finding_output(
     depends_on: list[str] = ["test-dependency"],
     related_to: list[str] = ["test-related-to"],
     notes: str = "test-notes",
-    service_name: str = "test-service",
-    check_id: str = "test-check-id",
-    check_title: str = "test-check-id",
+    additional_urls: list[str] = [
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html",
+        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html",
+    ],
+    service_name: str = "service",
+    check_id: str = "service_test_check_id",
+    check_title: str = "service_test_check_id",
     check_type: list[str] = ["test-type"],
 ) -> Finding:
     return Finding(
@@ -89,6 +94,7 @@ def generate_finding_output(
             RelatedTo=related_to,
             Categories=categories,
             Notes=notes,
+            AdditionalURLs=additional_urls,
         ),
         prowler_version=prowler_version,
     )

@@ -3,7 +3,7 @@ from uuid import uuid4
 from mock import MagicMock
 
 from prowler.providers.gcp.gcp_provider import GcpProvider
-from prowler.providers.gcp.models import GCPIdentityInfo
+from prowler.providers.gcp.models import GCPIdentityInfo, GCPProject
 
 GCP_PROJECT_ID = "123456789012"
 
@@ -18,6 +18,15 @@ def set_mocked_gcp_provider(
     provider.type = "gcp"
     provider.session = MagicMock()
     provider.session._service_account_email = "test@test.com"
+    provider.projects = {
+        GCP_PROJECT_ID: GCPProject(
+            id=GCP_PROJECT_ID,
+            number="123456789012",
+            name="test",
+            labels={},
+            lifecycle_state="ACTIVE",
+        )
+    }
     provider.project_ids = project_ids
     provider.default_project_id = GCP_PROJECT_ID
     provider.identity = GCPIdentityInfo(
@@ -342,6 +351,83 @@ def mock_api_projects_calls(client: MagicMock):
             },
         ]
     }
+
+    client.projects().timeSeries().list().execute.return_value = {
+        "timeSeries": [
+            {
+                "metric": {
+                    "labels": {
+                        "key_id": "key1",
+                    },
+                    "type": "iam.googleapis.com/service_account/key/authn_events_count",
+                },
+                "resource": {
+                    "type": "iam_service_account",
+                    "labels": {
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "unique_id": "111222233334444",
+                    },
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
+            },
+            {
+                "metric": {
+                    "labels": {
+                        "key_id": "key2",
+                    },
+                    "type": "iam.googleapis.com/service_account/key/authn_events_count",
+                },
+                "resource": {
+                    "type": "iam_service_account",
+                    "labels": {
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "unique_id": "111222233334444",
+                    },
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
+            },
+            {
+                "metric": {
+                    "labels": {
+                        "response_code": "200",
+                        "protocol": "https",
+                    },
+                    "type": "serviceruntime.googleapis.com/api/request_count",
+                },
+                "resource": {
+                    "type": "consumed_api",
+                    "labels": {
+                        "service": "securitycenter.googleapis.com",
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "credential_id": "serviceaccount:111222233334444",
+                    },
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
+            },
+            {
+                "metric": {
+                    "labels": {
+                        "response_code": "200",
+                        "protocol": "https",
+                    },
+                    "type": "serviceruntime.googleapis.com/api/request_count",
+                },
+                "resource": {
+                    "type": "consumed_api",
+                    "labels": {
+                        "service": "securitycenter.googleapis.com",
+                        "project_id": "{GCP_PROJECT_ID}",
+                        "credential_id": "serviceaccount:55566666777888999",
+                    },
+                },
+                "metricKind": "DELTA",
+                "valueType": "INT64",
+            },
+        ]
+    }
     client.projects().alertPolicies().list_next.return_value = None
     # Used by IAM
     client.projects().serviceAccounts().list().execute.return_value = {
@@ -350,11 +436,13 @@ def mock_api_projects_calls(client: MagicMock):
                 "name": f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account1@{GCP_PROJECT_ID}.iam.gserviceaccount.com",
                 "email": "service-account1@gmail.com",
                 "displayName": "Service Account 1",
+                "uniqueId": "111222233334444",
             },
             {
                 "name": f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account2@{GCP_PROJECT_ID}.iam.gserviceaccount.com",
                 "email": "service-account2@gmail.com",
                 "displayName": "Service Account 2",
+                "uniqueId": "55566666777888999",
             },
         ]
     }
@@ -877,6 +965,22 @@ def mock_api_urlMaps_calls(client: MagicMock):
         ]
     }
     client.urlMaps().list_next.return_value = None
+
+    client.regionUrlMaps().list().execute.return_value = {
+        "items": [
+            {
+                "name": "regional_url_map1",
+                "id": str(uuid4()),
+                "defaultService": "regional_service1",
+            },
+            {
+                "name": "regional_url_map2",
+                "id": str(uuid4()),
+                "defaultService": "regional_service2",
+            },
+        ]
+    }
+    client.regionUrlMaps().list_next.return_value = None
 
     client.backendServices().get().execute.side_effect = [
         {

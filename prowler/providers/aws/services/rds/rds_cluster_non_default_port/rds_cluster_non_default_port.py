@@ -6,18 +6,14 @@ class rds_cluster_non_default_port(Check):
     def execute(self):
         findings = []
         default_ports = {
-            3306: ["mysql", "mariadb"],
-            5432: ["postgres"],
+            3306: ["mysql", "mariadb", "aurora-mysql"],
+            5432: ["postgres", "aurora-postgresql"],
             1521: ["oracle"],
             1433: ["sqlserver"],
             50000: ["db2"],
         }
-        for db_cluster_arn, db_cluster in rds_client.db_clusters.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = db_cluster.region
-            report.resource_id = db_cluster.id
-            report.resource_arn = db_cluster_arn
-            report.resource_tags = db_cluster.tags
+        for db_cluster in rds_client.db_clusters.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_cluster)
             report.status = "PASS"
             report.status_extended = (
                 f"RDS Cluster {db_cluster.id} is not using the default port "

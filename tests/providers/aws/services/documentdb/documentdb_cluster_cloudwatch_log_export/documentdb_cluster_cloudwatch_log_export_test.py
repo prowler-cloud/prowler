@@ -17,9 +17,15 @@ class Test_documentdb_cluster_cloudwatch_log_export:
         documentdb_client = mock.MagicMock
         documentdb_client.db_clusters = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_cloudwatch_log_export.documentdb_cluster_cloudwatch_log_export import (
                 documentdb_cluster_cloudwatch_log_export,
@@ -48,9 +54,15 @@ class Test_documentdb_cluster_cloudwatch_log_export:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_cloudwatch_log_export.documentdb_cluster_cloudwatch_log_export import (
                 documentdb_cluster_cloudwatch_log_export,
@@ -87,9 +99,15 @@ class Test_documentdb_cluster_cloudwatch_log_export:
                 tags=[],
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_cloudwatch_log_export.documentdb_cluster_cloudwatch_log_export import (
                 documentdb_cluster_cloudwatch_log_export,
@@ -124,9 +142,15 @@ class Test_documentdb_cluster_cloudwatch_log_export:
                 tags=[],
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_cloudwatch_log_export.documentdb_cluster_cloudwatch_log_export import (
                 documentdb_cluster_cloudwatch_log_export,
@@ -161,9 +185,15 @@ class Test_documentdb_cluster_cloudwatch_log_export:
                 tags=[],
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-            new=documentdb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+                new=documentdb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+                new=documentdb_client,
+            ),
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_cloudwatch_log_export.documentdb_cluster_cloudwatch_log_export import (
                 documentdb_cluster_cloudwatch_log_export,

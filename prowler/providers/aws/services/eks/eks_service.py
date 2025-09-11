@@ -1,13 +1,12 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ EKS
 class EKS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -84,6 +83,10 @@ class EKS(AWSService):
                     ]["publicAccessCidrs"]
                 if "encryptionConfig" in describe_cluster["cluster"]:
                     cluster.encryptionConfig = True
+                if "deletionProtection" in describe_cluster["cluster"]:
+                    cluster.deletion_protection = describe_cluster["cluster"][
+                        "deletionProtection"
+                    ]
                 cluster.tags = [describe_cluster["cluster"].get("tags")]
                 cluster.version = describe_cluster["cluster"].get("version", "")
 
@@ -109,4 +112,5 @@ class EKSCluster(BaseModel):
     endpoint_private_access: bool = None
     public_access_cidrs: list[str] = []
     encryptionConfig: bool = None
+    deletion_protection: bool = None
     tags: Optional[list] = []

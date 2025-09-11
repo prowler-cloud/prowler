@@ -15,9 +15,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
+      "CLI": "aws put-bucket-encryption --bucket <BUCKET_NAME> --server-side-encryption-configuration '{\"Rules\":[{\"ApplyServerSideEncryptionByDefault\":{\"SSEAlgorithm\":\"aws:kms\",\"KMSMasterKeyID\":\"arn:aws:kms:<REGION>:<ACCOUNT_ID>:key/<KEY_ID>\"}}]}'",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default#terraform"
     },
     "Recommendation": {

@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -186,7 +186,7 @@ class SSLSupportMethod(Enum):
 
 
 class DefaultCacheConfigBehaviour(BaseModel):
-    realtime_log_config_arn: Optional[str]
+    realtime_log_config_arn: Optional[str] = None
     viewer_protocol_policy: ViewerProtocolPolicy
     field_level_encryption_id: str
 
@@ -196,8 +196,8 @@ class Origin(BaseModel):
     domain_name: str
     origin_protocol_policy: str
     origin_ssl_protocols: list[str]
-    origin_access_control: Optional[str]
-    s3_origin_config: Optional[dict]
+    origin_access_control: Optional[str] = None
+    s3_origin_config: Optional[dict] = None
 
 
 class Distribution(BaseModel):
@@ -207,14 +207,14 @@ class Distribution(BaseModel):
     id: str
     region: str
     logging_enabled: bool = False
-    default_cache_config: Optional[DefaultCacheConfigBehaviour]
-    geo_restriction_type: Optional[GeoRestrictionType]
+    default_cache_config: Optional[DefaultCacheConfigBehaviour] = None
+    geo_restriction_type: Optional[GeoRestrictionType] = None
     origins: list[Origin]
     web_acl_id: str = ""
-    default_certificate: Optional[bool]
-    default_root_object: Optional[str]
-    viewer_protocol_policy: Optional[str]
+    default_certificate: Optional[bool] = None
+    default_root_object: Optional[str] = None
+    viewer_protocol_policy: Optional[str] = None
     tags: Optional[list] = []
-    origin_failover: Optional[bool]
-    ssl_support_method: Optional[SSLSupportMethod]
-    certificate: Optional[str]
+    origin_failover: Optional[bool] = None
+    ssl_support_method: Optional[SSLSupportMethod] = None
+    certificate: Optional[str] = None

@@ -7,8 +7,9 @@ class glue_data_catalogs_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for data_catalog in glue_client.data_catalogs.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = data_catalog.region
+            if data_catalog.policy is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=data_catalog)
             report.resource_id = glue_client.audited_account
             report.resource_arn = glue_client._get_data_catalog_arn_template(
                 data_catalog.region

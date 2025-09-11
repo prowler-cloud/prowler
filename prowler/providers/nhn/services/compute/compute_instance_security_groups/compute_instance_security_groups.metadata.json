@@ -1,0 +1,30 @@
+{
+  "Provider": "nhn",
+  "CheckID": "compute_instance_security_groups",
+  "CheckTitle": "Check NHN Compute Security Group Configuration",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "VMInstance",
+  "Description": "Checks if NHN Compute VM instances are using appropriate security group configurations. Using only the default security group can pose a security risk.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review and modify security group rules for each VM instance.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

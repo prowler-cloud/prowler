@@ -2,7 +2,6 @@ import ipaddress
 from typing import Any
 
 
-################## Security Groups
 def check_security_group(
     ingress_rule: Any, protocol: str, ports: list = [], any_address: bool = False
 ) -> bool:
@@ -45,6 +44,13 @@ def check_security_group(
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
             if _is_cidr_public(ip_ingress_rule["CidrIpv6"], any_address):
                 return True
+
+    if (
+        ingress_rule["IpProtocol"] != "-1"
+        and protocol != "-1"
+        and ingress_rule["IpProtocol"] != protocol
+    ):
+        return False
 
     # Check for specific ports in ingress rules
     if "FromPort" in ingress_rule:

@@ -1,7 +1,7 @@
+import json
 import os
 import re
 import sys
-from typing import Optional
 
 from colorama import Fore, Style
 from google.auth import default, impersonated_credentials, load_credentials_from_dict
@@ -19,13 +19,11 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.exceptions.exceptions import (
-    GCPCloudAssetAPINotUsedError,
-    GCPCloudResourceManagerAPINotUsedError,
-    GCPGetProjectError,
-    GCPHTTPError,
     GCPInvalidProviderIdError,
-    GCPLoadCredentialsFromDictError,
+    GCPLoadADCFromDictError,
+    GCPLoadServiceAccountKeyFromDictError,
     GCPNoAccesibleProjectsError,
     GCPSetUpSessionError,
     GCPStaticCredentialsError,
@@ -57,7 +55,6 @@ class GcpProvider(Provider):
         - get_projects -> Get the projects accessible by the provided credentials
         - update_projects_with_organizations -> Update the projects with organizations
         - is_project_matching -> Check if the input project matches the project to match
-        - validate_static_arguments -> Validate the static arguments
         - validate_project_id -> Validate the provider ID
     """
 
@@ -73,6 +70,7 @@ class GcpProvider(Provider):
 
     def __init__(
         self,
+        retries_max_attempts: int = None,
         organization_id: str = None,
         project_ids: list = None,
         excluded_project_ids: list = None,
@@ -87,11 +85,14 @@ class GcpProvider(Provider):
         client_id: str = None,
         client_secret: str = None,
         refresh_token: str = None,
+        service_account_key: dict = None,
+        skip_api_check: bool = False,
     ):
         """
         GCP Provider constructor
 
         Args:
+            retries_max_attempts: int -> The maximum number of retries for the Google Cloud SDK retry config (Default: 3)
             organization_id: str
             project_ids: list
             excluded_project_ids: list
@@ -106,12 +107,13 @@ class GcpProvider(Provider):
             client_id: str
             client_secret: str
             refresh_token: str
+            service_account_key: dict
+            skip_api_check: bool
 
         Raises:
             GCPNoAccesibleProjectsError if no project IDs can be accessed via Google Credentials
             GCPSetUpSessionError if an error occurs during the setup session
-            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
-            GCPGetProjectError if an error occurs during the get project
+            GCPLoadADCFromDictError if an error occurs during the loading credentials from dict
 
         Returns:
             None
@@ -130,9 +132,17 @@ class GcpProvider(Provider):
                             ...     client_secret="client_secret",
                             ...     refresh_token="refresh_token"
                             ... )
+                        - Using the service account key:
+                            >>> GcpProvider(
+                            ...     service_account_key={"service_account_key": "service_account_key"}
+                            ... )
                         - Using a credentials file:
                             >>> GcpProvider(
                             ...     credentials_file="credentials_file"
+                            ... )
+                        - Using custom retry configuration:
+                            >>> GcpProvider(
+                            ...     retries_max_attempts=5
                             ... )
                 - Impersonating a service account: If you want to impersonate a GCP service account, you can use the impersonate_service_account parameter. For this method user must be authenticated:
                     >>> GcpProvider(
@@ -158,6 +168,18 @@ class GcpProvider(Provider):
                 ... )
         """
         logger.info("Instantiating GCP Provider ...")
+
+        # Update retry configuration if provided
+        if retries_max_attempts is not None:
+            import prowler.providers.gcp.config as gcp_config
+
+            gcp_config.DEFAULT_RETRY_ATTEMPTS = retries_max_attempts
+            logger.info(f"GCP retry attempts set to {retries_max_attempts}")
+
+        if skip_api_check:
+            logger.info("Skipping API active check for each service")
+        self.skip_api_check = skip_api_check
+
         self._impersonated_service_account = impersonate_service_account
         # Set the GCP credentials using the provided client_id, client_secret and refresh_token
         gcp_credentials = None
@@ -167,13 +189,18 @@ class GcpProvider(Provider):
             )
 
         self._session, self._default_project_id = self.setup_session(
-            credentials_file, self._impersonated_service_account, gcp_credentials
+            credentials_file=credentials_file,
+            service_account=self._impersonated_service_account,
+            gcp_credentials=gcp_credentials,
+            service_account_key=service_account_key,
         )
 
         self._project_ids = []
         self._projects = {}
         self._excluded_project_ids = []
-        accessible_projects = self.get_projects(self._session, organization_id)
+        accessible_projects = self.get_projects(
+            self._session, organization_id, project_ids, credentials_file
+        )
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
             raise GCPNoAccesibleProjectsError(
@@ -181,8 +208,6 @@ class GcpProvider(Provider):
                 message="No Project IDs can be accessed via Google Credentials.",
             )
         if project_ids:
-            if self._default_project_id not in project_ids:
-                self._default_project_id = project_ids[0]
             for input_project in project_ids:
                 for (
                     accessible_project_id,
@@ -202,6 +227,10 @@ class GcpProvider(Provider):
                 if project.lifecycle_state == "ACTIVE":
                     self._projects[project_id] = project
                     self._project_ids.append(project_id)
+
+        # Change default project if not in active projects
+        if self._project_ids and self._default_project_id not in self._project_ids:
+            self._default_project_id = self._project_ids[0]
 
         # Remove excluded projects if any input
         if excluded_project_ids:
@@ -310,25 +339,39 @@ class GcpProvider(Provider):
 
     @staticmethod
     def setup_session(
-        credentials_file: str, service_account: str, gcp_credentials: dict = None
+        credentials_file: str,
+        service_account: str,
+        gcp_credentials: dict = None,
+        service_account_key: dict = None,
     ) -> tuple:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
 
         Args:
-            credentials_file: str
-            service_account: str
+            credentials_file: str -> The credentials file path used to authenticate
+            service_account: dict -> The service account to impersonate
+            gcp_credentials: dict -> The GCP credentials following the format:
+                {
+                    "client_id": str,
+                    "client_secret": str,
+                    "refresh_token": str,
+                    "type": str
+                }
+            service_account_key: dict -> The service account key, used to authenticate
 
         Returns:
             Credentials object and default project ID
 
         Raises:
-            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPLoadADCFromDictError if an error occurs during the loading credentials from dict
+            GCPLoadServiceAccountKeyFromDictError if an error occurs during the loading credentials from the service account key
             GCPSetUpSessionError if an error occurs during the setup session
 
         Usage:
             >>> GcpProvider.setup_session(credentials_file, service_account)
-            >>> GcpProvider.setup_session(service_account, gcp_credentials)
+            >>> GcpProvider.setup_session(service_account, service_account_key)
+            >>> GcpProvider.setup_session(credentials_file, service_account, gcp_credentials)
+
         """
         try:
             scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -345,7 +388,24 @@ class GcpProvider(Provider):
                     logger.critical(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    raise GCPLoadCredentialsFromDictError(
+                    raise GCPLoadADCFromDictError(
+                        file=__file__, original_exception=error
+                    )
+
+            if service_account_key:
+                logger.info(
+                    "GCP provider: Setting credentials from service account key..."
+                )
+                try:
+                    credentials, default_project_id = load_credentials_from_dict(
+                        service_account_key, scopes=scopes
+                    )
+                    return credentials, default_project_id
+                except Exception as error:
+                    logger.critical(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    raise GCPLoadServiceAccountKeyFromDictError(
                         file=__file__, original_exception=error
                     )
 
@@ -357,13 +417,18 @@ class GcpProvider(Provider):
                 client_secrets_path = os.path.abspath(credentials_file)
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
+            access_token = os.getenv("CLOUDSDK_AUTH_ACCESS_TOKEN")
+            if access_token:
+                logger.info("Using access token from CLOUDSDK_AUTH_ACCESS_TOKEN")
+                credentials = Credentials(token=access_token, scopes=scopes)
+                default_project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+                return credentials, default_project_id
+
             # Get default credentials
             credentials, default_project_id = default(scopes=scopes)
 
             # Refresh the credentials to ensure they are valid
             credentials.refresh(Request())
-
-            logger.info(f"Initial credentials: {credentials}")
 
             if service_account:
                 # Create the impersonated credentials
@@ -372,7 +437,7 @@ class GcpProvider(Provider):
                     target_principal=service_account,
                     target_scopes=scopes,
                 )
-                logger.info(f"Impersonated credentials: {credentials}")
+                logger.info(f"Impersonating service account: {service_account}")
 
             return credentials, default_project_id
         except Exception as error:
@@ -386,10 +451,11 @@ class GcpProvider(Provider):
         credentials_file: str = None,
         service_account: str = None,
         raise_on_exception: bool = True,
+        provider_id: str = None,
         client_id: str = None,
         client_secret: str = None,
         refresh_token: str = None,
-        provider_id: Optional[str] = None,
+        service_account_key: dict = None,
     ) -> Connection:
         """
         Test the connection to GCP with the provided credentials file or service account to impersonate.
@@ -401,64 +467,83 @@ class GcpProvider(Provider):
             credentials_file: str
             service_account: str
             raise_on_exception: bool
+            provider_id: Optional[str] -> The provider ID, for GCP it is the project ID
             client_id: str
             client_secret: str
             refresh_token: str
-            provider_id: Optional[str] -> The provider ID, for GCP it is the project ID
+            service_account_key: dict
 
         Returns:
             Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
 
         Raises:
-            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPLoadADCFromDictError if an error occurs during the loading credentials from dict
+            GCPLoadServiceAccountKeyFromDictError if an error occurs during the loading credentials from dict
             GCPSetUpSessionError if an error occurs during the setup session
             GCPCloudResourceManagerAPINotUsedError if the Cloud Resource Manager API has not been used before or it is disabled
             GCPInvalidProviderIdError if the provider ID does not match with the expected project_id
             GCPTestConnectionError if an error occurs during the test connection
 
         Usage:
-            - Using static credentials:
+            - Using ADC credentials from `/Users/<user>/.config/gcloud/application_default_credentials.json`:
                 >>> GcpProvider.test_connection(
                 ...     client_id="client_id",
                 ...     client_secret="client_secret",
                 ...     refresh_token="refresh_token"
                 ... )
-            - Using a credentials file:
-                >>> GcpProvider.test_connection(
-                ...     credentials_file="credentials_file"
-                ... )
-            - Using a service account to impersonate, authentication is required to impersonate a service account:
+            - Using ADC credentials with a Service Account to impersonate:
                 >>> GcpProvider.test_connection(
                 ...     client_id="client_id",
                 ...     client_secret="client_secret",
                 ...     refresh_token="refresh_token",
                 ...     service_account="service_account"
                 ... )
+            - Using service account key:
+                >>> GcpProvider.test_connection(
+                ...     service_account_key={"service_account_key": "service_account_key"}
+                ... )
+            - Using a Service Account credentials file path:
+                >>> GcpProvider.test_connection(
+                ...     credentials_file="credentials_file"
+                ... )
         """
         try:
-            # Set the GCP credentials using the provided client_id, client_secret and refresh_token
+            if not provider_id:
+                logger.error("Provider ID is required.")
+                raise GCPInvalidProviderIdError(
+                    file=__file__, message="Provider ID is required."
+                )
+            # Set the GCP credentials using the provided client_id, client_secret and refresh_token from ADC
             gcp_credentials = None
             if any([client_id, client_secret, refresh_token]):
                 gcp_credentials = GcpProvider.validate_static_arguments(
                     client_id, client_secret, refresh_token
                 )
-
             session, project_id = GcpProvider.setup_session(
-                credentials_file, service_account, gcp_credentials
+                credentials_file=credentials_file,
+                service_account=service_account,
+                gcp_credentials=gcp_credentials,
+                service_account_key=service_account_key,
             )
+
+            if not project_id:
+                project_id = provider_id
+
             if provider_id and project_id != provider_id:
                 # Logic to check if the provider ID matches the project ID
                 GcpProvider.validate_project_id(
-                    provider_id=provider_id, credentials=session
+                    provider_id=provider_id,
+                    credentials=session,
                 )
 
-            service = discovery.build("cloudresourcemanager", "v1", credentials=session)
-            request = service.projects().list()
+            # Test the connection using OAuth2 API to verify token validity
+            client = discovery.build("oauth2", "v2", credentials=session)
+            request = client.tokeninfo()
             request.execute()
             return Connection(is_connected=True)
 
         # Errors from setup_session
-        except GCPLoadCredentialsFromDictError as load_credentials_error:
+        except GCPLoadServiceAccountKeyFromDictError as load_credentials_error:
             logger.critical(
                 f"{load_credentials_error.__class__.__name__}[{load_credentials_error.__traceback__.tb_lineno}]: {load_credentials_error}"
             )
@@ -473,18 +558,9 @@ class GcpProvider(Provider):
                 raise setup_session_error
             return Connection(error=setup_session_error)
         except HttpError as http_error:
-            if "Cloud Resource Manager API has not been used" in str(http_error):
-                logger.critical(
-                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-                )
-                if raise_on_exception:
-                    raise GCPCloudResourceManagerAPINotUsedError(
-                        file=__file__, original_exception=http_error
-                    )
-            else:
-                logger.critical(
-                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
-                )
+            logger.critical(
+                f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+            )
             if raise_on_exception:
                 raise http_error
             return Connection(error=http_error)
@@ -530,7 +606,10 @@ class GcpProvider(Provider):
 
     @staticmethod
     def get_projects(
-        credentials: Credentials, organization_id: str = None
+        credentials: Credentials,
+        organization_id: str = None,
+        project_ids: list = None,
+        credentials_file: str = None,
     ) -> dict[str, GCPProject]:
         """
         Get the projects accessible by the provided credentials. If an organization ID is provided, only the projects under that organization are returned.
@@ -538,15 +617,11 @@ class GcpProvider(Provider):
         Args:
             credentials: Credentials
             organization_id: str
+            project_ids: list
+            credentials_file: str
 
         Returns:
             dict[str, GCPProject]
-
-        Raises:
-            GCPCloudResourceManagerAPINotUsedError if the Cloud Resource Manager API has not been used before or it is disabled
-            GCPCloudAssetAPINotUsedError if the Cloud Asset API has not been used before or it is disabled
-            GCPHTTPError if an error occurs during the HTTP request
-            GCPGetProjectError if an error occurs during the get project
 
         Usage:
             >>> GcpProvider.get_projects(credentials=credentials, organization_id=organization_id)
@@ -555,112 +630,179 @@ class GcpProvider(Provider):
             projects = {}
 
             if organization_id:
-                # Initialize Cloud Asset Inventory API for recursive project retrieval
-                asset_service = discovery.build(
-                    "cloudasset", "v1", credentials=credentials
-                )
-                # Set the scope to the specified organization and filter for projects
-                scope = f"organizations/{organization_id}"
-                request = asset_service.assets().list(
-                    parent=scope,
-                    assetTypes=["cloudresourcemanager.googleapis.com/Project"],
-                    contentType="RESOURCE",
-                )
-
-                while request is not None:
-                    response = request.execute()
-
-                    for asset in response.get("assets", []):
-                        # Extract labels and other project details
-                        labels = {
-                            k: v
-                            for k, v in asset["resource"]["data"]
-                            .get("labels", {})
-                            .items()
-                        }
-                        project_id = asset["resource"]["data"]["projectId"]
-                        gcp_project = GCPProject(
-                            number=asset["resource"]["data"]["projectNumber"],
-                            id=project_id,
-                            name=asset["resource"]["data"].get("name", project_id),
-                            lifecycle_state=asset["resource"]["data"].get(
-                                "lifecycleState"
-                            ),
-                            labels=labels,
-                        )
-                        gcp_project.organization = GCPOrganization(
-                            id=organization_id, name=f"organizations/{organization_id}"
-                        )
-
-                        projects[project_id] = gcp_project
-
-                    request = asset_service.assets().list_next(
-                        previous_request=request, previous_response=response
+                try:
+                    # Initialize Cloud Asset Inventory API for recursive project retrieval
+                    asset_service = discovery.build(
+                        "cloudasset", "v1", credentials=credentials
+                    )
+                    # Set the scope to the specified organization and filter for projects
+                    scope = f"organizations/{organization_id}"
+                    request = asset_service.assets().list(
+                        parent=scope,
+                        assetTypes=["cloudresourcemanager.googleapis.com/Project"],
+                        contentType="RESOURCE",
                     )
 
-            else:
-                # Initialize Cloud Resource Manager API for simple project listing
-                service = discovery.build(
-                    "cloudresourcemanager", "v1", credentials=credentials
-                )
-                request = service.projects().list()
+                    while request is not None:
+                        response = request.execute()
 
-                while request is not None:
-                    response = request.execute()
-
-                    for project in response.get("projects", []):
-                        # Extract labels and other project details
-                        labels = {k: v for k, v in project.get("labels", {}).items()}
-                        project_id = project["projectId"]
-                        gcp_project = GCPProject(
-                            number=project["projectNumber"],
-                            id=project_id,
-                            name=project.get("name", project_id),
-                            lifecycle_state=project["lifecycleState"],
-                            labels=labels,
-                        )
-
-                        # Set organization if present in the project metadata
-                        if (
-                            "parent" in project
-                            and project["parent"].get("type") == "organization"
-                        ):
-                            parent_org_id = project["parent"]["id"]
+                        for asset in response.get("assets", []):
+                            # Extract labels and other project details
+                            labels = {
+                                k: v
+                                for k, v in asset["resource"]["data"]
+                                .get("labels", {})
+                                .items()
+                            }
+                            project_number = asset["resource"]["data"]["projectNumber"]
+                            project_id = (
+                                asset["resource"]["data"].get("projectId")
+                                if asset["resource"]["data"].get("projectId")
+                                else project_number
+                            )
+                            project_name = (
+                                asset["resource"]["data"].get("name")
+                                if asset["resource"]["data"].get("name")
+                                else project_id
+                            )
+                            # Handle empty or null project names
+                            if not project_name or project_name.strip() == "":
+                                project_name = "GCP Project"
+                            gcp_project = GCPProject(
+                                number=project_number,
+                                id=project_id,
+                                name=project_name,
+                                lifecycle_state=asset["resource"]["data"].get(
+                                    "lifecycleState"
+                                ),
+                                labels=labels,
+                            )
                             gcp_project.organization = GCPOrganization(
-                                id=parent_org_id, name=f"organizations/{parent_org_id}"
+                                id=organization_id,
+                                name=f"organizations/{organization_id}",
                             )
 
-                        projects[project_id] = gcp_project
+                            projects[project_id] = gcp_project
 
-                    request = service.projects().list_next(
-                        previous_request=request, previous_response=response
-                    )
-
-        except HttpError as http_error:
-            if "Cloud Resource Manager API has not been used" in str(http_error):
-                logger.critical(
-                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-                )
-                raise GCPCloudResourceManagerAPINotUsedError(
-                    file=__file__, original_exception=http_error
-                )
-            elif "Cloud Asset API has not been used" in str(http_error):
-                logger.critical(
-                    "Cloud Asset API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudasset.googleapis.com/ then retry."
-                )
-                raise GCPCloudAssetAPINotUsedError(
-                    file=__file__, original_exception=http_error
-                )
+                        request = asset_service.assets().list_next(
+                            previous_request=request, previous_response=response
+                        )
+                except HttpError as http_error:
+                    if "Cloud Asset API has not been used" in str(http_error):
+                        logger.error(
+                            f"Projects cannot be retrieved from the Organization since Cloud Asset API has not been used before or it is disabled [{http_error.__traceback__.tb_lineno}]. Enable it by visiting https://console.developers.google.com/apis/api/cloudasset.googleapis.com/ then retry."
+                        )
+                    else:
+                        logger.error(
+                            f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+                        )
             else:
-                logger.error(
-                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
-                )
-                raise GCPHTTPError(file=__file__, original_exception=http_error)
+                try:
+                    # Initialize Cloud Resource Manager API for simple project listing
+                    service = discovery.build(
+                        "cloudresourcemanager",
+                        "v1",
+                        credentials=credentials,
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
+                    )
+                    request = service.projects().list()
+
+                    while request is not None:
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+
+                        for project in response.get("projects", []):
+                            # Extract labels and other project details
+                            labels = {
+                                k: v for k, v in project.get("labels", {}).items()
+                            }
+                            project_number = project["projectNumber"]
+                            project_id = (
+                                project.get("projectId")
+                                if project.get("projectId")
+                                else project_number
+                            )
+                            project_name = (
+                                project.get("name")
+                                if project.get("name")
+                                else project_id
+                            )
+                            # Handle empty or null project names
+                            if not project_name or project_name.strip() == "":
+                                project_name = "GCP Project"
+                            project_id = project["projectId"]
+                            gcp_project = GCPProject(
+                                number=project_number,
+                                id=project_id,
+                                name=project_name,
+                                lifecycle_state=project["lifecycleState"],
+                                labels=labels,
+                            )
+
+                            # Set organization if present in the project metadata
+                            if (
+                                "parent" in project
+                                and project["parent"].get("type") == "organization"
+                            ):
+                                parent_org_id = project["parent"]["id"]
+                                gcp_project.organization = GCPOrganization(
+                                    id=parent_org_id,
+                                    name=f"organizations/{parent_org_id}",
+                                )
+
+                            projects[project_id] = gcp_project
+
+                        request = service.projects().list_next(
+                            previous_request=request, previous_response=response
+                        )
+                except HttpError as http_error:
+                    if "Cloud Resource Manager API has not been used" in str(
+                        http_error
+                    ):
+                        logger.error(
+                            f"Project information cannot be retrieved since Cloud Resource Manager API has not been used before or it is disabled [{http_error.__traceback__.tb_lineno}]. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                        )
+                    else:
+                        logger.error(
+                            f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+                        )
+            if not projects:
+                # If no projects were able to be accessed via API, add them manually if provided by the user in arguments
+                if project_ids:
+                    for input_project in project_ids:
+                        # Handle empty or null project names
+                        project_name = (
+                            input_project
+                            if input_project and input_project.strip() != ""
+                            else "GCP Project"
+                        )
+                        projects[input_project] = GCPProject(
+                            id=input_project,
+                            name=project_name,
+                            number=0,
+                            labels={},
+                            lifecycle_state="ACTIVE",
+                        )
+                # If no projects were able to be accessed via API, add them manually from the credentials file
+                elif credentials_file:
+                    with open(credentials_file, "r", encoding="utf-8") as file:
+                        project_id = json.load(file)["project_id"]
+                        # Handle empty or null project names
+                        project_name = (
+                            project_id
+                            if project_id and project_id.strip() != ""
+                            else "GCP Project"
+                        )
+                        projects[project_id] = GCPProject(
+                            id=project_id,
+                            name=project_name,
+                            number=0,
+                            labels={},
+                            lifecycle_state="ACTIVE",
+                        )
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise GCPGetProjectError(file=__file__, original_exception=error)
         finally:
             return projects
 
@@ -671,16 +813,15 @@ class GcpProvider(Provider):
         Returns:
             None
 
-        Raises:
-            GCPHTTPError if an error occurs during the HTTP request
-            GCPGetProjectError if an error occurs during the get project
-
         Usage:
             >>> GcpProvider.update_projects_with_organizations()
         """
         try:
             service = discovery.build(
-                "cloudresourcemanager", "v1", credentials=self._session
+                "cloudresourcemanager",
+                "v1",
+                credentials=self._session,
+                num_retries=DEFAULT_RETRY_ATTEMPTS,
             )
             # TODO: this call requires more permissions to get that data
             # resourcemanager.organizations.get --> add to the docs
@@ -691,7 +832,7 @@ class GcpProvider(Provider):
                     )
 
                     while request is not None:
-                        response = request.execute()
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                         project.organization.display_name = response.get("displayName")
                         request = service.projects().list_next(
                             previous_request=request, previous_response=response
@@ -738,19 +879,15 @@ class GcpProvider(Provider):
         client_id: str = None, client_secret: str = None, refresh_token: str = None
     ) -> dict:
         """
-        Validate the static arguments client_id, client_secret and refresh_token
-
+        Validate the static arguments client_id, client_secret and refresh_token of ADC credentials
         Args:
             client_id: str
             client_secret: str
             refresh_token: str
-
         Returns:
             dict
-
         Raises:
-            GCPStaticCredentialsError if any of the static arguments is missing
-
+            GCPStaticCredentialsError if any of the static arguments is missing from the ADC credentials
         Usage:
             >>> GcpProvider.validate_static_arguments(client_id, client_secret, refresh_token)
         """
@@ -788,7 +925,9 @@ class GcpProvider(Provider):
         """
 
         available_projects = list(
-            GcpProvider.get_projects(credentials=credentials).keys()
+            GcpProvider.get_projects(
+                credentials=credentials, project_ids=[provider_id]
+            ).keys()
         )
 
         if len(available_projects) == 0:

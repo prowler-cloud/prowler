@@ -5,12 +5,8 @@ from prowler.providers.aws.services.dms.dms_client import dms_client
 class dms_endpoint_ssl_enabled(Check):
     def execute(self):
         findings = []
-        for endpoint_arn, endpoint in dms_client.endpoints.items():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = endpoint.id
-            report.resource_arn = endpoint_arn
-            report.region = endpoint.region
-            report.resource_tags = endpoint.tags
+        for endpoint in dms_client.endpoints.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=endpoint)
 
             if endpoint.ssl_mode == "none":
                 report.status = "FAIL"

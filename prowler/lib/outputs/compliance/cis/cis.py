@@ -27,10 +27,8 @@ def get_cis_table(
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
-            if (
-                compliance.Framework == "CIS"
-                and compliance.Version in compliance_framework
-            ):
+            version_in_name = compliance_framework.split("_")[1]
+            if compliance.Framework == "CIS" and version_in_name in compliance.Version:
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         section = attribute.Section
@@ -94,11 +92,12 @@ def get_cis_table(
         print(
             f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
         )
+        total_findings_count = len(fail_count) + len(pass_count) + len(muted_count)
         overview_table = [
             [
-                f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
-                f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
-                f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
+                f"{Fore.RED}{round(len(fail_count) / total_findings_count * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
+                f"{Fore.GREEN}{round(len(pass_count) / total_findings_count * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
+                f"{orange_color}{round(len(muted_count) / total_findings_count * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
             ]
         ]
         print(tabulate(overview_table, tablefmt="rounded_grid"))

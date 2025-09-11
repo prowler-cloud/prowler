@@ -21,12 +21,15 @@ class Test_ecs_task_definitions_containers_readonly_access:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access import (
                 ecs_task_definitions_containers_readonly_access,
@@ -59,12 +62,15 @@ class Test_ecs_task_definitions_containers_readonly_access:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access import (
                 ecs_task_definitions_containers_readonly_access,
@@ -106,12 +112,15 @@ class Test_ecs_task_definitions_containers_readonly_access:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access import (
                 ecs_task_definitions_containers_readonly_access,
@@ -162,12 +171,15 @@ class Test_ecs_task_definitions_containers_readonly_access:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_containers_readonly_access.ecs_task_definitions_containers_readonly_access import (
                 ecs_task_definitions_containers_readonly_access,

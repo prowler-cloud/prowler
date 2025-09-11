@@ -104,12 +104,15 @@ class Test_dynamodb_table_cross_account_access:
     def test_no_tables(self):
         dynamodb_client = mock.MagicMock
         dynamodb_client.tables = {}
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,
@@ -131,15 +134,19 @@ class Test_dynamodb_table_cross_account_access:
                 arn=arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
+                policy={},
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,
@@ -172,12 +179,15 @@ class Test_dynamodb_table_cross_account_access:
                 policy=test_restricted_policy,
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,
@@ -211,12 +221,15 @@ class Test_dynamodb_table_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,
@@ -251,12 +264,15 @@ class Test_dynamodb_table_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,
@@ -291,12 +307,15 @@ class Test_dynamodb_table_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,
@@ -330,12 +349,15 @@ class Test_dynamodb_table_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,
@@ -369,12 +391,15 @@ class Test_dynamodb_table_cross_account_access:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
-            new=dynamodb_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-            new=dynamodb_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
+                new=dynamodb_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ),
         ):
             from prowler.providers.aws.services.dynamodb.dynamodb_table_cross_account_access.dynamodb_table_cross_account_access import (
                 dynamodb_table_cross_account_access,

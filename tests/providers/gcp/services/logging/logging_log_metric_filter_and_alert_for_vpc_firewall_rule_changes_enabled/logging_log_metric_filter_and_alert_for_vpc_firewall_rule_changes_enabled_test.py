@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import (
     GCP_EU1_LOCATION,
     GCP_PROJECT_ID,
@@ -12,15 +13,19 @@ class Test_logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
-            new=logging_client,
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
-            new=monitoring_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled,
@@ -40,15 +45,19 @@ class Test_logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
-            new=logging_client,
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
-            new=monitoring_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled,
@@ -57,6 +66,15 @@ class Test_logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_ena
             logging_client.metrics = []
             logging_client.project_ids = [GCP_PROJECT_ID]
             logging_client.region = GCP_EU1_LOCATION
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
 
             monitoring_client.alert_policies = []
 
@@ -71,7 +89,59 @@ class Test_logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_ena
                 == f"There are no log metric filters or alerts associated in project {GCP_PROJECT_ID}."
             )
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == ""
+            assert result[0].resource_name == "test"
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
+
+    def test_no_log_metric_filters_no_alerts_one_project_empty_name(self):
+        logging_client = MagicMock()
+        monitoring_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled import (
+                logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled,
+            )
+
+            logging_client.metrics = []
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
+
+            monitoring_client.alert_policies = []
+
+            check = (
+                logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled()
+            )
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"There are no log metric filters or alerts associated in project {GCP_PROJECT_ID}."
+            )
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].resource_name == "GCP Project"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
 
@@ -79,15 +149,19 @@ class Test_logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
-            new=logging_client,
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
-            new=monitoring_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled,
@@ -126,15 +200,19 @@ class Test_logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
-            new=logging_client,
-        ), patch(
-            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
-            new=monitoring_client,
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled.logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled,

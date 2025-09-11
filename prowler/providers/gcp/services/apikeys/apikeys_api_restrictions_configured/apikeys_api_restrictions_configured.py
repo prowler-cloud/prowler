@@ -6,12 +6,12 @@ class apikeys_api_restrictions_configured(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for key in apikeys_client.keys:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = key.project_id
-            report.resource_id = key.id
-            report.resource_name = key.name
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=key,
+                location=apikeys_client.region,
+            )
             report.status = "PASS"
-            report.location = apikeys_client.region
             report.status_extended = f"API key {key.name} has restrictions configured."
             if key.restrictions == {} or any(
                 [

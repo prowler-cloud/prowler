@@ -2,7 +2,7 @@ import json
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -30,6 +30,7 @@ class DynamoDB(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.tables[arn] = Table(
+                            arn=arn,
                             name=table,
                             encryption_type=None,
                             kms_arn=None,
@@ -221,6 +222,7 @@ class DAX(AWSService):
 
 
 class Table(BaseModel):
+    arn: str
     name: str
     billing_mode: str = "PROVISIONED"
     encryption_type: Optional[str]

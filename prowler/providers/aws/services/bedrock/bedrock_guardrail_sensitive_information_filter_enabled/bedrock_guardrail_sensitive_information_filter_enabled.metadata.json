@@ -23,7 +23,7 @@
       "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html"
     }
   },
-  "Categories": [],
+  "Categories": ["gen-ai"],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

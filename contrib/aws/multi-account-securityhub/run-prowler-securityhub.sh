@@ -1,6 +1,9 @@
 #!/bin/bash
 # Run Prowler against All AWS Accounts in an AWS Organization
 
+# Activate Poetry Environment
+eval "$(poetry env activate)"
+
 # Show Prowler Version
 prowler -v
 

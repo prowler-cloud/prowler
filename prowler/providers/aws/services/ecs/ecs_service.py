@@ -1,7 +1,7 @@
 from re import sub
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -115,6 +115,7 @@ class ECS(AWSService):
                     service_arn = service_desc["serviceArn"]
                     service_obj = Service(
                         name=sub(":.*", "", service_arn.split("/")[-1]),
+                        id=f"{sub(':.*', '', service_arn.split('/')[-2])}/{sub(':.*', '', service_arn.split('/')[-1])}",
                         arn=service_arn,
                         region=cluster.region,
                         assign_public_ip=(
@@ -174,6 +175,7 @@ class ECS(AWSService):
                 clusters=[cluster.arn],
                 include=[
                     "TAGS",
+                    "SETTINGS",
                 ],
             )
             cluster.settings = response["clusters"][0].get("settings", [])
@@ -212,6 +214,7 @@ class TaskDefinition(BaseModel):
 
 class Service(BaseModel):
     name: str
+    id: str
     arn: str
     region: str
     launch_type: str = ""

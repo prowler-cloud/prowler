@@ -13,12 +13,15 @@ class Test_kms_cmk_not_deleted_unintentionally:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally import (
                 kms_cmk_not_deleted_unintentionally,
@@ -41,12 +44,15 @@ class Test_kms_cmk_not_deleted_unintentionally:
             [AWS_REGION_US_EAST_1], scan_unused_services=False
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally import (
                 kms_cmk_not_deleted_unintentionally,
@@ -67,12 +73,15 @@ class Test_kms_cmk_not_deleted_unintentionally:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally import (
                 kms_cmk_not_deleted_unintentionally,
@@ -100,12 +109,15 @@ class Test_kms_cmk_not_deleted_unintentionally:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally import (
                 kms_cmk_not_deleted_unintentionally,
@@ -135,12 +147,15 @@ class Test_kms_cmk_not_deleted_unintentionally:
             [AWS_REGION_US_EAST_1], scan_unused_services=True
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally import (
                 kms_cmk_not_deleted_unintentionally,
