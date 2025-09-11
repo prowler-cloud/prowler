@@ -96,7 +96,12 @@ export const authFormSchema = (type: string) =>
             }),
 
       // Fields for Sign In and Sign Up
-      email: z.string().email(),
+      // Trim and normalize email, and provide consistent message
+      email: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .email({ message: "Please enter a valid email address." }),
       password: type === "sign-in" ? z.string() : validatePassword(),
       isSamlMode: z.boolean().optional(),
     })
