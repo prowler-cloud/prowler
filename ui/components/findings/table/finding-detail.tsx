@@ -195,6 +195,20 @@ export const FindingDetail = ({
                 </CustomLink>
               </InfoField>
             )}
+
+            {/* Additional URLs section */}
+            {attributes.check_metadata.additionalurls &&
+              attributes.check_metadata.additionalurls.length > 0 && (
+                <InfoField label="Additional URLs">
+                  <div className="flex flex-col gap-1">
+                    {attributes.check_metadata.additionalurls.map((link, idx) => (
+                      <CustomLink key={idx} href={link} size="sm">
+                        {link}
+                      </CustomLink>
+                    ))}
+                  </div>
+                </InfoField>
+              )}
           </div>
         )}
 
