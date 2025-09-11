@@ -1,4 +1,4 @@
-# Prowler Fixer (remediation)
+# Prowler Fixers (Remediations)
 
 Prowler allows you to fix some of the failed findings it identifies. You can use the `--fixer` flag to run the fixes that are available for the checks that failed.
 

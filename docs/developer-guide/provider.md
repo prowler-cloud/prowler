@@ -10,6 +10,7 @@ A provider is any platform or service that offers resources, data, or functional
 - Software as a Service (SaaS) Platforms (like Microsoft 365)
 - Development Platforms (like GitHub)
 - Container Orchestration Platforms (like Kubernetes)
+- Database-as-a-Service Platforms (like MongoDB Atlas)
 
 For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.com/).
 
@@ -70,6 +71,7 @@ Once you have decided the provider you want or need to add to Prowler, the next 
 | GCP         | SDK    | Official google-auth SDK, service accounts, ADC support           |
 | Kubernetes  | SDK    | Official kubernetes SDK, service accounts, ADC support            |
 | NHN Cloud   | API    | Custom REST API, no official SDK, community provider              |
+| MongoDB Atlas| API    | Custom REST API, no official SDK                                 |
 | IAC         | Tool   | Third-party security tool that uses trivy, no auth needed, output conversion|
 | M365        | Hybrid | Combines msgraph SDK for auth + PowerShell wrapper for operations |
 | GitHub      | Hybrid | Non-Official PyGithub SDK but it's been updated and maintained + Official graphql API requests|
@@ -101,7 +103,7 @@ Once you have decided the provider you want or need to add to Prowler, the next 
 #### Implementation Complexity
 
 - **SDK Providers**: Low complexity. You have mature examples like AWS, Azure, GCP, Kubernetes, etc. that you can leverage to implement your provider.
-- **API Providers**: Medium complexity. You need to implement the authentication and session management, and the API calls to the provider. You now have NHN as example to follow.
+- **API Providers**: Medium complexity. You need to implement the authentication and session management, and the API calls to the provider. You now have NHN and MongoDB Atlas as example to follow.
 - **Tool/Wrapper Providers**: High complexity. You need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have. You now have IAC and the PowerShell wrapper as example to follow.
 - **Hybrid Providers**: High complexity. You need to "customize" your provider, mixing the other types of providers in order to achieve the desired result. You have M365 (msgraph SDK + PowerShell wrapper) and Github (PyGithub SDK + graphql API requests) as examples.
 
@@ -3297,6 +3299,7 @@ Use existing providers as templates, this will help you to understand better the
 - [GitHub (SDK)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/github/github_provider.py)
 - [NHN (API)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/nhn/nhn_provider.py)
 - [IAC (Tool)](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/iac/iac_provider.py)
+- [MongoDB Atlas](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/mongodbatlas/mongodbatlas_provider.py)
 
 ---
 

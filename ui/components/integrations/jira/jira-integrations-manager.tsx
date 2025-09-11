@@ -304,12 +304,10 @@ export const JiraIntegrationsManager = ({
                 <CardHeader className="pb-2">
                   <IntegrationCardHeader
                     icon={<JiraIcon size={32} />}
-                    title={`${integration.attributes.configuration.domain} - ${integration.attributes.configuration.project_key}`}
-                    subtitle={`User: ${integration.attributes.configuration.user_mail || "N/A"}`}
+                    title={`${integration.attributes.configuration.domain}`}
                     connectionStatus={{
                       connected: integration.attributes.connected,
                     }}
-                    navigationUrl={`https://${integration.attributes.configuration.domain}/projects/${integration.attributes.configuration.project_key}`}
                   />
                 </CardHeader>
 

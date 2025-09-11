@@ -1,32 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_integration_cloudwatch_logs",
-  "CheckTitle": "Check if Neptune Clusters have audit cloudwatch logs enabled.",
+  "CheckTitle": "Neptune cluster has CloudWatch audit logs enabled",
   "CheckType": [
-    "Software and Configuration Checks, AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if Neptune Clusters have audit cloudwatch logs enabled.",
-  "Risk": "If audit logs are not enabled, it is difficult to determine the root cause of security incidents.",
-  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/auditing.html",
+  "ResourceType": "Other",
+  "Description": "Neptune DB cluster is inspected for CloudWatch export of **audit** events. The finding indicates whether the cluster publishes `audit` logs to CloudWatch; a failed status in the report means the `audit` export is not enabled and audit records are not being forwarded to CloudWatch for centralized logging and review.",
+  "Risk": "Missing **audit logs** reduces **detectability** and **accountability**: \n\n- Investigators cannot reconstruct queries, client origins, or timeline\n- Unauthorized queries, data exfiltration, or privilege misuse may go undetected\n\nThis degrades confidentiality and integrity and slows incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/neptune/latest/userguide/auditing.html",
+    "https://docs.aws.amazon.com/neptune/latest/userguide/cloudwatch-logs.html",
+    "https://cloudanix.com/docs/aws/audit/rdsmonitoring/rules/neptune_cluster_cloudwatch_log_export_enabled_remediation",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-2"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <value> --cloudwatch-logs-export-configuration '{\"EnableLogTypes\":[\"audit\"]}'",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-2",
-      "Terraform": ""
+      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_IDENTIFIER> --cloudwatch-logs-export-configuration '{\"EnableLogTypes\":[\"audit\"]}'",
+      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: \"<DB_CLUSTER_IDENTIFIER>\"\n      EnableCloudwatchLogsExports:\n        - audit  # Export audit logs to CloudWatch for monitoring and forensics\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier               = \"<db_cluster_identifier>\"\n  enabled_cloudwatch_logs_exports = [\"audit\"]  # Export audit logs to CloudWatch for monitoring and forensics\n}\n```",
+      "Other": "1. Sign in to the AWS Management Console and open Amazon Neptune\n2. Go to Databases and select the Neptune DB cluster\n3. Actions > Modify\n4. In Log exports, check \"Audit\"\n5. Continue > Modify DB Cluster"
     },
     "Recommendation": {
-      "Text": "Enable audit logs for Neptune Clusters.",
-      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/cloudwatch-logs.html"
+      "Text": "Enable and centralize **audit logging** for Neptune by exporting `audit` events to CloudWatch Logs and integrating with monitoring or SIEM.\n\n- Enforce **least privilege** on log access\n- Configure retention, encryption, and alerting for anomalous queries\n\nThis supports proactive detection and forensic readiness.",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_integration_cloudwatch_logs"
     }
   },
   "Categories": [
-    "logging"
+    "logging",
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],

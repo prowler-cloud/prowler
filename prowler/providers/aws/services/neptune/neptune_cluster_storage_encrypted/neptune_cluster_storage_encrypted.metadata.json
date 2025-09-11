@@ -1,29 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_storage_encrypted",
-  "CheckTitle": "Check if Neptune Clusters storage is encrypted at rest.",
-  "CheckType": [],
+  "CheckTitle": "Neptune cluster storage is encrypted at rest",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Sensitive Data Identifications/Security"
+  ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if Neptune Clusters storage is encrypted at rest.",
-  "Risk": "Ensure that the data available on your Amazon Neptune database instances is encrypted in order to meet regulatory requirements and prevent unauthorized users from accessing sensitive information. Encryption provides an additional layer of protection by securing your Neptune databases from unauthorized access to the underlying storage. Neptune is a fast, scalable, highly secure and fully-managed graph database service that makes it easy to build and run applications that work with deeply connected datasets.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1",
+  "ResourceType": "Other",
+  "Description": "Neptune DB cluster is evaluated for **encryption at rest**. Indicating the cluster's underlying storage is not encrypted.",
+  "Risk": "**Unencrypted Neptune storage** reduces confidentiality of stored data and metadata and increases attack surface.\n\nPossible impacts:\n- Unauthorized access or data exfiltration from underlying volumes or snapshots\n- Greater blast radius from leaked or shared snapshots",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1",
+    "https://docs.aws.amazon.com/neptune/latest/userguide/encrypt.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_18#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_18/",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_18#terraform"
+      "NativeIaC": "```yaml\nResources:\n  EncryptedNeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: !Sub ${DBClusterIdentifier}\n      StorageEncrypted: true  # Enable encryption at rest for data protection\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier = \"<cluster-id>\"\n  storage_encrypted  = true  # Enable encryption at rest for data protection\n}\n```",
+      "Other": ""
     },
     "Recommendation": {
-      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1"
+      "Text": "Provision all new Neptune DB clusters with **encryption at rest** and prefer **Customer-Managed Keys (CMK)** for key ownership and auditability.\n\nEnforce **least privilege** on KMS keys, implement key lifecycle practices (rotation, revocation) and ensure backups/snapshots remain encrypted to prevent exposure.",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_storage_encrypted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,6 +1,6 @@
 ## Running Prowler
 
-Running Prowler requires specifying the provider (e.g `aws`, `gcp`, `azure`, `m365`, `github` or `kubernetes`):
+Running Prowler requires specifying the provider (e.g `aws`, `gcp`, `azure`, `kubernetes`, `m365`, `github`, `iac` or `mongodbatlas`):
 
 ???+ note
     If no provider is specified, AWS is used by default for backward compatibility with Prowler v2.
@@ -255,3 +255,28 @@ prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/tes
     - For more details on supported scanners, see the [Trivy documentation](https://trivy.dev/latest/docs/scanner/vulnerability/)
 
 See more details about IaC scanning in the [IaC Tutorial](../tutorials/iac/getting-started-iac.md) section.
+
+## MongoDB Atlas
+
+Prowler allows you to scan your MongoDB Atlas cloud database deployments for security and compliance issues.
+
+Authentication is done using MongoDB Atlas API key pairs:
+
+```console
+# Using command-line arguments
+prowler mongodbatlas --atlas-public-key <public_key> --atlas-private-key <private_key>
+
+# Using environment variables
+export ATLAS_PUBLIC_KEY=<public_key>
+export ATLAS_PRIVATE_KEY=<private_key>
+prowler mongodbatlas
+```
+
+You can filter scans to specific organizations or projects:
+
+```console
+# Scan specific project
+prowler mongodbatlas --atlas-project-id <project_id>
+```
+
+See more details about MongoDB Atlas Authentication in [MongoDB Atlas Authentication](../tutorials/mongodbatlas/authentication.md)
