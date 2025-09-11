@@ -18,6 +18,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+- `firehose_stream_encrypted_at_rest` check false positives and new api call in kafka service [(#8599)](https://github.com/prowler-cloud/prowler/pull/8599)
 - Replace defender rules policies key to use old name [(#8702)](https://github.com/prowler-cloud/prowler/pull/8702)
 
 ## [v5.12.0] (Prowler v5.12.0)
