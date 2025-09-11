@@ -210,6 +210,7 @@ export const AuthForm = ({
           <Form {...form}>
             <form
               noValidate
+              method="post"
               className="flex flex-col gap-4"
               onSubmit={form.handleSubmit(onSubmit)}
             >
