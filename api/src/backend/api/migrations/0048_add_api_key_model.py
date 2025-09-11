@@ -40,10 +40,10 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "prefix",
-                    models.CharField(editable=False, max_length=15, unique=True),
+                    models.TextField(editable=False, unique=True),
                 ),
-                ("hashed_key", models.CharField(editable=False, max_length=150)),
-                ("created", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("hashed_key", models.TextField(editable=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
                 (
                     "name",
                     models.CharField(
@@ -53,15 +53,15 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "revoked",
-                    models.BooleanField(
+                    "revoked_at",
+                    models.DateTimeField(
                         blank=True,
-                        default=False,
+                        null=True,
                         help_text="If the API key is revoked, clients cannot use it anymore. (This cannot be undone.)",
                     ),
                 ),
                 (
-                    "expiry_date",
+                    "expires_at",
                     models.DateTimeField(
                         blank=True,
                         help_text="Once API key expires, clients cannot use it anymore.",
@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
                 "verbose_name": "API key",
                 "verbose_name_plural": "API keys",
                 "db_table": "api_keys",
-                "ordering": ("-created",),
+                "ordering": ("-created_at",),
                 "abstract": False,
             },
         ),

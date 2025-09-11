@@ -31,7 +31,6 @@ from django.utils.crypto import get_random_string
 from rest_framework_api_key.crypto import make_password, Sha512ApiKeyHasher
 from django.contrib.auth.hashers import check_password
 from rest_framework_api_key.models import APIKeyManager
-from django.utils import timezone
 
 from api.db_router import MainRouter
 from api.db_utils import (
@@ -225,7 +224,13 @@ class APIKeyManager(APIKeyManager):
         Get all usable (non-revoked, non-expired) API keys.
         If tenant_id is provided, filter by tenant.
         """
-        queryset = self.filter(revoked=False)
+
+        now = timezone.now()
+        queryset = self.filter(
+            models.Q(revoked_at__isnull=True)
+            & (models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now))
+        )
+
         if tenant_id:
             queryset = queryset.filter(tenant_id=tenant_id)
         return queryset
@@ -236,9 +241,8 @@ class APIKeyManager(APIKeyManager):
         Uses the prefix for efficient lookup while respecting tenant boundaries.
         """
         try:
-            prefix, _, _ = key.partition(".")
-            if not prefix:
-                raise self.model.DoesNotExist("Invalid key format")
+            # Extract prefix using the same logic as extract_prefix method
+            prefix = self.model.extract_prefix(key)
 
             # Use all keys, not just usable ones, so we can give proper error messages for revoked/expired keys
             queryset = self.all()
@@ -250,8 +254,8 @@ class APIKeyManager(APIKeyManager):
                 raise self.model.DoesNotExist("Key is not valid.")
 
             return api_key
-        except self.model.DoesNotExist:
-            raise  # Re-raise for explicit handling
+        except (ValueError, self.model.DoesNotExist):
+            raise self.model.DoesNotExist("Invalid key format or key not found")
 
     def is_valid_key(self, key: str, tenant_id=None) -> bool:
         """
@@ -349,12 +353,12 @@ class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
 
     def revoke(self):
         """Revoke the API key."""
-        self.revoked = True
+        self.revoked_at = timezone.now()
         self.save()
 
     def is_active(self):
         """Check if the API key is active (not revoked and not expired)."""
-        return not self.revoked and not self.has_expired
+        return self.revoked_at is None and not self.has_expired
 
     def update_last_used(self):
         """Update the last_used_at timestamp."""
@@ -366,32 +370,16 @@ class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
         return f"API Key: {self.name}"
 
     @classmethod
-    def generate_key(cls):
-        """
-        Generate a new API key with format pk_XXXXXXXX.YYYYYYYY
-        where XXXXXXXX is an 8-character prefix and YYYYYYYY is a 32-character secret.
-        """
-
-        # Generate prefix: 8 characters, lowercase + digits
-        prefix = get_random_string(
-            length=8, allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789"
-        )
-        # Generate secret: 32 characters, URL-safe base64
-        secret = secrets.token_urlsafe(32)[:32]  # Ensure exactly 32 chars
-
-        return f"pk_{prefix}.{secret}"
-
-    @classmethod
     def extract_prefix(cls, key):
         """
         Extract the prefix from an API key.
-        Validates the key format and returns the 8-character prefix.
+        Validates the key format and returns the full prefix including 'pk_'.
 
         Args:
-            key: API key string in format pk_XXXXXXXX.YYYYYYYY
+            key: API key string in format pk_XXXXXXXX_YYYYYYYY
 
         Returns:
-            str: The 8-character prefix
+            str: The full prefix including 'pk_'
 
         Raises:
             ValueError: If the key format is invalid
@@ -399,24 +387,20 @@ class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
         if not key or not isinstance(key, str):
             raise ValueError("Invalid API key format")
 
-        parts = key.split(".")
-        if len(parts) != 2:
+        parts = key.split("_", 2)  # Split on underscore, max 2 splits
+        if len(parts) != 3:  # Should be ['pk', 'XXXXXXXX', 'YYYYYYYY']
             raise ValueError("Invalid API key format")
 
-        prefix_part, secret_part = parts
-
-        if not prefix_part.startswith("pk_"):
+        if parts[0] != "pk":
             raise ValueError("Invalid API key format")
 
-        prefix = prefix_part[3:]  # Remove "pk_" prefix
-
-        if len(prefix) != 8:
+        if len(parts[1]) != 8:  # 8-character prefix
             raise ValueError("Invalid API key format")
 
-        if len(secret_part) == 0:
+        if len(parts[2]) == 0:  # Secret part
             raise ValueError("Invalid API key format")
 
-        return prefix
+        return f"pk_{parts[1]}"  # Return full prefix including 'pk_'
 
     @classmethod
     def hash_key(cls, key):

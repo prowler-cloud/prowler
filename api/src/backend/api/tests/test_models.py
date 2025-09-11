@@ -5,7 +5,15 @@ from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 
 from api.db_router import MainRouter
-from api.models import APIKey, Resource, ResourceTag, Role, SAMLConfiguration, SAMLDomainIndex, Tenant
+from api.models import (
+    APIKey,
+    Resource,
+    ResourceTag,
+    Role,
+    SAMLConfiguration,
+    SAMLDomainIndex,
+    Tenant,
+)
 
 
 @pytest.mark.django_db
@@ -348,19 +356,19 @@ class TestAPIKeyModel:
         """Test that generate_key produces correctly formatted keys."""
         key = APIKey.generate_key()
 
-        # Should be in format pk_XXXXXXXX.YYYYYYYY
+        # Should be in format pk_XXXXXXXX_YYYYYYYY
         assert key.startswith("pk_")
-        parts = key.split(".")
-        assert len(parts) == 2
+        parts = key.split("_")
+        assert len(parts) == 3  # ['pk', 'XXXXXXXX', 'YYYYYYYY']
 
-        # First part should be pk_ + 8 characters
-        prefix_part = parts[0]
-        assert len(prefix_part) == 11  # "pk_" + 8 chars
-        assert prefix_part.startswith("pk_")
+        # First part should be 'pk'
+        assert parts[0] == "pk"
 
-        # Second part should be 32 characters
-        random_part = parts[1]
-        assert len(random_part) == 32
+        # Second part should be 8 characters
+        assert len(parts[1]) == 8
+
+        # Third part should be 32 characters
+        assert len(parts[2]) == 32
 
     def test_generate_key_uniqueness(self):
         """Test that generate_key produces unique keys."""
@@ -370,24 +378,25 @@ class TestAPIKeyModel:
 
     def test_extract_prefix_valid_key(self):
         """Test extracting prefix from valid API key."""
-        key = "pk_abcd1234.xyz789abcdef123456789012345678"
+        key = "pk_abcd1234_xyz789abcdef123456789012345678"
         prefix = APIKey.extract_prefix(key)
-        assert prefix == "abcd1234"
+        # Updated: extract_prefix returns the full prefix including 'pk_'
+        assert prefix == "pk_abcd1234"
 
-    def test_extract_prefix_invalid_format_no_dot(self):
-        """Test extracting prefix from key without dot separator."""
+    def test_extract_prefix_invalid_format_no_underscore(self):
+        """Test extracting prefix from key without underscore separator."""
         with pytest.raises(ValueError, match="Invalid API key format"):
             APIKey.extract_prefix("pk_abcd1234xyz789")
 
     def test_extract_prefix_invalid_format_no_pk_prefix(self):
         """Test extracting prefix from key without pk_ prefix."""
         with pytest.raises(ValueError, match="Invalid API key format"):
-            APIKey.extract_prefix("abcd1234.xyz789")
+            APIKey.extract_prefix("abcd1234_xyz789")
 
-    def test_extract_prefix_invalid_format_too_many_dots(self):
-        """Test extracting prefix from key with too many dots."""
+    def test_extract_prefix_invalid_format_too_many_underscores(self):
+        """Test extracting prefix from key with too many underscores."""
         with pytest.raises(ValueError, match="Invalid API key format"):
-            APIKey.extract_prefix("pk_abcd1234.xyz789.extra")
+            APIKey.extract_prefix("pk_abcd1234_xyz789_extra")
 
     def test_extract_prefix_invalid_format_empty_string(self):
         """Test extracting prefix from empty string."""
@@ -401,7 +410,7 @@ class TestAPIKeyModel:
 
     def test_hash_key(self):
         """Test that hash_key produces secure hashes."""
-        key = "pk_test1234.abcdef123456789012345678901234"
+        key = "pk_test1234_abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(key)
 
         # Hash should not be the same as the original key
@@ -414,7 +423,7 @@ class TestAPIKeyModel:
 
     def test_hash_key_same_input_different_hashes(self):
         """Test that hashing the same key twice produces different hashes (due to salt)."""
-        key = "pk_test1234.abcdef123456789012345678901234"
+        key = "pk_test1234_abcdef123456789012345678901234"
         hash1 = APIKey.hash_key(key)
         hash2 = APIKey.hash_key(key)
 
@@ -423,22 +432,22 @@ class TestAPIKeyModel:
 
     def test_verify_key_correct_key(self):
         """Test verifying a correct API key against its hash."""
-        key = "pk_test1234.abcdef123456789012345678901234"
+        key = "pk_test1234_abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(key)
 
         assert APIKey.verify_key(key, key_hash) is True
 
     def test_verify_key_incorrect_key(self):
         """Test verifying an incorrect API key against a hash."""
-        correct_key = "pk_test1234.abcdef123456789012345678901234"
-        incorrect_key = "pk_wrong123.abcdef123456789012345678901234"
+        correct_key = "pk_test1234_abcdef123456789012345678901234"
+        incorrect_key = "pk_wrong123_abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(correct_key)
 
         assert APIKey.verify_key(incorrect_key, key_hash) is False
 
     def test_verify_key_empty_key(self):
         """Test verifying an empty key."""
-        key = "pk_test1234.abcdef123456789012345678901234"
+        key = "pk_test1234_abcdef123456789012345678901234"
         key_hash = APIKey.hash_key(key)
 
         assert APIKey.verify_key("", key_hash) is False
@@ -451,8 +460,8 @@ class TestAPIKeyModel:
             role=role,
             hashed_key="dummy_hash",
             prefix="testkey1",
-            expiry_date=None,  # No expiration
-            revoked=False,  # Not revoked
+            expires_at=None,  # No expiration
+            revoked_at=None,  # Not revoked
         )
 
         assert api_key.is_active() is True
@@ -466,8 +475,8 @@ class TestAPIKeyModel:
             role=role,
             hashed_key="dummy_hash",
             prefix="testkey2",
-            expiry_date=past_time,
-            revoked=False,
+            expires_at=past_time,
+            revoked_at=None,
         )
 
         assert api_key.is_active() is False
@@ -481,8 +490,8 @@ class TestAPIKeyModel:
             role=role,
             hashed_key="dummy_hash",
             prefix="testkey3",
-            expiry_date=future_time,
-            revoked=False,
+            expires_at=future_time,
+            revoked_at=None,
         )
 
         assert api_key.is_active() is True
@@ -495,8 +504,8 @@ class TestAPIKeyModel:
             role=role,
             hashed_key="dummy_hash",
             prefix="testkey4",
-            expiry_date=None,
-            revoked=True,
+            expires_at=None,
+            revoked_at=timezone.now(),
         )
 
         assert api_key.is_active() is False
@@ -510,8 +519,8 @@ class TestAPIKeyModel:
             role=role,
             hashed_key="dummy_hash",
             prefix="testkey5",
-            expiry_date=past_time,
-            revoked=True,
+            expires_at=past_time,
+            revoked_at=timezone.now(),
         )
 
         assert api_key.is_active() is False
@@ -524,20 +533,20 @@ class TestAPIKeyModel:
             role=role,
             hashed_key="dummy_hash",
             prefix="testkey6",
-            expiry_date=None,
-            revoked=False,
+            expires_at=None,
+            revoked_at=None,
         )
 
         # Initially active
         assert api_key.is_active() is True
-        assert api_key.revoked is False
+        assert api_key.revoked_at is None
 
         # Revoke the key
         api_key.revoke()
 
         # Should now be inactive and revoked
         assert api_key.is_active() is False
-        assert api_key.revoked is True
+        assert api_key.revoked_at is not None
 
     def test_revoke_key_idempotent(self, tenant, role):
         """Test that revoking an already revoked key is safe."""
@@ -547,21 +556,23 @@ class TestAPIKeyModel:
             role=role,
             hashed_key="dummy_hash",
             prefix="testkey7",
-            expiry_date=None,
-            revoked=False,
+            expires_at=None,
+            revoked_at=None,
         )
 
         # Revoke twice
         api_key.revoke()
-        first_revoked_status = api_key.revoked
+        first_revoked_at = api_key.revoked_at
 
         api_key.revoke()
-        second_revoked_status = api_key.revoked
+        second_revoked_at = api_key.revoked_at
 
         # Should still be inactive and revoked
         assert api_key.is_active() is False
-        assert first_revoked_status is True
-        assert second_revoked_status is True
+        assert first_revoked_at is not None
+        assert second_revoked_at is not None
+        # The second revocation should update the timestamp
+        assert second_revoked_at >= first_revoked_at
 
     def test_save_allows_empty_prefix(self, tenant, role):
         """Test that saving an API key allows empty prefix (will be generated)."""
@@ -635,3 +646,94 @@ class TestAPIKeyModel:
 
         # Verify prefix extraction matches
         assert APIKey.extract_prefix(raw_key) == api_key.prefix
+
+    def test_update_last_used(self, tenant, role):
+        """Test updating the last_used_at timestamp."""
+        api_key = APIKey.objects.create(
+            name="Test Key",
+            tenant_id=tenant.id,
+            role=role,
+            hashed_key="dummy_hash",
+            prefix="testkey10",
+        )
+
+        # Initially no last_used_at
+        assert api_key.last_used_at is None
+
+        # Update last used
+        api_key.update_last_used()
+
+        # Should now have a timestamp
+        assert api_key.last_used_at is not None
+        assert api_key.last_used_at <= timezone.now()
+
+    def test_manager_get_usable_keys(self, tenant, role):
+        """Test the manager's get_usable_keys method."""
+        # Create an active key
+        active_key = APIKey.objects.create(
+            name="Active Key",
+            tenant_id=tenant.id,
+            role=role,
+            hashed_key="dummy_hash1",
+            prefix="active123",
+            revoked_at=None,
+        )
+
+        # Create a revoked key
+        revoked_key = APIKey.objects.create(
+            name="Revoked Key",
+            tenant_id=tenant.id,
+            role=role,
+            hashed_key="dummy_hash2",
+            prefix="revoked123",
+            revoked_at=timezone.now(),
+        )
+
+        # Get usable keys
+        usable_keys = APIKey.objects.get_usable_keys(tenant_id=tenant.id)
+
+        # Should only include the active key
+        assert active_key in usable_keys
+        assert revoked_key not in usable_keys
+        assert usable_keys.count() == 1
+
+    def test_manager_get_from_key_consistency(self, tenant, role):
+        """Test that get_from_key uses same logic as extract_prefix."""
+        # Create a valid API key
+        raw_key = "pk_abcd1234_secretpartsecretpartsecretpart"
+        prefix = APIKey.extract_prefix(raw_key)
+        key_hash = APIKey.hash_key(raw_key)
+
+        api_key = APIKey.objects.create(
+            name="Test Key",
+            tenant_id=tenant.id,
+            role=role,
+            hashed_key=key_hash,
+            prefix=prefix,
+        )
+
+        # Test that manager can find it using the same prefix extraction logic
+        found_key = APIKey.objects.get_from_key(raw_key, tenant.id)
+        assert found_key.id == api_key.id
+
+    def test_manager_is_valid_key(self, tenant, role):
+        """Test the manager's is_valid_key method."""
+        # Create a valid API key
+        raw_key = "pk_valid123_secretpartsecretpartsecretpart"
+        prefix = APIKey.extract_prefix(raw_key)
+        key_hash = APIKey.hash_key(raw_key)
+
+        APIKey.objects.create(
+            name="Valid Key",
+            tenant_id=tenant.id,
+            role=role,
+            hashed_key=key_hash,
+            prefix=prefix,
+        )
+
+        # Test valid key
+        assert APIKey.objects.is_valid_key(raw_key, tenant.id) is True
+
+        # Test invalid key
+        invalid_key = "pk_invalid1_secretpartsecretpartsecretpart"
+        assert APIKey.objects.is_valid_key(invalid_key, tenant.id) is False
