@@ -12,7 +12,7 @@ import { authenticate, createNewUser } from "@/actions/auth";
 import { initiateSamlAuth } from "@/actions/integrations/saml";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { NotificationIcon, ProwlerExtended } from "@/components/icons";
+import { ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
@@ -65,6 +65,8 @@ export const AuthForm = ({
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
     defaultValues: {
       email: "",
       password: "",
@@ -111,10 +113,11 @@ export const AuthForm = ({
       if (result?.message === "Success") {
         router.push("/");
       } else if (result?.errors && "credentials" in result.errors) {
-        form.setError("email", {
-          type: "server",
-          message: result.errors.credentials ?? "Incorrect email or password",
-        });
+        const message =
+          result.errors.credentials ?? "Invalid email or password";
+
+        form.setError("email", { type: "server", message });
+        form.setError("password", { type: "server", message });
       } else if (result?.message === "User email is not verified") {
         router.push("/email-verification");
       } else {
@@ -206,6 +209,11 @@ export const AuthForm = ({
 
           <Form {...form}>
             <form
+<<<<<<< HEAD
+=======
+              noValidate
+              method="post"
+>>>>>>> 6f967c6da (fix(auth): validate email field (#8698))
               className="flex flex-col gap-4"
               onSubmit={form.handleSubmit(onSubmit)}
             >
@@ -237,7 +245,8 @@ export const AuthForm = ({
                 label="Email"
                 placeholder="Enter your email"
                 isInvalid={!!form.formState.errors.email}
-                showFormMessage={type !== "sign-in"}
+                // Always show field validation message, including on sign-in
+                showFormMessage
               />
               {!isSamlMode && (
                 <>
@@ -245,10 +254,8 @@ export const AuthForm = ({
                     control={form.control}
                     name="password"
                     password
-                    isInvalid={
-                      !!form.formState.errors.password ||
-                      !!form.formState.errors.email
-                    }
+                    // Only mark invalid when the password field has an error
+                    isInvalid={!!form.formState.errors.password}
                   />
                   {type === "sign-up" && (
                     <PasswordRequirementsMessage
@@ -319,12 +326,7 @@ export const AuthForm = ({
                   )}
                 </>
               )}
-              {type === "sign-in" && form.formState.errors?.email && (
-                <div className="flex flex-row items-center text-system-error">
-                  <NotificationIcon size={16} />
-                  <p className="text-small">Invalid email or password</p>
-                </div>
-              )}
+
               <CustomButton
                 type="submit"
                 ariaLabel={type === "sign-in" ? "Log in" : "Sign up"}
