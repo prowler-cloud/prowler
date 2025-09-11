@@ -209,9 +209,7 @@ class LlmProvider(Provider):
                     progress_counter["completed"] += 1
             if finding.get("prompt", {}).get("raw"):
                 if finding.get("response", {}).get("error"):
-                    logger.error(
-                        f"Error: {finding.get('response', {}).get('error')}"
-                    )
+                    logger.error(f"Error: {finding.get('response', {}).get('error')}")
                     return False
                 elif finding.get("error"):
                     logger.error(f"{finding.get('error')}")
