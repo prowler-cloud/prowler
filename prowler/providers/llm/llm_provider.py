@@ -140,7 +140,7 @@ class LlmProvider(Provider):
                 "ServiceName": finding["metadata"]["pluginId"].split(":")[0],
                 "SubServiceName": "",
                 "ResourceIdTemplate": "",
-                "Severity": finding["metadata"]["severity"],
+                "Severity": finding["metadata"]["severity"].lower(),
                 "ResourceType": "llm",
                 "Description": finding["metadata"]["goal"],
                 "Risk": "",
@@ -194,30 +194,33 @@ class LlmProvider(Provider):
             line: JSON line from the report file
             reports: List to append the processed report to
             streaming_callback: Optional callback for streaming mode
-            progress_counter: Optional dict to track progress {'completed': int, 'total': int}
+            progress_counter: Optional dict to track progress {'completed': int, 'total': int, 'completed_test_ids': set}
 
         Returns:
             bool: True if a valid finding was processed, False otherwise
         """
         try:
             finding = json.loads(line.strip())
+            # Extract testIdx and track unique tests
+            test_idx = finding.get("testIdx")
+            if test_idx is not None and progress_counter is not None:
+                if test_idx not in progress_counter["completed_test_ids"]:
+                    progress_counter["completed_test_ids"].add(test_idx)
+                    progress_counter["completed"] += 1
             if finding.get("prompt", {}).get("raw"):
                 if finding.get("response", {}).get("error"):
-                    logger.critical(
+                    logger.error(
                         f"Error: {finding.get('response', {}).get('error')}"
                     )
                     return False
-                if finding.get("error"):
-                    logger.critical(f"Error: {finding.get('error')}")
+                elif finding.get("error"):
+                    logger.error(f"{finding.get('error')}")
                     return False
                 report = self._process_check(finding)
                 if report:
                     reports.append(report)
                     if streaming_callback:
                         streaming_callback([report])
-                    # Increment progress counter if provided
-                    if progress_counter is not None:
-                        progress_counter["completed"] += 1
                     return True
         except json.JSONDecodeError as json_error:
             logger.error(
@@ -345,7 +348,7 @@ class LlmProvider(Provider):
                     logger.info(f"Found {progress_counter['total']} test cases to run")
 
         # Create progress counter dictionary
-        progress_counter = {"completed": 0, "total": 0}
+        progress_counter = {"completed": 0, "total": 0, "completed_test_ids": set()}
         previous_completed = 0  # Track previous completed count for bar updates
 
         # Start monitoring in separate threads
