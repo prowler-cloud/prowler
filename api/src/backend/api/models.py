@@ -28,7 +28,7 @@ from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
 import secrets
 from django.utils.crypto import get_random_string
-from rest_framework_api_key.crypto import make_password, Sha512ApiKeyHasher
+from rest_framework_api_key.crypto import make_password
 from django.contrib.auth.hashers import check_password
 from rest_framework_api_key.models import APIKeyManager
 
@@ -292,7 +292,7 @@ class APIKeyManager(APIKeyManager):
 
         # Override with our custom prefix and key
         obj.prefix = prefix
-        obj.hashed_key = make_password(key, hasher=Sha512ApiKeyHasher())
+        obj.hashed_key = make_password(key)
         obj.save()
 
         return obj, key
