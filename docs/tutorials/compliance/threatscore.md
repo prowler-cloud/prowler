@@ -186,6 +186,7 @@ Different pillars typically receive different weight and risk assignments based 
 | 4. Encryption | 700-950 | 4-5 | Essential for data protection, regulatory compliance |
 
 **Subpillar Weight Considerations:**
+
 - **2.1 Network (Attack Surface)**: 500-800, Risk 3-4 - Network perimeter defense
 - **2.2 Storage (Attack Surface)**: 600-900, Risk 4-5 - Data exposure impact
 - **2.3 Application (Attack Surface)**: 400-700, Risk 2-4 - Varies by application criticality
@@ -202,9 +203,11 @@ Different pillars typically receive different weight and risk assignments based 
 - **Characteristics**: Impact varies significantly across subpillars (Network, Storage, Application)
 - **ThreatScore Impact**: Depends on specific subpillar and business context
 - **Weight Strategy**:
+
   - 2.1 Network subpillar: 500-800 (perimeter defense importance)
   - 2.2 Storage subpillar: 600-900 (data exposure risk)
   - 2.3 Application subpillar: 400-700 (application-specific criticality)
+
 - **Risk Strategy**: Wide range (2-5) based on exposure, data sensitivity, and business criticality
 
 #### Monitoring Pillar (3. Logging and Monitoring)
@@ -287,28 +290,37 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 **Step-by-step Calculation:**
 
 1. **Calculate weighted contributions for each requirement:**
-
-   - Encryption: 0.90 × 500 × 950 × 5 = 2,137,500
-   - Access Controls: 0.70 × 400 × 800 × 4 = 896,000
-   - Audit Logging: 0.875 × 400 × 700 × 3 = 735,000
-   - Backup Security: 0.667 × 300 × 600 × 3 = 360,060
-   - Network Segmentation: 0.75 × 200 × 750 × 4 = 450,000
+   ```
+   Numerator = Σ(rate_i × total_i × weight_i × risk_i)
+   ```
+   - **Encryption (4.2 At-Rest)**: 0.90 × 500 × 950 × 5 = 2,137,500
+   - **Access Controls (1.2 Authorization)**: 0.70 × 400 × 800 × 4 = 896,000
+   - **Audit Logging (3.1 Logging)**: 0.875 × 400 × 700 × 3 = 735,000
+   - **Backup Security (2.2 Storage)**: 0.667 × 300 × 600 × 3 = 360,060
+   - **Network Segmentation (2.1 Network)**: 0.75 × 200 × 750 × 4 = 450,000
 
 2. **Sum numerator:** 2,137,500 + 896,000 + 735,000 + 360,060 + 450,000 = **4,578,560**
 
-3. **Calculate total weights:**
-
-   - Encryption: 500 × 950 × 5 = 2,375,000
-   - Access Controls: 400 × 800 × 4 = 1,280,000
-   - Audit Logging: 400 × 700 × 3 = 840,000
-   - Backup Security: 300 × 600 × 3 = 540,000
-   - Network Segmentation: 200 × 750 × 4 = 600,000
+3. **Calculate total weights for each requirement:**
+   ```
+   Denominator = Σ(total_i × weight_i × risk_i)
+   ```
+   - **Encryption (4.2 At-Rest)**: 500 × 950 × 5 = 2,375,000
+   - **Access Controls (1.2 Authorization)**: 400 × 800 × 4 = 1,280,000
+   - **Audit Logging (3.1 Logging)**: 400 × 700 × 3 = 840,000
+   - **Backup Security (2.2 Storage)**: 300 × 600 × 3 = 540,000
+   - **Network Segmentation (2.1 Network)**: 200 × 750 × 4 = 600,000
 
 4. **Sum denominator:** 2,375,000 + 1,280,000 + 840,000 + 540,000 + 600,000 = **5,635,000**
 
-5. **Final ThreatScore:** (4,578,560 / 5,635,000) × 100 = **81.2%**
+5. **Final ThreatScore calculation:**
+   ```
+   ThreatScore = (Numerator / Denominator) × 100
+   ThreatScore = (4,578,560 / 5,635,000) × 100 = 81.2%
+   ```
 
 **Pillar-Level Analysis:**
+
 - **4. Encryption pillar (4.2 At-Rest)**: Highest contribution due to maximum weight (950) and risk (5)
 - **1. IAM pillar (1.2 Authorization)**: Significant impact despite lower pass rate (70%) due to high weight (800)
 - **3. Logging and Monitoring pillar (3.1 Logging)**: Moderate contribution with good performance (87.5%)
@@ -334,17 +346,21 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 | 2. Attack Surface | 2.3 Application | Input Validation | 150 | 50 | 500 | 3 | 75% |
 
 **Pillar Performance Summary:**
+
 - **1. IAM Pillar Average**: ~87% (weighted by findings across Authentication, Authorization, and Privilege Escalation subpillars)
 - **4. Encryption Pillar Average**: ~94% (weighted by findings across In-Transit and At-Rest subpillars)
 - **2. Attack Surface Pillar Average**: ~77% (weighted across Network, Storage, and Application subpillars)
+
   - 2.1 Network subpillar: ~80% average
   - 2.2 Storage subpillar: 75%
   - 2.3 Application subpillar: 75%
+
 - **3. Logging and Monitoring Average**: ~87% (weighted by findings across Logging and Monitoring subpillars)
 
 **Overall ThreatScore**: ~85.3%
 
 This comprehensive example demonstrates how:
+
 - High-performing, high-weight pillars (4. Encryption, 1. IAM) significantly boost the score
 - The 2. Attack Surface pillar shows how diverse subpillars (Network, Storage, Application) are aggregated
 - Multiple requirements within pillars provide detailed granular assessment
@@ -417,6 +433,7 @@ For frameworks with only one requirement:
 
 #### Minimum Data Set
 For each requirement, the following data must be available:
+
 - **pass_count**: Number of PASS findings (integer ≥ 0)
 - **fail_count**: Number of FAIL findings (integer ≥ 0)
 - **weight**: Business importance (integer 1-1000)
@@ -450,16 +467,19 @@ rate_i = pass_i / total_i (when total_i > 0)
 ### Monitoring and Trending
 
 1. **Establish Baseline**
+
    - Record initial ThreatScore after implementing measurement
    - Set realistic improvement targets based on organizational capacity
    - Track score changes over time to identify trends
 
 2. **Regular Reporting**
+
    - Generate monthly ThreatScore reports for stakeholders
    - Highlight significant score changes and their causes
    - Include requirement-level breakdowns for detailed analysis
 
 3. **Continuous Improvement**
+
    - Use score trends to identify systematic issues
    - Correlate score changes with security incidents or changes
    - Adjust weights and risk levels based on lessons learned
