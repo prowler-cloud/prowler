@@ -109,12 +109,14 @@ Risk levels represent the potential security impact of non-compliance with a req
 Consider a compliance framework with two requirements:
 
 **Requirement 1: Encryption at Rest**
+
 - Findings: 200 PASS, 500 FAIL (total = 700)
 - Pass Rate: 200/700 = 0.286 (28.6%)
 - Weight: 500 (High priority - data protection)
 - Risk Level: 4 (High risk - data exposure)
 
 **Requirement 2: Access Logging**
+
 - Findings: 300 PASS, 100 FAIL (total = 400)
 - Pass Rate: 300/400 = 0.75 (75%)
 - Weight: 800 (Critical for audit compliance)
@@ -173,16 +175,19 @@ Using the same healthcare scenario, let's see how parameter changes affect the s
 
 #### Scenario A: Increase PHI Encryption Risk Level
 Change PHI Encryption risk from 5 to 3:
+
 - **New ThreatScore: 77.8%** (decrease of 3.4 points)
 - **Impact**: Lower risk weighting reduces the influence of high-performing critical controls
 
 #### Scenario B: Improve Access Controls Pass Rate
 Change Access Controls from 70% to 90% pass rate:
+
 - **New ThreatScore: 85.1%** (increase of 3.9 points)
 - **Impact**: Improving performance on high-weight requirements has significant score impact
 
 #### Scenario C: Add New Low-Weight Requirement
 Add "Documentation Completeness" (50 PASS, 10 FAIL, weight=100, risk=1):
+
 - **New ThreatScore: 81.3%** (minimal change of 0.1 points)
 - **Impact**: Low-weight requirements have minimal impact on overall score
 
@@ -192,22 +197,26 @@ Add "Documentation Completeness" (50 PASS, 10 FAIL, weight=100, risk=1):
 
 #### Zero Findings Scenario
 When a requirement has `total_i = 0` (no findings):
+
 - **Behavior**: Requirement is completely excluded from calculation
 - **Rationale**: No evidence means no contribution to confidence in the score
 - **Impact**: Other requirements receive proportionally more influence
 
 #### Perfect Score Scenario
 When all requirements have 100% pass rate:
+
 - **Result**: ThreatScore = 100%
 - **Interpretation**: All implemented security checks are passing
 
 #### Zero Pass Rate Scenario
 When all requirements have 0% pass rate:
+
 - **Result**: ThreatScore = 0%
 - **Interpretation**: Critical security failures across all requirements
 
 #### Single Requirement Framework
 For frameworks with only one requirement:
+
 - **Formula simplification**: ThreatScore = pass_rate × 100
 - **Impact**: Weight and risk values become irrelevant for score calculation
 
