@@ -304,34 +304,39 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 **Step-by-step Calculation:**
 
 1. **Calculate weighted contributions for each requirement:**
-   ```
-   Numerator = Σ(rate_i × total_i × weight_i × risk_i)
-   ```
-   - **Encryption (4.2 At-Rest)**: 0.90 × 500 × 950 × 5 = 2,137,500
-   - **Access Controls (1.2 Authorization)**: 0.70 × 400 × 800 × 4 = 896,000
-   - **Audit Logging (3.1 Logging)**: 0.875 × 400 × 700 × 3 = 735,000
-   - **Backup Security (2.2 Storage)**: 0.667 × 300 × 600 × 3 = 360,060
-   - **Network Segmentation (2.1 Network)**: 0.75 × 200 × 750 × 4 = 450,000
+
+    ```
+    Numerator = Σ(rate_i × total_i × weight_i × risk_i)
+    ```
+
+    - **Encryption (4.2 At-Rest)**: 0.90 × 500 × 950 × 5 = 2,137,500
+    - **Access Controls (1.2 Authorization)**: 0.70 × 400 × 800 × 4 = 896,000
+    - **Audit Logging (3.1 Logging)**: 0.875 × 400 × 700 × 3 = 735,000
+    - **Backup Security (2.2 Storage)**: 0.667 × 300 × 600 × 3 = 360,060
+    - **Network Segmentation (2.1 Network)**: 0.75 × 200 × 750 × 4 = 450,000
 
 2. **Sum numerator:** 2,137,500 + 896,000 + 735,000 + 360,060 + 450,000 = **4,578,560**
 
 3. **Calculate total weights for each requirement:**
-   ```
-   Denominator = Σ(total_i × weight_i × risk_i)
-   ```
-   - **Encryption (4.2 At-Rest)**: 500 × 950 × 5 = 2,375,000
-   - **Access Controls (1.2 Authorization)**: 400 × 800 × 4 = 1,280,000
-   - **Audit Logging (3.1 Logging)**: 400 × 700 × 3 = 840,000
-   - **Backup Security (2.2 Storage)**: 300 × 600 × 3 = 540,000
-   - **Network Segmentation (2.1 Network)**: 200 × 750 × 4 = 600,000
+
+    ```
+    Denominator = Σ(total_i × weight_i × risk_i)
+    ```
+
+    - **Encryption (4.2 At-Rest)**: 500 × 950 × 5 = 2,375,000
+    - **Access Controls (1.2 Authorization)**: 400 × 800 × 4 = 1,280,000
+    - **Audit Logging (3.1 Logging)**: 400 × 700 × 3 = 840,000
+    - **Backup Security (2.2 Storage)**: 300 × 600 × 3 = 540,000
+    - **Network Segmentation (2.1 Network)**: 200 × 750 × 4 = 600,000
 
 4. **Sum denominator:** 2,375,000 + 1,280,000 + 840,000 + 540,000 + 600,000 = **5,635,000**
 
 5. **Final ThreatScore calculation:**
-   ```
-   ThreatScore = (Numerator / Denominator) × 100
-   ThreatScore = (4,578,560 / 5,635,000) × 100 = 81.2%
-   ```
+
+    ```
+    ThreatScore = (Numerator / Denominator) × 100
+    ThreatScore = (4,578,560 / 5,635,000) × 100 = 81.2%
+    ```
 
 **Pillar-Level Analysis:**
 
@@ -482,19 +487,16 @@ rate_i = pass_i / total_i (when total_i > 0)
 ### Monitoring and Trending
 
 1. **Establish Baseline**
-
-   - Record initial ThreatScore after implementing measurement
-   - Set realistic improvement targets based on organizational capacity
-   - Track score changes over time to identify trends
+    - Record initial ThreatScore after implementing measurement
+    - Set realistic improvement targets based on organizational capacity
+    - Track score changes over time to identify trends
 
 2. **Regular Reporting**
-
-   - Generate monthly ThreatScore reports for stakeholders
-   - Highlight significant score changes and their causes
-   - Include requirement-level breakdowns for detailed analysis
+    - Generate monthly ThreatScore reports for stakeholders
+    - Highlight significant score changes and their causes
+    - Include requirement-level breakdowns for detailed analysis
 
 3. **Continuous Improvement**
-
-   - Use score trends to identify systematic issues
-   - Correlate score changes with security incidents or changes
-   - Adjust weights and risk levels based on lessons learned
+    - Use score trends to identify systematic issues
+    - Correlate score changes with security incidents or changes
+    - Adjust weights and risk levels based on lessons learned
