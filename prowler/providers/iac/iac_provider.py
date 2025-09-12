@@ -242,9 +242,10 @@ class IacProvider(Provider):
             logger.info(
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
-            
-            # Check if we're in an environment with a TTY (terminal)
+
+            # Check if we're in an environment with a TTY
             # Celery workers and other non-interactive environments don't have TTY
+            #   and cannot use the alive_bar
             try:
                 if sys.stdout.isatty():
                     with alive_bar(
@@ -271,7 +272,7 @@ class IacProvider(Provider):
                 logger.info(f"Cloning {original_url}...")
                 porcelain.clone(repository_url, temporary_directory, depth=1)
                 logger.info("Repository cloned successfully!")
-            
+
             return temporary_directory
         except Exception as error:
             logger.critical(
@@ -318,8 +319,8 @@ class IacProvider(Provider):
             ]
             if exclude_path:
                 trivy_command.extend(["--skip-dirs", ",".join(exclude_path)])
-            
-            # Check if we're in an environment with a TTY (terminal)
+
+            # Check if we're in an environment with a TTY
             try:
                 if sys.stdout.isatty():
                     with alive_bar(
