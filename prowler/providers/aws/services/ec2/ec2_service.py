@@ -367,7 +367,7 @@ class EC2(AWSService):
                                     region=regional_client.region,
                                     tags=image.get("Tags"),
                                     deprecation_time=image.get("DeprecationTime"),
-                                    amazon_public=(owner == "amazon"),
+                                    owner=owner,
                                 )
                             )
                 except ClientError as error:
@@ -757,6 +757,7 @@ class Image(BaseModel):
     name: str
     public: bool
     deprecation_time: Optional[str]
+    owner: str
     amazon_public: bool = False
     region: str
     tags: Optional[list] = []
