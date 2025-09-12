@@ -115,55 +115,63 @@ The ThreatScore calculation considers requirements organized within the followin
 **Purpose**: Controls who can access what resources and under what conditions
 **Subpillars**:
 
-- **Authentication**: Verifying user and system identities
-- **Authorization**: Controlling access to resources based on authenticated identity
-- **Privilege Escalation**: Preventing unauthorized elevation of permissions
+- **1.1 Authentication**: Verifying user and system identities
+- **1.2 Authorization**: Controlling access to resources based on authenticated identity
+- **1.3 Privilege Escalation**: Preventing unauthorized elevation of permissions
 
 #### 2. Attack Surface
-**Purpose**: Minimizing exposure points that could be exploited by attackers
-**Coverage**: External-facing services, APIs, network endpoints, and system interfaces
+**Purpose**: Minimizing exposure points that could be exploited by attackers across network, storage, and application layers
+**Subpillars**:
 
-#### 3. Network
-**Purpose**: Securing network infrastructure and communications
-**Coverage**: Network segmentation, firewall rules, VPC configurations, and traffic controls
+- **2.1 Network**: Network infrastructure security, segmentation, firewall rules, VPC configurations, and traffic controls
+- **2.2 Storage**: Data storage systems security, database security, file system permissions, backup security, and storage encryption
+- **2.3 Application**: Application-level controls and configurations, application security settings, code security, runtime protections
 
-#### 4. Storage
-**Purpose**: Protecting data storage systems and access controls
-**Coverage**: Database security, file system permissions, backup security, and storage encryption
-
-#### 5. Application
-**Purpose**: Securing application-level controls and configurations
-**Coverage**: Application security settings, code security, runtime protections
-
-#### 6. Logging and Monitoring
+#### 3. Logging and Monitoring
 **Purpose**: Ensuring comprehensive visibility and audit capabilities
 **Subpillars**:
 
-- **Logging**: Capturing security-relevant events and activities
-- **Retention**: Maintaining logs for appropriate time periods
-- **Monitoring**: Active surveillance and alerting on security events
+- **3.1 Logging**: Capturing security-relevant events and activities
+- **3.2 Retention**: Maintaining logs for appropriate time periods
+- **3.3 Monitoring**: Active surveillance and alerting on security events
 
-#### 7. Encryption
+#### 4. Encryption
 **Purpose**: Protecting data confidentiality through cryptographic controls
 **Subpillars**:
 
-- **In-Transit**: Encrypting data during transmission
-- **At-Rest**: Encrypting stored data
+- **4.1 In-Transit**: Encrypting data during transmission
+- **4.2 At-Rest**: Encrypting stored data
 
 ### Pillar Hierarchy and ThreatScore Impact
 
 #### Hierarchy Structure
 ```
 Security Framework
-├── Pillar (e.g., IAM)
-│   ├── Subpillar (e.g., Authentication)
-│   │   ├── Requirement (e.g., MFA Enabled)
+├── 1. IAM
+│   ├── 1.1 Authentication
+│   ├── 1.2 Authorization
+│   └── 1.3 Privilege Escalation
+├── 2. Attack Surface
+│   ├── 2.1 Network
+│   ├── 2.2 Storage
+│   └── 2.3 Application
+├── 3. Logging and Monitoring
+│   ├── 3.1 Logging
+│   ├── 3.2 Retention
+│   └── 3.3 Monitoring
+└── 4. Encryption
+    ├── 4.1 In-Transit
+    └── 4.2 At-Rest
+
+Example Requirement Structure:
+├── Pillar: 1. IAM
+│   ├── Subpillar: 1.1 Authentication
+│   │   ├── Requirement: MFA Implementation
 │   │   │   ├── Check 1: Admin accounts use MFA
 │   │   │   ├── Check 2: Regular users use MFA
-│   │   │   └── Check N: Service accounts use MFA
+│   │   │   └── Check 3: Service accounts use MFA
 │   │   └── [Additional Requirements]
-│   └── [Additional Subpillars]
-└── [Additional Pillars]
+│   └── [Additional Subpillars: Authorization, Privilege Escalation]
 ```
 
 #### Weight and Risk Assignment by Pillar
@@ -172,33 +180,38 @@ Different pillars typically receive different weight and risk assignments based 
 
 | Pillar | Typical Weight Range | Typical Risk Range | Rationale |
 |--------|---------------------|-------------------|-----------|
-| IAM | 800-1000 | 4-5 | Critical for access control, high impact if compromised |
-| Encryption | 700-950 | 4-5 | Essential for data protection, regulatory compliance |
-| Logging and Monitoring | 600-800 | 3-4 | Important for detection and compliance, moderate direct impact |
-| Network | 500-800 | 3-4 | Important for perimeter defense, varies by environment |
-| Storage | 600-900 | 4-5 | High impact for data exposure, varies by data sensitivity |
-| Application | 400-700 | 2-4 | Varies significantly by application criticality |
-| Attack Surface | 500-800 | 3-5 | Highly dependent on exposure and criticality |
+| 1. IAM | 800-1000 | 4-5 | Critical for access control, high impact if compromised |
+| 2. Attack Surface | 500-900 | 3-5 | Highly dependent on exposure and criticality across network, storage, and application layers |
+| 3. Logging and Monitoring | 600-800 | 3-4 | Important for detection and compliance, moderate direct impact |
+| 4. Encryption | 700-950 | 4-5 | Essential for data protection, regulatory compliance |
+
+**Subpillar Weight Considerations:**
+- **2.1 Network (Attack Surface)**: 500-800, Risk 3-4 - Network perimeter defense
+- **2.2 Storage (Attack Surface)**: 600-900, Risk 4-5 - Data exposure impact
+- **2.3 Application (Attack Surface)**: 400-700, Risk 2-4 - Varies by application criticality
 
 ### Pillar-Specific Scoring Considerations
 
-#### High-Impact Pillars (IAM, Encryption)
+#### High-Impact Pillars (1. IAM, 4. Encryption)
 - **Characteristics**: Direct impact on data protection and access control
 - **ThreatScore Impact**: Failures in these pillars significantly lower overall score
-- **Weight Strategy**: Assign maximum weights (850-1000) to critical requirements
+- **Weight Strategy**: Assign maximum weights (800-1000) to critical requirements
 - **Risk Strategy**: Most requirements rated 4-5 due to severe consequences
 
-#### Medium-Impact Pillars (Network, Storage, Logging)
-- **Characteristics**: Important for security posture but impact varies by context
-- **ThreatScore Impact**: Moderate influence on overall score
-- **Weight Strategy**: Use business-driven weights (500-800) based on specific needs
-- **Risk Strategy**: Risk levels vary (3-4) based on data and system criticality
+#### Variable-Impact Pillar (2. Attack Surface)
+- **Characteristics**: Impact varies significantly across subpillars (Network, Storage, Application)
+- **ThreatScore Impact**: Depends on specific subpillar and business context
+- **Weight Strategy**:
+  - 2.1 Network subpillar: 500-800 (perimeter defense importance)
+  - 2.2 Storage subpillar: 600-900 (data exposure risk)
+  - 2.3 Application subpillar: 400-700 (application-specific criticality)
+- **Risk Strategy**: Wide range (2-5) based on exposure, data sensitivity, and business criticality
 
-#### Variable-Impact Pillars (Application, Attack Surface)
-- **Characteristics**: Impact highly dependent on specific application and environment
-- **ThreatScore Impact**: Customizable based on business context
-- **Weight Strategy**: Requires careful assessment of business criticality
-- **Risk Strategy**: Wide risk range (2-5) based on exposure and sensitivity
+#### Monitoring Pillar (3. Logging and Monitoring)
+- **Characteristics**: Essential for compliance and incident response
+- **ThreatScore Impact**: Moderate influence, critical for audit requirements
+- **Weight Strategy**: Consistent weights (600-800) across logging, retention, and monitoring subpillars
+- **Risk Strategy**: Moderate risk levels (3-4) with emphasis on compliance impact
 
 ### Cross-Pillar Dependencies
 
@@ -265,11 +278,11 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 
 | Pillar | Subpillar | Requirement | Pass | Fail | Total | Weight | Risk | Pass Rate |
 |--------|-----------|-------------|------|------|-------|--------|------|-----------|
-| Encryption | At-Rest | PHI Encryption | 450 | 50 | 500 | 950 | 5 | 90% |
-| IAM | Authorization | Access Controls | 280 | 120 | 400 | 800 | 4 | 70% |
-| Logging and Monitoring | Logging | Audit Logging | 350 | 50 | 400 | 700 | 3 | 87.5% |
-| Storage | - | Backup Security | 200 | 100 | 300 | 600 | 3 | 66.7% |
-| Network | - | Network Segmentation | 150 | 50 | 200 | 750 | 4 | 75% |
+| 4. Encryption | 4.2 At-Rest | Encryption | 450 | 50 | 500 | 950 | 5 | 90% |
+| 1. IAM | 1.2 Authorization | Access Controls | 280 | 120 | 400 | 800 | 4 | 70% |
+| 3. Logging and Monitoring | 3.1 Logging | Audit Logging | 350 | 50 | 400 | 700 | 3 | 87.5% |
+| 2. Attack Surface | 2.2 Storage | Backup Security | 200 | 100 | 300 | 600 | 3 | 66.7% |
+| 2. Attack Surface | 2.1 Network | Network Segmentation | 150 | 50 | 200 | 750 | 4 | 75% |
 
 **Step-by-step Calculation:**
 
@@ -296,11 +309,11 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 5. **Final ThreatScore:** (4,578,560 / 5,635,000) × 100 = **81.2%**
 
 **Pillar-Level Analysis:**
-- **Encryption pillar**: Highest contribution due to maximum weight (950) and risk (5)
-- **IAM pillar**: Significant impact despite lower pass rate (70%) due to high weight (800)
-- **Logging pillar**: Moderate contribution with good performance (87.5%)
-- **Network pillar**: Strong performance (75%) with high weight (750) balances the score
-- **Storage pillar**: Lowest performance (66.7%) but limited impact due to moderate weight (600)
+- **4. Encryption pillar (4.2 At-Rest)**: Highest contribution due to maximum weight (950) and risk (5)
+- **1. IAM pillar (1.2 Authorization)**: Significant impact despite lower pass rate (70%) due to high weight (800)
+- **3. Logging and Monitoring pillar (3.1 Logging)**: Moderate contribution with good performance (87.5%)
+- **2. Attack Surface pillar (2.1 Network)**: Strong performance (75%) with high weight (750) balances the score
+- **2. Attack Surface pillar (2.2 Storage)**: Lowest performance (66.7%) but limited impact due to moderate weight (600)
 
 ### Example 3: Multi-Pillar Comprehensive Scenario
 
@@ -308,31 +321,32 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 
 | Pillar | Subpillar | Requirement | Pass | Fail | Weight | Risk | Pass Rate |
 |--------|-----------|-------------|------|------|--------|------|-----------|
-| IAM | Authentication | MFA Implementation | 180 | 20 | 900 | 5 | 90% |
-| IAM | Authorization | Least Privilege Access | 150 | 50 | 850 | 4 | 75% |
-| IAM | Privilege Escalation | Admin Account Controls | 95 | 5 | 950 | 5 | 95% |
-| Encryption | At-Rest | Database Encryption | 300 | 20 | 900 | 5 | 93.8% |
-| Encryption | In-Transit | API/Web Encryption | 250 | 10 | 800 | 4 | 96.2% |
-| Network | - | Firewall Configuration | 400 | 100 | 600 | 3 | 80% |
-| Attack Surface | - | Public Endpoint Security | 80 | 20 | 700 | 4 | 80% |
-| Logging and Monitoring | Logging | Transaction Logging | 500 | 50 | 750 | 3 | 90.9% |
-| Logging and Monitoring | Monitoring | Real-time Alerts | 200 | 50 | 700 | 4 | 80% |
-| Storage | - | Data Classification | 300 | 100 | 650 | 3 | 75% |
-| Application | - | Input Validation | 150 | 50 | 500 | 3 | 75% |
+| 1. IAM | 1.1 Authentication | MFA Implementation | 180 | 20 | 900 | 5 | 90% |
+| 1. IAM | 1.2 Authorization | Least Privilege Access | 150 | 50 | 850 | 4 | 75% |
+| 1. IAM | 1.3 Privilege Escalation | Admin Account Controls | 95 | 5 | 950 | 5 | 95% |
+| 4. Encryption | 4.2 At-Rest | Database Encryption | 300 | 20 | 900 | 5 | 93.8% |
+| 4. Encryption | 4.1 In-Transit | API/Web Encryption | 250 | 10 | 800 | 4 | 96.2% |
+| 2. Attack Surface | 2.1 Network | Firewall Configuration | 400 | 100 | 600 | 3 | 80% |
+| 2. Attack Surface | 2.1 Network | Public Endpoint Security | 80 | 20 | 700 | 4 | 80% |
+| 3. Logging and Monitoring | 3.1 Logging | Transaction Logging | 500 | 50 | 750 | 3 | 90.9% |
+| 3. Logging and Monitoring | 3.3 Monitoring | Real-time Alerts | 200 | 50 | 700 | 4 | 80% |
+| 2. Attack Surface | 2.2 Storage | Data Classification | 300 | 100 | 650 | 3 | 75% |
+| 2. Attack Surface | 2.3 Application | Input Validation | 150 | 50 | 500 | 3 | 75% |
 
 **Pillar Performance Summary:**
-- **IAM Pillar Average**: ~87% (weighted by findings)
-- **Encryption Pillar Average**: ~94% (weighted by findings)
-- **Network Pillar**: 80%
-- **Attack Surface Pillar**: 80%
-- **Logging and Monitoring Average**: ~87% (weighted by findings)
-- **Storage Pillar**: 75%
-- **Application Pillar**: 75%
+- **1. IAM Pillar Average**: ~87% (weighted by findings across Authentication, Authorization, and Privilege Escalation subpillars)
+- **4. Encryption Pillar Average**: ~94% (weighted by findings across In-Transit and At-Rest subpillars)
+- **2. Attack Surface Pillar Average**: ~77% (weighted across Network, Storage, and Application subpillars)
+  - 2.1 Network subpillar: ~80% average
+  - 2.2 Storage subpillar: 75%
+  - 2.3 Application subpillar: 75%
+- **3. Logging and Monitoring Average**: ~87% (weighted by findings across Logging and Monitoring subpillars)
 
 **Overall ThreatScore**: ~85.3%
 
 This comprehensive example demonstrates how:
-- High-performing, high-weight pillars (Encryption, IAM) significantly boost the score
+- High-performing, high-weight pillars (4. Encryption, 1. IAM) significantly boost the score
+- The 2. Attack Surface pillar shows how diverse subpillars (Network, Storage, Application) are aggregated
 - Multiple requirements within pillars provide detailed granular assessment
 - Cross-pillar balance prevents single points of failure in security posture
 
