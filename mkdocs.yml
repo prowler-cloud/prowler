@@ -138,6 +138,10 @@ nav:
         - MongoDB Atlas:
             - Getting Started: tutorials/mongodbatlas/getting-started-mongodbatlas.md
             - Authentication: tutorials/mongodbatlas/authentication.md
+
+      - Compliance:
+        - ThreatScore: tutorials/compliance/threatscore.md
+
   - Developer Guide:
       - Concepts:
         - Introduction: developer-guide/introduction.md
