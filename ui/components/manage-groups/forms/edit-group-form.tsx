@@ -105,7 +105,8 @@ export const EditGroupForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/name":
               form.setError("name", {
                 type: "server",

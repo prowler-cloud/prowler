@@ -53,7 +53,8 @@ export const SendInvitationForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/email":
               form.setError("email", {
                 type: "server",
