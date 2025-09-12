@@ -70,6 +70,7 @@ nav:
           - Integrations:
             - Amazon S3: tutorials/prowler-app-s3-integration.md
             - AWS Security Hub: tutorials/prowler-app-security-hub-integration.md
+            - Jira: tutorials/prowler-app-jira-integration.md
           - Lighthouse AI: tutorials/prowler-app-lighthouse.md
           - Tutorials:
             - SSO with Entra: tutorials/prowler-app-sso-entra.md
@@ -99,7 +100,7 @@ nav:
         - AWS:
             - Getting Started: tutorials/aws/getting-started-aws.md
             - Authentication: tutorials/aws/authentication.md
-            - Assume Role: tutorials/aws/role-assumption.md
+            - Assume Role (CLI): tutorials/aws/role-assumption.md
             - AWS Organizations: tutorials/aws/organizations.md
             - AWS Regions and Partitions: tutorials/aws/regions-and-partitions.md
             - Tag-based Scan: tutorials/aws/tag-based-scan.md
@@ -161,6 +162,7 @@ nav:
           - Integration Tests: developer-guide/integration-testing.md
         - Debugging: developer-guide/debugging.md
         - Configurable Checks: developer-guide/configurable-checks.md
+        - Check Metadata Writting Guidelines: developer-guide/check-metadata-guidelines.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
