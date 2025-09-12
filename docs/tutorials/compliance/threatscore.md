@@ -1,17 +1,5 @@
 # Prowler ThreatScore Documentation
 
-## Table of Contents
-- [Introduction](#introduction)
-- [How ThreatScore Works](#how-threatscore-works)
-- [Mathematical Formula](#mathematical-formula)
-- [Parameters Explained](#parameters-explained)
-- [Security Pillars and Subpillars](#security-pillars-and-subpillars)
-- [Scoring Examples](#scoring-examples)
-- [Implementation Details](#implementation-details)
-- [Best Practices](#best-practices)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
-
 ## Introduction
 
 The **Prowler ThreatScore** is a comprehensive compliance scoring system that provides a unified metric for assessing your organization's security posture across compliance frameworks. It aggregates findings from individual security checks into a single, normalized score ranging from 0 to 100.
@@ -41,6 +29,16 @@ A numerical value (1-1000) representing the business importance or criticality o
 ### 4. Risk Level (`risk_i`)
 A severity rating (1-5) indicating the potential impact of non-compliance with this requirement.
 
+## Score Interpretation Guidelines
+
+| ThreatScore | Interpretation | Recommended Actions |
+|------------------|----------------|-------------------|
+| 90-100% | Excellent | Maintain current controls, focus on continuous improvement |
+| 80-89% | Good | Address remaining gaps, prepare for compliance audits |
+| 70-79% | Acceptable | Prioritize high-risk failures, develop improvement plan |
+| 60-69% | Needs Improvement | Immediate attention required, may not pass compliance audit |
+| Below 60% | Critical | Emergency response needed, potential regulatory issues |
+
 ## Mathematical Formula
 
 The ThreatScore uses a weighted average formula that accounts for all four factors:
@@ -48,13 +46,6 @@ The ThreatScore uses a weighted average formula that accounts for all four facto
 ```
 ThreatScore = (Σ(rate_i × total_i × weight_i × risk_i) / Σ(total_i × weight_i × risk_i)) × 100
 ```
-
-Where:
-
-- `rate_i` = Pass rate for requirement i (0.0 to 1.0)
-- `total_i` = Total number of findings for requirement i
-- `weight_i` = Business importance weight (1 to 1000)
-- `risk_i` = Risk severity level (1 to 5)
 
 ### Formula Properties
 - **Normalization**: Always produces a score between 0 and 100
@@ -473,16 +464,6 @@ rate_i = pass_i / total_i (when total_i > 0)
 - **Missing data**: Exclude requirement from calculation and log warning
 
 ## Best Practices
-
-### Score Interpretation Guidelines
-
-| ThreatScore | Interpretation | Recommended Actions |
-|------------------|----------------|-------------------|
-| 90-100% | Excellent | Maintain current controls, focus on continuous improvement |
-| 80-89% | Good | Address remaining gaps, prepare for compliance audits |
-| 70-79% | Acceptable | Prioritize high-risk failures, develop improvement plan |
-| 60-69% | Needs Improvement | Immediate attention required, may not pass compliance audit |
-| Below 60% | Critical | Emergency response needed, potential regulatory issues |
 
 ### Monitoring and Trending
 
