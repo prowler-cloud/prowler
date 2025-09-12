@@ -1839,6 +1839,16 @@ class TestProviderSecretViewSet:
                     "password": "supersecret",
                 },
             ),
+            # M365 with certificate (valid base64)
+            (
+                Provider.ProviderChoices.M365.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "tenant_id": "tenant-id",
+                    "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",  # Valid base64: "Test certificate content"
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -2203,6 +2213,48 @@ class TestProviderSecretViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_m365_provider_secrets_invalid_certificate_base64(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test M365 provider secret creation with invalid base64 certificate content"""
+        # Find M365 provider from fixture
+        m365_provider = None
+        for provider in providers_fixture:
+            if provider.provider == Provider.ProviderChoices.M365.value:
+                m365_provider = provider
+                break
+
+        assert m365_provider is not None, "M365 provider not found in fixture"
+
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "M365 Certificate Invalid Base64",
+                    "secret_type": "static",
+                    "secret": {
+                        "client_id": "client-id",
+                        "tenant_id": "tenant-id",
+                        "certificate_content": "invalid-base64-content!@#$%",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(m365_provider.id)}
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "certificate content is not valid base64 encoded data" in str(
+            response.json()
+        )
 
 
 @pytest.mark.django_db
