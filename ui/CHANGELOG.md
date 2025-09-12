@@ -2,12 +2,20 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.12.1] (Prowler v5.12.1)
+## [1.13.0] (Prowler v5.13.0) (Unreleased)
 
 ### 🚀 Added
 
 - `Prowler Hub` menu item with tooltip [(#8692)](https://github.com/prowler-cloud/prowler/pull/8692)
 - Copy link button to finding detail page [(#8685)](https://github.com/prowler-cloud/prowler/pull/8685)
+
+## [1.12.2] (Prowler v5.12.2)
+
+### 🐞 Fixed
+
+- Handle 4XX errors consistently and 204 responses properly[(#8722)](https://github.com/prowler-cloud/prowler/pull/8722)
+
+## [1.12.1] (Prowler v5.12.1)
 
 ### 🐞 Fixed
 
