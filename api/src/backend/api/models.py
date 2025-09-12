@@ -26,6 +26,11 @@ from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
+import secrets
+from django.utils.crypto import get_random_string
+from rest_framework_api_key.crypto import make_password
+from django.contrib.auth.hashers import check_password
+from rest_framework_api_key.models import APIKeyManager
 
 from api.db_router import MainRouter
 from api.db_utils import (
@@ -53,6 +58,7 @@ from api.rls import (
     Tenant,
 )
 from prowler.lib.check.models import Severity
+from rest_framework_api_key.models import AbstractAPIKey
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -163,6 +169,258 @@ class User(AbstractBaseUser):
 
     class JSONAPIMeta:
         resource_name = "users"
+
+
+class APIKeyUser:
+    """
+    A user-like object specifically for API key authentication.
+
+    This class provides a proper user identity for API key requests instead of using
+    AnonymousUser, which improves security and clarity in the authentication system.
+    """
+
+    def __init__(self, api_key_id, api_key_name, tenant_id, role=None):
+        self.api_key_id = api_key_id
+        self.api_key_name = api_key_name
+        self.tenant_id = tenant_id
+        self.role = role  # Store the role for RBAC
+        # Set a synthetic ID for consistency with User interface
+        self.id = f"api_key_{api_key_id}"
+        self.pk = self.id
+
+    @property
+    def is_authenticated(self):
+        """API key users are always considered authenticated."""
+        return True
+
+    @property
+    def is_anonymous(self):
+        """API key users are not anonymous."""
+        return False
+
+    @property
+    def is_active(self):
+        """API key users are considered active by default."""
+        return True
+
+    def __str__(self):
+        return f"APIKeyUser({self.api_key_name})"
+
+    def __repr__(self):
+        return f"APIKeyUser(api_key_id={self.api_key_id}, api_key_name={self.api_key_name}, tenant_id={self.tenant_id}, role={self.role})"
+
+
+class APIKeyManager(APIKeyManager):
+    """
+    Custom manager for APIKey that handles Row Level Security and tenant context.
+    """
+
+    def get_queryset(self):
+        """Override to ensure RLS is properly applied."""
+        return super().get_queryset()
+
+    def get_usable_keys(self, tenant_id=None):
+        """
+        Get all usable (non-revoked, non-expired) API keys.
+        If tenant_id is provided, filter by tenant.
+        """
+
+        now = timezone.now()
+        queryset = self.filter(
+            models.Q(revoked_at__isnull=True)
+            & (models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now))
+        )
+
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+        return queryset
+
+    def get_from_key(self, key: str, tenant_id=None):
+        """
+        Get API key from the raw key string.
+        Uses the prefix for efficient lookup while respecting tenant boundaries.
+        """
+        try:
+            # Extract prefix using the same logic as extract_prefix method
+            prefix = self.model.extract_prefix(key)
+
+            # Use all keys, not just usable ones, so we can give proper error messages for revoked/expired keys
+            queryset = self.all()
+            if tenant_id:
+                queryset = queryset.filter(tenant_id=tenant_id)
+            api_key = queryset.get(prefix=prefix)
+
+            if not api_key.is_valid(key):
+                raise self.model.DoesNotExist("Key is not valid.")
+
+            return api_key
+        except (ValueError, self.model.DoesNotExist):
+            raise self.model.DoesNotExist("Invalid key format or key not found")
+
+    def is_valid_key(self, key: str, tenant_id=None) -> bool:
+        """
+        Check if a key is valid without raising exceptions.
+        """
+        try:
+            api_key = self.get_from_key(key, tenant_id)
+            return not api_key.has_expired
+        except self.model.DoesNotExist:
+            return False
+
+    def create_key(self, tenant_id, role, name, **kwargs):
+        """
+        Create a new API key for a specific tenant and role.
+        Returns tuple of (api_key_instance, raw_key_string).
+        """
+        # Remove fields that shouldn't be passed to create
+        kwargs.pop("id", None)
+        kwargs.pop("prefix", None)
+        kwargs.pop("hashed_key", None)
+
+        # Create the instance
+        obj = self.model(tenant_id=tenant_id, role=role, name=name, **kwargs)
+
+        # Generate a custom key with "pk_" prefix (total 11 chars)
+        prefix = "pk_" + get_random_string(
+            length=8, allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789"
+        )
+        secret = secrets.token_urlsafe(32)
+        key = f"{prefix}.{secret}"
+
+        # Use the parent manager's assign_key method but override the prefix
+        super().assign_key(obj)  # This sets obj.prefix and obj.hashed_key
+
+        # Override with our custom prefix and key
+        obj.prefix = prefix
+        obj.hashed_key = make_password(key)
+        obj.save()
+
+        return obj, key
+
+class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
+    """
+    API Key model extending djangorestframework-api-key's AbstractAPIKey
+    while maintaining multi-tenancy support with Row Level Security and RBAC.
+    """
+
+    objects = APIKeyManager()
+    all_objects = APIKeyManager()
+
+    # Add UUID field for clean external references (keep library's id field intact)
+    uuid = models.UUIDField(
+        default=uuid4,
+        editable=False,
+        unique=True,
+        help_text="UUID for external API references",
+    )
+
+    role = models.ForeignKey(
+        "Role",
+        on_delete=models.CASCADE,
+        related_name="api_keys",
+        help_text="Role that defines the permissions for this API key",
+    )
+
+    last_used_at = models.DateTimeField(
+        null=True, blank=True, help_text="Last time this API key was used"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "api_keys"
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "prefix"], name="api_keys_tenant_prefix_idx"
+            ),
+        ]
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "api-keys"
+
+    def revoke(self):
+        """Revoke the API key."""
+        self.revoked_at = timezone.now()
+        self.save()
+
+    def is_active(self):
+        """Check if the API key is active (not revoked and not expired)."""
+        return self.revoked_at is None and not self.has_expired
+
+    def update_last_used(self):
+        """Update the last_used_at timestamp."""
+        self.last_used_at = timezone.now()
+        self.save(update_fields=["last_used_at"])
+
+    def __str__(self):
+        """Return string representation of the API key."""
+        return f"API Key: {self.name}"
+
+    @classmethod
+    def extract_prefix(cls, key):
+        """
+        Extract the prefix from an API key.
+        Validates the key format and returns the full prefix including 'pk_'.
+
+        Args:
+            key: API key string in format pk_XXXXXXXX_YYYYYYYY
+
+        Returns:
+            str: The full prefix including 'pk_'
+
+        Raises:
+            ValueError: If the key format is invalid
+        """
+        if not key or not isinstance(key, str):
+            raise ValueError("Invalid API key format")
+
+        parts = key.split("_", 2)  # Split on underscore, max 2 splits
+        if len(parts) != 3:  # Should be ['pk', 'XXXXXXXX', 'YYYYYYYY']
+            raise ValueError("Invalid API key format")
+
+        if parts[0] != "pk":
+            raise ValueError("Invalid API key format")
+
+        if len(parts[1]) != 8:  # 8-character prefix
+            raise ValueError("Invalid API key format")
+
+        if len(parts[2]) == 0:  # Secret part
+            raise ValueError("Invalid API key format")
+
+        return f"pk_{parts[1]}"  # Return full prefix including 'pk_'
+
+    @classmethod
+    def hash_key(cls, key):
+        """
+        Hash an API key using Django's password hashing with salt.
+
+        Args:
+            key: The raw API key string
+
+        Returns:
+            str: The hashed key
+        """
+        # Use Django's default password hashing which includes salt
+        return make_password(key)
+
+    @classmethod
+    def verify_key(cls, key, key_hash):
+        """
+        Verify an API key against its hash.
+
+        Args:
+            key: The raw API key string
+            key_hash: The hashed key to verify against
+
+        Returns:
+            bool: True if the key matches the hash, False otherwise
+        """
+        return check_password(key, key_hash)
 
 
 class Membership(models.Model):
