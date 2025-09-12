@@ -27,6 +27,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "MITRE-ATTACK": [
@@ -147,6 +148,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "By default, AR Container Analysis is disabled.",
       "compliance": {
         "MITRE-ATTACK": [
@@ -267,6 +269,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "MITRE-ATTACK": [
@@ -394,6 +397,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "MITRE-ATTACK": [
@@ -533,6 +537,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "MITRE-ATTACK": [

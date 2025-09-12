@@ -2071,7 +2071,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 )
             config_serializer = JiraConfigSerializer
             # Create non-editable configuration for JIRA integration
-            default_jira_issue_types = ["Task", "Bug"]
+            default_jira_issue_types = ["Task"]
             configuration.update(
                 {
                     "projects": {},
@@ -2288,6 +2288,44 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
                 {"domain": instance.credentials.get("domain")}
             )
         return representation
+
+
+class IntegrationJiraDispatchSerializer(serializers.Serializer):
+    """
+    Serializer for dispatching findings to JIRA integration.
+    """
+
+    project_key = serializers.CharField(required=True)
+    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+
+    class JSONAPIMeta:
+        resource_name = "integrations-jira-dispatches"
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        integration_instance = Integration.objects.get(
+            id=self.context.get("integration_id")
+        )
+        if integration_instance.integration_type != Integration.IntegrationChoices.JIRA:
+            raise ValidationError(
+                {"integration_type": "The given integration is not a JIRA integration"}
+            )
+
+        if not integration_instance.enabled:
+            raise ValidationError(
+                {"integration": "The given integration is not enabled"}
+            )
+
+        project_key = attrs.get("project_key")
+        if project_key not in integration_instance.configuration.get("projects", {}):
+            raise ValidationError(
+                {
+                    "project_key": "The given project key is not available for this JIRA integration. Refresh the "
+                    "connection if this is an error."
+                }
+            )
+
+        return validated_attrs
 
 
 # Processors

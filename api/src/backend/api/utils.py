@@ -10,7 +10,7 @@ from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
-from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError, JiraNoProjectsError
+from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
@@ -356,11 +356,10 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
     # TODO Refactor other integrations to use this function
     if integration.integration_type == Integration.IntegrationChoices.JIRA:
         try:
-            return Jira(
-                **integration.credentials, domain=integration.configuration["domain"]
-            )
+            return Jira(**integration.credentials)
         except JiraBasicAuthError as jira_auth_error:
             with rls_transaction(str(integration.tenant_id)):
+                integration.configuration["projects"] = {}
                 integration.connected = False
                 integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
                 integration.save()

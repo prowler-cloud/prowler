@@ -136,6 +136,11 @@ class Jira:
     }
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
+    HEADER_TEMPLATE = {
+        "Content-Type": "application/json",
+        "X-Force-Accept-Language": "true",
+        "Accept-Language": "en",
+    }
 
     def __init__(
         self,
@@ -199,6 +204,31 @@ class Jira:
     @property
     def using_basic_auth(self):
         return self._using_basic_auth
+
+    def get_headers(
+        self, access_token: str = None, content_type_json: bool = False
+    ) -> dict:
+        """Get headers for API requests
+
+        Args:
+            access_token: The access token to use for authorization
+            content_type_json: Whether to include Content-Type: application/json
+
+        Returns:
+            dict: Headers for API requests
+        """
+        headers = self.HEADER_TEMPLATE.copy()
+
+        if not content_type_json:
+            headers.pop("Content-Type", None)
+
+        if access_token:
+            if self._using_basic_auth:
+                headers["Authorization"] = f"Basic {access_token}"
+            else:
+                headers["Authorization"] = f"Bearer {access_token}"
+
+        return headers
 
     def get_params(self, state_encoded):
         return {
@@ -303,7 +333,7 @@ class Jira:
                 "redirect_uri": self.redirect_uri,
             }
 
-            headers = {"Content-Type": "application/json"}
+            headers = self.get_headers(content_type_json=True)
             response = requests.post(self.TOKEN_URL, json=body, headers=headers)
 
             if response.status_code == 200:
@@ -352,7 +382,7 @@ class Jira:
         """
         try:
             if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
+                headers = self.get_headers(access_token)
                 response = requests.get(
                     f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
@@ -360,7 +390,7 @@ class Jira:
                 response = response.json()
                 return response.get("cloudId")
             else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+                headers = self.get_headers(access_token)
                 response = requests.get(self.API_TOKEN_URL, headers=headers)
 
             if response.status_code == 200:
@@ -442,7 +472,7 @@ class Jira:
                 "refresh_token": self._refresh_token,
             }
 
-            headers = {"Content-Type": "application/json"}
+            headers = self.get_headers(content_type_json=True)
             response = requests.post(url, json=body, headers=headers)
 
             if response.status_code == 200:
@@ -582,10 +612,7 @@ class Jira:
             if not access_token:
                 return ValueError("Failed to get access token")
 
-            if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+            headers = self.get_headers(access_token)
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
@@ -652,10 +679,7 @@ class Jira:
                     file=os.path.basename(__file__),
                 )
 
-            if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+            headers = self.get_headers(access_token)
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
@@ -700,10 +724,7 @@ class Jira:
             if not access_token:
                 return ValueError("Failed to get access token")
 
-            if self._using_basic_auth:
-                headers = {"Authorization": f"Basic {access_token}"}
-            else:
-                headers = {"Authorization": f"Bearer {access_token}"}
+            headers = self.get_headers(access_token)
 
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
@@ -818,29 +839,30 @@ class Jira:
 
     @staticmethod
     def get_adf_description(
-        check_id: str = None,
-        check_title: str = None,
-        severity: str = None,
-        severity_color: str = None,
-        status: str = None,
-        status_color: str = None,
-        status_extended: str = None,
-        provider: str = None,
-        region: str = None,
-        resource_uid: str = None,
-        resource_name: str = None,
-        risk: str = None,
-        recommendation_text: str = None,
-        recommendation_url: str = None,
-        remediation_code_native_iac: str = None,
-        remediation_code_terraform: str = None,
-        remediation_code_cli: str = None,
-        remediation_code_other: str = None,
-        resource_tags: dict = None,
-        compliance: dict = None,
-        finding_url: str = None,
-        tenant_info: str = None,
+        check_id: str = "",
+        check_title: str = "",
+        severity: str = "",
+        severity_color: str = "",
+        status: str = "",
+        status_color: str = "",
+        status_extended: str = "",
+        provider: str = "",
+        region: str = "",
+        resource_uid: str = "",
+        resource_name: str = "",
+        risk: str = "",
+        recommendation_text: str = "",
+        recommendation_url: str = "",
+        remediation_code_native_iac: str = "",
+        remediation_code_terraform: str = "",
+        remediation_code_cli: str = "",
+        remediation_code_other: str = "",
+        resource_tags: dict = "",
+        compliance: dict = "",
+        finding_url: str = "",
+        tenant_info: str = "",
     ) -> dict:
+
         table_rows = [
             {
                 "type": "tableRow",
@@ -1578,16 +1600,7 @@ class Jira:
                     message="The issue type is invalid", file=os.path.basename(__file__)
                 )
 
-            if self._using_basic_auth:
-                headers = {
-                    "Authorization": f"Basic {access_token}",
-                    "Content-Type": "application/json",
-                }
-            else:
-                headers = {
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                }
+            headers = self.get_headers(access_token, content_type_json=True)
 
             for finding in findings:
                 status_color = self.get_color_from_status(finding.status.value)
@@ -1618,10 +1631,21 @@ class Jira:
                     finding_url=finding_url,
                     tenant_info=tenant_info,
                 )
+                summary_parts = ["[Prowler]"]
+                if finding.metadata.Severity.value:
+                    summary_parts.append(finding.metadata.Severity.value.upper())
+                if finding.metadata.CheckID:
+                    summary_parts.append(finding.metadata.CheckID)
+                if finding.resource_uid:
+                    summary_parts.append(finding.resource_uid)
+
+                summary = " - ".join(summary_parts[1:])
+                summary = f"{summary_parts[0]} {summary}"
+
                 payload = {
                     "fields": {
                         "project": {"key": project_key},
-                        "summary": f"[Prowler] {finding.metadata.Severity.value.upper()} - {finding.metadata.CheckID} - {finding.resource_uid}",
+                        "summary": summary,
                         "description": adf_description,
                         "issuetype": {"name": issue_type},
                     }
@@ -1691,3 +1715,201 @@ class Jira:
                 message="Failed to create an issue in Jira",
                 file=os.path.basename(__file__),
             )
+
+    def send_finding(
+        self,
+        check_id: str = "",
+        check_title: str = "",
+        severity: str = "",
+        status: str = "",
+        status_extended: str = "",
+        provider: str = "",
+        region: str = "",
+        resource_uid: str = "",
+        resource_name: str = "",
+        risk: str = "",
+        recommendation_text: str = "",
+        recommendation_url: str = "",
+        remediation_code_native_iac: str = "",
+        remediation_code_terraform: str = "",
+        remediation_code_cli: str = "",
+        remediation_code_other: str = "",
+        resource_tags: dict = "",
+        compliance: dict = "",
+        project_key: str = "",
+        issue_type: str = "",
+        issue_labels: list[str] = "",
+        finding_url: str = "",
+        tenant_info: str = "",
+    ) -> bool:
+        """
+        Send the finding to Jira
+
+        Args:
+            - check_id: The check ID
+            - check_title: The check title
+            - severity: The severity
+            - status: The status
+            - status_extended: The status extended
+            - provider: The provider
+            - region: The region
+            - resource_uid: The resource UID
+            - resource_name: The resource name
+            - risk: The risk
+            - recommendation_text: The recommendation text
+            - recommendation_url: The recommendation URL
+            - remediation_code_native_iac: The remediation code native IAC
+            - remediation_code_terraform: The remediation code terraform
+            - remediation_code_cli: The remediation code CLI
+            - remediation_code_other: The remediation code other
+            - resource_tags: The resource tags
+            - compliance: The compliance
+            - project_key: The project key
+            - issue_type: The issue type
+            - issue_labels: The issue labels
+            - finding_url: The finding URL
+            - tenant_info: The tenant info
+
+        Raises:
+            - JiraRefreshTokenError: Failed to refresh the access token
+            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraCreateIssueError: Failed to create an issue in Jira
+            - JiraSendFindingsResponseError: Failed to send the finding to Jira
+            - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
+
+        Returns:
+            - True if the finding was sent successfully
+            - False if the finding was not sent successfully
+        """
+        try:
+            access_token = self.get_access_token()
+
+            if not access_token:
+                raise JiraNoTokenError(
+                    message="No token was found",
+                    file=os.path.basename(__file__),
+                )
+
+            projects = self.get_projects()
+
+            if project_key not in projects:
+                logger.error("The project key is invalid")
+                raise JiraInvalidProjectKeyError(
+                    message="The project key is invalid",
+                    file=os.path.basename(__file__),
+                )
+
+            available_issue_types = self.get_available_issue_types(project_key)
+
+            if issue_type not in available_issue_types:
+                logger.error("The issue type is invalid")
+                raise JiraInvalidIssueTypeError(
+                    message="The issue type is invalid", file=os.path.basename(__file__)
+                )
+
+            headers = self.get_headers(access_token, content_type_json=True)
+
+            status_color = self.get_color_from_status(status)
+            severity_color = self.get_severity_color(severity.lower())
+            adf_description = self.get_adf_description(
+                check_id=check_id,
+                check_title=check_title,
+                severity=severity.upper(),
+                severity_color=severity_color,
+                status=status,
+                status_color=status_color,
+                status_extended=status_extended,
+                provider=provider,
+                region=region,
+                resource_uid=resource_uid,
+                resource_name=resource_name,
+                risk=risk,
+                recommendation_text=recommendation_text,
+                recommendation_url=recommendation_url,
+                remediation_code_native_iac=remediation_code_native_iac,
+                remediation_code_terraform=remediation_code_terraform,
+                remediation_code_cli=remediation_code_cli,
+                remediation_code_other=remediation_code_other,
+                resource_tags=resource_tags,
+                compliance=compliance,
+                finding_url=finding_url,
+                tenant_info=tenant_info,
+            )
+
+            summary_parts = ["[Prowler]"]
+            if severity:
+                summary_parts.append(severity.upper())
+            if check_id:
+                summary_parts.append(check_id)
+            if resource_uid:
+                summary_parts.append(resource_uid)
+            summary = " - ".join(summary_parts[1:])
+            summary = f"{summary_parts[0]} {summary}"
+
+            payload = {
+                "fields": {
+                    "project": {"key": project_key},
+                    "summary": summary,
+                    "description": adf_description,
+                    "issuetype": {"name": issue_type},
+                }
+            }
+            if issue_labels:
+                payload["fields"]["labels"] = issue_labels
+
+            response = requests.post(
+                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
+                json=payload,
+                headers=headers,
+            )
+
+            if response.status_code != 201:
+                try:
+                    response_json = response.json()
+                except (ValueError, requests.exceptions.JSONDecodeError):
+                    response_error = f"Failed to send finding: {response.status_code} - {response.text}"
+                    logger.error(response_error)
+                    return False
+
+                # Check if the error is due to required custom fields
+                if response.status_code == 400 and "errors" in response_json:
+                    errors = response_json.get("errors", {})
+                    # Look for custom field errors (fields starting with "customfield_")
+                    custom_field_errors = {
+                        k: v for k, v in errors.items() if k.startswith("customfield_")
+                    }
+                    if custom_field_errors:
+                        custom_fields_formatted = ", ".join(
+                            [f"'{k}': '{v}'" for k, v in custom_field_errors.items()]
+                        )
+                        logger.error(
+                            f"Jira project requires custom fields that are not supported: {custom_fields_formatted}"
+                        )
+                        return False
+
+                response_error = (
+                    f"Failed to send finding: {response.status_code} - {response_json}"
+                )
+                logger.error(response_error)
+                return False
+            else:
+                try:
+                    response_json = response.json()
+                    logger.info(f"Finding sent successfully: {response_json}")
+                except (ValueError, requests.exceptions.JSONDecodeError):
+                    logger.info(
+                        f"Finding sent successfully: Status {response.status_code}"
+                    )
+                return True
+        except JiraRequiredCustomFieldsError as custom_fields_error:
+            logger.error(f"Custom fields error: {custom_fields_error}")
+            return False
+        except JiraRefreshTokenError as refresh_error:
+            logger.error(f"Token refresh error: {refresh_error}")
+            return False
+        except JiraRefreshTokenResponseError as response_error:
+            logger.error(f"Token response error: {response_error}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to send finding: {e}")
+            return False

@@ -35,7 +35,7 @@ export async function authenticate(
             message: "Credentials error",
             errors: {
               ...defaultValues,
-              credentials: "Incorrect email or password",
+              credentials: "Invalid email or password",
             },
           };
         case "CallbackRouteError":

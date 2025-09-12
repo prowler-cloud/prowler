@@ -2865,6 +2865,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/IntegrationCreateResponse'
           description: ''
+  /api/v1/integrations/{integration_pk}/jira/dispatches:
+    post:
+      operationId: integrations_jira_dispatches_create
+      description: Send a set of filtered findings to the given integration. At least
+        one finding filter must be provided.
+      summary: Send findings to a Jira integration
+      parameters:
+      - in: query
+        name: filter[finding_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[finding_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: path
+        name: integration_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - Integration
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
+          description: ''
   /api/v1/integrations/{id}:
     get:
       operationId: integrations_retrieve
@@ -9492,6 +9557,39 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/IntegrationCreate'
+      required:
+      - data
+    IntegrationJiraDispatchRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - integrations-jira-dispatches
+            attributes:
+              type: object
+              properties:
+                project_key:
+                  type: string
+                  minLength: 1
+                issue_type:
+                  enum:
+                  - Task
+                  type: string
+                  description: '* `Task` - Task'
+                  x-spec-enum-id: b527b0cec62087c1
+              required:
+              - project_key
+              - issue_type
       required:
       - data
     IntegrationResponse:
