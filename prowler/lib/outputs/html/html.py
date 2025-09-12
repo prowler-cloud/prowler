@@ -143,18 +143,59 @@ class HTML(Output):
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <style>
         body {{
-            margin: 0; /* Ensure no default body margins */
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* Prioritize Inter */
-            font-size: 0.875rem; /* Slightly smaller base font */
-            background-color: #f8f9fa; /* Light gray background */
-            color: #212529; /* Default text color */
-            transition: background-color 0.3s, color 0.3s;
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.875rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #1e293b;
+            transition: all 0.3s ease;
+            line-height: 1.6;
         }}
         .container-fluid {{
-            padding-left: 15px; /* Maintain some padding */
-            padding-right: 15px;
+            padding: 20px 24px;
             width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
             box-sizing: border-box;
+        }}
+
+        /* Layout responsive improvements */
+        .row.g-4 {{
+            --bs-gutter-x: 1.5rem;
+            --bs-gutter-y: 1.5rem;
+        }}
+        .row.g-4 > * {{
+            padding-right: calc(var(--bs-gutter-x) * 0.5);
+            padding-left: calc(var(--bs-gutter-x) * 0.5);
+            margin-bottom: var(--bs-gutter-y);
+        }}
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {{
+            .container-fluid {{
+                padding: 15px 20px;
+            }}
+            .card {{
+                margin-bottom: 1.5rem;
+            }}
+            .row.g-4 {{
+                --bs-gutter-x: 1rem;
+            }}
+        }}
+        @media (max-width: 576px) {{
+            .container-fluid {{
+                padding: 10px 15px;
+            }}
+            .card .list-group-item {{
+                padding: 1.25rem 1.5rem;
+            }}
+            .info-value {{
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }}
+            .row.g-4 {{
+                --bs-gutter-x: 0.75rem;
+            }}
         }}
         .read-more {{color: #007bff; text-decoration: none;}}
         .read-more:hover {{text-decoration: underline;}}
@@ -166,33 +207,75 @@ class HTML(Output):
 
         /* Card styles */
         .card {{
-            border: 1px solid #e5e7eb; /* Tailwind gray-200 */
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05); /* Modern shadow */
-            margin-bottom: 1.75rem; /* Increased spacing */
-            border-radius: 0.5rem; /* More rounded corners */
-            background-color: #fff; /* Ensure card background is white */
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }}
+        .card:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
         }}
         .card-header {{
-            background-color: #f9fafb; /* Tailwind gray-50 */
-            color: #1f2937; /* Tailwind gray-800 */
-            font-weight: 600; /* Semibold */
-            padding: 0.65rem 1rem; /* Reduced padding */
-            border-bottom: 1px solid #e5e7eb; /* Tailwind gray-200 */
-            border-top-left-radius: 0.5rem; /* Match card radius */
-            border-top-right-radius: 0.5rem; /* Match card radius */
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: -0.025em;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            position: relative;
+        }}
+        .card-header::after {{
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #3b82f6 50%, transparent 100%);
+            opacity: 0.3;
         }}
         .card .list-group-item {{
-            background-color: #fff; /* Ensure list items have white background */
-            padding: 0.65rem 1rem; /* Reduced padding */
-            border-bottom: 1px solid #f3f4f6; /* Tailwind gray-100 for subtle separation */
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+            transition: all 0.2s ease;
+        }}
+        .card .list-group-item:hover {{
+            background-color: rgba(248, 250, 252, 0.9);
         }}
         .card .list-group-item:last-child {{
             border-bottom: none; /* Remove border from last item */
         }}
         .card .list-group-item b {{
-            font-weight: 500; /* Medium weight */
-            color: #374151; /* Tailwind gray-700 */
-            margin-right: 0.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.075em;
+            display: block;
+            margin-bottom: 0.5rem;
+        }}
+        /* Styles for information values */
+        .info-value {{
+            font-weight: 500;
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            background: rgba(248, 250, 252, 0.9);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
+            margin-top: 0.25rem;
+            word-break: break-all;
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }}
 
         /* Assessment Overview Card Specific Styles */
@@ -200,34 +283,105 @@ class HTML(Output):
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 1.5rem 2rem;
+            position: relative;
+        }}
+        #assessmentOverviewCard .list-group-item::before {{
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 0 2px 2px 0;
         }}
         #assessmentOverviewCard .list-group-item span.value {{
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: #111827; /* Tailwind gray-900 */
-            margin-left: auto; /* Push value to the right, bar will be in between */
-            padding-left: 0.5rem; /* Space between bar and value */
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: #0f172a;
+            margin-left: auto;
+            padding: 0.75rem 1.25rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 12px;
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            min-width: 70px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            transition: all 0.2s ease;
+        }}
+        #assessmentOverviewCard .list-group-item span.value:hover {{
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }}
+        /* Specific styles for different value types */
+        #assessmentOverviewCard .list-group-item:has(b:contains('Total Findings')) span.value {{
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border-color: rgba(30, 64, 175, 0.3);
+        }}
+        #assessmentOverviewCard .list-group-item:has(b:contains('Passed')) span.value {{
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #166534;
+            border-color: rgba(22, 101, 52, 0.3);
+        }}
+        #assessmentOverviewCard .list-group-item:has(b:contains('Failed')) span.value {{
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border-color: rgba(153, 27, 27, 0.3);
         }}
 
-        /* Tiny graph for assessment overview */
+        /* Enhanced progress bars for assessment overview */
         .overview-bar-container {{
             flex-grow: 1;
-            height: 10px; /* Height of the bar track */
-            background-color: #e5e7eb; /* Tailwind gray-200 for the track */
-            border-radius: 5px;
-            margin: 0 0.75rem; /* Space around the bar container */
-            overflow: hidden; /* Ensure bar stays within rounded corners */
+            height: 12px;
+            background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 8px;
+            margin: 0 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            position: relative;
+        }}
+        .overview-bar-container::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+            pointer-events: none;
         }}
         .overview-bar {{
             height: 100%;
             display: block;
-            border-radius: 5px;
+            border-radius: 8px;
+            transition: width 0.8s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }}
+        .overview-bar::after {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }}
+        @keyframes shimmer {{
+            0% {{ left: -100%; }}
+            100% {{ left: 100%; }}
         }}
         .overview-bar-passed {{
-            background-color: #28a745; /* Green for passed */
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
         }}
         .overview-bar-failed {{
-            background-color: #dc3545; /* Red for failed */
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
         }}
 
         /* Table specific styles */
@@ -235,11 +389,13 @@ class HTML(Output):
             width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            margin-top: 0.75rem; /* Reduced top margin for less space */
-            margin-bottom: 2rem; /* Added bottom margin */
-            border: 1px solid #dee2e6; /* Border around the container/table */
-            border-radius: 0.375rem; /* Rounded corners for the container */
-            box-shadow: 0 0.125rem 0.35rem rgba(0,0,0,.075); /* Subtle shadow for the table container */
+            margin-top: 1.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
         }}
         #findingsTable {{
             width: 100%;
@@ -259,50 +415,122 @@ class HTML(Output):
             border-bottom: none;
         }}
         #findingsTable thead th {{
-            background-color: #F1F3F5 !important; /* Updated background */
-            color: #374151 !important; /* Tailwind gray-700 */
-            border-bottom: 1px solid #DDE1E6 !important; /* Thinner and lighter bottom border */
-            font-weight: 600 !important; /* Tailwind font-semibold */
-            font-size: 0.8rem !important; /* Slightly increased font size */
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+            color: #1e293b !important;
+            border-bottom: 2px solid rgba(59, 130, 246, 0.15) !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
             text-transform: uppercase !important;
-            letter-spacing: 0.05em !important;
-            padding: 0.9rem 2.5rem 0.9rem 0.75rem !important; /* Increased right padding for sort arrows */
-            vertical-align: middle !important; /* Ensure vertical alignment */
+            letter-spacing: 0.075em !important;
+            padding: 1.25rem 2.5rem 1.25rem 1rem !important;
+            vertical-align: middle !important;
+            position: relative !important;
+        }}
+        #findingsTable thead th::before {{
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            transition: width 0.3s ease;
+        }}
+        #findingsTable thead th:hover::before {{
+            width: 80%;
         }}
         #findingsTable tbody tr {{
             cursor: pointer;
         }}
         #findingsTable tbody tr:hover {{
-            background-color: #f9fafb; /* Tailwind gray-50 for hover */
+            background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
         }}
         #findingsTable td {{ /* Specific overrides for td if th settings are too general */
             color: #4b5563; /* Tailwind gray-600 for cell text */
         }}
 
-        /* Chip styles */
+        /* Enhanced chip styles */
         .chip {{
-            display: inline-block;
-            padding: .35em .65em; /* Increased padding */
-            font-size: 80%;      /* Slightly increased font-size */
-            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
             line-height: 1;
             text-align: center;
             white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: .35rem; /* Slightly larger radius */
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
         }}
-        .status-chip.status-table-danger {{ background-color: #f8d7da; color: #721c24; }}
-        .status-chip.status-table-success {{ background-color: #d4edda; color: #155724; }}
-        .status-chip.status-table-info {{ background-color: #d1ecf1; color: #0c560; }}
-        .status-chip.status-table-warning {{ background-color: #fff3cd; color: #856404; }}
-        .severity-chip.severity-critical {{ background-color: #dc3545; color: white; }}
-        .severity-chip.severity-high {{ background-color: #fd7e14; color: white; }}
-        .severity-chip.severity-medium {{ background-color: #ffc107; color: #212529; }}
-        .severity-chip.severity-low {{ background-color: #28a745; color: white; }}
-        .severity-chip.severity-informational {{ background-color: #17a2b8; color: white; }}
-        .service-chip {{
-            background-color: #6c757d; /* Bootstrap secondary color */
+        .chip::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }}
+        .chip:hover::before {{
+            left: 100%;
+        }}
+        .status-chip.status-table-danger {{
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            color: #991b1b;
+            box-shadow: 0 4px 12px rgba(248, 113, 113, 0.25);
+        }}
+        .status-chip.status-table-success {{
+            background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%);
+            color: #166534;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+        }}
+        .status-chip.status-table-info {{
+            background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+            color: #1e3a8a;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }}
+        .status-chip.status-table-warning {{
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+        }}
+        .severity-chip.severity-critical {{
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+        }}
+        .severity-chip.severity-high {{
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+        }}
+        .severity-chip.severity-medium {{
+            background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+            color: #1f2937;
+            box-shadow: 0 4px 16px rgba(234, 179, 8, 0.4);
+        }}
+        .severity-chip.severity-low {{
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.4);
+        }}
+        .severity-chip.severity-informational {{
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+        }}
+        .service-chip {{
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
         }}
 
         /* Monospace font style */
@@ -333,19 +561,21 @@ class HTML(Output):
             transition: opacity 0.3s ease;
         }}
         .prowler-modal-content {{
-            background-color: #ffffff;
-            padding: 1.5rem; /* 24px */
-            border-radius: 0.5rem; /* 8px */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            max-width: 65%; /* Adjusted from 61% for potentially more content */
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            max-width: 70%;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
             position: relative;
             display: flex;
             flex-direction: column;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
+            transform: scale(0.95) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
         }}
         .prowler-modal-backdrop.visible .prowler-modal-content {{
             transform: scale(1);
@@ -354,29 +584,51 @@ class HTML(Output):
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem; /* 16px */
-            padding-bottom: 0.75rem; /* 12px */
-            border-bottom: 1px solid #e5e7eb; /* Tailwind gray-200 */
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(59, 130, 246, 0.1);
+            position: relative;
+        }}
+        .prowler-modal-header::after {{
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 1px;
         }}
         .prowler-modal-title {{
-            font-size: 1.25rem; /* 20px, adjusted from 1.125rem */
-            font-weight: 600;
-            color: #1f2937; /* Tailwind gray-800 */
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: #0f172a;
             flex-grow: 1;
-            margin-right: 1rem;
-            line-height: 1.4;
+            margin-right: 1.5rem;
+            line-height: 1.3;
+            letter-spacing: -0.025em;
         }}
         .prowler-modal-close-btn {{
-            background: none;
-            border: none;
-            font-size: 2rem; /* Larger close button */
+            background: rgba(148, 163, 184, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            font-size: 1.5rem;
             line-height: 1;
             cursor: pointer;
-            color: #9ca3af; /* Tailwind gray-400 */
-            padding: 0.25rem;
+            color: #64748b;
+            padding: 0.5rem;
+            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
         }}
         .prowler-modal-close-btn:hover {{
-            color: #1f2937; /* Tailwind gray-800 */
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            transform: scale(1.05);
         }}
         .prowler-modal-body {{
             font-size: 0.875rem; /* 14px */
@@ -804,277 +1056,34 @@ class HTML(Output):
             color: #007bff !important;
         }}
 
-        /* Dark Theme Styles */
-        body.dark-theme {{
-            background-color: #1a1a1a; /* Dark background */
-            color: #e0e0e0; /* Light text */
-        }}
-        body.dark-theme .card {{
-            background-color: #2c2c2c; /* Darker card background */
-            border: 1px solid #444; /* Darker border */
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,.2), 0 2px 4px -2px rgba(0,0,0,.15);
-        }}
-        body.dark-theme .card-header {{
-            background-color: #383838; /* Dark card header */
-            color: #f0f0f0; /* Light header text */
-            border-bottom: 1px solid #444;
-        }}
-        body.dark-theme .card .list-group-item {{
-            background-color: #2c2c2c;
-            color: #e0e0e0;
-            border-bottom: 1px solid #383838;
-        }}
-        body.dark-theme .card .list-group-item:last-child {{
-            border-bottom: none;
-        }}
-        body.dark-theme .card .list-group-item b {{
-            color: #f0f0f0;
-        }}
-        body.dark-theme #assessmentOverviewCard .list-group-item span.value {{
-            color: #f5f5f5;
-        }}
-        body.dark-theme .overview-bar-container {{
-            background-color: #444; /* Darker track for overview bar */
-        }}
-        body.dark-theme .table-responsive-container {{
-            border: 1px solid #444;
-            box-shadow: 0 0.125rem 0.35rem rgba(0,0,0,.15);
-        }}
-        body.dark-theme #findingsTable {{
-            /* No specific change needed if row/cell backgrounds are handled by hover/status */
-        }}
-        body.dark-theme #findingsTable th,
-        body.dark-theme #findingsTable td {{
-            border-bottom: 1px solid #444; /* Darker row separation */
-        }}
-        body.dark-theme #findingsTable thead th {{
-            background-color: #333 !important; /* Darker table header */
-            color: #e0e0e0 !important;
-            border-bottom: 1px solid #555 !important;
-        }}
-        body.dark-theme #findingsTable tbody tr:hover {{
-            background-color: #383838; /* Darker hover for table rows */
-        }}
-        body.dark-theme #findingsTable td {{
-            color: #c0c0c0; /* Lighter text for table cells */
-        }}
-        body.dark-theme .chip {{
-            /* Chips may need specific adjustments based on their light theme contrast */
-        }}
-        body.dark-theme .status-chip.status-table-danger {{ background-color: #58181F; color: #F8D7DA; }}
-        body.dark-theme .status-chip.status-table-success {{ background-color: #155724; color: #D4EDDA; }} /* Already dark bg friendly */
-        body.dark-theme .status-chip.status-table-info {{ background-color: #0C5460; color: #D1ECF1; }} /* Already dark bg friendly */
-        body.dark-theme .status-chip.status-table-warning {{ background-color: #665100; color: #FFF3CD; }}
-        body.dark-theme .severity-chip.severity-critical {{ background-color: #dc3545; color: white; }} /* Stays same, good contrast */
-        body.dark-theme .severity-chip.severity-high {{ background-color: #fd7e14; color: white; }} /* Stays same */
-        body.dark-theme .severity-chip.severity-medium {{ background-color: #ffc107; color: #212529; }} /* Stays same */
-        body.dark-theme .severity-chip.severity-low {{ background-color: #28a745; color: white; }} /* Stays same */
-        body.dark-theme .severity-chip.severity-informational {{ background-color: #17a2b8; color: white; }} /* Stays same */
-        body.dark-theme .service-chip {{
-            background-color: #5a6268; /* Darker gray for service chip */
-            color: white;
-        }}
-        body.dark-theme .prowler-modal-content {{
-            background-color: #2c2c2c;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.2);
-            border: 1px solid #444;
-        }}
-        body.dark-theme .prowler-modal-header {{
-            border-bottom: 1px solid #444;
-        }}
-        body.dark-theme .prowler-modal-title {{
-            color: #f0f0f0;
-        }}
-        body.dark-theme .prowler-modal-close-btn {{
-            color: #aaa;
-        }}
-        body.dark-theme .prowler-modal-close-btn:hover {{
-            color: #f0f0f0;
-        }}
-        body.dark-theme .prowler-modal-body {{
-            color: #e0e0e0;
-        }}
-        body.dark-theme .prowler-modal-section h4 {{
-            color: #f5f5f5;
-        }}
-        body.dark-theme .prowler-modal-section-header {{
-            border-bottom: 1px solid #444;
-        }}
-        body.dark-theme .prowler-modal-section-header:hover {{
-            background-color: #383838;
-        }}
-        body.dark-theme .prowler-modal-section-toggle {{
-            color: #aaa;
-        }}
-        body.dark-theme .prowler-modal-section-content {{
-            background-color: #383838;
-            border: 1px solid #444;
-            border-top: none;
-        }}
-        body.dark-theme .prowler-modal-section-content.fail-highlight {{
-            background-color: #4d3232; /* Darker red highlight */
-            border-color: #6e4949;
-        }}
-        body.dark-theme .prowler-modal-label {{
-            color: #b0b0b0;
-        }}
-        body.dark-theme .prowler-modal-value {{
-            color: #e0e0e0;
-        }}
-        body.dark-theme .prowler-modal-value a {{
-            color: #6bbaff;
-        }}
-        body.dark-theme .prowler-modal-value code, body.dark-theme .prowler-modal-value pre {{
-            background-color: #333;
-            color: #d0d0d0;
-        }}
-        body.dark-theme .modal-header-chips {{
-            border-bottom: 1px solid #444;
-        }}
-        body.dark-theme .modal-header-chips .chip-label {{
-            color: #b0b0b0;
-        }}
-        body.dark-theme .modal-header-chips .chip {{
-            /* Chips might need specific color adjustments for dark theme if not covered by general chip rules */
-        }}
-        body.dark-theme .compliance-standard-item {{
-            background-color: #383838;
-            border: 1px solid #444;
-        }}
-        body.dark-theme .compliance-standard-name {{
-            color: #f0f0f0;
-        }}
-        body.dark-theme .chip.compliance-chip {{
-            background-color: #4a4a4a;
-            color: #e0e0e0;
-        }}
-        body.dark-theme .copy-icon {{
-            color: #aaa;
-        }}
-        body.dark-theme .copy-icon:hover {{
-            color: #f0f0f0;
-        }}
-        body.dark-theme .tooltip-copied {{
-            background-color: #f0f0f0;
-            color: #1a1a1a;
-        }}
-        body.dark-theme .info-icon {{
-            color: #aaa;
-        }}
-        body.dark-theme .info-icon-tooltip {{
-            background-color: #f0f0f0;
-            color: #1a1a1a;
-        }}
-        body.dark-theme .info-icon-tooltip::after {{
-             border-color: transparent #f0f0f0 transparent transparent;
-        }}
-        body.dark-theme div.dataTables_wrapper div.row:last-child {{
-            border-top: 1px solid #444;
-            background-color: #2c2c2c; /* Dark background for pagination area */
-        }}
-        body.dark-theme .dataTables_info {{
-            color: #b0b0b0;
-        }}
-        body.dark-theme .dataTables_length label {{
-            color: #b0b0b0;
-        }}
-        body.dark-theme .dataTables_length select {{
-            background-color: #333;
-            color: #e0e0e0;
-            border: 1px solid #555;
-        }}
-        body.dark-theme .dataTables_paginate .paginate_button {{
-            /* Handled by Bootstrap's default, check if override needed */
-            color: #e0e0e0 !important;
-            border: 1px solid transparent; /* To match light theme structure */
-        }}
-        body.dark-theme .dataTables_paginate .paginate_button.disabled,
-        body.dark-theme .dataTables_paginate .paginate_button.disabled:hover {{
-            color: #666 !important;
-            background: transparent !important; /* Ensure disabled has no distracting bg */
-            border-color: transparent !important;
-        }}
 
-        body.dark-theme .dataTables_paginate .paginate_button.current,
-        body.dark-theme .dataTables_paginate .paginate_button.current:hover {{
-            background: #0056b3 !important; /* Darker blue for current page in dark mode */
-            color: white !important;
-            border-color: #0056b3 !important;
+        /* Page Load Animation */
+        @keyframes fadeInUp {{
+            from {{
+                opacity: 0;
+                transform: translateY(30px);
+            }}
+            to {{
+                opacity: 1;
+                transform: translateY(0);
+            }}
         }}
-        body.dark-theme .dataTables_paginate .paginate_button:hover {{
-            background: #4a4a4a !important;
-            border-color: #555 !important;
-            color: #e0e0e0 !important;
+        .card {{
+            animation: fadeInUp 0.8s ease forwards;
         }}
-         /* Theme Switcher Styles */
-        .theme-switcher-container {{
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
+        .card:nth-child(1) {{ animation-delay: 0.1s; }}
+        .card:nth-child(2) {{ animation-delay: 0.2s; }}
+        .card:nth-child(3) {{ animation-delay: 0.3s; }}
+        .table-responsive-container {{
+            animation: fadeInUp 1s ease forwards;
+            animation-delay: 0.4s;
         }}
-        .theme-switch-label {{
-            margin-right: 8px;
-            font-size: 0.8rem;
-            color: #4b5563; /* Default for light theme */
-        }}
-        body.dark-theme .theme-switch-label {{
-            color: #b0b0b0; /* For dark theme */
-        }}
-        .theme-switch {{
-            position: relative;
-            display: inline-block;
-            width: 50px; /* Adjusted width */
-            height: 26px; /* Adjusted height */
-        }}
-        .theme-switch input {{
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }}
-        .slider {{
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 26px; /* Keep it rounded */
-        }}
-        .slider:before {{
-            position: absolute;
-            content: "";
-            height: 20px; /* Smaller circle */
-            width: 20px;  /* Smaller circle */
-            left: 3px;    /* Adjusted position */
-            bottom: 3px;  /* Adjusted position */
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }}
-        input:checked + .slider {{
-            background-color: #007bff; /* Blue for dark mode enabled */
-        }}
-        input:focus + .slider {{
-            box-shadow: 0 0 1px #007bff;
-        }}
-        input:checked + .slider:before {{
-            transform: translateX(24px); /* Adjusted translation */
-        }}
-        /* End Theme Switcher Styles */
 
         /* Chart Styles */
         .card canvas {{
             background-color: transparent;
         }}
 
-        /* Dark theme chart adjustments */
-        body.dark-theme canvas {{
-            filter: brightness(0.9);
-        }}
 
         /* Ensure proper vertical alignment for all DataTables controls */
         .dataTables_wrapper .row {{
@@ -1132,46 +1141,91 @@ class HTML(Output):
         .container-fluid {{font-size: 14px;}}
 
         .float-left {{ float: left !important; max-width: 100%; }}
+
+        .card-img-left {{
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            display: block;
+            margin-right: auto;
+        }}
+
+        /* Logo attached to left edge */
+        .prowler-logo-container {{
+            position: absolute;
+            top: 20px;
+            left: 0;
+            z-index: 1000;
+        }}
+
+        .prowler-logo {{
+            width: 15rem;
+            height: auto;
+            margin: 0;
+            padding: 0;
+            display: block;
+        }}
+
+        /* Full-width findings table */
+        .full-width-table-container {{
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0 15px;
+            box-sizing: border-box;
+        }}
+
+        .full-width-table-container .table-responsive {{
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            overflow-x: auto;
+        }}
+
+        .full-width-table-container #findingsTable {{
+            width: 100%;
+            max-width: none;
+            table-layout: auto;
+            margin: 0;
+            min-width: 1200px;
+        }}
     </style>
     <title>Prowler - The Handy Cloud Security Tool</title>
     </head>
     <body>
-    <div class="theme-switcher-container">
-        <span class="theme-switch-label">Dark Mode:</span>
-        <label class="theme-switch">
-            <input type="checkbox" id="themeToggleCheckbox">
-            <span class="slider"></span>
-        </label>
+    <!-- Logo attached to left edge -->
+    <div class="prowler-logo-container">
+        <a href="{html_logo_url}"><img class="prowler-logo"
+                    src={square_logo_img}
+                    alt="prowler-logo"/></a>
     </div>
-    <div class="container-fluid">
+
+    <div class="container-fluid px-0" style="margin-top: 40px;">
+        <!-- First row: Main information -->
         <div class="row mt-3 align-items-stretch">
-        <div class="col-md-4">
-            <a href="{html_logo_url}"><img class="float-left card-img-left mt-2 mr-4 ml-4"
-                        src={square_logo_img}
-                        alt="prowler-logo"
-                        style="width: 15rem; height:auto;"/></a>
+        <div class="col-lg-4 col-md-6 col-12 pl-3 pr-2">
             <div class="card" id="reportInfoCard">
             <div class="card-header">
                 Report Information
             </div>
             <ul class="list-group list-group-flush">
                 <li class="list-group-item">
-                <div class="row">
-                    <div class="col-md-auto">
-                    <b>Version:</b> {prowler_version}
-                    </div>
-                </div>
+                    <b>Version:</b>
+                    <div class="info-value">{prowler_version}</div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
+                    <b>Parameters used:</b>
+                    <div class="info-value">{" ".join(sys.argv[1:]) if from_cli else "N/A"}</div>
                 </li>
                 <li class="list-group-item">
-                <b>Date:</b> {timestamp.isoformat()}
+                    <b>Date:</b>
+                    <div class="info-value">{timestamp.isoformat()}</div>
                 </li>
             </ul>
             </div>
-        </div>{HTML.get_assessment_summary(provider)}
-            <div class="col-md-2">
+        </div>
+        <!-- Assessment Overview Card -->
+        <div class="col-lg-4 col-md-6 col-12 px-2">
             <div class="card" id="assessmentOverviewCard">
                 <div class="card-header">
                     Assessment Overview
@@ -1194,11 +1248,17 @@ class HTML(Output):
                 </ul>
             </div>
         </div>
+        <!-- Provider Summary Card -->
+        <div class="col-lg-4 col-12 pl-2 pr-3">
+            {HTML.get_assessment_summary(provider)}
         </div>
         </div>
-        <div class="row-mt-3">
-        <div class="col-md-12">
-            <div class="table-responsive-container">
+    </div>
+    <!-- End container-fluid -->
+
+    <!-- Findings table - Full screen width -->
+    <div class="full-width-table-container mt-0">
+        <div class="table-responsive">
             <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[0, "asc"], [1, "asc"]]' data-page-length='100'>
             <thead class="thead-light">
                 <tr>
@@ -1663,36 +1723,6 @@ class HTML(Output):
                 }
             });
 
-            // Theme Switcher Logic
-            const themeToggleCheckbox = document.getElementById('themeToggleCheckbox');
-            const currentTheme = localStorage.getItem('theme');
-
-            function applyTheme(theme) {
-                if (theme === 'dark') {
-                    document.body.classList.add('dark-theme');
-                    themeToggleCheckbox.checked = true;
-                } else {
-                    document.body.classList.remove('dark-theme');
-                    themeToggleCheckbox.checked = false;
-                }
-            }
-
-            if (currentTheme) {
-                applyTheme(currentTheme);
-            } else {
-                // Default to light theme if no preference is stored
-                applyTheme('light');
-            }
-
-            themeToggleCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    localStorage.setItem('theme', 'dark');
-                    applyTheme('dark');
-                } else {
-                    localStorage.setItem('theme', 'light');
-                    applyTheme('light');
-                }
-            });
         });
     </script>
 </body>
@@ -1729,39 +1759,40 @@ class HTML(Output):
             else:
                 audited_regions = ", ".join(provider.identity.audited_regions)
             return f"""
-                <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
                             AWS Assessment Summary
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>AWS Account:</b> {provider.identity.account}
+                                <b>AWS Account:</b>
+                                <div class="info-value">{provider.identity.account}</div>
                             </li>
                             <li class="list-group-item">
-                                <b>AWS-CLI Profile:</b> {profile}
+                                <b>AWS-CLI Profile:</b>
+                                <div class="info-value">{profile}</div>
                             </li>
                             <li class="list-group-item">
-                                <b>Audited Regions:</b> {audited_regions}
+                                <b>Audited Regions:</b>
+                                <div class="info-value">{audited_regions}</div>
                             </li>
                         </ul>
                     </div>
-                </div>
-                <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        AWS Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>User Id:</b> {provider.identity.user_id}
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            AWS Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>User Id:</b>
+                                <div class="info-value">{provider.identity.user_id}</div>
                             </li>
                             <li class="list-group-item">
-                                <b>Caller Identity ARN:</b> {provider.identity.identity_arn}
+                                <b>Caller Identity ARN:</b>
+                                <div class="info-value">{provider.identity.identity_arn}</div>
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -1793,39 +1824,40 @@ class HTML(Output):
             else:
                 html_identity = provider.identity.identity_id
             return f"""
-                <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
                             Azure Assessment Summary
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Azure Tenant IDs:</b> {" ".join(provider.identity.tenant_ids)}
+                                <b>Azure Tenant IDs:</b>
+                                <div class="info-value">{" ".join(provider.identity.tenant_ids)}</div>
                             </li>
                             <li class="list-group-item">
-                                <b>Azure Tenant Domain:</b> {provider.identity.tenant_domain}
+                                <b>Azure Tenant Domain:</b>
+                                <div class="info-value">{provider.identity.tenant_domain}</div>
                             </li>
                             <li class="list-group-item">
-                                <b>Azure Subscriptions:</b> {" ".join(printed_subscriptions)}
+                                <b>Azure Subscriptions:</b>
+                                <div class="info-value">{" ".join(printed_subscriptions)}</div>
                             </li>
                         </ul>
                     </div>
-                </div>
-                <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        Azure Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>Azure Identity Type:</b> {provider.identity.identity_type}
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            Azure Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Azure Identity Type:</b>
+                                <div class="info-value">{provider.identity.identity_type}</div>
                             </li>
                             <li class="list-group-item">
-                                <b>Azure Identity ID:</b> {html_identity}
+                                <b>Azure Identity ID:</b>
+                                <div class="info-value">{html_identity}</div>
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -1854,7 +1886,6 @@ class HTML(Output):
             except AttributeError:
                 profile = "default"
             return f"""
-                <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
                             GCP Assessment Summary
@@ -1865,9 +1896,7 @@ class HTML(Output):
                             </li>
                         </ul>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
+                    <div class="card mt-3">
                         <div class="card-header">
                             GCP Credentials
                         </div>
@@ -1876,8 +1905,7 @@ class HTML(Output):
                                 <b>GCP Account:</b> {profile}
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -1897,7 +1925,7 @@ class HTML(Output):
         """
         try:
             return f"""
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
                             Kubernetes Assessment Summary
@@ -1921,8 +1949,7 @@ class HTML(Output):
                                 <b>Kubernetes Context:</b> {provider.identity.context}
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -2004,7 +2031,7 @@ class HTML(Output):
                             </li>"""
 
             return f"""
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
                             GitHub Assessment Summary
@@ -2022,8 +2049,7 @@ class HTML(Output):
                         <ul class="list-group list-group-flush">
                             {credentials_items}
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -2068,8 +2094,7 @@ class HTML(Output):
                                 <b>M365 Identity ID:</b> {provider.identity.identity_id}
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -2113,8 +2138,7 @@ class HTML(Output):
                                 <b>NHN Identity ID:</b> {provider.identity.identity_id}
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -2158,8 +2182,7 @@ class HTML(Output):
                                 <b>MongoDB Atlas authentication method:</b> API Key
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -2203,8 +2226,7 @@ class HTML(Output):
                                 <b>IAC authentication method:</b> {provider.auth_method}
                             </li>
                         </ul>
-                    </div>
-                </div>"""
+                    </div>"""
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -2227,6 +2249,11 @@ class HTML(Output):
             # It is not pretty but useful
             # AWS_provider --> aws
             # GCP_provider --> gcp
+            # GitHub_provider --> github
+            # M365_provider --> m365
+            # NHN_provider --> nhn
+            # MongoDB Atlas_provider --> mongodbatlas
+            # IAC_provider --> iac
             # Azure_provider --> azure
             # Kubernetes_provider --> kubernetes
 
