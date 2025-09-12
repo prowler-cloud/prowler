@@ -49,6 +49,7 @@ ThreatScore = (Σ(rate_i × total_i × weight_i × risk_i) / Σ(total_i × weigh
 ```
 
 Where:
+
 - `rate_i` = Pass rate for requirement i (0.0 to 1.0)
 - `total_i` = Total number of findings for requirement i
 - `weight_i` = Business importance weight (1 to 1000)
@@ -68,13 +69,13 @@ The weight parameter allows you to customize ThreatScore calculation based on yo
 
 #### Weight Assignment Guidelines
 
-| Weight Range | Priority Level | Use Cases | Examples |
-|--------------|----------------|-----------|----------|
-| 1-100 | Low | Optional or nice-to-have controls | Documentation standards, cosmetic configurations |
-| 101-300 | Medium | Standard security practices | Regular backup schedules, basic access controls |
-| 301-600 | High | Important security controls | Encryption requirements, network segmentation |
-| 601-850 | Critical | Regulatory compliance requirements | PCI DSS payment data protection, HIPAA PHI controls |
-| 851-1000 | Maximum | Mission-critical security controls | Root access controls, data exfiltration prevention |
+| Weight Range | Priority Level | Use Cases |
+|--------------|----------------|-----------|
+| 1-100 | Low | Optional or nice-to-have controls |
+| 101-300 | Medium | Standard security practices |
+| 301-600 | High | Important security controls |
+| 601-850 | Critical | Regulatory compliance requirements |
+| 851-1000 | Maximum | Mission-critical security controls |
 
 #### Weight Selection Strategy
 1. **Regulatory Mapping**: Assign higher weights to controls required by your industry regulations
@@ -86,13 +87,13 @@ The weight parameter allows you to customize ThreatScore calculation based on yo
 
 Risk levels represent the potential security impact of non-compliance with a requirement.
 
-| Risk Level | Severity | Impact Description | Examples |
-|------------|----------|-------------------|----------|
-| 1 | Very Low | Minimal security impact, informational | Log retention policies, documentation completeness |
-| 2 | Low | Limited exposure, low probability of exploitation | Non-critical service configurations, minor access issues |
-| 3 | Medium | Moderate security risk, potential for limited damage | Unencrypted internal communications, weak password policies |
-| 4 | High | Significant security risk, high probability of impact | Exposed databases, missing critical patches, weak authentication |
-| 5 | Critical | Severe security risk, immediate threat to organization | Public access to sensitive data, no encryption of PII, admin access without MFA |
+| Risk Level | Severity | Impact Description |
+|------------|----------|-------------------|
+| 1 | Very Low | Minimal security impact, informational |
+| 2 | Low | Limited exposure, low probability of exploitation |
+| 3 | Medium | Moderate security risk, potential for limited damage |
+| 4 | High | Significant security risk, high probability of impact |
+| 5 | Critical | Severe security risk, immediate threat to organization |
 
 #### Risk Level Assessment Criteria
 - **Confidentiality Impact**: Data exposure potential
@@ -311,166 +312,3 @@ rate_i = pass_i / total_i (when total_i > 0)
    - Use score trends to identify systematic issues
    - Correlate score changes with security incidents or changes
    - Adjust weights and risk levels based on lessons learned
-
-## Troubleshooting
-
-### Common Issues and Solutions
-
-#### Issue: ThreatScore Appears Too High/Low
-**Symptoms:**
-- Score doesn't align with perceived security posture
-- Stakeholders question score validity
-- Score changes unexpectedly
-
-**Possible Causes & Solutions:**
-1. **Incorrect Weight Assignment**
-   - *Problem*: Critical requirements have low weights, trivial ones have high weights
-   - *Solution*: Review and realign weights with business priorities and regulatory requirements
-
-2. **Inappropriate Risk Levels**
-   - *Problem*: Risk levels don't reflect actual security impact
-   - *Solution*: Reassess risk levels using standardized methodology (NIST, ISO 27001)
-
-3. **Data Quality Issues**
-   - *Problem*: Findings data contains errors or inconsistencies
-   - *Solution*: Validate source data, implement data quality checks
-
-#### Issue: Score Doesn't Change Despite Remediation
-**Symptoms:**
-- Security improvements don't reflect in ThreatScore
-- Score remains static over time
-- Fixed issues don't show impact
-
-**Possible Causes & Solutions:**
-1. **Low Weight/Risk Requirements Fixed**
-   - *Problem*: Improvements made to low-impact requirements
-   - *Solution*: Focus remediation efforts on high-weight, high-risk requirements
-
-2. **Insufficient Findings Volume**
-   - *Problem*: Fixed requirements have few total findings
-   - *Solution*: Prioritize requirements with higher finding counts for maximum score impact
-
-3. **Data Refresh Issues**
-   - *Problem*: Calculation uses stale data
-   - *Solution*: Verify data refresh procedures and timing
-
-#### Issue: Score Volatility
-**Symptoms:**
-- Score fluctuates significantly between measurements
-- Inconsistent results from similar configurations
-- Unexpected score drops/increases
-
-**Possible Causes & Solutions:**
-1. **Dynamic Finding Counts**
-   - *Problem*: Finding counts change due to environment changes
-   - *Solution*: Establish baseline measurements, account for legitimate environment changes
-
-2. **Inconsistent Weight/Risk Assignment**
-   - *Problem*: Parameters changed between calculations
-   - *Solution*: Implement version control for weight and risk parameters
-
-3. **Calculation Errors**
-   - *Problem*: Implementation bugs or precision issues
-   - *Solution*: Validate calculation logic, use reference implementation for testing
-
-### Debugging Steps
-
-#### Step 1: Validate Input Data
-```bash
-# Check for data completeness
-- Verify all requirements have pass/fail counts
-- Confirm weight values are in range [1, 1000]
-- Ensure risk values are in range [1, 5]
-- Identify any missing or null values
-```
-
-#### Step 2: Manual Calculation Verification
-```bash
-# Spot-check calculation for a few requirements
-- Calculate rate_i manually: pass_i / (pass_i + fail_i)
-- Verify weight_i and risk_i values are correct
-- Confirm numerator calculation: rate_i × total_i × weight_i × risk_i
-- Confirm denominator calculation: total_i × weight_i × risk_i
-```
-
-#### Step 3: Parameter Impact Analysis
-```bash
-# Test parameter sensitivity
-- Temporarily adjust one requirement's weight and observe score change
-- Modify risk level for high-impact requirement and verify score response
-- Add/remove requirements to test score stability
-```
-
-## FAQ
-
-### General Questions
-
-**Q: What's a good ThreatScore for my organization?**
-A: Target scores depend on your industry and risk tolerance:
-- **Financial Services/Healthcare**: Target 85-95% (high regulatory requirements)
-- **Technology/SaaS**: Target 80-90% (balanced security and agility)
-- **Manufacturing/Retail**: Target 75-85% (operational focus)
-- **Startups/SMB**: Target 70-80% (resource constraints acceptable)
-
-**Q: How often should I recalculate ThreatScore?**
-A: Recommended frequencies:
-- **Daily**: For continuous monitoring and rapid response
-- **Weekly**: For regular security reviews and trend analysis
-- **Monthly**: For stakeholder reporting and compliance tracking
-- **Quarterly**: For strategic planning and parameter reviews
-
-**Q: Can I compare ThreatScores across different compliance frameworks?**
-A: Limited comparability due to:
-- Different requirement sets and coverage areas
-- Varying weight and risk assignments
-- Framework-specific control definitions
-- *Recommendation*: Use framework-specific scores for detailed analysis, aggregate for overall posture
-
-### Technical Questions
-
-**Q: What happens if a requirement has zero findings?**
-A: Requirements with zero findings are excluded from calculation because:
-- No evidence means no contribution to confidence
-- Avoids artificially inflating or deflating scores
-- Other requirements receive proportionally more weight
-
-**Q: How do I handle requirements that aren't applicable to my environment?**
-A: Options for non-applicable requirements:
-1. **Exclude entirely**: Remove from framework definition
-2. **Set weight to 1**: Minimize impact while maintaining framework completeness
-3. **Mark as N/A**: Use separate tracking mechanism outside ThreatScore
-
-**Q: Can ThreatScore be gamed by adjusting weights?**
-A: Potential gaming scenarios and mitigations:
-- **Weight inflation**: Assign maximum weights to well-performing requirements
-  - *Mitigation*: Regular weight reviews with business justification
-- **Risk deflation**: Artificially lower risk levels to reduce impact
-  - *Mitigation*: Use standardized risk assessment methodology
-- **Requirement selection**: Choose only easy-to-pass requirements
-  - *Mitigation*: Use industry-standard compliance frameworks
-
-### Implementation Questions
-
-**Q: How do I determine appropriate weights for my requirements?**
-A: Weight assignment process:
-1. **Map to regulations**: Assign highest weights to mandatory compliance controls
-2. **Assess business impact**: Consider financial, operational, and reputational risks
-3. **Stakeholder input**: Involve compliance, risk, and business teams
-4. **Industry benchmarking**: Reference industry-specific control frameworks
-5. **Iterative refinement**: Adjust based on score behavior and feedback
-
-**Q: What data sources can feed into ThreatScore calculation?**
-A: Common data sources:
-- **Security scanning tools**: Vulnerability scanners, configuration assessment tools
-- **Compliance platforms**: GRC platforms, audit management systems
-- **SIEM/Security tools**: Log analysis, security monitoring platforms
-- **Manual assessments**: Audit findings, penetration test results
-- **Cloud security tools**: CSPM, CWPP, cloud-native security platforms
-
-**Q: How do I validate my ThreatScore implementation?**
-A: Validation approaches:
-1. **Reference calculations**: Manual calculation of sample scenarios
-2. **Boundary testing**: Test with edge cases (all pass, all fail, single requirement)
-3. **Parameter sensitivity**: Verify score changes with weight/risk modifications
-4. **Data validation**: Implement input data quality checks
-5. **Stakeholder review**: Confirm scores align with perceived security posture
