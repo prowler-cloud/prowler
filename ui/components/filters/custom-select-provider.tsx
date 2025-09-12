@@ -11,6 +11,7 @@ import {
   CustomProviderInputAzure,
   CustomProviderInputGCP,
   CustomProviderInputGitHub,
+  CustomProviderInputIac,
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
 } from "./custom-provider-inputs";
@@ -42,6 +43,10 @@ const providerDisplayData: Record<
   github: {
     label: "GitHub",
     component: <CustomProviderInputGitHub />,
+  },
+  iac: {
+    label: "Infrastructure as Code",
+    component: <CustomProviderInputIac />,
   },
 };
 

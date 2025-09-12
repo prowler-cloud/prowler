@@ -49,6 +49,7 @@ export const ProvidersOverview = ({
     gcp: "GCP",
     kubernetes: "Kubernetes",
     github: "GitHub",
+    iac: "IaC",
   };
 
   const providers = PROVIDER_TYPES.map((providerType) => ({

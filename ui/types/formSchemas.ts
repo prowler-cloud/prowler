@@ -110,6 +110,11 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("iac"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
     ]),
   );
 
@@ -190,7 +195,16 @@ export const addCredentialsFormSchema = (
                         .string()
                         .optional(),
                     }
-                  : {}),
+                  : providerType === "iac"
+                    ? {
+                        [ProviderCredentialFields.REPOSITORY_URL]: z
+                          .string()
+                          .nonempty("Repository URL is required"),
+                        [ProviderCredentialFields.ACCESS_TOKEN]: z
+                          .string()
+                          .optional(),
+                      }
+                    : {}),
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {

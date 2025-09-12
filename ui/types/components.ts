@@ -239,12 +239,19 @@ export type KubernetesCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type IacCredentials = {
+  [ProviderCredentialFields.REPOSITORY_URL]: string;
+  [ProviderCredentialFields.ACCESS_TOKEN]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPDefaultCredentials
   | GCPServiceAccountKey
   | KubernetesCredentials
+  | IacCredentials
   | M365Credentials;
 
 export interface SearchParamsProps {
