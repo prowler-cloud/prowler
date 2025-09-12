@@ -125,6 +125,7 @@ SPECTACULAR_SETTINGS = {
     ],
     "POSTPROCESSING_HOOKS": [
         "api.schema_hooks.attach_task_202_examples",
+        "api.schema_hooks.customize_parameter_descriptions",
     ],
     "TITLE": "API Reference - Prowler",
 }
