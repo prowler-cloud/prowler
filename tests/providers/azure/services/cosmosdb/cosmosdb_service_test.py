@@ -19,6 +19,7 @@ def mock_cosmosdb_get_accounts(_):
                 tags=None,
                 is_virtual_network_filter_enabled=None,
                 disable_local_auth=None,
+                private_endpoint_connections=[],
             )
         ]
     }

@@ -221,7 +221,7 @@ class TestFilePermissions:
 
 class TestStripAnsiCodes:
     def test_strip_ansi_codes_no_alteration(self):
-        input_string = "\x1B[31mHello\x1B[0m World"
+        input_string = "\x1b[31mHello\x1b[0m World"
         expected_output = "Hello World"
 
         actual_output = strip_ansi_codes(input_string)

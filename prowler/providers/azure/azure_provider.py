@@ -894,9 +894,10 @@ class AzureProvider(Provider):
                     client = GraphServiceClient(credentials=credentials)
 
                     domain_result = await client.domains.get()
-                    if getattr(domain_result, "value"):
-                        if getattr(domain_result.value[0], "id"):
-                            identity.tenant_domain = domain_result.value[0].id
+                    for domain in getattr(domain_result, "value", []):
+                        if getattr(domain, "is_default"):
+                            identity.tenant_domain = domain.id
+                            break
 
                 except HttpResponseError as error:
                     logger.error(
@@ -921,7 +922,7 @@ class AzureProvider(Provider):
                 # since that exception is not considered as critical, we keep filling another identity fields
                 if sp_env_auth or client_id:
                     # The id of the sp can be retrieved from environment variables
-                    identity.identity_id = getenv("AZURE_CLIENT_ID")
+                    identity.identity_id = getenv("AZURE_CLIENT_ID", default=client_id)
                     identity.identity_type = "Service Principal"
                 # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
                 # should work but it doesn't, pending issue

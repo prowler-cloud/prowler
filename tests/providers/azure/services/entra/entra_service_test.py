@@ -93,7 +93,7 @@ async def mock_entra_get_conditional_access_policy(_):
                     "include": ["797f4846-ba00-4fd7-ba43-dac1f8f63013"],
                     "exclude": [],
                 },
-                access_controls={"grant": ["MFA"], "block": []},
+                access_controls={"grant": ["MFA", "compliantDevice"], "block": []},
             )
         }
     }
@@ -216,7 +216,7 @@ class Test_Entra_Service:
         )
         assert entra_client.conditional_access_policy[DOMAIN]["id-1"].access_controls[
             "grant"
-        ] == ["MFA"]
+        ] == ["MFA", "compliantDevice"]
         assert (
             entra_client.conditional_access_policy[DOMAIN]["id-1"].access_controls[
                 "block"

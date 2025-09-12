@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id",
   "Severity": "high",
-  "ResourceType": "AwsEc2Instance",
+  "ResourceType": "AwsAccount",
   "Description": "Ensure Instance Metadata Service Version 2 (IMDSv2) is enforced for EC2 instances at the account level to protect against SSRF vulnerabilities.",
   "Risk": "EC2 instances that use IMDSv1 are vulnerable to SSRF attacks.",
   "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html#set-imdsv2-account-defaults",

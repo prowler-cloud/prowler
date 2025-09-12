@@ -3,7 +3,7 @@
   "CheckID": "controllermanager_disable_profiling",
   "CheckTitle": "Ensure that the --profiling argument is set to false",
   "CheckType": [],
-  "ServiceName": "controller-manager",
+  "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

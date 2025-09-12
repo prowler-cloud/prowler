@@ -2,8 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 from django.core.exceptions import ValidationError
-from django.db import DEFAULT_DB_ALIAS
-from django.db import models
+from django.db import DEFAULT_DB_ALIAS, models
 from django.db.backends.ddl_references import Statement, Table
 
 from api.db_utils import DB_USER, POSTGRES_TENANT_VAR
@@ -59,11 +58,11 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
     drop_sql_query = """
         ALTER TABLE %(table_name)s NO FORCE ROW LEVEL SECURITY;
         ALTER TABLE %(table_name)s DISABLE ROW LEVEL SECURITY;
-        REVOKE ALL ON TABLE %(table_name) TO %(db_user)s;
+        REVOKE ALL ON TABLE %(table_name)s FROM %(db_user)s;
     """
 
     drop_policy_sql_query = """
-        DROP POLICY IF EXISTS %(db_user)s_%(table_name)s_{statement} on %(table_name)s;
+        DROP POLICY IF EXISTS %(db_user)s_%(raw_table_name)s_{statement} ON %(table_name)s;
     """
 
     def __init__(
@@ -88,9 +87,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
                 f"{grant_queries}{self.grant_sql_query.format(statement=statement)}"
             )
 
-        full_create_sql_query = (
-            f"{self.rls_sql_query}" f"{policy_queries}" f"{grant_queries}"
-        )
+        full_create_sql_query = f"{self.rls_sql_query}{policy_queries}{grant_queries}"
 
         table_name = model._meta.db_table
         if self.partition_name:
@@ -107,16 +104,20 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
 
     def remove_sql(self, model: Any, schema_editor: Any) -> Any:
         field_column = schema_editor.quote_name(self.target_field)
+        raw_table_name = model._meta.db_table
+        table_name = raw_table_name
+        if self.partition_name:
+            raw_table_name = f"{raw_table_name}_{self.partition_name}"
+            table_name = raw_table_name
+
         full_drop_sql_query = (
             f"{self.drop_sql_query}"
-            f"{''.join([self.drop_policy_sql_query.format(statement) for statement in self.statements])}"
+            f"{''.join([self.drop_policy_sql_query.format(statement=statement) for statement in self.statements])}"
         )
-        table_name = model._meta.db_table
-        if self.partition_name:
-            table_name = f"{table_name}_{self.partition_name}"
         return Statement(
             full_drop_sql_query,
             table_name=Table(table_name, schema_editor.quote_name),
+            raw_table_name=raw_table_name,
             field_column=field_column,
             db_user=DB_USER,
             partition_name=self.partition_name,

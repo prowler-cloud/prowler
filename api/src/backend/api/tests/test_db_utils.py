@@ -3,12 +3,17 @@ from enum import Enum
 from unittest.mock import patch
 
 import pytest
+from django.conf import settings
+from freezegun import freeze_time
 
 from api.db_utils import (
+    _should_create_index_on_partition,
     batch_delete,
+    create_objects_in_batches,
     enum_to_choices,
     generate_random_token,
     one_week_from_now,
+    update_objects_in_batches,
 )
 from api.models import Provider
 
@@ -131,9 +136,180 @@ class TestBatchDelete:
         return provider_count
 
     @pytest.mark.django_db
-    def test_batch_delete(self, create_test_providers):
+    def test_batch_delete(self, tenants_fixture, create_test_providers):
+        tenant_id = str(tenants_fixture[0].id)
         _, summary = batch_delete(
-            Provider.objects.all(), batch_size=create_test_providers // 2
+            tenant_id, Provider.objects.all(), batch_size=create_test_providers // 2
         )
         assert Provider.objects.all().count() == 0
         assert summary == {"api.Provider": create_test_providers}
+
+
+class TestShouldCreateIndexOnPartition:
+    @freeze_time("2025-05-15 00:00:00Z")
+    @pytest.mark.parametrize(
+        "partition_name, all_partitions, expected",
+        [
+            ("any_name", True, True),
+            ("findings_default", True, True),
+            ("findings_2022_jan", True, True),
+            ("foo_bar", False, True),
+            ("findings_2025_MAY", False, True),
+            ("findings_2025_may", False, True),
+            ("findings_2025_jun", False, True),
+            ("findings_2025_apr", False, False),
+            ("findings_2025_xyz", False, True),
+        ],
+    )
+    def test_partition_inclusion_logic(self, partition_name, all_partitions, expected):
+        assert (
+            _should_create_index_on_partition(partition_name, all_partitions)
+            is expected
+        )
+
+    @freeze_time("2025-05-15 00:00:00Z")
+    def test_invalid_date_components(self):
+        # even if regex matches but int conversion fails, we fallback True
+        # (e.g. year too big, month number parse error)
+        bad_name = "findings_99999_jan"
+        assert _should_create_index_on_partition(bad_name, False) is True
+
+        bad_name2 = "findings_2025_abc"
+        # abc not in month_map → fallback True
+        assert _should_create_index_on_partition(bad_name2, False) is True
+
+
+@pytest.mark.django_db
+class TestCreateObjectsInBatches:
+    @pytest.fixture
+    def tenant(self, tenants_fixture):
+        return tenants_fixture[0]
+
+    def make_provider_instances(self, tenant, count):
+        """
+        Return a list of `count` unsaved Provider instances for the given tenant.
+        """
+        base_uid = 1000
+        return [
+            Provider(
+                tenant=tenant,
+                uid=str(base_uid + i),
+                provider=Provider.ProviderChoices.AWS,
+            )
+            for i in range(count)
+        ]
+
+    def test_exact_multiple_of_batch(self, tenant):
+        total = 6
+        batch_size = 3
+        objs = self.make_provider_instances(tenant, total)
+
+        create_objects_in_batches(str(tenant.id), Provider, objs, batch_size=batch_size)
+
+        qs = Provider.objects.filter(tenant=tenant)
+        assert qs.count() == total
+
+    def test_non_multiple_of_batch(self, tenant):
+        total = 7
+        batch_size = 3
+        objs = self.make_provider_instances(tenant, total)
+
+        create_objects_in_batches(str(tenant.id), Provider, objs, batch_size=batch_size)
+
+        qs = Provider.objects.filter(tenant=tenant)
+        assert qs.count() == total
+
+    def test_batch_size_default(self, tenant):
+        default_size = settings.DJANGO_DELETION_BATCH_SIZE
+        total = default_size + 2
+        objs = self.make_provider_instances(tenant, total)
+
+        create_objects_in_batches(str(tenant.id), Provider, objs)
+
+        qs = Provider.objects.filter(tenant=tenant)
+        assert qs.count() == total
+
+
+@pytest.mark.django_db
+class TestUpdateObjectsInBatches:
+    @pytest.fixture
+    def tenant(self, tenants_fixture):
+        return tenants_fixture[0]
+
+    def make_provider_instances(self, tenant, count):
+        """
+        Return a list of `count` unsaved Provider instances for the given tenant.
+        """
+        base_uid = 2000
+        return [
+            Provider(
+                tenant=tenant,
+                uid=str(base_uid + i),
+                provider=Provider.ProviderChoices.AWS,
+            )
+            for i in range(count)
+        ]
+
+    def test_exact_multiple_of_batch(self, tenant):
+        total = 6
+        batch_size = 3
+        objs = self.make_provider_instances(tenant, total)
+        create_objects_in_batches(str(tenant.id), Provider, objs, batch_size=batch_size)
+
+        # Fetch them back, mutate the `uid` field, then update in batches
+        providers = list(Provider.objects.filter(tenant=tenant))
+        for p in providers:
+            p.uid = f"{p.uid}_upd"
+
+        update_objects_in_batches(
+            tenant_id=str(tenant.id),
+            model=Provider,
+            objects=providers,
+            fields=["uid"],
+            batch_size=batch_size,
+        )
+
+        qs = Provider.objects.filter(tenant=tenant, uid__endswith="_upd")
+        assert qs.count() == total
+
+    def test_non_multiple_of_batch(self, tenant):
+        total = 7
+        batch_size = 3
+        objs = self.make_provider_instances(tenant, total)
+        create_objects_in_batches(str(tenant.id), Provider, objs, batch_size=batch_size)
+
+        providers = list(Provider.objects.filter(tenant=tenant))
+        for p in providers:
+            p.uid = f"{p.uid}_upd"
+
+        update_objects_in_batches(
+            tenant_id=str(tenant.id),
+            model=Provider,
+            objects=providers,
+            fields=["uid"],
+            batch_size=batch_size,
+        )
+
+        qs = Provider.objects.filter(tenant=tenant, uid__endswith="_upd")
+        assert qs.count() == total
+
+    def test_batch_size_default(self, tenant):
+        default_size = settings.DJANGO_DELETION_BATCH_SIZE
+        total = default_size + 2
+        objs = self.make_provider_instances(tenant, total)
+        create_objects_in_batches(str(tenant.id), Provider, objs)
+
+        providers = list(Provider.objects.filter(tenant=tenant))
+        for p in providers:
+            p.uid = f"{p.uid}_upd"
+
+        # Update without specifying batch_size (uses default)
+        update_objects_in_batches(
+            tenant_id=str(tenant.id),
+            model=Provider,
+            objects=providers,
+            fields=["uid"],
+        )
+
+        qs = Provider.objects.filter(tenant=tenant, uid__endswith="_upd")
+        assert qs.count() == total

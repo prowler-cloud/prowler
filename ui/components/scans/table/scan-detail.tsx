@@ -2,15 +2,13 @@
 
 import { Snippet } from "@nextui-org/react";
 
-import { ConnectionTrue } from "@/components/icons";
-import { ConnectionFalse } from "@/components/icons/Icons";
 import {
   DateWithTime,
   EntityInfoShort,
   InfoField,
 } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
-import { ProviderProps, ScanProps, TaskDetails } from "@/types";
+import { ProviderProps, ProviderType, ScanProps, TaskDetails } from "@/types";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -50,6 +48,7 @@ export const ScanDetail = ({
 }: {
   scanDetails: ScanProps & {
     taskDetails?: TaskDetails;
+    // TODO: Remove the "?" once we have a proper provider details type
     providerDetails?: ProviderProps;
   };
 }) => {
@@ -60,11 +59,20 @@ export const ScanDetail = ({
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <StatusBadge
-          size="lg"
-          status={scan.state}
-          loadingProgress={scan.progress}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center">
+          <StatusBadge
+            size="md"
+            className="w-fit"
+            status={scan.state}
+            loadingProgress={scan.progress}
+          />
+        </div>
+        <EntityInfoShort
+          cloudProvider={providerDetails?.provider as ProviderType}
+          entityAlias={providerDetails?.alias}
+          entityId={providerDetails?.uid}
+          showConnectionStatus={providerDetails?.connection.connected}
         />
       </div>
 
@@ -86,11 +94,20 @@ export const ScanDetail = ({
           </InfoField>
         </div>
 
+        <InfoField label="Scan ID" variant="simple">
+          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
+            {scanDetails.id}
+          </Snippet>
+        </InfoField>
+
         {scan.state === "failed" && taskDetails?.attributes.result && (
           <>
             {taskDetails.attributes.result.exc_message && (
               <InfoField label="Error Message" variant="simple">
-                <Snippet hideSymbol>
+                <Snippet
+                  className="bg-gray-50 py-1 dark:bg-slate-800"
+                  hideSymbol
+                >
                   <span className="whitespace-pre-line text-xs">
                     {taskDetails.attributes.result.exc_message.join("\n")}
                   </span>
@@ -100,11 +117,6 @@ export const ScanDetail = ({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <InfoField label="Error Type">
                 {renderValue(taskDetails.attributes.result.exc_type)}
-              </InfoField>
-              <InfoField label="Scan ID" variant="simple">
-                <Snippet hideSymbol>
-                  {renderValue(taskDetails?.attributes.task_args.scan_id)}
-                </Snippet>
               </InfoField>
             </div>
           </>
@@ -121,42 +133,6 @@ export const ScanDetail = ({
             <DateWithTime inline dateTime={scan.scheduled_at || "-"} />
           </InfoField>
         </div>
-      </Section>
-
-      {/* Provider Details */}
-      <Section title="Provider Details">
-        {providerDetails ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <EntityInfoShort
-              cloudProvider={
-                providerDetails.provider as
-                  | "aws"
-                  | "azure"
-                  | "gcp"
-                  | "kubernetes"
-              }
-              entityAlias={providerDetails.alias}
-              entityId={providerDetails.uid}
-            />
-            <InfoField label="Connection Status" variant="simple">
-              {providerDetails.connection.connected ? (
-                <ConnectionTrue className="text-system-success" size={24} />
-              ) : (
-                <ConnectionFalse className="text-danger" size={24} />
-              )}
-            </InfoField>
-            <InfoField label="Last Checked">
-              <DateWithTime
-                inline
-                dateTime={providerDetails.connection.last_checked_at}
-              />
-            </InfoField>
-          </div>
-        ) : (
-          <span className="text-sm text-gray-500">
-            No provider details available
-          </span>
-        )}
       </Section>
     </div>
   );

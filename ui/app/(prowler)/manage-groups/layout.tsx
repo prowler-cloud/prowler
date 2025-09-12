@@ -1,9 +1,8 @@
 import "@/styles/globals.css";
 
-import { Spacer } from "@nextui-org/react";
 import React from "react";
 
-import { NavigationHeader } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 
 interface ProviderLayoutProps {
   children: React.ReactNode;
@@ -11,14 +10,11 @@ interface ProviderLayoutProps {
 
 export default function ProviderLayout({ children }: ProviderLayoutProps) {
   return (
-    <>
-      <NavigationHeader
-        title="Manage providers groups"
-        icon="icon-park-outline:close-small"
-        href="/providers"
-      />
-      <Spacer y={16} />
+    <ContentLayout
+      title="Manage Groups"
+      icon="solar:users-group-two-rounded-outline"
+    >
       {children}
-    </>
+    </ContentLayout>
   );
 }

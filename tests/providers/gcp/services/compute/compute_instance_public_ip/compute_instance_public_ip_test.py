@@ -8,12 +8,15 @@ class Test_compute_instance_public_ip:
         compute_client = mock.MagicMock()
         compute_client.instances = []
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip import (
                 compute_instance_public_ip,
@@ -26,12 +29,15 @@ class Test_compute_instance_public_ip:
     def test_no_public_ip_instance(self):
         compute_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip import (
                 compute_instance_public_ip,
@@ -98,12 +104,15 @@ class Test_compute_instance_public_ip:
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_instance_public_ip.compute_instance_public_ip import (
                 compute_instance_public_ip,

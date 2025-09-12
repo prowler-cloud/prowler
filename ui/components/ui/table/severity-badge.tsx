@@ -45,7 +45,7 @@ export const SeverityBadge = ({ severity }: { severity: Severity }) => {
       color={color}
       endContent={getSeverityIcon(severity)}
     >
-      {severity}
+      <span className="text-xs font-light tracking-wide">{severity}</span>
     </Chip>
   );
 };

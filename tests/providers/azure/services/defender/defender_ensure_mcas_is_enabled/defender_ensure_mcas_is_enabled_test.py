@@ -13,12 +13,15 @@ class Test_defender_ensure_mcas_is_enabled:
         defender_client = mock.MagicMock
         defender_client.settings = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled import (
                 defender_ensure_mcas_is_enabled,
@@ -42,12 +45,15 @@ class Test_defender_ensure_mcas_is_enabled:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled import (
                 defender_ensure_mcas_is_enabled,
@@ -79,12 +85,15 @@ class Test_defender_ensure_mcas_is_enabled:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled import (
                 defender_ensure_mcas_is_enabled,
@@ -106,12 +115,15 @@ class Test_defender_ensure_mcas_is_enabled:
         defender_client = mock.MagicMock
         defender_client.settings = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_mcas_is_enabled.defender_ensure_mcas_is_enabled import (
                 defender_ensure_mcas_is_enabled,

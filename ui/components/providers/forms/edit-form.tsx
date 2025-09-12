@@ -10,6 +10,7 @@ import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { editProviderFormSchema } from "@/types";
 
 export const EditForm = ({
@@ -26,8 +27,8 @@ export const EditForm = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      providerId: providerId,
-      alias: providerAlias,
+      [ProviderCredentialFields.PROVIDER_ID]: providerId,
+      [ProviderCredentialFields.PROVIDER_ALIAS]: providerAlias,
     },
   });
 
@@ -74,14 +75,16 @@ export const EditForm = ({
         <div>
           <CustomInput
             control={form.control}
-            name="alias"
+            name={ProviderCredentialFields.PROVIDER_ALIAS}
             type="text"
             label="Alias"
             labelPlacement="outside"
             placeholder={providerAlias}
             variant="bordered"
             isRequired={false}
-            isInvalid={!!form.formState.errors.alias}
+            isInvalid={
+              !!form.formState.errors[ProviderCredentialFields.PROVIDER_ALIAS]
+            }
           />
         </div>
         <input type="hidden" name="providerId" value={providerId} />

@@ -3,7 +3,7 @@
   "CheckID": "controllermanager_root_ca_file_set",
   "CheckTitle": "Ensure that the --root-ca-file argument is set as appropriate",
   "CheckType": [],
-  "ServiceName": "controller-manager",
+  "ServiceName": "controllermanager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

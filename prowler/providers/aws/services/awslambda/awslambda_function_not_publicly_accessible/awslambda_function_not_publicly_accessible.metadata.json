@@ -13,10 +13,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
-      "Other": "",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html"
+      "CLI": "aws lambda remove-permission --region <REGION> --function-name <QUEUE_NAME> --statement-id FullAccess",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Grant usage permission on a per-resource basis and applying least privilege principle.",

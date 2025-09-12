@@ -11,12 +11,13 @@ class cloudsql_instance_ssl_connections(Check):
             report.status_extended = (
                 f"Database Instance {instance.name} requires SSL connections."
             )
-            if (
-                not instance.require_ssl
-                or instance.ssl_mode == "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
+
+            if (instance.ssl_mode == "ALLOW_UNENCRYPTED_AND_ENCRYPTED") or (
+                instance.ssl_mode == "SSL_MODE_UNSPECIFIED" and not instance.require_ssl
             ):
                 report.status = "FAIL"
                 report.status_extended = f"Database Instance {instance.name} does not require SSL connections."
+
             findings.append(report)
 
         return findings

@@ -3,6 +3,12 @@
 
 import os
 import sys
+import warnings
+
+# Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="dj_rest_auth.registration.serializers"
+)
 
 
 def main():

@@ -11,20 +11,25 @@ class app_function_latest_runtime_version(Check):
             functions,
         ) in app_client.functions.items():
             for function in functions.values():
-                report = Check_Report_Azure(metadata=self.metadata(), resource=function)
-                report.subscription = subscription_name
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Function {function.name} is using the latest runtime."
-                )
+                if function.enviroment_variables is not None:
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=function
+                    )
+                    report.subscription = subscription_name
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"Function {function.name} is using the latest runtime."
+                    )
 
-                if (
-                    function.enviroment_variables.get("FUNCTIONS_EXTENSION_VERSION", "")
-                    != "~4"
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Function {function.name} is not using the latest runtime. The current runtime is '{function.enviroment_variables.get('FUNCTIONS_EXTENSION_VERSION', '')}' and should be '~4'."
+                    if (
+                        function.enviroment_variables.get(
+                            "FUNCTIONS_EXTENSION_VERSION", ""
+                        )
+                        != "~4"
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"Function {function.name} is not using the latest runtime. The current runtime is '{function.enviroment_variables.get('FUNCTIONS_EXTENSION_VERSION', '')}' and should be '~4'."
 
-                findings.append(report)
+                    findings.append(report)
 
         return findings

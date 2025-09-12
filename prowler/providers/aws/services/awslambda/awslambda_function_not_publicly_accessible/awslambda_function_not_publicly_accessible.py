@@ -7,6 +7,8 @@ class awslambda_function_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for function in awslambda_client.functions.values():
+            if function.policy is None:
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"

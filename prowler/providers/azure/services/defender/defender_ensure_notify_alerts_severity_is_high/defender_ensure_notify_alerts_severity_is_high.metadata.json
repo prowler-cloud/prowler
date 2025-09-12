@@ -1,16 +1,16 @@
 {
   "Provider": "azure",
   "CheckID": "defender_ensure_notify_alerts_severity_is_high",
-  "CheckTitle": "Ensure That 'Notify about alerts with the following severity' is Set to 'High'",
+  "CheckTitle": "Ensure that email notifications are configured for alerts with a minimum severity of 'High' or lower",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureEmailNotifications",
-  "Description": "Microsoft Defender for Cloud emails the subscription owners whenever a high-severity alert is triggered for their subscription. You should provide a security contact email address as an additional email address.",
-  "Risk": "Microsoft Defender for Cloud emails the Subscription Owner to notify them about security alerts. Adding your Security Contact's email address to the 'Additional email addresses' field ensures that your organization's Security Team is included in these alerts. This ensures that the proper people are aware of any potential compromise in order to mitigate the risk in a timely fashion.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-provide-security-contact-details",
+  "Description": "Microsoft Defender for Cloud sends email notifications when alerts of a certain severity level or higher are triggered. By setting the minimum severity to 'High', 'Medium', or even 'Low', you ensure that alerts with equal or greater severity (e.g., High or Critical) are still delivered. Selecting a lower threshold like 'Low' results in more comprehensive alert coverage.",
+  "Risk": "If this setting is too restrictive (e.g., set to 'Critical' only), important security alerts with 'High' or 'Medium' severity might be missed. Ensuring that 'High' or a lower threshold is configured helps security teams stay informed about significant threats and respond in a timely manner.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/email-notifications-alerts#manage-notifications-on-email",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -19,7 +19,7 @@
       "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_4#terraform"
     },
     "Recommendation": {
-      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Defender for Cloud 3. Click on Environment Settings 4. Click on the appropriate Management Group, Subscription, or Workspace 5. Click on Email notifications 6. Enter a valid security contact email address (or multiple addresses separated by commas) in the Additional email addresses field 7. Click Save",
+      "Text": "1. From Azure Home select the Portal Menu. 2. Select Microsoft Defender for Cloud. 3. Click on Environment Settings. 4. Click on the appropriate Management Group, Subscription, or Workspace. 5. Click on Email notifications. 6. Under 'Notify about alerts with the following severity (or higher)', select at least 'High' (or optionally 'Medium' or 'Low' for broader coverage). 7. Click Save.",
       "Url": "https://docs.microsoft.com/en-us/rest/api/securitycenter/securitycontacts/list"
     }
   },

@@ -9,12 +9,15 @@ class Test_rds_cluster_multi_az:
         rds_client = mock.MagicMock
         rds_client.db_clusters = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az.rds_client",
+                new=rds_client,
+            ),
         ):
             from prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az import (
                 rds_cluster_multi_az,
@@ -53,12 +56,15 @@ class Test_rds_cluster_multi_az:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az.rds_client",
+                new=rds_client,
+            ),
         ):
             from prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az import (
                 rds_cluster_multi_az,
@@ -109,12 +115,15 @@ class Test_rds_cluster_multi_az:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            new=rds_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az.rds_client",
-            new=rds_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az.rds_client",
+                new=rds_client,
+            ),
         ):
             from prowler.providers.aws.services.rds.rds_cluster_multi_az.rds_cluster_multi_az import (
                 rds_cluster_multi_az,

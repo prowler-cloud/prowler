@@ -30,12 +30,15 @@ class Test_iam_user_with_temporary_credentials:
         )
         iam_client._get_user_temporary_credentials_usage(iam_client)
 
-        with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
-        ) as iam_service, mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
-            new=iam_service,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_service.IAM",
+                new=iam_client,
+            ) as iam_service,
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_client.iam_client",
+                new=iam_service,
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_user_with_temporary_credentials.iam_user_with_temporary_credentials import (
                 iam_user_with_temporary_credentials,
@@ -66,12 +69,15 @@ class Test_iam_user_with_temporary_credentials:
         )
         iam_client._get_user_temporary_credentials_usage(iam_client)
 
-        with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
-        ) as iam_service, mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
-            new=iam_service,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_service.IAM",
+                new=iam_client,
+            ) as iam_service,
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_client.iam_client",
+                new=iam_service,
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_user_with_temporary_credentials.iam_user_with_temporary_credentials import (
                 iam_user_with_temporary_credentials,
@@ -111,12 +117,15 @@ class Test_iam_user_with_temporary_credentials:
         )
         iam_client._get_user_temporary_credentials_usage(iam_client)
 
-        with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
-        ) as iam_service, mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
-            new=iam_service,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_service.IAM",
+                new=iam_client,
+            ) as iam_service,
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_client.iam_client",
+                new=iam_service,
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_user_with_temporary_credentials.iam_user_with_temporary_credentials import (
                 iam_user_with_temporary_credentials,
@@ -156,12 +165,15 @@ class Test_iam_user_with_temporary_credentials:
         )
         iam_client._get_user_temporary_credentials_usage(iam_client)
 
-        with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
-        ) as iam_service, mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
-            new=iam_service,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_service.IAM",
+                new=iam_client,
+            ) as iam_service,
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_client.iam_client",
+                new=iam_service,
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_user_with_temporary_credentials.iam_user_with_temporary_credentials import (
                 iam_user_with_temporary_credentials,
@@ -203,12 +215,15 @@ class Test_iam_user_with_temporary_credentials:
         )
         iam_client._get_user_temporary_credentials_usage(iam_client)
 
-        with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
-        ) as iam_service, mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
-            new=iam_service,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_service.IAM",
+                new=iam_client,
+            ) as iam_service,
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_client.iam_client",
+                new=iam_service,
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_user_with_temporary_credentials.iam_user_with_temporary_credentials import (
                 iam_user_with_temporary_credentials,
@@ -250,12 +265,15 @@ class Test_iam_user_with_temporary_credentials:
         )
         iam_client._get_user_temporary_credentials_usage(iam_client)
 
-        with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
-        ) as iam_service, mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
-            new=iam_service,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_service.IAM",
+                new=iam_client,
+            ) as iam_service,
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_client.iam_client",
+                new=iam_service,
+            ),
         ):
             from prowler.providers.aws.services.iam.iam_user_with_temporary_credentials.iam_user_with_temporary_credentials import (
                 iam_user_with_temporary_credentials,

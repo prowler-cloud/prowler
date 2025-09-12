@@ -14,15 +14,19 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestIAMService:
     def test_service(self):
-        with patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-            new=mock_is_api_active,
-        ), patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-            new=mock_api_client,
-        ), patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_service import IAM
 
@@ -37,6 +41,7 @@ class TestIAMService:
             )
             assert iam_client.service_accounts[0].email == "service-account1@gmail.com"
             assert iam_client.service_accounts[0].display_name == "Service Account 1"
+            assert iam_client.service_accounts[0].uniqueId == "111222233334444"
             assert len(iam_client.service_accounts[0].keys) == 2
             assert iam_client.service_accounts[0].keys[0].name == "key1"
             assert iam_client.service_accounts[0].keys[0].valid_after == datetime(
@@ -62,6 +67,7 @@ class TestIAMService:
             )
             assert iam_client.service_accounts[1].email == "service-account2@gmail.com"
             assert iam_client.service_accounts[1].display_name == "Service Account 2"
+            assert iam_client.service_accounts[1].uniqueId == "55566666777888999"
             assert len(iam_client.service_accounts[1].keys) == 1
             assert iam_client.service_accounts[1].keys[0].name == "key3"
             assert iam_client.service_accounts[1].keys[0].valid_after == datetime(
@@ -76,15 +82,19 @@ class TestIAMService:
 
 class TestAccessApproval:
     def test_service(self):
-        with patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-            new=mock_is_api_active,
-        ), patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-            new=mock_api_client,
-        ), patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_service import AccessApproval
 
@@ -107,19 +117,24 @@ class TestAccessApproval:
 
 class TestEssentialContacts:
     def test_service(self):
-        with patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-            new=mock_is_api_active,
-        ), patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-            new=mock_api_client,
-        ), patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), patch(  # Reinstancing the CloudResourceManager client to secure that is not instancied first by a test
-            "prowler.providers.gcp.services.iam.iam_service.cloudresourcemanager_client",
-            new=CloudResourceManager(
-                set_mocked_gcp_provider(),
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(  # Reinstancing the CloudResourceManager client to secure that is not instancied first by a test
+                "prowler.providers.gcp.services.iam.iam_service.cloudresourcemanager_client",
+                new=CloudResourceManager(
+                    set_mocked_gcp_provider(),
+                ),
             ),
         ):
             from prowler.providers.gcp.services.iam.iam_service import EssentialContacts

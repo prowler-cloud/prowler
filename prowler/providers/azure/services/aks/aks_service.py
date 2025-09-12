@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import List
 
 from azure.mgmt.containerservice import ContainerServiceClient
-from azure.mgmt.containerservice.models import ManagedClusterAgentPoolProfile
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -42,9 +41,19 @@ class AKS(AzureService):
                                         if getattr(cluster, "network_profile", None)
                                         else None
                                     ),
-                                    agent_pool_profiles=getattr(
-                                        cluster, "agent_pool_profiles", []
-                                    ),
+                                    agent_pool_profiles=[
+                                        ManagedClusterAgentPoolProfile(
+                                            name=agent_pool_profile.name,
+                                            enable_node_public_ip=getattr(
+                                                agent_pool_profile,
+                                                "enable_node_public_ip",
+                                                False,
+                                            ),
+                                        )
+                                        for agent_pool_profile in getattr(
+                                            cluster, "agent_pool_profiles", []
+                                        )
+                                    ],
                                     rbac_enabled=getattr(cluster, "enable_rbac", False),
                                 )
                             }
@@ -55,6 +64,12 @@ class AKS(AzureService):
                 )
 
         return clusters
+
+
+@dataclass
+class ManagedClusterAgentPoolProfile:
+    name: str
+    enable_node_public_ip: bool
 
 
 @dataclass

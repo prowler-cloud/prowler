@@ -99,6 +99,11 @@ export const CustomInput = <T extends FieldValues>({
           <FormControl>
             <Input
               id={name}
+              classNames={{
+                label:
+                  "tracking-tight font-light !text-default-500 text-xs !z-0",
+                input: "text-default-500 text-small",
+              }}
               isRequired={inputIsRequired}
               label={inputLabel}
               labelPlacement={labelPlacement}
@@ -115,7 +120,7 @@ export const CustomInput = <T extends FieldValues>({
             />
           </FormControl>
           {showFormMessage && (
-            <FormMessage className="text-system-error dark:text-system-error" />
+            <FormMessage className="max-w-full text-xs text-system-error dark:text-system-error" />
           )}
         </>
       )}

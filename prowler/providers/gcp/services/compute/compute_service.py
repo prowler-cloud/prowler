@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
@@ -17,10 +18,10 @@ class Compute(GCPService):
         self.firewalls = []
         self.compute_projects = []
         self.load_balancers = []
-        self._get_url_maps()
-        self._describe_backend_service()
         self._get_regions()
         self._get_projects()
+        self._get_url_maps()
+        self._describe_backend_service()
         self._get_zones()
         self.__threading_call__(self._get_instances, self.zones)
         self._get_networks()
@@ -33,7 +34,7 @@ class Compute(GCPService):
             try:
                 request = self.client.regions().list(project=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for region in response.get("items", []):
                         self.regions.add(region["name"])
@@ -51,7 +52,7 @@ class Compute(GCPService):
             try:
                 request = self.client.zones().list(project=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for zone in response.get("items", []):
                         self.zones.add(zone["name"])
@@ -68,7 +69,11 @@ class Compute(GCPService):
         for project_id in self.project_ids:
             try:
                 enable_oslogin = False
-                response = self.client.projects().get(project=project_id).execute()
+                response = (
+                    self.client.projects()
+                    .get(project=project_id)
+                    .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                )
                 for item in response["commonInstanceMetadata"].get("items", []):
                     if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
                         enable_oslogin = True
@@ -86,7 +91,8 @@ class Compute(GCPService):
                 request = self.client.instances().list(project=project_id, zone=zone)
                 while request is not None:
                     response = request.execute(
-                        http=self.__get_AuthorizedHttp_client__()
+                        http=self.__get_AuthorizedHttp_client__(),
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
                     )
 
                     for instance in response.get("items", []):
@@ -144,7 +150,7 @@ class Compute(GCPService):
             try:
                 request = self.client.networks().list(project=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                     for network in response.get("items", []):
                         subnet_mode = (
                             "legacy"
@@ -178,7 +184,8 @@ class Compute(GCPService):
                 )
                 while request is not None:
                     response = request.execute(
-                        http=self.__get_AuthorizedHttp_client__()
+                        http=self.__get_AuthorizedHttp_client__(),
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
                     )
                     for subnet in response.get("items", []):
                         self.subnets.append(
@@ -208,7 +215,8 @@ class Compute(GCPService):
                 )
                 while request is not None:
                     response = request.execute(
-                        http=self.__get_AuthorizedHttp_client__()
+                        http=self.__get_AuthorizedHttp_client__(),
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
                     )
                     for address in response.get("items", []):
                         self.addresses.append(
@@ -235,7 +243,7 @@ class Compute(GCPService):
             try:
                 request = self.client.firewalls().list(project=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for firewall in response.get("items", []):
                         self.firewalls.append(
@@ -260,9 +268,10 @@ class Compute(GCPService):
     def _get_url_maps(self):
         for project_id in self.project_ids:
             try:
+                # Global URL maps
                 request = self.client.urlMaps().list(project=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                     for urlmap in response.get("items", []):
                         self.load_balancers.append(
                             LoadBalancer(
@@ -280,19 +289,59 @@ class Compute(GCPService):
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+            try:
+                # Regional URL maps
+                for region in self.regions:
+                    request = self.client.regionUrlMaps().list(
+                        project=project_id, region=region
+                    )
+                    while request is not None:
+                        response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                        for urlmap in response.get("items", []):
+                            self.load_balancers.append(
+                                LoadBalancer(
+                                    name=urlmap["name"],
+                                    id=urlmap["id"],
+                                    service=urlmap.get("defaultService", ""),
+                                    project_id=project_id,
+                                )
+                            )
+
+                        request = self.client.regionUrlMaps().list_next(
+                            previous_request=request, previous_response=response
+                        )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _describe_backend_service(self):
         for balancer in self.load_balancers:
             if balancer.service:
                 try:
-                    response = (
-                        self.client.backendServices()
-                        .get(
-                            project=balancer.project_id,
-                            backendService=balancer.service.split("/")[-1],
+                    backend_service_name = balancer.service.split("/")[-1]
+                    is_regional = "/regions/" in balancer.service
+                    if is_regional:
+                        region = balancer.service.split("/regions/")[1].split("/")[0]
+                        response = (
+                            self.client.regionBackendServices()
+                            .get(
+                                project=balancer.project_id,
+                                region=region,
+                                backendService=backend_service_name,
+                            )
+                            .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                         )
-                        .execute()
-                    )
+                    else:
+                        response = (
+                            self.client.backendServices()
+                            .get(
+                                project=balancer.project_id,
+                                backendService=backend_service_name,
+                            )
+                            .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                        )
+
                     balancer.logging = response.get("logConfig", {}).get(
                         "enable", False
                     )

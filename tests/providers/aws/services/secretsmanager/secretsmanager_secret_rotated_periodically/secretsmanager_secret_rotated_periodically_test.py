@@ -61,12 +61,15 @@ class Test_secretsmanager_secret_rotated_periodically:
             SecretsManager,
         )
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically import (
@@ -97,12 +100,15 @@ class Test_secretsmanager_secret_rotated_periodically:
             SecretsManager,
         )
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically import (
                 secretsmanager_secret_rotated_periodically,
@@ -135,12 +141,15 @@ class Test_secretsmanager_secret_rotated_periodically:
             SecretsManager,
         )
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically import (
                 secretsmanager_secret_rotated_periodically,
@@ -176,12 +185,15 @@ class Test_secretsmanager_secret_rotated_periodically:
             SecretsManager,
         )
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
-            new=SecretsManager(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically.secretsmanager_client",
+                new=SecretsManager(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.secretsmanager.secretsmanager_secret_rotated_periodically.secretsmanager_secret_rotated_periodically import (
                 secretsmanager_secret_rotated_periodically,

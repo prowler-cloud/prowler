@@ -36,6 +36,7 @@ export const AddRoleForm = ({
       name: "",
       manage_users: false,
       manage_providers: false,
+      manage_integrations: false,
       manage_scans: false,
       unlimited_visibility: false,
       groups: [],
@@ -45,18 +46,20 @@ export const AddRoleForm = ({
     },
   });
 
-  const manageProviders = form.watch("manage_providers");
-  const unlimitedVisibility = form.watch("unlimited_visibility");
+  const { watch, setValue } = form;
+
+  const manageProviders = watch("manage_providers");
+  const unlimitedVisibility = watch("unlimited_visibility");
 
   useEffect(() => {
-    if (manageProviders) {
-      form.setValue("unlimited_visibility", true, {
+    if (manageProviders && !unlimitedVisibility) {
+      setValue("unlimited_visibility", true, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
       });
     }
-  }, [manageProviders, form]);
+  }, [manageProviders, unlimitedVisibility, setValue]);
 
   const isLoading = form.formState.isSubmitting;
 
@@ -66,7 +69,7 @@ export const AddRoleForm = ({
       "manage_account",
       "manage_billing",
       "manage_providers",
-      // "manage_integrations",
+      "manage_integrations",
       "manage_scans",
       "unlimited_visibility",
     ];
@@ -85,6 +88,7 @@ export const AddRoleForm = ({
     formData.append("name", values.name);
     formData.append("manage_users", String(values.manage_users));
     formData.append("manage_providers", String(values.manage_providers));
+    formData.append("manage_integrations", String(values.manage_integrations));
     formData.append("manage_scans", String(values.manage_scans));
     formData.append("manage_account", String(values.manage_account));
     formData.append(

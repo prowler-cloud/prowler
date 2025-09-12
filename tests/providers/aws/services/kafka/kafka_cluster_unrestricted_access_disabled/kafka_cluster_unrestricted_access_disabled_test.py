@@ -4,7 +4,7 @@ from prowler.providers.aws.services.kafka.kafka_service import (
     Cluster,
     EncryptionInTransit,
 )
-from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 
 class Test_kafka_cluster_unrestricted_access_disabled:
@@ -12,12 +12,15 @@ class Test_kafka_cluster_unrestricted_access_disabled:
         kafka_client = MagicMock
         kafka_client.clusters = {}
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-            new=kafka_client,
+        with (
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
+                new=kafka_client,
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_unrestricted_access_disabled.kafka_cluster_unrestricted_access_disabled import (
                 kafka_cluster_unrestricted_access_disabled,
@@ -51,12 +54,15 @@ class Test_kafka_cluster_unrestricted_access_disabled:
             )
         }
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-            new=kafka_client,
+        with (
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
+                new=kafka_client,
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_unrestricted_access_disabled.kafka_cluster_unrestricted_access_disabled import (
                 kafka_cluster_unrestricted_access_disabled,
@@ -102,12 +108,15 @@ class Test_kafka_cluster_unrestricted_access_disabled:
             )
         }
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-        ), patch(
-            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-            new=kafka_client,
+        with (
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
+                new=kafka_client,
+            ),
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_unrestricted_access_disabled.kafka_cluster_unrestricted_access_disabled import (
                 kafka_cluster_unrestricted_access_disabled,
@@ -126,6 +135,60 @@ class Test_kafka_cluster_unrestricted_access_disabled:
             assert (
                 result[0].resource_arn
                 == "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == []
+
+    def test_kafka_cluster_serverless_unrestricted_access_disabled(self):
+        kafka_client = MagicMock
+        kafka_client.clusters = {
+            "arn:aws:kafka:us-east-1:123456789012:cluster/serverless-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6": Cluster(
+                id="6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6",
+                name="serverless-cluster-1",
+                arn="arn:aws:kafka:us-east-1:123456789012:cluster/serverless-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6",
+                region=AWS_REGION_US_EAST_1,
+                tags=[],
+                state="ACTIVE",
+                kafka_version="SERVERLESS",
+                data_volume_kms_key_id="AWS_MANAGED",
+                encryption_in_transit=EncryptionInTransit(
+                    client_broker="TLS",
+                    in_cluster=True,
+                ),
+                tls_authentication=True,
+                public_access=False,
+                unauthentication_access=False,
+                enhanced_monitoring="DEFAULT",
+            )
+        }
+
+        with (
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_client.kafka_client",
+                new=kafka_client,
+            ),
+        ):
+            from prowler.providers.aws.services.kafka.kafka_cluster_unrestricted_access_disabled.kafka_cluster_unrestricted_access_disabled import (
+                kafka_cluster_unrestricted_access_disabled,
+            )
+
+            check = kafka_cluster_unrestricted_access_disabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Kafka cluster 'serverless-cluster-1' is serverless and always requires authentication by default."
+            )
+            assert result[0].resource_id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:kafka:us-east-1:123456789012:cluster/serverless-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-6"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []

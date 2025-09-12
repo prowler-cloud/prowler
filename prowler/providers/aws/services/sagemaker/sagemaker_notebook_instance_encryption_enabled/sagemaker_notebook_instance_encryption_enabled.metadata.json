@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-data-encrypted.html",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-data-encrypted.html",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_40#fix---buildtime"

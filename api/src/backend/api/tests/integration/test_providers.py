@@ -17,7 +17,7 @@ def test_delete_provider_without_executing_task(
     client = APIClient()
 
     test_user = "test_email@prowler.com"
-    test_password = "test_password"
+    test_password = "Test_password1@"
 
     prowler_task = tasks_fixture[0]
     task_mock = Mock()

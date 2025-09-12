@@ -20,6 +20,10 @@ def load_checks_to_execute(
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
+        # Bypass check loading for IAC provider since it uses Trivy directly
+        if provider == "iac":
+            return set()
+
         # Local subsets
         checks_to_execute = set()
         check_aliases = {}
@@ -62,16 +66,15 @@ def load_checks_to_execute(
                 checks_to_execute.update(check_severities[severity])
 
             if service_list:
+                checks_from_services = set()
                 for service in service_list:
-                    checks_to_execute = (
-                        set(
-                            CheckMetadata.list(
-                                bulk_checks_metadata=bulk_checks_metadata,
-                                service=service,
-                            )
-                        )
-                        & checks_to_execute
+                    service_checks = CheckMetadata.list(
+                        bulk_checks_metadata=bulk_checks_metadata,
+                        service=service,
                     )
+                    checks_from_services.update(service_checks)
+                checks_to_execute = checks_from_services & checks_to_execute
+
         # Handle if there are checks passed using -C/--checks-file
         elif checks_file:
             checks_to_execute = parse_checks_from_file(checks_file, provider)
@@ -111,7 +114,7 @@ def load_checks_to_execute(
             ):
                 checks_to_execute.add(check_name)
         # Only execute threat detection checks if threat-detection category is set
-        if not categories or "threat-detection" not in categories:
+        if (not categories or "threat-detection" not in categories) and not check_list:
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
 

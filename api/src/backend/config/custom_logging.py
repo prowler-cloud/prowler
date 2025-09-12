@@ -2,9 +2,8 @@ import json
 import logging
 from enum import StrEnum
 
-from django_guid.log_filters import CorrelationId
-
 from config.env import env
+from django_guid.log_filters import CorrelationId
 
 
 class BackendLogger(StrEnum):
@@ -39,9 +38,9 @@ class NDJSONFormatter(logging.Formatter):
             "funcName": record.funcName,
             "process": record.process,
             "thread": record.thread,
-            "transaction_id": record.transaction_id
-            if hasattr(record, "transaction_id")
-            else None,
+            "transaction_id": (
+                record.transaction_id if hasattr(record, "transaction_id") else None
+            ),
         }
 
         # Add REST API extra fields

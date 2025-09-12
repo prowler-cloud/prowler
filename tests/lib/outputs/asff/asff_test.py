@@ -105,7 +105,9 @@ class TestASFF:
             resource_uid="test-arn",
             resource_tags={"key1": "value1"},
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -147,7 +149,7 @@ class TestASFF:
             Remediation=Remediation(
                 Recommendation=Recommendation(
                     Text=finding.metadata.Remediation.Recommendation.Text,
-                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    Url="https://hub.prowler.com/check/check-id",
                 )
             ),
             Description=finding.status_extended,
@@ -170,7 +172,9 @@ class TestASFF:
             resource_name="test-resource",
             resource_uid="test-arn",
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -212,7 +216,7 @@ class TestASFF:
             Remediation=Remediation(
                 Recommendation=Recommendation(
                     Text=finding.metadata.Remediation.Recommendation.Text,
-                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    Url="https://hub.prowler.com/check/check-id",
                 )
             ),
             Description=finding.status_extended,
@@ -238,7 +242,9 @@ class TestASFF:
             resource_uid="test-arn",
             resource_tags={"key1": "value1"},
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
         finding.metadata.Remediation.Recommendation.Text = "x" * 513
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -281,7 +287,7 @@ class TestASFF:
             Remediation=Remediation(
                 Recommendation=Recommendation(
                     Text=f"{'x' * 509}...",
-                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    Url="https://hub.prowler.com/check/check-id",
                 )
             ),
             Description=finding.status_extended,
@@ -517,14 +523,16 @@ class TestASFF:
             resource_uid="test-arn",
             resource_tags={"key1": "value1"},
         )
-        finding.metadata.Remediation.Recommendation.Url = ""
+        finding.metadata.Remediation.Recommendation.Url = (
+            "https://hub.prowler.com/check/check-id"
+        )
 
         timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         expected_asff = [
             {
                 "SchemaVersion": "2018-10-08",
-                "Id": "prowler-test-check-id-123456789012-eu-west-1-1aa220687",
+                "Id": "prowler-service_test_check_id-123456789012-eu-west-1-1aa220687",
                 "ProductArn": "arn:aws:securityhub:eu-west-1::product/prowler/prowler",
                 "RecordState": "ACTIVE",
                 "ProductFields": {
@@ -532,14 +540,14 @@ class TestASFF:
                     "ProviderVersion": prowler_version,
                     "ProwlerResourceName": "test-arn",
                 },
-                "GeneratorId": "prowler-test-check-id",
+                "GeneratorId": "prowler-service_test_check_id",
                 "AwsAccountId": "123456789012",
                 "Types": ["test-type"],
                 "FirstObservedAt": timestamp,
                 "UpdatedAt": timestamp,
                 "CreatedAt": timestamp,
                 "Severity": {"Label": "HIGH"},
-                "Title": "test-check-id",
+                "Title": "service_test_check_id",
                 "Description": "This is a test",
                 "Resources": [
                     {
@@ -560,7 +568,7 @@ class TestASFF:
                 "Remediation": {
                     "Recommendation": {
                         "Text": "",
-                        "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                        "Url": "https://hub.prowler.com/check/check-id",
                     }
                 },
             }
@@ -577,7 +585,7 @@ class TestASFF:
         assert loads(content) == expected_asff
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(ASFF([]), "_file_descriptor")
+        assert not ASFF([])._file_descriptor
 
     def test_asff_generate_status(self):
         assert ASFF.generate_status("PASS") == "PASSED"

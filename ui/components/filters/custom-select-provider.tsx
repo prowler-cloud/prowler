@@ -4,35 +4,52 @@ import { Select, SelectItem } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useMemo } from "react";
 
+import { PROVIDER_TYPES, ProviderType } from "@/types/providers";
+
 import {
   CustomProviderInputAWS,
   CustomProviderInputAzure,
   CustomProviderInputGCP,
+  CustomProviderInputGitHub,
   CustomProviderInputKubernetes,
+  CustomProviderInputM365,
 } from "./custom-provider-inputs";
 
-const dataInputsProvider = [
-  {
-    key: "aws",
+const providerDisplayData: Record<
+  ProviderType,
+  { label: string; component: React.ReactElement }
+> = {
+  aws: {
     label: "Amazon Web Services",
-    value: <CustomProviderInputAWS />,
+    component: <CustomProviderInputAWS />,
   },
-  {
-    key: "gcp",
+  gcp: {
     label: "Google Cloud Platform",
-    value: <CustomProviderInputGCP />,
+    component: <CustomProviderInputGCP />,
   },
-  {
-    key: "azure",
+  azure: {
     label: "Microsoft Azure",
-    value: <CustomProviderInputAzure />,
+    component: <CustomProviderInputAzure />,
   },
-  {
-    key: "kubernetes",
+  m365: {
+    label: "Microsoft 365",
+    component: <CustomProviderInputM365 />,
+  },
+  kubernetes: {
     label: "Kubernetes",
-    value: <CustomProviderInputKubernetes />,
+    component: <CustomProviderInputKubernetes />,
   },
-];
+  github: {
+    label: "GitHub",
+    component: <CustomProviderInputGitHub />,
+  },
+};
+
+const dataInputsProvider = PROVIDER_TYPES.map((providerType) => ({
+  key: providerType,
+  label: providerDisplayData[providerType].label,
+  value: providerDisplayData[providerType].component,
+}));
 
 export const CustomSelectProvider: React.FC = () => {
   const router = useRouter();
@@ -68,6 +85,7 @@ export const CustomSelectProvider: React.FC = () => {
       placeholder="Select a provider"
       classNames={{
         selectorIcon: "right-2",
+        label: "!z-0 mb-2",
       }}
       label="Provider"
       labelPlacement="inside"

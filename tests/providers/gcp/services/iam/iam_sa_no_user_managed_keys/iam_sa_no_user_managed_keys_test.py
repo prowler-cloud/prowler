@@ -12,12 +12,15 @@ class Test_iam_sa_no_user_managed_keys:
     def test_iam_no_sa(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys import (
                 iam_sa_no_user_managed_keys,
@@ -34,12 +37,15 @@ class Test_iam_sa_no_user_managed_keys:
     def test_iam_sa_no_keys(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys import (
                 iam_sa_no_user_managed_keys,
@@ -56,6 +62,7 @@ class Test_iam_sa_no_user_managed_keys:
                     display_name="My service account",
                     keys=[],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -75,12 +82,15 @@ class Test_iam_sa_no_user_managed_keys:
     def test_iam_sa_no_user_managed_keys(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys import (
                 iam_sa_no_user_managed_keys,
@@ -108,6 +118,7 @@ class Test_iam_sa_no_user_managed_keys:
                         )
                     ],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -127,12 +138,15 @@ class Test_iam_sa_no_user_managed_keys:
     def test_iam_sa_user_managed_keys(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys import (
                 iam_sa_no_user_managed_keys,
@@ -160,6 +174,7 @@ class Test_iam_sa_no_user_managed_keys:
                         )
                     ],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 
@@ -179,12 +194,15 @@ class Test_iam_sa_no_user_managed_keys:
     def test_iam_sa_mixed_keys(self):
         iam_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
-            new=iam_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys.iam_client",
+                new=iam_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_sa_no_user_managed_keys.iam_sa_no_user_managed_keys import (
                 iam_sa_no_user_managed_keys,
@@ -219,6 +237,7 @@ class Test_iam_sa_no_user_managed_keys:
                         ),
                     ],
                     project_id=GCP_PROJECT_ID,
+                    uniqueId="111222233334444",
                 )
             ]
 

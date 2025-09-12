@@ -141,6 +141,14 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "collapsible-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-collapsible-content-height)" },
+        },
+        "collapsible-up": {
+          from: { height: "var(--radix-collapsible-content-height)" },
+          to: { height: "0" },
+        },
         advance: { from: { width: 0 }, to: { width: "100%" } },
         "fade-in": { from: { opacity: 0 }, to: { opacity: 1 } },
         "fade-out": { from: { opacity: 1 }, to: { opacity: 0 } },
@@ -162,10 +170,16 @@ module.exports = {
           "50%": { left: "20%", width: "80%" },
           "100%": { left: "100%", width: "100%" },
         },
+        dropArrow: {
+          "0%": { transform: "translateY(-8px)", opacity: "0" },
+          "50%": { opacity: "1" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "collapsible-down": "collapsible-down 0.2s ease-out",
+        "collapsible-up": "collapsible-up 0.2s ease-out",
+        "drop-arrow": "dropArrow 0.6s ease-out infinite",
       },
       screens: {
         "3xl": "1920px", // Add breakpoint to optimize layouts for large screens.
@@ -174,6 +188,7 @@ module.exports = {
   },
   plugins: [
     require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
     nextui({
       themes: {
         dark: {

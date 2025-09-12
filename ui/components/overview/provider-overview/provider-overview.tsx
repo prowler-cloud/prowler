@@ -7,10 +7,13 @@ import {
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
+  GitHubProviderBadge,
   KS8ProviderBadge,
+  M365ProviderBadge,
 } from "@/components/icons/providers-badge";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { ProviderOverviewProps } from "@/types";
+import { PROVIDER_TYPES, ProviderType } from "@/types/providers";
 
 export const ProvidersOverview = ({
   providersOverview,
@@ -20,27 +23,38 @@ export const ProvidersOverview = ({
   const calculatePassingPercentage = (pass: number, total: number) =>
     total > 0 ? ((pass / total) * 100).toFixed(2) : "0.00";
 
-  const renderProviderBadge = (providerId: string) => {
+  const renderProviderBadge = (providerId: ProviderType) => {
     switch (providerId) {
       case "aws":
         return <AWSProviderBadge width={30} height={30} />;
       case "azure":
         return <AzureProviderBadge width={30} height={30} />;
+      case "m365":
+        return <M365ProviderBadge width={30} height={30} />;
       case "gcp":
         return <GCPProviderBadge width={30} height={30} />;
       case "kubernetes":
         return <KS8ProviderBadge width={30} height={30} />;
+      case "github":
+        return <GitHubProviderBadge width={30} height={30} />;
       default:
         return null;
     }
   };
 
-  const providers = [
-    { id: "aws", name: "AWS" },
-    { id: "azure", name: "Azure" },
-    { id: "gcp", name: "GCP" },
-    { id: "kubernetes", name: "Kubernetes" },
-  ];
+  const providerDisplayNames: Record<ProviderType, string> = {
+    aws: "AWS",
+    azure: "Azure",
+    m365: "M365",
+    gcp: "GCP",
+    kubernetes: "Kubernetes",
+    github: "GitHub",
+  };
+
+  const providers = PROVIDER_TYPES.map((providerType) => ({
+    id: providerType,
+    name: providerDisplayNames[providerType],
+  }));
 
   if (!providersOverview || !Array.isArray(providersOverview.data)) {
     return (

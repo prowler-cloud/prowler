@@ -7,9 +7,14 @@ import { z } from "zod";
 
 import { addProviderFormSchema } from "@/types";
 
-import { AWSProviderBadge, AzureProviderBadge } from "../icons/providers-badge";
-import { GCPProviderBadge } from "../icons/providers-badge/GCPProviderBadge";
-import { KS8ProviderBadge } from "../icons/providers-badge/KS8ProviderBadge";
+import {
+  AWSProviderBadge,
+  AzureProviderBadge,
+  GCPProviderBadge,
+  GitHubProviderBadge,
+  KS8ProviderBadge,
+  M365ProviderBadge,
+} from "../icons/providers-badge";
 import { CustomRadio } from "../ui/custom";
 import { FormMessage } from "../ui/form";
 
@@ -55,10 +60,22 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
                   <span className="ml-2">Microsoft Azure</span>
                 </div>
               </CustomRadio>
+              <CustomRadio description="Microsoft 365" value="m365">
+                <div className="flex items-center">
+                  <M365ProviderBadge size={26} />
+                  <span className="ml-2">Microsoft 365</span>
+                </div>
+              </CustomRadio>
               <CustomRadio description="Kubernetes" value="kubernetes">
                 <div className="flex items-center">
                   <KS8ProviderBadge size={26} />
                   <span className="ml-2">Kubernetes</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio description="GitHub" value="github">
+                <div className="flex items-center">
+                  <GitHubProviderBadge size={26} />
+                  <span className="ml-2">GitHub</span>
                 </div>
               </CustomRadio>
             </div>

@@ -41,6 +41,7 @@ export function DataTableRowActions<InvitationProps>({
   const invitationEmail = (row.original as any).attributes?.email;
   const invitationRole = (row.original as any).relationships?.role?.attributes
     ?.name;
+  const invitationAccepted = (row.original as any).attributes?.state;
 
   return (
     <>
@@ -101,6 +102,7 @@ export function DataTableRowActions<InvitationProps>({
                 textValue="Edit Invitation"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onPress={() => setIsEditOpen(true)}
+                isDisabled={invitationAccepted === "accepted"}
               >
                 Edit Invitation
               </DropdownItem>
@@ -118,6 +120,7 @@ export function DataTableRowActions<InvitationProps>({
                   />
                 }
                 onPress={() => setIsDeleteOpen(true)}
+                isDisabled={invitationAccepted === "accepted"}
               >
                 Revoke Invitation
               </DropdownItem>

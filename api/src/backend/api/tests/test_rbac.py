@@ -1,7 +1,20 @@
+from unittest.mock import ANY, Mock, patch
+
 import pytest
+from conftest import TODAY
 from django.urls import reverse
 from rest_framework import status
-from unittest.mock import patch, ANY, Mock
+
+from api.models import (
+    Membership,
+    ProviderGroup,
+    ProviderGroupMembership,
+    Role,
+    RoleProviderGroupRelationship,
+    User,
+    UserRoleRelationship,
+)
+from api.v1.serializers import TokenSerializer
 
 
 @pytest.mark.django_db
@@ -48,7 +61,7 @@ class TestUserViewSet:
     def test_create_user_with_all_permissions(self, authenticated_client_rbac):
         valid_user_payload = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": "new_user@test.com",
         }
         response = authenticated_client_rbac.post(
@@ -62,7 +75,7 @@ class TestUserViewSet:
     ):
         valid_user_payload = {
             "name": "test",
-            "password": "newpassword123",
+            "password": "Newpassword123@",
             "email": "new_user@test.com",
         }
         response = authenticated_client_no_permissions_rbac.post(
@@ -304,3 +317,180 @@ class TestProviderViewSet:
             reverse("provider-connection", kwargs={"pk": provider.id})
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestLimitedVisibility:
+    TEST_EMAIL = "rbac@rbac.com"
+    TEST_PASSWORD = "Thisisapassword123@"
+
+    @pytest.fixture
+    def limited_admin_user(
+        self, django_db_setup, django_db_blocker, tenants_fixture, providers_fixture
+    ):
+        with django_db_blocker.unblock():
+            tenant = tenants_fixture[0]
+            provider = providers_fixture[0]
+            user = User.objects.create_user(
+                name="testing",
+                email=self.TEST_EMAIL,
+                password=self.TEST_PASSWORD,
+            )
+            Membership.objects.create(
+                user=user,
+                tenant=tenant,
+                role=Membership.RoleChoices.OWNER,
+            )
+
+            role = Role.objects.create(
+                name="limited_visibility",
+                tenant=tenant,
+                manage_users=True,
+                manage_account=True,
+                manage_billing=True,
+                manage_providers=True,
+                manage_integrations=True,
+                manage_scans=True,
+                unlimited_visibility=False,
+            )
+            UserRoleRelationship.objects.create(
+                user=user,
+                role=role,
+                tenant=tenant,
+            )
+
+            provider_group = ProviderGroup.objects.create(
+                name="limited_visibility_group",
+                tenant=tenant,
+            )
+            ProviderGroupMembership.objects.create(
+                tenant=tenant,
+                provider=provider,
+                provider_group=provider_group,
+            )
+
+            RoleProviderGroupRelationship.objects.create(
+                tenant=tenant, role=role, provider_group=provider_group
+            )
+
+        return user
+
+    @pytest.fixture
+    def authenticated_client_rbac_limited(
+        self, limited_admin_user, tenants_fixture, client
+    ):
+        client.user = limited_admin_user
+        tenant_id = tenants_fixture[0].id
+        serializer = TokenSerializer(
+            data={
+                "type": "tokens",
+                "email": self.TEST_EMAIL,
+                "password": self.TEST_PASSWORD,
+                "tenant_id": tenant_id,
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        access_token = serializer.validated_data["access"]
+        client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+        return client
+
+    def test_integrations(
+        self, authenticated_client_rbac_limited, integrations_fixture, providers_fixture
+    ):
+        # Integration 2 is related to provider1 and provider 2
+        # This user cannot see provider 2
+        integration = integrations_fixture[1]
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert integration.providers.count() == 2
+        assert (
+            response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
+        )
+
+    def test_overviews_providers(
+        self,
+        authenticated_client_rbac_limited,
+        scan_summaries_fixture,
+        providers_fixture,
+    ):
+        # By default, the associated provider is the one which has the overview data
+        response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > 0
+
+        # Changing the provider visibility, no data should be returned
+        # Only the associated provider to that group is changed
+        new_provider = providers_fixture[1]
+        ProviderGroupMembership.objects.all().update(provider=new_provider)
+
+        response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    @pytest.mark.parametrize(
+        "endpoint_name",
+        [
+            "findings",
+            "findings_severity",
+        ],
+    )
+    def test_overviews_findings(
+        self,
+        endpoint_name,
+        authenticated_client_rbac_limited,
+        scan_summaries_fixture,
+        providers_fixture,
+    ):
+        # By default, the associated provider is the one which has the overview data
+        response = authenticated_client_rbac_limited.get(
+            reverse(f"overview-{endpoint_name}")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        values = response.json()["data"]["attributes"].values()
+        assert any(value > 0 for value in values)
+
+        # Changing the provider visibility, no data should be returned
+        # Only the associated provider to that group is changed
+        new_provider = providers_fixture[1]
+        ProviderGroupMembership.objects.all().update(provider=new_provider)
+
+        response = authenticated_client_rbac_limited.get(
+            reverse(f"overview-{endpoint_name}")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]["attributes"].values()
+        assert all(value == 0 for value in data)
+
+    def test_overviews_services(
+        self,
+        authenticated_client_rbac_limited,
+        scan_summaries_fixture,
+        providers_fixture,
+    ):
+        # By default, the associated provider is the one which has the overview data
+        response = authenticated_client_rbac_limited.get(
+            reverse("overview-services"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > 0
+
+        # Changing the provider visibility, no data should be returned
+        # Only the associated provider to that group is changed
+        new_provider = providers_fixture[1]
+        ProviderGroupMembership.objects.all().update(provider=new_provider)
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("overview-services"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0

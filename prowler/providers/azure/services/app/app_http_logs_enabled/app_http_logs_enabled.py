@@ -22,6 +22,10 @@ class app_http_logs_enabled(Check):
                                     report.status = "PASS"
                                     report.status_extended = f"App {app.name} has HTTP Logs enabled in diagnostic setting {diagnostic_setting.name} in subscription {subscription_name}"
                                     break
+                                elif log.category_group == "allLogs" and log.enabled:
+                                    report.status = "PASS"
+                                    report.status_extended = f"App {app.name} has allLogs category group which includes HTTP Logs enabled in diagnostic setting {diagnostic_setting.name} in subscription {subscription_name}"
+                                    break
                     findings.append(report)
 
         return findings

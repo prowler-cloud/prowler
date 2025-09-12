@@ -2,7 +2,7 @@ from json import loads
 from typing import Optional
 
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -92,12 +92,12 @@ class SNS(AWSService):
                     )
                     subscriptions: list[Subscription] = [
                         Subscription(
-                            id=sub["SubscriptionArn"].split(":")[-1],
+                            id=(parts := sub["SubscriptionArn"].split(":"))[-1],
                             arn=sub["SubscriptionArn"],
                             owner=sub["Owner"],
                             protocol=sub["Protocol"],
                             endpoint=sub["Endpoint"],
-                            region=sub["SubscriptionArn"].split(":")[3],
+                            region=parts[3] if len(parts) > 3 else "unknown",
                         )
                         for sub in response["Subscriptions"]
                     ]

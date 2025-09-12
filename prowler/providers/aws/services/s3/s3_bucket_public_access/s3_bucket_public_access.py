@@ -45,7 +45,9 @@ class s3_bucket_public_access(Check):
                                     report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket ACL."
 
                         # 4. Check bucket policy
-                        if is_policy_public(bucket.policy, s3_client.audited_account):
+                        if bucket.policy is not None and is_policy_public(
+                            bucket.policy, s3_client.audited_account
+                        ):
                             report.status = "FAIL"
                             report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
                     findings.append(report)

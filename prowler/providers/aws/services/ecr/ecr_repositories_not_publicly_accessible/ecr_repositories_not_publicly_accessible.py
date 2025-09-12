@@ -8,6 +8,8 @@ class ecr_repositories_not_publicly_accessible(Check):
         findings = []
         for registry in ecr_client.registries.values():
             for repository in registry.repositories:
+                if repository.policy is None:
+                    continue
                 report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
                 report.status = "PASS"
                 report.status_extended = (

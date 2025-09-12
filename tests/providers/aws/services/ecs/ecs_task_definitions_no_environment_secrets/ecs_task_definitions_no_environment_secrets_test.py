@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from boto3 import client
 from moto import mock_aws
+
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 TASK_NAME = "test-task"
@@ -21,12 +22,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
@@ -64,12 +68,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
@@ -116,12 +123,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
@@ -168,12 +178,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
@@ -220,12 +233,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
@@ -276,12 +292,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,
@@ -332,12 +351,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
                 ecs_task_definitions_no_environment_secrets,

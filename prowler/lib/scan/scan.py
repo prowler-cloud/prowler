@@ -1,4 +1,5 @@
 import datetime
+from types import SimpleNamespace
 from typing import Generator
 
 from prowler.lib.check.check import (
@@ -22,7 +23,7 @@ from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidSeverityError,
     ScanInvalidStatusError,
 )
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, ProviderOutputOptions
 from prowler.providers.common.provider import Provider
 
 
@@ -38,6 +39,8 @@ class Scan:
     _progress: float = 0.0
     _duration: int = 0
     _status: list[str] = None
+    _bulk_checks_metadata: dict[str, CheckMetadata]
+    _bulk_compliance_frameworks: dict
 
     def __init__(
         self,
@@ -88,18 +91,18 @@ class Scan:
                 raise ScanInvalidStatusError(f"Invalid status provided: {s}.")
 
         # Load bulk compliance frameworks
-        bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
+        self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
 
         # Get bulk checks metadata for the provider
-        bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
+        self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
         # Complete checks metadata with the compliance framework specification
-        bulk_checks_metadata = update_checks_metadata_with_compliance(
-            bulk_compliance_frameworks, bulk_checks_metadata
+        self._bulk_checks_metadata = update_checks_metadata_with_compliance(
+            self._bulk_compliance_frameworks, self._bulk_checks_metadata
         )
 
         # Create a list of valid categories
         valid_categories = set()
-        for check, metadata in bulk_checks_metadata.items():
+        for check, metadata in self._bulk_checks_metadata.items():
             for category in metadata.Categories:
                 if category not in valid_categories:
                     valid_categories.add(category)
@@ -107,7 +110,7 @@ class Scan:
         # Validate checks
         if checks:
             for check in checks:
-                if check not in bulk_checks_metadata.keys():
+                if check not in self._bulk_checks_metadata.keys():
                     raise ScanInvalidCheckError(f"Invalid check provided: {check}.")
 
         # Validate services
@@ -121,7 +124,7 @@ class Scan:
         # Validate compliances
         if compliances:
             for compliance in compliances:
-                if compliance not in bulk_compliance_frameworks.keys():
+                if compliance not in self._bulk_compliance_frameworks.keys():
                     raise ScanInvalidComplianceFrameworkError(
                         f"Invalid compliance provided: {compliance}."
                     )
@@ -147,8 +150,8 @@ class Scan:
         # Load checks to execute
         self._checks_to_execute = sorted(
             load_checks_to_execute(
-                bulk_checks_metadata=bulk_checks_metadata,
-                bulk_compliance_frameworks=bulk_compliance_frameworks,
+                bulk_checks_metadata=self._bulk_checks_metadata,
+                bulk_compliance_frameworks=self._bulk_compliance_frameworks,
                 check_list=checks,
                 service_list=services,
                 compliance_frameworks=compliances,
@@ -215,9 +218,17 @@ class Scan:
     def duration(self) -> int:
         return self._duration
 
+    @property
+    def bulk_checks_metadata(self) -> dict[str, CheckMetadata]:
+        return self._bulk_checks_metadata
+
+    @property
+    def bulk_compliance_frameworks(self) -> dict[str, CheckMetadata]:
+        return self._bulk_compliance_frameworks
+
     def scan(
         self,
-        custom_checks_metadata: dict = {},
+        custom_checks_metadata: dict = None,
     ) -> Generator[tuple[float, list[Finding]], None, None]:
         """
         Executes the scan by iterating over the checks to execute and executing each check.
@@ -234,6 +245,14 @@ class Scan:
             Exception: If any other error occurs during the execution of a check.
         """
         try:
+            # Using SimpleNamespace to create a mocked object
+            arguments = SimpleNamespace()
+
+            output_options = ProviderOutputOptions(
+                arguments=arguments,
+                bulk_checks_metadata=self.bulk_checks_metadata,
+            )
+
             checks_to_execute = self.checks_to_execute
             # Initialize the Audit Metadata
             # TODO: this should be done in the provider class
@@ -301,7 +320,9 @@ class Scan:
                         try:
                             findings.append(
                                 Finding.generate_output(
-                                    self._provider, finding, output_options=None
+                                    self.provider,
+                                    finding,
+                                    output_options=output_options,
                                 )
                             )
                         except Exception:

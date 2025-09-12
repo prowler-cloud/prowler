@@ -13,23 +13,29 @@ class rds_cluster_critical_event_subscription(Check):
                 report.resource_id = rds_client.audited_account
                 report.resource_arn = rds_client._get_rds_arn_template(db_event.region)
                 if db_event.source_type == "db-cluster" and db_event.enabled:
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource=db_event
-                    )
                     if db_event.event_list == [] or set(db_event.event_list) == {
                         "maintenance",
                         "failure",
                     }:
+                        report = Check_Report_AWS(
+                            metadata=self.metadata(), resource=db_event
+                        )
                         report.status = "PASS"
                         report.status_extended = "RDS cluster events are subscribed."
 
                     elif db_event.event_list == ["maintenance"]:
+                        report = Check_Report_AWS(
+                            metadata=self.metadata(), resource=db_event
+                        )
                         report.status = "FAIL"
                         report.status_extended = (
                             "RDS cluster event category of failure is not subscribed."
                         )
 
                     elif db_event.event_list == ["failure"]:
+                        report = Check_Report_AWS(
+                            metadata=self.metadata(), resource=db_event
+                        )
                         report.status = "FAIL"
                         report.status_extended = "RDS cluster event category of maintenance is not subscribed."
 

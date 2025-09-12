@@ -70,12 +70,15 @@ class Test_dms_instance_no_public_access:
 
         from prowler.providers.aws.services.dms.dms_service import DMS
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
-            new=DMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
+                new=DMS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
                 dms_instance_no_public_access,
@@ -96,12 +99,15 @@ class Test_dms_instance_no_public_access:
 
             from prowler.providers.aws.services.dms.dms_service import DMS
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
-                new=DMS(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
+                    new=DMS(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
                     dms_instance_no_public_access,
@@ -131,12 +137,15 @@ class Test_dms_instance_no_public_access:
 
             from prowler.providers.aws.services.dms.dms_service import DMS
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
-                new=DMS(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
+                    new=DMS(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
                     dms_instance_no_public_access,
@@ -199,15 +208,19 @@ class Test_dms_instance_no_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
-                new=dms_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_client.dms_client",
-                new=dms_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
-                new=EC2(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
+                    new=dms_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_client.dms_client",
+                    new=dms_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
+                    new=EC2(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
@@ -275,15 +288,19 @@ class Test_dms_instance_no_public_access:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
-                new=dms_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_client.dms_client",
-                new=dms_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
-                new=EC2(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
+                    new=dms_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_client.dms_client",
+                    new=dms_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
+                    new=EC2(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (

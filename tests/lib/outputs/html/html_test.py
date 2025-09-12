@@ -4,13 +4,20 @@ from io import StringIO
 from mock import patch
 
 from prowler.config.config import prowler_version, timestamp
+from prowler.lib.logger import logger
 from prowler.lib.outputs.html.html import HTML
+from prowler.providers.github.models import GithubAppIdentityInfo
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
+from tests.providers.github.github_fixtures import APP_ID, set_mocked_github_provider
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
+)
+from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
+from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
+    set_mocked_mongodbatlas_provider,
 )
 
 html_stats = {
@@ -25,15 +32,15 @@ pass_html_finding = """
                         <tr class="p-3 mb-2 bg-success-custom">
                             <td>PASS</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -43,10 +50,10 @@ fail_html_finding = """
                         <tr class="table-danger">
                             <td>FAIL</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td>test-resource-uid</td>
                             <td>
 &#x2022;key1=value1
@@ -55,7 +62,7 @@ fail_html_finding = """
 </td>
                             <td>test-status-extended</td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -65,15 +72,15 @@ muted_html_finding = """
                         <tr class="table-warning">
                             <td>MUTED (PASS)</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -83,15 +90,15 @@ manual_html_finding = """
                         <tr class="table-info">
                             <td>MANUAL</td>
                             <td>high</td>
-                            <td>test-service</td>
+                            <td>service</td>
                             <td>eu-west-1</td>
-                            <td>test-check-id</td>
-                            <td>test-check-id</td>
+                            <td>service<wbr />_test<wbr />_check<wbr />_id</td>
+                            <td>service_test_check_id</td>
                             <td></td>
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -222,6 +229,127 @@ kubernetes_html_assessment_summary = """
                     </div>
                 </div>"""
 
+github_personal_access_token_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+
+                            <li class="list-group-item">
+                                <b>GitHub account:</b> account-name
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> Personal Access Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+github_app_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub App Name:</b> test-app
+                            </li>
+                            <li class="list-group-item">
+                                <b>Installations:</b> test-org
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> GitHub App Token
+                            </li>
+                            <li class="list-group-item">
+                                <b>GitHub App ID:</b> app-id
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+m365_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            M365 Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>M365 Tenant Domain:</b> user.onmicrosoft.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        M365 Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>M365 Identity Type:</b> Application
+                            </li>
+                            <li class="list-group-item">
+                                <b>M365 Identity ID:</b> 00000000-0000-0000-0000-000000000000
+                            </li>
+                            <li class="list-group-item">
+                                <b>M365 User:</b> user@email.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+mongodbatlas_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas organization:</b> test_org_name
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas authentication method:</b> API Key
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
 
 def get_aws_html_header(args: list) -> str:
     """
@@ -233,8 +361,7 @@ def get_aws_html_header(args: list) -> str:
     Returns:
         str: HTML header for AWS
     """
-    aws_html_header = f"""
-<!DOCTYPE html>
+    aws_html_header = f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -438,14 +565,15 @@ class TestHTML:
                 status="FAIL",
                 resource_tags={"key1": "value1", "key2": "value2"},
                 severity="high",
-                service_name="test-service",
+                service_name="service",
                 region=AWS_REGION_EU_WEST_1,
-                check_id="test-check-id",
-                check_title="test-check-id",
+                check_id="service_test_check_id",
+                check_title="service_test_check_id",
                 resource_uid="test-resource-uid",
                 status_extended="test-status-extended",
                 risk="test-risk",
                 remediation_recommendation_text="test-remediation-recommendation-text",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
                 compliance={"test-compliance": "test-compliance"},
             )
         ]
@@ -456,21 +584,35 @@ class TestHTML:
         assert output_data == fail_html_finding
 
     def test_transform_pass_finding(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
         assert output_data == pass_html_finding
 
     def test_transform_muted_finding(self):
-        findings = [generate_finding_output(muted=True)]
+        findings = [
+            generate_finding_output(
+                muted=True,
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
         assert output_data == muted_html_finding
 
     def test_transform_manual_finding(self):
-        findings = [generate_finding_output(status="MANUAL")]
+        findings = [
+            generate_finding_output(
+                status="MANUAL",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
@@ -478,7 +620,11 @@ class TestHTML:
 
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -492,11 +638,15 @@ class TestHTML:
         assert content == get_aws_html_header(args) + pass_html_finding + html_footer
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(HTML([]), "_file_descriptor")
+        assert not HTML([])._file_descriptor
 
     def test_write_header(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -510,7 +660,11 @@ class TestHTML:
 
     def test_write_footer(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
 
@@ -521,7 +675,11 @@ class TestHTML:
         assert content == html_footer
 
     def test_aws_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
@@ -530,7 +688,11 @@ class TestHTML:
         assert summary == aws_html_assessment_summary
 
     def test_azure_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_azure_provider()
 
@@ -539,7 +701,11 @@ class TestHTML:
         assert summary == summary
 
     def test_gcp_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
 
@@ -548,10 +714,84 @@ class TestHTML:
         assert summary == gcp_html_assessment_summary
 
     def test_kubernetes_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_kubernetes_provider()
 
         summary = output.get_assessment_summary(provider)
 
         assert summary == kubernetes_html_assessment_summary
+
+    def test_m365_get_assessment_summary(self):
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(findings)
+        provider = set_mocked_m365_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        expected_summary = m365_html_assessment_summary
+        assert summary == expected_summary
+
+    def test_github_personal_access_token_get_assessment_summary(self):
+        """Test GitHub HTML assessment summary generation with Personal Access Token authentication."""
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(findings)
+        provider = set_mocked_github_provider(auth_method="Personal Access Token")
+
+        summary = output.get_assessment_summary(provider)
+
+        # Check for expected content in the summary
+        assert "GitHub Assessment Summary" in summary
+        assert "GitHub Credentials" in summary
+        assert "<b>GitHub account:</b> account-name" in summary
+        assert "<b>GitHub authentication method:</b> Personal Access Token" in summary
+        # Note: account_email is None in the default fixture, so it shouldn't appear
+
+    def test_github_app_get_assessment_summary(self):
+        """Test GitHub HTML assessment summary generation with GitHub App authentication."""
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(findings)
+
+        provider = set_mocked_github_provider(
+            auth_method="GitHub App Token",
+            identity=GithubAppIdentityInfo(
+                app_id=APP_ID, app_name="test-app", installations=["test-org"]
+            ),
+        )
+
+        summary = output.get_assessment_summary(provider)
+        logger.error(summary)
+
+        # Check for expected content in the summary
+        assert "GitHub Assessment Summary" in summary
+        assert "GitHub Credentials" in summary
+        assert "<b>GitHub App Name:</b> test-app" in summary
+        assert "<b>Installations:</b> test-org" in summary
+        assert "<b>GitHub authentication method:</b> GitHub App Token" in summary
+        assert f"<b>GitHub App ID:</b> {APP_ID}" in summary
+
+    def test_mongodbatlas_get_assessment_summary(self):
+        """Test MongoDB Atlas HTML assessment summary generation."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_mongodbatlas_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        assert summary == mongodbatlas_html_assessment_summary

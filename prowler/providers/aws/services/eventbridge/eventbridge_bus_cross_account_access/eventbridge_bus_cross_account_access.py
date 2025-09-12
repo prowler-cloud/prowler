@@ -9,6 +9,8 @@ class eventbridge_bus_cross_account_access(Check):
     def execute(self):
         findings = []
         for bus in eventbridge_client.buses.values():
+            if bus.policy is None:
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=bus)
             report.status = "PASS"
             report.status_extended = (

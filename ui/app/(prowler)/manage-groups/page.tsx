@@ -58,13 +58,13 @@ export default function ManageGroupsPage({
 }
 
 const SSRAddGroupForm = async () => {
-  const providersResponse = await getProviders({});
+  const providersResponse = await getProviders({ pageSize: 50 });
   const rolesResponse = await getRoles({});
 
   const providersData =
     providersResponse?.data?.map((provider: ProviderProps) => ({
       id: provider.id,
-      name: provider.attributes.alias,
+      name: provider.attributes.alias || provider.attributes.uid,
     })) || [];
 
   const rolesData =
@@ -95,13 +95,13 @@ const SSRDataEditGroup = async ({
     return <div>Provider group not found</div>;
   }
 
-  const providersResponse = await getProviders({});
+  const providersResponse = await getProviders({ pageSize: 50 });
   const rolesResponse = await getRoles({});
 
   const providersList =
     providersResponse?.data?.map((provider: ProviderProps) => ({
       id: provider.id,
-      name: provider.attributes.alias,
+      name: provider.attributes.alias || provider.attributes.uid,
     })) || [];
 
   const rolesList =
@@ -115,7 +115,7 @@ const SSRDataEditGroup = async ({
   const associatedProviders = relationships.providers?.data.map(
     (provider: ProviderProps) => {
       const matchingProvider = providersList.find(
-        (p: ProviderProps) => p.id === provider.id,
+        (p: { id: string; name: string }) => p.id === provider.id,
       );
       return {
         id: provider.id,
@@ -163,6 +163,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   // Convert filters to the correct type
   const filters: Record<string, string> = {};
@@ -178,6 +179,7 @@ const SSRDataTable = async ({
     page,
     sort,
     filters,
+    pageSize,
   });
   return (
     <DataTable

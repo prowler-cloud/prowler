@@ -11,12 +11,15 @@ class Test_cloudsql_instance_mysql_local_infile_flag:
     def test_no_cloudsql_instances(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag import (
                 cloudsql_instance_mysql_local_infile_flag,
@@ -31,12 +34,15 @@ class Test_cloudsql_instance_mysql_local_infile_flag:
     def test_cloudsql_postgres_instance(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag import (
                 cloudsql_instance_mysql_local_infile_flag,
@@ -68,12 +74,15 @@ class Test_cloudsql_instance_mysql_local_infile_flag:
     def test_cloudsql_instance_with_no_flags(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag import (
                 cloudsql_instance_mysql_local_infile_flag,
@@ -114,12 +123,15 @@ class Test_cloudsql_instance_mysql_local_infile_flag:
     def test_cloudsql_instance_with_local_infile_flag_off(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag import (
                 cloudsql_instance_mysql_local_infile_flag,
@@ -160,12 +172,15 @@ class Test_cloudsql_instance_mysql_local_infile_flag:
     def test_cloudsql_instance_with_local_infile_flag_on(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_mysql_local_infile_flag.cloudsql_instance_mysql_local_infile_flag import (
                 cloudsql_instance_mysql_local_infile_flag,

@@ -5,7 +5,7 @@ import { getRoles } from "@/actions/roles";
 import { getUsers } from "@/actions/users/users";
 import { FilterControls } from "@/components/filters";
 import { filterUsers } from "@/components/filters/data-filters";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { AddUserButton } from "@/components/users";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
@@ -19,9 +19,7 @@ export default async function Users({
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
-    <>
-      <Header title="Users" icon="ci:users" />
-      <Spacer y={4} />
+    <ContentLayout title="Users" icon="ci:users">
       <FilterControls search />
       <Spacer y={8} />
       <AddUserButton />
@@ -32,7 +30,7 @@ export default async function Users({
       <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
-    </>
+    </ContentLayout>
   );
 }
 
@@ -43,6 +41,7 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
+  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
@@ -52,7 +51,7 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const usersData = await getUsers({ query, page, sort, filters });
+  const usersData = await getUsers({ query, page, sort, filters, pageSize });
   const rolesData = await getRoles({});
 
   // Create a dictionary for roles by user ID

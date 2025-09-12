@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_members_mfa_required",
+  "CheckTitle": "Check if organization members are required to have MFA enabled.",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "GitHubOrganization",
+  "Description": "Ensure that all organization members are required to have multi-factor authentication (MFA) enabled. Enforcing MFA for all organization members helps protect the organization's resources and data from unauthorized access and security breaches.",
+  "Risk": "Without Multi-Factor Authentication (MFA), user accounts are vulnerable to unauthorized access if their passwords are compromised. This can lead to unauthorized actions such as data theft, malicious code commits, and repository manipulation, potentially compromising the organization's source code and intellectual property.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Mandate the use of MFA for all organization members. This significantly enhances account security by adding an additional layer of protection beyond a username and password. MFA ensures that even if a password is compromised, unauthorized access to user accounts and repositories is prevented, safeguarding sensitive data and critical assets.",
+      "Url": "https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/preparing-to-require-two-factor-authentication-in-your-organization"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

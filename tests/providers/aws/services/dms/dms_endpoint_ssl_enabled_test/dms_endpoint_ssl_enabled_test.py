@@ -9,12 +9,15 @@ class Test_dms_endpoint_ssl_enabled:
         dms_client = mock.MagicMock
         dms_client.endpoints = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
                 dms_endpoint_ssl_enabled,
@@ -43,12 +46,15 @@ class Test_dms_endpoint_ssl_enabled:
         dms_client.audited_partition = "aws"
         dms_client.audited_region = AWS_REGION_US_EAST_1
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
                 dms_endpoint_ssl_enabled,
@@ -92,12 +98,15 @@ class Test_dms_endpoint_ssl_enabled:
         dms_client.audited_partition = "aws"
         dms_client.audited_region = AWS_REGION_US_EAST_1
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
                 dms_endpoint_ssl_enabled,
@@ -138,12 +147,15 @@ class Test_dms_endpoint_ssl_enabled:
         dms_client.audited_partition = "aws"
         dms_client.audited_region = AWS_REGION_US_EAST_1
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
                 dms_endpoint_ssl_enabled,
@@ -184,12 +196,15 @@ class Test_dms_endpoint_ssl_enabled:
         dms_client.audited_partition = "aws"
         dms_client.audited_region = AWS_REGION_US_EAST_1
 
-        with mock.patch(
-            "prowler.providers.aws.services.dms.dms_service.DMS",
-            new=dms_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_client.dms_client",
-            new=dms_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
+            ),
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
                 dms_endpoint_ssl_enabled,

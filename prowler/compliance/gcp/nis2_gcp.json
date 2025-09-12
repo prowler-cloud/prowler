@@ -1,0 +1,1492 @@
+{
+  "Framework": "NIS2",
+  "Version": "",
+  "Provider": "GCP",
+  "Description": "ANNEX to the Commission Implementing Regulation laying down rules for the application of Directive (EU) 2022/2555 as regards technical and methodological requirements of cybersecurity risk-management measures and further specification of the cases in which an incident is considered to be significant with regard to DNS service providers, TLD name registries, cloud computing service providers, data centre service providers, content delivery network providers, managed service providers, managed security service providers, providers of online market places, of online search engines and of social networking services platforms, and trust service providers",
+  "Requirements": [
+    {
+      "Id": "1.1.1.a",
+      "Description": "set out the relevant entities approach to managing the security of their network and information systems;",
+      "Checks": [
+        "iam_organization_essential_contacts_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.1.c",
+      "Description": "set out network and information security objectives;",
+      "Checks": [
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "compute"
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "The network and information system security policy shall be reviewed and, where appropriate, updated by management bodies at least annually and when significant incidents or significant changes to operations or risks occur. The result of the reviews shall be documented.",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.1 Policy on the security of network and information systems",
+          "Service": "logging"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "As part of their policy on the security of network and information systems referred to in point 1.1., the relevant entities shall lay down responsibilities and authorities for network and information system security and assign them to roles, allocate them according to the relevant entities needs, and communicate them to the management bodies.",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "compute"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.4",
+      "Description": "Depending on the size of the relevant entities, network and information system security shall be covered by dedicated roles or duties carried out in addition to existing roles.",
+      "Checks": [
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "1.2 Roles, responsibilities and authorities",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.e",
+      "Description": "analyse the risks posed to the security of network and information systems, including threat, likelihood, impact, and risk level, taking into account cyber threat intelligence and vulnerabilities;",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.g",
+      "Description": "identify and prioritise appropriate risk treatment options and measures;",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2.h",
+      "Description": "continuously monitor the implementation of the risk treatment measures;",
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.1 Risk management framework",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "The relevant entities shall regularly review the compliance with their policies on network and information system security, topic-specific policies, rules, and standards. The management bodies shall be informed of the status of network and information security on the basis of the compliance reviews by means of regular reporting.",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "gcr_container_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.2 Compliance monitoring",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "2.3.1",
+      "Description": "The relevant entities shall review independently their approach to managing network and information system security and its implementation including people, processes and technologies.",
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 RISK MANAGEMENT POLICY (ARTICLE 21(2), POINT (A) OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "2.3 Independent review of information and network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.d",
+      "Description": "documents to be used in the course of incident detection and response such as incident response manuals, escalation charts, contact lists and templates.",
+      "Checks": [
+        "iam_organization_essential_contacts_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3",
+      "Description": "The roles, responsibilities and procedures laid down in the policy shall be tested and reviewed and, where appropriate, updated at planned intervals and after significant incidents or significant changes to operations or risks.",
+      "Checks": [
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.1 Incident handling policy",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "The relevant entities shall lay down procedures and use tools to monitor and log activities on their network and information systems to detect events that could be considered as incidents and respond accordingly to mitigate the impact.",
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.a",
+      "Description": "relevant outbound and inbound network traffic;",
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.b",
+      "Description": "creation, modification or deletion of users of the relevant entities network and information systems and extension of the permissions;",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "logging"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.c",
+      "Description": "access to systems and applications;",
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.d",
+      "Description": "authentication-related events;",
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.e",
+      "Description": "all privileged access to systems and applications, and activities performed by administrative accounts;",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_audit_logs_enabled",
+        "cloudsql_instance_postgres_log_connections_flag"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.f",
+      "Description": "access or changes to critical configuration and backup files;",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "logging"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.3.g",
+      "Description": "event logs and logs from security tools, such as antivirus, intrusion detection systems or firewalls;",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "logging"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.4",
+      "Description": "The logs shall be regularly reviewed for any unusual or unwanted trends. Where appropriate, the relevant entities shall lay down appropriate values for alarm thresholds. If the laid down values for alarm threshold are exceeded, an alarm shall be triggered, where appropriate, automatically. The relevant entities shall ensure that, in case of an alarm, a qualified and appropriate response is initiated in a timely manner.",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "logging"
+        }
+      ]
+    },
+    {
+      "Id": "3.2.5",
+      "Description": "The relevant entities shall maintain and back up logs for a predefined period and shall protect them from unauthorised access or changes.",
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.2 Monitoring and logging",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "3.4.1",
+      "Description": "The relevant entities shall assess suspicious events to determine whether they constitute incidents and, if so, determine their nature and severity.",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.4 Event assessment and classification",
+          "Service": "logging"
+        }
+      ]
+    },
+    {
+      "Id": "3.5.3.a",
+      "Description": "with the Computer Security Incident Response Teams (CSIRTs) or, where applicable, the competent authorities, related to incident notification;",
+      "Checks": [
+        "iam_organization_essential_contacts_configured"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.5 Incident response",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "3.6.2",
+      "Description": "The relevant entities shall ensure that post-incident reviews contribute to improving their approach to network and information security, to risk treatment measures, and to incident handling, detection and response procedures.",
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "3.6 Post-incident reviews",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "For the purpose of Article 21(2), point (c) of Directive (EU) 2022/2555, the relevant entities shall lay down and maintain a business continuity and disaster recovery plan to apply in the case of incidents.",
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "cloudsql"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.f",
+      "Description": "recovery plans for specific operations, including recovery objectives;",
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "cloudsql"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.g",
+      "Description": "required resources, including backups and redundancies;",
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "cloudsql"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.4",
+      "Description": "The business continuity plan and disaster recovery plan shall be tested, reviewed and, where appropriate, updated at planned intervals and following significant incidents or significant changes to operations or risks. The relevant entities shall ensure that the plans incorporate lessons learnt from such tests.",
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.1 Business continuity and disaster recovery plan",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.b",
+      "Description": "assurance that backup copies are complete and accurate, including configuration data and data stored in cloud computing service environment;",
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "cloudsql"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.e",
+      "Description": "restoring data from backup copies;",
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "cloudsql"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.f",
+      "Description": "retention periods based on business and regulatory requirements.",
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 BUSINESS CONTINUITY AND CRISIS MANAGEMENT (ARTICLE 21(2), POINT (C), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "4.2 Backup and redundancy management",
+          "Service": "cloudstorage"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.2.a",
+      "Description": "the cybersecurity practices of the suppliers and service providers, including their secure development procedures;",
+      "Checks": [
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_network_default_in_use",
+        "gke_cluster_no_default_service_account"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.4.f",
+      "Description": "an obligation on suppliers and service providers to handle vulnerabilities that present a risk to the security of the network and information systems of the relevant entities;",
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.7.d",
+      "Description": "analyse the risks presented by changes related to ICT products and ICT services from suppliers and service providers and, where appropriate, take mitigating measures in a timely manner.",
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 SUPPLY CHAIN SECURITY (ARTICLE 21(2), POINT (D), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "5.1 Supply chain security policy",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.1.2.b",
+      "Description": "requirements regarding security updates throughout the entire lifetime of the ICT services or ICT products, or replacement after the end of the support period;",
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_rotated_in_90_days",
+        "artifacts_container_analysis_enabled",
+        "bigquery_dataset_cmk_encryption"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.1 Security in acquisition of ICT services or ICT products",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.1",
+      "Description": "Before developing a network and information system, including software, the relevant entities shall lay down rules for the secure development of network and information systems and apply them when developing network and information systems in-house, or when outsourcing the development of network and information systems. The rules shall cover all development phases, including specification, design, development, implementation and testing.",
+      "Checks": [
+        "compute_network_default_in_use",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "compute"
+        }
+      ]
+    },
+    {
+      "Id": "6.2.2.b",
+      "Description": "apply principles for engineering secure systems and secure coding principles to any information system development activities such as promoting cybersecurity-by-design, zero-trust architectures;",
+      "Checks": [
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "compute_instance_shielded_vm_enabled",
+        "apikeys_api_restrictions_configured",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.2 Secure development life cycle",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.4.1",
+      "Description": "The relevant entities shall apply change management procedures to control changes of network and information systems. Where applicable, the procedures shall be consistent with the relevant entities general policies concerning change management.",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.4 Change management, repairs and maintenance",
+          "Service": "logging"
+        }
+      ]
+    },
+    {
+      "Id": "6.6.1.a",
+      "Description": "security patches are applied within a reasonable time after they become available;",
+      "Checks": [
+        "compute_instance_shielded_vm_enabled",
+        "gcr_container_scanning_enabled",
+        "artifacts_container_analysis_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.6 Security patch management",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.b",
+      "Description": "determine and apply controls to protect the relevant entities internal network domains from unauthorised access;",
+      "Checks": [
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_firewall_rdp_access_from_the_internet_allowed"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "compute"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.e",
+      "Description": "not use systems used for administration of the security policy implementation for other purposes;",
+      "Checks": [
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.g",
+      "Description": "where appropriate, exclusively allow access to the relevant entities network and information systems by devices authorised by those entities;",
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_account_access_approval_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.i",
+      "Description": "establish communication between distinct systems only through trusted channels that are isolated using logical, cryptographic or physical separation from other communication channels and provide assured identification of their end points and protection of the channel data from modification or disclosure;",
+      "Checks": [
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_dns_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.7.2.l",
+      "Description": "apply best practices for the security of the DNS, and for Internet routing security and routing hygiene of traffic originating from and destined to the network.",
+      "Checks": [
+        "dns_dnssec_disabled",
+        "compute_network_dns_logging_enabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.7 Network security",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "6.9.2",
+      "Description": "For that purpose, the relevant entities shall in particular implement measures that detect or prevent the use of malicious or unauthorised software. The relevant entities shall, where appropriate, ensure that their network and information systems are equipped with detection and response software, which is updated regularly in accordance with the risk assessment carried out pursuant to point 2.1 and the contractual agreements with the providers.",
+      "Checks": [
+        "compute_instance_shielded_vm_enabled",
+        "gcr_container_scanning_enabled",
+        "artifacts_container_analysis_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 SECURITY IN NETWORK AND INFORMATION SYSTEMS ACQUISITION, DEVELOPMENT AND MAINTENANCE (ARTICLE 21(2), POINT (E), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "6.9 Protection against malicious and unauthorised software",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "7.2.b",
+      "Description": "the methods for monitoring, measurement, analysis and evaluation, as applicable, to ensure valid results;",
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 POLICIES AND PROCEDURES TO ASSESS THE EFFECTIVENESS OF CYBERSECURITY RISK-MANAGEMENT MEASURES (ARTICLE 21(2), POINT (F), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "7.2 The policy and procedures referred to in point 7.1. shall take into account results of the risk assessment pursuant to point 2.1. and past significant incidents. The relevant entities shall determine:",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.a",
+      "Description": "in accordance with the relevant entities classification of assets, the type, strength and quality of the cryptographic measures required to protect the relevant entities assets, including data at rest and data in transit;",
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_rotated_in_90_days",
+        "artifacts_container_analysis_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "compute_network_dns_logging_enabled",
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "compute_instance_encryption_with_csek_enabled",
+        "dataproc_encrypted_with_cmks_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c",
+      "Description": "the relevant entities approach to key management, including, where appropriate, methods for the following:",
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.i",
+      "Description": "generating different keys for cryptographic systems and applications;",
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.ii",
+      "Description": "issuing and obtaining public key certificates;",
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.iv",
+      "Description": "storing keys, including how authorised users obtain access to keys;",
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "kms_key_not_publicly_accessible",
+        "compute_instance_block_project_wide_ssh_keys_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.v",
+      "Description": "changing or updating keys, including rules on when and how to change keys;",
+      "Checks": [
+        "kms_key_rotation_enabled",
+        "apikeys_key_rotated_in_90_days",
+        "iam_sa_user_managed_key_rotate_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.vi",
+      "Description": "backing up or archiving keys;",
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_rotated_in_90_days",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.vii",
+      "Description": "logging and auditing of key management-related activities;",
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "9.2.c.xii",
+      "Description": "setting activation and deactivation dates for keys ensuring that the keys can only be used for the specified period of time according to the organization's rules on key management.",
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "9.2 Cryptography",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.1.1",
+      "Description": "For the purpose of Article 21(2), point (i) of Directive (EU) 2022/2555, the relevant entities shall establish, document and implement logical and physical access control policies for the access to their network and information systems, based on business requirements as well as network and information system security requirements.",
+      "Checks": [
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_dns_logging_enabled",
+        "compute_network_not_legacy",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_instance_block_project_wide_ssh_keys_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.1 Access control policy",
+          "Service": "compute"
+        }
+      ]
+    },
+    {
+      "Id": "11.1.2.c",
+      "Description": "ensure that access is only granted to users that have been adequately authenticated.",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_service_account_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.1 Access control policy",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.a",
+      "Description": "assign and revoke access rights based on the principles of need-to-know, least privilege and separation of duties;",
+      "Checks": [
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_service_account_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.d",
+      "Description": "ensure that access rights appropriately address third-party access, such as visitors, suppliers and service providers, in particular by limiting access rights in scope and in duration;",
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_service_account_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.e",
+      "Description": "maintain a register of access rights granted;",
+      "Checks": [
+        "bigquery_dataset_public_access",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.2.2.f",
+      "Description": "apply logging to the management of access rights.",
+      "Checks": [
+        "iam_audit_logs_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.2 Management of access rights",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.1",
+      "Description": "The relevant entities shall maintain policies for management of privileged accounts and system administration accounts as part of the access control policy referred to in point 11.1.",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_service_account_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.a",
+      "Description": "establish strong identification, authentication such as multi-factor authentication, and authorisation procedures for privileged accounts and system administration accounts;",
+      "Checks": [
+        "cloudsql_instance_sqlserver_contained_database_authentication_flag",
+        "iam_sa_no_user_managed_keys",
+        "iam_service_account_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.b",
+      "Description": "set up specific accounts to be used for system administration operations exclusively, such as installation, configuration, management or maintenance;",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.c",
+      "Description": "individualise and restrict system administration privileges to the highest extent possible,",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_service_account_unused",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.3.2.d",
+      "Description": "provide that system administration accounts are only used to connect to system administration systems.",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_account_access_approval_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.3 Privileged accounts and system administration accounts",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.a",
+      "Description": "only use system administration systems for system administration purposes, and not for any other operations;",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_service_account_unused"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.b",
+      "Description": "separate logically such systems from application software not used for system administrative purposes,",
+      "Checks": [
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.4.2.c",
+      "Description": "protect access to system administration systems through authentication and encryption.",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_service_account_unused",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.4 Administration systems",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.5.2.d",
+      "Description": "apply logging to the management of identities.",
+      "Checks": [
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_project_os_login_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.5 Identification",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.5.4",
+      "Description": "The relevant entities shall regularly review the identities for network and information systems and their users and, if no longer needed, deactivate them without delay.",
+      "Checks": [
+        "iam_service_account_unused",
+        "iam_sa_user_managed_key_unused",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_no_user_managed_keys"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.5 Identification",
+          "Service": "iam"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.1",
+      "Description": "The relevant entities shall implement secure authentication procedures and technologies based on access restrictions and the policy on access control.",
+      "Checks": [
+        "cloudsql_instance_sqlserver_contained_database_authentication_flag",
+        "iam_role_kms_enforce_separation_of_duties",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.a",
+      "Description": "ensure the strength of authentication is appropriate to the classification of the asset to be accessed;",
+      "Checks": [
+        "cloudsql_instance_sqlserver_contained_database_authentication_flag",
+        "iam_account_access_approval_enabled",
+        "cloudsql_instance_sqlserver_remote_access_flag",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.6.2.c",
+      "Description": "require the change of authentication credentials initially, at predefined intervals and upon suspicion that the credentials were compromised;",
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "kms_key_rotation_enabled",
+        "iam_sa_user_managed_key_rotate_90_days"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.6 Authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "11.7.2",
+      "Description": "The relevant entities shall ensure that the strength of authentication is appropriate for the classification of the asset to be accessed.",
+      "Checks": [
+        "cloudsql_instance_sqlserver_contained_database_authentication_flag",
+        "iam_account_access_approval_enabled",
+        "cloudsql_instance_sqlserver_remote_access_flag",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ],
+      "Attributes": [
+        {
+          "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "11.7 Multi-factor authentication",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.1.2.c",
+      "Description": "align the availability requirements of the assets with the delivery and recovery objectives set out in their business continuity and disaster recovery plans.",
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.1 Asset classification",
+          "Service": "cloudsql"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.a",
+      "Description": "cover the entire life cycle of the assets, including acquisition, use, storage, transportation and disposal;",
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.b",
+      "Description": "provide rules on the safe use, safe storage, safe transport, and the irretrievable deletion and destruction of the assets;",
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "kms_key_rotation_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "compute_instance_encryption_with_csek_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    },
+    {
+      "Id": "12.2.2.c",
+      "Description": "provide that the transfer shall take place in a secure manner, in accordance with the type of asset to be transferred.",
+      "Checks": [
+        "compute_network_dns_logging_enabled",
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudsql_instance_ssl_connections",
+        "cloudsql_instance_private_ip_assignment"
+      ],
+      "Attributes": [
+        {
+          "Section": "12 ASSET MANAGEMENT (ARTICLE 21(2), POINT (I), OF DIRECTIVE (EU) 2022/2555)",
+          "SubSection": "12.2 Handling of assets",
+          "Service": "generic"
+        }
+      ]
+    }
+  ]
+}

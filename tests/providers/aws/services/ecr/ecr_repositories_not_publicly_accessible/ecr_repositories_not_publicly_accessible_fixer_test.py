@@ -36,12 +36,15 @@ class Test_ecr_repositories_not_publicly_accessible_fixer:
 
         from prowler.providers.aws.services.ecr.ecr_service import ECR
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer.ecr_client",
-            new=ECR(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer.ecr_client",
+                new=ECR(aws_provider),
+            ),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer import (
@@ -78,12 +81,15 @@ class Test_ecr_repositories_not_publicly_accessible_fixer:
 
         from prowler.providers.aws.services.ecr.ecr_service import ECR
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer.ecr_client",
-            new=ECR(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer.ecr_client",
+                new=ECR(aws_provider),
+            ),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer import (
@@ -120,12 +126,15 @@ class Test_ecr_repositories_not_publicly_accessible_fixer:
 
         from prowler.providers.aws.services.ecr.ecr_service import ECR
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer.ecr_client",
-            new=ECR(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer.ecr_client",
+                new=ECR(aws_provider),
+            ),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ecr.ecr_repositories_not_publicly_accessible.ecr_repositories_not_publicly_accessible_fixer import (

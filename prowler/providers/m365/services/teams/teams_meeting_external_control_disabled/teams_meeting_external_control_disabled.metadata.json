@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_meeting_external_control_disabled",
+  "CheckTitle": "Ensure external participants can't give or request control",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Teams Global Meeting Policy",
+  "Description": "Ensure external participants can't give or request control in Teams meetings.",
+  "Risk": "Allowing external participants to give or request control during meetings could lead to unauthorized content sharing or malicious actions by external users.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTeamsMeetingPolicy -Identity Global -AllowExternalParticipantGiveRequestControl $false",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Teams admin center https://admin.teams.microsoft.com. 2. Click to expand Meetings select Meeting policies. 3. Click Global (Org-wide default). 4. Under content sharing set External participants can give or request control to Off.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable the ability for external participants to give or request control during Teams meetings to prevent unauthorized content sharing and maintain meeting security.",
+      "Url": "https://learn.microsoft.com/en-us/powershell/module/teams/set-csteamsmeetingpolicy?view=teams-ps"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

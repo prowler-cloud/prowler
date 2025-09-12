@@ -7,6 +7,7 @@ interface CustomAlertModalProps {
   title?: string;
   description?: string;
   children: ReactNode;
+  size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl";
 }
 
 export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
@@ -15,26 +16,30 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
   title,
   description,
   children,
+  size = "xl",
 }) => {
   return (
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      size="xl"
+      size={size}
       classNames={{
         base: "dark:bg-prowler-blue-800",
-        closeButton: "right-0",
+        closeButton: "rounded-md",
       }}
       backdrop="blur"
+      placement="center"
     >
       <ModalContent className="py-4">
         {(_onClose) => (
           <>
             <ModalHeader className="flex flex-col py-0">{title}</ModalHeader>
             <ModalBody>
-              <p className="text-small text-gray-600 dark:text-gray-300">
-                {description}
-              </p>
+              {description && (
+                <p className="text-small text-gray-600 dark:text-gray-300">
+                  {description}
+                </p>
+              )}
               {children}
             </ModalBody>
           </>

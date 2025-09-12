@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_default_branch_requires_linear_history",
+  "CheckTitle": "Check if repository default branch requires linear history",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "GithubRepository",
+  "Description": "Ensure that the repository default branch requires linear history.",
+  "Risk": "Allowing non-linear history can result in a cluttered and difficult-to-trace Git history, making it harder to identify specific changes, debug issues, and understand the sequence of development. This increases the risk of errors, inconsistencies, and bugs, especially in production environments.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-linear-history",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce a linear history by requiring rebase or squash merges for pull requests. This will create a clean, chronological commit history, making it easier to track changes, revert modifications, and troubleshoot any issues that arise.",
+      "Url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

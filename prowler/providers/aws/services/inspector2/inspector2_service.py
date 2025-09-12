@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
@@ -69,4 +69,4 @@ class Inspector(BaseModel):
     ecr_status: str
     lambda_status: str
     lambda_code_status: str
-    active_findings: bool = False
+    active_findings: bool = None

@@ -1,13 +1,34 @@
 import React from "react";
 
-import { Header } from "@/components/ui";
+import {
+  JiraIntegrationCard,
+  S3IntegrationCard,
+  SecurityHubIntegrationCard,
+} from "@/components/integrations";
+import { ContentLayout } from "@/components/ui";
 
-export default function Integrations() {
+export default async function Integrations() {
   return (
-    <>
-      <Header title="Integrations" icon="tabler:puzzle" />
+    <ContentLayout title="Integrations" icon="lucide:puzzle">
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Connect external services to enhance your security workflow and
+            automatically export your scan results.
+          </p>
+        </div>
 
-      <p>Hi hi from Integration page</p>
-    </>
+        <div className="grid gap-6">
+          {/* Amazon S3 Integration */}
+          <S3IntegrationCard />
+
+          {/* AWS Security Hub Integration */}
+          <SecurityHubIntegrationCard />
+
+          {/* Jira Integration */}
+          <JiraIntegrationCard />
+        </div>
+      </div>
+    </ContentLayout>
   );
 }

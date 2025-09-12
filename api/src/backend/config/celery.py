@@ -1,5 +1,12 @@
+import warnings
+
 from celery import Celery, Task
 from config.env import env
+
+# Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684
+warnings.filterwarnings(
+    "ignore", category=UserWarning, module="dj_rest_auth.registration.serializers"
+)
 
 BROKER_VISIBILITY_TIMEOUT = env.int("DJANGO_BROKER_VISIBILITY_TIMEOUT", default=86400)
 
@@ -50,9 +57,9 @@ class RLSTask(Task):
 
         tenant_id = kwargs.get("tenant_id")
         with rls_transaction(tenant_id):
-            APITask.objects.create(
+            APITask.objects.update_or_create(
                 id=task_result_instance.task_id,
                 tenant_id=tenant_id,
-                task_runner_task=task_result_instance,
+                defaults={"task_runner_task": task_result_instance},
             )
         return result

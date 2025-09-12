@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/version.html",
+      "CLI": "aws es upgrade-elasticsearch-domain --domain-name <DOMAIN_NAME> --target-version <TARGET_VERSION> --perform-check-only",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/version.html",
       "Terraform": ""

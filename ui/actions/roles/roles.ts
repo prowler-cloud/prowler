@@ -3,23 +3,28 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  handleApiError,
+  handleApiResponse,
+} from "@/lib";
 
 export const getRoles = async ({
   page = 1,
   query = "",
   sort = "",
   filters = {},
+  pageSize = 10,
 }) => {
-  const session = await auth();
+  const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/roles");
 
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/roles`);
+  const url = new URL(`${apiBaseUrl}/roles`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
@@ -31,53 +36,61 @@ export const getRoles = async ({
   });
 
   try {
-    const invitations = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+    const response = await fetch(url.toString(), {
+      headers,
     });
-    const data = await invitations.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/roles");
-    return parsedData;
+
+    return handleApiResponse(response, "/roles");
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching roles:", error);
     return undefined;
   }
 };
 
 export const getRoleInfoById = async (roleId: string) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/roles/${roleId}`);
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
 
   try {
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch role info: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
+  }
+};
+
+export const getRolesByIds = async (roleIds: string[]) => {
+  if (!roleIds || roleIds.length === 0) {
+    return { data: [] };
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/roles`);
+
+  // Add filter for role IDs
+  url.searchParams.append("filter[id__in]", roleIds.join(","));
+  // Request all results on a single page with reasonable size
+  url.searchParams.append("page[size]", "100");
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error("Error fetching roles by IDs:", error);
+    return { data: [] };
   }
 };
 
 export const addRole = async (formData: FormData) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
+  const headers = await getAuthHeaders({ contentType: true });
 
   const name = formData.get("name") as string;
   const groups = formData.getAll("groups[]") as string[];
@@ -91,8 +104,7 @@ export const addRole = async (formData: FormData) => {
         manage_providers: formData.get("manage_providers") === "true",
         manage_scans: formData.get("manage_scans") === "true",
         manage_account: formData.get("manage_account") === "true",
-        // TODO: Add back when we have integrations ready
-        // manage_integrations: formData.get("manage_integrations") === "true",
+        manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
       relationships: {},
@@ -118,32 +130,21 @@ export const addRole = async (formData: FormData) => {
   const body = JSON.stringify(payload);
 
   try {
-    const url = new URL(`${keyServer}/roles`);
+    const url = new URL(`${apiBaseUrl}/roles`);
     const response = await fetch(url.toString(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body,
     });
 
-    const data = await response.json();
-    revalidatePath("/roles");
-    return data;
+    return handleApiResponse(response, "/roles", false);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error during API call:", error);
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
 export const updateRole = async (formData: FormData, roleId: string) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
+  const headers = await getAuthHeaders({ contentType: true });
 
   const name = formData.get("name") as string;
   const groups = formData.getAll("groups[]") as string[];
@@ -185,53 +186,46 @@ export const updateRole = async (formData: FormData, roleId: string) => {
   const body = JSON.stringify(payload);
 
   try {
-    const url = new URL(`${keyServer}/roles/${roleId}`);
+    const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
     const response = await fetch(url.toString(), {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
       body,
     });
 
-    const data = await response.json();
-    revalidatePath("/roles");
-    return data;
+    return handleApiResponse(response, "/roles", false);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error during API call:", error);
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
 export const deleteRole = async (roleId: string) => {
-  const session = await auth();
-  const keyServer = process.env.API_BASE_URL;
+  const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${keyServer}/roles/${roleId}`);
+  const url = new URL(`${apiBaseUrl}/roles/${roleId}`);
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${session?.accessToken}`,
-      },
+      headers,
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData?.message || "Failed to delete the role");
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to delete the role");
+      } catch {
+        throw new Error("Failed to delete the role");
+      }
     }
 
-    const data = await response.json();
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/roles");
-    return data;
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };

@@ -6,6 +6,7 @@ from prowler.providers.aws.services.ec2.lib.security_groups import (
 )
 
 TRANSPORT_PROTOCOL_TCP = "tcp"
+TRANSPORT_PROTOCOL_UDP = "udp"
 TRANSPORT_PROTOCOL_ALL = "-1"
 
 IP_V4_ALL_CIDRS = "0.0.0.0/0"
@@ -361,6 +362,26 @@ class Test_check_security_group:
             0, 65535, TRANSPORT_PROTOCOL_ALL, [IP_V4_ALL_CIDRS], []
         )
         assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_ALL, None, True)
+
+    # UDP Protocol - IP_V4_ALL_CIDRS - Any Port - check None - Any Address - Open
+    def test_all_public_ipv4_address_open_any_port_check_none_any_address_udp(
+        self,
+    ):
+        ingress_rule = self.ingress_rule_generator(
+            0, 65535, TRANSPORT_PROTOCOL_UDP, [IP_V4_ALL_CIDRS], []
+        )
+        assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_UDP, None, True)
+
+    # UDP Protocol - IP_V4_ALL_CIDRS - Any Port - check TCP - Any Address - Open
+    def test_all_public_ipv4_address_open_any_port_udp_protocol_check_tcp_any_address(
+        self,
+    ):
+        ingress_rule = self.ingress_rule_generator(
+            0, 65535, TRANSPORT_PROTOCOL_UDP, [IP_V4_ALL_CIDRS], []
+        )
+        assert not check_security_group(
+            ingress_rule, TRANSPORT_PROTOCOL_TCP, None, True
+        )
 
     # ALL (-1) Protocol - IP_V6_ALL_CIDRS - Any Port - check None - Any Address - Open
     def test_all_public_ipv6_address_open_any_port_check_none_any_address(

@@ -11,19 +11,20 @@ class app_function_access_keys_configured(Check):
             functions,
         ) in app_client.functions.items():
             for function in functions.values():
-                report = Check_Report_Azure(metadata=self.metadata(), resource=function)
-                report.subscription = subscription_name
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"Function {function.name} does not have function keys configured."
-                )
-
-                if len(function.function_keys) > 0:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Function {function.name} has function keys configured."
+                if function.function_keys is not None:
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=function
                     )
+                    report.subscription = subscription_name
+                    report.status = "FAIL"
+                    report.status_extended = f"Function {function.name} does not have function keys configured."
 
-                findings.append(report)
+                    if len(function.function_keys) > 0:
+                        report.status = "PASS"
+                        report.status_extended = (
+                            f"Function {function.name} has function keys configured."
+                        )
+
+                    findings.append(report)
 
         return findings

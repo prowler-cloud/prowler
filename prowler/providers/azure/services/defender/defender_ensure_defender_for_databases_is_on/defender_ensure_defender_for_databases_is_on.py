@@ -16,7 +16,6 @@ class defender_ensure_defender_for_databases_is_on(Check):
                     metadata=self.metadata(), resource=pricings["SqlServers"]
                 )
                 report.subscription = subscription
-                report.resource_name = "Defender plan Databases"
                 report.status = "PASS"
                 report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to ON (pricing tier standard)."
                 if (

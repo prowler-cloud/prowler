@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_antispam_policy_inbound_no_allowed_domains",
+  "CheckTitle": "Ensure inbound anti-spam policies do not contain allowed domains",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Defender Anti-Spam Policy",
+  "Description": "Ensure that inbound anti-spam policies do not have any domains listed in the AllowedSenderDomains. Messages from these domains bypass most email protections, increasing the risk of successful phishing attacks.",
+  "Risk": "Having domains in the AllowedSenderDomains list allows emails from these domains to bypass essential security checks, increasing the risk of phishing attacks and other malicious activities.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/defender-office-365/anti-spam-protection-about#allow-and-block-lists-in-anti-spam-policies",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-HostedContentFilterPolicy -Identity <Policy name> -AllowedSenderDomains @{}",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft 365 Defender (https://security.microsoft.com). 2. Click to expand Email & collaboration and select Policies & rules > Threat policies. 3. Under Policies, select Anti-spam. 4. Open each out-of-compliance inbound anti-spam policy by clicking on it. 5. Click Edit allowed and blocked senders and domains. 6. Select Allow domains. 7. Delete each domain from the domains list. 8. Click Done > Save. 9. Repeat as needed.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that the AllowedSenderDomains list in your inbound anti-spam policies is empty to prevent bypassing essential security checks.",
+      "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/configure-the-allowed-sender-domains?view=o365-worldwide"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

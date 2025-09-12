@@ -20,12 +20,15 @@ class Test_s3_access_point_public_access_block:
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block import (
@@ -59,12 +62,15 @@ class Test_s3_access_point_public_access_block:
         bucket_name_eu = "test-bucket-eu-west-1"
         arn_eu = f"arn:aws:s3:eu-west-1:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_eu}"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block import (
@@ -152,12 +158,15 @@ class Test_s3_access_point_public_access_block:
         bucket_name_eu = "test-bucket-eu-west-1"
         arn_eu = f"arn:aws:s3:eu-west-1:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_eu}"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block import (
@@ -245,12 +254,15 @@ class Test_s3_access_point_public_access_block:
         bucket_name_eu = "test-bucket-eu-west-1"
         arn_eu = f"arn:aws:s3:eu-west-1:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_eu}"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block import (
@@ -338,12 +350,15 @@ class Test_s3_access_point_public_access_block:
             f"arn:aws:s3:ap-southeast-2:{AWS_ACCOUNT_NUMBER}:accesspoint/{ap_name_ap}"
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
-            new=S3Control(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block.s3control_client",
+                new=S3Control(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.s3.s3_access_point_public_access_block.s3_access_point_public_access_block import (
                 s3_access_point_public_access_block,

@@ -66,12 +66,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
@@ -130,12 +133,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
-                new=EC2(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
+                    new=EC2(aws_provider),
+                ),
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
@@ -184,12 +190,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
@@ -238,12 +247,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (
@@ -292,12 +304,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_fixer import (

@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "AzureSearchService",
   "Description": "Ensure that public network access to the Search Service is restricted.",
   "Risk": "Public accessibility exposes the Search Service to potential attacks, unauthorized usage, and data breaches. Restricting access minimizes the surface area for attacks and ensures that only authorized networks can access the search service.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/search/service-configure-firewall#configure-network-access-in-azure-portal",
@@ -23,7 +23,9 @@
       "Url": "https://learn.microsoft.com/en-us/azure/search/service-configure-firewall#configure-network-access-in-azure-portal"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -155,7 +155,7 @@ class Test_ecs_service_no_assign_public_ip:
                 result[0].status_extended
                 == "ECS Service service-with-no-public-ip does not have automatic public IP assignment."
             )
-            assert result[0].resource_id == "service-with-no-public-ip"
+            assert result[0].resource_id == "sample-cluster/service-with-no-public-ip"
             assert result[0].resource_arn == service_arn
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -221,7 +221,7 @@ class Test_ecs_service_no_assign_public_ip:
                 result[0].status_extended
                 == "ECS Service service-with-public-ip has automatic public IP assignment."
             )
-            assert result[0].resource_id == "service-with-public-ip"
+            assert result[0].resource_id == "sample-cluster/service-with-public-ip"
             assert result[0].resource_arn == service_arn
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1

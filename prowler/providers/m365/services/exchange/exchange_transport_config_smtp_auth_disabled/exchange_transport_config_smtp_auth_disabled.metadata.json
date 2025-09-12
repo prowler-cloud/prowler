@@ -1,0 +1,32 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_transport_config_smtp_auth_disabled",
+  "CheckTitle": "Ensure SMTP AUTH is disabled.",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Exchange Transport Config",
+  "Description": "Ensure that SMTP AUTH is disabled at the organization level in Exchange Online to reduce exposure to legacy protocols that can be exploited for malicious use.",
+  "Risk": "Leaving SMTP AUTH enabled allows legacy clients to authenticate using outdated methods, increasing the risk of credential compromise and unauthorized email sending.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-TransportConfig -SmtpClientAuthenticationDisabled $true",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Exchange admin center https://admin.exchange.microsoft.com. 2. Select Settings > Mail flow. 3. Ensure 'Turn off SMTP AUTH protocol for your organization' is checked.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable SMTP AUTH at the organization level to support secure, modern authentication practices and block legacy protocol usage.",
+      "Url": "https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

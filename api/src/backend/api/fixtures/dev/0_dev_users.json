@@ -3,7 +3,7 @@
     "model": "api.user",
     "pk": "8b38e2eb-6689-4f1e-a4ba-95b275130200",
     "fields": {
-      "password": "pbkdf2_sha256$720000$vA62S78kog2c2ytycVQdke$Fp35GVLLMyy5fUq3krSL9I02A+ocQ+RVa4S22LIAO5s=",
+      "password": "pbkdf2_sha256$870000$Z63pGJ7nre48hfcGbk5S0O$rQpKczAmijs96xa+gPVJifpT3Fetb8DOusl5Eq6gxac=",
       "last_login": null,
       "name": "Devie Prowlerson",
       "email": "dev@prowler.com",
@@ -16,13 +16,26 @@
     "model": "api.user",
     "pk": "b6493a3a-c997-489b-8b99-278bf74de9f6",
     "fields": {
-      "password": "pbkdf2_sha256$720000$vA62S78kog2c2ytycVQdke$Fp35GVLLMyy5fUq3krSL9I02A+ocQ+RVa4S22LIAO5s=",
+      "password": "pbkdf2_sha256$870000$Z63pGJ7nre48hfcGbk5S0O$rQpKczAmijs96xa+gPVJifpT3Fetb8DOusl5Eq6gxac=",
       "last_login": null,
       "name": "Devietoo Prowlerson",
       "email": "dev2@prowler.com",
       "company_name": "Prowler Developers",
       "is_active": true,
       "date_joined": "2024-09-18T09:04:20.850Z"
+    }
+  },
+  {
+    "model": "api.user",
+    "pk": "6d4f8a91-3c2e-4b5a-8f7d-1e9c5b2a4d6f",
+    "fields": {
+      "password": "pbkdf2_sha256$870000$Z63pGJ7nre48hfcGbk5S0O$rQpKczAmijs96xa+gPVJifpT3Fetb8DOusl5Eq6gxac=",
+      "last_login": null,
+      "name": "E2E Test User",
+      "email": "e2e@prowler.com",
+      "company_name": "Prowler E2E Tests",
+      "is_active": true,
+      "date_joined": "2024-01-01T00:00:00.850Z"
     }
   }
 ]

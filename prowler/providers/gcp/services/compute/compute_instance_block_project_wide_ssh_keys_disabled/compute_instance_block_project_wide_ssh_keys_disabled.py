@@ -13,7 +13,7 @@ class compute_instance_block_project_wide_ssh_keys_disabled(Check):
                 for item in instance.metadata["items"]:
                     if (
                         item["key"] == "block-project-ssh-keys"
-                        and item["value"] == "true"
+                        and item["value"].lower() == "true"
                     ):
                         report.status = "PASS"
                         report.status_extended = f"The VM Instance {instance.name} is not making use of common/shared project-wide SSH key(s)."

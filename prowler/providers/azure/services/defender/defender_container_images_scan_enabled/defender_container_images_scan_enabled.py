@@ -11,7 +11,6 @@ class defender_container_images_scan_enabled(Check):
                     metadata=self.metadata(), resource=pricings["Containers"]
                 )
                 report.subscription = subscription
-                report.resource_name = "Dender plan for Containers"
                 report.status = "PASS"
                 report.status_extended = (
                     f"Container image scan is enabled in subscription {subscription}."

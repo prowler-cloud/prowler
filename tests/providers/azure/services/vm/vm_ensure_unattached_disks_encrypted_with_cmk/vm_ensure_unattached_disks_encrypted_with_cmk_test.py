@@ -13,12 +13,15 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
         vm_client = mock.MagicMock
         vm_client.disks = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk import (
                 vm_ensure_unattached_disks_encrypted_with_cmk,
@@ -32,12 +35,15 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
         vm_client = mock.MagicMock
         vm_client.disks = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk import (
                 vm_ensure_unattached_disks_encrypted_with_cmk,
@@ -48,8 +54,8 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert len(result) == 0
 
     def test_vm_one_unattached_disk_encrypt_pk(self):
-        disk_id = uuid4()
-        resource_id = uuid4()
+        disk_id = str(uuid4())
+        resource_id = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
@@ -63,12 +69,15 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk import (
                 vm_ensure_unattached_disks_encrypted_with_cmk,
@@ -88,8 +97,8 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             )
 
     def test_vm_one_unattached_disk_encrypt_cmk(self):
-        disk_id = uuid4()
-        resource_id = uuid4()
+        disk_id = str(uuid4())
+        resource_id = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
@@ -103,12 +112,15 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk import (
                 vm_ensure_unattached_disks_encrypted_with_cmk,
@@ -128,10 +140,10 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             )
 
     def test_vm_subscription_two_unattached_disk_encrypt_cmk_and_pk(self):
-        disk_id_1 = uuid4()
-        resource_id_1 = uuid4()
-        disk_id_2 = uuid4()
-        resource_id_2 = uuid4()
+        disk_id_1 = str(uuid4())
+        resource_id_1 = str(uuid4())
+        disk_id_2 = str(uuid4())
+        resource_id_2 = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
@@ -152,12 +164,15 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk import (
                 vm_ensure_unattached_disks_encrypted_with_cmk,
@@ -185,27 +200,30 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             )
 
     def test_vm_attached_disk_encrypt_cmk(self):
-        disk_id = uuid4()
-        resource_id = uuid4()
+        disk_id = str(uuid4())
+        resource_id = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
                 disk_id: Disk(
                     resource_id=resource_id,
                     resource_name="test-disk",
-                    location="location",
-                    vms_attached=[uuid4()],
+                    vms_attached=[str(uuid4())],
                     encryption_type="EncryptionAtRestWithCustomerKey",
+                    location="location",
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
-            new=vm_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk.vm_client",
+                new=vm_client,
+            ),
         ):
             from prowler.providers.azure.services.vm.vm_ensure_unattached_disks_encrypted_with_cmk.vm_ensure_unattached_disks_encrypted_with_cmk import (
                 vm_ensure_unattached_disks_encrypted_with_cmk,

@@ -126,7 +126,7 @@ export const AddGroupForm = ({
           />
         </div>
 
-        {/* Providers Field */}
+        {/*Select Providers */}
         <Controller
           name="providers"
           control={form.control}
@@ -153,7 +153,7 @@ export const AddGroupForm = ({
           Roles can also be associated with the group. This step is optional and
           can be completed later if needed or from the Roles page.
         </p>
-        {/* Roles Field */}
+        {/* Select Roles */}
         <Controller
           name="roles"
           control={form.control}

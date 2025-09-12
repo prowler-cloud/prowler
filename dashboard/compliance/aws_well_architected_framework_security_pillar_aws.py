@@ -1,6 +1,6 @@
 import warnings
 
-from dashboard.common_methods import get_section_containers_format2
+from dashboard.common_methods import get_section_containers_3_levels
 
 warnings.filterwarnings("ignore")
 
@@ -10,6 +10,7 @@ def get_table(data):
         [
             "REQUIREMENTS_ATTRIBUTES_NAME",
             "REQUIREMENTS_ATTRIBUTES_SECTION",
+            "REQUIREMENTS_ATTRIBUTES_SUBSECTION",
             "CHECKID",
             "STATUS",
             "REGION",
@@ -18,6 +19,9 @@ def get_table(data):
         ]
     ]
 
-    return get_section_containers_format2(
-        aux, "REQUIREMENTS_ATTRIBUTES_SECTION", "REQUIREMENTS_ATTRIBUTES_NAME"
+    return get_section_containers_3_levels(
+        aux,
+        "REQUIREMENTS_ATTRIBUTES_SECTION",
+        "REQUIREMENTS_ATTRIBUTES_SUBSECTION",
+        "REQUIREMENTS_ATTRIBUTES_NAME",
     )

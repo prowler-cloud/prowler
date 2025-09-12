@@ -11,9 +11,7 @@
       "unique_resource_count": 1,
       "duration": 5,
       "scanner_args": {
-        "checks_to_execute": [
-          "accessanalyzer_enabled"
-        ]
+        "checks_to_execute": ["accessanalyzer_enabled"]
       },
       "inserted_at": "2024-09-01T17:25:27.050Z",
       "started_at": "2024-09-01T17:25:27.050Z",
@@ -33,9 +31,7 @@
       "unique_resource_count": 1,
       "duration": 20,
       "scanner_args": {
-        "checks_to_execute": [
-          "accessanalyzer_enabled"
-        ]
+        "checks_to_execute": ["accessanalyzer_enabled"]
       },
       "inserted_at": "2024-09-02T17:24:27.050Z",
       "started_at": "2024-09-02T17:24:27.050Z",
@@ -55,9 +51,7 @@
       "unique_resource_count": 10,
       "duration": 10,
       "scanner_args": {
-        "checks_to_execute": [
-          "cloudsql_instance_automated_backups"
-        ]
+        "checks_to_execute": ["cloudsql_instance_automated_backups"]
       },
       "inserted_at": "2024-09-02T19:26:27.050Z",
       "started_at": "2024-09-02T19:26:27.050Z",
@@ -77,9 +71,7 @@
       "unique_resource_count": 1,
       "duration": 35,
       "scanner_args": {
-        "checks_to_execute": [
-          "accessanalyzer_enabled"
-        ]
+        "checks_to_execute": ["accessanalyzer_enabled"]
       },
       "inserted_at": "2024-09-02T19:27:27.050Z",
       "started_at": "2024-09-02T19:27:27.050Z",
@@ -97,9 +89,7 @@
       "name": "test scheduled aws scan",
       "state": "available",
       "scanner_args": {
-        "checks_to_execute": [
-          "cloudformation_stack_outputs_find_secrets"
-        ]
+        "checks_to_execute": ["cloudformation_stack_outputs_find_secrets"]
       },
       "scheduled_at": "2030-09-02T19:20:27.050Z",
       "inserted_at": "2024-09-02T19:24:27.050Z",
@@ -178,9 +168,7 @@
       "unique_resource_count": 19,
       "progress": 100,
       "scanner_args": {
-        "checks_to_execute": [
-          "accessanalyzer_enabled"
-        ]
+        "checks_to_execute": ["accessanalyzer_enabled"]
       },
       "duration": 7,
       "scheduled_at": null,
@@ -188,6 +176,56 @@
       "updated_at": "2024-10-18T10:46:05.127Z",
       "started_at": "2024-10-18T10:45:57.909Z",
       "completed_at": "2024-10-18T10:46:05.127Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "6dd8925f-a52d-48de-a546-d2d90db30ab1",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "name": "real scan azure",
+      "provider": "1b59e032-3eb6-4694-93a5-df84cd9b3ce2",
+      "trigger": "manual",
+      "state": "completed",
+      "unique_resource_count": 20,
+      "progress": 100,
+      "scanner_args": {
+        "checks_to_execute": [
+          "accessanalyzer_enabled",
+          "account_security_contact_information_is_registered"
+        ]
+      },
+      "duration": 4,
+      "scheduled_at": null,
+      "inserted_at": "2024-10-18T11:16:21.358Z",
+      "updated_at": "2024-10-18T11:16:26.060Z",
+      "started_at": "2024-10-18T11:16:21.593Z",
+      "completed_at": "2024-10-18T11:16:26.060Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "4ca7ce89-3236-41a8-a369-8937bc152af5",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "name": "real scan k8s",
+      "provider": "7791914f-d646-4fe2-b2ed-73f2c6499a36",
+      "trigger": "manual",
+      "state": "completed",
+      "unique_resource_count": 20,
+      "progress": 100,
+      "scanner_args": {
+        "checks_to_execute": [
+          "accessanalyzer_enabled",
+          "account_security_contact_information_is_registered"
+        ]
+      },
+      "duration": 4,
+      "scheduled_at": null,
+      "inserted_at": "2024-10-18T11:16:21.358Z",
+      "updated_at": "2024-10-18T11:16:26.060Z",
+      "started_at": "2024-10-18T11:16:21.593Z",
+      "completed_at": "2024-10-18T11:16:26.060Z"
     }
   },
   {

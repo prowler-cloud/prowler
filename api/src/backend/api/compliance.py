@@ -1,12 +1,38 @@
 from types import MappingProxyType
 
+from api.models import Provider
+from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
 
-from api.models import Provider
-
 PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE = {}
 PROWLER_CHECKS = {}
+AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
+
+
+def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[str]:
+    """
+    Retrieve and cache the list of available compliance frameworks for a specific cloud provider.
+
+    This function lazily loads and caches the available compliance frameworks (e.g., CIS, MITRE, ISO)
+    for each provider type (AWS, Azure, GCP, etc.) on first access. Subsequent calls for the same
+    provider will return the cached result.
+
+    Args:
+        provider_type (Provider.ProviderChoices): The cloud provider type for which to retrieve
+            available compliance frameworks (e.g., "aws", "azure", "gcp", "m365").
+
+    Returns:
+        list[str]: A list of framework identifiers (e.g., "cis_1.4_aws", "mitre_attack_azure") available
+        for the given provider.
+    """
+    global AVAILABLE_COMPLIANCE_FRAMEWORKS
+    if provider_type not in AVAILABLE_COMPLIANCE_FRAMEWORKS:
+        AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type] = (
+            get_available_compliance_frameworks(provider_type)
+        )
+
+    return AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type]
 
 
 def get_prowler_provider_checks(provider_type: Provider.ProviderChoices):
@@ -164,10 +190,16 @@ def generate_compliance_overview_template(prowler_compliance: dict):
                 total_checks = len(requirement.Checks)
                 checks_dict = {check: None for check in requirement.Checks}
 
+                req_status_val = "MANUAL" if total_checks == 0 else "PASS"
+
                 # Build requirement dictionary
                 requirement_dict = {
                     "name": requirement.Name or requirement.Id,
                     "description": requirement.Description,
+                    "tactics": getattr(requirement, "Tactics", []),
+                    "subtechniques": getattr(requirement, "SubTechniques", []),
+                    "platforms": getattr(requirement, "Platforms", []),
+                    "technique_url": getattr(requirement, "TechniqueURL", ""),
                     "attributes": [
                         dict(attribute) for attribute in requirement.Attributes
                     ],
@@ -178,19 +210,17 @@ def generate_compliance_overview_template(prowler_compliance: dict):
                         "manual": 0,
                         "total": total_checks,
                     },
-                    "status": "PASS",
+                    "status": req_status_val,
                 }
 
-                # Update requirements status
-                if total_checks == 0:
+                # Update requirements status counts for the framework
+                if req_status_val == "MANUAL":
                     requirements_status["manual"] += 1
+                elif req_status_val == "PASS":
+                    requirements_status["passed"] += 1
 
                 # Add requirement to compliance requirements
                 compliance_requirements[requirement.Id] = requirement_dict
-
-            # Calculate pending requirements
-            pending_requirements = total_requirements - requirements_status["manual"]
-            requirements_status["passed"] = pending_requirements
 
             # Build compliance dictionary
             compliance_dict = {

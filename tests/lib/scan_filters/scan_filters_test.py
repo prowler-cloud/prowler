@@ -13,5 +13,4 @@ class Test_Scan_Filters:
         assert not is_resource_filtered(
             "arn:aws:iam::123456789012:user/test1", audit_resources
         )
-        assert is_resource_filtered("test_bucket", audit_resources)
         assert is_resource_filtered("arn:aws:s3:::test_bucket", audit_resources)

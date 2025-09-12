@@ -6,9 +6,9 @@ import requests
 from freezegun import freeze_time
 from mock import patch
 from py_ocsf_models.events.base_event import SeverityID, StatusID
-from py_ocsf_models.events.findings.detection_finding import DetectionFinding
 from py_ocsf_models.events.findings.detection_finding import (
-    TypeID as DetectionFindingTypeID,
+    DetectionFinding,
+    DetectionFindingTypeID,
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
@@ -62,7 +62,6 @@ class TestOCSF:
         assert output_data.finding_info.desc == findings[0].metadata.Description
         assert output_data.finding_info.title == findings[0].metadata.CheckTitle
         assert output_data.finding_info.uid == findings[0].uid
-        assert output_data.finding_info.product_uid == "prowler"
         assert output_data.finding_info.types == ["test-type"]
         assert output_data.time == int(findings[0].timestamp.timestamp())
         assert output_data.time_dt == findings[0].timestamp
@@ -105,6 +104,7 @@ class TestOCSF:
             "categories": findings[0].metadata.Categories,
             "depends_on": findings[0].metadata.DependsOn,
             "related_to": findings[0].metadata.RelatedTo,
+            "additional_urls": findings[0].metadata.AdditionalURLs,
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
         }
@@ -168,14 +168,14 @@ class TestOCSF:
             {
                 "message": "status extended",
                 "metadata": {
-                    "event_code": "test-check-id",
+                    "event_code": "service_test_check_id",
                     "product": {
                         "name": "Prowler",
                         "uid": "prowler",
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.4.0",
+                    "version": "1.5.0",
                     "profiles": ["cloud", "datetime"],
                     "tenant_uid": "test-organization-id",
                 },
@@ -190,6 +190,10 @@ class TestOCSF:
                     "categories": ["test-category"],
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],
+                    "additional_urls": [
+                        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html",
+                        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html",
+                    ],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
                 },
@@ -199,8 +203,7 @@ class TestOCSF:
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
-                    "product_uid": "prowler",
-                    "title": "test-check-id",
+                    "title": "service_test_check_id",
                     "uid": "test-unique-finding",
                     "types": ["test-type"],
                 },
@@ -212,7 +215,7 @@ class TestOCSF:
                             "details": "resource_details",
                             "metadata": {},
                         },
-                        "group": {"name": "test-service"},
+                        "group": {"name": "service"},
                         "labels": [],
                         "name": "resource_name",
                         "type": "test-resource",
@@ -258,7 +261,7 @@ class TestOCSF:
         assert json.loads(content) == expected_json_output
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(OCSF([]), "_file_descriptor")
+        assert not OCSF([])._file_descriptor
 
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
@@ -286,7 +289,6 @@ class TestOCSF:
         assert finding_information.desc == finding_output.metadata.Description
         assert finding_information.title == finding_output.metadata.CheckTitle
         assert finding_information.uid == finding_output.uid
-        assert finding_information.product_uid == "prowler"
 
         # Event time
         assert finding_ocsf.time == int(finding_output.timestamp.timestamp())
@@ -319,6 +321,7 @@ class TestOCSF:
             "categories": finding_output.metadata.Categories,
             "depends_on": finding_output.metadata.DependsOn,
             "related_to": finding_output.metadata.RelatedTo,
+            "additional_urls": finding_output.metadata.AdditionalURLs,
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
         }
@@ -331,7 +334,10 @@ class TestOCSF:
         assert isinstance(resource_details[0], ResourceDetails)
         assert resource_details[0].labels == ["Name:test", "Environment:dev"]
         assert resource_details[0].name == finding_output.resource_name
-        assert resource_details[0].uid == finding_output.resource_uid
+        assert resource_details[0].data == {
+            "details": finding_output.resource_details,
+            "metadata": {},  # TODO: add metadata to the resource details
+        }
         assert resource_details[0].type == finding_output.metadata.ResourceType
         assert resource_details[0].cloud_partition == finding_output.partition
         assert resource_details[0].region == finding_output.region

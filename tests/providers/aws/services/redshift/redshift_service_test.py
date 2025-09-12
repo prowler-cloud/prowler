@@ -140,7 +140,8 @@ class Test_Redshift_Service:
         ]
         assert redshift.clusters[0].parameter_group_name == "default.redshift-1.0"
         assert redshift.clusters[0].encrypted
-        assert redshift.clusters[0].multi_az is False
+        # Moto does not pass the multi_az parameter back.
+        assert redshift.clusters[0].multi_az == ""
         assert redshift.clusters[0].master_username == "user"
         assert redshift.clusters[0].enhanced_vpc_routing
         assert redshift.clusters[0].database_name == "test"

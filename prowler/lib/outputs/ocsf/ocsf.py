@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
-from py_ocsf_models.events.findings.detection_finding import DetectionFinding
 from py_ocsf_models.events.findings.detection_finding import (
-    TypeID as DetectionFindingTypeID,
+    DetectionFinding,
+    DetectionFindingTypeID,
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
@@ -40,7 +40,7 @@ class OCSF(Output):
         - get_finding_status_id(muted: bool) -> StatusID: Returns the StatusID based on the muted value.
 
     References:
-        - OCSF: https://schema.ocsf.io/1.2.0/classes/detection_finding
+        - OCSF: https://schema.ocsf.io/classes/detection_finding
         - PY-OCSF-Model: https://github.com/prowler-cloud/py-ocsf-models
     """
 
@@ -78,7 +78,6 @@ class OCSF(Output):
                         title=finding.metadata.CheckTitle,
                         uid=finding.uid,
                         name=finding.resource_name,
-                        product_uid="prowler",
                         types=finding.metadata.CheckType,
                     ),
                     time_dt=finding.timestamp,
@@ -93,10 +92,6 @@ class OCSF(Output):
                             filter(
                                 None,
                                 [
-                                    finding.metadata.Remediation.Code.NativeIaC,
-                                    finding.metadata.Remediation.Code.Terraform,
-                                    finding.metadata.Remediation.Code.CLI,
-                                    finding.metadata.Remediation.Code.Other,
                                     finding.metadata.Remediation.Recommendation.Url,
                                 ],
                             )
@@ -164,6 +159,7 @@ class OCSF(Output):
                         "categories": finding.metadata.Categories,
                         "depends_on": finding.metadata.DependsOn,
                         "related_to": finding.metadata.RelatedTo,
+                        "additional_urls": finding.metadata.AdditionalURLs,
                         "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
                     },
@@ -200,7 +196,8 @@ class OCSF(Output):
                 and not self._file_descriptor.closed
                 and self._data
             ):
-                self._file_descriptor.write("[")
+                if self._file_descriptor.tell() == 0:
+                    self._file_descriptor.write("[")
                 for finding in self._data:
                     try:
                         self._file_descriptor.write(
@@ -211,14 +208,14 @@ class OCSF(Output):
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                if self._file_descriptor.tell() > 0:
+                if self.close_file or self._from_cli:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(
                             self._file_descriptor.tell() - 1, os.SEEK_SET
                         )
                     self._file_descriptor.truncate()
                     self._file_descriptor.write("]")
-                self._file_descriptor.close()
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

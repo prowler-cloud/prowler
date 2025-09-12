@@ -9,7 +9,7 @@
   "SubServiceName": "instance",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
-  "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceType": "AwsEc2Instance",
   "Description": "Ensure no EC2 instances allow ingress from the internet to TCP port 11211 (Memcached).",
   "Risk": "Memcached is an open-source, high-performance, distributed memory object caching system. It is often used to speed up dynamic database-driven websites by caching data and objects in RAM to reduce the number of times an external data source must be read. Memcached is designed to be used in trusted environments and should not be exposed to the internet. If Memcached is exposed to the internet, it can be exploited by attackers to perform distributed denial-of-service (DDoS) attacks, data exfiltration, and other malicious activities.",
   "RelatedUrl": "",

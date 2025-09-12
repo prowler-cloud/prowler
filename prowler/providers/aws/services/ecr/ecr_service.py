@@ -3,7 +3,7 @@ from json import loads
 from typing import Optional
 
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -87,6 +87,7 @@ class ECR(AWSService):
                             logger.warning(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
+                            repository.policy = {}
 
         except Exception as error:
             if "RepositoryPolicyNotFoundException" not in str(error):

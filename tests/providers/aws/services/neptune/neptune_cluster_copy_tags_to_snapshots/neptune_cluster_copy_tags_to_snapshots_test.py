@@ -9,12 +9,15 @@ class Test_neptune_cluster_copy_tags_to_snapshots:
         neptune_client = mock.MagicMock
         neptune_client.clusters = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            new=neptune_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots.neptune_client",
-            new=neptune_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+                new=neptune_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots.neptune_client",
+                new=neptune_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots import (
@@ -47,12 +50,15 @@ class Test_neptune_cluster_copy_tags_to_snapshots:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            new=neptune_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots.neptune_client",
-            new=neptune_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+                new=neptune_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots.neptune_client",
+                new=neptune_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots import (
@@ -94,12 +100,15 @@ class Test_neptune_cluster_copy_tags_to_snapshots:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            new=neptune_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots.neptune_client",
-            new=neptune_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+                new=neptune_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots.neptune_client",
+                new=neptune_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.neptune.neptune_cluster_copy_tags_to_snapshots.neptune_cluster_copy_tags_to_snapshots import (

@@ -3,7 +3,7 @@
   "CheckID": "rbac_minimize_pv_creation_access",
   "CheckTitle": "Minimize access to create persistent volumes",
   "CheckType": [],
-  "ServiceName": "RBAC",
+  "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
