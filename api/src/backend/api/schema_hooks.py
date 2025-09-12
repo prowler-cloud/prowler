@@ -1,3 +1,9 @@
+from api.utils import (
+    FIELDS_PARAMETER_DESCRIPTION,
+    INSERTED_AT_FILTER_PARAMETER_DESCRIPTION,
+)
+
+
 def _pick_task_response_component(components):
     schemas = components.get("schemas", {}) or {}
     for candidate in ("TaskResponse",):
@@ -91,5 +97,53 @@ def attach_task_202_examples(result, generator, request, public):  # noqa: F841
                     jsonapi["schema"] = {
                         "$ref": f"#/components/schemas/{task_resp_component}"
                     }
+
+    return result
+
+
+def customize_parameter_descriptions(result, generator, request, public):  # noqa: F841
+    """Customize parameter descriptions based on parameter name patterns.
+
+    This function applies consistent descriptions to common parameter types across all endpoints.
+    To add new parameter rules, simply add them to the parameter_rules dictionary.
+    """
+    if not isinstance(result, dict):
+        return result
+
+    # Define parameter customization rules
+    # Each rule maps a condition function to its description
+    parameter_rules = {
+        # Fields parameters: fields[resource_type] - static description
+        lambda name: name.startswith("fields[")
+        and name.endswith("]"): FIELDS_PARAMETER_DESCRIPTION,
+        # Inserted at filter: filter[inserted_at] - static description
+        lambda name: name
+        == "filter[inserted_at]": INSERTED_AT_FILTER_PARAMETER_DESCRIPTION,
+        # Add more rules here as needed:
+        # lambda name: name == "filter[updated_at]": "Filter by exact date when the resource was updated...",
+        # lambda name: name.startswith("filter[status]"): "Filter by resource status...",
+    }
+
+    paths = result.get("paths", {}) or {}
+    for path_item in paths.values():
+        if not isinstance(path_item, dict):
+            continue
+
+        for method_obj in path_item.values():
+            if not isinstance(method_obj, dict):
+                continue
+
+            parameters = method_obj.get("parameters", []) or []
+            for param in parameters:
+                if not isinstance(param, dict):
+                    continue
+
+                param_name = param.get("name", "")
+
+                # Apply parameter rules
+                for condition_func, description in parameter_rules.items():
+                    if condition_func(param_name):
+                        param["description"] = description
+                        break  # Only apply the first matching rule
 
     return result

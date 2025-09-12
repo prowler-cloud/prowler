@@ -27,8 +27,9 @@ paths:
             - requirements_failed
             - requirements_manual
             - total_requirements
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[compliance_id]
@@ -55,6 +56,8 @@ paths:
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -188,8 +191,9 @@ paths:
             - version
             - description
             - attributes
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[compliance_id]
@@ -223,8 +227,9 @@ paths:
             type: string
             enum:
             - regions
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[scan_id]
@@ -287,8 +292,9 @@ paths:
             - version
             - description
             - status
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[compliance_id]
@@ -317,6 +323,8 @@ paths:
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -446,8 +454,9 @@ paths:
             - url
             - scan
             - resources
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[check_id]
@@ -533,8 +542,8 @@ paths:
         schema:
           type: string
           format: date
-        description: At least one of the variations of the `filter[inserted_at]` filter
-          must be provided.
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
         required: true
       - in: query
         name: filter[inserted_at__date]
@@ -928,8 +937,9 @@ paths:
             - url
             - scan
             - resources
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -976,8 +986,9 @@ paths:
             enum:
             - services
             - regions
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[check_id]
@@ -1063,6 +1074,8 @@ paths:
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -1433,8 +1446,9 @@ paths:
             - url
             - scan
             - resources
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[check_id]
@@ -1841,8 +1855,9 @@ paths:
             - services
             - regions
             - resource_types
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[check_id]
@@ -1928,8 +1943,8 @@ paths:
         schema:
           type: string
           format: date
-        description: At least one of the variations of the `filter[inserted_at]` filter
-          must be provided.
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
         required: true
       - in: query
         name: filter[inserted_at__date]
@@ -2287,8 +2302,9 @@ paths:
             - services
             - regions
             - resource_types
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[check_id]
@@ -2689,14 +2705,17 @@ paths:
             - configuration
             - providers
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -2869,8 +2888,9 @@ paths:
             - configuration
             - providers
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -3047,8 +3067,9 @@ paths:
             - inserted_at
             - updated_at
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - name: filter[search]
         required: false
@@ -3244,14 +3265,17 @@ paths:
             - fail
             - muted
             - pass
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -3411,14 +3435,17 @@ paths:
             - medium
             - low
             - informational
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -3578,8 +3605,9 @@ paths:
             - id
             - findings
             - resources
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       tags:
       - Overview
@@ -3613,14 +3641,17 @@ paths:
             - fail
             - muted
             - pass
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -3758,8 +3789,9 @@ paths:
             - processor_type
             - configuration
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[processor_type]
@@ -3881,8 +3913,9 @@ paths:
             - processor_type
             - configuration
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -3977,8 +4010,9 @@ paths:
             - providers
             - roles
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[id]
@@ -4000,6 +4034,8 @@ paths:
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -4139,8 +4175,9 @@ paths:
             - providers
             - roles
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -4281,8 +4318,8 @@ paths:
   /api/v1/providers:
     get:
       operationId: providers_list
-      description: Retrieve a list of all providers with options for filtering by
-        various criteria.
+      description: Retrieve a list of all configured providers with options for filtering
+        by various criteria.
       summary: List all providers
       parameters:
       - in: query
@@ -4301,126 +4338,117 @@ paths:
             - secret
             - provider_groups
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[alias]
         schema:
           type: string
+        description: Filter by exact provider alias name.
       - in: query
         name: filter[alias__icontains]
         schema:
           type: string
+        description: Filter by partial provider alias match.
       - in: query
         name: filter[alias__in]
         schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
+          type: string
+        description: Filter by multiple provider aliases. Provide a comma-separated
+          list, e.g. "aws_alias_1,azure_alias_2".
       - in: query
         name: filter[connected]
         schema:
           type: boolean
+        description: Filter by connection status. Set to True to return only connected
+          providers, or False to return only providers with failed connections. If
+          not specified, both connected and failed providers are included. Providers
+          with no connection attempt (status is None) are excluded from this filter.
       - in: query
         name: filter[id]
         schema:
           type: string
           format: uuid
+        description: Filter by exact Prowler provider ID (UUIDv4).
       - in: query
         name: filter[id__in]
         schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
+          type: string
+        description: 'Filter by multiple Prowler provider IDs. Provide a comma-separated
+          list of UUIDs, e. g.: "a1b2c3d4-5678-90ab-cdef-1234567890ab,deadbeef-1234-5678-9abc-def012345678,0f1e2d3c-4b5a-6978-8c9d-0e1f2a3b4c5d".'
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__gte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Filter providers inserted on or after this date (format: YYYY-MM-DD)'
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Filter providers inserted on or before this date (format: YYYY-MM-DD)'
       - in: query
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
-          enum:
-          - aws
-          - azure
-          - gcp
-          - github
-          - kubernetes
-          - m365
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
+        description: Filter by single provider type
       - in: query
         name: filter[provider__in]
         schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
+          type: string
+        description: Filter by multiple provider types (comma-separated, e.g. "aws,azure,gcp")
+      - in: query
+        name: filter[search]
         schema:
           type: string
+        description: Search a term across "provider", "alias" and "uid"
       - in: query
         name: filter[uid]
         schema:
           type: string
+        description: Filter by exact provider ID (AWS account ID, Azure subscription
+          ID, GCP project ID, etc.)
       - in: query
         name: filter[uid__icontains]
         schema:
           type: string
+        description: Filter by partial provider ID match (AWS account ID, Azure subscription
+          ID, GCP project ID, etc.)
       - in: query
         name: filter[uid__in]
         schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
+          type: string
+        description: 'Filter by multiple provider IDs (AWS account ID, Azure subscription
+          ID, GCP project ID, etc.). For example: "1234567890,a1b2c3d4-5678-90ab-cdef-1234567890ab"'
       - in: query
         name: filter[updated_at]
         schema:
           type: string
           format: date
+        description: 'Filter by exact date when provider was lastly updated (format:
+          YYYY-MM-DD).'
       - in: query
         name: filter[updated_at__gte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Filter providers updated on or after this date (format: YYYY-MM-DD)'
       - in: query
         name: filter[updated_at__lte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Filter providers updated on or before this date (format: YYYY-MM-DD)'
       - in: query
         name: include
         schema:
@@ -4432,40 +4460,24 @@ paths:
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+      - in: query
+        name: page[number]
         schema:
           type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
+        description: 'Page number to retrieve (default: 1)'
+      - in: query
+        name: page[size]
         schema:
           type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        description: 'Number of results per page (default: 100)'
+      - in: query
+        name: sort
         schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - provider
-            - -provider
-            - uid
-            - -uid
-            - alias
-            - -alias
-            - connected
-            - -connected
-            - inserted_at
-            - -inserted_at
-            - updated_at
-            - -updated_at
-        explode: false
+          type: string
+        description: 'Sort the results by the specified fields. Use ''-'' prefix for
+          descending order. For example: "-provider,inserted_at", this first sorts
+          by provider alphabetically and then inside of each category by inserted_at
+          date'
       tags:
       - Provider
       security:
@@ -4479,8 +4491,9 @@ paths:
           description: ''
     post:
       operationId: providers_create
-      description: Add a new provider to the system by providing the required provider
-        details.
+      description: Create a new provider in the current Prowler Tenant. The provider
+        represents a cloud account or environment that Prowler will scan for security
+        findings.
       summary: Create a new provider
       tags:
       - Provider
@@ -4503,13 +4516,13 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderCreateResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/providers/{id}:
     get:
       operationId: providers_retrieve
-      description: Fetch detailed information about a specific provider by their ID.
-      summary: Retrieve data from a provider
+      description: Get detailed information about a specific provider
+      summary: Get provider details
       parameters:
       - in: query
         name: fields[providers]
@@ -4527,15 +4540,16 @@ paths:
             - secret
             - provider_groups
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this provider.
+        description: Prowler provider ID (UUIDv4 generated by Prowler)
         required: true
       - in: query
         name: include
@@ -4561,16 +4575,15 @@ paths:
           description: ''
     patch:
       operationId: providers_partial_update
-      description: Update certain fields of an existing provider's information without
-        affecting other fields.
-      summary: Partially update a provider
+      description: Update some fields of a specific provider
+      summary: Update provider details
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this provider.
+        description: Prowler provider ID (UUIDv4 generated by Prowler)
         required: true
       tags:
       - Provider
@@ -4597,7 +4610,7 @@ paths:
           description: ''
     delete:
       operationId: providers_destroy
-      description: Remove a provider from the system by their ID.
+      description: Delete a specific provider
       summary: Delete a provider
       parameters:
       - in: path
@@ -4605,7 +4618,7 @@ paths:
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this provider.
+        description: Prowler provider ID (UUIDv4 generated by Prowler)
         required: true
       tags:
       - Provider
@@ -4636,16 +4649,16 @@ paths:
   /api/v1/providers/{id}/connection:
     post:
       operationId: providers_connection_create
-      description: Try to verify connection. For instance, Role & Credentials are
-        set correctly
-      summary: Check connection
+      description: Verify that a configured provider can successfully establish a
+        connection to the actual provider endpoints.
+      summary: Test provider connection
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this provider.
+        description: Prowler provider ID (UUIDv4 generated by Prowler)
         required: true
       tags:
       - Provider
@@ -4676,9 +4689,9 @@ paths:
   /api/v1/providers/secrets:
     get:
       operationId: providers_secrets_list
-      description: Retrieve a list of all secrets with options for filtering by various
-        criteria.
-      summary: List all secrets
+      description: List all provider secrets with options for filtering by various
+        criteria
+      summary: List provider secrets
       parameters:
       - in: query
         name: fields[provider-secrets]
@@ -4693,66 +4706,64 @@ paths:
             - secret_type
             - provider
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[name]
         schema:
           type: string
+        description: Filter by exact secret name
       - in: query
         name: filter[name__icontains]
         schema:
           type: string
+        description: Filter by partial secret name match
       - in: query
         name: filter[provider]
         schema:
           type: string
           format: uuid
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
+        description: Prowler provider ID (UUIDv4 generated by Prowler)
+      - in: query
+        name: filter[search]
         schema:
           type: string
+        description: Search term in name attribute
       - in: query
         name: filter[updated_at]
         schema:
           type: string
           format: date
-      - name: page[number]
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+        description: 'Filter by exact update date (format: YYYY-MM-DD)'
+      - in: query
+        name: page[number]
         schema:
           type: integer
-      - name: page[size]
-        required: false
-        in: query
-        description: Number of results to return per page.
+        description: 'Page number to retrieve (default: 1)'
+      - in: query
+        name: page[size]
         schema:
           type: integer
-      - name: sort
-        required: false
-        in: query
-        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        description: Number of results per page
+      - in: query
+        name: sort
         schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - name
-            - -name
-            - inserted_at
-            - -inserted_at
-            - updated_at
-            - -updated_at
-        explode: false
+          type: string
+        description: Sort the results by the specified fields. You can specify multiple
+          fields separated by commas; the results will be sorted by the first field,
+          then by the second within each group of the first, and so on. Use '-' as
+          a prefix to a field name for descending order (e.g. "-name,inserted_at"
+          sorts by name descending, then by inserted_at ascending within each name).
+          If not set, the default sort order will be applied
       tags:
       - Provider
       security:
@@ -4766,9 +4777,8 @@ paths:
           description: ''
     post:
       operationId: providers_secrets_create
-      description: Add a new secret to the system by providing the required secret
-        details.
-      summary: Create a new secret
+      description: Add or update complete credentials for an existing provider
+      summary: Add provider secret
       tags:
       - Provider
       requestBody:
@@ -4790,13 +4800,13 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderSecretCreateResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/providers/secrets/{id}:
     get:
       operationId: providers_secrets_retrieve
-      description: Fetch detailed information about a specific secret by their ID.
-      summary: Retrieve data from a secret
+      description: Get detailed information about a specific provider secret
+      summary: Get provider secret details
       parameters:
       - in: query
         name: fields[provider-secrets]
@@ -4811,14 +4821,16 @@ paths:
             - secret_type
             - provider
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
         schema:
           type: string
           format: uuid
+        description: The UUID of the provider secret
         required: true
       tags:
       - Provider
@@ -4833,15 +4845,15 @@ paths:
           description: ''
     patch:
       operationId: providers_secrets_partial_update
-      description: Update certain fields of an existing secret's information without
-        affecting other fields.
-      summary: Partially update a secret
+      description: Update the details of a specific provider secret
+      summary: Update provider secret
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
+        description: The UUID of the provider secret.
         required: true
       tags:
       - Provider
@@ -4864,18 +4876,19 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderSecretUpdateResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
     delete:
       operationId: providers_secrets_destroy
-      description: Remove a secret from the system by their ID.
-      summary: Delete a secret
+      description: Delete a specific provider secret
+      summary: Delete provider secret
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
+        description: The UUID of the provider secret.
         required: true
       tags:
       - Provider
@@ -4883,7 +4896,7 @@ paths:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Secret deleted successfully
   /api/v1/resources:
     get:
       operationId: resources_list
@@ -4911,14 +4924,17 @@ paths:
             - failed_findings_count
             - url
             - type
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -5232,8 +5248,9 @@ paths:
             - failed_findings_count
             - url
             - type
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -5291,8 +5308,9 @@ paths:
             - failed_findings_count
             - url
             - type
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[name]
@@ -5542,14 +5560,17 @@ paths:
             - services
             - regions
             - types
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -5829,8 +5850,9 @@ paths:
             - services
             - regions
             - types
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[name]
@@ -6079,8 +6101,9 @@ paths:
             - users
             - invitations
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[id]
@@ -6102,6 +6125,8 @@ paths:
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -6275,8 +6300,9 @@ paths:
             - users
             - invitations
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -6432,8 +6458,9 @@ paths:
             - metadata_xml
             - created_at
             - updated_at
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - name: filter[search]
         required: false
@@ -6530,8 +6557,9 @@ paths:
             - metadata_xml
             - created_at
             - updated_at
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -6636,8 +6664,9 @@ paths:
             - next_scan_at
             - processor
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[completed_at]
@@ -6649,6 +6678,8 @@ paths:
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[name]
         schema:
@@ -6972,8 +7003,9 @@ paths:
             - next_scan_at
             - processor
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -7056,8 +7088,9 @@ paths:
             enum:
             - id
             - name
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -7095,8 +7128,9 @@ paths:
             type: string
             enum:
             - id
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -7184,8 +7218,9 @@ paths:
             - result
             - task_args
             - metadata
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[name]
@@ -7283,8 +7318,9 @@ paths:
             - result
             - task_args
             - metadata
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -7359,14 +7395,17 @@ paths:
             enum:
             - name
             - memberships
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[inserted_at]
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -7493,8 +7532,9 @@ paths:
             enum:
             - name
             - memberships
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -7587,8 +7627,9 @@ paths:
             - tenant
             - role
             - date_joined
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - name: filter[search]
         required: false
@@ -7697,8 +7738,9 @@ paths:
             - expires_at
             - inviter
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[email]
@@ -7733,6 +7775,8 @@ paths:
         schema:
           type: string
           format: date
+        description: Filter by exact date when the resource was inserted into the
+          database. The accepted format is YYYY-MM-DD.
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -7908,8 +7952,9 @@ paths:
             - expires_at
             - inviter
             - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -8090,8 +8135,9 @@ paths:
             - date_joined
             - memberships
             - roles
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[company_name]
@@ -8256,8 +8302,9 @@ paths:
             - date_joined
             - memberships
             - roles
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -8422,8 +8469,9 @@ paths:
             - tenant
             - role
             - date_joined
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: filter[date_joined]
@@ -8530,8 +8578,9 @@ paths:
             - tenant
             - role
             - date_joined
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: path
         name: id
@@ -8576,8 +8625,9 @@ paths:
             - date_joined
             - memberships
             - roles
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
+        description:
+        - Return only the specified fields in the response. If not set, all fields
+          are returned. Provide a comma-separated list, e.g. "field1,field2,field3".
         explode: false
       - in: query
         name: include
@@ -11725,9 +11775,10 @@ components:
               properties:
                 alias:
                   type: string
-                  nullable: true
-                  maxLength: 100
                   minLength: 3
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
+                  maxLength: 100
       required:
       - data
     PatchedRoleProviderGroupRelationshipRequest:
@@ -12671,51 +12722,6 @@ components:
               readOnly: true
           required:
           - secret
-    ProviderCreate:
-      type: object
-      required:
-      - type
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - providers
-        attributes:
-          type: object
-          properties:
-            alias:
-              type: string
-              nullable: true
-              maxLength: 100
-              minLength: 3
-            provider:
-              enum:
-              - aws
-              - azure
-              - gcp
-              - kubernetes
-              - m365
-              - github
-              type: string
-              description: |-
-                * `aws` - AWS
-                * `azure` - Azure
-                * `gcp` - GCP
-                * `kubernetes` - Kubernetes
-                * `m365` - M365
-                * `github` - GitHub
-              x-spec-enum-id: 4c1e219dad1cc0e7
-            uid:
-              type: string
-              title: Unique identifier for the provider, set by the provider
-              maxLength: 250
-              minLength: 3
-          required:
-          - uid
     ProviderCreateRequest:
       type: object
       properties:
@@ -12737,9 +12743,10 @@ components:
               properties:
                 alias:
                   type: string
-                  nullable: true
-                  maxLength: 100
                   minLength: 3
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
+                  maxLength: 100
                 provider:
                   enum:
                   - aws
@@ -12749,28 +12756,26 @@ components:
                   - m365
                   - github
                   type: string
+                  x-spec-enum-id: 4c1e219dad1cc0e7
                   description: |-
+                    Type of provider to create.
+
                     * `aws` - AWS
                     * `azure` - Azure
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
-                  x-spec-enum-id: 4c1e219dad1cc0e7
                 uid:
                   type: string
                   minLength: 3
-                  title: Unique identifier for the provider, set by the provider
+                  description: The unique identifier for the provider account. Format
+                    depends on the provider, e. g. AWS account ID, Azure subscription
+                    ID, GCP project ID, etc.
                   maxLength: 250
               required:
+              - provider
               - uid
-      required:
-      - data
-    ProviderCreateResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ProviderCreate'
       required:
       - data
     ProviderGroup:
@@ -13231,250 +13236,6 @@ components:
               title: Resource Identifier
           required:
           - provider
-    ProviderSecretCreate:
-      type: object
-      required:
-      - type
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - provider-secrets
-        attributes:
-          type: object
-          properties:
-            inserted_at:
-              type: string
-              format: date-time
-              readOnly: true
-            updated_at:
-              type: string
-              format: date-time
-              readOnly: true
-            name:
-              type: string
-              nullable: true
-              maxLength: 100
-              minLength: 3
-            secret_type:
-              enum:
-              - static
-              - role
-              - service_account
-              type: string
-              description: |-
-                * `static` - Key-value pairs
-                * `role` - Role assumption
-                * `service_account` - GCP Service Account Key
-              x-spec-enum-id: 20c74ebcd6671497
-            secret:
-              oneOf:
-              - type: object
-                title: AWS Static Credentials
-                properties:
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Required for environments
-                      where no IAM role is being assumed and direct AWS access is
-                      needed.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Must accompany 'aws_access_key_id'
-                      to authorize access to AWS resources.
-                  aws_session_token:
-                    type: string
-                    description: The session token associated with temporary credentials.
-                      Only needed for session-based or temporary AWS access.
-                required:
-                - aws_access_key_id
-                - aws_secret_access_key
-              - type: object
-                title: AWS Assume Role
-                properties:
-                  role_arn:
-                    type: string
-                    description: The Amazon Resource Name (ARN) of the role to assume.
-                      Required for AWS role assumption.
-                  external_id:
-                    type: string
-                    description: An identifier to enhance security for role assumption.
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Only required if the environment
-                      lacks pre-configured AWS credentials.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Required if 'aws_access_key_id'
-                      is provided or if no AWS credentials are pre-configured.
-                  aws_session_token:
-                    type: string
-                    description: The session token for temporary credentials, if applicable.
-                  session_duration:
-                    type: integer
-                    minimum: 900
-                    maximum: 43200
-                    default: 3600
-                    description: The duration (in seconds) for the role session.
-                  role_session_name:
-                    type: string
-                    description: |-
-                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
-
-                      Examples:
-                      - MySession123
-                      - User_Session-1
-                      - Test.Session@2
-                    pattern: ^[a-zA-Z0-9=,.@_-]+$
-                required:
-                - role_arn
-                - external_id
-              - type: object
-                title: Azure Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-              - type: object
-                title: M365 Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                  user:
-                    type: email
-                    description: User microsoft email address.
-                  password:
-                    type: string
-                    description: User password.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-                - user
-                - password
-              - type: object
-                title: GCP Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The client ID from Google Cloud, used to identify
-                      the application for GCP access.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the GCP client
-                      ID, required for secure access.
-                  refresh_token:
-                    type: string
-                    description: A refresh token that allows the application to obtain
-                      new access tokens for extended use.
-                required:
-                - client_id
-                - client_secret
-                - refresh_token
-              - type: object
-                title: GCP Service Account Key
-                properties:
-                  service_account_key:
-                    type: object
-                    description: The service account key for GCP.
-                required:
-                - service_account_key
-              - type: object
-                title: Kubernetes Static Credentials
-                properties:
-                  kubeconfig_content:
-                    type: string
-                    description: The content of the Kubernetes kubeconfig file, encoded
-                      as a string.
-                required:
-                - kubeconfig_content
-              - type: object
-                title: GitHub Personal Access Token
-                properties:
-                  personal_access_token:
-                    type: string
-                    description: GitHub personal access token for authentication.
-                required:
-                - personal_access_token
-              - type: object
-                title: GitHub OAuth App Token
-                properties:
-                  oauth_app_token:
-                    type: string
-                    description: GitHub OAuth App token for authentication.
-                required:
-                - oauth_app_token
-              - type: object
-                title: GitHub App Credentials
-                properties:
-                  github_app_id:
-                    type: integer
-                    description: GitHub App ID for authentication.
-                  github_app_key:
-                    type: string
-                    description: Path to the GitHub App private key file.
-                required:
-                - github_app_id
-                - github_app_key
-              writeOnly: true
-          required:
-          - secret_type
-          - secret
-        relationships:
-          type: object
-          properties:
-            provider:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                      - providers
-                      title: Resource Type Name
-                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                        member is used to describe resource objects that share common
-                        attributes and relationships.
-                  required:
-                  - id
-                  - type
-              required:
-              - data
-              description: The identifier of the related object.
-              title: Resource Identifier
-          required:
-          - provider
     ProviderSecretCreateRequest:
       type: object
       properties:
@@ -13725,271 +13486,11 @@ components:
               - provider
       required:
       - data
-    ProviderSecretCreateResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ProviderSecretCreate'
-      required:
-      - data
     ProviderSecretResponse:
       type: object
       properties:
         data:
           $ref: '#/components/schemas/ProviderSecret'
-      required:
-      - data
-    ProviderSecretUpdate:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - provider-secrets
-        id:
-          type: string
-          format: uuid
-        attributes:
-          type: object
-          properties:
-            inserted_at:
-              type: string
-              format: date-time
-              readOnly: true
-            updated_at:
-              type: string
-              format: date-time
-              readOnly: true
-            name:
-              type: string
-              nullable: true
-              maxLength: 100
-              minLength: 3
-            secret_type:
-              enum:
-              - static
-              - role
-              - service_account
-              type: string
-              description: |-
-                * `static` - Key-value pairs
-                * `role` - Role assumption
-                * `service_account` - GCP Service Account Key
-              x-spec-enum-id: 20c74ebcd6671497
-            secret:
-              oneOf:
-              - type: object
-                title: AWS Static Credentials
-                properties:
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Required for environments
-                      where no IAM role is being assumed and direct AWS access is
-                      needed.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Must accompany 'aws_access_key_id'
-                      to authorize access to AWS resources.
-                  aws_session_token:
-                    type: string
-                    description: The session token associated with temporary credentials.
-                      Only needed for session-based or temporary AWS access.
-                required:
-                - aws_access_key_id
-                - aws_secret_access_key
-              - type: object
-                title: AWS Assume Role
-                properties:
-                  role_arn:
-                    type: string
-                    description: The Amazon Resource Name (ARN) of the role to assume.
-                      Required for AWS role assumption.
-                  external_id:
-                    type: string
-                    description: An identifier to enhance security for role assumption.
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Only required if the environment
-                      lacks pre-configured AWS credentials.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Required if 'aws_access_key_id'
-                      is provided or if no AWS credentials are pre-configured.
-                  aws_session_token:
-                    type: string
-                    description: The session token for temporary credentials, if applicable.
-                  session_duration:
-                    type: integer
-                    minimum: 900
-                    maximum: 43200
-                    default: 3600
-                    description: The duration (in seconds) for the role session.
-                  role_session_name:
-                    type: string
-                    description: |-
-                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
-
-                      Examples:
-                      - MySession123
-                      - User_Session-1
-                      - Test.Session@2
-                    pattern: ^[a-zA-Z0-9=,.@_-]+$
-                required:
-                - role_arn
-                - external_id
-              - type: object
-                title: Azure Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-              - type: object
-                title: M365 Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                  user:
-                    type: email
-                    description: User microsoft email address.
-                  password:
-                    type: string
-                    description: User password.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-                - user
-                - password
-              - type: object
-                title: GCP Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The client ID from Google Cloud, used to identify
-                      the application for GCP access.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the GCP client
-                      ID, required for secure access.
-                  refresh_token:
-                    type: string
-                    description: A refresh token that allows the application to obtain
-                      new access tokens for extended use.
-                required:
-                - client_id
-                - client_secret
-                - refresh_token
-              - type: object
-                title: GCP Service Account Key
-                properties:
-                  service_account_key:
-                    type: object
-                    description: The service account key for GCP.
-                required:
-                - service_account_key
-              - type: object
-                title: Kubernetes Static Credentials
-                properties:
-                  kubeconfig_content:
-                    type: string
-                    description: The content of the Kubernetes kubeconfig file, encoded
-                      as a string.
-                required:
-                - kubeconfig_content
-              - type: object
-                title: GitHub Personal Access Token
-                properties:
-                  personal_access_token:
-                    type: string
-                    description: GitHub personal access token for authentication.
-                required:
-                - personal_access_token
-              - type: object
-                title: GitHub OAuth App Token
-                properties:
-                  oauth_app_token:
-                    type: string
-                    description: GitHub OAuth App token for authentication.
-                required:
-                - oauth_app_token
-              - type: object
-                title: GitHub App Credentials
-                properties:
-                  github_app_id:
-                    type: integer
-                    description: GitHub App ID for authentication.
-                  github_app_key:
-                    type: string
-                    description: Path to the GitHub App private key file.
-                required:
-                - github_app_id
-                - github_app_key
-              writeOnly: true
-          required:
-          - secret
-        relationships:
-          type: object
-          properties:
-            provider:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                      - providers
-                      title: Resource Type Name
-                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                        member is used to describe resource objects that share common
-                        attributes and relationships.
-                  required:
-                  - id
-                  - type
-              required:
-              - data
-              description: The identifier of the related object.
-              title: Resource Identifier
-              readOnly: true
-    ProviderSecretUpdateResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ProviderSecretUpdate'
       required:
       - data
     Resource:

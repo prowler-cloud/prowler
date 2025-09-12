@@ -809,6 +809,19 @@ class ProviderIncludeSerializer(RLSSerializer):
 
 
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    provider = ProviderEnumSerializerField(help_text="Type of provider to create.")
+    alias = serializers.CharField(
+        required=False,
+        help_text="Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
+        min_length=3,
+        max_length=100,
+    )
+    uid = serializers.CharField(
+        help_text="The unique identifier for the provider account. Format depends on the provider, e. g. AWS account ID, Azure subscription ID, GCP project ID, etc.",
+        min_length=3,
+        max_length=250,
+    )
+
     class Meta:
         model = Provider
         fields = [
@@ -824,6 +837,13 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
     Serializer for updating the Provider model.
     Only allows "alias" and "scanner_args" fields to be updated.
     """
+
+    alias = serializers.CharField(
+        required=False,
+        help_text="Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
+        min_length=3,
+        max_length=100,
+    )
 
     class Meta:
         model = Provider
