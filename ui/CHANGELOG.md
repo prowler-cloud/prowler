@@ -2,12 +2,20 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.12.1] (Prowler v5.12.1)
+## [1.13.0] (Prowler unreleased)
 
 ### 🚀 Added
+- Support for Markdown and AdditionalURLs in findings detail page [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
+- `Prowler Hub` menu item with tooltip [(#8692)] (https://github.com/prowler-cloud/prowler/pull/8692)
+- Copy link button to finding detail page [(#8685)] (https://github.com/prowler-cloud/prowler/pull/8685)
 
-- `Prowler Hub` menu item with tooltip [(#8692)](https://github.com/prowler-cloud/prowler/pull/8692)
-- Copy link button to finding detail page [(#8685)](https://github.com/prowler-cloud/prowler/pull/8685)
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.12.1] (Prowler v5.12.1)
 
 ### 🐞 Fixed
 
@@ -25,7 +33,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Overview chart "Findings by Severity" now shows only failing findings (defaults to `status=FAIL`) and chart links open the Findings page pre-filtered to fails per severity [(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
 - Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
 - No-permission message on the scan page [(#8624)](https://github.com/prowler-cloud/prowler/pull/8624)
-- Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
 
 ### 🐞 Fixed
 
