@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
-    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
