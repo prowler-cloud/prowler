@@ -297,14 +297,6 @@ class APIKeyManager(APIKeyManager):
 
         return obj, key
 
-    def using_admin_db(self):
-        """
-        Return a manager that uses the admin database to bypass RLS.
-        Useful for authentication where we don't have tenant context yet.
-        """
-        return self.using(MainRouter.admin_db)
-
-
 class APIKey(RowLevelSecurityProtectedModel, AbstractAPIKey):
     """
     API Key model extending djangorestframework-api-key's AbstractAPIKey

@@ -17,6 +17,7 @@ dependencies = [
   "django-guid==3.5.0",
   "django-postgres-extra (>=2.0.8,<3.0.0)",
   "djangorestframework==3.15.2",
+  "djangorestframework-api-key>=3.0.0,<4.0.0",
   "djangorestframework-jsonapi==7.0.2",
   "djangorestframework-simplejwt (>=5.3.1,<6.0.0)",
   "drf-nested-routers (>=0.94.1,<1.0.0)",
