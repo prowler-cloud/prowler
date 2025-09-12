@@ -30,7 +30,7 @@ github_client = httpx.Client(
     timeout=30.0,
     headers={
         "Accept": "*/*",
-        "User-Agent": "prowler-mcp-server/1.0",
+        "User-Agent": "prowler-mcp-server/0.1.0",
     },
 )
 
