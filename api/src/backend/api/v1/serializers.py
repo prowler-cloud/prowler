@@ -259,8 +259,15 @@ class UserSerializer(BaseSerializerV1):
     Serializer for the User model.
     """
 
-    memberships = serializers.ResourceRelatedField(many=True, read_only=True)
-    roles = serializers.ResourceRelatedField(many=True, read_only=True)
+    # We use SerializerMethodResourceRelatedField so includes (e.g. ?include=roles)
+    # respect RBAC and do not leak relationships of other users when the requester
+    # lacks manage_account. The visibility logic lives in get_roles/get_memberships.
+    memberships = SerializerMethodResourceRelatedField(
+        many=True, read_only=True, source="memberships", method_name="get_memberships"
+    )
+    roles = SerializerMethodResourceRelatedField(
+        many=True, read_only=True, source="roles", method_name="get_roles"
+    )
 
     class Meta:
         model = User
@@ -278,8 +285,33 @@ class UserSerializer(BaseSerializerV1):
         }
 
     included_serializers = {
-        "roles": "api.v1.serializers.RoleSerializer",
+        "roles": "api.v1.serializers.RoleIncludeSerializer",
     }
+
+    def _can_view_relationships(self, instance) -> bool:
+        """Allow self to view own relationships. Require manage_account to view others."""
+        role = self.context.get("role")
+        request = self.context.get("request")
+        is_self = bool(
+            request
+            and getattr(request, "user", None)
+            and getattr(instance, "id", None) == request.user.id
+        )
+        return is_self or (role and role.manage_account)
+
+    def get_roles(self, instance):
+        return (
+            instance.roles.all()
+            if self._can_view_relationships(instance)
+            else Role.objects.none()
+        )
+
+    def get_memberships(self, instance):
+        return (
+            instance.memberships.all()
+            if self._can_view_relationships(instance)
+            else Membership.objects.none()
+        )
 
 
 class UserCreateSerializer(BaseWriteSerializer):
@@ -1690,6 +1722,37 @@ class RoleUpdateSerializer(RoleSerializer):
             UserRoleRelationship.objects.bulk_create(through_model_instances)
 
         return super().update(instance, validated_data)
+
+
+class RoleIncludeSerializer(RLSSerializer):
+    permission_state = serializers.SerializerMethodField()
+
+    def get_permission_state(self, obj) -> str:
+        return obj.permission_state
+
+    class Meta:
+        model = Role
+        fields = [
+            "id",
+            "name",
+            "manage_users",
+            "manage_account",
+            # Disable for the first release
+            # "manage_billing",
+            # /Disable for the first release
+            "manage_integrations",
+            "manage_providers",
+            "manage_scans",
+            "permission_state",
+            "unlimited_visibility",
+            "inserted_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
 
 
 class ProviderGroupResourceIdentifierSerializer(serializers.Serializer):
