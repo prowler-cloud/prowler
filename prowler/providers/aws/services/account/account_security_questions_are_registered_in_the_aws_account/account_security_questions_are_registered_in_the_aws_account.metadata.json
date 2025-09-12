@@ -1,31 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "account_security_questions_are_registered_in_the_aws_account",
-  "CheckTitle": "Ensure security questions are registered in the AWS account.",
+  "CheckTitle": "AWS root user has security challenge questions configured",
   "CheckType": [
-    "IAM"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "account",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsAccount",
-  "Description": "Ensure security questions are registered in the AWS account.",
-  "Risk": "The AWS support portal allows account owners to establish security questions that can be used to authenticate individuals calling AWS customer service for support. It is recommended that security questions be established. When creating a new AWS account a default super user is automatically created. This account is referred to as the root account. It is recommended that the use of this account be limited and highly controlled. During events in which the root password is no longer accessible or the MFA token associated with root is lost/destroyed it is possible through authentication using secret questions and associated answers to recover root login access.",
+  "ResourceType": "AwsIamUser",
+  "Description": "**AWS account root** configuration may include legacy **security challenge questions** for support identity verification. This evaluates whether those questions are set on the account. *New configuration is discontinued by AWS and remaining support for this feature is time-limited.*",
+  "Risk": "Absence of these questions can limit support-assisted recovery if root credentials or MFA are lost, reducing **availability** and slowing **incident response**. Reliance on KBA also weakens **confidentiality** due to **social engineering**. Treat this as a recovery gap and adopt stronger, phishing-resistant factors.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-security-challenge.html",
+    "https://aws.amazon.com/console/",
+    "https://docs.prowler.com/checks/aws/iam-policies/iam_15"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "No command available.",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/iam-policies/iam_15",
+      "Other": "1. AWS removed security challenge questions on Jan 6, 2025; this setting cannot be configured.\n2. Treat this finding as Not Applicable.\n3. Mitigate by enabling root MFA: sign in as the root user, open your account menu (top right) > Security credentials, then under Multi-factor authentication (MFA) choose Activate MFA and complete setup.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Login as root account and from My Account configure Security questions.",
-      "Url": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-security-challenge.html"
+      "Text": "Favor stronger recovery instead of KBA:\n- Enforce **MFA for root** and minimize root use\n- Keep **alternate contacts** and root email current and protected\n- Establish a tightly controlled **break-glass role**, applying least privilege and separation of duties\n- Document and test recovery procedures; monitor root activity",
+      "Url": "https://hub.prowler.com/check/account_security_questions_are_registered_in_the_aws_account"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
