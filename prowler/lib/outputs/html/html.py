@@ -235,7 +235,7 @@ class HTML(Output):
             width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            margin-top: 2rem; /* Increased top margin */
+            margin-top: 0.75rem; /* Reduced top margin for less space */
             margin-bottom: 2rem; /* Added bottom margin */
             border: 1px solid #dee2e6; /* Border around the container/table */
             border-radius: 0.375rem; /* Rounded corners for the container */
@@ -266,7 +266,7 @@ class HTML(Output):
             font-size: 0.8rem !important; /* Slightly increased font size */
             text-transform: uppercase !important;
             letter-spacing: 0.05em !important;
-            padding: 0.9rem 0.75rem !important; /* Adjusted padding for new font size */
+            padding: 0.9rem 2.5rem 0.9rem 0.75rem !important; /* Increased right padding for sort arrows */
             vertical-align: middle !important; /* Ensure vertical alignment */
         }}
         #findingsTable tbody tr {{
@@ -678,7 +678,7 @@ class HTML(Output):
             font-size: 0.85em !important; /* Slightly smaller relative to header text */
             opacity: 0.5 !important; /* More subtle */
             position: absolute !important;
-            right: 10px !important; /* Adjusted positioning */
+            right: 15px !important; /* Increased spacing from edge */
             top: 50% !important;
             transform: translateY(-50%) !important;
             content: '' !important; /* Clear default content first */
@@ -1084,6 +1084,23 @@ class HTML(Output):
             display: flex;
             align-items: center;
         }}
+        /* Group Filters button and Length selector together */
+        .dt-buttons {{
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            margin-right: 1rem;
+        }}
+        .dataTables_wrapper .col-sm-12.col-md-6:first-child {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }}
+        .dataTables_length {{
+            display: inline-flex !important;
+            align-items: center !important;
+            margin: 0 !important;
+        }}
         /* Fix for DataTables responsive layout */
         @media (max-width: 767px) {{
             div.dataTables_wrapper div.row:last-child {{
@@ -1270,7 +1287,7 @@ class HTML(Output):
                     viewTotal: true,
                     layout: 'columns-3' // Keep this for the button pop-up for now
                 },
-                dom: 'Bfrtipl', // B=Buttons, f=filtering input, r=processing, t=table, i=info, p=pagination, l=length changing
+                dom: 'Blfrtipr', // B=Buttons, l=length changing, f=filtering input, r=processing, t=table, i=info, p=pagination, r=processing
                 language: {
                     searchPanes: {
                         clearMessage: 'Clear Filters',
@@ -1303,13 +1320,14 @@ class HTML(Output):
                 ]
             });
 
-            // Fix DataTables length control alignment
+            // Fix DataTables length control alignment and position it next to buttons
             setTimeout(function() {
                 // Force proper styling on the length control
                 $('.dataTables_length').css({
-                    'display': 'flex',
+                    'display': 'inline-flex',
                     'align-items': 'center',
-                    'gap': '0.5rem'
+                    'gap': '0.5rem',
+                    'margin': '0'
                 });
 
                 $('.dataTables_length label').css({
@@ -1324,6 +1342,18 @@ class HTML(Output):
                     'margin': '0',
                     'vertical-align': 'middle'
                 });
+
+                // Group buttons and length selector together
+                var $buttonsContainer = $('.dt-buttons');
+                var $lengthContainer = $('.dataTables_length');
+
+                if ($buttonsContainer.length && $lengthContainer.length) {
+                    // Create wrapper for grouped controls
+                    if (!$buttonsContainer.parent().hasClass('grouped-controls')) {
+                        $buttonsContainer.wrap('<div class="grouped-controls" style="display: flex; align-items: center; gap: 1rem;"></div>');
+                        $lengthContainer.appendTo($buttonsContainer.parent());
+                    }
+                }
             }, 100); // Small delay to ensure DataTables has finished rendering
 
             // BEGIN: Collapsible Filters Logic (REMOVING THIS BLOCK)
