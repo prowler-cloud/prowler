@@ -278,6 +278,11 @@ class LlmProvider(Provider):
             return self._stream_findings(process, report_path, streaming_callback)
 
         except Exception as error:
+            if "No such file or directory: 'promptfoo'" in str(error):
+                logger.critical(
+                    "Promptfoo binary not found. Please install promptfoo from https://promptfoo.dev/docs/installation/ or use your system package manager (e.g., 'npm install -g promptfoo' or 'brew install promptfoo' on macOS)"
+                )
+                sys.exit(1)
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
