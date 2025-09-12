@@ -9,6 +9,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
 
 ### Changed
+- Update aws apigatewayv2 service metadata to new format [(#8719)](https://github.com/prowler-cloud/prowler/pull/8719)
+
 - Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
 - Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
 
