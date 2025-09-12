@@ -366,14 +366,6 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
             raise jira_auth_error
 
 
-def get_jira_integration_metadata(jira_integration: Integration) -> dict:
-    prowler_jira = initialize_prowler_integration(jira_integration)
-    try:
-        return prowler_jira.get_jira_metadata()
-    except JiraNoProjectsError:
-        return {}
-
-
 # OpenAPI parameters
 
 FIELDS_PARAMETER_DESCRIPTION = (
