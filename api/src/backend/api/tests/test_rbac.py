@@ -227,6 +227,83 @@ class TestUserViewSet:
                 assert rels["memberships"]["data"] == []
                 assert rels["memberships"]["meta"]["count"] == 0
 
+    def test_include_roles_hidden_without_manage_account(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        # Arrange: ensure another user in the same tenant with its own role
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        other_user = User.objects.create_user(
+            name="other_in_tenant_inc",
+            email="other_in_tenant_inc@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+        other_role = Role.objects.create(
+            name="other_inc_role",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+        UserRoleRelationship.objects.create(
+            user=other_user, role=other_role, tenant_id=tenant.id
+        )
+
+        response = authenticated_client_rbac_manage_users_only.get(
+            reverse("user-list"), {"include": "roles"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+
+        # Assert: included must not contain the other user's role
+        included = payload.get("included", [])
+        included_role_ids = {
+            item["id"] for item in included if item.get("type") == "roles"
+        }
+        assert str(other_role.id) not in included_role_ids
+
+        # Relationships for other user should be empty
+        for item in payload["data"]:
+            if item["id"] == str(other_user.id):
+                rels = item["relationships"]
+                assert rels["roles"]["data"] == []
+
+    def test_include_roles_visible_with_manage_account(
+        self, authenticated_client_rbac, tenants_fixture
+    ):
+        # Arrange: another user in tenant[0] with its role
+        tenant = tenants_fixture[0]
+        other_user = User.objects.create_user(
+            name="other_with_role",
+            email="other_with_role@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+        other_role = Role.objects.create(
+            name="other_visible_role",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+        UserRoleRelationship.objects.create(
+            user=other_user, role=other_role, tenant_id=tenant.id
+        )
+
+        response = authenticated_client_rbac.get(
+            reverse("user-list"), {"include": "roles"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+
+        # Assert: included must contain the other user's role
+        included = payload.get("included", [])
+        included_role_ids = {
+            item["id"] for item in included if item.get("type") == "roles"
+        }
+        assert str(other_role.id) in included_role_ids
+
     def test_retrieve_user_with_manage_users_only_hides_relationships(
         self, authenticated_client_rbac_manage_users_only
     ):

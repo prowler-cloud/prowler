@@ -259,8 +259,15 @@ class UserSerializer(BaseSerializerV1):
     Serializer for the User model.
     """
 
-    memberships = serializers.ResourceRelatedField(many=True, read_only=True)
-    roles = serializers.ResourceRelatedField(many=True, read_only=True)
+    # We use SerializerMethodResourceRelatedField so includes (e.g. ?include=roles)
+    # respect RBAC and do not leak relationships of other users when the requester
+    # lacks manage_account. The visibility logic lives in get_roles/get_memberships.
+    memberships = SerializerMethodResourceRelatedField(
+        many=True, read_only=True, source="memberships", method_name="get_memberships"
+    )
+    roles = SerializerMethodResourceRelatedField(
+        many=True, read_only=True, source="roles", method_name="get_roles"
+    )
 
     class Meta:
         model = User
@@ -281,8 +288,8 @@ class UserSerializer(BaseSerializerV1):
         "roles": "api.v1.serializers.RoleIncludeSerializer",
     }
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
+    def _can_view_relationships(self, instance) -> bool:
+        """Allow self to view own relationships. Require manage_account to view others."""
         role = self.context.get("role")
         request = self.context.get("request")
         is_self = bool(
@@ -290,13 +297,21 @@ class UserSerializer(BaseSerializerV1):
             and getattr(request, "user", None)
             and getattr(instance, "id", None) == request.user.id
         )
+        return is_self or (role and role.manage_account)
 
-        # Hide relationships for other users if no manage_account, but always show for self
-        if role and not role.manage_account and not is_self:
-            representation["memberships"] = []
-            representation["roles"] = []
+    def get_roles(self, instance):
+        return (
+            instance.roles.all()
+            if self._can_view_relationships(instance)
+            else Role.objects.none()
+        )
 
-        return representation
+    def get_memberships(self, instance):
+        return (
+            instance.memberships.all()
+            if self._can_view_relationships(instance)
+            else Membership.objects.none()
+        )
 
 
 class UserCreateSerializer(BaseWriteSerializer):
