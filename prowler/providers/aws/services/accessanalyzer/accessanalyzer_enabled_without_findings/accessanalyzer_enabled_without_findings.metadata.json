@@ -14,7 +14,7 @@
   "Severity": "low",
   "ResourceType": "Other",
   "Description": "**IAM Access Analyzer** analyzers are in `Active` state and currently report zero `Active` findings within their scope of monitored resources.",
-  "Risk": "Unresolved `Active` findings indicate unintended external or internal access paths.\n- **Confidentiality**: public/cross\u2011account reads of data (buckets, snapshots, secrets)\n- **Integrity**: rogue role assumption or KMS use enabling policy/data changes\n- **Lateral movement** across accounts",
+  "Risk": "Unresolved `Active` findings indicate unintended external or internal access paths.\n- **Confidentiality**: public/cross-account reads of data (buckets, snapshots, secrets)\n- **Integrity**: rogue role assumption or KMS use enabling policy/data changes\n- **Lateral movement** across accounts",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-findings-remediate.html",
