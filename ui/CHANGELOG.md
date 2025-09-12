@@ -6,13 +6,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- `Prowler Hub` menu item with tooltip [(#8692)] (https://github.com/prowler-cloud/prowler/pull/8692)
-- Copy link button to finding detail page [(#8685)] (https://github.com/prowler-cloud/prowler/pull/8685)
+- `Prowler Hub` menu item with tooltip [(#8692)](https://github.com/prowler-cloud/prowler/pull/8692)
+- Copy link button to finding detail page [(#8685)](https://github.com/prowler-cloud/prowler/pull/8685)
 
 ### 🐞 Fixed
 
-- Field-level email validation message [(#8698)] (https://github.com/prowler-cloud/prowler/pull/8698)
-- POST method on auth form [(#8699)] (https://github.com/prowler-cloud/prowler/pull/8699)
+- Field-level email validation message [(#8698)](https://github.com/prowler-cloud/prowler/pull/8698)
+- POST method on auth form [(#8699)](https://github.com/prowler-cloud/prowler/pull/8699)
 
 ## [1.12.0] (Prowler v5.12.0)
 
