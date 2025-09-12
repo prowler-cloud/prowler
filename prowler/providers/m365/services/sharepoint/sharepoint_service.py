@@ -3,7 +3,7 @@ from asyncio import gather, get_event_loop
 from typing import List, Optional
 
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service

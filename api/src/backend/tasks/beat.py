@@ -2,10 +2,10 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
-from rest_framework_json_api.serializers import ValidationError
 from tasks.tasks import perform_scheduled_scan_task
 
 from api.db_utils import rls_transaction
+from api.exceptions import ConflictException
 from api.models import Provider, Scan, StateChoices
 
 
@@ -24,15 +24,9 @@ def schedule_provider_scan(provider_instance: Provider):
     if PeriodicTask.objects.filter(
         interval=schedule, name=task_name, task="scan-perform-scheduled"
     ).exists():
-        raise ValidationError(
-            [
-                {
-                    "detail": "There is already a scheduled scan for this provider.",
-                    "status": 400,
-                    "source": {"pointer": "/data/attributes/provider_id"},
-                    "code": "invalid",
-                }
-            ]
+        raise ConflictException(
+            detail="There is already a scheduled scan for this provider.",
+            pointer="/data/attributes/provider_id",
         )
 
     with rls_transaction(tenant_id):

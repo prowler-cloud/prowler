@@ -1,6 +1,7 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from botocore.client import ClientError
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -71,6 +72,17 @@ class ElasticBeanstalk(AWSService):
                     and option["OptionName"] == "StreamLogs"
                 ):
                     environment.cloudwatch_stream_logs = option.get("Value", "false")
+        except ClientError as error:
+            if error.response["Error"]["Code"] in [
+                "InvalidParameterValue",
+            ]:
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -84,10 +96,17 @@ class ElasticBeanstalk(AWSService):
                 "ResourceTags"
             ]
             resource.tags = response
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        except ClientError as error:
+            if error.response["Error"]["Code"] in [
+                "ResourceNotFoundException",
+            ]:
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

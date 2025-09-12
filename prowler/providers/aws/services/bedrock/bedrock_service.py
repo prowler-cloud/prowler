@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -116,7 +116,7 @@ class Guardrail(BaseModel):
     region: str
     tags: Optional[list] = []
     sensitive_information_filter: bool = False
-    prompt_attack_filter_strength: Optional[str]
+    prompt_attack_filter_strength: Optional[str] = None
 
 
 class BedrockAgent(AWSService):
@@ -169,6 +169,6 @@ class Agent(BaseModel):
     id: str
     name: str
     arn: str
-    guardrail_id: Optional[str]
+    guardrail_id: Optional[str] = None
     region: str
     tags: Optional[list] = []

@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { DateWithTime, InfoField } from "@/components/ui/entities";
-import { MembershipDetailData } from "@/types/users/users";
+import { MembershipDetailData } from "@/types/users";
 
 import { EditTenantForm } from "../forms";
 

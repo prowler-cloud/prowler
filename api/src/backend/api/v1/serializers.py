@@ -7,20 +7,24 @@ from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
+from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api.exceptions import ConflictException
 from api.models import (
-    ComplianceOverview,
     Finding,
     Integration,
     IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
+    LighthouseConfiguration,
     Membership,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
@@ -29,8 +33,10 @@ from api.models import (
     ResourceTag,
     Role,
     RoleProviderGroupRelationship,
+    SAMLConfiguration,
     Scan,
     StateChoices,
+    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -40,9 +46,14 @@ from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
     IntegrationConfigField,
     IntegrationCredentialField,
+    JiraConfigSerializer,
+    JiraCredentialSerializer,
     S3ConfigSerializer,
+    SecurityHubConfigSerializer,
 )
+from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from prowler.lib.mutelist.mutelist import Mutelist
 
 # Tokens
 
@@ -128,6 +139,12 @@ class TokenSerializer(BaseTokenSerializer):
 
 class TokenSocialLoginSerializer(BaseTokenSerializer):
     email = serializers.EmailField(write_only=True)
+    tenant_id = serializers.UUIDField(
+        write_only=True,
+        required=False,
+        help_text="If not provided, the tenant ID of the first membership that was added"
+        " to the user will be used.",
+    )
 
     # Output tokens
     refresh = serializers.CharField(read_only=True)
@@ -849,6 +866,7 @@ class ScanSerializer(RLSSerializer):
             "completed_at",
             "scheduled_at",
             "next_scan_at",
+            "processor",
             "url",
         ]
 
@@ -986,8 +1004,12 @@ class ResourceSerializer(RLSSerializer):
 
     tags = serializers.SerializerMethodField()
     type_ = serializers.CharField(read_only=True)
+    failed_findings_count = serializers.IntegerField(read_only=True)
 
-    findings = serializers.ResourceRelatedField(many=True, read_only=True)
+    findings = SerializerMethodResourceRelatedField(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = Resource
@@ -1003,6 +1025,7 @@ class ResourceSerializer(RLSSerializer):
             "tags",
             "provider",
             "findings",
+            "failed_findings_count",
             "url",
         ]
         extra_kwargs = {
@@ -1012,8 +1035,8 @@ class ResourceSerializer(RLSSerializer):
         }
 
     included_serializers = {
-        "findings": "api.v1.serializers.FindingSerializer",
-        "provider": "api.v1.serializers.ProviderSerializer",
+        "findings": "api.v1.serializers.FindingIncludeSerializer",
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
     }
 
     @extend_schema_field(
@@ -1024,6 +1047,10 @@ class ResourceSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
+        # Use prefetched tags if available to avoid N+1 queries
+        if hasattr(obj, "prefetched_tags"):
+            return {tag.key: tag.value for tag in obj.prefetched_tags}
+        # Fallback to the original method if prefetch is not available
         return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
@@ -1033,10 +1060,17 @@ class ResourceSerializer(RLSSerializer):
         fields["type"] = type_
         return fields
 
+    def get_findings(self, obj):
+        return (
+            obj.latest_findings
+            if hasattr(obj, "latest_findings")
+            else obj.findings.all()
+        )
+
 
 class ResourceIncludeSerializer(RLSSerializer):
     """
-    Serializer for the Resource model.
+    Serializer for the included Resource model.
     """
 
     tags = serializers.SerializerMethodField()
@@ -1069,6 +1103,10 @@ class ResourceIncludeSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
+        # Use prefetched tags if available to avoid N+1 queries
+        if hasattr(obj, "prefetched_tags"):
+            return {tag.key: tag.value for tag in obj.prefetched_tags}
+        # Fallback to the original method if prefetch is not available
         return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
@@ -1077,6 +1115,17 @@ class ResourceIncludeSerializer(RLSSerializer):
         type_ = fields.pop("type_")
         fields["type"] = type_
         return fields
+
+
+class ResourceMetadataSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    types = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    # Temporarily disabled until we implement tag filtering in the UI
+    # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
+
+    class Meta:
+        resource_name = "resources-metadata"
 
 
 class FindingSerializer(RLSSerializer):
@@ -1102,6 +1151,7 @@ class FindingSerializer(RLSSerializer):
             "updated_at",
             "first_seen_at",
             "muted",
+            "muted_reason",
             "url",
             # Relationships
             "scan",
@@ -1112,6 +1162,28 @@ class FindingSerializer(RLSSerializer):
         "scan": ScanIncludeSerializer,
         "resources": ResourceIncludeSerializer,
     }
+
+
+class FindingIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the include Finding model.
+    """
+
+    class Meta:
+        model = Finding
+        fields = [
+            "id",
+            "uid",
+            "status",
+            "severity",
+            "check_id",
+            "check_metadata",
+            "inserted_at",
+            "updated_at",
+            "first_seen_at",
+            "muted",
+            "muted_reason",
+        ]
 
 
 # To be removed when the related endpoint is removed as well
@@ -1149,6 +1221,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GITHUB.value:
+                serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
@@ -1198,8 +1272,8 @@ class M365ProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
     tenant_id = serializers.CharField()
-    user = serializers.EmailField()
-    password = serializers.CharField()
+    user = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1223,6 +1297,16 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
 
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class GithubProviderSecret(serializers.Serializer):
+    personal_access_token = serializers.CharField(required=False)
+    oauth_app_token = serializers.CharField(required=False)
+    github_app_id = serializers.IntegerField(required=False)
+    github_app_key_content = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1307,12 +1391,13 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "provider": {"read_only": True},
-            "secret_type": {"read_only": True},
+            "secret_type": {"required": False},
         }
 
     def validate(self, attrs):
         provider = self.instance.provider
-        secret_type = self.instance.secret_type
+        # To allow updating a secret with the same type without making the `secret_type` mandatory
+        secret_type = attrs.get("secret_type") or self.instance.secret_type
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
@@ -1679,130 +1764,63 @@ class RoleProviderGroupRelationshipSerializer(RLSSerializer, BaseWriteSerializer
 # Compliance overview
 
 
-class ComplianceOverviewSerializer(RLSSerializer):
+class ComplianceOverviewSerializer(serializers.Serializer):
     """
-    Serializer for the ComplianceOverview model.
+    Serializer for compliance requirement status aggregated by compliance framework.
+
+    This serializer is used to format aggregated compliance framework data,
+    providing counts of passed, failed, and manual requirements along with
+    an overall global status for each framework.
     """
 
-    requirements_status = serializers.SerializerMethodField(
-        read_only=True, method_name="get_requirements_status"
-    )
-    provider_type = serializers.SerializerMethodField(read_only=True)
+    # Add ID field which will be used for resource identification
+    id = serializers.CharField()
+    framework = serializers.CharField()
+    version = serializers.CharField()
+    requirements_passed = serializers.IntegerField()
+    requirements_failed = serializers.IntegerField()
+    requirements_manual = serializers.IntegerField()
+    total_requirements = serializers.IntegerField()
 
-    class Meta:
-        model = ComplianceOverview
-        fields = [
-            "id",
-            "inserted_at",
-            "compliance_id",
-            "framework",
-            "version",
-            "requirements_status",
-            "region",
-            "provider_type",
-            "scan",
-            "url",
-        ]
-
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "passed": {"type": "integer"},
-                "failed": {"type": "integer"},
-                "manual": {"type": "integer"},
-                "total": {"type": "integer"},
-            },
-        }
-    )
-    def get_requirements_status(self, obj):
-        return {
-            "passed": obj.requirements_passed,
-            "failed": obj.requirements_failed,
-            "manual": obj.requirements_manual,
-            "total": obj.total_requirements,
-        }
-
-    @extend_schema_field(serializers.CharField(allow_null=True))
-    def get_provider_type(self, obj):
-        """
-        Retrieves the provider_type from scan.provider.provider_type.
-        """
-        try:
-            return obj.scan.provider.provider
-        except AttributeError:
-            return None
+    class JSONAPIMeta:
+        resource_name = "compliance-overviews"
 
 
-class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
-    requirements = serializers.SerializerMethodField(read_only=True)
+class ComplianceOverviewDetailSerializer(serializers.Serializer):
+    """
+    Serializer for detailed compliance requirement information.
 
-    class Meta(ComplianceOverviewSerializer.Meta):
-        fields = ComplianceOverviewSerializer.Meta.fields + [
-            "description",
-            "requirements",
-        ]
+    This serializer formats the aggregated requirement data, showing detailed status
+    and counts for each requirement across all regions.
+    """
 
-    @extend_schema_field(
-        {
-            "type": "object",
-            "properties": {
-                "requirement_id": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string"},
-                        "checks": {
-                            "type": "object",
-                            "properties": {
-                                "check_name": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "enum": ["PASS", "FAIL", None],
-                                        },
-                                    },
-                                }
-                            },
-                            "description": "Each key in the 'checks' object is a check name, with values as "
-                            "'PASS', 'FAIL', or null.",
-                        },
-                        "status": {
-                            "type": "string",
-                            "enum": ["PASS", "FAIL", "MANUAL"],
-                        },
-                        "attributes": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                            },
-                        },
-                        "description": {"type": "string"},
-                        "checks_status": {
-                            "type": "object",
-                            "properties": {
-                                "total": {"type": "integer"},
-                                "pass": {"type": "integer"},
-                                "fail": {"type": "integer"},
-                                "manual": {"type": "integer"},
-                            },
-                        },
-                    },
-                }
-            },
-        }
-    )
-    def get_requirements(self, obj):
-        """
-        Returns the detailed structure of requirements.
-        """
-        return obj.requirements
+    id = serializers.CharField()
+    framework = serializers.CharField()
+    version = serializers.CharField()
+    description = serializers.CharField()
+    status = serializers.ChoiceField(choices=StatusChoices.choices)
+
+    class JSONAPIMeta:
+        resource_name = "compliance-requirements-details"
+
+
+class ComplianceOverviewAttributesSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    framework_description = serializers.CharField()
+    name = serializers.CharField()
+    framework = serializers.CharField()
+    version = serializers.CharField()
+    description = serializers.CharField()
+    attributes = serializers.JSONField()
+
+    class JSONAPIMeta:
+        resource_name = "compliance-requirements-attributes"
 
 
 class ComplianceOverviewMetadataSerializer(serializers.Serializer):
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
-    class Meta:
+    class JSONAPIMeta:
         resource_name = "compliance-overviews-metadata"
 
 
@@ -1936,6 +1954,62 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
 
 
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
+    def validate(self, attrs):
+        integration_type = attrs.get("integration_type")
+
+        if (
+            integration_type == Integration.IntegrationChoices.AMAZON_S3
+            and Integration.objects.filter(
+                configuration=attrs.get("configuration")
+            ).exists()
+        ):
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
+            )
+
+        if (
+            integration_type == Integration.IntegrationChoices.JIRA
+            and Integration.objects.filter(
+                configuration__contains={
+                    "domain": attrs.get("configuration").get("domain")
+                }
+            ).exists()
+        ):
+            raise ConflictException(
+                detail="This integration already exists.",
+                pointer="/data/attributes/configuration",
+            )
+
+        # Check if any provider already has a SecurityHub integration
+        if hasattr(self, "instance") and self.instance and not integration_type:
+            integration_type = self.instance.integration_type
+
+        if (
+            integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+            and "providers" in attrs
+        ):
+            providers = attrs.get("providers", [])
+            tenant_id = self.context.get("tenant_id")
+            for provider in providers:
+                # For updates, exclude the current instance from the check
+                query = IntegrationProviderRelationship.objects.filter(
+                    provider=provider,
+                    integration__integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                    tenant_id=tenant_id,
+                )
+                if hasattr(self, "instance") and self.instance:
+                    query = query.exclude(integration=self.instance)
+
+                if query.exists():
+                    raise ConflictException(
+                        detail=f"Provider {provider.id} already has a Security Hub integration. Only one "
+                        "Security Hub integration is allowed per provider.",
+                        pointer="/data/relationships/providers",
+                    )
+
+        return super().validate(attrs)
+
     @staticmethod
     def validate_integration_data(
         integration_type: str,
@@ -1943,17 +2017,49 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
         configuration: dict,
         credentials: dict,
     ):
-        if integration_type == Integration.IntegrationChoices.S3:
+        if integration_type == Integration.IntegrationChoices.AMAZON_S3:
             config_serializer = S3ConfigSerializer
             credentials_serializers = [AWSCredentialSerializer]
-            # TODO: This will be required for AWS Security Hub
-            # if providers and not all(
-            #     provider.provider == Provider.ProviderChoices.AWS
-            #     for provider in providers
-            # ):
-            #     raise serializers.ValidationError(
-            #         {"providers": "All providers must be AWS for the S3 integration."}
-            #     )
+        elif integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
+            if providers:
+                if len(providers) > 1:
+                    raise serializers.ValidationError(
+                        {
+                            "providers": "Only one provider is supported for the Security Hub integration."
+                        }
+                    )
+                if providers[0].provider != Provider.ProviderChoices.AWS:
+                    raise serializers.ValidationError(
+                        {
+                            "providers": "The provider must be AWS type for the Security Hub integration."
+                        }
+                    )
+            config_serializer = SecurityHubConfigSerializer
+            credentials_serializers = [AWSCredentialSerializer]
+        elif integration_type == Integration.IntegrationChoices.JIRA:
+            if providers:
+                raise serializers.ValidationError(
+                    {
+                        "providers": "Relationship field is not accepted. This integration applies to all providers."
+                    }
+                )
+            if configuration:
+                raise serializers.ValidationError(
+                    {
+                        "configuration": "This integration does not support custom configuration."
+                    }
+                )
+            config_serializer = JiraConfigSerializer
+            # Create non-editable configuration for JIRA integration
+            default_jira_issue_types = ["Task"]
+            configuration.update(
+                {
+                    "projects": {},
+                    "issue_types": default_jira_issue_types,
+                    "domain": credentials.get("domain"),
+                }
+            )
+            credentials_serializers = [JiraCredentialSerializer]
         else:
             raise serializers.ValidationError(
                 {
@@ -1961,7 +2067,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 }
             )
 
-        config_serializer(data=configuration).is_valid(raise_exception=True)
+        serializer_instance = config_serializer(data=configuration)
+        serializer_instance.is_valid(raise_exception=True)
+
+        # Apply the validated (and potentially transformed) data back to configuration
+        configuration.update(serializer_instance.validated_data)
 
         for cred_serializer in credentials_serializers:
             try:
@@ -2013,6 +2123,10 @@ class IntegrationSerializer(RLSSerializer):
                 for provider in representation["providers"]
                 if provider["id"] in allowed_provider_ids
             ]
+        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+            representation["configuration"].update(
+                {"domain": instance.credentials.get("domain")}
+            )
         return representation
 
 
@@ -2040,7 +2154,6 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
             "connected": {"read_only": True},
-            "enabled": {"read_only": True},
             "connection_last_checked_at": {"read_only": True},
         }
 
@@ -2050,10 +2163,18 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         configuration = attrs.get("configuration")
         credentials = attrs.get("credentials")
 
-        validated_attrs = super().validate(attrs)
+        if (
+            not providers
+            and integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
+        ):
+            raise serializers.ValidationError(
+                {"providers": "At least one provider is required for this integration."}
+            )
+
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
+        validated_attrs = super().validate(attrs)
         return validated_attrs
 
     def create(self, validated_data):
@@ -2106,13 +2227,16 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
     def validate(self, attrs):
         integration_type = self.instance.integration_type
         providers = attrs.get("providers")
-        configuration = attrs.get("configuration") or self.instance.configuration
+        if integration_type != Integration.IntegrationChoices.JIRA:
+            configuration = attrs.get("configuration") or self.instance.configuration
+        else:
+            configuration = attrs.get("configuration", {})
         credentials = attrs.get("credentials") or self.instance.credentials
 
-        validated_attrs = super().validate(attrs)
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
         )
+        validated_attrs = super().validate(attrs)
         return validated_attrs
 
     def update(self, instance, validated_data):
@@ -2127,4 +2251,333 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
             ]
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
+        # Preserve regions field for Security Hub integrations
+        if instance.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:
+            if "configuration" in validated_data:
+                # Preserve the existing regions field if it exists
+                existing_regions = instance.configuration.get("regions", {})
+                validated_data["configuration"]["regions"] = existing_regions
+
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Ensure JIRA integrations show updated domain in configuration from credentials
+        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+            representation["configuration"].update(
+                {"domain": instance.credentials.get("domain")}
+            )
+        return representation
+
+
+class IntegrationJiraDispatchSerializer(serializers.Serializer):
+    """
+    Serializer for dispatching findings to JIRA integration.
+    """
+
+    project_key = serializers.CharField(required=True)
+    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+
+    class JSONAPIMeta:
+        resource_name = "integrations-jira-dispatches"
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        integration_instance = Integration.objects.get(
+            id=self.context.get("integration_id")
+        )
+        if integration_instance.integration_type != Integration.IntegrationChoices.JIRA:
+            raise ValidationError(
+                {"integration_type": "The given integration is not a JIRA integration"}
+            )
+
+        if not integration_instance.enabled:
+            raise ValidationError(
+                {"integration": "The given integration is not enabled"}
+            )
+
+        project_key = attrs.get("project_key")
+        if project_key not in integration_instance.configuration.get("projects", {}):
+            raise ValidationError(
+                {
+                    "project_key": "The given project key is not available for this JIRA integration. Refresh the "
+                    "connection if this is an error."
+                }
+            )
+
+        return validated_attrs
+
+
+# Processors
+
+
+class ProcessorSerializer(RLSSerializer):
+    """
+    Serializer for the Processor model.
+    """
+
+    configuration = ProcessorConfigField()
+
+    class Meta:
+        model = Processor
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "processor_type",
+            "configuration",
+            "url",
+        ]
+
+
+class ProcessorCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    configuration = ProcessorConfigField(required=True)
+
+    class Meta:
+        model = Processor
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "processor_type",
+            "configuration",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Processor.objects.all(),
+                fields=["processor_type"],
+                message="A processor with the same type already exists.",
+            )
+        ]
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        self.validate_processor_data(attrs)
+        return validated_attrs
+
+    def validate_processor_data(self, attrs):
+        processor_type = attrs.get("processor_type")
+        configuration = attrs.get("configuration")
+        if processor_type == "mutelist":
+            self.validate_mutelist_configuration(configuration)
+
+    def validate_mutelist_configuration(self, configuration):
+        if not isinstance(configuration, dict):
+            raise serializers.ValidationError("Invalid Mutelist configuration.")
+
+        mutelist_configuration = configuration.get("Mutelist", {})
+
+        if not mutelist_configuration:
+            raise serializers.ValidationError(
+                "Invalid Mutelist configuration: 'Mutelist' is a required property."
+            )
+
+        try:
+            Mutelist.validate_mutelist(mutelist_configuration, raise_on_exception=True)
+            return
+        except Exception as error:
+            raise serializers.ValidationError(
+                f"Invalid Mutelist configuration: {error}"
+            )
+
+
+class ProcessorUpdateSerializer(BaseWriteSerializer):
+    configuration = ProcessorConfigField(required=True)
+
+    class Meta:
+        model = Processor
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "configuration",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        validated_attrs = super().validate(attrs)
+        self.validate_processor_data(attrs)
+        return validated_attrs
+
+    def validate_processor_data(self, attrs):
+        processor_type = self.instance.processor_type
+        configuration = attrs.get("configuration")
+        if processor_type == "mutelist":
+            self.validate_mutelist_configuration(configuration)
+
+    def validate_mutelist_configuration(self, configuration):
+        if not isinstance(configuration, dict):
+            raise serializers.ValidationError("Invalid Mutelist configuration.")
+
+        mutelist_configuration = configuration.get("Mutelist", {})
+
+        if not mutelist_configuration:
+            raise serializers.ValidationError(
+                "Invalid Mutelist configuration: 'Mutelist' is a required property."
+            )
+
+        try:
+            Mutelist.validate_mutelist(mutelist_configuration, raise_on_exception=True)
+            return
+        except Exception as error:
+            raise serializers.ValidationError(
+                f"Invalid Mutelist configuration: {error}"
+            )
+
+
+# SSO
+
+
+class SamlInitiateSerializer(serializers.Serializer):
+    email_domain = serializers.CharField()
+
+    class JSONAPIMeta:
+        resource_name = "saml-initiate"
+
+
+class SamlMetadataSerializer(serializers.Serializer):
+    class JSONAPIMeta:
+        resource_name = "saml-meta"
+
+
+class SAMLConfigurationSerializer(RLSSerializer):
+    class Meta:
+        model = SAMLConfiguration
+        fields = ["id", "email_domain", "metadata_xml", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class LighthouseConfigSerializer(RLSSerializer):
+    """
+    Serializer for the LighthouseConfig model.
+    """
+
+    api_key = serializers.CharField(required=False)
+
+    class Meta:
+        model = LighthouseConfiguration
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+            "inserted_at",
+            "updated_at",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "is_active": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Check if api_key is specifically requested in fields param
+        fields_param = self.context.get("request", None) and self.context[
+            "request"
+        ].query_params.get("fields[lighthouse-config]", "")
+        if fields_param == "api_key":
+            # Return decrypted key if specifically requested
+            data["api_key"] = instance.api_key_decoded if instance.api_key else None
+        else:
+            # Return masked key for general requests
+            data["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return data
+
+
+class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """Serializer for creating new Lighthouse configurations."""
+
+    api_key = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = LighthouseConfiguration
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+            "inserted_at",
+            "updated_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "is_active": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        tenant_id = self.context.get("request").tenant_id
+        if LighthouseConfiguration.objects.filter(tenant_id=tenant_id).exists():
+            raise serializers.ValidationError(
+                {
+                    "tenant_id": "Lighthouse configuration already exists for this tenant."
+                }
+            )
+        return super().validate(attrs)
+
+    def create(self, validated_data):
+        api_key = validated_data.pop("api_key")
+        instance = super().create(validated_data)
+        instance.api_key_decoded = api_key
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Always mask the API key in the response
+        data["api_key"] = "*" * len(instance.api_key) if instance.api_key else None
+        return data
+
+
+class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
+    """
+    Serializer for updating LighthouseConfig instances.
+    """
+
+    api_key = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = LighthouseConfiguration
+        fields = [
+            "id",
+            "name",
+            "api_key",
+            "model",
+            "temperature",
+            "max_tokens",
+            "business_context",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "is_active": {"read_only": True},
+            "name": {"required": False},
+            "model": {"required": False},
+            "temperature": {"required": False},
+            "max_tokens": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        api_key = validated_data.pop("api_key", None)
+        instance = super().update(instance, validated_data)
+        if api_key:
+            instance.api_key_decoded = api_key
+            instance.save()
+        return instance

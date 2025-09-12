@@ -63,7 +63,7 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 29
+            assert len(results) == 32
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "PASS"
@@ -108,7 +108,7 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 29
+            assert len(results) == 32
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"
@@ -153,7 +153,7 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 29
+            assert len(results) == 32
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"
@@ -196,7 +196,7 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             results = check.execute()
-            assert len(results) == 29
+            assert len(results) == 32
             for result in results:
                 if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "FAIL"

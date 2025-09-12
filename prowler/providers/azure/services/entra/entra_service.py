@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from msgraph import GraphServiceClient
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -45,38 +45,45 @@ class Entra(AzureService):
             for tenant, client in self.clients.items():
                 users_list = await client.users.get()
                 users.update({tenant: {}})
-                for user in users_list.value:
-                    users[tenant].update(
-                        {
-                            user.id: User(
-                                id=user.id,
-                                name=user.display_name,
-                                authentication_methods=[
-                                    AuthMethod(
-                                        id=auth_method.id,
-                                        type=getattr(auth_method, "odata_type", None),
-                                    )
-                                    for auth_method in (
-                                        await client.users.by_user_id(
-                                            user.id
-                                        ).authentication.methods.get()
-                                    ).value
-                                ],
-                            )
-                        }
-                    )
+                try:
+                    for user in users_list.value:
+                        users[tenant].update(
+                            {
+                                user.id: User(
+                                    id=user.id,
+                                    name=user.display_name,
+                                    authentication_methods=[
+                                        AuthMethod(
+                                            id=auth_method.id,
+                                            type=getattr(
+                                                auth_method, "odata_type", None
+                                            ),
+                                        )
+                                        for auth_method in (
+                                            await client.users.by_user_id(
+                                                user.id
+                                            ).authentication.methods.get()
+                                        ).value
+                                    ],
+                                )
+                            }
+                        )
+                except Exception as error:
+                    if (
+                        error.__class__.__name__ == "ODataError"
+                        and error.__dict__.get("response_status_code", None) == 403
+                    ):
+                        logger.error(
+                            "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
+                        )
+                    else:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
-            if (
-                error.__class__.__name__ == "ODataError"
-                and error.__dict__.get("response_status_code", None) == 403
-            ):
-                logger.error(
-                    "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
-                )
-            else:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
         return users
 
@@ -367,12 +374,12 @@ class User(BaseModel):
 
 
 class DefaultUserRolePermissions(BaseModel):
-    allowed_to_create_apps: Optional[bool]
-    allowed_to_create_security_groups: Optional[bool]
-    allowed_to_create_tenants: Optional[bool]
-    allowed_to_read_bitlocker_keys_for_owned_device: Optional[bool]
-    allowed_to_read_other_users: Optional[bool]
-    odata_type: Optional[str]
+    allowed_to_create_apps: Optional[bool] = None
+    allowed_to_create_security_groups: Optional[bool] = None
+    allowed_to_create_tenants: Optional[bool] = None
+    allowed_to_read_bitlocker_keys_for_owned_device: Optional[bool] = None
+    allowed_to_read_other_users: Optional[bool] = None
+    odata_type: Optional[str] = None
     permission_grant_policies_assigned: Optional[List[str]] = None
 
 
@@ -380,20 +387,20 @@ class AuthorizationPolicy(BaseModel):
     id: str
     name: str
     description: str
-    default_user_role_permissions: Optional[DefaultUserRolePermissions]
+    default_user_role_permissions: Optional[DefaultUserRolePermissions] = None
     guest_invite_settings: str
     guest_user_role_id: UUID
 
 
 class SettingValue(BaseModel):
-    name: Optional[str]
-    odata_type: Optional[str]
-    value: Optional[str]
+    name: Optional[str] = None
+    odata_type: Optional[str] = None
+    value: Optional[str] = None
 
 
 class GroupSetting(BaseModel):
-    name: Optional[str]
-    template_id: Optional[str]
+    name: Optional[str] = None
+    template_id: Optional[str] = None
     settings: List[SettingValue]
 
 

@@ -1,7 +1,8 @@
 from datetime import date, datetime, timedelta, timezone
 
+from dateutil.parser import parse
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import F, Q
 from django_filters.rest_framework import (
     BaseInFilter,
     BooleanFilter,
@@ -22,12 +23,14 @@ from api.db_utils import (
     StatusEnumField,
 )
 from api.models import (
-    ComplianceOverview,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     Invitation,
     Membership,
+    OverviewStatusChoices,
     PermissionChoices,
+    Processor,
     Provider,
     ProviderGroup,
     ProviderSecret,
@@ -338,6 +341,8 @@ class ResourceFilter(ProviderRelationshipFilterSet):
     tags = CharFilter(method="filter_tag")
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    scan = UUIDFilter(field_name="provider__scan", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="provider__scan", lookup_expr="in")
 
     class Meta:
         model = Resource
@@ -350,6 +355,82 @@ class ResourceFilter(ProviderRelationshipFilterSet):
             "type": ["exact", "icontains", "in"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
+        }
+
+    def filter_queryset(self, queryset):
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
+            self.data.get("updated_at")
+            or self.data.get("updated_at__date")
+            or self.data.get("updated_at__gte")
+            or self.data.get("updated_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[updated_at], filter[updated_at.gte], "
+                        "or filter[updated_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/updated_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        gte_date = (
+            parse(self.data.get("updated_at__gte")).date()
+            if self.data.get("updated_at__gte")
+            else datetime.now(timezone.utc).date()
+        )
+        lte_date = (
+            parse(self.data.get("updated_at__lte")).date()
+            if self.data.get("updated_at__lte")
+            else datetime.now(timezone.utc).date()
+        )
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/updated_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
+
+    def filter_tag_key(self, queryset, name, value):
+        return queryset.filter(Q(tags__key=value) | Q(tags__key__icontains=value))
+
+    def filter_tag_value(self, queryset, name, value):
+        return queryset.filter(Q(tags__value=value) | Q(tags__value__icontains=value))
+
+    def filter_tag(self, queryset, name, value):
+        # We won't know what the user wants to filter on just based on the value,
+        # and we don't want to build special filtering logic for every possible
+        # provider tag spec, so we'll just do a full text search
+        return queryset.filter(tags__text_search=value)
+
+
+class LatestResourceFilter(ProviderRelationshipFilterSet):
+    tag_key = CharFilter(method="filter_tag_key")
+    tag_value = CharFilter(method="filter_tag_value")
+    tag = CharFilter(method="filter_tag")
+    tags = CharFilter(method="filter_tag")
+
+    class Meta:
+        model = Resource
+        fields = {
+            "provider": ["exact", "in"],
+            "uid": ["exact", "icontains"],
+            "name": ["exact", "icontains"],
+            "region": ["exact", "icontains", "in"],
+            "service": ["exact", "icontains", "in"],
+            "type": ["exact", "icontains", "in"],
         }
 
     def filter_tag_key(self, queryset, name, value):
@@ -637,12 +718,11 @@ class RoleFilter(FilterSet):
 
 class ComplianceOverviewFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    provider_type = ChoiceFilter(choices=Provider.ProviderChoices.choices)
-    provider_type__in = ChoiceInFilter(choices=Provider.ProviderChoices.choices)
-    scan_id = UUIDFilter(field_name="scan__id")
+    scan_id = UUIDFilter(field_name="scan_id")
+    region = CharFilter(field_name="region")
 
     class Meta:
-        model = ComplianceOverview
+        model = ComplianceRequirementOverview
         fields = {
             "inserted_at": ["date", "gte", "lte"],
             "compliance_id": ["exact", "icontains"],
@@ -662,6 +742,72 @@ class ScanSummaryFilter(FilterSet):
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
     region = CharFilter(field_name="region")
+
+    class Meta:
+        model = ScanSummary
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+            "region": ["exact", "icontains", "in"],
+        }
+
+
+class ScanSummarySeverityFilter(ScanSummaryFilter):
+    """Filter for findings_severity ScanSummary endpoint - includes status filters"""
+
+    # Custom status filters - only for severity grouping endpoint
+    status = ChoiceFilter(method="filter_status", choices=OverviewStatusChoices.choices)
+    status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
+
+    def filter_status(self, queryset, name, value):
+        # Validate the status value
+        if value not in [choice[0] for choice in OverviewStatusChoices.choices]:
+            raise ValidationError(f"Invalid status value: {value}")
+
+        # Apply the filter by annotating the queryset with the status field
+        if value == OverviewStatusChoices.FAIL:
+            return queryset.annotate(status_count=F("fail"))
+        elif value == OverviewStatusChoices.PASS:
+            return queryset.annotate(status_count=F("_pass"))
+        else:
+            return queryset.annotate(status_count=F("total"))
+
+    def filter_status_in(self, queryset, name, value):
+        # Validate the status values
+        valid_statuses = [choice[0] for choice in OverviewStatusChoices.choices]
+        for status_val in value:
+            if status_val not in valid_statuses:
+                raise ValidationError(f"Invalid status value: {status_val}")
+
+        # If all statuses or no valid statuses, use total
+        if (
+            set(value)
+            >= {
+                OverviewStatusChoices.FAIL,
+                OverviewStatusChoices.PASS,
+            }
+            or not value
+        ):
+            return queryset.annotate(status_count=F("total"))
+
+        # Build the sum expression based on status values
+        sum_expression = None
+        for status in value:
+            if status == OverviewStatusChoices.FAIL:
+                field_expr = F("fail")
+            elif status == OverviewStatusChoices.PASS:
+                field_expr = F("_pass")
+            else:
+                continue
+
+            if sum_expression is None:
+                sum_expression = field_expr
+            else:
+                sum_expression = sum_expression + field_expr
+
+        if sum_expression is None:
+            return queryset.annotate(status_count=F("total"))
+
+        return queryset.annotate(status_count=sum_expression)
 
     class Meta:
         model = ScanSummary
@@ -705,3 +851,32 @@ class IntegrationFilter(FilterSet):
         fields = {
             "inserted_at": ["date", "gte", "lte"],
         }
+
+
+class ProcessorFilter(FilterSet):
+    processor_type = ChoiceFilter(choices=Processor.ProcessorChoices.choices)
+    processor_type__in = ChoiceInFilter(
+        choices=Processor.ProcessorChoices.choices,
+        field_name="processor_type",
+        lookup_expr="in",
+    )
+
+
+class IntegrationJiraFindingsFilter(FilterSet):
+    # To be expanded as needed
+    finding_id = UUIDFilter(field_name="id", lookup_expr="exact")
+    finding_id__in = UUIDInFilter(field_name="id", lookup_expr="in")
+
+    class Meta:
+        model = Finding
+        fields = {}
+
+    def filter_queryset(self, queryset):
+        # Validate that there is at least one filter provided
+        if not self.data:
+            raise ValidationError(
+                {
+                    "findings": "No finding filters provided. At least one filter is required."
+                }
+            )
+        return super().filter_queryset(queryset)

@@ -26,17 +26,19 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,nhn,dashboard} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,dashboard,iac} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,nhn}
+  {aws,azure,gcp,kubernetes,m365,github,iac,nhn,mongodbatlas}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
-    github              GitHub Provider
     m365                Microsoft 365 Provider
+    github              GitHub Provider
+    iac                 IaC Provider (Preview)
     nhn                 NHN Provider (Unofficial)
+    mongodbatlas        MongoDB Atlas Provider
 
 Available components:
     dashboard           Local dashboard
@@ -232,6 +234,11 @@ Detailed documentation at https://docs.prowler.com
             "-e",
             nargs="+",
             help="Checks to exclude",
+        )
+        exclude_checks_parser.add_argument(
+            "--excluded-checks-file",
+            nargs="?",
+            help="JSON file containing the checks to be excluded. See config/checklist_example.json",
         )
         exclude_checks_parser.add_argument(
             "--excluded-service",

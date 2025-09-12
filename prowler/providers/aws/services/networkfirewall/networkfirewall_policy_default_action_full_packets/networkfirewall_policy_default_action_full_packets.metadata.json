@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
   ],
-  "ServiceName": "network-firewall",
+  "ServiceName": "networkfirewall",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
   "Severity": "medium",

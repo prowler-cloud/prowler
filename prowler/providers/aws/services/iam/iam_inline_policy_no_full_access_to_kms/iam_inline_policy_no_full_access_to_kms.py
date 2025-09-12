@@ -9,7 +9,7 @@ class iam_inline_policy_no_full_access_to_kms(Check):
     def execute(self):
         findings = []
 
-        for policy in iam_client.policies:
+        for policy in iam_client.policies.values():
             if policy.type == "Inline":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region

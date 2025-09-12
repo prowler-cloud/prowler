@@ -85,6 +85,37 @@ class TestAzureProvider:
                 "python_latest_version": "3.12",
                 "java_latest_version": "17",
                 "recommended_minimal_tls_versions": ["1.2", "1.3"],
+                "vm_backup_min_daily_retention_days": 7,
+                "desired_vm_sku_sizes": [
+                    "Standard_A8_v2",
+                    "Standard_DS3_v2",
+                    "Standard_D4s_v3",
+                ],
+                "defender_attack_path_minimal_risk_level": "High",
+                "apim_threat_detection_llm_jacking_threshold": 0.1,
+                "apim_threat_detection_llm_jacking_minutes": 1440,
+                "apim_threat_detection_llm_jacking_actions": [
+                    "ImageGenerations_Create",
+                    "ChatCompletions_Create",
+                    "Completions_Create",
+                    "Embeddings_Create",
+                    "FineTuning_Jobs_Create",
+                    "Models_List",
+                    "Deployments_List",
+                    "Deployments_Get",
+                    "Deployments_Create",
+                    "Deployments_Delete",
+                    "Messages_Create",
+                    "Claude_Create",
+                    "GenerateContent",
+                    "GenerateText",
+                    "GenerateImage",
+                    "Llama_Create",
+                    "CodeLlama_Create",
+                    "Gemini_Generate",
+                    "Claude_Generate",
+                    "Llama_Generate",
+                ],
             }
 
     def test_azure_provider_not_auth_methods(self):
@@ -110,7 +141,6 @@ class TestAzureProvider:
                 return_value={},
             ),
         ):
-
             with pytest.raises(AzureNoAuthenticationMethodError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
@@ -151,7 +181,6 @@ class TestAzureProvider:
                 return_value={},
             ),
         ):
-
             with pytest.raises(AzureBrowserAuthNoTenantIDError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
@@ -193,7 +222,6 @@ class TestAzureProvider:
                 return_value={},
             ),
         ):
-
             with pytest.raises(AzureTenantIDNoBrowserAuthError) as exception:
                 _ = AzureProvider(
                     az_cli_auth,
@@ -224,7 +252,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.SubscriptionClient"
             ) as mock_resource_client,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
             mock_credentials.get_token.return_value = AccessToken(
@@ -266,7 +293,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
             ) as mock_validate_static_credentials,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
             mock_credentials.get_token.return_value = AccessToken(
@@ -317,7 +343,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
             ) as mock_validate_static_credentials,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_default_credential.return_value = {
                 "client_id": str(uuid4()),
@@ -368,7 +393,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.validate_static_credentials"
             ) as mock_validate_static_credentials,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_default_credential.return_value = {
                 "client_id": str(uuid4()),
@@ -442,7 +466,6 @@ class TestAzureProvider:
                 "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
             ) as mock_setup_session,
         ):
-
             mock_setup_session.side_effect = AzureHTTPResponseError(
                 file="test_file", original_exception="Simulated HttpResponseError"
             )
@@ -463,7 +486,6 @@ class TestAzureProvider:
         with patch(
             "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
         ) as mock_setup_session:
-
             mock_setup_session.side_effect = Exception("Simulated Exception")
 
             with pytest.raises(Exception) as exception:

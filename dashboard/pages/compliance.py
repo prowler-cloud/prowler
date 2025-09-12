@@ -346,34 +346,27 @@ def display_data(
         if item == "nan" or item.__class__.__name__ != "str":
             region_filter_options.remove(item)
 
+    # Convert ASSESSMENTDATE to datetime
     data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], errors="coerce")
-    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    data["ASSESSMENTDAY"] = data["ASSESSMENTDATE"].dt.date
 
-    # Choosing the date that is the most recent
-    data_values = data["ASSESSMENTDATE"].unique()
-    data_values.sort()
-    data_values = data_values[::-1]
-    aux = []
+    # Find the latest timestamp per account per day
+    latest_per_account_day = data.groupby(["ACCOUNTID", "ASSESSMENTDAY"])[
+        "ASSESSMENTDATE"
+    ].transform("max")
 
-    data_values = [str(i) for i in data_values]
-    for value in data_values:
-        if value.split(" ")[0] not in [aux[i].split(" ")[0] for i in range(len(aux))]:
-            aux.append(value)
-    data_values = [str(i) for i in aux]
+    # Keep only rows with the latest timestamp for each account and day
+    data = data[data["ASSESSMENTDATE"] == latest_per_account_day]
 
-    data = data[data["ASSESSMENTDATE"].isin(data_values)]
-    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].apply(lambda x: x.split(" ")[0])
+    # Prepare the date filter options (unique days, as strings)
+    options_date = sorted(data["ASSESSMENTDAY"].astype(str).unique(), reverse=True)
 
-    options_date = data["ASSESSMENTDATE"].unique()
-    options_date.sort()
-    options_date = options_date[::-1]
-
-    # Filter DATE
+    # Filter by selected date (as string)
     if date_filter_analytics in options_date:
-        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+        data = data[data["ASSESSMENTDAY"].astype(str) == date_filter_analytics]
     else:
         date_filter_analytics = options_date[0]
-        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+        data = data[data["ASSESSMENTDAY"].astype(str) == date_filter_analytics]
 
     if data.empty:
         fig = px.pie()

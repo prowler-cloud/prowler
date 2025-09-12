@@ -79,6 +79,9 @@ class CSV(Output):
                 finding_dict["RELATED_TO"] = unroll_list(finding.metadata.RelatedTo)
                 finding_dict["NOTES"] = finding.metadata.Notes
                 finding_dict["PROWLER_VERSION"] = finding.prowler_version
+                finding_dict["ADDITIONAL_URLS"] = unroll_list(
+                    finding.metadata.AdditionalURLs
+                )
                 self._data.append(finding_dict)
         except Exception as error:
             logger.error(

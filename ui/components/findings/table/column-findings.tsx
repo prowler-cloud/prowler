@@ -5,6 +5,7 @@ import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
+import { DataTableRowActions } from "@/components/findings/table/data-table-row-actions";
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
@@ -103,7 +104,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
       const {
-        attributes: { muted },
+        attributes: { muted, muted_reason },
       } = getFindingsData(row);
       const { delta } = row.original.attributes;
 
@@ -120,7 +121,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
             </p>
           </div>
           <span className="absolute -right-2 top-1/2 -translate-y-1/2">
-            <Muted isMuted={muted} />
+            <Muted isMuted={muted} mutedReason={muted_reason || ""} />
           </span>
         </div>
       );
@@ -228,7 +229,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "cloudProvider",
-    header: "Cloud provider",
+    header: "Cloud Provider",
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");
@@ -243,6 +244,13 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
           />
         </>
       );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      return <DataTableRowActions row={row} />;
     },
   },
 ];

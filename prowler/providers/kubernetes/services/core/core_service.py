@@ -1,7 +1,7 @@
 import socket
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from kubernetes import client
 from prowler.lib.logger import logger
@@ -171,7 +171,7 @@ class Pod(BaseModel):
     host_ip: Optional[str]
     host_pid: Optional[str]
     host_ipc: Optional[str]
-    host_network: Optional[str]
+    host_network: Optional[bool]
     security_context: Optional[dict]
     containers: Optional[dict]
 

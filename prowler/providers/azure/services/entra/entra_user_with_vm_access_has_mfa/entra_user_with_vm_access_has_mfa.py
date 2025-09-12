@@ -17,7 +17,7 @@ class entra_user_with_vm_access_has_mfa(Check):
         findings = []
 
         for users in entra_client.users.values():
-            for user_domain_name, user in users.items():
+            for user in users.values():
                 for (
                     subscription_name,
                     role_assigns,

@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "databricks_workspace_vnet_injection_enabled",
+  "CheckTitle": "Ensure Azure Databricks workspaces are deployed in a customer-managed VNet (VNet Injection)",
+  "CheckType": [],
+  "ServiceName": "databricks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Databricks/workspaces/{workspaceName}",
+  "Severity": "medium",
+  "ResourceType": "AzureDatabricksWorkspace",
+  "Description": "Checks whether Azure Databricks workspaces are deployed in a customer-managed Virtual Network (VNet Injection) instead of a Databricks-managed VNet.",
+  "Risk": "Using a Databricks-managed VNet limits control over network security policies, firewall configurations, and routing, increasing the risk of unauthorized access or data exfiltration.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/vnet-inject",
+  "Remediation": {
+    "Code": {
+      "CLI": "az databricks workspace create --name <databricks-workspace-name> --resource-group <resource-group-name> --location <region> --managed-resource-group <managed-rg-name> --enable-no-public-ip true --network-security-group-rule \"NoAzureServices\" --public-network-access Disabled --custom-virtual-network-id /subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/<vnet-name>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy Databricks workspaces into a customer-managed VNet to ensure better control over network security and compliance.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Databricks/check-for-vnet-injection.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

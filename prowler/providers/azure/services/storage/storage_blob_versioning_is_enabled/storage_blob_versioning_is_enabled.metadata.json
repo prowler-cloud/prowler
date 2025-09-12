@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_blob_versioning_is_enabled",
+  "CheckTitle": "Ensure Blob Versioning is Enabled on Azure Blob Storage Accounts",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Ensure that blob versioning is enabled on Azure Blob Storage accounts to automatically retain previous versions of objects.",
+  "Risk": "Without blob versioning, accidental or malicious changes to blobs cannot be easily recovered, leading to potential data loss.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable",
+  "Remediation": {
+    "Code": {
+      "CLI": "az storage account blob-service-properties update --resource-group <resource_group> --account-name <storage-account> --enable-versioning true",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-versioning-for-blobs.html",
+      "Terraform": "resource \"azurerm_storage_account\" \"example\" {\n  name                     = \"examplestorageacct\"\n  resource_group_name      = azurerm_resource_group.example.name\n  location                 = azurerm_resource_group.example.location\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n\n  blob_properties {\n    versioning_enabled = true\n  }\n}\n"
+    },
+    "Recommendation": {
+      "Text": "Enable blob versioning for all Azure Storage accounts that store critical or sensitive data.",
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

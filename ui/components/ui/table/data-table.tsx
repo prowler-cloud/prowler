@@ -29,12 +29,14 @@ interface DataTableProviderProps<TData, TValue> {
   data: TData[];
   metadata?: MetaDataProps;
   customFilters?: FilterOption[];
+  disableScroll?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   metadata,
+  disableScroll = false,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -109,7 +111,10 @@ export function DataTable<TData, TValue>({
       </div>
       {metadata && (
         <div className="flex w-full items-center space-x-2 py-4">
-          <DataTablePagination metadata={metadata} />
+          <DataTablePagination
+            metadata={metadata}
+            disableScroll={disableScroll}
+          />
         </div>
       )}
     </>

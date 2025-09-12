@@ -30,9 +30,13 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
         <div
           className={`flex ${inline ? "flex-row items-center gap-2" : "flex-col"}`}
         >
-          <span className="text-xs font-semibold">{formattedDate}</span>
+          <span className="whitespace-nowrap text-xs font-semibold">
+            {formattedDate}
+          </span>
           {showTime && (
-            <span className="text-xs text-gray-500">{formattedTime}</span>
+            <span className="whitespace-nowrap text-xs text-gray-500">
+              {formattedTime}
+            </span>
           )}
         </div>
       </div>

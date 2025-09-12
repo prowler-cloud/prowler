@@ -7,19 +7,19 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { addProvider } from "@/actions/providers/providers";
+import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { ProviderType } from "@/types";
+import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
 
-import { addProvider } from "../../../../actions/providers/providers";
-import { addProviderFormSchema, ApiError } from "../../../../types";
 import { RadioGroupProvider } from "../../radio-group-provider";
-import { ProviderTitleDocs } from "../provider-title-docs";
+
 export type FormValues = z.infer<typeof addProviderFormSchema>;
 
 // Helper function for labels and placeholders
-const getProviderFieldDetails = (providerType?: string) => {
+const getProviderFieldDetails = (providerType?: ProviderType) => {
   switch (providerType) {
     case "aws":
       return {
@@ -45,6 +45,11 @@ const getProviderFieldDetails = (providerType?: string) => {
       return {
         label: "Domain ID",
         placeholder: "e.g. your-domain.onmicrosoft.com",
+      };
+    case "github":
+      return {
+        label: "Username",
+        placeholder: "e.g. your-github-username",
       };
     default:
       return {
@@ -143,6 +148,10 @@ export const ConnectAccountForm = () => {
 
   const handleBackStep = () => {
     setPrevStep((prev) => prev - 1);
+    //Deselect the providerType if the user is going back to the first step
+    if (prevStep === 2) {
+      form.setValue("providerType", undefined as unknown as ProviderType);
+    }
     // Reset the providerUid and providerAlias fields when going back
     form.setValue("providerUid", "");
     form.setValue("providerAlias", "");
@@ -171,7 +180,7 @@ export const ConnectAccountForm = () => {
         {/* Step 2: UID, alias, and credentials (if AWS) */}
         {prevStep === 2 && (
           <>
-            <ProviderTitleDocs providerType={providerType as ProviderType} />
+            <ProviderTitleDocs providerType={providerType} />
             <CustomInput
               control={form.control}
               name="providerUid"

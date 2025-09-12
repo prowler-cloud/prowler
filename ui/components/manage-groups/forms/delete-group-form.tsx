@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import React, { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -26,6 +27,7 @@ export const DeleteGroupForm = ({
     resolver: zodResolver(formSchema),
   });
   const { toast } = useToast();
+  const router = useRouter();
   const isLoading = form.formState.isSubmitting;
 
   async function onSubmitClient(formData: FormData) {
@@ -46,6 +48,7 @@ export const DeleteGroupForm = ({
         title: "Success!",
         description: "The provider group was removed successfully.",
       });
+      router.push("/manage-groups");
     }
     setIsOpen(false); // Close the modal on success
   }

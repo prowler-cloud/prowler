@@ -22,10 +22,25 @@ provider/kubernetes:
       - any-glob-to-any-file: "prowler/providers/kubernetes/**"
       - any-glob-to-any-file: "tests/providers/kubernetes/**"
 
+provider/m365:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/m365/**"
+      - any-glob-to-any-file: "tests/providers/m365/**"
+
 provider/github:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/github/**"
       - any-glob-to-any-file: "tests/providers/github/**"
+
+provider/iac:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/iac/**"
+      - any-glob-to-any-file: "tests/providers/iac/**"
+
+provider/mongodbatlas:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/mongodbatlas/**"
+      - any-glob-to-any-file: "tests/providers/mongodbatlas/**"
 
 github_actions:
   - changed-files:
@@ -42,11 +57,13 @@ mutelist:
       - any-glob-to-any-file: "prowler/providers/azure/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/gcp/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/kubernetes/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/mongodbatlas/lib/mutelist/**"
       - any-glob-to-any-file: "tests/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/aws/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/azure/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/gcp/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/kubernetes/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/mongodbatlas/lib/mutelist/**"
 
 integration/s3:
   - changed-files:
@@ -102,3 +119,7 @@ compliance:
 review-django-migrations:
   - changed-files:
       - any-glob-to-any-file: "api/src/backend/api/migrations/**"
+
+metadata-review:
+  - changed-files:
+      - any-glob-to-any-file: "**/*.metadata.json"

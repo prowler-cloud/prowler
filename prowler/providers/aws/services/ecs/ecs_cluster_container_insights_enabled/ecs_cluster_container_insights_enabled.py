@@ -13,11 +13,10 @@ class ecs_cluster_container_insights_enabled(Check):
             )
             if cluster.settings:
                 for setting in cluster.settings:
-                    if (
-                        setting["name"] == "containerInsights"
-                        and setting["value"] == "enabled"
+                    if setting["name"] == "containerInsights" and (
+                        setting["value"] == "enabled" or setting["value"] == "enhanced"
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"ECS cluster {cluster.name} has container insights enabled."
+                        report.status_extended = f"ECS cluster {cluster.name} has container insights {setting['value']}."
             findings.append(report)
         return findings

@@ -10,9 +10,10 @@ import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 const formSchema = z.object({
-  providerId: z.string(),
+  [ProviderCredentialFields.PROVIDER_ID]: z.string(),
 });
 
 export const DeleteForm = ({
@@ -53,7 +54,11 @@ export const DeleteForm = ({
   return (
     <Form {...form}>
       <form action={onSubmitClient}>
-        <input type="hidden" name="id" value={providerId} />
+        <input
+          type="hidden"
+          name={ProviderCredentialFields.PROVIDER_ID}
+          value={providerId}
+        />
         <div className="flex w-full justify-center sm:space-x-6">
           <CustomButton
             type="button"

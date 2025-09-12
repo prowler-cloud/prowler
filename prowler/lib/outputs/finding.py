@@ -3,7 +3,7 @@ from datetime import datetime
 from types import SimpleNamespace
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic.v1 import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import (
@@ -19,6 +19,7 @@ from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
+from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 class Finding(BaseModel):
@@ -38,7 +39,7 @@ class Finding(BaseModel):
     account_organization_uid: Optional[str] = None
     account_organization_name: Optional[str] = None
     metadata: CheckMetadata
-    account_tags: dict = {}
+    account_tags: dict = Field(default_factory=dict)
     uid: str
     status: Status
     status_extended: str
@@ -50,7 +51,7 @@ class Finding(BaseModel):
     resource_tags: dict = Field(default_factory=dict)
     partition: Optional[str] = None
     region: str
-    compliance: dict
+    compliance: dict = Field(default_factory=dict)
     prowler_version: str = prowler_version
     raw: dict = Field(default_factory=dict)
 
@@ -249,8 +250,18 @@ class Finding(BaseModel):
                 output_data["auth_method"] = provider.auth_method
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
-                output_data["account_name"] = provider.identity.account_name
-                output_data["account_uid"] = provider.identity.account_id
+
+                if isinstance(provider.identity, GithubIdentityInfo):
+                    # GithubIdentityInfo (Personal Access Token, OAuth)
+                    output_data["account_name"] = provider.identity.account_name
+                    output_data["account_uid"] = provider.identity.account_id
+                    output_data["account_email"] = provider.identity.account_email
+                elif isinstance(provider.identity, GithubAppIdentityInfo):
+                    # GithubAppIdentityInfo (GitHub App)
+                    output_data["account_name"] = provider.identity.app_name
+                    output_data["account_uid"] = provider.identity.app_id
+                    output_data["installations"] = provider.identity.installations
+
                 output_data["region"] = check_output.owner
 
             elif provider.type == "m365":
@@ -262,6 +273,18 @@ class Finding(BaseModel):
                 )
                 output_data["account_name"] = get_nested_attribute(
                     provider, "identity.tenant_domain"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
+            elif provider.type == "mongodbatlas":
+                output_data["auth_method"] = "api_key"
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.organization_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.organization_name"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
@@ -281,6 +304,16 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
+
+            elif provider.type == "iac":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "iac"
+                output_data["account_name"] = "iac"
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_name
+                output_data["region"] = check_output.resource_line_range
+                output_data["resource_line_range"] = check_output.resource_line_range
+                output_data["framework"] = check_output.check_metadata.ServiceName
 
             # check_output Unique ID
             # TODO: move this to a function
@@ -343,6 +376,8 @@ class Finding(BaseModel):
         finding.region = resource.region
         # Azure, GCP specified field
         finding.location = resource.region
+        # GitHub specified field
+        finding.owner = resource.region
         # K8s specified field
         if provider.type == "kubernetes":
             finding.namespace = resource.region.removeprefix("namespace: ")

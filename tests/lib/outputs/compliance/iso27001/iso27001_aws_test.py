@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+from unittest import mock
 
 from freezegun import freeze_time
 from mock import patch
@@ -42,7 +43,7 @@ class TestAWSISO27001:
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
         assert output_data.ResourceName == ""
-        assert output_data.CheckId == "test-check-id"
+        assert output_data.CheckId == "service_test_check_id"
         assert output_data.Muted is False
         # Test manual check
         output_data_manual = output.data[1]
@@ -73,7 +74,11 @@ class TestAWSISO27001:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
-    @freeze_time(datetime.now())
+    @freeze_time("2025-01-01 00:00:00")
+    @mock.patch(
+        "prowler.lib.outputs.compliance.iso27001.iso27001_aws.timestamp",
+        "2025-01-01 00:00:00",
+    )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [generate_finding_output(compliance={"ISO27001-2013": "A.10.1"})]
@@ -85,5 +90,5 @@ class TestAWSISO27001:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_CATEGORY;REQUIREMENTS_ATTRIBUTES_OBJETIVE_ID;REQUIREMENTS_ATTRIBUTES_OBJETIVE_NAME;REQUIREMENTS_ATTRIBUTES_CHECK_SUMMARY;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\naws;ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.;123456789012;eu-west-1;{datetime.now()};A.10.1;Cryptographic Controls;Setup Encryption at rest for RDS instances;A.10 Cryptography;A.10.1;Cryptographic Controls;Setup Encryption at rest for RDS instances;PASS;;;test-check-id;False;\r\naws;ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.;;;{datetime.now()};A.10.2;Cryptographic Controls;Setup Encryption at rest for RDS instances;A.10 Cryptography;A.10.1;Cryptographic Controls;Setup Encryption at rest for RDS instances;MANUAL;Manual check;manual_check;manual;False;Manual check\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_CATEGORY;REQUIREMENTS_ATTRIBUTES_OBJETIVE_ID;REQUIREMENTS_ATTRIBUTES_OBJETIVE_NAME;REQUIREMENTS_ATTRIBUTES_CHECK_SUMMARY;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\naws;ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.;123456789012;eu-west-1;{datetime.now()};A.10.1;Cryptographic Controls;Setup Encryption at rest for RDS instances;A.10 Cryptography;A.10.1;Cryptographic Controls;Setup Encryption at rest for RDS instances;PASS;;;service_test_check_id;False;\r\naws;ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.;;;{datetime.now()};A.10.2;Cryptographic Controls;Setup Encryption at rest for RDS instances;A.10 Cryptography;A.10.1;Cryptographic Controls;Setup Encryption at rest for RDS instances;MANUAL;Manual check;manual_check;manual;False;Manual check\r\n"
         assert content == expected_csv

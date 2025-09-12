@@ -22,7 +22,8 @@ module.exports = {
     },
   },
   rules: {
-    "no-console": 1,
+    // console.error are allowed but no console.log
+    "no-console": ["error", { allow: ["error"] }],
     eqeqeq: 2,
     quotes: ["error", "double", "avoid-escape"],
     "@typescript-eslint/no-explicit-any": "off",

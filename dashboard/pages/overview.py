@@ -1,5 +1,4 @@
 # Standard library imports
-import csv
 import glob
 import json
 import os
@@ -20,7 +19,6 @@ from dash.dependencies import Input, Output
 # Config import
 from dashboard.config import (
     critical_color,
-    encoding_format,
     fail_color,
     folder_path_overview,
     high_color,
@@ -38,6 +36,7 @@ from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
     create_date_dropdown,
+    create_provider_dropdown,
     create_region_dropdown,
     create_service_dropdown,
     create_severity_dropdown,
@@ -45,6 +44,7 @@ from dashboard.lib.dropdowns import (
     create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
+from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -54,11 +54,13 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(file, "r", newline="", encoding=encoding_format) as csvfile:
-        reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)
+    try:
+        df = pd.read_csv(file, sep=";")
+        num_rows = len(df)
         if num_rows > 1:
             csv_files.append(file)
+    except Exception:
+        logger.error(f"Error reading file {file}")
 
 
 # Import logos providers
@@ -83,7 +85,18 @@ def load_csv_files(csv_files):
     """Load CSV files into a single pandas DataFrame."""
     dfs = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        account_columns = ["ACCOUNT_ID", "ACCOUNT_UID", "SUBSCRIPTION"]
+
+        df_sample = pd.read_csv(file, sep=";", on_bad_lines="skip", nrows=1)
+
+        dtype_dict = {}
+        for col in account_columns:
+            if col in df_sample.columns:
+                dtype_dict[col] = str
+
+        # Read the full file with proper dtypes
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", dtype=dtype_dict)
+
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 dfs.append(df.astype(str))
@@ -120,7 +133,6 @@ if data is None:
         ]
     )
 else:
-
     # This handles the case where we are using v3 outputs
     if "ASSESSMENT_START_TIME" in data.columns:
         data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(
@@ -180,7 +192,13 @@ else:
         data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
 
     # Remove dupplicates on the finding_uid colummn but keep the last one taking into account the timestamp
-    data = data.sort_values("TIMESTAMP").drop_duplicates("FINDING_UID", keep="last")
+    data["DATE"] = data["TIMESTAMP"].dt.date
+    data = (
+        data.sort_values("TIMESTAMP")
+        .groupby(["DATE", "FINDING_UID"], as_index=False)
+        .last()
+    )
+    data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
 
     data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
     data_valid = pd.DataFrame()
@@ -287,6 +305,13 @@ else:
     ]
 
     service_dropdown = create_service_dropdown(services)
+
+    # Provider Dropdown
+    providers = ["All"] + list(data["PROVIDER"].unique())
+    providers = [
+        x for x in providers if str(x) != "nan" and x.__class__.__name__ == "str"
+    ]
+    provider_dropdown = create_provider_dropdown(providers)
 
     # Create the download button
     download_button_csv = html.Button(
@@ -469,9 +494,11 @@ else:
         download_button_xlsx,
         severity_dropdown,
         service_dropdown,
+        provider_dropdown,
         table_row_dropdown,
         status_dropdown,
         table_div_header,
+        len(data["PROVIDER"].unique()),
     )
 
 
@@ -498,6 +525,8 @@ else:
         Output("severity-filter", "value"),
         Output("severity-filter", "options"),
         Output("service-filter", "value"),
+        Output("provider-filter", "value"),
+        Output("provider-filter", "options"),
         Output("service-filter", "options"),
         Output("table-rows", "value"),
         Output("table-rows", "options"),
@@ -516,6 +545,7 @@ else:
     Input("download_link_xlsx", "n_clicks"),
     Input("severity-filter", "value"),
     Input("service-filter", "value"),
+    Input("provider-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
     Input("search-input", "value"),
@@ -539,6 +569,7 @@ def filter_data(
     n_clicks_xlsx,
     severity_values,
     service_values,
+    provider_values,
     table_row_values,
     status_values,
     search_value,
@@ -864,6 +895,25 @@ def filter_data(
         filtered_data["SERVICE_NAME"].isin(updated_service_values)
     ]
 
+    provider_filter_options = ["All"] + list(filtered_data["PROVIDER"].unique())
+
+    # Filter Provider
+    if provider_values == ["All"]:
+        updated_provider_values = filtered_data["PROVIDER"].unique()
+    elif "All" in provider_values and len(provider_values) > 1:
+        # Remove 'All' from the list
+        provider_values.remove("All")
+        updated_provider_values = provider_values
+    elif len(provider_values) == 0:
+        updated_provider_values = filtered_data["PROVIDER"].unique()
+        provider_values = ["All"]
+    else:
+        updated_provider_values = provider_values
+
+    filtered_data = filtered_data[
+        filtered_data["PROVIDER"].isin(updated_provider_values)
+    ]
+
     # Filter Status
     if status_values == ["All"]:
         updated_status_values = filtered_data["STATUS"].unique()
@@ -1084,25 +1134,17 @@ def filter_data(
 
         table_row_options = []
 
-        # Take the values from the table_row_values
+        # Calculate table row options as percentages
+        percentages = [0.05, 0.10, 0.25, 0.50, 0.75, 1.0]
+        total_rows = len(filtered_data)
+        for pct in percentages:
+            value = max(1, int(total_rows * pct))
+            label = f"{int(pct * 100)}%"
+            table_row_options.append({"label": label, "value": value})
+
+        # Default to 25% if not set
         if table_row_values is None or table_row_values == -1:
-            if len(filtered_data) < 25:
-                table_row_values = len(filtered_data)
-            else:
-                table_row_values = 25
-
-        if len(filtered_data) < 25:
-            table_row_values = len(filtered_data)
-
-        if len(filtered_data) >= 25:
-            table_row_options.append(25)
-        if len(filtered_data) >= 50:
-            table_row_options.append(50)
-        if len(filtered_data) >= 75:
-            table_row_options.append(75)
-        if len(filtered_data) >= 100:
-            table_row_options.append(100)
-        table_row_options.append(len(filtered_data))
+            table_row_values = table_row_options[0]["value"]
 
         # For the values that are nan or none, replace them with ""
         filtered_data = filtered_data.replace({np.nan: ""})
@@ -1337,21 +1379,36 @@ def filter_data(
     ]
 
     # Create Provider Cards
-    aws_card = create_provider_card(
-        "aws", aws_provider_logo, "Accounts", full_filtered_data
-    )
-    azure_card = create_provider_card(
-        "azure", azure_provider_logo, "Subscriptions", full_filtered_data
-    )
-    gcp_card = create_provider_card(
-        "gcp", gcp_provider_logo, "Projects", full_filtered_data
-    )
-    k8s_card = create_provider_card(
-        "kubernetes", ks8_provider_logo, "Clusters", full_filtered_data
-    )
-    m365_card = create_provider_card(
-        "m365", m365_provider_logo, "Accounts", full_filtered_data
-    )
+    if "aws" in list(data["PROVIDER"].unique()):
+        aws_card = create_provider_card(
+            "aws", aws_provider_logo, "Accounts", full_filtered_data
+        )
+    else:
+        aws_card = None
+    if "azure" in list(data["PROVIDER"].unique()):
+        azure_card = create_provider_card(
+            "azure", azure_provider_logo, "Subscriptions", full_filtered_data
+        )
+    else:
+        azure_card = None
+    if "gcp" in list(data["PROVIDER"].unique()):
+        gcp_card = create_provider_card(
+            "gcp", gcp_provider_logo, "Projects", full_filtered_data
+        )
+    else:
+        gcp_card = None
+    if "kubernetes" in list(data["PROVIDER"].unique()):
+        k8s_card = create_provider_card(
+            "kubernetes", ks8_provider_logo, "Clusters", full_filtered_data
+        )
+    else:
+        k8s_card = None
+    if "m365" in list(data["PROVIDER"].unique()):
+        m365_card = create_provider_card(
+            "m365", m365_provider_logo, "Accounts", full_filtered_data
+        )
+    else:
+        m365_card = None
 
     # Subscribe to Prowler Cloud card
     subscribe_card = [
@@ -1435,6 +1492,8 @@ def filter_data(
             severity_values,
             severity_filter_options,
             service_values,
+            provider_values,
+            provider_filter_options,
             service_filter_options,
             table_row_values,
             table_row_options,
@@ -1595,6 +1654,39 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                     [
                                         html.Div(
                                             [
+                                                # Description as first details item
+                                                html.Div(
+                                                    [
+                                                        html.P(
+                                                            html.Strong(
+                                                                "Description: ",
+                                                                style={
+                                                                    "margin-bottom": "8px"
+                                                                },
+                                                            )
+                                                        ),
+                                                        html.Div(
+                                                            dcc.Markdown(
+                                                                str(
+                                                                    data.get(
+                                                                        "DESCRIPTION",
+                                                                        "",
+                                                                    )
+                                                                ),
+                                                                dangerously_allow_html=True,
+                                                                style={
+                                                                    "margin-left": "0px",
+                                                                    "padding-left": "10px",
+                                                                },
+                                                            ),
+                                                            className="markdown-content",
+                                                            style={
+                                                                "margin-left": "0px",
+                                                                "padding-left": "10px",
+                                                            },
+                                                        ),
+                                                    ],
+                                                ),
                                                 html.Div(
                                                     [
                                                         html.P(
@@ -1734,19 +1826,27 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                         html.P(
                                                             html.Strong(
                                                                 "Risk: ",
-                                                                style={
-                                                                    "margin-right": "5px"
-                                                                },
+                                                                style={},
                                                             )
                                                         ),
-                                                        html.P(
-                                                            str(data.get("RISK", "")),
+                                                        html.Div(
+                                                            dcc.Markdown(
+                                                                str(
+                                                                    data.get("RISK", "")
+                                                                ),
+                                                                dangerously_allow_html=True,
+                                                                style={
+                                                                    "margin-left": "0px",
+                                                                    "padding-left": "10px",
+                                                                },
+                                                            ),
+                                                            className="markdown-content",
                                                             style={
-                                                                "margin-left": "5px"
+                                                                "margin-left": "0px",
+                                                                "padding-left": "10px",
                                                             },
                                                         ),
                                                     ],
-                                                    style={"display": "flex"},
                                                 ),
                                                 html.Div(
                                                     [
@@ -1788,23 +1888,32 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                             html.Strong(
                                                                 "Recommendation: ",
                                                                 style={
-                                                                    "margin-right": "5px"
+                                                                    "margin-bottom": "8px"
                                                                 },
                                                             )
                                                         ),
-                                                        html.P(
-                                                            str(
-                                                                data.get(
-                                                                    "REMEDIATION_RECOMMENDATION_TEXT",
-                                                                    "",
-                                                                )
+                                                        html.Div(
+                                                            dcc.Markdown(
+                                                                str(
+                                                                    data.get(
+                                                                        "REMEDIATION_RECOMMENDATION_TEXT",
+                                                                        "",
+                                                                    )
+                                                                ),
+                                                                dangerously_allow_html=True,
+                                                                style={
+                                                                    "margin-left": "0px",
+                                                                    "padding-left": "10px",
+                                                                },
                                                             ),
+                                                            className="markdown-content",
                                                             style={
-                                                                "margin-left": "5px"
+                                                                "margin-left": "0px",
+                                                                "padding-left": "10px",
                                                             },
                                                         ),
                                                     ],
-                                                    style={"display": "flex"},
+                                                    style={"margin-bottom": "15px"},
                                                 ),
                                                 html.Div(
                                                     [

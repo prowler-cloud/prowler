@@ -36,7 +36,7 @@ class TestGithubMutelist:
 
         mutelist = GithubMutelist(mutelist_content=mutelist_fixture)
 
-        assert not mutelist.validate_mutelist()
+        assert len(mutelist.validate_mutelist(mutelist_fixture)) == 0
         assert mutelist.mutelist == {}
         assert mutelist.mutelist_file_path is None
 
@@ -86,7 +86,7 @@ class TestGithubMutelist:
         mutelist = GithubMutelist(mutelist_content=mutelist_content)
 
         finding_1 = generate_finding_output(
-            check_id="check_test",
+            check_id="service_check_test",
             status="FAIL",
             account_uid="account_1",
             resource_uid="test_resource",

@@ -5,7 +5,9 @@ import { ProwlerExtended } from "@/components/icons";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Menu } from "@/components/ui/sidebar/menu";
@@ -25,6 +27,8 @@ export function SheetMenu() {
         side="left"
       >
         <SheetHeader>
+          <SheetTitle className="sr-only">Sidebar</SheetTitle>
+          <SheetDescription className="sr-only" />
           <Button
             className="flex items-center justify-center pb-2 pt-1"
             variant="link"

@@ -11,6 +11,7 @@ import {
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
+  GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
 } from "../icons/providers-badge";
@@ -69,6 +70,12 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
                 <div className="flex items-center">
                   <KS8ProviderBadge size={26} />
                   <span className="ml-2">Kubernetes</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio description="GitHub" value="github">
+                <div className="flex items-center">
+                  <GitHubProviderBadge size={26} />
+                  <span className="ml-2">GitHub</span>
                 </div>
               </CustomRadio>
             </div>

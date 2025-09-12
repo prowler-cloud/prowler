@@ -3,7 +3,7 @@
   "CheckID": "networkfirewall_deletion_protection",
   "CheckTitle": "Ensure that Deletion Protection safety feature is enabled for your Amazon VPC network firewalls.",
   "CheckType": [],
-  "ServiceName": "network-firewall",
+  "ServiceName": "networkfirewall",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
   "Severity": "medium",

@@ -1,24 +1,78 @@
+import os
+import re
+
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
-from rest_framework_json_api.serializers import ValidationError
 
-
-class BaseValidateSerializer(serializers.Serializer):
-    def validate(self, data):
-        if hasattr(self, "initial_data"):
-            initial_data = set(self.initial_data.keys()) - {"id", "type"}
-            unknown_keys = initial_data - set(self.fields.keys())
-            if unknown_keys:
-                raise ValidationError(f"Invalid fields: {unknown_keys}")
-        return data
-
-
-# Integrations
+from api.v1.serializer_utils.base import BaseValidateSerializer
 
 
 class S3ConfigSerializer(BaseValidateSerializer):
     bucket_name = serializers.CharField()
-    output_directory = serializers.CharField()
+    output_directory = serializers.CharField(allow_blank=True)
+
+    def validate_output_directory(self, value):
+        """
+        Validate the output_directory field to ensure it's a properly formatted path.
+        Prevents paths with excessive slashes like "///////test".
+        If empty, sets a default value.
+        """
+        # If empty or None, set default value
+        if not value:
+            return "output"
+
+        # Normalize the path to remove excessive slashes
+        normalized_path = os.path.normpath(value)
+
+        # Remove leading slashes for S3 paths
+        if normalized_path.startswith("/"):
+            normalized_path = normalized_path.lstrip("/")
+
+        # Check for invalid characters or patterns
+        if re.search(r'[<>:"|?*]', normalized_path):
+            raise serializers.ValidationError(
+                'Output directory contains invalid characters. Avoid: < > : " | ? *'
+            )
+
+        # Check for empty path after normalization
+        if not normalized_path or normalized_path == ".":
+            raise serializers.ValidationError(
+                "Output directory cannot be empty or just '.' or '/'."
+            )
+
+        # Check for paths that are too long (S3 key limit is 1024 characters, leave some room for filename)
+        if len(normalized_path) > 900:
+            raise serializers.ValidationError(
+                "Output directory path is too long (max 900 characters)."
+            )
+
+        return normalized_path
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class SecurityHubConfigSerializer(BaseValidateSerializer):
+    send_only_fails = serializers.BooleanField(default=False)
+    archive_previous_findings = serializers.BooleanField(default=False)
+    regions = serializers.DictField(default=dict, read_only=True)
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+        # Always initialize regions as empty dict
+        validated_data["regions"] = {}
+        return validated_data
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class JiraConfigSerializer(BaseValidateSerializer):
+    domain = serializers.CharField(read_only=True)
+    issue_types = serializers.ListField(
+        read_only=True, child=serializers.CharField(), default=["Task"]
+    )
+    projects = serializers.DictField(read_only=True)
 
     class Meta:
         resource_name = "integrations"
@@ -34,6 +88,15 @@ class AWSCredentialSerializer(BaseValidateSerializer):
     aws_access_key_id = serializers.CharField(required=False)
     aws_secret_access_key = serializers.CharField(required=False)
     aws_session_token = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "integrations"
+
+
+class JiraCredentialSerializer(BaseValidateSerializer):
+    user_mail = serializers.EmailField(required=True)
+    api_token = serializers.CharField(required=True)
+    domain = serializers.CharField(required=True)
 
     class Meta:
         resource_name = "integrations"
@@ -90,6 +153,27 @@ class AWSCredentialSerializer(BaseValidateSerializer):
                     },
                 },
             },
+            {
+                "type": "object",
+                "title": "JIRA Credentials",
+                "properties": {
+                    "user_mail": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The email address of the JIRA user account.",
+                    },
+                    "api_token": {
+                        "type": "string",
+                        "description": "The API token for authentication with JIRA. This can be generated from your "
+                        "Atlassian account settings.",
+                    },
+                    "domain": {
+                        "type": "string",
+                        "description": "The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').",
+                    },
+                },
+                "required": ["user_mail", "api_token", "domain"],
+            },
         ]
     }
 )
@@ -110,10 +194,40 @@ class IntegrationCredentialField(serializers.JSONField):
                     },
                     "output_directory": {
                         "type": "string",
-                        "description": "The directory path within the bucket where files will be saved.",
+                        "description": "The directory path within the bucket where files will be saved. Optional - "
+                        'defaults to "output" if not provided. Path will be normalized to remove '
+                        'excessive slashes and invalid characters are not allowed (< > : " | ? *). '
+                        "Maximum length is 900 characters.",
+                        "maxLength": 900,
+                        "pattern": '^[^<>:"|?*]+$',
+                        "default": "output",
                     },
                 },
-                "required": ["bucket_name", "output_directory"],
+                "required": ["bucket_name"],
+            },
+            {
+                "type": "object",
+                "title": "AWS Security Hub",
+                "properties": {
+                    "send_only_fails": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, only findings with status 'FAIL' will be sent to Security Hub.",
+                    },
+                    "archive_previous_findings": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "If true, archives findings that are not present in the current execution.",
+                    },
+                },
+            },
+            {
+                "type": "object",
+                "title": "JIRA",
+                "description": "JIRA integration does not accept any configuration in the payload. Leave it as an "
+                "empty JSON object (`{}`).",
+                "properties": {},
+                "additionalProperties": False,
             },
         ]
     }

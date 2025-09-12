@@ -80,8 +80,8 @@ export const SelectScanProvider = <
               {providers.map((item) => (
                 <SelectItem
                   key={item.providerId}
-                  textValue={item.alias}
-                  aria-label={item.alias}
+                  textValue={`${item.providerType} - ${item.alias || ""} ${item.uid}`}
+                  aria-label={`${item.providerType} provider ${item.alias}`}
                 >
                   <div className="flex items-center gap-2">
                     <EntityInfoShort

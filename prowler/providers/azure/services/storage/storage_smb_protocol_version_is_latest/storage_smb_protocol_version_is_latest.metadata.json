@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_smb_protocol_version_is_latest",
+  "CheckTitle": "Ensure SMB protocol version for file shares is set to the latest version.",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/fileServices/default",
+  "Severity": "medium",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Ensure that SMB file shares are configured to use only the latest SMB protocol version.",
+  "Risk": "Allowing older SMB protocol versions may expose file shares to known vulnerabilities and security risks.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol#smb-security-settings",
+  "Remediation": {
+    "Code": {
+      "CLI": "az storage account file-service-properties update --resource-group <resource-group> --account-name <storage-account> --versions <latest-version>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure your Azure Storage Account file shares to allow only the latest SMB protocol version.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/latest-smb-protocol-version.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
