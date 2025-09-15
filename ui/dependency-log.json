@@ -137,6 +137,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@sentry/nextjs",
+    "from": "10.11.0",
+    "to": "10.11.0",
+    "strategy": "installed",
+    "generatedAt": "2025-09-15T09:02:35.711Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@tailwindcss/typography",
     "from": "0.5.16",
     "to": "0.5.16",
