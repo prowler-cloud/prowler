@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 
 import { getComplianceCsv, getExportsZip } from "@/actions/scans";
@@ -350,20 +351,73 @@ export const handleApiResponse = async (
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
     const errorDetail = errorData?.errors?.[0]?.detail;
+    const errorCode = errorData?.errors?.[0]?.code;
+
+    // Capture error context for Sentry
+    const errorContext = {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      errorDetail,
+      errorCode,
+      pathToRevalidate,
+    };
 
     // Special handling for server errors (500+)
     if (response.status >= 500) {
-      throw new Error(
+      const serverError = new Error(
         errorDetail ||
           `Server error (${response.status}): The server encountered an error. Please try again later.`,
       );
+
+      // Capture server errors with high priority
+      Sentry.captureException(serverError, {
+        tags: {
+          api_error: true,
+          status_code: response.status.toString(),
+          error_type: "server_error",
+        },
+        level: "error",
+        contexts: {
+          api_response: errorContext,
+        },
+        fingerprint: [
+          "api-server-error",
+          response.status.toString(),
+          response.url,
+        ],
+      });
+
+      throw serverError;
     }
 
     // Client errors (4xx)
-    throw new Error(
+    const clientError = new Error(
       errorDetail ||
         `Request failed (${response.status}): ${response.statusText}`,
     );
+
+    // Only capture unexpected client errors (not 401, 403, 404)
+    if (![401, 403, 404].includes(response.status)) {
+      Sentry.captureException(clientError, {
+        tags: {
+          api_error: true,
+          status_code: response.status.toString(),
+          error_type: "client_error",
+        },
+        level: "warning",
+        contexts: {
+          api_response: errorContext,
+        },
+        fingerprint: [
+          "api-client-error",
+          response.status.toString(),
+          response.url,
+        ],
+      });
+    }
+
+    throw clientError;
   }
 
   const data = await response.json();
@@ -378,6 +432,48 @@ export const handleApiResponse = async (
 // Helper function to handle API errors consistently
 export const handleApiError = (error: unknown): { error: string } => {
   console.error(error);
+
+  // Capture unexpected errors with Sentry
+  if (error instanceof Error) {
+    // Don't capture expected errors like redirects or not found
+    if (
+      !error.message.includes("NEXT_REDIRECT") &&
+      !error.message.includes("NEXT_NOT_FOUND") &&
+      !error.message.includes("401") &&
+      !error.message.includes("403") &&
+      !error.message.includes("404")
+    ) {
+      Sentry.captureException(error, {
+        tags: {
+          error_source: "handleApiError",
+          error_type: "unexpected_error",
+        },
+        level: "error",
+        contexts: {
+          error_details: {
+            message: error.message,
+            stack: error.stack,
+          },
+        },
+      });
+    }
+  } else {
+    // Capture non-Error objects
+    Sentry.captureMessage(
+      `Non-Error object in handleApiError: ${String(error)}`,
+      {
+        level: "warning",
+        tags: {
+          error_source: "handleApiError",
+          error_type: "non_error_object",
+        },
+        extra: {
+          error: error,
+        },
+      },
+    );
+  }
+
   return {
     error: getErrorMessage(error),
   };
