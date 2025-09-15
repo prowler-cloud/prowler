@@ -36,6 +36,20 @@ class HTML(Output):
         # Convert markdown to HTML
         html_content = md.convert(text)
 
+        # Strip outer <p> tags if present, as we're embedding in existing HTML
+        # Handle single paragraph case
+        if (
+            html_content.startswith("<p>")
+            and html_content.endswith("</p>")
+            and html_content.count("<p>") == 1
+        ):
+            html_content = html_content[3:-4]
+        # Handle multiple paragraphs case - replace <p> and </p> with <br><br>
+        elif "<p>" in html_content and "</p>" in html_content:
+            html_content = html_content.replace("</p>\n<p>", "<br />\n<br />\n")
+            html_content = html_content.replace("<p>", "")
+            html_content = html_content.replace("</p>", "")
+
         return html_content
 
     def transform(self, findings: list[Finding]) -> None:

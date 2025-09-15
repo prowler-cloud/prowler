@@ -823,14 +823,14 @@ class TestHTML:
         """Test that line breaks are converted to <br> tags"""
         test_text = "Line 1\nLine 2\nLine 3"
         result = HTML.process_markdown(test_text)
-        expected = "Line 1<br>Line 2<br>Line 3"
+        expected = "Line 1<br />\nLine 2<br />\nLine 3"
         assert result == expected
 
     def test_process_markdown_mixed_formatting(self):
         """Test mixed markdown formatting"""
         test_text = "**Bold text** with *italic* and `code` elements.\n\nNew paragraph with **more bold**."
         result = HTML.process_markdown(test_text)
-        expected = "<strong>Bold text</strong> with <em>italic</em> and <code>code</code> elements.<br><br>New paragraph with <strong>more bold</strong>."
+        expected = "<strong>Bold text</strong> with <em>italic</em> and <code>code</code> elements.<br />\n<br />\nNew paragraph with <strong>more bold</strong>."
         assert result == expected
 
     def test_process_markdown_empty_string(self):
@@ -880,4 +880,4 @@ class TestHTML:
         assert "<strong>Primary</strong>" in output_data
         assert "<strong>alternate contacts</strong>" in output_data
         assert "<code>monitored aliases</code>" in output_data
-        assert "<br>" in output_data  # Line breaks converted
+        assert "<br />" in output_data  # Line breaks converted
