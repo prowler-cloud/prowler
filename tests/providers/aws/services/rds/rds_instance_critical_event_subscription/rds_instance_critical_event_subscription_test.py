@@ -81,6 +81,12 @@ class Test_rds_instance_critical_event_subscription:
             DBParameterGroupFamily="default.aurora-postgresql14",
             Description="test parameter group",
         )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="aurora-postgresql",
+            MasterUsername="admin",
+            MasterUserPassword="password",
+        )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -140,6 +146,12 @@ class Test_rds_instance_critical_event_subscription:
             DBParameterGroupName="test",
             DBParameterGroupFamily="default.aurora-postgresql14",
             Description="test parameter group",
+        )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="aurora-postgresql",
+            MasterUsername="admin",
+            MasterUserPassword="password",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
@@ -202,6 +214,12 @@ class Test_rds_instance_critical_event_subscription:
             DBParameterGroupFamily="default.aurora-postgresql14",
             Description="test parameter group",
         )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="aurora-postgresql",
+            MasterUsername="admin",
+            MasterUserPassword="password",
+        )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -259,6 +277,12 @@ class Test_rds_instance_critical_event_subscription:
             DBParameterGroupName="test",
             DBParameterGroupFamily="default.aurora-postgresql14",
             Description="test parameter group",
+        )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="aurora-postgresql",
+            MasterUsername="admin",
+            MasterUserPassword="password",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
@@ -318,6 +342,12 @@ class Test_rds_instance_critical_event_subscription:
             DBParameterGroupFamily="default.aurora-postgresql14",
             Description="test parameter group",
         )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="aurora-postgresql",
+            MasterUsername="admin",
+            MasterUserPassword="password",
+        )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -376,6 +406,12 @@ class Test_rds_instance_critical_event_subscription:
             DBParameterGroupFamily="default.aurora-postgresql14",
             Description="test parameter group",
         )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="aurora-postgresql",
+            MasterUsername="admin",
+            MasterUserPassword="password",
+        )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -433,6 +469,12 @@ class Test_rds_instance_critical_event_subscription:
             DBParameterGroupName="test",
             DBParameterGroupFamily="default.aurora-postgresql14",
             Description="test parameter group",
+        )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="aurora-postgresql",
+            MasterUsername="admin",
+            MasterUserPassword="password",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",

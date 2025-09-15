@@ -91,6 +91,7 @@ class Test_elbv2_ssl_listeners:
         response = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
+            Port=80,
             DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
         )
 

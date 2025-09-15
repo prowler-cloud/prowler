@@ -40,6 +40,7 @@ class Test_rds_instance_copy_tags_to_snapshots_to_snapshots:
             Engine="aurora-postgresql",
             DBInstanceClass="db.t2.micro",
             AllocatedStorage=5,
+            PubliclyAccessible=False,
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 

@@ -40,7 +40,7 @@ class Test_rds_instance_default_admin:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql14",
+            DBParameterGroupFamily="default.aurora-postgresql13",
             Description="test parameter group",
         )
         conn.create_db_instance(
@@ -51,6 +51,7 @@ class Test_rds_instance_default_admin:
             MasterUsername="postgres",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
+            PubliclyAccessible=False,
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -91,7 +92,7 @@ class Test_rds_instance_default_admin:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql14",
+            DBParameterGroupFamily="default.aurora-postgresql13",
             Description="test parameter group",
         )
         conn.create_db_instance(
@@ -102,6 +103,7 @@ class Test_rds_instance_default_admin:
             MasterUsername="postgres2",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
+            PubliclyAccessible=False,
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -154,6 +156,7 @@ class Test_rds_instance_default_admin:
             DBName="aurora-postgres",
             MasterUsername="postgres",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -206,6 +209,7 @@ class Test_rds_instance_default_admin:
             DBName="aurora-postgres",
             MasterUsername="postgres2",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 

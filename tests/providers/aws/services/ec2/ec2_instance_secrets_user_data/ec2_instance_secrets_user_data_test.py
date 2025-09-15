@@ -233,7 +233,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in EC2 instance {instance.id} User Data -> Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
+                == f"Potential secret found in EC2 instance {instance.id} User Data -> Hex High Entropy String on line 3."
             )
             assert result[0].resource_id == instance.id
             assert (
@@ -327,7 +327,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in EC2 instance {instance.id} User Data -> Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
+                == f"Potential secret found in EC2 instance {instance.id} User Data -> Hex High Entropy String on line 3."
             )
             assert result[0].resource_id == instance.id
             assert (

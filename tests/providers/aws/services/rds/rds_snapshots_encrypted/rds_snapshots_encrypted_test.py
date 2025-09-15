@@ -91,13 +91,18 @@ class Test_rds_snapshots_encrypted:
                 check = rds_snapshots_encrypted()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
+                # Moto 5.1.11 creates additional automatic snapshots
+                assert len(result) == 2
+                # Find the manual snapshot result
+                manual_snapshot_result = next(
+                    (r for r in result if r.resource_id == "snapshot-1"), None
+                )
+                assert manual_snapshot_result is not None
+                assert manual_snapshot_result.status == "FAIL"
                 assert (
-                    result[0].status_extended
+                    manual_snapshot_result.status_extended
                     == "RDS Instance Snapshot snapshot-1 is not encrypted."
                 )
-                assert result[0].resource_id == "snapshot-1"
 
     @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -162,6 +167,7 @@ class Test_rds_snapshots_encrypted:
             DBClusterInstanceClass="db.m1.small",
             MasterUsername="root",
             MasterUserPassword="hunter2000",
+            PubliclyAccessible=False,
         )
 
         conn.create_db_cluster_snapshot(
@@ -213,6 +219,7 @@ class Test_rds_snapshots_encrypted:
             DBClusterInstanceClass="db.m1.small",
             MasterUsername="root",
             MasterUserPassword="hunter2000",
+            PubliclyAccessible=False,
         )
 
         conn.create_db_cluster_snapshot(

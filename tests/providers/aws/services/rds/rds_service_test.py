@@ -388,6 +388,7 @@ class Test_RDS_Service:
             DBClusterInstanceClass="db.m1.small",
             MasterUsername="root",
             MasterUserPassword="hunter2000",
+            PubliclyAccessible=False,
         )
 
         conn.create_db_cluster_snapshot(

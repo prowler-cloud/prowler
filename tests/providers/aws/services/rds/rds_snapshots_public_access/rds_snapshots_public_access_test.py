@@ -99,13 +99,18 @@ class Test_rds_snapshots_public_access:
                 check = rds_snapshots_public_access()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "PASS"
+                # Moto 5.1.11 creates additional automatic snapshots
+                assert len(result) == 2
+                # Find the manual snapshot result
+                manual_snapshot_result = next(
+                    (r for r in result if r.resource_id == "snapshot-1"), None
+                )
+                assert manual_snapshot_result is not None
+                assert manual_snapshot_result.status == "PASS"
                 assert (
-                    result[0].status_extended
+                    manual_snapshot_result.status_extended
                     == "RDS Instance Snapshot snapshot-1 is not shared."
                 )
-                assert result[0].resource_id == "snapshot-1"
 
     @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

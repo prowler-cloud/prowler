@@ -338,6 +338,13 @@ class RDS(AWSService):
                             logger.warning(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
+                        elif (
+                            error.response["Error"]["Code"]
+                            == "DBParameterGroupNotFound"
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
                         else:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
