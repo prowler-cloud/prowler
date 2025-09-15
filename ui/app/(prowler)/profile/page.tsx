@@ -8,7 +8,12 @@ import { UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
-import { RoleDetail, TenantDetailData } from "@/types/users";
+import {
+  MembershipDetailData,
+  RoleDetail,
+  TenantDetailData,
+  UserProfileResponse,
+} from "@/types/users";
 
 export default async function Profile() {
   return (
@@ -21,70 +26,84 @@ export default async function Profile() {
 }
 
 const SSRDataUser = async () => {
-  const userProfile = await getUserInfo();
+  const userProfile = (await getUserInfo()) as UserProfileResponse | undefined;
   if (!userProfile?.data) {
     return null;
   }
 
-  const roleDetails =
-    userProfile.included?.filter((item: any) => item.type === "roles") || [];
-  const membershipsIncluded =
-    userProfile.included?.filter((item: any) => item.type === "memberships") ||
-    [];
+  const userData = userProfile.data;
 
-  const roleDetailsMap = roleDetails.reduce(
-    (acc: Record<string, RoleDetail>, role: RoleDetail) => {
+  const roleDetails =
+    userProfile.included?.filter(
+      (item): item is RoleDetail => item.type === "roles",
+    ) || [];
+
+  const membershipsIncluded =
+    userProfile.included?.filter(
+      (item): item is MembershipDetailData => item.type === "memberships",
+    ) || [];
+
+  const tenantsIncluded =
+    userProfile.included?.filter(
+      (item): item is TenantDetailData => item.type === "tenants",
+    ) || [];
+
+  const roleDetailsMap = roleDetails.reduce<Record<string, RoleDetail>>(
+    (acc, role) => {
       acc[role.id] = role;
       return acc;
     },
-    {} as Record<string, RoleDetail>,
+    {},
   );
 
-  const tenantsMap = {} as Record<string, TenantDetailData>;
+  const tenantsMap = tenantsIncluded.reduce<Record<string, TenantDetailData>>(
+    (acc, tenant) => {
+      acc[tenant.id] = tenant;
+      return acc;
+    },
+    {},
+  );
 
   const firstUserMembership = membershipsIncluded.find(
-    (m: any) => m.relationships?.user?.data?.id === userProfile.data.id,
+    (m) => m.relationships?.user?.data?.id === userData.id,
   );
+
   const userTenantId = firstUserMembership?.relationships?.tenant?.data?.id;
-  const tenantIdForCard = userTenantId || "";
 
   const userRoleIds =
-    userProfile.data.relationships?.roles?.data?.map(
-      (r: { id: string }) => r.id,
-    ) || [];
-  const hasManageAccount = roleDetails.some(
-    (role: any) =>
-      role.attributes?.manage_account === true && userRoleIds.includes(role.id),
-  );
-  const isOwner = membershipsIncluded.some(
-    (m: any) =>
-      m.attributes?.role === "owner" &&
-      m.relationships?.user?.data?.id === userProfile.data.id,
-  );
-  const canManageAccount = isOwner && hasManageAccount;
+    userData.relationships?.roles?.data?.map((r) => r.id) || [];
 
-  // Determine manage_integrations permission
+  const hasManageAccount = roleDetails.some(
+    (role) =>
+      role.attributes.manage_account === true && userRoleIds.includes(role.id),
+  );
+
   const hasManageIntegrations = roleDetails.some(
-    (role: any) =>
-      role.attributes?.manage_integrations === true &&
+    (role) =>
+      role.attributes.manage_integrations === true &&
       userRoleIds.includes(role.id),
   );
 
-  // Fetch SAML config only if user can manage integrations
+  const isOwner = membershipsIncluded.some(
+    (m) =>
+      m.attributes.role === "owner" &&
+      m.relationships?.user?.data?.id === userData.id,
+  );
+
   const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <UserBasicInfoCard user={userProfile?.data} tenantId={tenantIdForCard} />
+      <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
       <div className="flex flex-col gap-6 xl:flex-row">
         <div className="w-full lg:w-2/3 xl:w-1/2">
-          <RolesCard roles={roleDetails || []} roleDetails={roleDetailsMap} />
+          <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
         </div>
         <div className="w-full lg:w-2/3 xl:w-1/2">
           <MembershipsCard
-            memberships={membershipsIncluded || []}
+            memberships={membershipsIncluded}
             tenantsMap={tenantsMap}
-            isOwner={canManageAccount}
+            isOwner={isOwner && hasManageAccount}
           />
         </div>
       </div>
