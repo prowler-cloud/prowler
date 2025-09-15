@@ -14,7 +14,7 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors will be recorded
 
   // Release tracking
-  release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+  release: process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION,
 
   // Integrations
   integrations: [
