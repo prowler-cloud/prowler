@@ -15,6 +15,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
     Finding,
@@ -286,7 +287,7 @@ class UserSerializer(BaseSerializerV1):
 
     included_serializers = {
         "roles": "api.v1.serializers.RoleIncludeSerializer",
-        "memberships": "api.v1.serializers.MembershipSerializer",
+        "memberships": "api.v1.serializers.MembershipIncludeSerializer",
     }
 
     def _can_view_relationships(self, instance) -> bool:
@@ -535,6 +536,13 @@ class TenantSerializer(BaseSerializerV1):
         fields = ["id", "name", "memberships"]
 
 
+class TenantIncludeSerializer(BaseSerializerV1):
+
+    class Meta:
+        model = Tenant
+        fields = ["id", "name"]
+
+
 # Memberships
 
 
@@ -554,6 +562,29 @@ class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
         fields = ["id", "user", "tenant", "role", "date_joined"]
+
+
+class MembershipIncludeSerializer(serializers.ModelSerializer):
+    """
+    Include-oriented Membership serializer that enables including tenant objects with names
+    without altering the base MembershipSerializer behavior.
+    """
+
+    role = MemberRoleEnumSerializerField()
+    user = serializers.ResourceRelatedField(read_only=True)
+    tenant = SerializerMethodResourceRelatedField(read_only=True, source="tenant")
+
+    class Meta:
+        model = Membership
+        fields = ["id", "user", "tenant", "role", "date_joined"]
+
+    included_serializers = {"tenant": "api.v1.serializers.TenantIncludeSerializer"}
+
+    def get_tenant(self, instance):
+        try:
+            return Tenant.objects.using(MainRouter.admin_db).get(id=instance.tenant_id)
+        except Tenant.DoesNotExist:
+            return None
 
 
 # Provider Groups
