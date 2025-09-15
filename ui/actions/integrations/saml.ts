@@ -39,7 +39,7 @@ export const createSamlConfig = async (_prevState: any, formData: FormData) => {
       }),
     });
 
-    handleApiResponse(response, "/integrations", false);
+    await handleApiResponse(response, "/integrations", false);
     return { success: "SAML configuration created successfully!" };
   } catch (error) {
     console.error("Error creating SAML config:", error);
@@ -89,7 +89,7 @@ export const updateSamlConfig = async (_prevState: any, formData: FormData) => {
       }),
     });
 
-    handleApiResponse(response, "/integrations", false);
+    await handleApiResponse(response, "/integrations", false);
     return { success: "SAML configuration updated successfully!" };
   } catch (error) {
     console.error("Error updating SAML config:", error);
