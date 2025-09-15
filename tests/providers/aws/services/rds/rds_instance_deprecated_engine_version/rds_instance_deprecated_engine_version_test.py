@@ -65,6 +65,7 @@ class Test_rds_instance_deprecated_engine_version:
             EngineVersion="8.0.32",
             DBName="staging-mysql",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -111,6 +112,7 @@ class Test_rds_instance_deprecated_engine_version:
             EngineVersion="8.0.23",
             DBName="staging-mysql",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS

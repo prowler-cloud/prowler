@@ -60,7 +60,7 @@ class RDS(AWSService):
                                 engine=instance["Engine"],
                                 engine_version=instance["EngineVersion"],
                                 status=instance["DBInstanceStatus"],
-                                public=instance["PubliclyAccessible"],
+                                public=instance.get("PubliclyAccessible", False),
                                 encrypted=instance["StorageEncrypted"],
                                 auto_minor_version_upgrade=instance[
                                     "AutoMinorVersionUpgrade"
@@ -80,7 +80,7 @@ class RDS(AWSService):
                                     for item in instance["DBParameterGroups"]
                                 ],
                                 multi_az=instance["MultiAZ"],
-                                username=instance["MasterUsername"],
+                                username=instance.get("MasterUsername", ""),
                                 iam_auth=instance.get(
                                     "IAMDatabaseAuthenticationEnabled", False
                                 ),

@@ -51,6 +51,7 @@ class Test_rds_instance_iam_authentication_enabled:
             EnableIAMDatabaseAuthentication=False,
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
+            PubliclyAccessible=False,
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -102,6 +103,7 @@ class Test_rds_instance_iam_authentication_enabled:
             DBInstanceClass="db.m1.small",
             EnableIAMDatabaseAuthentication=True,
             DBParameterGroupName="test",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -154,6 +156,7 @@ class Test_rds_instance_iam_authentication_enabled:
             DBInstanceClass="db.m1.small",
             EnableIAMDatabaseAuthentication=True,
             DBParameterGroupName="test",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -206,6 +209,7 @@ class Test_rds_instance_iam_authentication_enabled:
             DBInstanceClass="db.m1.small",
             EnableIAMDatabaseAuthentication=True,
             DBParameterGroupName="test",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -257,6 +261,7 @@ class Test_rds_instance_iam_authentication_enabled:
             DBName="staging-sqlserver",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -299,6 +304,7 @@ class Test_rds_instance_iam_authentication_enabled:
             Engine="mysql",
             DBName="staging-mysql",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS

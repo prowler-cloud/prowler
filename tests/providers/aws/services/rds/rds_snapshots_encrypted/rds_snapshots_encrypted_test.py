@@ -64,6 +64,7 @@ class Test_rds_snapshots_encrypted:
             Engine="postgres",
             DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         conn.create_db_snapshot(
@@ -108,6 +109,7 @@ class Test_rds_snapshots_encrypted:
             Engine="postgres",
             DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
+            PubliclyAccessible=False,
         )
 
         conn.create_db_snapshot(
