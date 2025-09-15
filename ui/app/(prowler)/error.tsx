@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 export default function Error({
   error,
@@ -35,7 +36,8 @@ export default function Error({
       Sentry.captureException(error, {
         tags: {
           error_boundary: "app",
-          error_type: "server_error",
+          error_type: SentryErrorType.SERVER_ERROR,
+          error_source: SentryErrorSource.ERROR_BOUNDARY,
           status_code: "500",
           digest: error.digest,
         },
@@ -55,7 +57,8 @@ export default function Error({
       Sentry.captureException(error, {
         tags: {
           error_boundary: "app",
-          error_type: "application_error",
+          error_type: SentryErrorType.APPLICATION_ERROR,
+          error_source: SentryErrorSource.ERROR_BOUNDARY,
           digest: error.digest,
         },
         level: "warning",

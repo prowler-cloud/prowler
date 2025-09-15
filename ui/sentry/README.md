@@ -5,8 +5,8 @@ This folder contains all Sentry-related configuration and utilities for the Prow
 ## Files
 
 - `sentry.server.config.ts` - Server-side error tracking configuration
-- `sentry.edge.config.ts` - Edge runtime error tracking configuration  
-- `utils.ts` - Utility functions for Sentry integration
+- `sentry.edge.config.ts` - Edge runtime error tracking configuration
+- `utils.ts` - Enums for standardized error types and sources
 - `index.ts` - Main export file
 
 ## Client Configuration
@@ -16,17 +16,16 @@ The client-side configuration is located in `app/instrumentation.client.ts` foll
 ## Usage
 
 ```typescript
-// Import Sentry utilities
-import { setSentryUser, addBreadcrumb, withSentry } from "@/sentry";
+// Import Sentry enums for error categorization
+import { SentryErrorType, SentryErrorSource } from "@/sentry";
 
-// Set user context after login
-await setSentryUser();
-
-// Add breadcrumbs for user actions
-addBreadcrumb("User clicked button", "ui.click");
-
-// Wrap server actions with error tracking
-const trackedAction = await withSentry(myServerAction, "myServerAction");
+// Use in error handling
+Sentry.captureException(error, {
+  tags: {
+    error_type: SentryErrorType.SERVER_ERROR,
+    error_source: SentryErrorSource.API_ROUTE,
+  },
+});
 ```
 
 ## Environment Variables

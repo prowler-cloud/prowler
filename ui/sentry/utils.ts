@@ -1,102 +1,36 @@
-import * as Sentry from "@sentry/nextjs";
-
-import { auth } from "@/auth.config";
-
 /**
- * Set user context in Sentry from the current session
- * This should be called after successful authentication
+ * Enum for standardized error types across the application
  */
-export async function setSentryUser() {
-  try {
-    const session = await auth();
+export enum SentryErrorType {
+  // API Errors
+  API_ERROR = "api_error",
+  SERVER_ERROR = "server_error",
+  CLIENT_ERROR = "client_error",
 
-    if (session?.user) {
-      Sentry.setUser({
-        id: session.user.id,
-        email: session.user.email || undefined,
-        username: session.user.name || undefined,
-        tenant_id: session.tenantId,
-      });
+  // Request Processing
+  REQUEST_PROCESSING = "request_processing",
+  STREAM_PROCESSING = "stream_processing",
 
-      Sentry.setContext("session", {
-        tenantId: session.tenantId,
-        accessToken: session.accessToken ? "present" : "missing",
-        refreshToken: session.refreshToken ? "present" : "missing",
-      });
-    } else {
-      // Clear user context on logout
-      Sentry.setUser(null);
-    }
-  } catch (error) {
-    console.error("Failed to set Sentry user context:", error);
-  }
+  // Application Errors
+  APPLICATION_ERROR = "application_error",
+  UNEXPECTED_ERROR = "unexpected_error",
+  NON_ERROR_OBJECT = "non_error_object",
+
+  // Authentication
+  AUTH_ERROR = "auth_error",
+  PERMISSION_ERROR = "permission_error",
+
+  // Server Actions
+  SERVER_ACTION_ERROR = "server_action_error",
 }
 
 /**
- * Add breadcrumb for user actions
+ * Enum for error sources
  */
-export function addBreadcrumb(
-  message: string,
-  category: string,
-  data?: Record<string, any>,
-) {
-  Sentry.addBreadcrumb({
-    message,
-    category,
-    level: "info",
-    data,
-    timestamp: Date.now(),
-  });
-}
-
-/**
- * Capture a message with context
- */
-export function captureMessage(
-  message: string,
-  level: Sentry.SeverityLevel = "info",
-  context?: Record<string, any>,
-) {
-  Sentry.captureMessage(message, {
-    level,
-    extra: context,
-  });
-}
-
-/**
- * Wrapper for server actions to capture errors
- */
-export async function withSentry<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  actionName: string,
-): Promise<T> {
-  return (async (...args: Parameters<T>) => {
-    try {
-      addBreadcrumb(`Server action: ${actionName}`, "server.action", {
-        actionName,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Execute the function
-      const result = await fn(...args);
-      return result;
-    } catch (error) {
-      // Capture the error with context
-      Sentry.captureException(error, {
-        tags: {
-          action_name: actionName,
-          error_source: "server_action",
-        },
-        contexts: {
-          action: {
-            name: actionName,
-            args: JSON.stringify(args).slice(0, 1000), // Limit size
-          },
-        },
-      });
-
-      // Re-throw the error to maintain normal flow
-      throw error;
-    }
-  }) as T;
+export enum SentryErrorSource {
+  ERROR_BOUNDARY = "error_boundary",
+  API_ROUTE = "api_route",
+  SERVER_ACTION = "server_action",
+  HANDLE_API_ERROR = "handleApiError",
+  HANDLE_API_RESPONSE = "handleApiResponse",
 }

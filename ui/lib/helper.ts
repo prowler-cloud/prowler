@@ -5,6 +5,7 @@ import { getComplianceCsv, getExportsZip } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
@@ -375,7 +376,8 @@ export const handleApiResponse = async (
         tags: {
           api_error: true,
           status_code: response.status.toString(),
-          error_type: "server_error",
+          error_type: SentryErrorType.SERVER_ERROR,
+          error_source: SentryErrorSource.HANDLE_API_RESPONSE,
         },
         level: "error",
         contexts: {
@@ -403,7 +405,8 @@ export const handleApiResponse = async (
         tags: {
           api_error: true,
           status_code: response.status.toString(),
-          error_type: "client_error",
+          error_type: SentryErrorType.CLIENT_ERROR,
+          error_source: SentryErrorSource.HANDLE_API_RESPONSE,
         },
         level: "warning",
         contexts: {
@@ -433,45 +436,53 @@ export const handleApiResponse = async (
 export const handleApiError = (error: unknown): { error: string } => {
   console.error(error);
 
-  // Capture unexpected errors with Sentry
-  if (error instanceof Error) {
-    // Don't capture expected errors like redirects or not found
-    if (
-      !error.message.includes("NEXT_REDIRECT") &&
-      !error.message.includes("NEXT_NOT_FOUND") &&
-      !error.message.includes("401") &&
-      !error.message.includes("403") &&
-      !error.message.includes("404")
-    ) {
-      Sentry.captureException(error, {
-        tags: {
-          error_source: "handleApiError",
-          error_type: "unexpected_error",
-        },
-        level: "error",
-        contexts: {
-          error_details: {
-            message: error.message,
-            stack: error.stack,
+  // Check if this error was already captured by handleApiResponse
+  const isAlreadyCaptured =
+    error instanceof Error &&
+    (error.message.includes("Server error") ||
+      error.message.includes("Request failed"));
+
+  // Only capture if not already captured by handleApiResponse
+  if (!isAlreadyCaptured) {
+    if (error instanceof Error) {
+      // Don't capture expected errors like redirects or not found
+      if (
+        !error.message.includes("NEXT_REDIRECT") &&
+        !error.message.includes("NEXT_NOT_FOUND") &&
+        !error.message.includes("401") &&
+        !error.message.includes("403") &&
+        !error.message.includes("404")
+      ) {
+        Sentry.captureException(error, {
+          tags: {
+            error_source: SentryErrorSource.HANDLE_API_ERROR,
+            error_type: SentryErrorType.UNEXPECTED_ERROR,
+          },
+          level: "error",
+          contexts: {
+            error_details: {
+              message: error.message,
+              stack: error.stack,
+            },
+          },
+        });
+      }
+    } else {
+      // Capture non-Error objects
+      Sentry.captureMessage(
+        `Non-Error object in handleApiError: ${String(error)}`,
+        {
+          level: "warning",
+          tags: {
+            error_source: SentryErrorSource.HANDLE_API_ERROR,
+            error_type: SentryErrorType.NON_ERROR_OBJECT,
+          },
+          extra: {
+            error: error,
           },
         },
-      });
+      );
     }
-  } else {
-    // Capture non-Error objects
-    Sentry.captureMessage(
-      `Non-Error object in handleApiError: ${String(error)}`,
-      {
-        level: "warning",
-        tags: {
-          error_source: "handleApiError",
-          error_type: "non_error_object",
-        },
-        extra: {
-          error: error,
-        },
-      },
-    );
   }
 
   return {

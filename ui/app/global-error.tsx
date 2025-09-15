@@ -4,6 +4,8 @@ import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
 import { useEffect } from "react";
 
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
+
 export default function GlobalError({
   error,
   reset: _reset,
@@ -15,6 +17,8 @@ export default function GlobalError({
     Sentry.captureException(error, {
       tags: {
         error_boundary: "global",
+        error_type: SentryErrorType.APPLICATION_ERROR,
+        error_source: SentryErrorSource.ERROR_BOUNDARY,
         digest: error.digest,
       },
       level: "error",

@@ -9,6 +9,7 @@ import {
   convertVercelMessageToLangChainMessage,
 } from "@/lib/lighthouse/utils";
 import { initLighthouseWorkflow } from "@/lib/lighthouse/workflow";
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 export async function POST(req: Request) {
   try {
@@ -94,7 +95,8 @@ export async function POST(req: Request) {
           Sentry.captureException(error, {
             tags: {
               api_route: "lighthouse_analyst",
-              error_type: "stream_processing",
+              error_type: SentryErrorType.STREAM_PROCESSING,
+              error_source: SentryErrorSource.API_ROUTE,
             },
             level: "error",
             contexts: {
@@ -123,7 +125,8 @@ export async function POST(req: Request) {
     Sentry.captureException(error, {
       tags: {
         api_route: "lighthouse_analyst",
-        error_type: "request_processing",
+        error_type: SentryErrorType.REQUEST_PROCESSING,
+        error_source: SentryErrorSource.API_ROUTE,
         method: "POST",
       },
       level: "error",
