@@ -21,7 +21,6 @@ export default async function Profile() {
 }
 
 const SSRDataUser = async () => {
-  const samlConfig = await getSamlConfig();
   const userProfile = await getUserInfo();
   if (!userProfile?.data) {
     return null;
@@ -30,9 +29,8 @@ const SSRDataUser = async () => {
   const roleDetails =
     userProfile.included?.filter((item: any) => item.type === "roles") || [];
   const membershipsIncluded =
-    userProfile.included?.filter(
-      (item: any) => item.type === "memberships",
-    ) || [];
+    userProfile.included?.filter((item: any) => item.type === "memberships") ||
+    [];
 
   const roleDetailsMap = roleDetails.reduce(
     (acc: Record<string, RoleDetail>, role: RoleDetail) => {
@@ -56,8 +54,7 @@ const SSRDataUser = async () => {
     ) || [];
   const hasManageAccount = roleDetails.some(
     (role: any) =>
-      role.attributes?.manage_account === true &&
-      userRoleIds.includes(role.id),
+      role.attributes?.manage_account === true && userRoleIds.includes(role.id),
   );
   const isOwner = membershipsIncluded.some(
     (m: any) =>
@@ -65,6 +62,16 @@ const SSRDataUser = async () => {
       m.relationships?.user?.data?.id === userProfile.data.id,
   );
   const canManageAccount = isOwner && hasManageAccount;
+
+  // Determine manage_integrations permission
+  const hasManageIntegrations = roleDetails.some(
+    (role: any) =>
+      role.attributes?.manage_integrations === true &&
+      userRoleIds.includes(role.id),
+  );
+
+  // Fetch SAML config only if user can manage integrations
+  const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -81,9 +88,11 @@ const SSRDataUser = async () => {
           />
         </div>
       </div>
-      <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
-        <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
-      </div>
+      {hasManageIntegrations && (
+        <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
+          <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
+        </div>
+      )}
     </div>
   );
 };
