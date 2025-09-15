@@ -10,7 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Throttling options for `/api/v1/tokens` using the `DJANGO_THROTTLE_TOKEN_OBTAIN` environment variable [(#8647)](https://github.com/prowler-cloud/prowler/pull/8647)
 
 ### Fixed
-- 500 error when deleting user [(#1501)](https://github.com/prowler-cloud/prowler-cloud/pull/1501)
+- 500 error when deleting user [(#8731)](https://github.com/prowler-cloud/prowler/pull/8731)
 
 ---
 
