@@ -537,7 +537,6 @@ class TenantSerializer(BaseSerializerV1):
 
 
 class TenantIncludeSerializer(BaseSerializerV1):
-
     class Meta:
         model = Tenant
         fields = ["id", "name"]
