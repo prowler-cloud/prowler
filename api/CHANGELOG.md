@@ -9,6 +9,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - `GET /overviews/findings_severity` now supports `filter[status]` and `filter[status__in]` to aggregate by specific statuses (`FAIL`, `PASS`)[(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
 - Throttling options for `/api/v1/tokens` using the `DJANGO_THROTTLE_TOKEN_OBTAIN` environment variable [(#8647)](https://github.com/prowler-cloud/prowler/pull/8647)
 
+### Fixed
+- 500 error when deleting user [(#1501)](https://github.com/prowler-cloud/prowler-cloud/pull/1501)
+
 ---
 
 ## [1.12.0] (Prowler 5.11.0)
