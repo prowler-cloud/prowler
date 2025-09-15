@@ -2912,7 +2912,10 @@ class RoleViewSet(BaseRLSViewSet):
         user_role = get_role(request.user)
         # If the user is the owner of the role, the manage_account field is not editable
         if user_role and kwargs["pk"] == str(user_role.id):
-            request.data["manage_account"] = str(user_role.manage_account).lower()
+            return Response(
+                {"detail": "User cannot disable their own MANAGE_ACCOUNT policy."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):

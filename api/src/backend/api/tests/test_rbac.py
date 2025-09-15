@@ -178,6 +178,33 @@ class TestUserViewSet:
         # Memberships should be present and count > 0
         assert rels["memberships"]["meta"]["count"] > 0
 
+    def test_me_include_roles_and_memberships_included_block(
+        self, authenticated_client_rbac
+    ):
+        # Request current user info including roles and memberships
+        response = authenticated_client_rbac.get(
+            reverse("user-me"), {"include": "roles,memberships"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+
+        # Included must contain memberships corresponding to relationships data
+        rel_memberships = payload["data"]["relationships"]["memberships"]
+        ids_in_relationship = {item["id"] for item in rel_memberships["data"]}
+
+        included = payload["included"]
+        included_membership_ids = {
+            item["id"] for item in included if item["type"] == "memberships"
+        }
+
+        # If there are memberships in relationships, they must be present in included
+        if ids_in_relationship:
+            assert ids_in_relationship.issubset(included_membership_ids)
+        else:
+            # At minimum, included should contain the user's membership when requested
+            # (count should align with meta count)
+            assert rel_memberships["meta"]["count"] == len(included_membership_ids)
+
     def test_list_users_with_manage_account_only_forbidden(
         self, authenticated_client_rbac_manage_account
     ):

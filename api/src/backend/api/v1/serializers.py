@@ -286,6 +286,7 @@ class UserSerializer(BaseSerializerV1):
 
     included_serializers = {
         "roles": "api.v1.serializers.RoleIncludeSerializer",
+        "memberships": "api.v1.serializers.MembershipSerializer",
     }
 
     def _can_view_relationships(self, instance) -> bool:
