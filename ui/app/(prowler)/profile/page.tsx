@@ -27,11 +27,12 @@ const SSRDataUser = async () => {
     return null;
   }
 
-  // Extract role details and memberships directly from the included array
   const roleDetails =
     userProfile.included?.filter((item: any) => item.type === "roles") || [];
   const membershipsIncluded =
-    userProfile.included?.filter((item: any) => item.type === "memberships") || [];
+    userProfile.included?.filter(
+      (item: any) => item.type === "memberships",
+    ) || [];
 
   const roleDetailsMap = roleDetails.reduce(
     (acc: Record<string, RoleDetail>, role: RoleDetail) => {
@@ -41,22 +42,22 @@ const SSRDataUser = async () => {
     {} as Record<string, RoleDetail>,
   );
 
-  // We don't fetch tenants here; if tenant details are needed (e.g., name),
-  // they must be included by the API. For now we proceed without names.
   const tenantsMap = {} as Record<string, TenantDetailData>;
 
-  // Determine a tenantId to show in the basic info card using the first membership
   const firstUserMembership = membershipsIncluded.find(
     (m: any) => m.relationships?.user?.data?.id === userProfile.data.id,
   );
   const userTenantId = firstUserMembership?.relationships?.tenant?.data?.id;
   const tenantIdForCard = userTenantId || "";
 
-  // Compute permissions locally using included roles and relationships
   const userRoleIds =
-    userProfile.data.relationships?.roles?.data?.map((r: { id: string }) => r.id) || [];
+    userProfile.data.relationships?.roles?.data?.map(
+      (r: { id: string }) => r.id,
+    ) || [];
   const hasManageAccount = roleDetails.some(
-    (role: any) => role.attributes?.manage_account === true && userRoleIds.includes(role.id),
+    (role: any) =>
+      role.attributes?.manage_account === true &&
+      userRoleIds.includes(role.id),
   );
   const isOwner = membershipsIncluded.some(
     (m: any) =>
