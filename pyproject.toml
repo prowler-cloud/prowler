@@ -51,6 +51,7 @@ dependencies = [
   "google-auth-httplib2>=0.1,<0.3",
   "jsonschema==4.23.0",
   "kubernetes==32.0.1",
+  "markdown==3.9.0",
   "microsoft-kiota-abstractions==1.9.2",
   "msgraph-sdk==1.23.0",
   "numpy==2.0.2",
@@ -74,7 +75,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">3.9.1,<3.13"
-version = "5.12.0"
+version = "5.13.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
