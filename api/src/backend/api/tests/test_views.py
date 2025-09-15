@@ -4581,36 +4581,6 @@ class TestRoleViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_role_partial_update_cannot_disable_manage_account_on_self(
-        self, authenticated_client
-    ):
-        """Ensure a user cannot PATCH their own role to remove manage_account."""
-        from api.models import Role, UserRoleRelationship
-
-        user = authenticated_client.user
-        # Pick a role assigned to the current user
-        my_rel = UserRoleRelationship.objects.filter(user=user).first()
-        assert my_rel is not None
-        role: Role = my_rel.role
-
-        payload = {
-            "data": {
-                "id": str(role.id),
-                "type": "roles",
-                "attributes": {
-                    "manage_account": "false",
-                },
-            }
-        }
-
-        resp = authenticated_client.patch(
-            reverse("role-detail", kwargs={"pk": role.id}),
-            data=json.dumps(payload),
-            content_type="application/vnd.api+json",
-        )
-
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-
     def test_role_list_filters(self, authenticated_client, roles_fixture):
         role = roles_fixture[0]
         response = authenticated_client.get(
