@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+
+## [1.12.2] (Prowler v5.12.2)
+
+### 🐞 Fixed
+
+- Handle 4XX errors consistently and 204 responses properly[(#8722)](https://github.com/prowler-cloud/prowler/pull/8722)
+
 ## [1.12.1] (Prowler v5.12.1)
 
 ### 🐞 Fixed
