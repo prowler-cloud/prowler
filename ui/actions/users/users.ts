@@ -164,7 +164,7 @@ export const deleteUser = async (formData: FormData) => {
 
 export const getUserInfo = async () => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
+  const url = new URL(`${apiBaseUrl}/users/me?include=roles,memberships`);
 
   try {
     const response = await fetch(url.toString(), {

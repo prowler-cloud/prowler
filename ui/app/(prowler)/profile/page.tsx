@@ -1,16 +1,13 @@
 import React, { Suspense } from "react";
 
 import { getSamlConfig } from "@/actions/integrations/saml";
-import { getAllTenants } from "@/actions/users/tenants";
 import { getUserInfo } from "@/actions/users/users";
-import { getUserMemberships } from "@/actions/users/users";
 import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
 import { ContentLayout } from "@/components/ui";
 import { UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
-import { isUserOwnerAndHasManageAccount } from "@/lib/permissions";
 import { RoleDetail, TenantDetailData } from "@/types/users";
 
 export default async function Profile() {
@@ -30,8 +27,11 @@ const SSRDataUser = async () => {
     return null;
   }
 
+  // Extract role details and memberships directly from the included array
   const roleDetails =
     userProfile.included?.filter((item: any) => item.type === "roles") || [];
+  const membershipsIncluded =
+    userProfile.included?.filter((item: any) => item.type === "memberships") || [];
 
   const roleDetailsMap = roleDetails.reduce(
     (acc: Record<string, RoleDetail>, role: RoleDetail) => {
@@ -41,46 +41,42 @@ const SSRDataUser = async () => {
     {} as Record<string, RoleDetail>,
   );
 
-  const memberships = await getUserMemberships(userProfile.data.id);
-  const tenants = await getAllTenants();
+  // We don't fetch tenants here; if tenant details are needed (e.g., name),
+  // they must be included by the API. For now we proceed without names.
+  const tenantsMap = {} as Record<string, TenantDetailData>;
 
-  const tenantsMap = tenants?.data?.reduce(
-    (acc: Record<string, TenantDetailData>, tenant: TenantDetailData) => {
-      acc[tenant.id] = tenant;
-      return acc;
-    },
-    {} as Record<string, TenantDetailData>,
+  // Determine a tenantId to show in the basic info card using the first membership
+  const firstUserMembership = membershipsIncluded.find(
+    (m: any) => m.relationships?.user?.data?.id === userProfile.data.id,
   );
+  const userTenantId = firstUserMembership?.relationships?.tenant?.data?.id;
+  const tenantIdForCard = userTenantId || "";
 
-  const userMembershipIds =
-    userProfile.data.relationships?.memberships?.data?.map(
-      (membership: { id: string }) => membership.id,
-    ) || [];
-
-  const userTenant = tenants?.data?.find((tenant: TenantDetailData) =>
-    tenant.relationships?.memberships?.data?.some(
-      (membership: { id: string }) => userMembershipIds.includes(membership.id),
-    ),
+  // Compute permissions locally using included roles and relationships
+  const userRoleIds =
+    userProfile.data.relationships?.roles?.data?.map((r: { id: string }) => r.id) || [];
+  const hasManageAccount = roleDetails.some(
+    (role: any) => role.attributes?.manage_account === true && userRoleIds.includes(role.id),
   );
-
-  const isOwner = isUserOwnerAndHasManageAccount(
-    roleDetails,
-    memberships?.data || [],
-    userProfile.data.id,
+  const isOwner = membershipsIncluded.some(
+    (m: any) =>
+      m.attributes?.role === "owner" &&
+      m.relationships?.user?.data?.id === userProfile.data.id,
   );
+  const canManageAccount = isOwner && hasManageAccount;
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <UserBasicInfoCard user={userProfile?.data} tenantId={userTenant?.id} />
+      <UserBasicInfoCard user={userProfile?.data} tenantId={tenantIdForCard} />
       <div className="flex flex-col gap-6 xl:flex-row">
         <div className="w-full lg:w-2/3 xl:w-1/2">
           <RolesCard roles={roleDetails || []} roleDetails={roleDetailsMap} />
         </div>
         <div className="w-full lg:w-2/3 xl:w-1/2">
           <MembershipsCard
-            memberships={memberships?.data || []}
+            memberships={membershipsIncluded || []}
             tenantsMap={tenantsMap}
-            isOwner={isOwner}
+            isOwner={canManageAccount}
           />
         </div>
       </div>
