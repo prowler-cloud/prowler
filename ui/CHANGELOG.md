@@ -2,6 +2,29 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [1.13.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Support for Markdown and AdditionalURLs in findings detail page [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
+- `Prowler Hub` menu item with tooltip [(#8692)] (https://github.com/prowler-cloud/prowler/pull/8692)
+- Copy link button to finding detail page [(#8685)] (https://github.com/prowler-cloud/prowler/pull/8685)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.12.2] (Prowler v5.12.2)
+
+### 🐞 Fixed
+
+- Handle 4XX errors consistently and 204 responses properly[(#8722)](https://github.com/prowler-cloud/prowler/pull/8722)
+
+>>>>>>> 940a1202b (fix: handle 4XX and 204 properly (#8722))
 ## [1.12.1] (Prowler v5.12.1)
 
 ### 🐞 Fixed
