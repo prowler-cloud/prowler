@@ -312,7 +312,7 @@ class Test_rds_instance_transport_encrypted:
             DBParameterGroupName="test",
             Parameters=[
                 {
-                    "ParameterName": "require_secure_transport",
+                    "ParameterName": "rds.force_ssl",
                     "ParameterValue": "1",
                     "ApplyMethod": "immediate",
                 },

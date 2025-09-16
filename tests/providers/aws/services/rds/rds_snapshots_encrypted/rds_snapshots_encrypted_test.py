@@ -91,7 +91,7 @@ class Test_rds_snapshots_encrypted:
                 check = rds_snapshots_encrypted()
                 result = check.execute()
 
-                # Moto 5.1.11 creates additional automatic snapshots
+                # Moto creates additional automatic snapshots
                 assert len(result) == 2
                 # Find the manual snapshot result
                 manual_snapshot_result = next(
