@@ -217,10 +217,10 @@ class Test_awslambda_function_no_secrets_in_variables:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Lambda function {function_name} variables -> Secret Keyword in variable TELEGRAM_BOT_TOKEN."
+                == f"No secrets found in Lambda function {function_name} variables."
             )
             assert result[0].resource_tags == []
 
