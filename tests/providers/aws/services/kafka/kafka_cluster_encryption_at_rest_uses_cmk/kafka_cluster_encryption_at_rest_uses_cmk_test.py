@@ -18,7 +18,7 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
                 return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
                 new=kafka_client,
             ),
         ):
@@ -68,7 +68,7 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
                 return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
                 new=kafka_client,
             ),
             patch(
@@ -134,7 +134,7 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
                 return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
                 new=kafka_client,
             ),
             patch(
@@ -195,7 +195,7 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
                 return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
             ),
             patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
                 new=kafka_client,
             ),
             patch(
