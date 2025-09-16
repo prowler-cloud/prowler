@@ -924,6 +924,45 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     def get_queryset(self):
         return User.objects.filter(membership__tenant__id=self.request.tenant_id)
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Prevent deleting role relationships if it would leave the tenant with no
+        users having MANAGE_ACCOUNT. Supports deleting specific roles via JSON:API
+        relationship payload or clearing all roles for the user when no payload.
+        """
+        user = self.get_object()
+        # Disallow deleting own roles
+        if str(user.id) == str(request.user.id):
+            return Response(
+                data={
+                    "detail": "Users cannot delete the relationship with their role."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        tenant_id = self.request.tenant_id
+        payload = request.data if isinstance(request.data, dict) else None
+        data = payload.get("data") if payload else None
+        if data:
+            try:
+                role_ids = [item["id"] for item in data]
+            except Exception:
+                role_ids = []
+            roles_to_remove = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
+        else:
+            roles_to_remove = user.roles.filter(tenant_id=tenant_id)
+
+        # Proceed with deletion scoped to tenant
+        if data:
+            UserRoleRelationship.objects.filter(
+                user=user,
+                tenant_id=tenant_id,
+                role_id__in=roles_to_remove.values_list("id", flat=True),
+            ).delete()
+        else:
+            UserRoleRelationship.objects.filter(user=user, tenant_id=tenant_id).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def create(self, request, *args, **kwargs):
         user = self.get_object()
 
@@ -960,12 +999,6 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def destroy(self, request, *args, **kwargs):
-        user = self.get_object()
-        user.roles.clear()
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2913,6 +2946,21 @@ class RoleViewSet(BaseRLSViewSet):
             instance.name == "admin"
         ):  # TODO: Move to a constant/enum (in case other roles are created by default)
             raise ValidationError(detail="The admin role cannot be deleted.")
+
+        # Prevent deleting the last MANAGE_ACCOUNT role in the tenant
+        if instance.manage_account:
+            has_other_ma = (
+                Role.objects.filter(tenant_id=instance.tenant_id, manage_account=True)
+                .exclude(id=instance.id)
+                .exists()
+            )
+            if not has_other_ma:
+                return Response(
+                    data={
+                        "detail": "Cannot delete the only role with MANAGE_ACCOUNT in the tenant."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         return super().destroy(request, *args, **kwargs)
 
