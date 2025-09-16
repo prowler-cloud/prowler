@@ -18,7 +18,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DBEngineVersions": [
                 {
-                    "Engine": "mysql",
+                    "Engine": "postgres",
                     "EngineVersion": "8.0.32",
                     "DBEngineDescription": "description",
                     "DBEngineVersionDescription": "description",
@@ -145,23 +145,34 @@ class Test_rds_snapshots_public_access:
                     rds_snapshots_public_access,
                 )
 
-                service_client.db_snapshots[0].public = True
+                # Find the manual snapshot and set it to public
+                manual_snapshot = next(
+                    (s for s in service_client.db_snapshots if s.id == "snapshot-1"),
+                    None,
+                )
+                if manual_snapshot:
+                    manual_snapshot.public = True
                 check = rds_snapshots_public_access()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert len(result) == 2
+                # Find the manual snapshot result
+                manual_snapshot_result = next(
+                    (r for r in result if r.resource_id == "snapshot-1"), None
+                )
+                assert manual_snapshot_result is not None
+                assert manual_snapshot_result.status == "FAIL"
                 assert (
-                    result[0].status_extended
+                    manual_snapshot_result.status_extended
                     == "RDS Instance Snapshot snapshot-1 is public."
                 )
-                assert result[0].resource_id == "snapshot-1"
-                assert result[0].region == AWS_REGION_US_EAST_1
+                assert manual_snapshot_result.resource_id == "snapshot-1"
+                assert manual_snapshot_result.region == AWS_REGION_US_EAST_1
                 assert (
-                    result[0].resource_arn
+                    manual_snapshot_result.resource_arn
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:snapshot:snapshot-1"
                 )
-                assert result[0].resource_tags == []
+                assert manual_snapshot_result.resource_tags == []
 
     @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -199,19 +210,24 @@ class Test_rds_snapshots_public_access:
                 check = rds_snapshots_public_access()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "PASS"
+                assert len(result) == 2
+                # Find the manual snapshot result
+                manual_snapshot_result = next(
+                    (r for r in result if r.resource_id == "snapshot-1"), None
+                )
+                assert manual_snapshot_result is not None
+                assert manual_snapshot_result.status == "PASS"
                 assert (
-                    result[0].status_extended
+                    manual_snapshot_result.status_extended
                     == "RDS Cluster Snapshot snapshot-1 is not shared."
                 )
-                assert result[0].resource_id == "snapshot-1"
-                assert result[0].region == AWS_REGION_US_EAST_1
+                assert manual_snapshot_result.resource_id == "snapshot-1"
+                assert manual_snapshot_result.region == AWS_REGION_US_EAST_1
                 assert (
-                    result[0].resource_arn
+                    manual_snapshot_result.resource_arn
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:snapshot-1"
                 )
-                assert result[0].resource_tags == []
+                assert manual_snapshot_result.resource_tags == []
 
     @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -246,20 +262,35 @@ class Test_rds_snapshots_public_access:
                     rds_snapshots_public_access,
                 )
 
-                service_client.db_cluster_snapshots[0].public = True
+                # Find the manual cluster snapshot and set it to public
+                manual_snapshot = next(
+                    (
+                        s
+                        for s in service_client.db_cluster_snapshots
+                        if s.id == "snapshot-1"
+                    ),
+                    None,
+                )
+                if manual_snapshot:
+                    manual_snapshot.public = True
                 check = rds_snapshots_public_access()
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert len(result) == 2
+                # Find the manual snapshot result
+                manual_snapshot_result = next(
+                    (r for r in result if r.resource_id == "snapshot-1"), None
+                )
+                assert manual_snapshot_result is not None
+                assert manual_snapshot_result.status == "FAIL"
                 assert (
-                    result[0].status_extended
+                    manual_snapshot_result.status_extended
                     == "RDS Cluster Snapshot snapshot-1 is public."
                 )
-                assert result[0].resource_id == "snapshot-1"
-                assert result[0].region == AWS_REGION_US_EAST_1
+                assert manual_snapshot_result.resource_id == "snapshot-1"
+                assert manual_snapshot_result.region == AWS_REGION_US_EAST_1
                 assert (
-                    result[0].resource_arn
+                    manual_snapshot_result.resource_arn
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:snapshot-1"
                 )
-                assert result[0].resource_tags == []
+                assert manual_snapshot_result.resource_tags == []

@@ -40,14 +40,14 @@ class Test_rds_instance_default_admin:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql13",
+            DBParameterGroupFamily="default.postgres13",
             Description="test parameter group",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
-            DBName="aurora-postgres",
+            Engine="postgres",
+            DBName="postgres",
             MasterUsername="postgres",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
@@ -92,14 +92,14 @@ class Test_rds_instance_default_admin:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql13",
+            DBParameterGroupFamily="default.postgres13",
             Description="test parameter group",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
-            DBName="aurora-postgres",
+            Engine="postgres",
+            DBName="postgres",
             MasterUsername="postgres2",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
@@ -144,7 +144,7 @@ class Test_rds_instance_default_admin:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="aurora-postgresql",
+            Engine="postgres",
             MasterUsername="postgres",
             MasterUserPassword="defaultpassword",
         )
@@ -152,8 +152,8 @@ class Test_rds_instance_default_admin:
             DBInstanceIdentifier="db-master-1",
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
-            DBName="aurora-postgres",
+            Engine="postgres",
+            DBName="postgres",
             MasterUsername="postgres",
             DBInstanceClass="db.m1.small",
             PubliclyAccessible=False,
@@ -197,7 +197,7 @@ class Test_rds_instance_default_admin:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
-            Engine="aurora-postgresql",
+            Engine="postgres",
             MasterUsername="custom",
             MasterUserPassword="defaultpassword",
         )
@@ -205,8 +205,8 @@ class Test_rds_instance_default_admin:
             DBInstanceIdentifier="db-master-1",
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
-            DBName="aurora-postgres",
+            Engine="postgres",
+            DBName="postgres",
             MasterUsername="postgres2",
             DBInstanceClass="db.m1.small",
             PubliclyAccessible=False,

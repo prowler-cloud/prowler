@@ -22,7 +22,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "DBEngineVersions": [
                 {
-                    "Engine": "mysql",
+                    "Engine": "postgres",
                     "EngineVersion": "8.0.32",
                     "DBEngineDescription": "description",
                     "DBEngineVersionDescription": "description",
@@ -90,6 +90,13 @@ class Test_RDS_Service:
             DBParameterGroupFamily="default.postgres9.3",
             Description="test parameter group",
         )
+        conn.create_db_cluster(
+            DBClusterIdentifier="cluster-postgres",
+            Engine="postgres",
+            MasterUsername="postgres",
+            MasterUserPassword="password",
+            StorageEncrypted=True,
+        )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -100,7 +107,7 @@ class Test_RDS_Service:
             DeletionProtection=True,
             PubliclyAccessible=True,
             AutoMinorVersionUpgrade=True,
-            BackupRetentionPeriod=10,
+            BackupRetentionPeriod=1,
             EnableCloudwatchLogsExports=["audit", "error"],
             MultiAZ=True,
             DBParameterGroupName="test",
@@ -125,7 +132,7 @@ class Test_RDS_Service:
         assert db_instance.status == "available"
         assert db_instance.public
         assert db_instance.encrypted
-        assert db_instance.backup_retention_period == 10
+        assert db_instance.backup_retention_period == 1
         assert db_instance.cloudwatch_logs == ["audit", "error"]
         assert db_instance.deletion_protection
         assert db_instance.auto_minor_version_upgrade
@@ -310,11 +317,15 @@ class Test_RDS_Service:
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
-        assert len(rds.db_snapshots) == 1
-        assert rds.db_snapshots[0].id == "snapshot-1"
-        assert rds.db_snapshots[0].instance_id == "db-primary-1"
-        assert rds.db_snapshots[0].region == AWS_REGION_US_EAST_1
-        assert not rds.db_snapshots[0].public
+        assert len(rds.db_snapshots) == 2
+        # Find the manual snapshot
+        manual_snapshot = next(
+            (s for s in rds.db_snapshots if s.id == "snapshot-1"), None
+        )
+        assert manual_snapshot is not None
+        assert manual_snapshot.instance_id == "db-primary-1"
+        assert manual_snapshot.region == AWS_REGION_US_EAST_1
+        assert not manual_snapshot.public
 
     # Test RDS Describe DB Clusters
     @mock_aws
@@ -397,11 +408,15 @@ class Test_RDS_Service:
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
-        assert len(rds.db_cluster_snapshots) == 1
-        assert rds.db_cluster_snapshots[0].id == "snapshot-1"
-        assert rds.db_cluster_snapshots[0].cluster_id == "db-primary-1"
-        assert rds.db_cluster_snapshots[0].region == AWS_REGION_US_EAST_1
-        assert not rds.db_cluster_snapshots[0].public
+        assert len(rds.db_cluster_snapshots) == 2
+        # Find the manual snapshot
+        manual_snapshot = next(
+            (s for s in rds.db_cluster_snapshots if s.id == "snapshot-1"), None
+        )
+        assert manual_snapshot is not None
+        assert manual_snapshot.cluster_id == "db-primary-1"
+        assert manual_snapshot.region == AWS_REGION_US_EAST_1
+        assert not manual_snapshot.public
 
     # Test RDS describe db event subscriptions
     @mock_aws
@@ -441,12 +456,12 @@ class Test_RDS_Service:
         # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
-        assert "mysql" in rds.db_engines[AWS_REGION_US_EAST_1]
-        assert rds.db_engines[AWS_REGION_US_EAST_1]["mysql"].engine_versions == [
+        assert "postgres" in rds.db_engines[AWS_REGION_US_EAST_1]
+        assert rds.db_engines[AWS_REGION_US_EAST_1]["postgres"].engine_versions == [
             "8.0.32"
         ]
         assert (
-            rds.db_engines[AWS_REGION_US_EAST_1]["mysql"].engine_description
+            rds.db_engines[AWS_REGION_US_EAST_1]["postgres"].engine_description
             == "description"
         )
 
