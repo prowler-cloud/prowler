@@ -9,6 +9,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Support for Markdown and AdditionalURLs in findings detail page [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
 - `Prowler Hub` menu item with tooltip [(#8692)] (https://github.com/prowler-cloud/prowler/pull/8692)
 - Copy link button to finding detail page [(#8685)] (https://github.com/prowler-cloud/prowler/pull/8685)
+- Add compliance details in compliance specific view [(#8742)](https://github.com/prowler-cloud/prowler/pull/8742)
 
 ### 🔄 Changed
 
