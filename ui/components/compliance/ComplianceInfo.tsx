@@ -6,11 +6,17 @@ interface ComplianceInfoProps {
   version?: string;
 }
 
-export const ComplianceInfo = ({ name, framework, version }: ComplianceInfoProps) => {
+export const ComplianceInfo = ({
+    name,
+    framework,
+    version,
+  }: ComplianceInfoProps) => {
   return (
     <div className="space-y-4">
       {name && (
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{name}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {name}
+        </h1>
       )}
 
       <div className="flex flex-wrap gap-2">
