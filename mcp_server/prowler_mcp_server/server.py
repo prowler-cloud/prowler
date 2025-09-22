@@ -1,5 +1,5 @@
 from fastmcp import FastMCP
-
+from prowler_mcp_server.lib.logger import logger
 
 # Initialize main Prowler MCP server
 prowler_mcp_server = FastMCP("prowler-mcp-server")
@@ -13,6 +13,6 @@ async def setup_main_server():
         from prowler_mcp_server.prowler_hub.server import hub_mcp_server
 
         await prowler_mcp_server.import_server(hub_mcp_server, prefix="prowler_hub")
-    except Exception:
-        # TODO: Add error logging
-        pass
+        logger.info("Successfully imported Prowler Hub server")
+    except Exception as e:
+        logger.error(f"Failed to import Prowler Hub server: {e}")
