@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.13.0
+  version: 1.14.0
   description: |-
     Prowler API specification.
 
@@ -8221,6 +8221,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8340,6 +8341,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8653,6 +8655,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -15557,59 +15560,49 @@ components:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - memberships
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - memberships
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type memberships
-              title: memberships
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
             roles:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - roles
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - roles
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type roles
-              title: roles
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
     UserCreate:
       type: object

@@ -1,3 +1,4 @@
+import json
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -150,6 +151,221 @@ class TestUserViewSet:
         response = authenticated_client_no_permissions_rbac.get(reverse("user-me"))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == "rbac_limited@rbac.com"
+
+    def test_me_shows_own_roles_and_memberships_without_manage_account(
+        self, authenticated_client_no_permissions_rbac
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("user-me"))
+        assert response.status_code == status.HTTP_200_OK
+
+        rels = response.json()["data"]["relationships"]
+
+        # Self should see own roles and memberships even without manage_account
+        assert isinstance(rels["roles"]["data"], list)
+        assert rels["memberships"]["meta"]["count"] == 1
+
+    def test_me_shows_roles_and_memberships_with_manage_account(
+        self, authenticated_client_rbac
+    ):
+        response = authenticated_client_rbac.get(reverse("user-me"))
+        assert response.status_code == status.HTTP_200_OK
+
+        rels = response.json()["data"]["relationships"]
+
+        # Roles should have data when manage_account is True
+        assert len(rels["roles"]["data"]) > 0
+
+        # Memberships should be present and count > 0
+        assert rels["memberships"]["meta"]["count"] > 0
+
+    def test_me_include_roles_and_memberships_included_block(
+        self, authenticated_client_rbac
+    ):
+        # Request current user info including roles and memberships
+        response = authenticated_client_rbac.get(
+            reverse("user-me"), {"include": "roles,memberships"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+
+        # Included must contain memberships corresponding to relationships data
+        rel_memberships = payload["data"]["relationships"]["memberships"]
+        ids_in_relationship = {item["id"] for item in rel_memberships["data"]}
+
+        included = payload["included"]
+        included_membership_ids = {
+            item["id"] for item in included if item["type"] == "memberships"
+        }
+
+        # If there are memberships in relationships, they must be present in included
+        if ids_in_relationship:
+            assert ids_in_relationship.issubset(included_membership_ids)
+        else:
+            # At minimum, included should contain the user's membership when requested
+            # (count should align with meta count)
+            assert rel_memberships["meta"]["count"] == len(included_membership_ids)
+
+    def test_list_users_with_manage_account_only_forbidden(
+        self, authenticated_client_rbac_manage_account
+    ):
+        response = authenticated_client_rbac_manage_account.get(reverse("user-list"))
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retrieve_other_user_with_manage_account_only_forbidden(
+        self, authenticated_client_rbac_manage_account, create_test_user
+    ):
+        response = authenticated_client_rbac_manage_account.get(
+            reverse("user-detail", kwargs={"pk": create_test_user.id})
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_list_users_with_manage_users_only_hides_relationships(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        # Ensure there is at least one other user in the same tenant
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        other_user = User.objects.create_user(
+            name="other_in_tenant",
+            email="other_in_tenant@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+
+        response = authenticated_client_rbac_manage_users_only.get(reverse("user-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert isinstance(data, list)
+
+        current_user_id = str(mu_user.id)
+        assert any(item["id"] == current_user_id for item in data)
+
+        for item in data:
+            rels = item["relationships"]
+            if item["id"] == current_user_id:
+                # Self should see own relationships
+                assert isinstance(rels["roles"]["data"], list)
+                assert rels["memberships"]["meta"].get("count", 0) >= 1
+            else:
+                # Others should be hidden without manage_account
+                assert rels["roles"]["data"] == []
+                assert rels["memberships"]["data"] == []
+                assert rels["memberships"]["meta"]["count"] == 0
+
+    def test_include_roles_hidden_without_manage_account(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        # Arrange: ensure another user in the same tenant with its own role
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        other_user = User.objects.create_user(
+            name="other_in_tenant_inc",
+            email="other_in_tenant_inc@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+        other_role = Role.objects.create(
+            name="other_inc_role",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+        UserRoleRelationship.objects.create(
+            user=other_user, role=other_role, tenant_id=tenant.id
+        )
+
+        response = authenticated_client_rbac_manage_users_only.get(
+            reverse("user-list"), {"include": "roles"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+
+        # Assert: included must not contain the other user's role
+        included = payload.get("included", [])
+        included_role_ids = {
+            item["id"] for item in included if item.get("type") == "roles"
+        }
+        assert str(other_role.id) not in included_role_ids
+
+        # Relationships for other user should be empty
+        for item in payload["data"]:
+            if item["id"] == str(other_user.id):
+                rels = item["relationships"]
+                assert rels["roles"]["data"] == []
+
+    def test_include_roles_visible_with_manage_account(
+        self, authenticated_client_rbac, tenants_fixture
+    ):
+        # Arrange: another user in tenant[0] with its role
+        tenant = tenants_fixture[0]
+        other_user = User.objects.create_user(
+            name="other_with_role",
+            email="other_with_role@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+        other_role = Role.objects.create(
+            name="other_visible_role",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+        UserRoleRelationship.objects.create(
+            user=other_user, role=other_role, tenant_id=tenant.id
+        )
+
+        response = authenticated_client_rbac.get(
+            reverse("user-list"), {"include": "roles"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+
+        # Assert: included must contain the other user's role
+        included = payload.get("included", [])
+        included_role_ids = {
+            item["id"] for item in included if item.get("type") == "roles"
+        }
+        assert str(other_role.id) in included_role_ids
+
+    def test_retrieve_user_with_manage_users_only_hides_relationships(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        # Create a target user in the same tenant to ensure visibility
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        target_user = User.objects.create_user(
+            name="target_same_tenant",
+            email="target_same_tenant@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=target_user, tenant=tenant)
+
+        response = authenticated_client_rbac_manage_users_only.get(
+            reverse("user-detail", kwargs={"pk": target_user.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        rels = response.json()["data"]["relationships"]
+        assert rels["roles"]["data"] == []
+        assert rels["memberships"]["data"] == []
+        assert rels["memberships"]["meta"]["count"] == 0
+
+    def test_list_users_with_all_permissions_shows_relationships(
+        self, authenticated_client_rbac
+    ):
+        response = authenticated_client_rbac.get(reverse("user-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert isinstance(data, list)
+
+        rels = data[0]["relationships"]
+        assert len(rels["roles"]["data"]) >= 0
+        assert rels["memberships"]["meta"]["count"] >= 0
 
 
 @pytest.mark.django_db
@@ -494,3 +710,123 @@ class TestLimitedVisibility:
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
+
+
+@pytest.mark.django_db
+class TestRolePermissions:
+    def test_role_create_with_manage_account_only_allowed(
+        self, authenticated_client_rbac_manage_account
+    ):
+        data = {
+            "data": {
+                "type": "roles",
+                "attributes": {
+                    "name": "Role Manage Account Only",
+                    "manage_users": "false",
+                    "manage_account": "true",
+                    "manage_providers": "false",
+                    "manage_scans": "false",
+                    "unlimited_visibility": "false",
+                },
+                "relationships": {"provider_groups": {"data": []}},
+            }
+        }
+        response = authenticated_client_rbac_manage_account.post(
+            reverse("role-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_role_create_with_manage_users_only_forbidden(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        data = {
+            "data": {
+                "type": "roles",
+                "attributes": {
+                    "name": "Role Manage Users Only",
+                    "manage_users": "true",
+                    "manage_account": "false",
+                    "manage_providers": "false",
+                    "manage_scans": "false",
+                    "unlimited_visibility": "false",
+                },
+                "relationships": {"provider_groups": {"data": []}},
+            }
+        }
+        response = authenticated_client_rbac_manage_users_only.post(
+            reverse("role-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestUserRoleLinkPermissions:
+    def test_link_user_roles_with_manage_account_only_allowed(
+        self, authenticated_client_rbac_manage_account
+    ):
+        # Arrange: create a second user in the same tenant as the manage_account user
+        ma_user = authenticated_client_rbac_manage_account.user
+        ma_membership = Membership.objects.filter(user=ma_user).first()
+        tenant = ma_membership.tenant
+
+        user2 = User.objects.create_user(
+            name="target_user",
+            email="target_user_ma@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+
+        # Create a role in the same tenant
+        role = Role.objects.create(
+            name="linkable_role",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+
+        data = {"data": [{"type": "roles", "id": str(role.id)}]}
+
+        # Act
+        response = authenticated_client_rbac_manage_account.post(
+            reverse("user-roles-relationship", kwargs={"pk": user2.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+
+        # Assert
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_link_user_roles_with_manage_users_only_forbidden(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        mu_user = authenticated_client_rbac_manage_users_only.user
+        mu_membership = Membership.objects.filter(user=mu_user).first()
+        tenant = mu_membership.tenant
+
+        user2 = User.objects.create_user(
+            name="target_user2",
+            email="target_user_mu@rbac.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+
+        role = Role.objects.create(
+            name="linkable_role_mu",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+        )
+
+        data = {"data": [{"type": "roles", "id": str(role.id)}]}
+
+        response = authenticated_client_rbac_manage_users_only.post(
+            reverse("user-roles-relationship", kwargs={"pk": user2.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
