@@ -413,7 +413,7 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].public
                 assert vpc.subnets[0].nat_gateway is False
                 assert vpc.subnets[0].region == AWS_REGION_US_EAST_1
-                assert vpc.subnets[0].tags is None
+                assert vpc.subnets[0].tags == []
 
     @mock_aws
     def test_vpc_subnet_with_open_nacl(self):

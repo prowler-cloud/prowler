@@ -19,7 +19,8 @@ export const useFormServerErrors = <T extends Record<string, any>>(
   ) => {
     errors.forEach((error: ApiError) => {
       const errorMessage = error.detail;
-      const fieldName = errorMapping?.[error.source.pointer];
+      const pointer = error.source?.pointer;
+      const fieldName = pointer ? errorMapping?.[pointer] : undefined;
 
       if (fieldName && fieldName in form.formState.defaultValues!) {
         form.setError(fieldName as any, {

@@ -135,8 +135,8 @@ class Test_EC2_Service:
         assert re.match(r"ami-[0-9a-z]{8}", ec2.instances[0].image_id)
         assert ec2.instances[0].launch_time == MOCK_DATETIME
         assert not ec2.instances[0].user_data
-        assert not ec2.instances[0].http_tokens
-        assert not ec2.instances[0].http_endpoint
+        assert ec2.instances[0].http_tokens == "optional"
+        assert ec2.instances[0].http_endpoint == "enabled"
         assert not ec2.instances[0].instance_profile
         assert ipaddress.ip_address(ec2.instances[0].private_ip).is_private
         assert (

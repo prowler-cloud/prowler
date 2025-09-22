@@ -78,3 +78,6 @@ _data/
 
 # Claude
 CLAUDE.md
+
+# LLM's (Until we have a standard one)
+AGENTS.md
