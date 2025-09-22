@@ -20,7 +20,6 @@ class DMS(AWSService):
         self.__threading_call__(self._describe_endpoints)
         self.__threading_call__(self._describe_replication_tasks)
         self.__threading_call__(self._list_tags, self.endpoints.values())
-        self.__threading_call__(self._describe_replication_tasks)
         self.__threading_call__(self._list_tags, self.replication_tasks.values())
 
     def _describe_replication_instances(self, regional_client):

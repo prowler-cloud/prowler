@@ -33,13 +33,14 @@ class Test_rds_instance_copy_tags_to_snapshots_to_snapshots:
                 assert len(result) == 0
 
     @mock_aws
-    def test_rds_aurora_instance(self):
+    def test_rds_postgres_instance(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="test-instance",
-            Engine="aurora-postgresql",
+            Engine="postgres",
             DBInstanceClass="db.t2.micro",
             AllocatedStorage=5,
+            PubliclyAccessible=False,
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -59,14 +60,19 @@ class Test_rds_instance_copy_tags_to_snapshots_to_snapshots:
 
                 check = rds_instance_copy_tags_to_snapshots()
                 result = check.execute()
-                assert len(result) == 0
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS Instance test-instance does not have copy tags to snapshots enabled."
+                )
 
     @mock_aws
     def test_rds_instance_without_copy_tags(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="test-instance",
-            Engine="mysql",
+            Engine="postgres",
             DBInstanceClass="db.t2.micro",
             AllocatedStorage=5,
             CopyTagsToSnapshot=False,
@@ -108,7 +114,7 @@ class Test_rds_instance_copy_tags_to_snapshots_to_snapshots:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="test-instance",
-            Engine="mysql",
+            Engine="postgres",
             DBInstanceClass="db.t2.micro",
             AllocatedStorage=5,
             CopyTagsToSnapshot=True,

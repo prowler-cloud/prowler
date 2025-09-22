@@ -795,3 +795,89 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert summary == mongodbatlas_html_assessment_summary
+
+    def test_process_markdown_bold_text(self):
+        """Test that **text** is converted to <strong>text</strong>"""
+        test_text = "This is **bold text** and this is **also bold**"
+        result = HTML.process_markdown(test_text)
+        expected = (
+            "This is <strong>bold text</strong> and this is <strong>also bold</strong>"
+        )
+        assert result == expected
+
+    def test_process_markdown_italic_text(self):
+        """Test that *text* is converted to <em>text</em>"""
+        test_text = "This is *italic text* and this is *also italic*"
+        result = HTML.process_markdown(test_text)
+        expected = "This is <em>italic text</em> and this is <em>also italic</em>"
+        assert result == expected
+
+    def test_process_markdown_code_text(self):
+        """Test that `text` is converted to <code>text</code>"""
+        test_text = "Use the `ls` command to list files and `cd` to change directories"
+        result = HTML.process_markdown(test_text)
+        expected = "Use the <code>ls</code> command to list files and <code>cd</code> to change directories"
+        assert result == expected
+
+    def test_process_markdown_line_breaks(self):
+        """Test that line breaks are converted to <br> tags"""
+        test_text = "Line 1\nLine 2\nLine 3"
+        result = HTML.process_markdown(test_text)
+        expected = "Line 1<br />\nLine 2<br />\nLine 3"
+        assert result == expected
+
+    def test_process_markdown_mixed_formatting(self):
+        """Test mixed markdown formatting"""
+        test_text = "**Bold text** with *italic* and `code` elements.\n\nNew paragraph with **more bold**."
+        result = HTML.process_markdown(test_text)
+        expected = "<strong>Bold text</strong> with <em>italic</em> and <code>code</code> elements.<br />\n<br />\nNew paragraph with <strong>more bold</strong>."
+        assert result == expected
+
+    def test_process_markdown_empty_string(self):
+        """Test that empty string returns empty string"""
+        result = HTML.process_markdown("")
+        assert result == ""
+
+    def test_process_markdown_none_input(self):
+        """Test that None input returns None"""
+        result = HTML.process_markdown(None)
+        assert result is None
+
+    def test_process_markdown_no_markdown(self):
+        """Test that plain text without markdown is returned unchanged"""
+        test_text = "This is plain text without any markdown formatting"
+        result = HTML.process_markdown(test_text)
+        assert result == test_text
+
+    def test_transform_with_markdown_risk(self):
+        """Test that Risk field with markdown is properly converted"""
+        findings = [
+            generate_finding_output(
+                risk="Outdated contacts delay **security notifications** and slow **incident response**",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
+        html = HTML(findings)
+        output_data = html.data[0]
+
+        # Check that markdown is converted to HTML
+        assert "<strong>security notifications</strong>" in output_data
+        assert "<strong>incident response</strong>" in output_data
+
+    def test_transform_with_markdown_recommendation(self):
+        """Test that Recommendation field with markdown is properly converted"""
+        findings = [
+            generate_finding_output(
+                risk="test-risk",
+                remediation_recommendation_text="Adopt:\n- **Primary** and **alternate contacts**\n- Use `monitored aliases`",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
+        html = HTML(findings)
+        output_data = html.data[0]
+
+        # Check that markdown is converted to HTML
+        assert "<strong>Primary</strong>" in output_data
+        assert "<strong>alternate contacts</strong>" in output_data
+        assert "<code>monitored aliases</code>" in output_data
+        assert "<br />" in output_data  # Line breaks converted

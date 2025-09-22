@@ -1,7 +1,6 @@
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
-import { getRoles } from "@/actions/roles";
 import { getUsers } from "@/actions/users/users";
 import { FilterControls } from "@/components/filters";
 import { filterUsers } from "@/components/filters/data-filters";
@@ -52,7 +51,6 @@ const SSRDataTable = async ({
   const query = (filters["filter[search]"] as string) || "";
 
   const usersData = await getUsers({ query, page, sort, filters, pageSize });
-  const rolesData = await getRoles({});
 
   // Create a dictionary for roles by user ID
   const roleDict = (usersData?.included || []).reduce(
@@ -68,7 +66,7 @@ const SSRDataTable = async ({
   // Generate the array of roles with all the roles available
   const roles = Array.from(
     new Map(
-      (rolesData?.data || []).map((role: Role) => [
+      (usersData?.included || []).map((role: Role) => [
         role.id,
         { id: role.id, name: role.attributes?.name || "Unnamed Role" },
       ]),
