@@ -1779,7 +1779,7 @@ class RoleUpdateSerializer(RoleSerializer):
                 will_be_assigned = any(u.id == request_user.id for u in users)
                 if is_currently_assigned and not will_be_assigned:
                     raise serializers.ValidationError(
-                        {"users": "Users cannot remove their own role assignment."}
+                        {"users": "Users cannot remove their own role."}
                     )
 
             # Safeguard MANAGE_ACCOUNT coverage when updating users of this role

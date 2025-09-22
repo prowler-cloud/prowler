@@ -950,12 +950,12 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         payload = request.data if isinstance(request.data, dict) else None
 
-        # If an user has more than one role, we will delete the relationship with the roles in the payload
+        # If a user has more than one role, we will delete the relationship with the roles in the payload
         data = payload.get("data") if payload else None
         if data:
             try:
                 role_ids = [item["id"] for item in data]
-            except Exception:
+            except KeyError:
                 role_ids = []
             roles_to_remove = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
         else:
