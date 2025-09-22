@@ -57,7 +57,7 @@ ThreatScore = (Σ(rate_i × total_i × weight_i × risk_i) / Σ(total_i × weigh
 
 ### Weight Values (1-1000)
 
-The weight parameter allows you to customize ThreatScore calculation based on your organization's priorities and regulatory requirements.
+The weight parameter allows customization of ThreatScore calculation based on organizational priorities and regulatory requirements.
 
 #### Weight Assignment Guidelines
 
@@ -70,9 +70,9 @@ The weight parameter allows you to customize ThreatScore calculation based on yo
 | 851-1000 | Maximum | Mission-critical security controls |
 
 #### Weight Selection Strategy
-1. **Regulatory Mapping**: Assign higher weights to controls required by your industry regulations
+1. **Regulatory Mapping**: Assign higher weights to controls required by industry regulations
 2. **Business Impact**: Consider the potential business impact of control failures
-3. **Risk Tolerance**: Align weights with your organization's risk appetite
+3. **Risk Tolerance**: Align weights with organizational risk appetite
 4. **Stakeholder Input**: Involve compliance and business teams in weight decisions
 
 ### Risk Levels (1-5)
@@ -92,7 +92,7 @@ Risk levels represent the potential security impact of non-compliance with a req
 - **Integrity Impact**: Risk of unauthorized data modification
 - **Availability Impact**: Service disruption potential
 - **Compliance Impact**: Regulatory violation consequences
-- **Exploitability**: Ease of exploitation by attackers
+- **Exploitability**: Ease of exploitation by threat actors
 
 ## Security Pillars and Subpillars
 
@@ -114,7 +114,7 @@ The ThreatScore calculation considers requirements organized within the followin
 
 #### 2. Attack Surface
 
-**Purpose**: Minimizing exposure points that could be exploited by attackers across network, storage, and application layers
+**Purpose**: Minimizing exposure points that could be exploited by threat actors across network, storage, and application layers
 
 **Subpillars**:
 
@@ -480,3 +480,4 @@ rate_i = pass_i / total_i (when total_i > 0)
     - Use score trends to identify systematic issues
     - Correlate score changes with security incidents or changes
     - Adjust weights and risk levels based on lessons learned
+
