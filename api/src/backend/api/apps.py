@@ -35,7 +35,8 @@ class ApiConfig(AppConfig):
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv`: If an external server (e.g., Gunicorn) is running the app
-        #   `os.environ.get("RUN_MAIN")`: If the Django development server is running the app
+        #   `os.environ.get("RUN_MAIN")`: If it's not a Django command or using `runserver`,
+        #                                 only the main process will do it
         if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
             self._ensure_crypto_keys()
 
