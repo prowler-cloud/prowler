@@ -949,6 +949,8 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
             )
         tenant_id = self.request.tenant_id
         payload = request.data if isinstance(request.data, dict) else None
+
+        # If an user has more than one role, we will delete the relationship with the roles in the payload
         data = payload.get("data") if payload else None
         if data:
             try:
@@ -959,15 +961,11 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         else:
             roles_to_remove = user.roles.filter(tenant_id=tenant_id)
 
-        # Proceed with deletion scoped to tenant
-        if data:
-            UserRoleRelationship.objects.filter(
-                user=user,
-                tenant_id=tenant_id,
-                role_id__in=roles_to_remove.values_list("id", flat=True),
-            ).delete()
-        else:
-            UserRoleRelationship.objects.filter(user=user, tenant_id=tenant_id).delete()
+        UserRoleRelationship.objects.filter(
+            user=user,
+            tenant_id=tenant_id,
+            role_id__in=roles_to_remove.values_list("id", flat=True),
+        ).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
