@@ -286,11 +286,11 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 
 | Pillar | Subpillar | Requirement | Pass | Fail | Total | Weight | Risk | Pass Rate |
 |--------|-----------|-------------|------|------|-------|--------|------|-----------|
-| 4. Encryption | 4.2 At-Rest | Encryption | 450 | 50 | 500 | 950 | 5 | 90% |
 | 1. IAM | 1.2 Authorization | Access Controls | 280 | 120 | 400 | 800 | 4 | 70% |
-| 3. Logging and Monitoring | 3.1 Logging | Audit Logging | 350 | 50 | 400 | 700 | 3 | 87.5% |
-| 2. Attack Surface | 2.2 Storage | Backup Security | 200 | 100 | 300 | 600 | 3 | 66.7% |
 | 2. Attack Surface | 2.1 Network | Network Segmentation | 150 | 50 | 200 | 750 | 4 | 75% |
+| 2. Attack Surface | 2.2 Storage | Backup Security | 200 | 100 | 300 | 600 | 3 | 66.7% |
+| 3. Logging and Monitoring | 3.1 Logging | Audit Logging | 350 | 50 | 400 | 700 | 3 | 87.5% |
+| 4. Encryption | 4.2 At-Rest | Encryption | 450 | 50 | 500 | 950 | 5 | 90% |
 
 **Step-by-step Calculation:**
 
@@ -300,11 +300,11 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
     Numerator = Σ(rate_i × total_i × weight_i × risk_i)
     ```
 
-    - **Encryption (4.2 At-Rest)**: 0.90 × 500 × 950 × 5 = 2,137,500
     - **Access Controls (1.2 Authorization)**: 0.70 × 400 × 800 × 4 = 896,000
-    - **Audit Logging (3.1 Logging)**: 0.875 × 400 × 700 × 3 = 735,000
-    - **Backup Security (2.2 Storage)**: 0.667 × 300 × 600 × 3 = 360,060
     - **Network Segmentation (2.1 Network)**: 0.75 × 200 × 750 × 4 = 450,000
+    - **Backup Security (2.2 Storage)**: 0.667 × 300 × 600 × 3 = 360,060
+    - **Audit Logging (3.1 Logging)**: 0.875 × 400 × 700 × 3 = 735,000
+    - **Encryption (4.2 At-Rest)**: 0.90 × 500 × 950 × 5 = 2,137,500
 
 2. **Sum numerator:** 2,137,500 + 896,000 + 735,000 + 360,060 + 450,000 = **4,578,560**
 
@@ -314,11 +314,11 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
     Denominator = Σ(total_i × weight_i × risk_i)
     ```
 
-    - **Encryption (4.2 At-Rest)**: 500 × 950 × 5 = 2,375,000
     - **Access Controls (1.2 Authorization)**: 400 × 800 × 4 = 1,280,000
-    - **Audit Logging (3.1 Logging)**: 400 × 700 × 3 = 840,000
-    - **Backup Security (2.2 Storage)**: 300 × 600 × 3 = 540,000
     - **Network Segmentation (2.1 Network)**: 200 × 750 × 4 = 600,000
+    - **Backup Security (2.2 Storage)**: 300 × 600 × 3 = 540,000
+    - **Audit Logging (3.1 Logging)**: 400 × 700 × 3 = 840,000
+    - **Encryption (4.2 At-Rest)**: 500 × 950 × 5 = 2,375,000
 
 4. **Sum denominator:** 2,375,000 + 1,280,000 + 840,000 + 540,000 + 600,000 = **5,635,000**
 
@@ -331,39 +331,38 @@ This example demonstrates how pillar organization affects ThreatScore calculatio
 
 **Pillar-Level Analysis:**
 
-- **4. Encryption pillar (4.2 At-Rest)**: Highest contribution due to maximum weight (950) and risk (5)
 - **1. IAM pillar (1.2 Authorization)**: Significant impact despite lower pass rate (70%) due to high weight (800)
-- **3. Logging and Monitoring pillar (3.1 Logging)**: Moderate contribution with good performance (87.5%)
 - **2. Attack Surface pillar (2.1 Network)**: Strong performance (75%) with high weight (750) balances the score
 - **2. Attack Surface pillar (2.2 Storage)**: Lowest performance (66.7%) but limited impact due to moderate weight (600)
+- **3. Logging and Monitoring pillar (3.1 Logging)**: Moderate contribution with good performance (87.5%)
+- **4. Encryption pillar (4.2 At-Rest)**: Highest contribution due to maximum weight (950) and risk (5)
 
 ### Example 3: Multi-Pillar Comprehensive Scenario
 
-**Financial Services Organization - Multi-Framework Compliance**
 
 | Pillar | Subpillar | Requirement | Pass | Fail | Weight | Risk | Pass Rate |
 |--------|-----------|-------------|------|------|--------|------|-----------|
 | 1. IAM | 1.1 Authentication | MFA Implementation | 180 | 20 | 900 | 5 | 90% |
 | 1. IAM | 1.2 Authorization | Least Privilege Access | 150 | 50 | 850 | 4 | 75% |
 | 1. IAM | 1.3 Privilege Escalation | Admin Account Controls | 95 | 5 | 950 | 5 | 95% |
-| 4. Encryption | 4.2 At-Rest | Database Encryption | 300 | 20 | 900 | 5 | 93.8% |
-| 4. Encryption | 4.1 In-Transit | API/Web Encryption | 250 | 10 | 800 | 4 | 96.2% |
 | 2. Attack Surface | 2.1 Network | Firewall Configuration | 400 | 100 | 600 | 3 | 80% |
 | 2. Attack Surface | 2.1 Network | Public Endpoint Security | 80 | 20 | 700 | 4 | 80% |
-| 3. Logging and Monitoring | 3.1 Logging | Transaction Logging | 500 | 50 | 750 | 3 | 90.9% |
-| 3. Logging and Monitoring | 3.3 Monitoring | Real-time Alerts | 200 | 50 | 700 | 4 | 80% |
 | 2. Attack Surface | 2.2 Storage | Data Classification | 300 | 100 | 650 | 3 | 75% |
 | 2. Attack Surface | 2.3 Application | Input Validation | 150 | 50 | 500 | 3 | 75% |
+| 3. Logging and Monitoring | 3.1 Logging | Transaction Logging | 500 | 50 | 750 | 3 | 90.9% |
+| 3. Logging and Monitoring | 3.3 Monitoring | Real-time Alerts | 200 | 50 | 700 | 4 | 80% |
+| 4. Encryption | 4.2 At-Rest | Database Encryption | 300 | 20 | 900 | 5 | 93.8% |
+| 4. Encryption | 4.1 In-Transit | API/Web Encryption | 250 | 10 | 800 | 4 | 96.2% |
 
 **Pillar Performance Summary**:
 
 - **1. IAM Pillar Average**: ~87% (weighted by findings across Authentication, Authorization, and Privilege Escalation subpillars)
-- **4. Encryption Pillar Average**: ~94% (weighted by findings across In-Transit and At-Rest subpillars)
 - **2. Attack Surface Pillar Average**: ~77% (weighted across Network, Storage, and Application subpillars)
     - 2.1 Network subpillar: ~80% average
     - 2.2 Storage subpillar: 75%
     - 2.3 Application subpillar: 75%
 - **3. Logging and Monitoring Average**: ~87% (weighted by findings across Logging and Monitoring subpillars)
+- **4. Encryption Pillar Average**: ~94% (weighted by findings across In-Transit and At-Rest subpillars)
 
 **Overall ThreatScore**: ~85.3%
 
