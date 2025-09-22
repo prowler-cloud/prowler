@@ -12,6 +12,7 @@ import {
   BarChartSkeleton,
   ClientAccordionWrapper,
   ComplianceHeader,
+  ComplianceInfo,
   ComplianceScanInfo,
   HeatmapChart,
   HeatmapChartSkeleton,
@@ -198,6 +199,8 @@ const SSRComplianceContent = async ({
   }
 
   const framework = attributesData?.data?.[0]?.attributes?.framework;
+  const name = attributesData?.data?.[0]?.attributes?.compliance_name || "";
+  const version = attributesData?.data?.[0]?.attributes?.version || "";
   const mapper = getComplianceMapper(framework);
   const data = mapper.mapComplianceData(
     attributesData,
@@ -218,6 +221,7 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="space-y-8">
+      <ComplianceInfo name={name} framework={framework} version={version} />
       <ChartsWrapper logoPath={logoPath}>
         <PieChart
           pass={totalRequirements.pass}

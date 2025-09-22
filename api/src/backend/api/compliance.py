@@ -221,8 +221,6 @@ def generate_compliance_overview_template(prowler_compliance: dict):
 
                 # Add requirement to compliance requirements
                 compliance_requirements[requirement.Id] = requirement_dict
-            print("--------")
-            print(compliance_data.Framework)
             # Build compliance dictionary
             compliance_dict = {
                 "framework": compliance_data.Framework,
