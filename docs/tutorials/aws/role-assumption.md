@@ -1,4 +1,4 @@
-# AWS Assume Role in Prowler
+# AWS Assume Role in Prowler (CLI)
 
 ## Authentication Overview
 

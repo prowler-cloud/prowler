@@ -10,8 +10,11 @@ import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { FormButtons } from "@/components/ui/form/form-buttons";
 import {
+  type CreateValues,
   editJiraIntegrationFormSchema,
+  type FormValues,
   IntegrationProps,
+  type JiraCredentialsPayload,
   jiraIntegrationFormSchema,
 } from "@/types/integrations";
 
@@ -30,7 +33,7 @@ export const JiraIntegrationForm = ({
   const isEditing = !!integration;
   const isCreating = !isEditing;
 
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(
       isCreating ? jiraIntegrationFormSchema : editJiraIntegrationFormSchema,
     ),
@@ -45,7 +48,20 @@ export const JiraIntegrationForm = ({
 
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmit = async (data: any) => {
+  const normalizeDomain = (raw: string): string => {
+    let v = (raw || "").trim().toLowerCase();
+    // strip protocol
+    v = v.replace(/^https?:\/\//, "");
+    // take hostname (drop path/query)
+    v = v.split("/")[0];
+    // if full host provided, strip Atlassian suffix to keep site name only
+    if (v.endsWith(".atlassian.net")) {
+      v = v.replace(/\.atlassian\.net$/, "");
+    }
+    return v;
+  };
+
+  const onSubmit = async (data: FormValues) => {
     try {
       const formData = new FormData();
 
@@ -53,19 +69,20 @@ export const JiraIntegrationForm = ({
       formData.append("integration_type", "jira");
 
       // Prepare credentials object
-      const credentials: any = {};
+      const credentials: JiraCredentialsPayload = {};
 
       // For editing, only add fields that have values
       if (isEditing) {
         // Only add domain if it's provided (for updates, domain might not be editable)
-        if (data.domain) credentials.domain = data.domain;
+        if (data.domain) credentials.domain = normalizeDomain(data.domain);
         if (data.user_mail) credentials.user_mail = data.user_mail;
         if (data.api_token) credentials.api_token = data.api_token;
       } else {
         // For creation, all credential fields are required
-        credentials.domain = data.domain;
-        credentials.user_mail = data.user_mail;
-        credentials.api_token = data.api_token;
+        const createData = data as CreateValues;
+        credentials.domain = normalizeDomain(createData.domain);
+        credentials.user_mail = createData.user_mail;
+        credentials.api_token = createData.api_token;
       }
 
       // Add credentials as JSON
@@ -77,10 +94,17 @@ export const JiraIntegrationForm = ({
       if (isCreating) {
         formData.append("configuration", JSON.stringify({}));
         formData.append("providers", JSON.stringify([]));
-        formData.append("enabled", JSON.stringify(data.enabled));
+        // enabled exists only in create schema
+        formData.append(
+          "enabled",
+          JSON.stringify((data as CreateValues).enabled),
+        );
       }
 
-      let result;
+      type IntegrationResult =
+        | { success: string; integrationId?: string }
+        | { error: string };
+      let result: IntegrationResult;
       if (isEditing) {
         result = await updateIntegration(integration.id, formData);
       } else {
@@ -171,7 +195,7 @@ export const JiraIntegrationForm = ({
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            To generate an API token, visit your{" "}
+            To generate an API token with scopes, visit your{" "}
             <a
               href="https://id.atlassian.com/manage-profile/security/api-tokens"
               target="_blank"
@@ -206,7 +230,7 @@ export const JiraIntegrationForm = ({
               Need help configuring your Jira integration?
             </p>
             <CustomLink
-              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/integrations/jira/"
+              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-jira-integration/"
               target="_blank"
               size="sm"
             >

@@ -92,10 +92,6 @@ class OCSF(Output):
                             filter(
                                 None,
                                 [
-                                    finding.metadata.Remediation.Code.NativeIaC,
-                                    finding.metadata.Remediation.Code.Terraform,
-                                    finding.metadata.Remediation.Code.CLI,
-                                    finding.metadata.Remediation.Code.Other,
                                     finding.metadata.Remediation.Recommendation.Url,
                                 ],
                             )
@@ -163,6 +159,7 @@ class OCSF(Output):
                         "categories": finding.metadata.Categories,
                         "depends_on": finding.metadata.DependsOn,
                         "related_to": finding.metadata.RelatedTo,
+                        "additional_urls": finding.metadata.AdditionalURLs,
                         "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
                     },

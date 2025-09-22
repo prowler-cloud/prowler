@@ -300,7 +300,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.13.0"
+        spectacular_settings.VERSION = "1.14.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -768,11 +768,13 @@ class UserViewSet(BaseUserViewset):
         # If called during schema generation, return an empty queryset
         if getattr(self, "swagger_fake_view", False):
             return User.objects.none()
+
         queryset = (
             User.objects.filter(membership__tenant__id=self.request.tenant_id)
             if hasattr(self.request, "tenant_id")
             else User.objects.all()
         )
+
         return queryset.prefetch_related("memberships", "roles")
 
     def get_permissions(self):
@@ -789,6 +791,12 @@ class UserViewSet(BaseUserViewset):
             return UserUpdateSerializer
         else:
             return UserSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.request.user.is_authenticated:
+            context["role"] = get_role(self.request.user)
+        return context
 
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
@@ -919,7 +927,7 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_USERS]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         return User.objects.filter(membership__tenant__id=self.request.tenant_id)

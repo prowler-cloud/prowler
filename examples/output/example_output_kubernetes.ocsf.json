@@ -28,6 +28,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "Enabling AlwaysPullImages can increase network and registry load and decrease container startup speed. It may not be suitable for all environments.",
       "compliance": {
         "CIS-1.10": [
@@ -161,6 +162,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "While anonymous access can be useful for health checks and discovery, consider the security implications for your specific environment.",
       "compliance": {
         "CIS-1.10": [
@@ -294,6 +296,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "Ensure the audit log retention period is set appropriately to balance between storage constraints and the need for historical data.",
       "compliance": {
         "CIS-1.10": [
@@ -427,6 +430,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "Ensure the audit log backup retention period is set appropriately to balance between storage constraints and the need for historical data.",
       "compliance": {
         "CIS-1.10": [
@@ -560,6 +564,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "Adjust the audit log file size limit based on your organization's storage capabilities and logging requirements.",
       "compliance": {
         "CIS-1.10": [
@@ -693,6 +698,7 @@
       ],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "Audit logs are not enabled by default in Kubernetes. Configuring them is essential for security monitoring and forensic analysis.",
       "compliance": {
         "CIS-1.10": [

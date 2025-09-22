@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure ",
+  "Description": "This check verifies that phishing-resistant MFA strength is required for all administrator accounts. Phishing-resistant MFA includes authentication methods that are resistant to phishing attacks and MFA fatigue attacks compared to weaker methods like SMS or push notifications.",
   "Risk": "Administrators using weaker MFA methods, such as SMS or push notifications, are vulnerable to phishing attacks and MFA fatigue attacks. Attackers can intercept codes or trick users into approving fraudulent authentication requests, leading to unauthorized access to critical systems.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-admin-phish-resistant-mfa",
   "Remediation": {
