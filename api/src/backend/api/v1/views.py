@@ -22,7 +22,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, Prefetch, Q, Sum
+from django.db.models import Count, F, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -57,10 +57,12 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
     check_lighthouse_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
+    jira_integration_task,
     perform_scan_task,
 )
 
@@ -74,8 +76,10 @@ from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
+    CustomDjangoFilterBackend,
     FindingFilter,
     IntegrationFilter,
+    IntegrationJiraFindingsFilter,
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
@@ -88,13 +92,13 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
     UserFilter,
 )
 from api.models import (
-    ComplianceOverview,
     ComplianceRequirementOverview,
     Finding,
     Integration,
@@ -142,6 +146,7 @@ from api.v1.serializers import (
     FindingMetadataSerializer,
     FindingSerializer,
     IntegrationCreateSerializer,
+    IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -214,6 +219,8 @@ class RelationshipViewSchema(JsonApiAutoSchema):
     description="Obtain a token by providing valid credentials and an optional tenant ID.",
 )
 class CustomTokenObtainView(GenericAPIView):
+    throttle_scope = "token-obtain"
+
     resource_name = "tokens"
     serializer_class = TokenSerializer
     http_method_names = ["post"]
@@ -293,7 +300,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.10.0"
+        spectacular_settings.VERSION = "1.13.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -314,6 +321,11 @@ class SchemaView(SpectacularAPIView):
                 "invitations, creating new invitations, accepting and revoking them.",
             },
             {
+                "name": "Role",
+                "description": "Endpoints for managing RBAC roles within tenants, allowing creation, retrieval, "
+                "updating, and deletion of role configurations and permissions.",
+            },
+            {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
             },
@@ -322,8 +334,18 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing provider groups.",
             },
             {
+                "name": "Task",
+                "description": "Endpoints for task management, allowing retrieval of task status and "
+                "revoking tasks that have not started.",
+            },
+            {
                 "name": "Scan",
                 "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Schedule",
+                "description": "Endpoints for managing scan schedules, allowing configuration of automated "
+                "scans with different scheduling options.",
             },
             {
                 "name": "Resource",
@@ -336,8 +358,9 @@ class SchemaView(SpectacularAPIView):
                 "findings that result from scans.",
             },
             {
-                "name": "Overview",
-                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
+                "name": "Processor",
+                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
+                "registration, configuration, and deletion of post-processing actions.",
             },
             {
                 "name": "Compliance Overview",
@@ -345,9 +368,8 @@ class SchemaView(SpectacularAPIView):
                 " compliance framework ID.",
             },
             {
-                "name": "Task",
-                "description": "Endpoints for task management, allowing retrieval of task status and "
-                "revoking tasks that have not started.",
+                "name": "Overview",
+                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
             },
             {
                 "name": "Integration",
@@ -355,14 +377,15 @@ class SchemaView(SpectacularAPIView):
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
             {
-                "name": "Lighthouse",
-                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
-                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
+                "name": "Lighthouse AI",
+                "description": "Endpoints for managing Lighthouse AI configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business "
+                "context.",
             },
             {
-                "name": "Processor",
-                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
-                "registration, configuration, and deletion of post-processing actions.",
+                "name": "SAML",
+                "description": "Endpoints for Single Sign-On authentication management via SAML for seamless user "
+                "authentication.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -1995,6 +2018,21 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             )
         )
 
+    def _should_prefetch_findings(self) -> bool:
+        fields_param = self.request.query_params.get("fields[resources]", "")
+        include_param = self.request.query_params.get("include", "")
+        return (
+            fields_param == ""
+            or "findings" in fields_param.split(",")
+            or "findings" in include_param.split(",")
+        )
+
+    def _get_findings_prefetch(self):
+        findings_queryset = Finding.all_objects.defer("scan", "resources").filter(
+            tenant_id=self.request.tenant_id
+        )
+        return [Prefetch("findings", queryset=findings_queryset)]
+
     def get_serializer_class(self):
         if self.action in ["metadata", "metadata_latest"]:
             return ResourceMetadataSerializer
@@ -2018,7 +2056,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             filtered_queryset,
             manager=Resource.all_objects,
             select_related=["provider"],
-            prefetch_related=["findings"],
+            prefetch_related=(
+                self._get_findings_prefetch()
+                if self._should_prefetch_findings()
+                else []
+            ),
         )
 
     def retrieve(self, request, *args, **kwargs):
@@ -2043,14 +2085,18 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+        latest_scans = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id,
+                state=StateChoices.COMPLETED,
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
-            .values_list("id", flat=True)
+            .values("provider_id")
         )
+
         filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, provider__scan__in=latest_scan_ids
+            provider_id__in=Subquery(latest_scans)
         )
 
         return self.paginate_by_pk(
@@ -2058,7 +2104,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             filtered_queryset,
             manager=Resource.all_objects,
             select_related=["provider"],
-            prefetch_related=["findings"],
+            prefetch_related=(
+                self._get_findings_prefetch()
+                if self._should_prefetch_findings()
+                else []
+            ),
         )
 
     @action(detail=False, methods=["get"], url_name="metadata")
@@ -3006,7 +3056,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews metadata obtained successfully",
                 response=ComplianceOverviewMetadataSerializer,
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3038,7 +3090,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance requirement details obtained successfully",
                 response=ComplianceOverviewDetailSerializer(many=True),
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3470,7 +3524,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
-    queryset = ComplianceOverview.objects.all()
+    queryset = ScanSummary.objects.all()
     http_method_names = ["get"]
     ordering = ["-inserted_at"]
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
@@ -3481,19 +3535,10 @@ class OverviewViewSet(BaseRLSViewSet):
         role = get_role(self.request.user)
         providers = get_providers(role)
 
-        def _get_filtered_queryset(model):
-            if role.unlimited_visibility:
-                return model.all_objects.filter(tenant_id=self.request.tenant_id)
-            return model.all_objects.filter(
-                tenant_id=self.request.tenant_id, scan__provider__in=providers
-            )
+        if not role.unlimited_visibility:
+            self.allowed_providers = providers
 
-        if self.action == "providers":
-            return _get_filtered_queryset(Finding)
-        elif self.action in ("findings", "findings_severity", "services"):
-            return _get_filtered_queryset(ScanSummary)
-        else:
-            return super().get_queryset()
+        return ScanSummary.all_objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "providers":
@@ -3509,8 +3554,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "findings_severity"]:
+        elif self.action == "findings":
             return ScanSummaryFilter
+        elif self.action == "findings_severity":
+            return ScanSummarySeverityFilter
         elif self.action == "services":
             return ServiceOverviewFilter
         return None
@@ -3526,18 +3573,24 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
         tenant_id = self.request.tenant_id
+        queryset = self.get_queryset()
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
 
         findings_aggregated = (
-            ScanSummary.all_objects.filter(
-                tenant_id=tenant_id, scan_id__in=latest_scan_ids
-            )
+            queryset.filter(scan_id__in=latest_scan_ids)
             .values(
                 "scan__provider_id",
                 provider=F("scan__provider__provider"),
@@ -3573,7 +3626,7 @@ class OverviewViewSet(BaseRLSViewSet):
             )
 
         return Response(
-            OverviewProviderSerializer(overview, many=True).data,
+            self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,
         )
 
@@ -3582,9 +3635,16 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
@@ -3619,11 +3679,23 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
         tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
+
+        # Load only required fields
+        queryset = self.get_queryset().only(
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
+        )
+
         filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
@@ -3632,18 +3704,24 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
+        # The filter will have added a status_count annotation if any status filter was used
+        if "status_count" in filtered_queryset.query.annotations:
+            sum_expression = Sum("status_count")
+        else:
+            sum_expression = Sum("total")
+
         severity_counts = (
             filtered_queryset.values("severity")
-            .annotate(count=Sum("total"))
+            .annotate(count=sum_expression)
             .order_by("severity")
         )
 
         severity_data = {sev[0]: 0 for sev in SeverityChoices}
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
 
-        for item in severity_counts:
-            severity_data[item["severity"]] = item["count"]
-
-        serializer = OverviewSeveritySerializer(severity_data)
+        serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="services")
@@ -3651,9 +3729,16 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
 
         latest_scan_ids = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
             .order_by("provider_id", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
@@ -3671,7 +3756,7 @@ class OverviewViewSet(BaseRLSViewSet):
             .order_by("service")
         )
 
-        serializer = OverviewServiceSerializer(services_data, many=True)
+        serializer = self.get_serializer(services_data, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -3795,32 +3880,138 @@ class IntegrationViewSet(BaseRLSViewSet):
         context["allowed_providers"] = self.allowed_providers
         return context
 
+    @extend_schema(
+        tags=["Integration"],
+        summary="Check integration connection",
+        description="Try to verify integration connection",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        get_object_or_404(Integration, pk=pk)
+        with transaction.atomic():
+            task = check_integration_connection_task.delay(
+                integration_id=pk, tenant_id=self.request.tenant_id
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+@extend_schema_view(
+    dispatches=extend_schema(
+        tags=["Integration"],
+        summary="Send findings to a Jira integration",
+        description="Send a set of filtered findings to the given integration. At least one finding filter must be "
+        "provided.",
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+        filters=True,
+    )
+)
+class IntegrationJiraViewSet(BaseRLSViewSet):
+    queryset = Finding.all_objects.all()
+    serializer_class = IntegrationJiraDispatchSerializer
+    http_method_names = ["post"]
+    filter_backends = [CustomDjangoFilterBackend]
+    filterset_class = IntegrationJiraFindingsFilter
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    def get_queryset(self):
+        tenant_id = self.request.tenant_id
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
+        else:
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
+                scan__provider__in=get_providers(user_roles)
+            )
+
+        return queryset
+
+    @action(detail=False, methods=["post"], url_name="dispatches")
+    def dispatches(self, request, integration_pk=None):
+        get_object_or_404(Integration, pk=integration_pk)
+        serializer = self.get_serializer(
+            data=request.data, context={"integration_id": integration_pk}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        if self.filter_queryset(self.get_queryset()).count() == 0:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
+        finding_ids = [
+            str(finding_id)
+            for finding_id in self.filter_queryset(self.get_queryset()).values_list(
+                "id", flat=True
+            )
+        ]
+        project_key = serializer.validated_data["project_key"]
+        issue_type = serializer.validated_data["issue_type"]
+
+        with transaction.atomic():
+            task = jira_integration_task.delay(
+                tenant_id=self.request.tenant_id,
+                integration_id=integration_pk,
+                project_key=project_key,
+                issue_type=issue_type,
+                finding_ids=finding_ids,
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
 
 @extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse"],
-        summary="List all Lighthouse configurations",
-        description="Retrieve a list of all Lighthouse configurations.",
+        tags=["Lighthouse AI"],
+        summary="List all Lighthouse AI configurations",
+        description="Retrieve a list of all Lighthouse AI configurations.",
     ),
     create=extend_schema(
-        tags=["Lighthouse"],
-        summary="Create a new Lighthouse configuration",
-        description="Create a new Lighthouse configuration with the specified details.",
+        tags=["Lighthouse AI"],
+        summary="Create a new Lighthouse AI configuration",
+        description="Create a new Lighthouse AI configuration with the specified details.",
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse"],
-        summary="Partially update a Lighthouse configuration",
-        description="Update certain fields of an existing Lighthouse configuration.",
+        tags=["Lighthouse AI"],
+        summary="Partially update a Lighthouse AI configuration",
+        description="Update certain fields of an existing Lighthouse AI configuration.",
     ),
     destroy=extend_schema(
-        tags=["Lighthouse"],
-        summary="Delete a Lighthouse configuration",
-        description="Remove a Lighthouse configuration by its ID.",
+        tags=["Lighthouse AI"],
+        summary="Delete a Lighthouse AI configuration",
+        description="Remove a Lighthouse AI configuration by its ID.",
     ),
     connection=extend_schema(
-        tags=["Lighthouse"],
+        tags=["Lighthouse AI"],
         summary="Check the connection to the OpenAI API",
-        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),

@@ -842,7 +842,7 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 32
+        assert len(response.keys()) == 33
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
@@ -1754,13 +1754,13 @@ aws:
         assert not recovered_regions
 
     def test_get_regions_all_count(self):
-        assert len(AwsProvider.get_regions(partition=None)) == 37
+        assert len(AwsProvider.get_regions(partition=None)) == 38
 
     def test_get_regions_cn_count(self):
         assert len(AwsProvider.get_regions("aws-cn")) == 2
 
     def test_get_regions_aws_count(self):
-        assert len(AwsProvider.get_regions(partition="aws")) == 33
+        assert len(AwsProvider.get_regions(partition="aws")) == 34
 
     def test_get_all_regions(self):
         with patch(
@@ -2008,7 +2008,12 @@ aws:
             ).isoformat(),
         }
 
-        assert aws_provider.refresh_credentials() == refreshed_credentials
+        assert (
+            AwsProvider.refresh_credentials(
+                aws_provider._assumed_role_configuration, aws_provider._session
+            )
+            == refreshed_credentials
+        )
 
     @mock_aws
     def test_refresh_credentials_after_expiration(self):
@@ -2025,7 +2030,9 @@ aws:
         current_credentials = aws_provider._assumed_role_configuration.credentials
 
         # Refresh credentials
-        refreshed_credentials = aws_provider.refresh_credentials()
+        refreshed_credentials = AwsProvider.refresh_credentials(
+            aws_provider._assumed_role_configuration, aws_provider._session
+        )
 
         # Assert that the refreshed credentials are different
         access_key = refreshed_credentials.get("access_key")

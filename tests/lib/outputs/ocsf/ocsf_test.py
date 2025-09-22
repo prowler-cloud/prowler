@@ -104,6 +104,7 @@ class TestOCSF:
             "categories": findings[0].metadata.Categories,
             "depends_on": findings[0].metadata.DependsOn,
             "related_to": findings[0].metadata.RelatedTo,
+            "additional_urls": findings[0].metadata.AdditionalURLs,
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
         }
@@ -167,7 +168,7 @@ class TestOCSF:
             {
                 "message": "status extended",
                 "metadata": {
-                    "event_code": "test-check-id",
+                    "event_code": "service_test_check_id",
                     "product": {
                         "name": "Prowler",
                         "uid": "prowler",
@@ -189,6 +190,10 @@ class TestOCSF:
                     "categories": ["test-category"],
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],
+                    "additional_urls": [
+                        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html",
+                        "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html",
+                    ],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
                 },
@@ -198,7 +203,7 @@ class TestOCSF:
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
-                    "title": "test-check-id",
+                    "title": "service_test_check_id",
                     "uid": "test-unique-finding",
                     "types": ["test-type"],
                 },
@@ -210,7 +215,7 @@ class TestOCSF:
                             "details": "resource_details",
                             "metadata": {},
                         },
-                        "group": {"name": "test-service"},
+                        "group": {"name": "service"},
                         "labels": [],
                         "name": "resource_name",
                         "type": "test-resource",
@@ -316,6 +321,7 @@ class TestOCSF:
             "categories": finding_output.metadata.Categories,
             "depends_on": finding_output.metadata.DependsOn,
             "related_to": finding_output.metadata.RelatedTo,
+            "additional_urls": finding_output.metadata.AdditionalURLs,
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
         }

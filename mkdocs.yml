@@ -46,73 +46,100 @@ repo_name: prowler-cloud/prowler
 
 nav:
   - Getting Started:
-      - Overview: index.md
-      - Requirements: getting-started/requirements.md
-  - Tutorials:
+    - Overview:
+      - What is Prowler?: index.md
+      - Products:
+          - Prowler App: products/prowler-app.md
+          - Prowler CLI: products/prowler-cli.md
+          - Prowler Cloud 🔗: https://cloud.prowler.com
+          - Prowler Hub 🔗: https://hub.prowler.com
+    - Installation:
+        - Prowler App: installation/prowler-app.md
+        - Prowler CLI: installation/prowler-cli.md
+    - Basic Usage:
+        - Prowler App: basic-usage/prowler-app.md
+        - Prowler CLI: basic-usage/prowler-cli.md
+  - User Guide:
       - Prowler App:
           - Getting Started: tutorials/prowler-app.md
+          - Authentication:
+            - Social Login: tutorials/prowler-app-social-login.md
+            - SSO with SAML: tutorials/prowler-app-sso.md
           - Role-Based Access Control: tutorials/prowler-app-rbac.md
-          - Social Login: tutorials/prowler-app-social-login.md
-          - SSO with SAML: tutorials/prowler-app-sso.md
-          - Lighthouse: tutorials/prowler-app-lighthouse.md
+          - Mutelist: tutorials/prowler-app-mute-findings.md
+          - Integrations:
+            - Amazon S3: tutorials/prowler-app-s3-integration.md
+            - AWS Security Hub: tutorials/prowler-app-security-hub-integration.md
+            - Jira: tutorials/prowler-app-jira-integration.md
+          - Lighthouse AI: tutorials/prowler-app-lighthouse.md
+          - Tutorials:
+            - SSO with Entra: tutorials/prowler-app-sso-entra.md
+            - Bulk Provider Provisioning: tutorials/bulk-provider-provisioning.md
       - CLI:
           - Miscellaneous: tutorials/misc.md
           - Reporting: tutorials/reporting.md
           - Compliance: tutorials/compliance.md
           - Dashboard: tutorials/dashboard.md
-          - Fixer (remediations): tutorials/fixer.md
-          - Quick Inventory: tutorials/quick-inventory.md
-          - Slack Integration: tutorials/integrations.md
           - Configuration File: tutorials/configuration_file.md
           - Logging: tutorials/logging.md
           - Mutelist: tutorials/mutelist.md
+          - Integrations:
+            - AWS Security Hub: tutorials/aws/securityhub.md
+            - Slack: tutorials/integrations.md
+            - Send reports to AWS S3: tutorials/aws/s3.md
+          - Fixers (Remediations): tutorials/fixer.md
           - Check Aliases: tutorials/check-aliases.md
           - Custom Metadata: tutorials/custom-checks-metadata.md
-          - Scan Unused Services: tutorials/scan-unused-services.md
           - Pentesting: tutorials/pentesting.md
-          - Parallel Execution: tutorials/parallel-execution.md
-          - Developer Guide: developer-guide/introduction.md
-          - Prowler Check Kreator: tutorials/prowler-check-kreator.md
-      - AWS:
-          - Getting Started: tutorials/aws/getting-started-aws.md
-          - Authentication: tutorials/aws/authentication.md
-          - Assume Role: tutorials/aws/role-assumption.md
-          - AWS Security Hub: tutorials/aws/securityhub.md
-          - AWS Organizations: tutorials/aws/organizations.md
-          - AWS Regions and Partitions: tutorials/aws/regions-and-partitions.md
-          - Scan Multiple AWS Accounts: tutorials/aws/multiaccount.md
-          - Send reports to AWS S3: tutorials/aws/s3.md
-          - AWS CloudShell: tutorials/aws/cloudshell.md
-          - Checks v2 to v3 and v4 Mapping: tutorials/aws/v2_to_v3_checks_mapping.md
-          - Tag-based Scan: tutorials/aws/tag-based-scan.md
-          - Resource ARNs based Scan: tutorials/aws/resource-arn-based-scan.md
-          - Boto3 Configuration: tutorials/aws/boto3-configuration.md
-          - Threat Detection: tutorials/aws/threat-detection.md
-      - Azure:
-          - Getting Started: tutorials/azure/getting-started-azure.md
-          - Authentication: tutorials/azure/authentication.md
-          - Non default clouds: tutorials/azure/use-non-default-cloud.md
-          - Subscriptions: tutorials/azure/subscriptions.md
-          - Create Prowler Service Principal: tutorials/azure/create-prowler-service-principal.md
-      - Google Cloud:
-          - Getting Started: tutorials/gcp/getting-started-gcp.md
-          - Authentication: tutorials/gcp/authentication.md
-          - Projects: tutorials/gcp/projects.md
-          - Organization: tutorials/gcp/organization.md
-      - Kubernetes:
-          - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
-          - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
-          - Miscellaneous: tutorials/kubernetes/misc.md
-      - Microsoft 365:
-          - Getting Started: tutorials/microsoft365/getting-started-m365.md
-          - Authentication: tutorials/microsoft365/authentication.md
-          - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
-      - GitHub:
-          - Authentication: tutorials/github/authentication.md
-      - IaC:
-          - Getting Started: tutorials/iac/getting-started-iac.md
+          - Scan Unused Services: tutorials/scan-unused-services.md
+          - Quick Inventory: tutorials/quick-inventory.md
+          - Tutorials:
+            - Parallel Execution: tutorials/parallel-execution.md
+
+      - Providers:
+        - AWS:
+            - Getting Started: tutorials/aws/getting-started-aws.md
+            - Authentication: tutorials/aws/authentication.md
+            - Assume Role (CLI): tutorials/aws/role-assumption.md
+            - AWS Organizations: tutorials/aws/organizations.md
+            - AWS Regions and Partitions: tutorials/aws/regions-and-partitions.md
+            - Tag-based Scan: tutorials/aws/tag-based-scan.md
+            - Resource ARNs based Scan: tutorials/aws/resource-arn-based-scan.md
+            - Boto3 Configuration: tutorials/aws/boto3-configuration.md
+            - Threat Detection: tutorials/aws/threat-detection.md
+            - Tutorial > AWS CloudShell: tutorials/aws/cloudshell.md
+            - Tutorial > Scan Multiple AWS Accounts: tutorials/aws/multiaccount.md
+        - Azure:
+            - Getting Started: tutorials/azure/getting-started-azure.md
+            - Authentication: tutorials/azure/authentication.md
+            - Non default clouds: tutorials/azure/use-non-default-cloud.md
+            - Subscriptions: tutorials/azure/subscriptions.md
+            - Create Prowler Service Principal: tutorials/azure/create-prowler-service-principal.md
+        - Google Cloud:
+            - Getting Started: tutorials/gcp/getting-started-gcp.md
+            - Authentication: tutorials/gcp/authentication.md
+            - Projects: tutorials/gcp/projects.md
+            - Organization: tutorials/gcp/organization.md
+            - Retry Configuration: tutorials/gcp/retry-configuration.md
+        - Kubernetes:
+            - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
+            - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
+            - Miscellaneous: tutorials/kubernetes/misc.md
+        - Microsoft 365:
+            - Getting Started: tutorials/microsoft365/getting-started-m365.md
+            - Authentication: tutorials/microsoft365/authentication.md
+            - Use of PowerShell: tutorials/microsoft365/use-of-powershell.md
+        - GitHub:
+            - Getting Started: tutorials/github/getting-started-github.md
+            - Authentication: tutorials/github/authentication.md
+        - IaC:
+            - Getting Started: tutorials/iac/getting-started-iac.md
+            - Authentication: tutorials/iac/authentication.md
+        - MongoDB Atlas:
+            - Getting Started: tutorials/mongodbatlas/getting-started-mongodbatlas.md
+            - Authentication: tutorials/mongodbatlas/authentication.md
   - Developer Guide:
-      - General Concepts:
+      - Concepts:
         - Introduction: developer-guide/introduction.md
         - Providers: developer-guide/provider.md
         - Services: developer-guide/services.md
@@ -121,7 +148,7 @@ nav:
         - Integrations: developer-guide/integrations.md
         - Compliance: developer-guide/security-compliance-framework.md
         - Lighthouse: developer-guide/lighthouse.md
-      - Provider Specific Details:
+      - Providers:
         - AWS: developer-guide/aws-details.md
         - Azure: developer-guide/azure-details.md
         - Google Cloud: developer-guide/gcp-details.md
@@ -135,11 +162,12 @@ nav:
           - Integration Tests: developer-guide/integration-testing.md
         - Debugging: developer-guide/debugging.md
         - Configurable Checks: developer-guide/configurable-checks.md
+        - Check Metadata Writting Guidelines: developer-guide/check-metadata-guidelines.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
-  - About: about.md
-  - Prowler Cloud: https://prowler.com
+  - About 🔗: https://prowler.com/about#team
+  - Release Notes 🔗: https://github.com/prowler-cloud/prowler/releases
 
 # Customization
 extra:

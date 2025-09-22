@@ -67,7 +67,7 @@
         "elbv2_ssl_listeners",
         "ssm_documents_set_as_public",
         "vpc_subnet_no_public_ip_by_default",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
         "s3_account_level_public_access_blocks"

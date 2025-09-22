@@ -21,15 +21,15 @@ class Exchange(M365Service):
         self.mailbox_audit_properties = []
 
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.organization_config = self._get_organization_config()
-            self.mailboxes_config = self._get_mailbox_audit_config()
-            self.external_mail_config = self._get_external_mail_config()
-            self.transport_rules = self._get_transport_rules()
-            self.transport_config = self._get_transport_config()
-            self.mailbox_policy = self._get_mailbox_policy()
-            self.role_assignment_policies = self._get_role_assignment_policies()
-            self.mailbox_audit_properties = self._get_mailbox_audit_properties()
+            if self.powershell.connect_exchange_online():
+                self.organization_config = self._get_organization_config()
+                self.mailboxes_config = self._get_mailbox_audit_config()
+                self.external_mail_config = self._get_external_mail_config()
+                self.transport_rules = self._get_transport_rules()
+                self.transport_config = self._get_transport_config()
+                self.mailbox_policy = self._get_mailbox_policy()
+                self.role_assignment_policies = self._get_role_assignment_policies()
+                self.mailbox_audit_properties = self._get_mailbox_audit_properties()
             self.powershell.close()
 
     def _get_organization_config(self):
@@ -123,12 +123,20 @@ class Exchange(M365Service):
                 rules_data = [rules_data]
             for rule in rules_data:
                 if rule:
+                    sender_domain_is = rule.get("SenderDomainIs", [])
+                    if sender_domain_is is None:
+                        sender_domain_is = []
+
+                    redirect_message_to = rule.get("RedirectMessageTo", [])
+                    if redirect_message_to is None:
+                        redirect_message_to = []
+
                     transport_rules.append(
                         TransportRule(
                             name=rule.get("Name", ""),
                             scl=rule.get("SetSCL", None),
-                            sender_domain_is=rule.get("SenderDomainIs", []),
-                            redirect_message_to=rule.get("RedirectMessageTo", None),
+                            sender_domain_is=sender_domain_is,
+                            redirect_message_to=redirect_message_to,
                         )
                     )
         except Exception as error:

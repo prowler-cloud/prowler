@@ -7,6 +7,7 @@ from locust import HttpUser, between
 from utils.config import (
     BASE_HEADERS,
     FINDINGS_RESOURCE_METADATA,
+    RESOURCE_METADATA,
     TARGET_INSERTED_AT,
     USER_EMAIL,
     USER_PASSWORD,
@@ -121,13 +122,16 @@ def get_scan_id_from_provider_name(host: str, token: str, provider_name: str) ->
     return response.json()["data"][0]["id"]
 
 
-def get_resource_filters_pairs(host: str, token: str, scan_id: str = "") -> dict:
+def get_dynamic_filters_pairs(
+    host: str, token: str, endpoint: str, scan_id: str = ""
+) -> dict:
     """
-    Retrieves and maps resource metadata filter values from the findings endpoint.
+    Retrieves and maps metadata filter values from a given endpoint.
 
     Args:
         host (str): The host URL of the API.
         token (str): Bearer token for authentication.
+        endpoint (str): The API endpoint to query for metadata.
         scan_id (str, optional): Optional scan ID to filter metadata. Defaults to using inserted_at timestamp.
 
     Returns:
@@ -136,22 +140,28 @@ def get_resource_filters_pairs(host: str, token: str, scan_id: str = "") -> dict
     Raises:
         AssertionError: If the request fails or does not return a 200 status code.
     """
+    metadata_mapping = (
+        FINDINGS_RESOURCE_METADATA if endpoint == "findings" else RESOURCE_METADATA
+    )
+    date_filter = "inserted_at" if endpoint == "findings" else "updated_at"
     metadata_filters = (
         f"filter[scan]={scan_id}"
         if scan_id
-        else f"filter[inserted_at]={TARGET_INSERTED_AT}"
+        else f"filter[{date_filter}]={TARGET_INSERTED_AT}"
     )
     response = requests.get(
-        f"{host}/findings/metadata?{metadata_filters}", headers=get_auth_headers(token)
+        f"{host}/{endpoint}/metadata?{metadata_filters}",
+        headers=get_auth_headers(token),
     )
     assert (
         response.status_code == 200
     ), f"Failed to get resource filters values: {response.text}"
     attributes = response.json()["data"]["attributes"]
+
     return {
-        FINDINGS_RESOURCE_METADATA[key]: values
+        metadata_mapping[key]: values
         for key, values in attributes.items()
-        if key in FINDINGS_RESOURCE_METADATA.keys()
+        if key in metadata_mapping.keys()
     }
 
 

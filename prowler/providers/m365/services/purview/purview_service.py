@@ -11,8 +11,8 @@ class Purview(M365Service):
         self.audit_log_config = None
 
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.audit_log_config = self._get_audit_log_config()
+            if self.powershell.connect_exchange_online():
+                self.audit_log_config = self._get_audit_log_config()
             self.powershell.close()
 
     def _get_audit_log_config(self):

@@ -5,6 +5,7 @@ import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
+import { DataTableRowActions } from "@/components/findings/table/data-table-row-actions";
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
@@ -228,7 +229,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "cloudProvider",
-    header: "Cloud provider",
+    header: "Cloud Provider",
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");
@@ -243,6 +244,13 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
           />
         </>
       );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      return <DataTableRowActions row={row} />;
     },
   },
 ];

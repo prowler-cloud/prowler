@@ -78,7 +78,7 @@ class TestProwlerThreatScoreGCP:
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
         assert output_data.ResourceName == ""
-        assert output_data.CheckId == "test-check-id"
+        assert output_data.CheckId == "service_test_check_id"
         assert not output_data.Muted
         # Test manual check
         output_data_manual = output.data[1]

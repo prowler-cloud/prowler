@@ -9,7 +9,7 @@ class iam_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
 
-        for policy in iam_client.policies:
+        for policy in iam_client.policies.values():
             if policy.type == "Custom":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region

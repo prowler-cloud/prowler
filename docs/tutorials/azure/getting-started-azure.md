@@ -4,6 +4,9 @@
 
 Set up your Azure subscription to enable security scanning using Prowler Cloud/App.
 
+???+ note "Government Cloud Support"
+    Government cloud subscriptions (Azure Government) are not currently supported, but we expect to add support for them in the near future.
+
 ## Requirements
 
 To configure your Azure subscription, you’ll need:
@@ -144,8 +147,8 @@ Assign the following Microsoft Graph permissions:
 
 6. Return to `Access control (IAM)` > `+ Add` > `Add role assignment`
 
-    - Assign the `Reader` role
-    - Then repeat and assign the custom `ProwlerRole`
+    - Assign the `Reader` role to the Application created in the previous step
+    - Then repeat the same process assigning the custom `ProwlerRole`
 
     ![Role Assignment](./img/add-role-assigment.png)
 

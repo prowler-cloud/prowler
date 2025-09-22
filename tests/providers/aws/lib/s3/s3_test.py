@@ -1,7 +1,9 @@
 from os import path, remove
 from pathlib import Path
+from unittest import mock
 
 import boto3
+import botocore
 import pytest
 from moto import mock_aws
 
@@ -9,7 +11,10 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.providers.aws.lib.s3.exceptions.exceptions import S3InvalidBucketNameError
+from prowler.providers.aws.lib.s3.exceptions.exceptions import (
+    S3InvalidBucketNameError,
+    S3InvalidBucketRegionError,
+)
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.common.models import Connection
 from tests.lib.outputs.compliance.fixtures import ISO27001_2013_AWS
@@ -18,6 +23,7 @@ from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 CURRENT_DIRECTORY = str(Path(path.dirname(path.realpath(__file__))))
 S3_BUCKET_NAME = "test_bucket"
+S3_BUCKET_ARN = f"arn:aws:s3:::{S3_BUCKET_NAME}"
 OUTPUT_MODE_CSV = "csv"
 OUTPUT_MODE_JSON_OCSF = "json-ocsf"
 OUTPUT_MODE_JSON_ASFF = "json-asff"
@@ -46,6 +52,7 @@ FINDING = generate_finding_output(
     related_to=["related"],
     notes="Notes about the finding",
 )
+make_api_call = botocore.client.BaseClient._make_api_call
 
 
 class TestS3:
@@ -373,6 +380,49 @@ class TestS3:
                 aws_secret_access_key=access_key["SecretAccessKey"],
             )
 
+    def mock_make_api_head_bucket(self, operation_name, kwarg):
+        if operation_name == "HeadBucket":
+            if kwarg["Bucket"] == "bucket_without_region":
+                return {"BucketArn": S3_BUCKET_ARN}
+            else:
+                return {
+                    "BucketArn": S3_BUCKET_ARN,
+                    "BucketRegion": AWS_REGION_US_EAST_1,
+                }
+
+    @mock_aws
+    def test_test_connection_S3_bucket_invalid_region_raise_on_exception(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=self.mock_make_api_head_bucket,
+        ):
+
+            with pytest.raises(S3InvalidBucketRegionError):
+                S3.test_connection(
+                    aws_region=AWS_REGION_US_EAST_1,
+                    # Bucket without region to force exception
+                    bucket_name="bucket_without_region",
+                    # aws_access_key_id=access_key["AccessKeyId"],
+                    # aws_secret_access_key=access_key["SecretAccessKey"],
+                    raise_on_exception=True,
+                )
+
+    def test_test_connection_S3_bucket_invalid_region_no_raise_on_exception(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=self.mock_make_api_head_bucket,
+        ):
+            connection = S3.test_connection(
+                aws_region=AWS_REGION_US_EAST_1,
+                bucket_name="bucket_without_region",
+                raise_on_exception=False,
+            )
+            assert connection.is_connected is False
+            assert (
+                str(connection.error)
+                == "S3InvalidBucketRegionError[6005]: The specified bucket region is invalid."
+            )
+
     @mock_aws
     def test_init_without_session(self):
         with pytest.raises(ValueError) as e:
@@ -413,5 +463,16 @@ class TestS3:
             )
         assert (
             str(e.value)
-            == "If a session duration, an external ID, or a role session name is provided, a role ARN is required."
+            == "If no role ARN is provided, a profile, an AWS access key ID, or an AWS secret access key is required."
         )
+
+    @mock_aws
+    def test_init_without_session_and_role_arn_but_profile(self):
+        with pytest.raises(ValueError) as e:
+            S3(
+                session=None,
+                bucket_name=S3_BUCKET_NAME,
+                output_directory=CURRENT_DIRECTORY,
+                external_id="1234567890",
+            )
+        assert str(e.value) == "If an external ID is provided, a role ARN is required."

@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Requirement } from "@/types/compliance";
 
 import {
@@ -8,7 +9,6 @@ import {
   ComplianceDetailContainer,
   ComplianceDetailSection,
   ComplianceDetailText,
-  ComplianceLink,
 } from "./shared-components";
 
 interface CISDetailsProps {
@@ -121,7 +121,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
             {processReferences(requirement.references).map(
               (url: string, index: number) => (
                 <div key={index}>
-                  <ComplianceLink href={url}>{url}</ComplianceLink>
+                  <CustomLink href={url}>{url}</CustomLink>
                 </div>
               ),
             )}

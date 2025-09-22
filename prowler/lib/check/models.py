@@ -7,8 +7,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Optional, Set
 
-from checkov.common.output.record import Record
-from pydantic.v1 import BaseModel, ValidationError, validator
+from pydantic.v1 import BaseModel, Field, ValidationError, validator
 
 from prowler.config.config import Provider
 from prowler.lib.check.compliance_models import Compliance
@@ -86,6 +85,7 @@ class CheckMetadata(BaseModel):
         Risk (str): The risk associated with the check.
         RelatedUrl (str): The URL related to the check.
         Remediation (Remediation): The remediation steps for the check.
+        AdditionalURLs (list[str]): Additional URLs related to the check. Defaults to an empty list.
         Categories (list[str]): The categories of the check.
         DependsOn (list[str]): The dependencies of the check.
         RelatedTo (list[str]): The related checks.
@@ -98,13 +98,14 @@ class CheckMetadata(BaseModel):
         valid_severity(severity): Validator function to validate the severity of the check.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
+        validate_additional_urls(additional_urls): Validator function to ensure AdditionalURLs contains no duplicates.
     """
 
     Provider: str
     CheckID: str
     CheckTitle: str
     CheckType: list[str]
-    CheckAliases: list[str] = []
+    CheckAliases: list[str] = Field(default_factory=list)
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str
@@ -114,13 +115,14 @@ class CheckMetadata(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
+    AdditionalURLs: list[str] = Field(default_factory=list)
     Categories: list[str]
     DependsOn: list[str]
     RelatedTo: list[str]
     Notes: str
     # We set the compliance to None to
     # store the compliance later if supplied
-    Compliance: Optional[list[Any]] = []
+    Compliance: Optional[list[Any]] = Field(default_factory=list)
 
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
@@ -148,6 +150,49 @@ class CheckMetadata(BaseModel):
         if not resource_type or not isinstance(resource_type, str):
             raise ValueError("ResourceType must be a non-empty string")
         return resource_type
+
+    @validator("ServiceName", pre=True, always=True)
+    def validate_service_name(cls, service_name, values):
+        if not service_name:
+            raise ValueError("ServiceName must be a non-empty string")
+
+        check_id = values.get("CheckID")
+        if check_id and values.get("Provider") != "iac":
+            service_from_check_id = check_id.split("_")[0]
+            if service_name != service_from_check_id:
+                raise ValueError(
+                    f"ServiceName {service_name} does not belong to CheckID {check_id}"
+                )
+            if not service_name.islower():
+                raise ValueError(f"ServiceName {service_name} must be in lowercase")
+
+        return service_name
+
+    @validator("CheckID", pre=True, always=True)
+    def valid_check_id(cls, check_id, values):
+        if not check_id:
+            raise ValueError("CheckID must be a non-empty string")
+
+        if check_id and values.get("Provider") != "iac":
+            if "-" in check_id:
+                raise ValueError(
+                    f"CheckID {check_id} contains a hyphen, which is not allowed"
+                )
+
+        return check_id
+
+    @validator("AdditionalURLs", pre=True, always=True)
+    def validate_additional_urls(cls, additional_urls):
+        if not isinstance(additional_urls, list):
+            raise ValueError("AdditionalURLs must be a list")
+
+        if any(not url or not url.strip() for url in additional_urls):
+            raise ValueError("AdditionalURLs cannot contain empty items")
+
+        if len(additional_urls) != len(set(additional_urls)):
+            raise ValueError("AdditionalURLs cannot contain duplicate items")
+
+        return additional_urls
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
@@ -442,8 +487,6 @@ class Check_Report:
             self.resource = resource.to_dict()
         elif is_dataclass(resource):
             self.resource = asdict(resource)
-        elif hasattr(resource, "__dict__"):
-            self.resource = resource.__dict__
         else:
             logger.error(
                 f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"
@@ -523,9 +566,7 @@ class Check_Report_GCP(Check_Report):
             or ""
         )
         self.resource_name = (
-            resource_name
-            or getattr(resource, "name", "")
-            or getattr(resource, "id", "")
+            resource_name or getattr(resource, "name", "") or "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (
@@ -623,24 +664,34 @@ class CheckReportM365(Check_Report):
 
 @dataclass
 class CheckReportIAC(Check_Report):
-    """Contains the IAC Check's finding information using Checkov."""
+    """Contains the IAC Check's finding information using Trivy."""
 
     resource_name: str
-    resource_path: str
     resource_line_range: str
 
-    def __init__(self, metadata: dict = {}, resource: Record = None) -> None:
+    def __init__(
+        self, metadata: dict = {}, finding: dict = {}, file_path: str = ""
+    ) -> None:
         """
-        Initialize the IAC Check's finding information from a Checkov failed_check dict.
+        Initialize the IAC Check's finding information from a Trivy misconfiguration dict.
 
         Args:
             metadata (Dict): Optional check metadata (can be None).
-            failed_check (dict): A single failed_check result from Checkov's JSON output.
+            finding (dict): A single misconfiguration result from Trivy's JSON output.
         """
-        super().__init__(metadata, resource)
-        self.resource_name = resource.resource
-        self.resource_path = resource.file_path
-        self.resource_line_range = resource.file_line_range
+        super().__init__(metadata, finding)
+
+        self.resource = finding
+        self.resource_name = file_path
+        self.resource_line_range = (
+            (
+                str(finding.get("CauseMetadata", {}).get("StartLine", ""))
+                + ":"
+                + str(finding.get("CauseMetadata", {}).get("EndLine", ""))
+            )
+            if finding.get("CauseMetadata", {}).get("StartLine", "")
+            else ""
+        )
 
 
 @dataclass
@@ -664,6 +715,31 @@ class CheckReportNHN(Check_Report):
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "kr1")
+
+
+@dataclass
+class CheckReportMongoDBAtlas(Check_Report):
+    """Contains the MongoDB Atlas Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    location: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the MongoDB Atlas Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.location = getattr(resource, "location", self.project_id)
 
 
 # Testing Pending

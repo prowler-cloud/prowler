@@ -1,0 +1,10 @@
+# Prowler Provider Bulk Importer Dependencies
+#
+# Core HTTP library for API requests
+requests>=2.28.0
+
+# YAML parsing support (optional, only needed for YAML input files)
+PyYAML>=6.0
+
+# Type hints support for older Python versions (optional)
+typing-extensions>=4.0.0; python_version < '3.8'

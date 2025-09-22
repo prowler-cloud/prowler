@@ -14,7 +14,10 @@ from prowler.providers.m365.m365_provider import M365Provider
 class Entra(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+
         if self.powershell:
+            self.powershell.connect_exchange_online()
+            self.user_accounts_status = self.powershell.get_user_account_status()
             self.powershell.close()
 
         loop = get_event_loop()
@@ -36,6 +39,7 @@ class Entra(M365Service):
         self.groups = attributes[3]
         self.organizations = attributes[4]
         self.users = attributes[5]
+        self.user_accounts_status = {}
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -405,6 +409,9 @@ class Entra(M365Service):
                         if registration_details.get(user.id, None) is not None
                         else False
                     ),
+                    account_enabled=not self.user_accounts_status.get(user.id, {}).get(
+                        "AccountDisabled", False
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -585,6 +592,7 @@ class User(BaseModel):
     on_premises_sync_enabled: bool
     directory_roles_ids: List[str] = []
     is_mfa_capable: bool = False
+    account_enabled: bool = True
 
 
 class InvitationsFrom(Enum):

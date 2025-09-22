@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { getComplianceCsv, getExportsZip } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
@@ -285,19 +287,16 @@ export function decryptKey(passkey: string) {
   return atob(passkey);
 }
 
-export const getErrorMessage = async (error: unknown): Promise<string> => {
-  let message: string;
-
+export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    message = error.message;
+    return error.message;
   } else if (error && typeof error === "object" && "message" in error) {
-    message = String(error.message);
+    return String(error.message);
   } else if (typeof error === "string") {
-    message = error;
+    return error;
   } else {
-    message = "Oops! Something went wrong.";
+    return "Oops! Something went wrong.";
   }
-  return message;
 };
 
 export const permissionFormFields: PermissionInfo[] = [
@@ -323,12 +322,12 @@ export const permissionFormFields: PermissionInfo[] = [
     description:
       "Allows configuration and management of cloud provider connections",
   },
-  // {
-  //   field: "manage_integrations",
-  //   label: "Manage Integrations",
-  //   description:
-  //     "Controls the setup and management of third-party integrations",
-  // },
+  {
+    field: "manage_integrations",
+    label: "Manage Integrations",
+    description:
+      "Allows configuration and management of third-party integrations",
+  },
   {
     field: "manage_scans",
     label: "Manage Scans",
@@ -341,3 +340,85 @@ export const permissionFormFields: PermissionInfo[] = [
     description: "Provides access to billing settings and invoices",
   },
 ];
+
+// Helper function to handle API responses consistently
+export const handleApiResponse = async (
+  response: Response,
+  pathToRevalidate?: string,
+  parse = true,
+) => {
+  if (!response.ok) {
+    // Read error body safely; prefer JSON, fallback to plain text
+    const rawErrorText = await response.text().catch(() => "");
+    let errorData: any = null;
+    try {
+      errorData = rawErrorText ? JSON.parse(rawErrorText) : null;
+    } catch {
+      errorData = null;
+    }
+
+    const errorsArray = Array.isArray(errorData?.errors)
+      ? (errorData.errors as any[])
+      : undefined;
+    const errorDetail =
+      errorsArray?.[0]?.detail ||
+      errorData?.error ||
+      errorData?.message ||
+      (rawErrorText && rawErrorText.trim()) ||
+      response.statusText ||
+      "Oops! Something went wrong.";
+
+    //5XX errors
+    if (response.status >= 500) {
+      throw new Error(
+        errorDetail ||
+          `Server error (${response.status}): The server encountered an error. Please try again later.`,
+      );
+    }
+
+    return errorsArray
+      ? { error: errorDetail, errors: errorsArray, status: response.status }
+      : ({ error: errorDetail, status: response.status } as any);
+  }
+
+  // Handle empty or no-content responses gracefully (e.g., 204, empty body)
+  if (response.status === 204) {
+    if (pathToRevalidate && pathToRevalidate !== "") {
+      revalidatePath(pathToRevalidate);
+    }
+    return { success: true, status: response.status } as any;
+  }
+
+  // Read raw text to determine if there's a body to parse
+  const rawText = await response.text();
+  const hasBody = rawText && rawText.trim().length > 0;
+
+  if (!hasBody) {
+    if (pathToRevalidate && pathToRevalidate !== "") {
+      revalidatePath(pathToRevalidate);
+    }
+    return { success: true, status: response.status } as any;
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(rawText);
+  } catch (e) {
+    // If body isn't valid JSON, return as text payload
+    data = { data: rawText };
+  }
+
+  if (pathToRevalidate && pathToRevalidate !== "") {
+    revalidatePath(pathToRevalidate);
+  }
+
+  return parse ? parseStringify(data) : data;
+};
+
+// Helper function to handle API errors consistently
+export const handleApiError = (error: unknown): { error: string } => {
+  console.error(error);
+  return {
+    error: getErrorMessage(error),
+  };
+};

@@ -1,6 +1,6 @@
 # In-Cluster Execution
 
-For in-cluster execution, you can use the supplied yaml files inside `/kubernetes`:
+For in-cluster execution, use the supplied yaml files inside `/kubernetes`:
 
 * [prowler-sa.yaml](https://github.com/prowler-cloud/prowler/blob/master/kubernetes/prowler-sa.yaml)
 * [job.yaml](https://github.com/prowler-cloud/prowler/blob/master/kubernetes/job.yaml)

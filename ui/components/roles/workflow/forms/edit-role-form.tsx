@@ -17,7 +17,7 @@ import {
   CustomInput,
 } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { permissionFormFields } from "@/lib";
+import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 
 type FormValues = z.infer<typeof editRoleFormSchema>;
@@ -99,7 +99,7 @@ export const EditRoleForm = ({
       updatedFields.manage_users = values.manage_users;
       updatedFields.manage_providers = values.manage_providers;
       updatedFields.manage_account = values.manage_account;
-      // updatedFields.manage_integrations = values.manage_integrations;
+      updatedFields.manage_integrations = values.manage_integrations;
       updatedFields.manage_scans = values.manage_scans;
       updatedFields.unlimited_visibility = values.unlimited_visibility;
 
@@ -133,7 +133,8 @@ export const EditRoleForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/name":
               form.setError("name", {
                 type: "server",
@@ -159,7 +160,7 @@ export const EditRoleForm = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: getErrorMessage(error),
       });
     }
   };

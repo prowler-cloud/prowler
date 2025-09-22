@@ -102,8 +102,15 @@ jobs:
         run: |
           poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
 
+      - name: Dockerfile - Check if Dockerfile has changed
+        id: dockerfile-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            Dockerfile
+
       - name: Hadolint
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        if: steps.dockerfile-changed-files.outputs.any_changed == 'true'
         run: |
           /tmp/hadolint Dockerfile --ignore=DL3013
 
@@ -115,7 +122,7 @@ jobs:
           files: |
             ./prowler/providers/aws/**
             ./tests/providers/aws/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: AWS - Test
         if: steps.aws-changed-files.outputs.any_changed == 'true'
@@ -130,7 +137,7 @@ jobs:
           files: |
             ./prowler/providers/azure/**
             ./tests/providers/azure/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: Azure - Test
         if: steps.azure-changed-files.outputs.any_changed == 'true'
@@ -145,7 +152,7 @@ jobs:
           files: |
             ./prowler/providers/gcp/**
             ./tests/providers/gcp/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: GCP - Test
         if: steps.gcp-changed-files.outputs.any_changed == 'true'
@@ -160,7 +167,7 @@ jobs:
           files: |
             ./prowler/providers/kubernetes/**
             ./tests/providers/kubernetes/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: Kubernetes - Test
         if: steps.kubernetes-changed-files.outputs.any_changed == 'true'
@@ -175,7 +182,7 @@ jobs:
           files: |
             ./prowler/providers/github/**
             ./tests/providers/github/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: GitHub - Test
         if: steps.github-changed-files.outputs.any_changed == 'true'
@@ -190,7 +197,7 @@ jobs:
           files: |
             ./prowler/providers/nhn/**
             ./tests/providers/nhn/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: NHN - Test
         if: steps.nhn-changed-files.outputs.any_changed == 'true'
@@ -205,7 +212,7 @@ jobs:
           files: |
             ./prowler/providers/m365/**
             ./tests/providers/m365/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: M365 - Test
         if: steps.m365-changed-files.outputs.any_changed == 'true'
@@ -220,12 +227,27 @@ jobs:
           files: |
             ./prowler/providers/iac/**
             ./tests/providers/iac/**
-            .poetry.lock
+            ./poetry.lock
 
       - name: IaC - Test
         if: steps.iac-changed-files.outputs.any_changed == 'true'
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/iac --cov-report=xml:iac_coverage.xml tests/providers/iac
+
+      # Test MongoDB Atlas
+      - name: MongoDB Atlas - Check if any file has changed
+        id: mongodb-atlas-changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        with:
+          files: |
+            ./prowler/providers/mongodbatlas/**
+            ./tests/providers/mongodbatlas/**
+            .poetry.lock
+
+      - name: MongoDB Atlas - Test
+        if: steps.mongodb-atlas-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/mongodbatlas --cov-report=xml:mongodb_atlas_coverage.xml tests/providers/mongodbatlas
 
       # Common Tests
       - name: Lib - Test

@@ -21,18 +21,18 @@ class Defender(M365Service):
         self.inbound_spam_rules = {}
         self.report_submission_policy = None
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.malware_policies = self._get_malware_filter_policy()
-            self.malware_rules = self._get_malware_filter_rule()
-            self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
-            self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
-            self.antiphishing_policies = self._get_antiphishing_policy()
-            self.antiphishing_rules = self._get_antiphishing_rules()
-            self.connection_filter_policy = self._get_connection_filter_policy()
-            self.dkim_configurations = self._get_dkim_config()
-            self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
-            self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
-            self.report_submission_policy = self._get_report_submission_policy()
+            if self.powershell.connect_exchange_online():
+                self.malware_policies = self._get_malware_filter_policy()
+                self.malware_rules = self._get_malware_filter_rule()
+                self.outbound_spam_policies = self._get_outbound_spam_filter_policy()
+                self.outbound_spam_rules = self._get_outbound_spam_filter_rule()
+                self.antiphishing_policies = self._get_antiphishing_policy()
+                self.antiphishing_rules = self._get_antiphishing_rules()
+                self.connection_filter_policy = self._get_connection_filter_policy()
+                self.dkim_configurations = self._get_dkim_config()
+                self.inbound_spam_policies = self._get_inbound_spam_filter_policy()
+                self.inbound_spam_rules = self._get_inbound_spam_filter_rule()
+                self.report_submission_policy = self._get_report_submission_policy()
             self.powershell.close()
 
     def _get_malware_filter_policy(self):
@@ -44,6 +44,23 @@ class Defender(M365Service):
                 malware_policy = [malware_policy]
             for policy in malware_policy:
                 if policy:
+                    file_types_raw = policy.get("FileTypes", [])
+                    file_types = []
+                    if file_types_raw is not None:
+                        if isinstance(file_types_raw, list):
+                            file_types = file_types_raw
+                        else:
+                            try:
+                                if isinstance(file_types_raw, str):
+                                    file_types = [file_types_raw]
+                                else:
+                                    file_types = [str(file_types_raw)]
+                            except (ValueError, TypeError):
+                                logger.warning(
+                                    f"Skipping invalid file_types value: {file_types_raw}"
+                                )
+                                file_types = []
+
                     malware_policies.append(
                         MalwarePolicy(
                             enable_file_filter=policy.get("EnableFileFilter", False),
@@ -54,7 +71,7 @@ class Defender(M365Service):
                             internal_sender_admin_address=policy.get(
                                 "InternalSenderAdminAddress", ""
                             ),
-                            file_types=policy.get("FileTypes", []),
+                            file_types=file_types,
                             is_default=policy.get("IsDefault", False),
                         )
                     )
@@ -74,7 +91,7 @@ class Defender(M365Service):
                 malware_rule = [malware_rule]
             for rule in malware_rule:
                 if rule:
-                    malware_rules[rule.get("Name", "")] = MalwareRule(
+                    malware_rules[rule.get("MalwareFilterPolicy", "")] = MalwareRule(
                         state=rule.get("State", ""),
                         priority=rule.get("Priority", 0),
                         users=rule.get("SentTo", None),
@@ -135,12 +152,14 @@ class Defender(M365Service):
                 antiphishing_rule = [antiphishing_rule]
             for rule in antiphishing_rule:
                 if rule:
-                    antiphishing_rules[rule.get("Name", "")] = AntiphishingRule(
-                        state=rule.get("State", ""),
-                        priority=rule.get("Priority", 0),
-                        users=rule.get("SentTo", None),
-                        groups=rule.get("SentToMemberOf", None),
-                        domains=rule.get("RecipientDomainIs", None),
+                    antiphishing_rules[rule.get("AntiPhishPolicy", "")] = (
+                        AntiphishingRule(
+                            state=rule.get("State", ""),
+                            priority=rule.get("Priority", 0),
+                            users=rule.get("SentTo", None),
+                            groups=rule.get("SentToMemberOf", None),
+                            domains=rule.get("RecipientDomainIs", None),
+                        )
                     )
         except Exception as error:
             logger.error(
@@ -207,7 +226,7 @@ class Defender(M365Service):
                         notify_sender_blocked_addresses=policy.get(
                             "NotifyOutboundSpamRecipients", []
                         ),
-                        auto_forwarding_mode=policy.get("AutoForwardingMode", True),
+                        auto_forwarding_mode=policy.get("AutoForwardingMode", "On"),
                         default=policy.get("IsDefault", False),
                     )
 
@@ -233,7 +252,9 @@ class Defender(M365Service):
                 outbound_spam_rule = [outbound_spam_rule]
             for rule in outbound_spam_rule:
                 if rule:
-                    outbound_spam_rules[rule.get("Name", "")] = OutboundSpamRule(
+                    outbound_spam_rules[
+                        rule.get("HostedOutboundSpamFilterPolicy", "")
+                    ] = OutboundSpamRule(
                         state=rule.get("State", "Disabled"),
                         priority=rule.get("Priority", 0),
                         users=rule.get("From", None),
@@ -257,12 +278,43 @@ class Defender(M365Service):
                 inbound_spam_policy = [inbound_spam_policy]
             for policy in inbound_spam_policy:
                 if policy:
+                    allowed_domains_raw = policy.get("AllowedSenderDomains", [])
+                    allowed_domains = []
+
+                    if isinstance(allowed_domains_raw, str):
+                        try:
+                            import json
+
+                            parsed_domains = json.loads(allowed_domains_raw)
+                            if isinstance(parsed_domains, list):
+                                allowed_domains_raw = parsed_domains
+                            else:
+                                logger.warning(
+                                    f"Expected list from JSON string, got: {type(parsed_domains)}"
+                                )
+                                allowed_domains_raw = []
+                        except (json.JSONDecodeError, ValueError) as e:
+                            logger.warning(
+                                f"Failed to parse AllowedSenderDomains as JSON: {e}"
+                            )
+                            allowed_domains_raw = []
+
+                    if allowed_domains_raw:
+                        for domain in allowed_domains_raw:
+                            if isinstance(domain, str):
+                                allowed_domains.append(domain)
+                            else:
+                                try:
+                                    allowed_domains.append(str(domain))
+                                except (ValueError, TypeError):
+                                    logger.warning(
+                                        f"Skipping invalid domain value: {domain}"
+                                    )
+
                     inbound_spam_policies.append(
                         DefenderInboundSpamPolicy(
                             identity=policy.get("Identity", ""),
-                            allowed_sender_domains=policy.get(
-                                "AllowedSenderDomains", []
-                            ),
+                            allowed_sender_domains=allowed_domains,
                             default=policy.get("IsDefault", False),
                         )
                     )
@@ -282,12 +334,14 @@ class Defender(M365Service):
                 inbound_spam_rule = [inbound_spam_rule]
             for rule in inbound_spam_rule:
                 if rule:
-                    inbound_spam_rules[rule.get("Name", "")] = InboundSpamRule(
-                        state=rule.get("State", "Disabled"),
-                        priority=rule.get("Priority", 0),
-                        users=rule.get("SentTo", None),
-                        groups=rule.get("SentToMemberOf", None),
-                        domains=rule.get("RecipientDomainIs", None),
+                    inbound_spam_rules[rule.get("HostedContentFilterPolicy", "")] = (
+                        InboundSpamRule(
+                            state=rule.get("State", "Disabled"),
+                            priority=rule.get("Priority", 0),
+                            users=rule.get("SentTo", None),
+                            groups=rule.get("SentToMemberOf", None),
+                            domains=rule.get("RecipientDomainIs", None),
+                        )
                     )
         except Exception as error:
             logger.error(
@@ -389,7 +443,7 @@ class OutboundSpamPolicy(BaseModel):
     notify_limit_exceeded: bool
     notify_limit_exceeded_addresses: List[str]
     notify_sender_blocked_addresses: List[str]
-    auto_forwarding_mode: bool
+    auto_forwarding_mode: str
     default: bool
 
 

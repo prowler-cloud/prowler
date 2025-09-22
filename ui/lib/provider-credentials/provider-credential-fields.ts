@@ -8,6 +8,7 @@ export const ProviderCredentialFields = {
   CREDENTIALS_TYPE: "credentials_type",
   CREDENTIALS_TYPE_AWS: "aws-sdk-default",
   CREDENTIALS_TYPE_ACCESS_SECRET_KEY: "access-secret-key",
+
   // Base fields for all providers
   PROVIDER_ID: "providerId",
   PROVIDER_TYPE: "providerType",
@@ -35,6 +36,12 @@ export const ProviderCredentialFields = {
 
   // Kubernetes fields
   KUBECONFIG_CONTENT: "kubeconfig_content",
+
+  // GitHub fields
+  PERSONAL_ACCESS_TOKEN: "personal_access_token",
+  OAUTH_APP_TOKEN: "oauth_app_token",
+  GITHUB_APP_ID: "github_app_id",
+  GITHUB_APP_KEY: "github_app_key_content",
 } as const;
 
 // Type for credential field values
@@ -59,6 +66,10 @@ export const ErrorPointers = {
   SESSION_DURATION: "/data/attributes/secret/session_duration",
   ROLE_SESSION_NAME: "/data/attributes/secret/role_session_name",
   SERVICE_ACCOUNT_KEY: "/data/attributes/secret/service_account_key",
+  PERSONAL_ACCESS_TOKEN: "/data/attributes/secret/personal_access_token",
+  OAUTH_APP_TOKEN: "/data/attributes/secret/oauth_app_token",
+  GITHUB_APP_ID: "/data/attributes/secret/github_app_id",
+  GITHUB_APP_KEY: "/data/attributes/secret/github_app_key_content",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];

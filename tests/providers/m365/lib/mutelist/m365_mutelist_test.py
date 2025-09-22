@@ -56,7 +56,6 @@ class TestM365Mutelist:
         mutelist = M365Mutelist(mutelist_content=mutelist_content)
 
         finding = MagicMock
-        finding.tenant_id = "subscription_1"
         finding.check_metadata = MagicMock
         finding.check_metadata.CheckID = "check_test"
         finding.status = "FAIL"
@@ -65,7 +64,35 @@ class TestM365Mutelist:
         finding.tenant_domain = "test_domain"
         finding.resource_tags = []
 
-        assert mutelist.is_finding_muted(finding)
+        assert mutelist.is_finding_muted(finding, tenant_id="subscription_1")
+
+    def test_finding_is_not_muted(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "subscription_1": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["*"],
+                            "Resources": ["test_resource"],
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = M365Mutelist(mutelist_content=mutelist_content)
+
+        finding = MagicMock
+        finding.check_metadata = MagicMock
+        finding.check_metadata.CheckID = "check_test"
+        finding.status = "FAIL"
+        finding.location = "global"
+        finding.resource_name = "test_resource"
+        finding.tenant_domain = "test_domain"
+        finding.resource_tags = []
+
+        assert not mutelist.is_finding_muted(finding, tenant_id="subscription_2")
 
     def test_mute_finding(self):
         # Mutelist
@@ -85,7 +112,7 @@ class TestM365Mutelist:
         mutelist = M365Mutelist(mutelist_content=mutelist_content)
 
         finding_1 = generate_finding_output(
-            check_id="check_test",
+            check_id="service_check_test",
             status="FAIL",
             account_uid="subscription_1",
             region="subscription_1",
