@@ -8,7 +8,6 @@ from prowler_mcp_server.server import prowler_mcp_server, setup_main_server
 def main():
     """Main entry point for the MCP server."""
     try:
-        logger.info("Starting Prowler MCP server...")
         asyncio.run(setup_main_server())
         prowler_mcp_server.run()
     except KeyboardInterrupt:
