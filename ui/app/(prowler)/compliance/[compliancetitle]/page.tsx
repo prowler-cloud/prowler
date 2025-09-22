@@ -12,7 +12,6 @@ import {
   BarChartSkeleton,
   ClientAccordionWrapper,
   ComplianceHeader,
-  ComplianceInfo,
   ComplianceScanInfo,
   HeatmapChart,
   HeatmapChartSkeleton,
@@ -90,11 +89,6 @@ export default async function ComplianceDetail({
   );
   const searchParamsKey = JSON.stringify(paramsForKey);
 
-  const formattedTitle = compliancetitle.split("-").join(" ");
-  const pageTitle = version
-    ? `Compliance Details: ${formattedTitle} - ${version}`
-    : `Compliance Details: ${formattedTitle}`;
-
   let selectedScan: ScanEntity | null = null;
 
   if (scanData) {
@@ -103,12 +97,22 @@ export default async function ComplianceDetail({
 
   const selectedScanId = scanId || selectedScan?.id || null;
 
-  const metadataInfoData = await getComplianceOverviewMetadataInfo({
-    filters: {
-      "filter[scan_id]": selectedScanId,
-    },
-  });
+  const [metadataInfoData, attributesData] = await Promise.all([
+    getComplianceOverviewMetadataInfo({
+      filters: {
+        "filter[scan_id]": selectedScanId,
+      },
+    }),
+    complianceId ? getComplianceAttributes(complianceId) : Promise.resolve(null),
+  ]);
+
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
+  const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
+  const formattedTitle = compliancetitle.split("-").join(" ");
+
+  const pageTitle = complianceName
+    ? (version ? `${complianceName} - ${version}` : complianceName)
+    : (version ? `Compliance Details: ${formattedTitle} - ${version}` : `Compliance Details: ${formattedTitle}`);
 
   return (
     <ContentLayout
@@ -156,6 +160,7 @@ export default async function ComplianceDetail({
           region={regionFilter}
           filter={cisProfileFilter}
           logoPath={logoPath}
+          attributesData={attributesData}
         />
       </Suspense>
     </ContentLayout>
@@ -168,21 +173,20 @@ const SSRComplianceContent = async ({
   region,
   filter,
   logoPath,
+  attributesData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
   logoPath?: string;
+  attributesData: any;
 }) => {
-  const [attributesData, requirementsData] = await Promise.all([
-    getComplianceAttributes(complianceId),
-    getComplianceRequirements({
-      complianceId,
-      scanId,
-      region,
-    }),
-  ]);
+  const requirementsData = await getComplianceRequirements({
+    complianceId,
+    scanId,
+    region,
+  });
   const type = requirementsData?.data?.[0]?.type;
 
   if (!scanId || type === "tasks") {
@@ -199,8 +203,6 @@ const SSRComplianceContent = async ({
   }
 
   const framework = attributesData?.data?.[0]?.attributes?.framework;
-  const name = attributesData?.data?.[0]?.attributes?.compliance_name || "";
-  const version = attributesData?.data?.[0]?.attributes?.version || "";
   const mapper = getComplianceMapper(framework);
   const data = mapper.mapComplianceData(
     attributesData,
@@ -221,7 +223,6 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="space-y-8">
-      <ComplianceInfo name={name} framework={framework} version={version} />
       <ChartsWrapper logoPath={logoPath}>
         <PieChart
           pass={totalRequirements.pass}
