@@ -902,7 +902,11 @@ class UserViewSet(BaseUserViewset):
     partial_update=extend_schema(
         tags=["User"],
         summary="Partially update a user-roles relationship",
-        description="Update the user-roles relationship information without affecting other fields.",
+        description=(
+            "Update the user-roles relationship information without affecting other fields. "
+            "If the update would remove MANAGE_ACCOUNT from the last remaining user in the "
+            "tenant, the API rejects the request with a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship updated successfully"
@@ -912,7 +916,12 @@ class UserViewSet(BaseUserViewset):
     destroy=extend_schema(
         tags=["User"],
         summary="Delete a user-roles relationship",
-        description="Remove the user-roles relationship from the system by their ID.",
+        description=(
+            "Remove the user-roles relationship from the system by their ID. If removing "
+            "MANAGE_ACCOUNT would take it away from the last remaining user in the tenant, "
+            "the API rejects the request with a 400 response. Users also cannot delete their "
+            "own role assignments; attempting to do so returns a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship deleted successfully"
@@ -2911,13 +2920,11 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
     partial_update=extend_schema(
         tags=["Role"],
         summary="Partially update a role",
-        description="Update certain fields of an existing role's information without affecting other fields.",
         responses={200: RoleSerializer},
     ),
     destroy=extend_schema(
         tags=["Role"],
         summary="Delete a role",
-        description="Remove a role from the system by their ID.",
     ),
 )
 class RoleViewSet(BaseRLSViewSet):
@@ -2939,6 +2946,14 @@ class RoleViewSet(BaseRLSViewSet):
             return RoleUpdateSerializer
         return super().get_serializer_class()
 
+    @extend_schema(
+        description=(
+            "Update selected fields on an existing role. When changing the `users` "
+            "relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts "
+            "that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents "
+            "callers from removing their own assignment to that role."
+        )
+    )
     def partial_update(self, request, *args, **kwargs):
         user_role = get_role(request.user)
         # If the user is the owner of the role, the manage_account field is not editable
@@ -2946,6 +2961,12 @@ class RoleViewSet(BaseRLSViewSet):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
+    @extend_schema(
+        description=(
+            "Delete the specified role. The API rejects deletion of the last role "
+            "in the tenant that grants MANAGE_ACCOUNT."
+        )
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if (

@@ -6363,8 +6363,10 @@ paths:
           description: ''
     patch:
       operationId: roles_partial_update
-      description: Update certain fields of an existing role's information without
-        affecting other fields.
+      description: Update selected fields on an existing role. When changing the `users`
+        relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts
+        that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents
+        callers from removing their own assignment to that role.
       summary: Partially update a role
       parameters:
       - in: path
@@ -6399,7 +6401,8 @@ paths:
           description: ''
     delete:
       operationId: roles_destroy
-      description: Remove a role from the system by their ID.
+      description: Delete the specified role. The API rejects deletion of the last
+        role in the tenant that grants MANAGE_ACCOUNT.
       summary: Delete a role
       parameters:
       - in: path
@@ -8439,7 +8442,8 @@ paths:
     patch:
       operationId: users_relationships_roles_partial_update
       description: Update the user-roles relationship information without affecting
-        other fields.
+        other fields. If the update would remove MANAGE_ACCOUNT from the last remaining
+        user in the tenant, the API rejects the request with a 400 response.
       summary: Partially update a user-roles relationship
       tags:
       - User
@@ -8463,6 +8467,10 @@ paths:
     delete:
       operationId: users_relationships_roles_destroy
       description: Remove the user-roles relationship from the system by their ID.
+        If removing MANAGE_ACCOUNT would take it away from the last remaining user
+        in the tenant, the API rejects the request with a 400 response. Users also
+        cannot delete their own role assignments; attempting to do so returns a 400
+        response.
       summary: Delete a user-roles relationship
       tags:
       - User
