@@ -1792,7 +1792,7 @@ class RoleUpdateSerializer(RoleSerializer):
                     .exclude(role_id=instance.id)
                     .exists()
                 )
-                # After the change, this role will contribute len(users) MA assignments
+
                 if not other_ma_exists and len(users) == 0:
                     raise serializers.ValidationError(
                         {
