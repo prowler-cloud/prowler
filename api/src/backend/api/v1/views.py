@@ -902,7 +902,11 @@ class UserViewSet(BaseUserViewset):
     partial_update=extend_schema(
         tags=["User"],
         summary="Partially update a user-roles relationship",
-        description="Update the user-roles relationship information without affecting other fields.",
+        description=(
+            "Update the user-roles relationship information without affecting other fields. "
+            "If the update would remove MANAGE_ACCOUNT from the last remaining user in the "
+            "tenant, the API rejects the request with a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship updated successfully"
@@ -912,7 +916,12 @@ class UserViewSet(BaseUserViewset):
     destroy=extend_schema(
         tags=["User"],
         summary="Delete a user-roles relationship",
-        description="Remove the user-roles relationship from the system by their ID.",
+        description=(
+            "Remove the user-roles relationship from the system by their ID. If removing "
+            "MANAGE_ACCOUNT would take it away from the last remaining user in the tenant, "
+            "the API rejects the request with a 400 response. Users also cannot delete their "
+            "own role assignments; attempting to do so returns a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship deleted successfully"
@@ -931,6 +940,43 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
 
     def get_queryset(self):
         return User.objects.filter(membership__tenant__id=self.request.tenant_id)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Prevent deleting role relationships if it would leave the tenant with no
+        users having MANAGE_ACCOUNT. Supports deleting specific roles via JSON:API
+        relationship payload or clearing all roles for the user when no payload.
+        """
+        user = self.get_object()
+        # Disallow deleting own roles
+        if str(user.id) == str(request.user.id):
+            return Response(
+                data={
+                    "detail": "Users cannot delete the relationship with their role."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        tenant_id = self.request.tenant_id
+        payload = request.data if isinstance(request.data, dict) else None
+
+        # If a user has more than one role, we will delete the relationship with the roles in the payload
+        data = payload.get("data") if payload else None
+        if data:
+            try:
+                role_ids = [item["id"] for item in data]
+            except KeyError:
+                role_ids = []
+            roles_to_remove = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
+        else:
+            roles_to_remove = user.roles.filter(tenant_id=tenant_id)
+
+        UserRoleRelationship.objects.filter(
+            user=user,
+            tenant_id=tenant_id,
+            role_id__in=roles_to_remove.values_list("id", flat=True),
+        ).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def create(self, request, *args, **kwargs):
         user = self.get_object()
@@ -968,12 +1014,6 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def destroy(self, request, *args, **kwargs):
-        user = self.get_object()
-        user.roles.clear()
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2880,13 +2920,11 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
     partial_update=extend_schema(
         tags=["Role"],
         summary="Partially update a role",
-        description="Update certain fields of an existing role's information without affecting other fields.",
         responses={200: RoleSerializer},
     ),
     destroy=extend_schema(
         tags=["Role"],
         summary="Delete a role",
-        description="Remove a role from the system by their ID.",
     ),
 )
 class RoleViewSet(BaseRLSViewSet):
@@ -2908,6 +2946,14 @@ class RoleViewSet(BaseRLSViewSet):
             return RoleUpdateSerializer
         return super().get_serializer_class()
 
+    @extend_schema(
+        description=(
+            "Update selected fields on an existing role. When changing the `users` "
+            "relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts "
+            "that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents "
+            "callers from removing their own assignment to that role."
+        )
+    )
     def partial_update(self, request, *args, **kwargs):
         user_role = get_role(request.user)
         # If the user is the owner of the role, the manage_account field is not editable
@@ -2915,12 +2961,33 @@ class RoleViewSet(BaseRLSViewSet):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
+    @extend_schema(
+        description=(
+            "Delete the specified role. The API rejects deletion of the last role "
+            "in the tenant that grants MANAGE_ACCOUNT."
+        )
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if (
             instance.name == "admin"
         ):  # TODO: Move to a constant/enum (in case other roles are created by default)
             raise ValidationError(detail="The admin role cannot be deleted.")
+
+        # Prevent deleting the last MANAGE_ACCOUNT role in the tenant
+        if instance.manage_account:
+            has_other_ma = (
+                Role.objects.filter(tenant_id=instance.tenant_id, manage_account=True)
+                .exclude(id=instance.id)
+                .exists()
+            )
+            if not has_other_ma:
+                return Response(
+                    data={
+                        "detail": "Cannot delete the only role with MANAGE_ACCOUNT in the tenant."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         return super().destroy(request, *args, **kwargs)
 

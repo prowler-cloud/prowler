@@ -422,6 +422,34 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
         roles = Role.objects.filter(id__in=role_ids)
         tenant_id = self.context.get("tenant_id")
 
+        # Safeguard: A tenant must always have at least one user with MANAGE_ACCOUNT.
+        # If the target roles do NOT include MANAGE_ACCOUNT, and the current user is
+        # the only one in the tenant with MANAGE_ACCOUNT, block the update.
+        target_includes_manage_account = roles.filter(manage_account=True).exists()
+        if not target_includes_manage_account:
+            # Check if any other user has MANAGE_ACCOUNT
+            other_users_have_manage_account = (
+                UserRoleRelationship.objects.filter(
+                    tenant_id=tenant_id, role__manage_account=True
+                )
+                .exclude(user_id=instance.id)
+                .exists()
+            )
+
+            # Check if the current user has MANAGE_ACCOUNT
+            instance_has_manage_account = instance.roles.filter(
+                tenant_id=tenant_id, manage_account=True
+            ).exists()
+
+            # If the current user is the last holder of MANAGE_ACCOUNT, prevent removal
+            if instance_has_manage_account and not other_users_have_manage_account:
+                raise serializers.ValidationError(
+                    {
+                        "roles": "At least one user in the tenant must retain MANAGE_ACCOUNT. "
+                        "Assign MANAGE_ACCOUNT to another user before removing it here."
+                    }
+                )
+
         instance.roles.clear()
         new_relationships = [
             UserRoleRelationship(user=instance, role=r, tenant_id=tenant_id)
@@ -1741,6 +1769,37 @@ class RoleUpdateSerializer(RoleSerializer):
 
         if "users" in validated_data:
             users = validated_data.pop("users")
+            # Prevent a user from removing their own role assignment via Role update
+            request = self.context.get("request")
+            if request and getattr(request, "user", None):
+                request_user = request.user
+                is_currently_assigned = instance.users.filter(
+                    id=request_user.id
+                ).exists()
+                will_be_assigned = any(u.id == request_user.id for u in users)
+                if is_currently_assigned and not will_be_assigned:
+                    raise serializers.ValidationError(
+                        {"users": "Users cannot remove their own role."}
+                    )
+
+            # Safeguard MANAGE_ACCOUNT coverage when updating users of this role
+            if instance.manage_account:
+                # Existing MANAGE_ACCOUNT assignments on other roles within the tenant
+                other_ma_exists = (
+                    UserRoleRelationship.objects.filter(
+                        tenant_id=tenant_id, role__manage_account=True
+                    )
+                    .exclude(role_id=instance.id)
+                    .exists()
+                )
+
+                if not other_ma_exists and len(users) == 0:
+                    raise serializers.ValidationError(
+                        {
+                            "users": "At least one user in the tenant must retain MANAGE_ACCOUNT. "
+                            "Assign this MANAGE_ACCOUNT role to at least one user or ensure another user has it."
+                        }
+                    )
             instance.users.clear()
             through_model_instances = [
                 UserRoleRelationship(
