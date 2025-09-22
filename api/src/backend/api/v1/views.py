@@ -3545,6 +3545,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     ),
                     "name": requirement.get("name", ""),
                     "framework": compliance_framework.get("framework", ""),
+                    "compliance_name": compliance_framework.get("name", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
                     "attributes": base_attributes,

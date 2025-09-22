@@ -182,6 +182,7 @@ paths:
             type: string
             enum:
             - id
+            - compliance_name
             - framework_description
             - name
             - framework
@@ -8739,6 +8740,8 @@ components:
           properties:
             id:
               type: string
+            compliance_name:
+              type: string
             framework_description:
               type: string
             name:
@@ -8752,6 +8755,7 @@ components:
             attributes: {}
           required:
           - id
+          - compliance_name
           - framework_description
           - name
           - framework
