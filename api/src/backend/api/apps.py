@@ -2,6 +2,7 @@ import logging
 import os
 
 from pathlib import Path
+import sys
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -32,7 +33,12 @@ class ApiConfig(AppConfig):
         from api import signals  # noqa: F401
         from api.compliance import load_prowler_compliance
 
-        self._ensure_crypto_keys()  # Generate required cryptographic keys if not present
+        # Generate required cryptographic keys if not present, but only if:
+        #   `"manage.py" not in sys.argv`: If an external server (e.g., Gunicorn) is running the app
+        #   `os.environ.get("RUN_MAIN")`: If the Django development server is running the app
+        if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
+            self._ensure_crypto_keys()
+
         load_prowler_compliance()
 
     def _ensure_crypto_keys(self):
