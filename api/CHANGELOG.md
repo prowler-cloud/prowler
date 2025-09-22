@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.14.0] (Prowler UNRELEASED)
+
+### Fixed
+- 500 error when deleting user [(#8731)](https://github.com/prowler-cloud/prowler/pull/8731)
+
+---
+
 ## [1.13.0] (Prowler 5.12.0)
 
 ### Added
