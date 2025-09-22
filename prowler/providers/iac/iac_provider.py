@@ -350,7 +350,7 @@ class IacProvider(Provider):
                             logger.info(f"{line}")
 
             try:
-                output = json.loads(process.stdout)["Results"]
+                output = json.loads(process.stdout).get("Results", [])
 
                 if not output:
                     logger.warning("No findings returned from Trivy scan")
