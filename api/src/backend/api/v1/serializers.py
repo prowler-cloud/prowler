@@ -900,18 +900,6 @@ class ProviderIncludeSerializer(RLSSerializer):
 
 
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
-    provider = ProviderEnumSerializerField(help_text="Type of provider to create.")
-    alias = serializers.CharField(
-        required=False,
-        help_text="Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
-        min_length=3,
-        max_length=100,
-    )
-    uid = serializers.CharField(
-        help_text="The unique identifier for the provider account. Format depends on the provider, e. g. AWS account ID, Azure subscription ID, GCP project ID, etc.",
-        min_length=3,
-        max_length=250,
-    )
 
     class Meta:
         model = Provider
@@ -921,6 +909,17 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "uid",
             # "scanner_args"
         ]
+        extra_kwargs = {
+            "alias": {
+                "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",  # For some reason this is not working
+            },
+            "provider": {
+                "help_text": "Type of provider to create.",
+            },
+            "uid": {
+                "help_text": "The unique identifier for the provider account. Format depends on the provider, e. g. AWS account ID, Azure subscription ID, GCP project ID, etc.",
+            },
+        }
 
 
 class ProviderUpdateSerializer(BaseWriteSerializer):
@@ -929,19 +928,17 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
     Only allows "alias" and "scanner_args" fields to be updated.
     """
 
-    alias = serializers.CharField(
-        required=False,
-        help_text="Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
-        min_length=3,
-        max_length=100,
-    )
-
     class Meta:
         model = Provider
         fields = [
             "alias",
             # "scanner_args"
         ]
+        extra_kwargs = {
+            "alias": {
+                "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
+            }
+        }
 
 
 # Scans
@@ -1118,8 +1115,7 @@ class ResourceSerializer(RLSSerializer):
     failed_findings_count = serializers.IntegerField(read_only=True)
 
     findings = SerializerMethodResourceRelatedField(
-        many=True,
-        read_only=True,
+        many=True, read_only=True, source="findings", method_name="get_findings"
     )
 
     class Meta:
