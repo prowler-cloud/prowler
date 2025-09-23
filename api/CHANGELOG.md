@@ -14,6 +14,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.13.1] (Prowler 5.12.2)
+
+### Security
+- Django updated to the latest 5.1 security release, 5.1.12, due to [problems](https://www.djangoproject.com/weblog/2025/sep/03/security-releases/) with potential SQL injection in FilteredRelation column aliases [(#8693)](https://github.com/prowler-cloud/prowler/pull/8693)
+
+---
+
 ## [1.13.0] (Prowler 5.12.0)
 
 ### Added
@@ -32,6 +39,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - GitHub provider always scans user instead of organization when using provider UID [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
+
+---
 
 ## [1.11.0] (Prowler 5.10.0)
 
