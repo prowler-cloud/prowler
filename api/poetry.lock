@@ -2934,6 +2934,22 @@ htmlsoup = ["BeautifulSoup4"]
 source = ["Cython (>=3.0.11,<3.1.0)"]
 
 [[package]]
+name = "markdown"
+version = "3.9"
+description = "Python implementation of John Gruber's Markdown."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "markdown-3.9-py3-none-any.whl", hash = "sha256:9f4d91ed810864ea88a6f32c07ba8bee1346c0cc1f6b1f9f6c822f2a9667d280"},
+    {file = "markdown-3.9.tar.gz", hash = "sha256:d2900fe1782bd33bdbbd56859defef70c2e78fc46668f8eb9df3128138f2cb6a"},
+]
+
+[package.extras]
+docs = ["mdx_gh_links (>=0.2)", "mkdocs (>=1.6)", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-nature (>=0.6)", "mkdocs-section-index", "mkdocstrings[python]"]
+testing = ["coverage", "pyyaml"]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -6165,4 +6181,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "df0d80f27044dcddb100f2f5ad0f0ad1a55bcd5d86fdff44a7c416c838539121"
+content-hash = "91058a14382b76136a82f45624a30aece7a6d77c8b36c290bb4c40ea60c8850b"

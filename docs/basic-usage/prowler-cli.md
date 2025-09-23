@@ -279,4 +279,4 @@ You can filter scans to specific organizations or projects:
 prowler mongodbatlas --atlas-project-id <project_id>
 ```
 
-See more details about MongoDB Atlas Authentication in [Requirements](../getting-started/requirements.md#mongodb-atlas)
+See more details about MongoDB Atlas Authentication in [MongoDB Atlas Authentication](../tutorials/mongodbatlas/authentication.md)

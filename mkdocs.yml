@@ -100,7 +100,7 @@ nav:
         - AWS:
             - Getting Started: tutorials/aws/getting-started-aws.md
             - Authentication: tutorials/aws/authentication.md
-            - Assume Role: tutorials/aws/role-assumption.md
+            - Assume Role (CLI): tutorials/aws/role-assumption.md
             - AWS Organizations: tutorials/aws/organizations.md
             - AWS Regions and Partitions: tutorials/aws/regions-and-partitions.md
             - Tag-based Scan: tutorials/aws/tag-based-scan.md

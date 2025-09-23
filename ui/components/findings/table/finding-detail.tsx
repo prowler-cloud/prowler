@@ -1,17 +1,30 @@
 "use client";
 
 import { Snippet } from "@nextui-org/react";
+import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomSection } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { EntityInfoShort, InfoField } from "@/components/ui/entities";
+import {
+  CopyLinkButton,
+  EntityInfoShort,
+  InfoField,
+} from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
+
+const MarkdownContainer = ({ children }: { children: string }) => {
+  return (
+    <div className="prose prose-sm max-w-none whitespace-normal break-words dark:prose-invert">
+      <ReactMarkdown>{children}</ReactMarkdown>
+    </div>
+  );
+};
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -42,6 +55,10 @@ export const FindingDetail = ({
   const resource = finding.relationships.resource.attributes;
   const scan = finding.relationships.scan.attributes;
   const providerDetails = finding.relationships.provider.attributes;
+  const currentUrl = new URL(window.location.href);
+  const params = new URLSearchParams(currentUrl.search);
+  params.set("id", findingDetails.id);
+  const url = `${window.location.origin}${currentUrl.pathname}?${params.toString()}`;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
@@ -50,6 +67,7 @@ export const FindingDetail = ({
         <div>
           <h2 className="line-clamp-2 text-lg font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
             {renderValue(attributes.check_metadata.checktitle)}
+            <CopyLinkButton url={url} />
           </h2>
         </div>
         <div className="flex items-center gap-x-4">
@@ -122,15 +140,17 @@ export const FindingDetail = ({
               hideCopyButton
               hideSymbol
             >
-              <p className="whitespace-pre-line">
+              <MarkdownContainer>
                 {attributes.check_metadata.risk}
-              </p>
+              </MarkdownContainer>
             </Snippet>
           </InfoField>
         )}
 
         <InfoField label="Description">
-          {renderValue(attributes.check_metadata.description)}
+          <MarkdownContainer>
+            {attributes.check_metadata.description}
+          </MarkdownContainer>
         </InfoField>
 
         <InfoField label="Status Extended">
@@ -147,9 +167,10 @@ export const FindingDetail = ({
             {attributes.check_metadata.remediation.recommendation.text && (
               <InfoField label="Recommendation">
                 <div className="flex flex-col gap-2">
-                  <p>
+                  <MarkdownContainer>
                     {attributes.check_metadata.remediation.recommendation.text}
-                  </p>
+                  </MarkdownContainer>
+
                   {attributes.check_metadata.remediation.recommendation.url && (
                     <CustomLink
                       href={
@@ -175,17 +196,35 @@ export const FindingDetail = ({
               </InfoField>
             )}
 
-            {/* Additional Resources section */}
+            {/* Remediation Steps section */}
             {attributes.check_metadata.remediation.code.other && (
-              <InfoField label="Additional Resources">
-                <CustomLink
-                  href={attributes.check_metadata.remediation.code.other}
-                  size="sm"
-                >
-                  View documentation
-                </CustomLink>
+              <InfoField label="Remediation Steps">
+                <MarkdownContainer>
+                  {attributes.check_metadata.remediation.code.other}
+                </MarkdownContainer>
               </InfoField>
             )}
+
+            {/* Additional URLs section */}
+            {attributes.check_metadata.additionalurls &&
+              attributes.check_metadata.additionalurls.length > 0 && (
+                <InfoField label="References">
+                  <div className="flex flex-col gap-1">
+                    {attributes.check_metadata.additionalurls.map(
+                      (link, idx) => (
+                        <CustomLink
+                          key={idx}
+                          href={link}
+                          size="sm"
+                          className="!whitespace-normal break-all"
+                        >
+                          {link}
+                        </CustomLink>
+                      ),
+                    )}
+                  </div>
+                </InfoField>
+              )}
           </div>
         )}
 

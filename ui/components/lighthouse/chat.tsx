@@ -134,7 +134,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   // Global keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (messageValue?.trim()) {
           onFormSubmit();
@@ -145,16 +145,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [messageValue, onFormSubmit]);
-
-  useEffect(() => {
-    if (messagesContainerRef.current && latestUserMsgRef.current) {
-      const container = messagesContainerRef.current;
-      const userMsg = latestUserMsgRef.current;
-      const containerPadding = 16; // p-4 in Tailwind = 16px
-      container.scrollTop =
-        userMsg.offsetTop - container.offsetTop - containerPadding;
-    }
-  }, [messages]);
 
   const suggestedActions: SuggestedAction[] = [
     {
