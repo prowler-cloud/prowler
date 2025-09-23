@@ -2,15 +2,16 @@
 
 Access the entire Prowler ecosystem through the Model Context Protocol (MCP). This server provides two main capabilities:
 
-- **Prowler App**: Full access to Prowler Cloud platform for managing providers, running scans, and analyzing security findings
+- **Prowler Cloud and Prowler App (Self-Managed)**: Full access to Prowler Cloud platform and Prowler Self-Managed for managing providers, running scans, and analyzing security findings
 - **Prowler Hub**: Access to Prowler's security checks, fixers, and compliance frameworks catalog
+
 
 ## Requirements
 
 - Python 3.12+
 - Network access to `https://hub.prowler.com` (for Prowler Hub)
-- Network access to Prowler App API (it can be Prowler Cloud API or self-hosted Prowler App API)
-- Prowler Cloud account credentials (for Prowler App features)
+- Network access to Prowler Cloud and Prowler App (Self-Managed) API (it can be Prowler Cloud API or self-hosted Prowler App API)
+- Prowler Cloud account credentials (for Prowler Cloud and Prowler App (Self-Managed) features)
 
 ## Installation
 
@@ -51,7 +52,7 @@ All tools are exposed under the `prowler_hub` prefix.
 - `prowler_hub_list_providers`: List Prowler official providers and their services.
 - `prowler_hub_get_artifacts_count`: Return total artifact count (checks + frameworks).
 
-### Prowler App
+### Prowler Cloud and Prowler App (Self-Managed)
 
 All tools are exposed under the `prowler_app` prefix.
 
@@ -99,10 +100,10 @@ All tools are exposed under the `prowler_app` prefix.
 
 ### Environment Variables
 
-For Prowler App features, you need to set the following environment variables:
+For Prowler Cloud and Prowler App (Self-Managed) features, you need to set the following environment variables:
 
 ```bash
-# Required for Prowler App authentication
+# Required for Prowler Cloud and Prowler App (Self-Managed) authentication
 export PROWLER_APP_EMAIL="your-email@example.com"
 export PROWLER_APP_PASSWORD="your-password"
 
