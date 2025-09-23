@@ -24,14 +24,16 @@ import { ResourceProps, SearchParamsProps } from "@/types";
 export default async function Resources({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
-  const { filters, query } = extractFiltersAndQuery(searchParams);
+  const resolvedSearchParams = await searchParams;
+  const { searchParamsKey, encodedSort } =
+    extractSortAndKey(resolvedSearchParams);
+  const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
   const outputFilters = replaceFieldKey(filters, "inserted_at", "updated_at");
 
   // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
   const metadataInfoData = await (
     hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
@@ -71,7 +73,7 @@ export default async function Resources({
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );

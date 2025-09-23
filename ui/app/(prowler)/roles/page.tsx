@@ -14,9 +14,10 @@ import { SearchParamsProps } from "@/types";
 export default async function Roles({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
     <ContentLayout title="Roles" icon="mdi:account-key-outline">
@@ -28,7 +29,7 @@ export default async function Roles({
       <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );

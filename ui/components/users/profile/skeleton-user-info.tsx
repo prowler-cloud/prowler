@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardBody, Skeleton } from "@nextui-org/react";
 
 export const SkeletonUserInfo = () => {

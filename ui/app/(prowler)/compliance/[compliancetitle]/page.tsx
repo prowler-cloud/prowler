@@ -72,18 +72,19 @@ export default async function ComplianceDetail({
   params,
   searchParams,
 }: {
-  params: { compliancetitle: string };
-  searchParams: ComplianceDetailSearchParams;
+  params: Promise<{ compliancetitle: string }>;
+  searchParams: Promise<ComplianceDetailSearchParams>;
 }) {
-  const { compliancetitle } = params;
-  const { complianceId, version, scanId, scanData } = searchParams;
-  const regionFilter = searchParams["filter[region__in]"];
-  const cisProfileFilter = searchParams["filter[cis_profile_level]"];
+  const { compliancetitle } = await params;
+  const resolvedSearchParams = await searchParams;
+  const { complianceId, version, scanId, scanData } = resolvedSearchParams;
+  const regionFilter = resolvedSearchParams["filter[region__in]"];
+  const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
   // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
   const paramsForKey = Object.fromEntries(
-    Object.entries(searchParams).filter(
+    Object.entries(resolvedSearchParams).filter(
       ([key]) => key !== "page" && key !== "pageSize",
     ),
   );

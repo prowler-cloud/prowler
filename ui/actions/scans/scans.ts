@@ -2,13 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getScans = async ({
   page = 1,

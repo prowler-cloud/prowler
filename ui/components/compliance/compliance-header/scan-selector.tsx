@@ -1,3 +1,5 @@
+"use client";
+
 import { Select, SelectItem } from "@nextui-org/react";
 
 import { ProviderType, ScanProps } from "@/types";

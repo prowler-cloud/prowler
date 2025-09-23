@@ -26,10 +26,11 @@ import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
 export default async function Scans({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
   const session = await auth();
-  const filteredParams = { ...searchParams };
+  const resolvedSearchParams = await searchParams;
+  const filteredParams = { ...resolvedSearchParams };
   delete filteredParams.scanId;
   const searchParamsKey = JSON.stringify(filteredParams);
 
@@ -112,7 +113,7 @@ export default async function Scans({
         </div>
         <Spacer y={8} />
         <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-          <SSRDataTableScans searchParams={searchParams} />
+          <SSRDataTableScans searchParams={resolvedSearchParams} />
         </Suspense>
       </>
     </ContentLayout>

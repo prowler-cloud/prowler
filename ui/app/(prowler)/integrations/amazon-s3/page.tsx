@@ -6,19 +6,25 @@ import { S3IntegrationsManager } from "@/components/integrations/s3/s3-integrati
 import { ContentLayout } from "@/components/ui";
 
 interface S3IntegrationsProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function S3Integrations({
   searchParams,
 }: S3IntegrationsProps) {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-  const sort = searchParams.sort?.toString();
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt(resolvedSearchParams.page?.toString() || "1", 10);
+  const pageSize = parseInt(
+    resolvedSearchParams.pageSize?.toString() || "10",
+    10,
+  );
+  const sort = resolvedSearchParams.sort?.toString();
 
   // Extract all filter parameters
   const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    Object.entries(resolvedSearchParams).filter(([key]) =>
+      key.startsWith("filter["),
+    ),
   );
 
   const urlSearchParams = new URLSearchParams();

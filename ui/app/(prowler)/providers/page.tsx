@@ -19,9 +19,10 @@ import { ProviderProps, SearchParamsProps } from "@/types";
 export default async function Providers({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
     <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
@@ -45,7 +46,7 @@ export default async function Providers({
           </>
         }
       >
-        <ProvidersContent searchParams={searchParams} />
+        <ProvidersContent searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );

@@ -110,10 +110,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       fullWidth
       isHoverable
       shadow="sm"
-      isPressable
-      onPress={navigateToDetail}
     >
-      <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
+      <CardBody
+        className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800 cursor-pointer"
+        onClick={navigateToDetail}
+      >
         <div className="flex w-full items-center space-x-4">
           <Image
             src={getComplianceIcon(title)}
@@ -146,13 +147,15 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 Passing Requirements
               </small>
 
-              <DownloadIconButton
-                paramId={complianceId}
-                onDownload={handleDownload}
-                textTooltip="Download compliance CSV report"
-                isDisabled={hasRegionFilter}
-                isDownloading={isDownloading}
-              />
+              <div onClick={(e) => e.stopPropagation()}>
+                <DownloadIconButton
+                  paramId={complianceId}
+                  onDownload={handleDownload}
+                  textTooltip="Download compliance CSV report"
+                  isDisabled={hasRegionFilter}
+                  isDownloading={isDownloading}
+                />
+              </div>
               {/* <small>{getScanChange()}</small> */}
             </div>
           </div>

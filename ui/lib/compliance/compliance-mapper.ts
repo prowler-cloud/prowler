@@ -69,9 +69,92 @@ export interface ComplianceMapper {
   getDetailsComponent: (requirement: Requirement) => React.ReactNode;
 }
 
+export const complianceMappers: Record<string, ComplianceMapper> = {
+  ENS: {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapENSComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toENSAccordionItems(data, scanId),
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(ENSCustomDetails, { requirement }),
+  },
+  ISO27001: {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapISOComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toISOAccordionItems(data, scanId),
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(ISOCustomDetails, { requirement }),
+  },
+  CIS: {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapCISComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toCISAccordionItems(data, scanId),
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(CISCustomDetails, { requirement }),
+  },
+  "AWS-Well-Architected-Framework-Security-Pillar": {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapAWSWellArchitectedComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toAWSWellArchitectedAccordionItems(data, scanId),
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
+  },
+  "AWS-Well-Architected-Framework-Reliability-Pillar": {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapAWSWellArchitectedComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toAWSWellArchitectedAccordionItems(data, scanId),
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
+  },
+  "KISA-ISMS-P": {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapKISAComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toKISAAccordionItems(data, scanId),
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(KISACustomDetails, { requirement }),
+  },
+  "MITRE-ATTACK": {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapMITREComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toMITREAccordionItems(data, scanId),
+    getTopFailedSections: (mappedData) => getMITRETopFailedSections(mappedData),
+    calculateCategoryHeatmapData: (data) => calculateMITRECategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(MITRECustomDetails, { requirement }),
+  },
+  ProwlerThreatScore: {
+    mapComplianceData: (attributesData, requirementsData, filter) =>
+      mapThetaComplianceData(attributesData, requirementsData, filter),
+    toAccordionItems: (data, scanId) => toThetaAccordionItems(data, scanId),
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (complianceData: Framework[]) =>
+      calculateCategoryHeatmapData(complianceData),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(ThreatCustomDetails, { requirement }),
+  },
+};
+
 const defaultMapper: ComplianceMapper = {
-  mapComplianceData: mapGenericComplianceData,
-  toAccordionItems: toGenericAccordionItems,
+  mapComplianceData: (attributesData, requirementsData, filter) =>
+    mapGenericComplianceData(attributesData, requirementsData, filter),
+  toAccordionItems: (data, scanId) => toGenericAccordionItems(data, scanId),
   getTopFailedSections,
   calculateCategoryHeatmapData: (data: Framework[]) =>
     calculateCategoryHeatmapData(data),
@@ -90,78 +173,4 @@ export const getComplianceMapper = (framework?: string): ComplianceMapper => {
   }
 
   return complianceMappers[framework] || defaultMapper;
-};
-
-export const complianceMappers: Record<string, ComplianceMapper> = {
-  ENS: {
-    mapComplianceData: mapENSComplianceData,
-    toAccordionItems: toENSAccordionItems,
-    getTopFailedSections,
-    calculateCategoryHeatmapData: (data: Framework[]) =>
-      calculateCategoryHeatmapData(data),
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(ENSCustomDetails, { requirement }),
-  },
-  ISO27001: {
-    mapComplianceData: mapISOComplianceData,
-    toAccordionItems: toISOAccordionItems,
-    getTopFailedSections,
-    calculateCategoryHeatmapData: (data: Framework[]) =>
-      calculateCategoryHeatmapData(data),
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(ISOCustomDetails, { requirement }),
-  },
-  CIS: {
-    mapComplianceData: mapCISComplianceData,
-    toAccordionItems: toCISAccordionItems,
-    getTopFailedSections,
-    calculateCategoryHeatmapData: (data: Framework[]) =>
-      calculateCategoryHeatmapData(data),
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(CISCustomDetails, { requirement }),
-  },
-  "AWS-Well-Architected-Framework-Security-Pillar": {
-    mapComplianceData: mapAWSWellArchitectedComplianceData,
-    toAccordionItems: toAWSWellArchitectedAccordionItems,
-    getTopFailedSections,
-    calculateCategoryHeatmapData: (data: Framework[]) =>
-      calculateCategoryHeatmapData(data),
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
-  },
-  "AWS-Well-Architected-Framework-Reliability-Pillar": {
-    mapComplianceData: mapAWSWellArchitectedComplianceData,
-    toAccordionItems: toAWSWellArchitectedAccordionItems,
-    getTopFailedSections,
-    calculateCategoryHeatmapData: (data: Framework[]) =>
-      calculateCategoryHeatmapData(data),
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
-  },
-  "KISA-ISMS-P": {
-    mapComplianceData: mapKISAComplianceData,
-    toAccordionItems: toKISAAccordionItems,
-    getTopFailedSections,
-    calculateCategoryHeatmapData: (data: Framework[]) =>
-      calculateCategoryHeatmapData(data),
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(KISACustomDetails, { requirement }),
-  },
-  "MITRE-ATTACK": {
-    mapComplianceData: mapMITREComplianceData,
-    toAccordionItems: toMITREAccordionItems,
-    getTopFailedSections: getMITRETopFailedSections,
-    calculateCategoryHeatmapData: calculateMITRECategoryHeatmapData,
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(MITRECustomDetails, { requirement }),
-  },
-  ProwlerThreatScore: {
-    mapComplianceData: mapThetaComplianceData,
-    toAccordionItems: toThetaAccordionItems,
-    getTopFailedSections,
-    calculateCategoryHeatmapData: (complianceData: Framework[]) =>
-      calculateCategoryHeatmapData(complianceData),
-    getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(ThreatCustomDetails, { requirement }),
-  },
 };

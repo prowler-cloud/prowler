@@ -1,3 +1,5 @@
+"use client";
+
 import { Divider, Tooltip } from "@nextui-org/react";
 
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";

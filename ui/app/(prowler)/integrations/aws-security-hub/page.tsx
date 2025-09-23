@@ -6,18 +6,24 @@ import { SecurityHubIntegrationsManager } from "@/components/integrations/securi
 import { ContentLayout } from "@/components/ui";
 
 interface SecurityHubIntegrationsProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function SecurityHubIntegrations({
   searchParams,
 }: SecurityHubIntegrationsProps) {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-  const sort = searchParams.sort?.toString();
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt(resolvedSearchParams.page?.toString() || "1", 10);
+  const pageSize = parseInt(
+    resolvedSearchParams.pageSize?.toString() || "10",
+    10,
+  );
+  const sort = resolvedSearchParams.sort?.toString();
 
   const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    Object.entries(resolvedSearchParams).filter(([key]) =>
+      key.startsWith("filter["),
+    ),
   );
 
   const urlSearchParams = new URLSearchParams();

@@ -17,9 +17,10 @@ import { InvitationProps, Role, SearchParamsProps } from "@/types";
 export default async function Invitations({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
     <ContentLayout title="Invitations" icon="ci:users">
@@ -31,7 +32,7 @@ export default async function Invitations({
       <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );

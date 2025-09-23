@@ -27,7 +27,7 @@ export const EditScanForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       scanId: scanId,
-      scanName: scanName,
+      scanName: scanName || "",
     },
   });
 
@@ -69,7 +69,7 @@ export const EditScanForm = ({
         className="flex flex-col space-y-4"
       >
         <div className="text-md">
-          Current name: <span className="font-bold">{scanName}</span>
+          Current name: <span className="font-bold">{scanName || "Unnamed"}</span>
         </div>
         <div>
           <CustomInput
@@ -78,7 +78,7 @@ export const EditScanForm = ({
             type="text"
             label="Name"
             labelPlacement="outside"
-            placeholder={scanName}
+            placeholder={scanName || "Enter scan name"}
             variant="bordered"
             isRequired={false}
             isInvalid={!!form.formState.errors.scanName}

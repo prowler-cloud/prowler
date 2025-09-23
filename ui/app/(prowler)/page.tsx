@@ -37,12 +37,13 @@ function pickFilterParams(
   );
 }
 
-export default function Home({
+export default async function Home({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
   return (
     <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
       <FilterControls providers mutedFindings showClearButton={false} />
@@ -56,13 +57,13 @@ export default function Home({
 
         <div className="col-span-12 lg:col-span-4">
           <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
-            <SSRFindingsBySeverity searchParams={searchParams} />
+            <SSRFindingsBySeverity searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
 
         <div className="col-span-12 lg:col-span-4">
           <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-            <SSRFindingsByStatus searchParams={searchParams} />
+            <SSRFindingsByStatus searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
 
@@ -72,7 +73,7 @@ export default function Home({
             key={searchParamsKey}
             fallback={<SkeletonTableNewFindings />}
           >
-            <SSRDataNewFindingsTable searchParams={searchParams} />
+            <SSRDataNewFindingsTable searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
       </div>

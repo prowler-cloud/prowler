@@ -1,7 +1,13 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useFormState } from "react-dom";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { z } from "zod";
 
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
@@ -110,7 +116,7 @@ export const SamlConfigForm = ({
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   samlConfig?: any;
 }) => {
-  const [state, formAction, isPending] = useFormState(
+  const [state, formAction, isPending] = useActionState(
     samlConfig?.id ? updateSamlConfig : createSamlConfig,
     null,
   );

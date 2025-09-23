@@ -33,13 +33,15 @@ import { FindingProps, SearchParamsProps } from "@/types/components";
 export default async function Findings({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
-  const { filters, query } = extractFiltersAndQuery(searchParams);
+  const resolvedSearchParams = await searchParams;
+  const { searchParamsKey, encodedSort } =
+    extractSortAndKey(resolvedSearchParams);
+  const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
   const [metadataInfoData, providersData, scansData] = await Promise.all([
     (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
@@ -94,7 +96,7 @@ export default async function Findings({
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );

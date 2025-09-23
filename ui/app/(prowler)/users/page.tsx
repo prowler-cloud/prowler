@@ -13,9 +13,10 @@ import { Role, SearchParamsProps, UserProps } from "@/types";
 export default async function Users({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
     <ContentLayout title="Users" icon="ci:users">
@@ -27,7 +28,7 @@ export default async function Users({
       <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );

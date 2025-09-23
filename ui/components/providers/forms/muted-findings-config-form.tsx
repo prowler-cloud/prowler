@@ -1,8 +1,13 @@
 "use client";
 
 import { Textarea } from "@nextui-org/react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   createMutedFindingsConfig,
@@ -45,7 +50,7 @@ export const MutedFindingsConfigForm = ({
   }>({ isValid: true });
   const [hasUserStartedTyping, setHasUserStartedTyping] = useState(false);
 
-  const [state, formAction, isPending] = useFormState<
+  const [state, formAction, isPending] = useActionState<
     MutedFindingsConfigActionState,
     FormData
   >(config ? updateMutedFindingsConfig : createMutedFindingsConfig, null);

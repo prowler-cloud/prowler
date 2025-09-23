@@ -2,12 +2,8 @@
 
 import { z } from "zod";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib/helper";
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getAllTenants = async () => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -41,7 +37,7 @@ const editTenantFormSchema = z
     path: ["name"],
   });
 
-export async function updateTenantName(prevState: any, formData: FormData) {
+export async function updateTenantName(_prevState: any, formData: FormData) {
   const headers = await getAuthHeaders({ contentType: true });
   const formDataObject = Object.fromEntries(formData);
   const validatedData = editTenantFormSchema.safeParse(formDataObject);

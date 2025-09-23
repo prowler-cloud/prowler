@@ -1,3 +1,5 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectItem } from "@nextui-org/react";
 import { MailIcon, ShieldIcon } from "lucide-react";

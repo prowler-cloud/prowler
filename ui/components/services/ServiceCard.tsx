@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardBody, Chip } from "@nextui-org/react";
 
 import { getAWSIcon, NotificationIcon, SuccessIcon } from "../icons";

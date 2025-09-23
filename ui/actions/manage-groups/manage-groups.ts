@@ -3,13 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ManageGroupPayload, ProviderGroupsResponse } from "@/types/components";
 
 export const getProviderGroups = async ({

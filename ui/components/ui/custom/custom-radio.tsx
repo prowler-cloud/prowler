@@ -1,3 +1,5 @@
+"use client";
+
 import { cn, useRadio, VisuallyHidden } from "@nextui-org/react";
 import React from "react";
 

@@ -9,19 +9,35 @@
   },
   {
     "section": "dependencies",
+    "name": "@langchain/core",
+    "from": "0.3.77",
+    "to": "0.3.77",
+    "strategy": "installed",
+    "generatedAt": "2025-09-23T10:22:08.630Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/langgraph",
+    "from": "0.4.9",
+    "to": "0.4.9",
+    "strategy": "installed",
+    "generatedAt": "2025-09-23T10:22:08.630Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@langchain/langgraph-supervisor",
     "from": "0.0.12",
-    "to": "0.0.12",
+    "to": "0.0.20",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/openai",
     "from": "0.6.9",
-    "to": "0.6.9",
+    "to": "0.5.18",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
@@ -259,9 +275,9 @@
     "section": "dependencies",
     "name": "next",
     "from": "14.2.32",
-    "to": "14.2.32",
+    "to": "15.5.3",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
@@ -291,17 +307,17 @@
     "section": "dependencies",
     "name": "react",
     "from": "18.3.1",
-    "to": "18.3.1",
+    "to": "19.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
     "name": "react-dom",
     "from": "18.3.1",
-    "to": "18.3.1",
+    "to": "19.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
@@ -427,17 +443,17 @@
     "section": "devDependencies",
     "name": "@types/react",
     "from": "18.3.3",
-    "to": "18.3.3",
+    "to": "19.1.13",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "devDependencies",
     "name": "@types/react-dom",
     "from": "18.3.0",
-    "to": "18.3.0",
+    "to": "19.1.9",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "devDependencies",
@@ -473,6 +489,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "babel-plugin-react-compiler",
+    "from": "19.1.0-rc.3",
+    "to": "19.1.0-rc.3",
+    "strategy": "installed",
+    "generatedAt": "2025-09-23T10:22:08.630Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "eslint",
     "from": "8.57.1",
     "to": "8.57.1",
@@ -483,9 +507,9 @@
     "section": "devDependencies",
     "name": "eslint-config-next",
     "from": "14.2.32",
-    "to": "14.2.32",
+    "to": "15.5.3",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "devDependencies",

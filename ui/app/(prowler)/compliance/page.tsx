@@ -22,12 +22,15 @@ import { ComplianceOverviewData } from "@/types/compliance";
 export default async function Compliance({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    Object.entries(resolvedSearchParams).filter(([key]) =>
+      key.startsWith("filter["),
+    ),
   );
 
   const scansData = await getScans({
@@ -72,7 +75,7 @@ export default async function Compliance({
     .filter(Boolean) as ExpandedScanData[];
 
   const selectedScanId =
-    searchParams.scanId || expandedScansData[0]?.id || null;
+    resolvedSearchParams.scanId || expandedScansData[0]?.id || null;
   const query = (filters["filter[search]"] as string) || "";
 
   // Find the selected scan
@@ -112,7 +115,7 @@ export default async function Compliance({
           />
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid
-              searchParams={searchParams}
+              searchParams={resolvedSearchParams}
               selectedScan={selectedScanData}
             />
           </Suspense>

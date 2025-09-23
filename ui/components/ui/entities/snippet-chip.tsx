@@ -1,3 +1,5 @@
+"use client";
+
 import { cn, Snippet, Tooltip } from "@nextui-org/react";
 import React from "react";
 

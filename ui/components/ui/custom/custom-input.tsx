@@ -117,6 +117,7 @@ export const CustomInput = <T extends FieldValues>({
               isDisabled={isDisabled}
               isReadOnly={isReadOnly}
               {...field}
+              value={field.value ?? ""}
             />
           </FormControl>
           {showFormMessage && (

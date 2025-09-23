@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, handleApiResponse } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getFindings = async ({
   page = 1,

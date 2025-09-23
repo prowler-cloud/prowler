@@ -15,20 +15,21 @@ import { ColumnGroups } from "@/components/manage-groups/table";
 import { DataTable } from "@/components/ui/table";
 import { ProviderProps, Role, SearchParamsProps } from "@/types";
 
-export default function ManageGroupsPage({
+export default async function ManageGroupsPage({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams);
-  const providerGroupId = searchParams.groupId;
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams);
+  const providerGroupId = resolvedSearchParams.groupId;
 
   return (
     <div className="grid min-h-[70vh] grid-cols-1 items-center justify-center gap-4 md:grid-cols-12">
       <div className="col-span-1 flex justify-end md:col-span-4">
         <Suspense key={searchParamsKey} fallback={<SkeletonManageGroups />}>
           {providerGroupId ? (
-            <SSRDataEditGroup searchParams={searchParams} />
+            <SSRDataEditGroup searchParams={resolvedSearchParams} />
           ) : (
             <div className="flex flex-col">
               <h1 className="mb-2 text-xl font-medium" id="getting-started">
@@ -50,7 +51,7 @@ export default function ManageGroupsPage({
         <Spacer y={8} />
         <h3 className="mb-4 text-sm font-bold uppercase">Provider Groups</h3>
         <Suspense key={searchParamsKey} fallback={<SkeletonManageGroups />}>
-          <SSRDataTable searchParams={searchParams} />
+          <SSRDataTable searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
     </div>

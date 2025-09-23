@@ -1,3 +1,5 @@
+"use client";
+
 import { Button, CircularProgress } from "@nextui-org/react";
 import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";

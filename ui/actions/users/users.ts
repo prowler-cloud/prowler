@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import {
-  apiBaseUrl,
-  getAuthHeaders,
   handleApiError,
   handleApiResponse,
-} from "@/lib";
+  handleApiResponseWithRevalidation,
+} from "@/lib/server-actions-helper";
 
 export const getUsers = async ({
   page = 1,
@@ -40,7 +40,7 @@ export const getUsers = async ({
       headers,
     });
 
-    return handleApiResponse(users, "/users");
+    return handleApiResponse(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     return undefined;
@@ -85,7 +85,7 @@ export const updateUser = async (formData: FormData) => {
       }),
     });
 
-    return handleApiResponse(response, "/users");
+    return handleApiResponseWithRevalidation(response, "/users");
   } catch (error) {
     handleApiError(error);
   }
@@ -120,7 +120,7 @@ export const updateUserRole = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    return handleApiResponse(response, "/users");
+    return handleApiResponseWithRevalidation(response, "/users");
   } catch (error) {
     handleApiError(error);
   }
@@ -178,7 +178,7 @@ export const getUserInfo = async () => {
       throw new Error(`Failed to fetch user data: ${response.statusText}`);
     }
 
-    return handleApiResponse(response, "/profile");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching profile:", error);
     return undefined;

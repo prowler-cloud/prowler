@@ -1,7 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect } from "react";
-import { useFormState } from "react-dom";
+import { Dispatch, SetStateAction, useActionState, useEffect } from "react";
 
 import { updateTenantName } from "@/actions/users/tenants";
 import { useToast } from "@/components/ui";
@@ -17,7 +16,7 @@ export const EditTenantForm = ({
   tenantName?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const [state, formAction] = useFormState(updateTenantName, null);
+  const [state, formAction] = useActionState(updateTenantName, null);
   const { toast } = useToast();
 
   useEffect(() => {

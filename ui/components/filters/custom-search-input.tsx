@@ -1,3 +1,5 @@
+"use client";
+
 import { Input } from "@nextui-org/react";
 import debounce from "lodash.debounce";
 import { SearchIcon, XCircle } from "lucide-react";
