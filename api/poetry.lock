@@ -6221,8 +6221,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-<<<<<<< HEAD
-content-hash = "6749a0794e7baeb221c8acc43d2f51e5a2eaf6d2b2731c77fbad834caf445acb"
-=======
-content-hash = "91058a14382b76136a82f45624a30aece7a6d77c8b36c290bb4c40ea60c8850b"
->>>>>>> a55ac266b (chore(django): update django to 5.1.12 due to security problems (#8693))
+content-hash = "0c8181f9bfd77a9dbe0e952cbbcafabbbde53561c56da5795bc5db45556f848f"

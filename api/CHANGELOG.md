@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.14.0] (Prowler UNRELEASED)
 
 ### Added
@@ -23,7 +21,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> a55ac266b (chore(django): update django to 5.1.12 due to security problems (#8693))
 ## [1.13.0] (Prowler 5.12.0)
 
 ### Added
