@@ -940,7 +940,3 @@ def generate_server_file():
 
     # Generate and save the MCP server
     generator.save_to_file(str(Path(__file__).parent.parent / "server.py"))
-
-
-if __name__ == "__main__":
-    generate_server_file()
