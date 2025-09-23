@@ -911,7 +911,7 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
         ]
         extra_kwargs = {
             "alias": {
-                "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",  # For some reason this is not working
+                "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
             },
             "provider": {
                 "help_text": "Type of provider to create.",
@@ -1115,7 +1115,8 @@ class ResourceSerializer(RLSSerializer):
     failed_findings_count = serializers.IntegerField(read_only=True)
 
     findings = SerializerMethodResourceRelatedField(
-        many=True, read_only=True, source="findings", method_name="get_findings"
+        many=True,
+        read_only=True,
     )
 
     class Meta:
