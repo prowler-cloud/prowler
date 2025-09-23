@@ -21,9 +21,6 @@ from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 
-# from drf_spectacular.types import OpenApiTypes
-# from drf_spectacular.utils import OpenApiParameter
-
 
 class CustomOAuth2Client(OAuth2Client):
     def __init__(self, client_id, secret, *args, **kwargs):
@@ -364,12 +361,3 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
                 integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
                 integration.save()
             raise jira_auth_error
-
-
-# OpenAPI parameters
-
-FIELDS_PARAMETER_DESCRIPTION = (
-    'Return only the specified fields in the response. If not set, all fields are returned. Provide a comma-separated list, e.g. "field1,field2,field3".',
-)
-
-INSERTED_AT_FILTER_PARAMETER_DESCRIPTION = "Filter by exact date when the resource was inserted into the database. The accepted format is YYYY-MM-DD."
