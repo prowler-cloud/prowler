@@ -148,3 +148,7 @@ cython_debug/
 
 # uv
 uv.lock
+
+# Prowler App MCP server
+prowler_mcp_server/prowler_app/server.py
+prowler_mcp_server/prowler_app/utils/schema.yaml
