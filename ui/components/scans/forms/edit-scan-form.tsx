@@ -69,7 +69,8 @@ export const EditScanForm = ({
         className="flex flex-col space-y-4"
       >
         <div className="text-md">
-          Current name: <span className="font-bold">{scanName || "Unnamed"}</span>
+          Current name:{" "}
+          <span className="font-bold">{scanName || "Unnamed"}</span>
         </div>
         <div>
           <CustomInput

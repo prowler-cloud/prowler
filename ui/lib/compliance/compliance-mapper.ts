@@ -69,11 +69,20 @@ export interface ComplianceMapper {
   getDetailsComponent: (requirement: Requirement) => React.ReactNode;
 }
 
-export const complianceMappers: Record<string, ComplianceMapper> = {
+const getDefaultMapper = (): ComplianceMapper => ({
+  mapComplianceData: mapGenericComplianceData,
+  toAccordionItems: toGenericAccordionItems,
+  getTopFailedSections,
+  calculateCategoryHeatmapData: (data: Framework[]) =>
+    calculateCategoryHeatmapData(data),
+  getDetailsComponent: (requirement: Requirement) =>
+    React.createElement(GenericCustomDetails, { requirement }),
+});
+
+const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
   ENS: {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapENSComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toENSAccordionItems(data, scanId),
+    mapComplianceData: mapENSComplianceData,
+    toAccordionItems: toENSAccordionItems,
     getTopFailedSections,
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
@@ -81,9 +90,8 @@ export const complianceMappers: Record<string, ComplianceMapper> = {
       React.createElement(ENSCustomDetails, { requirement }),
   },
   ISO27001: {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapISOComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toISOAccordionItems(data, scanId),
+    mapComplianceData: mapISOComplianceData,
+    toAccordionItems: toISOAccordionItems,
     getTopFailedSections,
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
@@ -91,9 +99,8 @@ export const complianceMappers: Record<string, ComplianceMapper> = {
       React.createElement(ISOCustomDetails, { requirement }),
   },
   CIS: {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapCISComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toCISAccordionItems(data, scanId),
+    mapComplianceData: mapCISComplianceData,
+    toAccordionItems: toCISAccordionItems,
     getTopFailedSections,
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
@@ -101,9 +108,8 @@ export const complianceMappers: Record<string, ComplianceMapper> = {
       React.createElement(CISCustomDetails, { requirement }),
   },
   "AWS-Well-Architected-Framework-Security-Pillar": {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapAWSWellArchitectedComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toAWSWellArchitectedAccordionItems(data, scanId),
+    mapComplianceData: mapAWSWellArchitectedComplianceData,
+    toAccordionItems: toAWSWellArchitectedAccordionItems,
     getTopFailedSections,
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
@@ -111,9 +117,8 @@ export const complianceMappers: Record<string, ComplianceMapper> = {
       React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
   },
   "AWS-Well-Architected-Framework-Reliability-Pillar": {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapAWSWellArchitectedComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toAWSWellArchitectedAccordionItems(data, scanId),
+    mapComplianceData: mapAWSWellArchitectedComplianceData,
+    toAccordionItems: toAWSWellArchitectedAccordionItems,
     getTopFailedSections,
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
@@ -121,9 +126,8 @@ export const complianceMappers: Record<string, ComplianceMapper> = {
       React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
   },
   "KISA-ISMS-P": {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapKISAComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toKISAAccordionItems(data, scanId),
+    mapComplianceData: mapKISAComplianceData,
+    toAccordionItems: toKISAAccordionItems,
     getTopFailedSections,
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
@@ -131,36 +135,23 @@ export const complianceMappers: Record<string, ComplianceMapper> = {
       React.createElement(KISACustomDetails, { requirement }),
   },
   "MITRE-ATTACK": {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapMITREComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toMITREAccordionItems(data, scanId),
-    getTopFailedSections: (mappedData) => getMITRETopFailedSections(mappedData),
-    calculateCategoryHeatmapData: (data) => calculateMITRECategoryHeatmapData(data),
+    mapComplianceData: mapMITREComplianceData,
+    toAccordionItems: toMITREAccordionItems,
+    getTopFailedSections: getMITRETopFailedSections,
+    calculateCategoryHeatmapData: calculateMITRECategoryHeatmapData,
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(MITRECustomDetails, { requirement }),
   },
   ProwlerThreatScore: {
-    mapComplianceData: (attributesData, requirementsData, filter) =>
-      mapThetaComplianceData(attributesData, requirementsData, filter),
-    toAccordionItems: (data, scanId) => toThetaAccordionItems(data, scanId),
+    mapComplianceData: mapThetaComplianceData,
+    toAccordionItems: toThetaAccordionItems,
     getTopFailedSections,
     calculateCategoryHeatmapData: (complianceData: Framework[]) =>
       calculateCategoryHeatmapData(complianceData),
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(ThreatCustomDetails, { requirement }),
   },
-};
-
-const defaultMapper: ComplianceMapper = {
-  mapComplianceData: (attributesData, requirementsData, filter) =>
-    mapGenericComplianceData(attributesData, requirementsData, filter),
-  toAccordionItems: (data, scanId) => toGenericAccordionItems(data, scanId),
-  getTopFailedSections,
-  calculateCategoryHeatmapData: (data: Framework[]) =>
-    calculateCategoryHeatmapData(data),
-  getDetailsComponent: (requirement: Requirement) =>
-    React.createElement(GenericCustomDetails, { requirement }),
-};
+});
 
 /**
  * Get the appropriate compliance mapper based on the framework name
@@ -169,8 +160,9 @@ const defaultMapper: ComplianceMapper = {
  */
 export const getComplianceMapper = (framework?: string): ComplianceMapper => {
   if (!framework) {
-    return defaultMapper;
+    return getDefaultMapper();
   }
 
-  return complianceMappers[framework] || defaultMapper;
+  const complianceMappers = getComplianceMappers();
+  return complianceMappers[framework] || getDefaultMapper();
 };

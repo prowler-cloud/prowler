@@ -106,13 +106,9 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   };
 
   return (
-    <Card
-      fullWidth
-      isHoverable
-      shadow="sm"
-    >
+    <Card fullWidth isHoverable shadow="sm">
       <CardBody
-        className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800 cursor-pointer"
+        className="flex cursor-pointer flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800"
         onClick={navigateToDetail}
       >
         <div className="flex w-full items-center space-x-4">
@@ -147,7 +143,16 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 Passing Requirements
               </small>
 
-              <div onClick={(e) => e.stopPropagation()}>
+              <div
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
                 <DownloadIconButton
                   paramId={complianceId}
                   onDownload={handleDownload}
