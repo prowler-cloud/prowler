@@ -1,12 +1,12 @@
 # Renaming Checks in Prowler
 
-Sometimes it's necessary to rename a check in Prowler, whether to align with other Check IDs structure, fix a typo, or because the logic of the check has changed and requires a new name.
+To rename a check in Prowler, follow these steps when aligning with Check ID structure, fixing typos, or updating check logic that requires a new name.
 
-In all these cases, when the Check ID is changed, it's necessary to update the following files:
+When changing a Check ID, update the following files:
 
-## Check Folder
+## Update Check Folder Structure
 
-First, you need to rename the check folder with the new check name.
+First, rename the check folder with the new check name.
 
 **Path:** `prowler/providers/<provider>/services/<service>/<check_name>`
 
@@ -19,7 +19,7 @@ prowler/providers/aws/services/inspector2/inspector2_findings_exist/
 prowler/providers/aws/services/inspector2/inspector2_active_findings_exist/
 ```
 
-After that, you need to rename the file that contains the check logic. Inside that file, you also need to rename the class name to match the new check name.
+Next, rename the file that contains the check logic. Inside that file, also rename the class name to match the new check name.
 
 **Path:** `prowler/providers/<provider>/services/<service>/<check_name>/<check_name>.py`
 
@@ -38,7 +38,7 @@ class inspector2_active_findings_exist(Check):
         # ... check logic ...
 ```
 
-Then, rename the file that contains the check metadata. Inside that file, you need to add the old check name as an alias in the `CheckAliases` field and modify the `CheckID` to the new check name.
+Then, rename the file that contains the check metadata. Inside that file, add the old check name as an alias in the `CheckAliases` field and modify the `CheckID` to the new check name.
 
 **Path:** `prowler/providers/<provider>/services/<service>/<check_name>/<check_name>.metadata.json`
 
@@ -79,9 +79,9 @@ Then, rename the file that contains the check metadata. Inside that file, you ne
 }
 ```
 
-## Tests Folder
+## Update Test Files
 
-Second, you need to rename the tests folder with the new check name.
+Second, rename the tests folder with the new check name.
 
 **Path:** `tests/providers/<provider>/services/<service>/<check_name>`
 
@@ -94,7 +94,7 @@ tests/providers/aws/services/inspector2/inspector2_findings_exist/
 tests/providers/aws/services/inspector2/inspector2_active_findings_exist/
 ```
 
-After that, you need to rename the test file that contains all the unit tests. Inside that file, you need to rename all appearances of the old check name to the new check name.
+Next, rename the test file that contains all the unit tests. Inside that file, rename all appearances of the old check name to the new check name.
 
 **Path:** `tests/providers/<provider>/services/<service>/<check_name>/<check_name>_test.py`
 
@@ -125,7 +125,7 @@ class Test_inspector2_active_findings_exist:
         # ... test logic ...
 ```
 
-**Important:** You need to update all references to the old check name in the test file, including:
+**Important:** Update all references to the old check name in the test file, including:
 - Import statements at the top of the file
 - Class name in the test class
 - Any function calls to the check
@@ -171,9 +171,9 @@ class Test_inspector2_active_findings_exist:
             assert "No active findings found" in result[0].status_extended
 ```
 
-## Compliance Folder
+## Update Compliance Mappings
 
-Finally, it's needed to rename all the appearances of the old check name to the new check name inside any type of compliance where the check is mapped.
+Finally, rename all appearances of the old check name to the new check name inside any compliance framework where the check is mapped.
 
 - `prowler/compliance/<service>/<compliance_where_the_check_is_mapped>.json`
 
@@ -204,6 +204,6 @@ Finally, it's needed to rename all the appearances of the old check name to the 
 }
 ```
 
-Maybe the dev compliance file that contains examples of compliance could have an example of the check that you are renaming, if that is the case it's needed to modify this file too.
+The development compliance file may contain examples of the check being renamed. If so, modify this file as well:
 
 - `api/src/backend/api/fixtures/dev/7_dev_compliance.json`
