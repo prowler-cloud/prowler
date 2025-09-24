@@ -3,7 +3,7 @@ import {
   ModalBody,
   ModalContent,
   ModalHeader
-} from "@nextui-org/modal";
+} from "@heroui/modal";
 
 import React, { ReactNode } from "react";
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/card";
-import { Divider } from "@nextui-org/divider";
-import { Snippet } from "@nextui-org/snippet";
+import { Card, CardBody } from "@heroui/card";
+import { Divider } from "@heroui/divider";
+import { Snippet } from "@heroui/snippet";
 
 
 import { AddIcon } from "../icons";

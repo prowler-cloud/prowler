@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/card";
-import { Chip } from "@nextui-org/chip";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Chip } from "@heroui/chip";
 
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";

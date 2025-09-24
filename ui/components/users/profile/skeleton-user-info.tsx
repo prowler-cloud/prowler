@@ -1,5 +1,5 @@
-import { Card, CardBody } from "@nextui-org/card";
-import { Skeleton } from "@nextui-org/skeleton";
+import { Card, CardBody } from "@heroui/card";
+import { Skeleton } from "@heroui/skeleton";
 
 
 export const SkeletonUserInfo = () => {

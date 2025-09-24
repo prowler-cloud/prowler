@@ -1,4 +1,4 @@
-import { cn } from "@nextui-org/theme";
+import { cn } from "@heroui/theme";
 
 import * as React from "react";
 

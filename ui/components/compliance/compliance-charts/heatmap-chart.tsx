@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@nextui-org/theme";
+import { cn } from "@heroui/theme";
 
 import { useTheme } from "next-themes";
 import { useState } from "react";

@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/card";
-import { Progress } from "@nextui-org/progress";
+import { Card, CardBody } from "@heroui/card";
+import { Progress } from "@heroui/progress";
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";

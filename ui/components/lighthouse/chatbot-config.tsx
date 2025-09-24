@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem } from "@nextui-org/select";
-import { Spacer } from "@nextui-org/spacer";
+import { Select, SelectItem } from "@heroui/select";
+import { Spacer } from "@heroui/spacer";
 
 import { SaveIcon } from "lucide-react";
 import { useState } from "react";

@@ -1,5 +1,5 @@
 import { Icon } from "@iconify/react";
-import { Divider } from "@nextui-org/divider";
+import { Divider } from "@heroui/divider";
 
 import React from "react";
 

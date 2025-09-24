@@ -1,18 +1,18 @@
 "use client";
 
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger
-} from "@nextui-org/dropdown";
+} from "@heroui/dropdown";
 
 import {
   // DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
+} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";

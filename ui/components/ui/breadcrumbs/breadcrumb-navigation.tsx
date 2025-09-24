@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import { BreadcrumbItem, Breadcrumbs } from "@nextui-org/breadcrumbs";
+import { BreadcrumbItem, Breadcrumbs } from "@heroui/breadcrumbs";
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";

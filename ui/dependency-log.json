@@ -49,7 +49,7 @@
   },
   {
     "section": "dependencies",
-    "name": "@nextui-org/react",
+    "name": "@heroui/react",
     "from": "2.4.8",
     "to": "2.4.8",
     "strategy": "installed",
@@ -57,7 +57,7 @@
   },
   {
     "section": "dependencies",
-    "name": "@nextui-org/system",
+    "name": "@heroui/system",
     "from": "2.2.1",
     "to": "2.2.1",
     "strategy": "installed",
@@ -65,7 +65,7 @@
   },
   {
     "section": "dependencies",
-    "name": "@nextui-org/theme",
+    "name": "@heroui/theme",
     "from": "2.2.5",
     "to": "2.2.5",
     "strategy": "installed",

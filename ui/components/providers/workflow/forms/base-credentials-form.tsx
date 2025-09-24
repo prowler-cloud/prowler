@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider } from "@nextui-org/divider";
+import { Divider } from "@heroui/divider";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Control } from "react-hook-form";

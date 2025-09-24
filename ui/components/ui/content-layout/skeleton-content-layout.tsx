@@ -1,4 +1,4 @@
-import { Skeleton } from "@nextui-org/skeleton";
+import { Skeleton } from "@heroui/skeleton";
 
 
 export const SkeletonContentLayout = () => {

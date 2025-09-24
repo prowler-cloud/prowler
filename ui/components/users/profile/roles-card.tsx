@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader } from "@nextui-org/card";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 
 
 import { RoleData, RoleDetail } from "@/types/users";

@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@nextui-org/button";
-import { Checkbox, CheckboxGroup } from "@nextui-org/checkbox";
-import { Divider } from "@nextui-org/divider";
-import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
-import { ScrollShadow } from "@nextui-org/scroll-shadow";
+import { Button } from "@heroui/button";
+import { Checkbox, CheckboxGroup } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Popover, PopoverContent, PopoverTrigger } from "@heroui/popover";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 

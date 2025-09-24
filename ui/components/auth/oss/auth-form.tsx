@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Button } from "@nextui-org/button";
-import { Checkbox } from "@nextui-org/checkbox";
-import { Divider } from "@nextui-org/divider";
+import { Button } from "@heroui/button";
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";

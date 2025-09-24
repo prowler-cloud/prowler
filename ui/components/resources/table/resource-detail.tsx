@@ -1,7 +1,7 @@
 "use client";
 
-import { Snippet } from "@nextui-org/snippet";
-import { Spinner } from "@nextui-org/spinner";
+import { Snippet } from "@heroui/snippet";
+import { Spinner } from "@heroui/spinner";
 
 import { InfoIcon } from "lucide-react";
 import { useEffect, useState } from "react";

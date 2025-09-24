@@ -1,5 +1,5 @@
-import { Divider } from "@nextui-org/divider";
-import { Spacer } from "@nextui-org/spacer";
+import { Divider } from "@heroui/divider";
+import { Spacer } from "@heroui/spacer";
 
 import { redirect } from "next/navigation";
 import React, { Suspense } from "react";

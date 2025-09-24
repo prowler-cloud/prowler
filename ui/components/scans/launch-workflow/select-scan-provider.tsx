@@ -1,6 +1,6 @@
 "use client";
 
-import { Select, SelectItem } from "@nextui-org/select";
+import { Select, SelectItem } from "@heroui/select";
 
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 

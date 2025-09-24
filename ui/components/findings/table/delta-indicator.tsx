@@ -1,4 +1,4 @@
-import { Tooltip } from "@nextui-org/tooltip";
+import { Tooltip } from "@heroui/tooltip";
 
 
 import { CustomButton } from "@/components/ui/custom/custom-button";

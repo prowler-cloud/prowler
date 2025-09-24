@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/divider";
+import { Divider } from "@heroui/divider";
 
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";

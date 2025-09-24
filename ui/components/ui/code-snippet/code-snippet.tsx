@@ -1,4 +1,4 @@
-import { Snippet } from "@nextui-org/snippet";
+import { Snippet } from "@heroui/snippet";
 
 
 export const CodeSnippet = ({ value }: { value: string }) => (

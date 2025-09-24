@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/card";
-import { Divider } from "@nextui-org/divider";
+import { Card, CardBody } from "@heroui/card";
+import { Divider } from "@heroui/divider";
 
 
 import { DateWithTime, InfoField, SnippetChip } from "@/components/ui/entities";

@@ -40,14 +40,15 @@
   }
 
   .checkbox-update {
-    @apply mr-2 bg-background;
+     margin-right: 0.5rem;
+     background-color: var(--background);
   }
 }
 
 @layer components {
   .animate-download-icon polyline,
   .animate-download-icon line {
-    @apply animate-drop-arrow;
+    animation: dropArrow 0.6s ease-out infinite;
     transform-box: fill-box;
     transform-origin: center;
   }

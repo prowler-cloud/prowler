@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/divider";
+import { Divider } from "@heroui/divider";
 
 import { SaveIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";

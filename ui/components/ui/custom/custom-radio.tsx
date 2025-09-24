@@ -1,5 +1,5 @@
-import { cn } from "@nextui-org/theme";
-import { useRadio } from "@nextui-org/radio";
+import { cn } from "@heroui/theme";
+import { useRadio } from "@heroui/radio";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
 
 import React from "react";

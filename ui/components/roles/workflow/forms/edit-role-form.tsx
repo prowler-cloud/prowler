@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox } from "@nextui-org/checkbox";
-import { Divider } from "@nextui-org/divider";
-import { Tooltip } from "@nextui-org/tooltip";
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Tooltip } from "@heroui/tooltip";
 
 import { clsx } from "clsx";
 import { InfoIcon, SaveIcon } from "lucide-react";

@@ -1,7 +1,7 @@
 "use client";
 
-import { useSwitch } from "@nextui-org/switch";
-import type { SwitchProps } from "@nextui-org/switch";
+import { useSwitch } from "@heroui/switch";
+import type { SwitchProps } from "@heroui/switch";
 
 import { useIsSSR } from "@react-aria/ssr";
 import { VisuallyHidden } from "@react-aria/visually-hidden";

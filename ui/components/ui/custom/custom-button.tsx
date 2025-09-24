@@ -1,5 +1,5 @@
-import { Button } from "@nextui-org/button";
-import { CircularProgress } from "@nextui-org/progress";
+import { Button } from "@heroui/button";
+import { CircularProgress } from "@heroui/progress";
 
 import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Snippet } from "@nextui-org/snippet";
+import { Snippet } from "@heroui/snippet";
 
 
 import {

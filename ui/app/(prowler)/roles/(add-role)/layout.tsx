@@ -1,6 +1,6 @@
 import "@/styles/globals.css";
 
-import { Spacer } from "@nextui-org/spacer";
+import { Spacer } from "@heroui/spacer";
 
 import React from "react";
 

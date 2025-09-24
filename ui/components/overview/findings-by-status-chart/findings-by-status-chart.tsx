@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/card";
-import { Chip } from "@nextui-org/chip";
+import { Card, CardBody } from "@heroui/card";
+import { Chip } from "@heroui/chip";
 
 import { TrendingUp } from "lucide-react";
 import Link from "next/link";
@@ -115,7 +115,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
     {
       findings: "Empty",
       number: 1,
-      fill: "hsl(var(--nextui-default-200))",
+      fill: "hsl(var(--heroui-default-200))",
     },
   ];
 

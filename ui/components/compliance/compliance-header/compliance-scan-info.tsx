@@ -1,5 +1,5 @@
-import { Divider } from "@nextui-org/divider";
-import { Tooltip } from "@nextui-org/tooltip";
+import { Divider } from "@heroui/divider";
+import { Tooltip } from "@heroui/tooltip";
 
 
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";

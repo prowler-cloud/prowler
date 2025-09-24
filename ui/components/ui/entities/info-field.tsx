@@ -1,4 +1,4 @@
-import { Tooltip } from "@nextui-org/tooltip";
+import { Tooltip } from "@heroui/tooltip";
 
 import clsx from "clsx";
 import { InfoIcon } from "lucide-react";

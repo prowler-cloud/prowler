@@ -1,6 +1,6 @@
-import { cn } from "@nextui-org/theme";
-import { Snippet } from "@nextui-org/snippet";
-import { Tooltip } from "@nextui-org/tooltip";
+import { cn } from "@heroui/theme";
+import { Snippet } from "@heroui/snippet";
+import { Tooltip } from "@heroui/tooltip";
 
 import React from "react";
 

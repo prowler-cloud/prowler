@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider } from "@nextui-org/divider";
+import { Divider } from "@heroui/divider";
 
 import { Ellipsis, LogOut } from "lucide-react";
 import Link from "next/link";

@@ -1,5 +1,5 @@
 "use client";
-import { Select, SelectItem } from "@nextui-org/select";
+import { Select, SelectItem } from "@heroui/select";
 
 
 const accounts = [

@@ -1,4 +1,4 @@
-import { Select, SelectItem } from "@nextui-org/select";
+import { Select, SelectItem } from "@heroui/select";
 
 
 import { ProviderType, ScanProps } from "@/types";

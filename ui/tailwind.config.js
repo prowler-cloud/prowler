@@ -1,4 +1,4 @@
-const { nextui } = require("@nextui-org/theme");
+const { heroui } = require("@heroui/theme");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -6,7 +6,7 @@ module.exports = {
   content: [
     "./components/**/*.{ts,jsx,tsx,mdx}",
     "./app/**/*.{ts,jsx,tsx,mdx}",
-    "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   prefix: "",
   theme: {
@@ -189,7 +189,7 @@ module.exports = {
   plugins: [
     require("tailwindcss-animate"),
     require("@tailwindcss/typography"),
-    nextui({
+    heroui({
       themes: {
         dark: {
           colors: {

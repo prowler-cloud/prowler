@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@nextui-org/button";
-import { Input } from "@nextui-org/input";
-import { Select, SelectItem } from "@nextui-org/select";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
 
 import { CheckSquare, Search, Square } from "lucide-react";
 import { useMemo, useState } from "react";

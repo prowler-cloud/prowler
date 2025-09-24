@@ -1,6 +1,6 @@
 "use client";
 
-import { Spacer } from "@nextui-org/spacer";
+import { Spacer } from "@heroui/spacer";
 
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";

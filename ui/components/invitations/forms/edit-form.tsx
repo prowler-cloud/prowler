@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem } from "@nextui-org/select";
+import { Select, SelectItem } from "@heroui/select";
 
 import { MailIcon, ShieldIcon } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
