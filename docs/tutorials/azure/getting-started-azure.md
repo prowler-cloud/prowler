@@ -128,3 +128,8 @@ To scan a specific Azure subscription:
 prowler azure --subscription-ids <subscription-id>
 ```
 
+To scan multiple Azure subscriptions:
+
+```console
+prowler azure --subscription-ids <subscription-id1> <subscription-id2> <subscription-id3>
+```
