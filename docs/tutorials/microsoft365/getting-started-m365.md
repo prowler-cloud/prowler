@@ -1,43 +1,30 @@
-# Getting Started with M365 on Prowler Cloud/App
-
-Set up your M365 account to enable security scanning using Prowler Cloud/App.
+# Getting Started With Microsoft 365 on Prowler
 
 ???+ note "Government Cloud Support"
     Government cloud accounts or tenants (Microsoft 365 Government) are not currently supported, but we expect to add support for them in the near future.
 
-## Requirements
+## Prerequisites
 
-To configure your M365 account, you'll need:
+Configure authentication for Microsoft 365 by following the [Microsoft 365 Authentication](authentication.md) guide. This includes:
 
-1. Obtain a domain from the Entra ID portal.
+- Creating a Service Principal Application
+- Granting required Microsoft Graph API permissions
+- Setting up PowerShell module permissions (for full security coverage)
+- Assigning appropriate roles to users (if using user authentication)
 
-2. Access Prowler Cloud/App and add a new cloud provider `Microsoft 365`.
+## Prowler App
 
-3. Configure your M365 account:
+### Step 1: Obtain Domain ID
 
-    3.1 Create the Service Principal app.
+1. Go to the Entra ID portal, then search for `Domain` or go to Identity > Settings > Domain Names
 
-    3.2 Grant the required API permissions.
+    ![Search Domain Names](./img/search-domain-names.png)
 
-    3.3 Assign the required roles to your user.
+    ![Custom Domain Names](./img/custom-domain-names.png)
 
-4. Add the credentials to Prowler Cloud/App.
+2. Select the domain to use as unique identifier for Microsoft 365 account in Prowler App
 
-## Step 1: Obtain your Domain
-
-Go to the Entra ID portal, then you can search for `Domain` or go to Identity > Settings > Domain Names.
-
-![Search Domain Names](./img/search-domain-names.png)
-
-<br>
-
-![Custom Domain Names](./img/custom-domain-names.png)
-
-Once you are there just select the domain you want to use as unique identifier for your M365 account in Prowler Cloud/App.
-
----
-
-## Step 2: Access Prowler Cloud/App
+### Step 2: Access Prowler App
 
 1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
 2. Navigate to `Configuration` > `Cloud Providers`
@@ -56,213 +43,22 @@ Once you are there just select the domain you want to use as unique identifier f
 
     ![Add Domain ID](./img/add-domain-id.png)
 
----
+### Step 3: Add Credentials to Prowler App
 
-## Step 3: Configure your M365 account
-
-
-### Create the Service Principal app
-
-A Service Principal is required to grant Prowler the necessary privileges.
-
-1. Access **Microsoft Entra ID**
-
-    ![Overview of Microsoft Entra ID](./img/microsoft-entra-id.png)
-
-2. Navigate to `Applications` > `App registrations`
-
-    ![App Registration nav](./img/app-registration-menu.png)
-
-3. Click `+ New registration`, complete the form, and click `Register`
-
-    ![New Registration](./img/new-registration.png)
-
-4. Go to `Certificates & secrets` > `Client secrets` > `+ New client secret`
-
-    ![Certificate & Secrets nav](./img/certificates-and-secrets.png)
-
-5. Fill in the required fields and click `Add`, then copy the generated `value` (that value will be `AZURE_CLIENT_SECRET`)
-
-    ![New Client Secret](./img/new-client-secret.png)
-
-With this done you will have all the needed keys, summarized in the following table
-
-| Value | Description |
-|-------|-------------|
-| Client ID | Application (client) ID |
-| Client Secret | AZURE_CLIENT_SECRET |
-| Tenant ID | Directory (tenant) ID |
-
----
-
-### Grant required Graph API permissions
-
-Assign the following Microsoft Graph permissions:
-
-- `AuditLog.Read.All`: Required for Entra service.
-- `Directory.Read.All`: Required for all services.
-- `Policy.Read.All`: Required for all services.
-- `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-- `User.Read` (IMPORTANT: this is set as **delegated**): Required for the sign-in only if using user authentication.
-
-???+ note
-    You can replace `Directory.Read.All` with `Domain.Read.All` is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
-
-    > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
-
-Follow these steps to assign the permissions:
-
-1. Go to your App Registration > Select your Prowler App created before > click on `API permissions`
-
-    ![API Permission Page](./img/api-permissions-page.png)
-
-2. Click `+ Add a permission` > `Microsoft Graph` > `Application permissions`
-
-    ![Add API Permission](./img/add-app-api-permission.png)
-
-3. Search and select every permission below and once all are selected click on `Add permissions`:
-    - `AuditLog.Read.All`: Required for Entra service.
-    - `Directory.Read.All`
-    - `Policy.Read.All`
-    - `SharePointTenantSettings.Read.All`
-
-
-    ![Permission Screenshots](./img/directory-permission.png)
-
-    ![Application Permissions](./img/app-permissions.png)
-
----
-
-
-### Grant PowerShell modules permissions
-
-The permissions you need to grant depends on whether you are using user credentials or service principal to authenticate to the M365 modules.
-
-???+ warning "Warning"
-    Make sure you add the correct set of permissions for the authentication method you are using.
-
-
-#### If using application(service principal) authentication (Recommended)
-
-To grant the permissions for the PowerShell modules via application authentication, you need to add the necessary APIs to your app registration. All of this assignments are done through Entra ID.
-
-???+ warning "Warning"
-    You need to have a license that allows you to use the APIs.
-
-1. Add Exchange API:
-
-    - Search and select`Office 365 Exchange Online` API in **APIs my organization uses**.
-
-    ![Office 365 Exchange Online API](./img/search-exchange-api.png)
-
-    - Select `Exchange.ManageAsApp` permission and click on `Add permissions`.
-
-    ![Exchange.ManageAsApp Permission](./img/exchange-permission.png)
-
-    You also need to assign the `Global Reader` role to the app. For that go to `Roles and administrators` and in the `Administrative roles` section click `here` to go to the directory level assignment:
-
-    ![Roles and administrators](./img/here.png)
-
-    Once in the directory level assignment, search for `Global Reader` and click on it to open the assginments page of that role.
-
-    ![Global Reader Role](./img/global-reader-role.png)
-
-    Click on `Add assignments`, search for your app and click on `Assign`.
-
-    You have to select it as `Active` and click on `Assign` to assign the role to the app.
-
-    ![Assign Global Reader Role](./img/assign-global-reader-role.png)
-
-    For more information about the need of adding this role, see [Microsoft documentation](https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps#step-5-assign-microsoft-entra-roles-to-the-application). You can select any other role of the specified.
-
-2. Add Teams API:
-
-    - Search and select `Skype and Teams Tenant Admin API` API in **APIs my organization uses**.
-
-    ![Skype and Teams Tenant Admin API](./img/search-skype-teams-tenant-admin-api.png)
-
-    - Select `application_access` permission and click on `Add permissions`.
-
-    ![application_access Permission](./img/teams-permission.png)
-
-3. Click on `Grant admin consent for <your-tenant-name>` to grant admin consent.
-
-    ![Grant Admin Consent](./img/grant-external-api-permissions.png)
-
-    The final result of permission assignment should be this:
-
-    ![Final Permission Assignment](./img/final-permissions.png)
-
----
-
-#### If using user authentication
-
-This method is not recommended because it requires a user with MFA enabled and Microsoft will not allow MFA capable users to authenticate programmatically after 1st October 2025. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mandatory-multifactor-authentication?tabs=dotnet) for more information.
-
-???+ warning
-    Remember that if the user is newly created, you need to sign in with that account first, as Microsoft will prompt you to change the password. If you don’t complete this step, user authentication will fail because Microsoft marks the initial password as expired.
-
-
-1. Search and select:
-
-    - `User.Read`
-
-    ![Permission Screenshots](./img/directory-permission-delegated.png)
-
-2. Click `Add permissions`, then **grant admin consent**
-
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
-
-    The final result of permission assignment should be this:
-
-    ![Final Permission Assignment](./img/final-permissions-m365.png)
-
-3. Assign **required roles** to your **user**
-
-    Assign one of the following roles to your User:
-
-    - `Global Reader` (recommended): this allows you to read all roles needed.
-    - `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (here you only read so that's why we recomend that role).
-
-    Follow these steps to assign the role:
-
-    1. Go to Users > All Users > Click on the email for the user you will use
-
-        ![User Overview](./img/user-info-page.png)
-
-    2. Click `Assigned Roles`
-
-        ![User Roles](./img/user-role-page.png)
-
-    3. Click on `Add assignments`, then search and select:
-
-        - `Global Reader` This is the recommended, if you want to use the others just search for them
-
-        ![Global Reader Screenshots](./img/global-reader.png)
-
-    4. Click on next, then assign the role as `Active`, and click on `Assign` to grant admin consent
-
-        ![Grant Admin Consent for Role](./img/grant-admin-consent-for-role.png)
-
----
-
-## Step 4: Add credentials to Prowler Cloud/App
-
-1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
+1. Go to App Registration overview and copy the `Client ID` and `Tenant ID`
 
     ![App Overview](./img/app-overview.png)
 
-
-2. Go to Prowler Cloud/App and paste:
+2. Go to Prowler App and paste:
 
     - `Client ID`
     - `Tenant ID`
-    - `AZURE_CLIENT_SECRET` from earlier
+    - `AZURE_CLIENT_SECRET` from Service Principal setup
 
-    If you are using user authentication, also add:
+    If using user authentication, also add:
 
-    - `M365_USER` the user using the correct assigned domain, more info [here](../../tutorials/microsoft365/authentication.md#service-principal-and-user-credentials-authentication)
-    - `M365_PASSWORD` the password of the user
+    - `M365_USER` (email using assigned domain in tenant)
+    - `M365_PASSWORD` (user password)
 
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
 
@@ -273,3 +69,37 @@ This method is not recommended because it requires a user with MFA enabled and M
 4. Click `Launch Scan`
 
     ![Launch Scan M365](./img/launch-scan.png)
+
+---
+
+## Prowler CLI
+
+Use Prowler CLI to scan Microsoft 365 environments from the command line.
+
+### PowerShell Requirements
+
+PowerShell 7.4+ is required for full Microsoft 365 security coverage. Installation instructions are available in the [Authentication guide](authentication.md#supported-powershell-versions).
+
+### Authentication Options
+
+Choose an authentication method from the [Microsoft 365 Authentication](authentication.md) guide:
+
+- **Service Principal Application** (recommended): `--sp-env-auth`
+- **Service Principal with User Credentials**: `--env-auth`
+- **Interactive Browser Authentication**: `--browser-auth`
+
+### Basic Usage
+
+After configuring authentication, run a basic scan:
+
+```console
+prowler m365 --sp-env-auth
+```
+
+For comprehensive scans including PowerShell checks:
+
+```console
+prowler m365 --sp-env-auth --init-modules
+```
+
+---
