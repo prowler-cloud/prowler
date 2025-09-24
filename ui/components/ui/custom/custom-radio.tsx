@@ -1,7 +1,6 @@
-import { cn } from "@heroui/theme";
 import { useRadio } from "@heroui/radio";
+import { cn } from "@heroui/theme";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
-
 import React from "react";
 
 interface CustomRadioProps {
@@ -27,9 +26,9 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
     <Component
       {...getBaseProps()}
       className={cn(
-        "group inline-flex flex-row-reverse items-center justify-between tap-highlight-transparent hover:opacity-70 active:opacity-50",
-        "max-w-full cursor-pointer gap-4 rounded-lg border-2 border-default p-4",
-        "w-full hover:border-action data-[selected=true]:border-action",
+        "group tap-highlight-transparent inline-flex flex-row-reverse items-center justify-between hover:opacity-70 active:opacity-50",
+        "border-default max-w-full cursor-pointer gap-4 rounded-lg border-2 p-4",
+        "hover:border-action data-[selected=true]:border-action w-full",
       )}
     >
       <VisuallyHidden>

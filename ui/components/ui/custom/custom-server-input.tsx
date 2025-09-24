@@ -1,7 +1,6 @@
 "use client";
 
 import { Input } from "@heroui/input";
-
 import React from "react";
 
 interface CustomServerInputProps {

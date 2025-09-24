@@ -6,9 +6,8 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownSection,
-  DropdownTrigger
+  DropdownTrigger,
 } from "@heroui/dropdown";
-
 import {
   AddNoteBulkIcon,
   DeleteDocumentBulkIcon,
@@ -28,8 +27,7 @@ interface DataTableRowActionsProps<InvitationProps> {
   row: Row<InvitationProps>;
   roles?: { id: string; name: string }[];
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none shrink-0";
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<InvitationProps>({
   row,
@@ -70,7 +68,7 @@ export function DataTableRowActions<InvitationProps>({
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="dark:bg-prowler-blue-800 shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>

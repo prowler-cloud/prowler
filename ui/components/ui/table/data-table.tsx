@@ -59,7 +59,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large p-4 shadow-small dark:bg-prowler-blue-400">
+      <div className="rounded-large shadow-small dark:bg-prowler-blue-400 relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto p-4">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -110,7 +110,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       {metadata && (
-        <div className="flex w-full items-center space-x-2 py-4">
+        <div className="flex w-full items-center gap-2 py-4">
           <DataTablePagination
             metadata={metadata}
             disableScroll={disableScroll}

@@ -1,7 +1,6 @@
 "use client";
 
 import { Checkbox } from "@heroui/checkbox";
-
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 

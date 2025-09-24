@@ -1,7 +1,6 @@
 import "@/styles/globals.css";
 
 import { Spacer } from "@heroui/spacer";
-
 import React from "react";
 
 import { WorkflowSendInvite } from "@/components/invitations/workflow";

@@ -1,6 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectItem } from "@heroui/select";
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import { MailIcon, ShieldIcon } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -93,17 +92,17 @@ export const EditForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
-        <div className="flex flex-row justify-center space-x-4 rounded-lg bg-gray-50 p-3">
-          <div className="flex items-center text-small text-gray-600">
+        <div className="flex flex-row justify-center gap-4 rounded-lg bg-gray-50 p-3">
+          <div className="text-small flex items-center text-gray-600">
             <MailIcon className="mr-2 h-4 w-4" />
             <span className="text-gray-500">Email:</span>
             <span className="ml-2 font-semibold text-gray-900">
               {invitationEmail}
             </span>
           </div>
-          <div className="flex items-center text-small text-gray-600">
+          <div className="text-small flex items-center text-gray-600">
             <ShieldIcon className="mr-2 h-4 w-4" />
             <span className="text-gray-500">Role:</span>
             <span className="ml-2 font-semibold text-gray-900">
@@ -158,7 +157,7 @@ export const EditForm = ({
         </div>
         <input type="hidden" name="invitationId" value={invitationId} />
 
-        <div className="flex w-full justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"

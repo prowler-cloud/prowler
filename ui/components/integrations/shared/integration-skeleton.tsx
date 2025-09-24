@@ -2,7 +2,6 @@
 
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Skeleton } from "@heroui/skeleton";
-
 import { ReactNode } from "react";
 
 interface IntegrationSkeletonProps {
@@ -77,7 +76,7 @@ export const IntegrationSkeleton = ({
               <div className="flex flex-wrap gap-1">
                 <Skeleton className="h-6 w-16 rounded-full" />
                 <Skeleton className="h-6 w-20 rounded-full" />
-                <Skeleton className="w-18 h-6 rounded-full" />
+                <Skeleton className="h-6 w-18 rounded-full" />
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Skeleton className="h-3 w-32 rounded" />

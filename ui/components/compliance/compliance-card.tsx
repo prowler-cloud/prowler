@@ -2,7 +2,6 @@
 
 import { Card, CardBody } from "@heroui/card";
 import { Progress } from "@heroui/progress";
-
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
@@ -110,17 +109,17 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   return (
     <Card fullWidth isHoverable shadow="sm">
       <CardBody
-        className="flex cursor-pointer flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800"
+        className="dark:bg-prowler-blue-800 flex cursor-pointer flex-row items-center justify-between gap-4"
         onClick={navigateToDetail}
       >
-        <div className="flex w-full items-center space-x-4">
+        <div className="flex w-full items-center gap-4">
           <Image
             src={getComplianceIcon(title)}
             alt={`${title} logo`}
             className="h-10 w-10 min-w-10 rounded-md border border-gray-300 bg-white object-contain p-1"
           />
           <div className="flex w-full flex-col">
-            <h4 className="mb-1 text-small font-bold leading-5">
+            <h4 className="text-small mb-1 leading-5 font-bold">
               {formatTitle(title)}
               {version ? ` - ${version}` : ""}
             </h4>

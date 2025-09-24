@@ -2,7 +2,6 @@
 
 import { Snippet } from "@heroui/snippet";
 
-
 import {
   DateWithTime,
   EntityInfoShort,
@@ -36,8 +35,8 @@ const Section = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-    <h3 className="text-md font-medium text-gray-800 dark:text-prowler-theme-pale/90">
+  <div className="dark:bg-prowler-blue-400 flex flex-col gap-4 rounded-lg p-4 shadow">
+    <h3 className="text-md dark:text-prowler-theme-pale/90 font-medium text-gray-800">
       {title}
     </h3>
     {children}
@@ -109,7 +108,7 @@ export const ScanDetail = ({
                   className="bg-gray-50 py-1 dark:bg-slate-800"
                   hideSymbol
                 >
-                  <span className="whitespace-pre-line text-xs">
+                  <span className="text-xs whitespace-pre-line">
                     {taskDetails.attributes.result.exc_message.join("\n")}
                   </span>
                 </Snippet>

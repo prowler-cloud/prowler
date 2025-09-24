@@ -1,7 +1,6 @@
 "use client";
 
 import { Select, SelectItem } from "@heroui/select";
-
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 import { EntityInfoShort } from "@/components/ui/entities";

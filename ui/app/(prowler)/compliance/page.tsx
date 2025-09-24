@@ -166,7 +166,7 @@ const SSRComplianceGrid = async ({
   ) {
     return (
       <div className="flex h-full items-center">
-        <div className="text-sm text-default-500">
+        <div className="text-default-500 text-sm">
           No compliance data available for the selected scan.
         </div>
       </div>
@@ -177,7 +177,7 @@ const SSRComplianceGrid = async ({
   if (compliancesData?.errors?.length > 0) {
     return (
       <div className="flex h-full items-center">
-        <div className="text-sm text-default-500">Provide a valid scan ID.</div>
+        <div className="text-default-500 text-sm">Provide a valid scan ID.</div>
       </div>
     );
   }

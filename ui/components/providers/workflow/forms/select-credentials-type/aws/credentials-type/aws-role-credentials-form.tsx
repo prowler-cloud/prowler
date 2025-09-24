@@ -2,7 +2,6 @@ import { Chip } from "@heroui/chip";
 import { Divider } from "@heroui/divider";
 import { Select, SelectItem } from "@heroui/select";
 import { Switch } from "@heroui/switch";
-
 import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
@@ -68,13 +67,13 @@ export const AWSRoleCredentialsForm = ({
     <>
       <div className="flex flex-col">
         {type === "providers" && (
-          <div className="text-md font-bold leading-9 text-default-foreground">
+          <div className="text-md text-default-foreground leading-9 font-bold">
             Connect assuming IAM Role
           </div>
         )}
       </div>
 
-      <span className="text-xs font-bold text-default-500">
+      <span className="text-default-500 text-xs font-bold">
         Specify which AWS credentials to use
       </span>
 
@@ -172,10 +171,10 @@ export const AWSRoleCredentialsForm = ({
       <Divider className="" />
 
       {type === "providers" ? (
-        <span className="text-xs font-bold text-default-500">Assume Role</span>
+        <span className="text-default-500 text-xs font-bold">Assume Role</span>
       ) : (
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-default-500">
+          <span className="text-default-500 text-xs font-bold">
             {isCloudEnv && credentialsType === "aws-sdk-default"
               ? "Adding a role is required"
               : "Optionally add a role"}
@@ -228,7 +227,7 @@ export const AWSRoleCredentialsForm = ({
             }
           />
 
-          <span className="text-xs text-default-500">Optional fields</span>
+          <span className="text-default-500 text-xs">Optional fields</span>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <CustomInput
               control={control}

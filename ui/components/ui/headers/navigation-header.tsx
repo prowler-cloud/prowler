@@ -1,6 +1,5 @@
-import { Icon } from "@iconify/react";
 import { Divider } from "@heroui/divider";
-
+import { Icon } from "@iconify/react";
 import React from "react";
 
 import { CustomButton } from "@/components/ui/custom/custom-button";
@@ -30,7 +29,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
           <Icon icon={icon} className="text-gray-600 dark:text-gray-400" />
         </CustomButton>
         <Divider orientation="vertical" className="h-6" />
-        <h1 className="text-xl font-light text-default-700">{title}</h1>
+        <h1 className="text-default-700 text-xl font-light">{title}</h1>
       </header>
     </>
   );

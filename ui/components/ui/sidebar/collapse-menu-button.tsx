@@ -1,7 +1,6 @@
 "use client";
 
 import { Tooltip } from "@heroui/tooltip";
-
 import { DropdownMenuArrow } from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
@@ -88,7 +87,7 @@ export const CollapseMenuButton = ({
           </div>
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
         {submenus.map(
           (
             { href, label, active, icon: SubIcon, target, disabled, onClick },
@@ -115,7 +114,7 @@ export const CollapseMenuButton = ({
                       disabled={true}
                     >
                       <div className="flex items-center">
-                        <div className="mr-4 h-full border-l border-default-200"></div>
+                        <div className="border-default-200 mr-4 h-full border-l"></div>
                         <span className="mr-2">
                           <SubIcon size={16} />
                         </span>
@@ -153,7 +152,7 @@ export const CollapseMenuButton = ({
                   className="flex items-center"
                   onClick={onClick}
                 >
-                  <div className="mr-4 h-full border-l border-default-200"></div>
+                  <div className="border-default-200 mr-4 h-full border-l"></div>
                   <span className="mr-2">
                     <SubIcon size={16} />
                   </span>

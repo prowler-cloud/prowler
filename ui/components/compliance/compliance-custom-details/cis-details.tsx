@@ -117,7 +117,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
 
       {requirement.references && (
         <ComplianceDetailSection title="References">
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             {processReferences(requirement.references).map(
               (url: string, index: number) => (
                 <div key={index}>

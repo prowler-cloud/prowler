@@ -2,13 +2,12 @@
 
 import { Skeleton } from "@heroui/skeleton";
 
-
 export const HeatmapChartSkeleton = () => {
   return (
     <div className="flex h-[320px] w-[400px] flex-col items-center justify-between lg:w-[400px]">
       {/* Title skeleton */}
       <Skeleton className="h-4 w-36 rounded-lg">
-        <div className="h-4 bg-default-200" />
+        <div className="bg-default-200 h-4" />
       </Skeleton>
 
       {/* Heatmap area skeleton - 3x3 grid like the real component */}
@@ -19,7 +18,7 @@ export const HeatmapChartSkeleton = () => {
               key={index}
               className="flex items-center justify-center rounded border"
             >
-              <div className="h-full w-full bg-default-200" />
+              <div className="bg-default-200 h-full w-full" />
             </Skeleton>
           ))}
         </div>

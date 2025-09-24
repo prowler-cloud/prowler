@@ -1,7 +1,6 @@
 "use client";
 
 import { Divider } from "@heroui/divider";
-
 import { Ellipsis, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -100,7 +99,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
       </div>
       <ScrollArea className="[&>div>div[style]]:block!">
         <nav className="mt-2 h-full w-full lg:mt-6">
-          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px-44px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px-41px)]">
+          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px-44px)] flex-col items-start gap-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px-41px)]">
             {filteredMenuList.map(({ groupLabel, menus }, index) => (
               <li
                 className={cn(

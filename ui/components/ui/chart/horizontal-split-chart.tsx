@@ -1,7 +1,6 @@
 "use client";
 
 import { Tooltip } from "@heroui/tooltip";
-
 import * as React from "react";
 import { useEffect, useState } from "react";
 
@@ -217,7 +216,7 @@ export const HorizontalSplitBar = ({
 
         {/* Central separator */}
         <div
-          className="shrink-0 bg-background"
+          className="bg-background shrink-0"
           style={{ width: `${separatorWidth}px` }}
         />
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { Chip } from "@heroui/chip";
-
 import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
@@ -45,7 +44,7 @@ export const MembershipItem = ({
 
           <div className="flex flex-col gap-1 md:flex-row md:gap-x-4">
             <InfoField label="Name" inline variant="transparent">
-              <span className="whitespace-nowrap font-semibold">
+              <span className="font-semibold whitespace-nowrap">
                 {tenantName}
               </span>
             </InfoField>

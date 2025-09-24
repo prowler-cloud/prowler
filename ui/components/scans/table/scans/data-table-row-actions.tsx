@@ -6,9 +6,8 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownSection,
-  DropdownTrigger
+  DropdownTrigger,
 } from "@heroui/dropdown";
-
 import {
   // DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
@@ -27,8 +26,7 @@ import { EditScanForm } from "../../forms";
 interface DataTableRowActionsProps<ScanProps> {
   row: Row<ScanProps>;
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none shrink-0";
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<ScanProps>({
   row,
@@ -55,7 +53,7 @@ export function DataTableRowActions<ScanProps>({
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="dark:bg-prowler-blue-800 shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>

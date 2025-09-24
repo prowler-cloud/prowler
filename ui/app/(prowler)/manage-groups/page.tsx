@@ -1,6 +1,5 @@
 import { Divider } from "@heroui/divider";
 import { Spacer } from "@heroui/spacer";
-
 import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 
@@ -37,7 +36,7 @@ export default async function ManageGroupsPage({
               <h1 className="mb-2 text-xl font-medium" id="getting-started">
                 Create a new provider group
               </h1>
-              <p className="mb-5 text-small text-default-500">
+              <p className="text-small text-default-500 mb-5">
                 Create a new provider group to manage the providers and roles.
               </p>
               <SSRAddGroupForm />
@@ -146,7 +145,7 @@ const SSRDataEditGroup = async ({
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
         Edit provider group
       </h1>
-      <p className="mb-5 text-small text-default-500">
+      <p className="text-small text-default-500 mb-5">
         Edit the provider group to manage the providers and roles.
       </p>
       <EditGroupForm

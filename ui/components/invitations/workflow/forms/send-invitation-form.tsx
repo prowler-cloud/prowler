@@ -1,8 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectItem } from "@heroui/select";
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -93,7 +92,7 @@ export const SendInvitationForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Email Field */}
         <CustomInput
@@ -145,7 +144,7 @@ export const SendInvitationForm = ({
         />
 
         {/* Submit Button */}
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           <CustomButton
             type="submit"
             ariaLabel="Send Invitation"

@@ -1,5 +1,4 @@
 import { Input } from "@heroui/input";
-
 import { SearchIcon, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";

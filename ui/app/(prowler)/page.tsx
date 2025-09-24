@@ -1,5 +1,4 @@
 import { Spacer } from "@heroui/spacer";
-
 import { Suspense } from "react";
 
 import { getLatestFindings } from "@/actions/findings/findings";

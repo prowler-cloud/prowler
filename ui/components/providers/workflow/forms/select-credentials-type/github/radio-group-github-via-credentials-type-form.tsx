@@ -1,7 +1,6 @@
 "use client";
 
 import { RadioGroup } from "@heroui/radio";
-
 import React from "react";
 import { Control, Controller } from "react-hook-form";
 
@@ -40,7 +39,7 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
             }}
           >
             <div className="flex flex-col gap-4">
-              <span className="text-sm text-default-500">
+              <span className="text-default-500 text-sm">
                 Personal Access Token
               </span>
               <CustomRadio
@@ -52,7 +51,7 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
                 </div>
               </CustomRadio>
 
-              <span className="text-sm text-default-500">OAuth App</span>
+              <span className="text-default-500 text-sm">OAuth App</span>
               <CustomRadio
                 description="Use OAuth App token for authentication"
                 value="oauth_app"
@@ -62,7 +61,7 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
                 </div>
               </CustomRadio>
 
-              <span className="text-sm text-default-500">GitHub App</span>
+              <span className="text-default-500 text-sm">GitHub App</span>
               <CustomRadio
                 description="Use GitHub App ID and private key for authentication"
                 value="github_app"

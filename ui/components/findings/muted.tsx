@@ -1,6 +1,5 @@
 import { Tooltip } from "@heroui/tooltip";
 
-
 import { MutedIcon } from "../icons";
 
 interface MutedProps {
@@ -16,8 +15,8 @@ export const Muted = ({
 
   return (
     <Tooltip content={mutedReason} className="text-xs">
-      <div className="w-fit rounded-full border border-system-severity-critical/40 p-1">
-        <MutedIcon className="h-4 w-4 text-system-severity-critical" />
+      <div className="border-system-severity-critical/40 w-fit rounded-full border p-1">
+        <MutedIcon className="text-system-severity-critical h-4 w-4" />
       </div>
     </Tooltip>
   );

@@ -1,5 +1,4 @@
 import { Tooltip } from "@heroui/tooltip";
-
 import React from "react";
 
 import { IdIcon } from "@/components/icons";
@@ -35,7 +34,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
               content={showConnectionStatus ? "Connected" : "Not Connected"}
             >
               <span
-                className={`absolute right-[-0.2rem] top-[-0.1rem] h-2 w-2 cursor-pointer rounded-full ${
+                className={`absolute top-[-0.1rem] right-[-0.2rem] h-2 w-2 cursor-pointer rounded-full ${
                   showConnectionStatus ? "bg-green-500" : "bg-red-500"
                 }`}
               />
@@ -45,7 +44,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
         <div className="flex max-w-[120px] flex-col">
           {entityAlias && (
             <Tooltip content={entityAlias} placement="top" size="sm">
-              <span className="truncate text-ellipsis text-xs text-default-500">
+              <span className="text-default-500 truncate text-xs text-ellipsis">
                 {entityAlias}
               </span>
             </Tooltip>

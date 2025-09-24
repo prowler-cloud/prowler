@@ -2,7 +2,6 @@
 
 import { Snippet } from "@heroui/snippet";
 import { Spinner } from "@heroui/spinner";
-
 import { InfoIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -151,7 +150,7 @@ export const ResourceDetail = ({
     return (
       <div className="flex min-h-96 flex-col items-center justify-center gap-4 rounded-lg p-8">
         <Spinner size="lg" />
-        <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">
+        <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
           Loading resource details...
         </p>
       </div>
@@ -191,12 +190,12 @@ export const ResourceDetail = ({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Resource UID" variant="simple">
             <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-              <span className="whitespace-pre-line text-xs">
+              <span className="text-xs whitespace-pre-line">
                 {renderValue(attributes.uid)}
               </span>
             </Snippet>
           </InfoField>
-          <div className="flex w-full items-end justify-between space-x-2">
+          <div className="flex w-full items-end justify-between gap-2">
             <EntityInfoShort
               cloudProvider={providerData.provider as ProviderType}
               entityAlias={providerData.alias as string}
@@ -249,13 +248,13 @@ export const ResourceDetail = ({
         {findingsLoading ? (
           <div className="flex items-center justify-center gap-2 py-8">
             <Spinner size="sm" />
-            <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">
+            <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
               Loading findings...
             </p>
           </div>
         ) : allFindings.length > 0 ? (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-prowler-theme-pale/80">
+          <div className="flex flex-col gap-4">
+            <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
               Total findings: {allFindings.length}
             </p>
             {allFindings.map((finding: any, index: number) => {
@@ -266,7 +265,7 @@ export const ResourceDetail = ({
                 return (
                   <div
                     key={index}
-                    className="flex flex-col gap-2 rounded-lg px-4 py-2 shadow-small dark:bg-prowler-blue-400"
+                    className="shadow-small dark:bg-prowler-blue-400 flex flex-col gap-2 rounded-lg px-4 py-2"
                   >
                     <p className="text-sm text-red-600">
                       Finding {id} - No attributes available
@@ -282,17 +281,17 @@ export const ResourceDetail = ({
                 <button
                   key={index}
                   onClick={() => navigateToFinding(id)}
-                  className="flex w-full cursor-pointer flex-col gap-2 rounded-lg px-4 py-2 shadow-small dark:bg-prowler-blue-400"
+                  className="shadow-small dark:bg-prowler-blue-400 flex w-full cursor-pointer flex-col gap-2 rounded-lg px-4 py-2"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-left text-sm font-medium text-gray-800 dark:text-prowler-theme-pale/90">
+                    <h3 className="dark:text-prowler-theme-pale/90 text-left text-sm font-medium text-gray-800">
                       {checktitle}
                     </h3>
                     <div className="flex items-center gap-2">
                       <SeverityBadge severity={severity || "-"} />
                       <StatusFindingBadge status={status || "-"} />
                       <InfoIcon
-                        className="cursor-pointer text-primary"
+                        className="text-primary cursor-pointer"
                         size={16}
                         onClick={() => navigateToFinding(id)}
                       />
@@ -303,7 +302,7 @@ export const ResourceDetail = ({
             })}
           </div>
         ) : (
-          <p className="text-gray-600 dark:text-prowler-theme-pale/80">
+          <p className="dark:text-prowler-theme-pale/80 text-gray-600">
             No findings found for this resource.
           </p>
         )}

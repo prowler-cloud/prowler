@@ -1,6 +1,5 @@
 import { Tooltip } from "@heroui/tooltip";
 
-
 interface ComplianceAccordionTitleProps {
   label: string;
   pass: number;
@@ -25,7 +24,7 @@ export const ComplianceAccordionTitle = ({
     <div className="flex flex-col items-start justify-between gap-1 md:flex-row md:items-center md:gap-2">
       <div className="overflow-hidden md:min-w-0 md:flex-1">
         <span
-          className="block max-w-[600px] overflow-hidden truncate text-ellipsis text-sm"
+          className="block max-w-[600px] truncate overflow-hidden text-sm text-ellipsis"
           title={label}
         >
           {label.charAt(0).toUpperCase() + label.slice(1)}
@@ -34,7 +33,7 @@ export const ComplianceAccordionTitle = ({
       <div className="mr-4 flex items-center gap-2">
         <div className="hidden lg:block">
           {total > 0 && isParentLevel && (
-            <span className="whitespace-nowrap text-xs font-medium text-gray-600">
+            <span className="text-xs font-medium whitespace-nowrap text-gray-600">
               Requirements:
             </span>
           )}
@@ -128,7 +127,7 @@ export const ComplianceAccordionTitle = ({
           size="sm"
           placement="top"
         >
-          <div className="min-w-[32px] text-center text-xs font-medium text-default-600">
+          <div className="text-default-600 min-w-[32px] text-center text-xs font-medium">
             {total > 0 ? total : "—"}
           </div>
         </Tooltip>

@@ -2,7 +2,6 @@
 
 import { Progress } from "@heroui/progress";
 import { Spacer } from "@heroui/spacer";
-
 import { usePathname } from "next/navigation";
 import React from "react";
 
@@ -37,7 +36,7 @@ export const WorkflowSendInvite = () => {
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
         Send invitation
       </h1>
-      <p className="mb-5 text-small text-default-500">
+      <p className="text-small text-default-500 mb-5">
         Follow the steps to send an invitation to the users.
       </p>
       <Progress

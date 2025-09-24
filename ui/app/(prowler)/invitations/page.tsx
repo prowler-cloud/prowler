@@ -1,5 +1,4 @@
 import { Spacer } from "@heroui/spacer";
-
 import React, { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";

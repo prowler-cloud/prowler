@@ -1,8 +1,7 @@
 "use client";
 
-import { useSwitch } from "@heroui/switch";
 import type { SwitchProps } from "@heroui/switch";
-
+import { useSwitch } from "@heroui/switch";
 import { useIsSSR } from "@react-aria/ssr";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
 import clsx from "clsx";

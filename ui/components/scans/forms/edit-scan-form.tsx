@@ -66,7 +66,7 @@ export const EditScanForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         <div className="text-md">
           Current name:{" "}
@@ -87,7 +87,7 @@ export const EditScanForm = ({
         </div>
         <input type="hidden" name="scanId" value={scanId} />
 
-        <div className="flex w-full justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"

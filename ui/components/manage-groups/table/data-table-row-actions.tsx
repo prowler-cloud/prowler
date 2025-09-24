@@ -6,9 +6,8 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownSection,
-  DropdownTrigger
+  DropdownTrigger,
 } from "@heroui/dropdown";
-
 import {
   DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
@@ -26,8 +25,7 @@ import { DeleteGroupForm } from "../forms";
 interface DataTableRowActionsProps<ProviderProps> {
   row: Row<ProviderProps>;
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none shrink-0";
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<ProviderProps>({
   row,
@@ -50,7 +48,7 @@ export function DataTableRowActions<ProviderProps>({
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="dark:bg-prowler-blue-800 shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>

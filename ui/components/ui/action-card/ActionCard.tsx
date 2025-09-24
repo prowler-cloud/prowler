@@ -1,9 +1,8 @@
 "use client";
 
-import { Icon } from "@iconify/react";
-import { Card, CardBody } from "@heroui/card";
 import type { CardProps } from "@heroui/card";
-
+import { Card, CardBody } from "@heroui/card";
+import { Icon } from "@iconify/react";
 import React from "react";
 
 import { cn } from "@/lib";
@@ -64,7 +63,7 @@ export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
         <CardBody className="flex h-full flex-row items-center gap-2 p-2">
           <div
             className={cn(
-              "item-center flex rounded-medium border p-1",
+              "item-center rounded-medium flex border p-1",
               colors?.iconWrapper,
             )}
           >
@@ -72,7 +71,7 @@ export const ActionCard = React.forwardRef<HTMLDivElement, ActionCardProps>(
           </div>
           <div className="flex flex-col">
             <p className="text-md">{title}</p>
-            <p className="text-sm text-default-400">
+            <p className="text-default-400 text-sm">
               {description || children}
             </p>
           </div>

@@ -174,9 +174,9 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const shouldDisableChat = !hasConfig || !isActive;
 
   return (
-    <div className="relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col bg-background">
+    <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">
       {shouldDisableChat && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
               {!hasConfig
@@ -190,7 +190,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             </p>
             <CustomLink
               href="/lighthouse/config"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
               target="_self"
               size="sm"
             >
@@ -273,7 +273,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       ) : (
         <div
-          className="flex-1 space-y-4 overflow-y-auto p-4"
+          className="flex flex-1 flex-col gap-4 overflow-y-auto p-4"
           ref={messagesContainerRef}
         >
           {messages.map((message, idx) => {
@@ -349,7 +349,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 status === "submitted" ? "Stop generation" : "Send message"
               }
               isDisabled={status === "submitted" || !messageValue?.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 disabled:opacity-50"
             >
               {status === "submitted" ? <span>■</span> : <span>➤</span>}
             </CustomButton>

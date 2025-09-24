@@ -1,5 +1,4 @@
 import { Skeleton } from "@heroui/skeleton";
-
 import React from "react";
 
 interface SkeletonAccordionProps {
@@ -17,7 +16,7 @@ export const SkeletonAccordion = ({
 
   return (
     <div
-      className={`w-full space-y-2 ${className} rounded-xl border border-gray-300 p-2 dark:border-gray-700`}
+      className={`flex w-full flex-col gap-2 ${className} rounded-xl border border-gray-300 p-2 dark:border-gray-700`}
     >
       {[...Array(itemCount)].map((_, index) => (
         <Skeleton key={index} className="rounded-lg">

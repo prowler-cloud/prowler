@@ -1,10 +1,4 @@
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader
-} from "@heroui/modal";
-
+import { Modal, ModalBody, ModalContent, ModalHeader } from "@heroui/modal";
 import React, { ReactNode } from "react";
 
 interface CustomAlertModalProps {

@@ -1,5 +1,4 @@
 import { Chip } from "@heroui/chip";
-
 import clsx from "clsx";
 import React from "react";
 
@@ -42,7 +41,7 @@ export const StatusBadge = ({
   return (
     <Chip
       className={clsx(
-        "relative w-full max-w-full border-none text-xs capitalize text-default-600",
+        "text-default-600 relative w-full max-w-full border-none text-xs capitalize",
         status === "executing" && "border border-solid border-transparent",
         className,
       )}
@@ -53,8 +52,8 @@ export const StatusBadge = ({
     >
       {status === "executing" ? (
         <div className="relative flex items-center justify-center gap-1">
-          <SpinnerIcon size={16} className="animate-spin text-default-500" />
-          <span className="pointer-events-none text-[0.6rem] text-default-500">
+          <SpinnerIcon size={16} className="text-default-500 animate-spin" />
+          <span className="text-default-500 pointer-events-none text-[0.6rem]">
             {loadingProgress}%
           </span>
           <span>executing</span>

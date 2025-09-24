@@ -116,7 +116,7 @@ export const ClientAccordionContent = ({
     return (
       <div className="w-full">
         {renderDetails()}
-        <p className="mb-1 mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+        <p className="mt-3 mb-1 text-sm font-medium text-gray-800 dark:text-gray-200">
           ⚠️ This requirement has no checks; therefore, there are no findings.
         </p>
       </div>
@@ -127,7 +127,7 @@ export const ClientAccordionContent = ({
   const checksList = (
     <div className="flex items-center px-2 text-sm">
       <div className="w-full flex-col">
-        <div className="mb-1 mt-[-8px] h-1 w-full border-b border-gray-200 dark:border-gray-800" />
+        <div className="mt-[-8px] mb-1 h-1 w-full border-b border-gray-200 dark:border-gray-800" />
         <span className="text-gray-600 dark:text-gray-200" aria-label="Checks">
           {checks.join(", ")}
         </span>
@@ -170,7 +170,7 @@ export const ClientAccordionContent = ({
     }
 
     return (
-      <div className="mb-1 mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+      <div className="mt-3 mb-1 text-sm font-medium text-gray-800 dark:text-gray-200">
         ⚠️ There are no findings for these regions
       </div>
     );
@@ -186,7 +186,7 @@ export const ClientAccordionContent = ({
             items={accordionChecksItems}
             variant="light"
             defaultExpandedKeys={[""]}
-            className="rounded-lg bg-gray-50 dark:bg-prowler-blue-400"
+            className="dark:bg-prowler-blue-400 rounded-lg bg-gray-50"
           />
         </div>
       )}

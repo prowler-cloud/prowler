@@ -1,10 +1,9 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox } from "@heroui/checkbox";
 import { Divider } from "@heroui/divider";
 import { Tooltip } from "@heroui/tooltip";
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import { clsx } from "clsx";
 import { InfoIcon, SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -172,7 +171,7 @@ export const EditRoleForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
         <CustomInput
           control={form.control}
@@ -241,7 +240,7 @@ export const EditRoleForm = ({
         <Divider className="my-4" />
 
         {!unlimitedVisibility && (
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col gap-4">
             <span className="text-lg font-semibold">Groups visibility</span>
 
             <p className="text-small text-default-700 font-medium">
@@ -273,7 +272,7 @@ export const EditRoleForm = ({
             )}
           </div>
         )}
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           <CustomButton
             type="submit"
             ariaLabel="Update Role"

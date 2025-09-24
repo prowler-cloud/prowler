@@ -52,3 +52,11 @@
     transform-origin: center;
   }
 }
+
+@layer base {
+  /* is set to default by tailwind 4 */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}

@@ -1,5 +1,4 @@
 import { Spacer } from "@heroui/spacer";
-
 import { Suspense } from "react";
 
 import {
@@ -143,7 +142,7 @@ const SSRDataTable = async ({
   return (
     <>
       {resourcesData?.errors && (
-        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-small text-red-700">
+        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{resourcesData.errors[0].detail}</p>
         </div>

@@ -1,6 +1,5 @@
 import { Card, CardBody, CardHeader } from "@heroui/card";
 
-
 import { RoleData, RoleDetail } from "@/types/users";
 
 import { RoleItem } from "./role-item";
@@ -26,7 +25,7 @@ export const RolesCard = ({
         {roles.length === 0 ? (
           <div className="text-sm text-gray-500">No roles assigned.</div>
         ) : (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {roles.map((role) => (
               <RoleItem
                 key={role.id}

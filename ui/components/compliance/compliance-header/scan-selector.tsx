@@ -1,6 +1,5 @@
 import { Select, SelectItem } from "@heroui/select";
 
-
 import { ProviderType, ScanProps } from "@/types";
 
 import { ComplianceScanInfo } from "./compliance-scan-info";

@@ -1,7 +1,6 @@
 "use client";
 
 import { Chip } from "@heroui/chip";
-
 import { ColumnDef } from "@tanstack/react-table";
 
 import { DateWithTime, SnippetChip } from "@/components/ui/entities";

@@ -2,7 +2,6 @@
 
 import { Spacer } from "@heroui/spacer";
 
-
 import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 

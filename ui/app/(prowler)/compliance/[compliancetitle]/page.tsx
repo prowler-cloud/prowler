@@ -1,5 +1,4 @@
 import { Spacer } from "@heroui/spacer";
-
 import Image from "next/image";
 import React, { Suspense } from "react";
 
@@ -141,7 +140,7 @@ export default async function ComplianceDetail({
       <Suspense
         key={searchParamsKey}
         fallback={
-          <div className="space-y-8">
+          <div className="flex flex-col gap-8">
             <ChartsWrapper logoPath={logoPath}>
               <PieChartSkeleton />
               <BarChartSkeleton />
@@ -188,7 +187,7 @@ const SSRComplianceContent = async ({
 
   if (!scanId || type === "tasks") {
     return (
-      <div className="space-y-8">
+      <div className="flex flex-col gap-8">
         <ChartsWrapper logoPath={logoPath}>
           <PieChart pass={0} fail={0} manual={0} />
           <BarChart sections={[]} />
@@ -219,7 +218,7 @@ const SSRComplianceContent = async ({
   const topFailedSections = mapper.getTopFailedSections(data);
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-8">
       <ChartsWrapper logoPath={logoPath}>
         <PieChart
           pass={totalRequirements.pass}

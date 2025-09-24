@@ -1,7 +1,6 @@
 "use client";
 
 import { RadioGroup } from "@heroui/radio";
-
 import React from "react";
 import { Control, Controller } from "react-hook-form";
 
@@ -40,7 +39,7 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
             }}
           >
             <div className="flex flex-col gap-4">
-              <span className="text-sm text-default-500">
+              <span className="text-default-500 text-sm">
                 Using Service Account
               </span>
               <CustomRadio
@@ -51,7 +50,7 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
                   <span className="ml-2">Connect via Service Account Key</span>
                 </div>
               </CustomRadio>
-              <span className="text-sm text-default-500">
+              <span className="text-default-500 text-sm">
                 Using Application Default Credentials
               </span>
               <CustomRadio

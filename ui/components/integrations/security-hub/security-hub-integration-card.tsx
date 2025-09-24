@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardBody, CardHeader } from "@heroui/card";
-
 import { SettingsIcon } from "lucide-react";
 
 import { AWSSecurityHubIcon } from "@/components/icons/services/IconServices";
@@ -20,7 +19,7 @@ export const SecurityHubIntegrationCard = () => {
                 AWS Security Hub
               </h4>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-                <p className="text-nowrap text-xs text-gray-500 dark:text-gray-300">
+                <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   Send security findings to AWS Security Hub.
                 </p>
                 <CustomLink

@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@heroui/theme";
-
 import { useTheme } from "next-themes";
 import { useState } from "react";
 
@@ -31,7 +30,7 @@ const capitalizeFirstLetter = (text: string): string => {
 };
 
 const title = (
-  <h3 className="mb-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+  <h3 className="mb-2 text-xs font-semibold tracking-wide whitespace-nowrap uppercase">
     Sections Failure Rate
   </h3>
 );

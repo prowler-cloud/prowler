@@ -1,7 +1,6 @@
 import "@/styles/globals.css";
 
 import { Spacer } from "@heroui/spacer";
-
 import React from "react";
 
 import { WorkflowAddProvider } from "@/components/providers/workflow";

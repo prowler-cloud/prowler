@@ -1,7 +1,6 @@
 "use client";
 
 import { Chip } from "@heroui/chip";
-
 import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
 

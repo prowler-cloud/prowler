@@ -36,7 +36,7 @@ export const EditTenantForm = ({
   }, [state, toast, setIsOpen]);
 
   return (
-    <form action={formAction} className="flex flex-col space-y-4">
+    <form action={formAction} className="flex flex-col gap-4">
       <div className="text-md">
         Current name: <span className="font-bold">{tenantName}</span>
       </div>

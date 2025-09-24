@@ -1,8 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Divider } from "@heroui/divider";
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -148,7 +147,7 @@ export const EditGroupForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Field for the name */}
         <div className="flex flex-col gap-2">
@@ -242,7 +241,7 @@ export const EditGroupForm = ({
           </p>
         )}
 
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"

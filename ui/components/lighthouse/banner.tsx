@@ -12,7 +12,7 @@ interface BannerConfig {
 const renderBanner = ({ message, href, gradient }: BannerConfig) => (
   <Link href={href} className="mb-4 block w-full">
     <div
-      className={`w-full rounded-lg ${gradient} shadow-lg transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-opacity-50`}
+      className={`w-full rounded-lg ${gradient} focus:ring-opacity-50 shadow-lg transition-all duration-200 hover:shadow-xl focus:ring-2 focus:outline-none`}
     >
       <div className="px-4 py-3">
         <div className="flex items-center gap-4">
