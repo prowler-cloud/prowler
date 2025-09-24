@@ -36,10 +36,10 @@ Available Cloud Providers:
     kubernetes          Kubernetes Provider
     m365                Microsoft 365 Provider
     github              GitHub Provider
-    iac                 IaC Provider (Preview)
-    llm                 LLM Provider (Preview)
+    iac                 IaC Provider (Beta)
+    llm                 LLM Provider (Beta)
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider
+    mongodbatlas        MongoDB Atlas Provider (Beta)
 
 Available components:
     dashboard           Local dashboard
