@@ -43,7 +43,7 @@ export const StatusBadge = ({
     <Chip
       className={clsx(
         "relative w-full max-w-full border-none text-xs capitalize text-default-600",
-        status === "executing" && "border-1 border-solid border-transparent",
+        status === "executing" && "border border-solid border-transparent",
         className,
       )}
       size={size}

@@ -28,7 +28,7 @@ interface DataTableRowActionsProps<ScanProps> {
   row: Row<ScanProps>;
 }
 const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
+  "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<ScanProps>({
   row,

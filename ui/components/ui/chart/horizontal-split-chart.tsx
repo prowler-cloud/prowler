@@ -217,7 +217,7 @@ export const HorizontalSplitBar = ({
 
         {/* Central separator */}
         <div
-          className="flex-shrink-0 bg-background"
+          className="shrink-0 bg-background"
           style={{ width: `${separatorWidth}px` }}
         />
 

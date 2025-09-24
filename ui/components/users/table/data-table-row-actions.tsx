@@ -27,7 +27,7 @@ interface DataTableRowActionsProps<UserProps> {
   roles?: { id: string; name: string }[];
 }
 const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
+  "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<UserProps>({
   row,

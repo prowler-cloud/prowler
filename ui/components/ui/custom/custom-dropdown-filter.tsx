@@ -227,7 +227,7 @@ export const CustomDropdownFilter = ({
             variant="flat"
           >
             <div className="flex min-w-0 flex-1 items-center gap-2">
-              <span className="flex-shrink-0 text-small">
+              <span className="shrink-0 text-small">
                 {filter?.labelCheckboxGroup}
               </span>
 
@@ -235,9 +235,9 @@ export const CustomDropdownFilter = ({
                 <>
                   <Divider
                     orientation="vertical"
-                    className="h-4 flex-shrink-0"
+                    className="h-4 shrink-0"
                   />
-                  <div className="flex min-w-0 flex-shrink items-center">
+                  <div className="flex min-w-0 shrink items-center">
                     {selectedValues.length <= 2 ? (
                       <span
                         className="max-w-32 truncate text-xs text-default-500"
@@ -254,7 +254,7 @@ export const CustomDropdownFilter = ({
                     )}
                     <div
                       onClick={handleClearAll}
-                      className="ml-1 flex h-4 w-4 flex-shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-default-200"
+                      className="ml-1 flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-default-200"
                       aria-label="Clear selection"
                       role="button"
                       tabIndex={0}

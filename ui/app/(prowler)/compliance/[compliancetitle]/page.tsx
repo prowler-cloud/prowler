@@ -45,12 +45,12 @@ const ComplianceIconSmall = ({
   title: string;
 }) => {
   return (
-    <div className="relative h-6 w-6 flex-shrink-0">
+    <div className="relative h-6 w-6 shrink-0">
       <Image
         src={logoPath}
         alt={`${title} logo`}
         fill
-        className="h-8 w-8 min-w-8 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
+        className="h-8 w-8 min-w-8 rounded-md border border-gray-300 bg-white object-contain p-[2px]"
       />
     </div>
   );

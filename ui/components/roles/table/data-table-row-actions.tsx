@@ -26,7 +26,7 @@ interface DataTableRowActionsProps<RoleProps> {
   row: Row<RoleProps>;
 }
 const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
+  "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<RoleProps>({
   row,

@@ -27,7 +27,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   return (
     <div className="flex items-center justify-start">
       <div className="flex items-center justify-between gap-x-2">
-        <div className="relative flex-shrink-0">
+        <div className="relative shrink-0">
           {getProviderLogo(cloudProvider)}
           {showConnectionStatus && (
             <Tooltip

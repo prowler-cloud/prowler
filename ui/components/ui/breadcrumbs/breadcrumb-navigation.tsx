@@ -110,7 +110,7 @@ export function BreadcrumbNavigation({
       {typeof icon === "string" ? (
         <Icon className="text-default-500" height={24} icon={icon} width={24} />
       ) : icon ? (
-        <div className="flex h-8 w-8 items-center justify-center [&>*]:h-full [&>*]:w-full">
+        <div className="flex h-8 w-8 items-center justify-center *:h-full *:w-full">
           {icon}
         </div>
       ) : null}
@@ -157,7 +157,7 @@ export function BreadcrumbNavigation({
                     width={24}
                   />
                 ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center [&>*]:h-full [&>*]:w-full">
+                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
                     {breadcrumb.icon}
                   </div>
                 ) : null}
@@ -178,7 +178,7 @@ export function BreadcrumbNavigation({
                     width={24}
                   />
                 ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center [&>*]:h-full [&>*]:w-full">
+                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
                     {breadcrumb.icon}
                   </div>
                 ) : null}
@@ -194,7 +194,7 @@ export function BreadcrumbNavigation({
                     width={24}
                   />
                 ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center [&>*]:h-full [&>*]:w-full">
+                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
                     {breadcrumb.icon}
                   </div>
                 ) : null}

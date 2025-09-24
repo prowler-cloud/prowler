@@ -259,7 +259,7 @@ export const SendToJiraModal = ({
                         trigger: "min-h-12",
                         popoverContent: "dark:bg-gray-800",
                         label:
-                          "tracking-tight font-light !text-default-500 text-xs !z-0",
+                          "tracking-tight font-light !text-default-500 text-xs z-0!",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                     >
@@ -315,7 +315,7 @@ export const SendToJiraModal = ({
                         popoverContent: "dark:bg-gray-800",
                         listboxWrapper: "max-h-[300px] dark:bg-gray-800",
                         label:
-                          "tracking-tight font-light !text-default-500 text-xs !z-0",
+                          "tracking-tight font-light !text-default-500 text-xs z-0!",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                       listboxProps={{
@@ -396,7 +396,7 @@ export const SendToJiraModal = ({
                         popoverContent: "dark:bg-gray-800",
                         listboxWrapper: "max-h-[300px] dark:bg-gray-800",
                         label:
-                          "tracking-tight font-light !text-default-500 text-xs !z-0",
+                          "tracking-tight font-light !text-default-500 text-xs z-0!",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                       listboxProps={{

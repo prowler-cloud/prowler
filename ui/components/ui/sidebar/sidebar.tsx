@@ -58,7 +58,7 @@ export function Sidebar() {
             <div
               className={clsx({
                 hidden: !isOpen,
-                "!mt-0": isOpen,
+                "mt-0!": isOpen,
               })}
             >
               <ProwlerExtended />

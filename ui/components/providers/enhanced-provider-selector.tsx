@@ -161,7 +161,7 @@ export const EnhancedProviderSelector = ({
                     listboxWrapper: "max-h-[300px] dark:bg-gray-800",
                     listbox: "gap-0",
                     label:
-                      "tracking-tight font-light !text-default-500 text-xs !z-0",
+                      "tracking-tight font-light !text-default-500 text-xs z-0!",
                     value: "text-default-500 text-small dark:text-gray-300",
                   }}
                   renderValue={(items) => {
@@ -265,7 +265,7 @@ export const EnhancedProviderSelector = ({
                               </div>
                             </div>
                           </div>
-                          <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+                          <div className="ml-2 flex shrink-0 items-center gap-2">
                             <div
                               className={`h-2 w-2 rounded-full ${
                                 provider.attributes.connection.connected

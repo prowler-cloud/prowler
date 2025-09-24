@@ -25,7 +25,7 @@ export const NoScansAvailable = () => {
             </div>
             <CustomButton
               asLink="/scans"
-              className="flex-shrink-0"
+              className="shrink-0"
               ariaLabel="Go to Scans page"
               variant="solid"
               color="action"

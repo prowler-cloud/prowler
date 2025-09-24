@@ -61,7 +61,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
                 startContent={
                   <JiraIcon
                     size={20}
-                    className="pointer-events-none flex-shrink-0 text-default-500"
+                    className="pointer-events-none shrink-0 text-default-500"
                   />
                 }
                 onPress={() => setIsJiraModalOpen(true)}

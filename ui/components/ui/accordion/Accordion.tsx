@@ -116,7 +116,7 @@ export const Accordion = ({
 
   return (
     <NextUIAccordion
-      className={cn("w-full !px-0", className)}
+      className={cn("w-full px-0!", className)}
       variant={variant}
       selectionMode={selectionMode}
       selectedKeys={expandedKeys}

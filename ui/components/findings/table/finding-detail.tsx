@@ -217,7 +217,7 @@ export const FindingDetail = ({
                           key={idx}
                           href={link}
                           size="sm"
-                          className="!whitespace-normal break-all"
+                          className="whitespace-normal! break-all"
                         >
                           {link}
                         </CustomLink>

@@ -174,7 +174,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const shouldDisableChat = !hasConfig || !isActive;
 
   return (
-    <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
+    <div className="relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col bg-background">
       {shouldDisableChat && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
@@ -204,7 +204,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
       {(error || errorMessage) && (
         <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <div className="flex items-start">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg
                 className="h-5 w-5 text-red-400"
                 viewBox="0 0 20 20"
@@ -294,12 +294,12 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground dark:!text-black"
+                      ? "bg-primary text-primary-foreground dark:text-black!"
                       : "bg-muted"
                   }`}
                 >
                   <div
-                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:!text-black" : ""}`}
+                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:text-black!" : ""}`}
                   >
                     <MemoizedMarkdown
                       id={message.id}
@@ -349,7 +349,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 status === "submitted" ? "Stop generation" : "Send message"
               }
               isDisabled={status === "submitted" || !messageValue?.trim()}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
             >
               {status === "submitted" ? <span>■</span> : <span>➤</span>}
             </CustomButton>

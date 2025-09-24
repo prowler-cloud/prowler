@@ -69,7 +69,7 @@ export const PasswordRequirementsMessage = ({
         {allRequirementsMet ? (
           <div className="flex items-center gap-2">
             <CheckCircle
-              className="h-4 w-4 flex-shrink-0 text-system-success"
+              className="h-4 w-4 shrink-0 text-system-success"
               aria-hidden="true"
             />
             <p className="text-xs font-medium leading-tight text-system-success">
@@ -80,7 +80,7 @@ export const PasswordRequirementsMessage = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <AlertCircle
-                className="h-4 w-4 flex-shrink-0 text-red-600"
+                className="h-4 w-4 shrink-0 text-red-600"
                 aria-hidden="true"
               />
               <p className="text-xs font-medium leading-tight text-red-700">
@@ -95,7 +95,7 @@ export const PasswordRequirementsMessage = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                      className={`h-2 w-2 shrink-0 rounded-full ${
                         req.isMet ? "bg-system-success" : "bg-red-400"
                       }`}
                       aria-hidden="true"

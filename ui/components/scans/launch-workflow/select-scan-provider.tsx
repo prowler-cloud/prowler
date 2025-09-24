@@ -44,7 +44,7 @@ export const SelectScanProvider = <
               classNames={{
                 selectorIcon: "right-2",
                 label:
-                  "tracking-tight font-light !text-default-700 text-xs !z-0",
+                  "tracking-tight font-light !text-default-700 text-xs z-0!",
                 value: "text-default-500 text-small",
               }}
               label="Select a cloud provider to launch a scan"

@@ -67,7 +67,7 @@ export const M365CredentialsForm = ({
       </p>
 
       <div className="flex items-center rounded-lg border border-system-warning bg-system-warning-medium p-2 text-sm dark:text-default-300">
-        <InfoIcon className="mr-2 inline h-4 w-4 flex-shrink-0" />
+        <InfoIcon className="mr-2 inline h-4 w-4 shrink-0" />
         <p className="text-xs font-extrabold">
           By October 2025, MFA will be mandatory.
         </p>
