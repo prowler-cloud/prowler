@@ -91,7 +91,7 @@ All tools are exposed under the `prowler_app` prefix.
 
 #### Processor Management
 - `prowler_app_processors_list`: List all processors with filtering
-- `prowler_app_processors_create`: Create a new processor (e.g., mutelist)
+- `prowler_app_processors_create`: Create a new processor. For now, only mute lists are supported.
 - `prowler_app_processors_retrieve`: Get processor details by ID
 - `prowler_app_processors_partial_update`: Update processor configuration
 - `prowler_app_processors_destroy`: Delete a processor
