@@ -153,6 +153,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@tailwindcss/postcss",
+    "from": "4.1.13",
+    "to": "4.1.13",
+    "strategy": "installed",
+    "generatedAt": "2025-09-24T15:04:48.761Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@tailwindcss/typography",
     "from": "0.5.16",
     "to": "0.5.16",
