@@ -139,7 +139,7 @@ This method is required for Prowler App and recommended for Prowler CLI.
 |-------|-----------|
 | Client ID | Application ID |
 | Client Secret | Application Generated Secret |
-| Tenant ID | Azure Active Directory tenant ID |
+| Tenant ID | Microsoft Entra Tenant ID |
 
 ### Environment Variables (CLI)
 
