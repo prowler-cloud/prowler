@@ -61,7 +61,7 @@ def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
     with transaction.atomic():
         with connection.cursor() as cursor:
             try:
-                # just in case the value is an UUID object
+                # just in case the value is a UUID object
                 uuid.UUID(str(value))
             except ValueError:
                 raise ValidationError("Must be a valid UUID")

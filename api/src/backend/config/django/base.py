@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.saml",
     "dj_rest_auth.registration",
     "rest_framework.authtoken",
+    "drf_simple_apikey"
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,7 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular_jsonapi.schemas.openapi.JsonApiAutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "api.authentication.CombinedJWTOrAPIKeyAuthentication",
     ),
     "PAGE_SIZE": 10,
     "EXCEPTION_HANDLER": "api.exceptions.custom_exception_handler",
@@ -139,6 +140,10 @@ DJANGO_GUID = {
     "INTEGRATIONS": [],
     "IGNORE_URLS": [],
     "UUID_LENGTH": 32,
+}
+
+DRF_API_KEY = {
+    "FERNET_SECRET": env.str("DJANGO_SECRETS_ENCRYPTION_KEY", "")
 }
 
 DATABASE_ROUTERS = ["api.db_router.MainRouter"]

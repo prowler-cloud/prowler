@@ -41,6 +41,7 @@ from api.models import (
     Task,
     User,
     UserRoleRelationship,
+    TenantAPIKey
 )
 from api.rls import Tenant
 from api.v1.serializer_utils.integrations import (
@@ -2735,3 +2736,96 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
             instance.api_key_decoded = api_key
             instance.save()
         return instance
+
+
+# API Keys
+
+class TenantApiKeySerializer(RLSSerializer):
+    """
+    Serializer for the TenantApiKey model.
+    """
+
+    class Meta:
+        model = TenantAPIKey
+        fields = [
+            "id",
+            "name",
+            "expiry_date",
+            "revoked",
+            "created",
+            "whitelisted_ips",
+            "blacklisted_ips",
+            "entity",
+        ]
+
+
+class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """Serializer for creating new API keys."""
+    
+    raw_api_key = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TenantAPIKey
+        fields = [
+            "id",
+            "name",
+            "expiry_date",
+            "entity",
+            "created",
+            "raw_api_key",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "entity": {"read_only": True},
+            "created": {"read_only": True},
+            "raw_api_key": {"read_only": True},
+        }
+
+    def get_raw_api_key(self, obj):
+        """Return the raw API key if it was stored during creation."""
+        return getattr(obj, '_raw_api_key', None)
+
+    def create(self, validated_data):
+        instance, raw_api_key = TenantAPIKey.objects.create_api_key(**validated_data,
+                                                                    tenant_id=self.context.get("tenant_id"),
+                                                                    entity=self.context.get("request").user)
+        # Store the raw API key temporarily on the instance for the serializer
+        instance._raw_api_key = raw_api_key
+        return instance
+
+
+# class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
+#     """
+#     Serializer for updating LighthouseConfig instances.
+#     """
+#
+#     api_key = serializers.CharField(write_only=True, required=False)
+#
+#     class Meta:
+#         model = LighthouseConfiguration
+#         fields = [
+#             "id",
+#             "name",
+#             "api_key",
+#             "model",
+#             "temperature",
+#             "max_tokens",
+#             "business_context",
+#             "is_active",
+#         ]
+#         extra_kwargs = {
+#             "id": {"read_only": True},
+#             "is_active": {"read_only": True},
+#             "name": {"required": False},
+#             "model": {"required": False},
+#             "temperature": {"required": False},
+#             "max_tokens": {"required": False},
+#         }
+#
+#     def update(self, instance, validated_data):
+#         api_key = validated_data.pop("api_key", None)
+#         instance = super().update(instance, validated_data)
+#         if api_key:
+#             instance.api_key_decoded = api_key
+#             instance.save()
+#         return instance

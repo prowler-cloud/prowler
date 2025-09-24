@@ -39,6 +39,7 @@ from api.v1.views import (
     TenantViewSet,
     UserRoleRelationshipView,
     UserViewSet,
+    TenantApiKeyViewSet
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
@@ -65,6 +66,7 @@ router.register(
     LighthouseConfigViewSet,
     basename="lighthouseconfiguration",
 )
+router.register(r"api-keys", TenantApiKeyViewSet, basename="api-key")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(

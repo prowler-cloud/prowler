@@ -26,6 +26,7 @@ from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
+from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 
 from api.db_router import MainRouter
 from api.db_utils import (
@@ -202,6 +203,31 @@ class Membership(models.Model):
 
     class JSONAPIMeta:
         resource_name = "memberships"
+
+
+class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
+    # todovictor: uuid and int?
+    # todovictor: prefix
+    # todovictor: entity on cascade? maybe revoke and set null
+    entity = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="user_api_keys",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "api_keys"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "api-keys"
 
 
 class Provider(RowLevelSecurityProtectedModel):

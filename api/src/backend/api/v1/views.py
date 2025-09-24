@@ -126,6 +126,7 @@ from api.models import (
     Task,
     User,
     UserRoleRelationship,
+    TenantAPIKey
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
@@ -198,6 +199,8 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
+    TenantApiKeySerializer,
+    TenantApiKeyCreateSerializer
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -4188,3 +4191,24 @@ class ProcessorViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProcessorUpdateSerializer
         return super().get_serializer_class()
+
+
+class TenantApiKeyViewSet(BaseRLSViewSet):
+    queryset = TenantAPIKey.objects.all()
+    serializer_class = TenantApiKeySerializer
+    http_method_names = ["get", "post", "delete"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def get_queryset(self):
+        queryset = TenantAPIKey.objects.filter(tenant_id=self.request.tenant_id)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return TenantApiKeyCreateSerializer
+        # elif self.action == "partial_update":
+        #     return ProcessorUpdateSerializer
+        return super().get_serializer_class()
+
+    # TODOvictor: delete = revoke, data persistence
