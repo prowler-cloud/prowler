@@ -2,7 +2,7 @@
 
 Prowler for Google Cloud supports multiple authentication methods. To use a specific method, configure the appropriate credentials during execution:
 
-- [**User Credentials** (Application Default Credentials)](#user-credentials)
+- [**User Credentials** (Application Default Credentials)](#application-default-credentials-user-credentials)
 - [**Service Account Key File**](#service-account-key-file)
 - [**Access Token**](#access-token)
 - [**Service Account Impersonation**](#service-account-impersonation)
