@@ -222,23 +222,21 @@ class ProviderFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
     connected = BooleanFilter(
-        help_text="Filter by connection status. Set to True to return only connected providers, or False to return only providers with failed connections. If not specified, both connected and failed providers are included. Providers with no connection attempt (status is None) are excluded from this filter."
+        help_text="Filter by connection status. Set to True to return only connected providers, or False to return only providers with failed connections. If not specified, both connected and failed providers are included. Providers with no connection attempt (status is null) are excluded from this filter."
     )
     provider = ChoiceFilter(
         choices=Provider.ProviderChoices.choices,
         help_text="Filter by single provider type",
     )
-
-    # Explicit field definitions with help_text
     id = UUIDFilter(
         field_name="id",
         lookup_expr="exact",
-        help_text="Filter by exact Prowler provider ID (UUIDv4).",
+        help_text="Filter by exact Prowler provider ID (UUIDv4)",
     )
     id__in = UUIDInFilter(
         field_name="id",
         lookup_expr="in",
-        help_text="Filter by multiple Prowler provider IDs. Provide a comma-separated list of UUIDs.",
+        help_text="Filter by multiple Prowler provider IDs. Provide a comma-separated list of UUIDs",
     )
     provider__in = ChoiceInFilter(
         field_name="provider",
@@ -264,42 +262,42 @@ class ProviderFilter(FilterSet):
     alias = CharFilter(
         field_name="alias",
         lookup_expr="exact",
-        help_text="Filter by exact provider alias name.",
+        help_text="Filter by exact provider alias name",
     )
     alias__icontains = CharFilter(
         field_name="alias",
         lookup_expr="icontains",
-        help_text="Filter by partial provider alias match.",
+        help_text="Filter by partial provider alias match",
     )
     alias__in = CharInFilter(
         field_name="alias",
         lookup_expr="in",
-        help_text='Filter by multiple provider aliases. Provide a comma-separated list, e.g. "aws_alias_1,azure_alias_2".',
+        help_text='Filter by multiple provider aliases. Provide a comma-separated list, e.g. "aws_alias_1,azure_alias_2"',
     )
     inserted_at__gte = DateFilter(
         field_name="inserted_at",
         lookup_expr="gte",
-        help_text="Filter providers inserted on or after this date (format: YYYY-MM-DD)",
+        help_text="Only return providers inserted on or after this date (format: YYYY-MM-DD)",
     )
     inserted_at__lte = DateFilter(
         field_name="inserted_at",
         lookup_expr="lte",
-        help_text="Filter providers inserted on or before this date (format: YYYY-MM-DD)",
+        help_text="Only return providers inserted on or before this date (format: YYYY-MM-DD)",
     )
     updated_at = DateFilter(
         field_name="updated_at",
         lookup_expr="date",
-        help_text="Filter by exact date when provider was lastly updated (format: YYYY-MM-DD).",
+        help_text="Only return providers updated on this exact date (format: YYYY-MM-DD)",
     )
     updated_at__gte = DateFilter(
         field_name="updated_at",
         lookup_expr="gte",
-        help_text="Filter providers updated on or after this date (format: YYYY-MM-DD)",
+        help_text="Only return providers updated on or after this date (format: YYYY-MM-DD)",
     )
     updated_at__lte = DateFilter(
         field_name="updated_at",
         lookup_expr="lte",
-        help_text="Filter providers updated on or before this date (format: YYYY-MM-DD)",
+        help_text="Only return providers updated on or before this date (format: YYYY-MM-DD)",
     )
 
     class Meta:
@@ -722,7 +720,7 @@ class ProviderSecretFilter(FilterSet):
     inserted_at = DateFilter(
         field_name="inserted_at",
         lookup_expr="date",
-        help_text="Filter by exact date when the secret was inserted (format: YYYY-MM-DD)",
+        help_text="Filter by exact date when the secret was added (format: YYYY-MM-DD)",
     )
     updated_at = DateFilter(
         field_name="updated_at",
