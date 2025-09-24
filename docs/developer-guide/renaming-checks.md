@@ -126,6 +126,7 @@ class Test_inspector2_active_findings_exist:
 ```
 
 **Important:** Update all references to the old check name in the test file, including:
+
 - Import statements at the top of the file
 - Class name in the test class
 - Any function calls to the check
