@@ -14,7 +14,7 @@ Prowler for Microsoft 365 supports multiple authentication types. Authentication
 - [**Interactive browser authentication**](#interactive-browser-authentication)
 
 ???+ warning
-    The Service Principal with User Credentials method will be deprecated in October 2025 when Microsoft enforces multifactor authentication (MFA) in all tenants, which will not allow user authentication without interactive methods.
+    The Service Principal with User Credentials method will be deprecated in October 2025 when Microsoft enforces MFA in all tenants, which will not allow user authentication without interactive methods.
 
 ## Required Permissions
 
@@ -22,7 +22,7 @@ To run the full Prowler provider, including PowerShell checks, two types of perm
 
 ### Service Principal Authentication Permissions (Recommended)
 
-When using service principal authentication, add the following **Application Permissions**:
+When using service principal authentication, add these **Application Permissions**:
 
 **Microsoft Graph API Permissions:**
 
@@ -34,7 +34,7 @@ When using service principal authentication, add the following **Application Per
 
 **External API Permissions:**
 
-- `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. You also need to assign the `Global Reader` role to the app.
+- `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. The `Global Reader` role must also be assigned to the app.
 - `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
 
 ???+ note
@@ -72,29 +72,29 @@ When using browser authentication, permissions are delegated to the user, so the
 
     ![Overview of Microsoft Entra ID](../microsoft365/img/microsoft-entra-id.png)
 
-2. Navigate to `Applications` > `App registrations`
+2. Navigate to "Applications" > "App registrations"
 
     ![App Registration nav](../microsoft365/img/app-registration-menu.png)
 
-3. Click `+ New registration`, complete the form, and click `Register`
+3. Click "+ New registration", complete the form, and click "Register"
 
     ![New Registration](../microsoft365/img/new-registration.png)
 
-4. Go to `Certificates & secrets` > `Client secrets` > `+ New client secret`
+4. Go to "Certificates & secrets" > "Client secrets" > "+ New client secret"
 
     ![Certificate & Secrets nav](../microsoft365/img/certificates-and-secrets.png)
 
-5. Fill in the required fields and click `Add`, then copy the generated `value` (this will be `AZURE_CLIENT_SECRET`)
+5. Fill in the required fields and click "Add", then copy the generated value (this will be `AZURE_CLIENT_SECRET`)
 
     ![New Client Secret](../microsoft365/img/new-client-secret.png)
 
 #### Grant Microsoft Graph API Permissions
 
-1. Go to App Registration > Select your Prowler App > click on `API permissions`
+1. Go to App Registration > Select your Prowler App > click on "API permissions"
 
     ![API Permission Page](../microsoft365/img/api-permissions-page.png)
 
-2. Click `+ Add a permission` > `Microsoft Graph` > `Application permissions`
+2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
 
     ![Add API Permission](../microsoft365/img/add-app-api-permission.png)
 
@@ -108,17 +108,17 @@ When using browser authentication, permissions are delegated to the user, so the
 
     ![Application Permissions](../microsoft365/img/app-permissions.png)
 
-4. Click `Add permissions`, then click `Grant admin consent for <your-tenant-name>`
+4. Click "Add permissions", then click "Grant admin consent for <your-tenant-name>"
 
 #### Grant PowerShell Module Permissions (For Service Principal Authentication)
 
 1. **Add Exchange API:**
 
-    - Search and select `Office 365 Exchange Online` API in **APIs my organization uses**
+    - Search and select "Office 365 Exchange Online" API in **APIs my organization uses**
 
     ![Office 365 Exchange Online API](../microsoft365/img/search-exchange-api.png)
 
-    - Select `Exchange.ManageAsApp` permission and click `Add permissions`
+    - Select "Exchange.ManageAsApp" permission and click "Add permissions"
 
     ![Exchange.ManageAsApp Permission](../microsoft365/img/exchange-permission.png)
 
@@ -132,38 +132,38 @@ When using browser authentication, permissions are delegated to the user, so the
 
 2. **Add Teams API:**
 
-    - Search and select `Skype and Teams Tenant Admin API` in **APIs my organization uses**
+    - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**
 
     ![Skype and Teams Tenant Admin API](../microsoft365/img/search-skype-teams-tenant-admin-api.png)
 
-    - Select `application_access` permission and click `Add permissions`
+    - Select "application_access" permission and click "Add permissions"
 
     ![application_access Permission](../microsoft365/img/teams-permission.png)
 
-3. Click `Grant admin consent for <your-tenant-name>` to grant admin consent
+3. Click "Grant admin consent for <your-tenant-name>" to grant admin consent
 
     ![Grant Admin Consent](../microsoft365/img/grant-external-api-permissions.png)
 
 #### Assign User Roles (For User Authentication)
 
-If using Service Principal with User Credentials authentication, assign the following roles to the user:
+When using Service Principal with User Credentials authentication, assign the following roles to the user:
 
 1. Go to Users > All Users > Click on the email for the user
 
     ![User Overview](../microsoft365/img/user-info-page.png)
 
-2. Click `Assigned Roles`
+2. Click "Assigned Roles"
 
     ![User Roles](../microsoft365/img/user-role-page.png)
 
-3. Click `Add assignments`, then search and select:
+3. Click "Add assignments", then search and select:
 
     - `Global Reader` (recommended)
     - OR `Exchange Administrator` and `Teams Administrator` (both required)
 
     ![Global Reader Screenshots](../microsoft365/img/global-reader.png)
 
-4. Click next, assign the role as `Active`, and click `Assign`
+4. Click next, assign the role as "Active", and click "Assign"
 
     ![Grant Admin Consent for Role](../microsoft365/img/grant-admin-consent-for-role.png)
 
@@ -268,7 +268,7 @@ Installing PowerShell is different depending on your OS:
 
 === "Windows"
 
-    [Windows](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#install-powershell-using-winget-recommended): you will need to update PowerShell to +7.4 to be able to run prowler, if not some checks will not show findings and the provider could not work as expected. This version of PowerShell is [supported](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4#supported-versions-of-windows) on Windows 10, Windows 11, Windows Server 2016 and higher versions.
+    [Windows](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#install-powershell-using-winget-recommended): PowerShell must be updated to version 7.4+ for Prowler to function properly. Otherwise, some checks will not show findings and the provider may not function properly. This version of PowerShell is [supported](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4#supported-versions-of-windows) on Windows 10, Windows 11, Windows Server 2016 and higher versions.
 
     ```console
     winget install --id Microsoft.PowerShell --source winget
@@ -276,7 +276,7 @@ Installing PowerShell is different depending on your OS:
 
 === "MacOS"
 
-    [MacOS](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.5#install-the-latest-stable-release-of-powershell): installing PowerShell on MacOS needs to have installed [brew](https://brew.sh/), once you have it is just running the command above, Pwsh is only supported in macOS 15 (Sequoia) x64 and Arm64, macOS 14 (Sonoma) x64 and Arm64, macOS 13 (Ventura) x64 and Arm64
+    [MacOS](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.5#install-the-latest-stable-release-of-powershell): installing PowerShell on MacOS needs to have installed [brew](https://brew.sh/), once installed, simply run the command shown above, Pwsh is only supported in macOS 15 (Sequoia) x64 and Arm64, macOS 14 (Sonoma) x64 and Arm64, macOS 13 (Ventura) x64 and Arm64
 
     ```console
     brew install powershell/tap/powershell
@@ -289,7 +289,7 @@ Installing PowerShell is different depending on your OS:
     [Ubuntu](https://learn.microsoft.com/es-es/powershell/scripting/install/install-ubuntu?view=powershell-7.5#installation-via-package-repository-the-package-repository): The required version for installing PowerShell +7.4 on Ubuntu are Ubuntu 22.04 and Ubuntu 24.04.
     The recommended way to install it is downloading the package available on PMC.
 
-    You just need to follow the following steps:
+    Follow these steps:
 
     ```console
     ###################################
@@ -328,7 +328,7 @@ Installing PowerShell is different depending on your OS:
 
     [Alpine](https://learn.microsoft.com/es-es/powershell/scripting/install/install-alpine?view=powershell-7.5#installation-steps): The only supported version for installing PowerShell +7.4 on Alpine is Alpine 3.20. The unique way to install it is downloading the tar.gz package available on [PowerShell github](https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-musl-x64.tar.gz).
 
-    You just need to follow the following steps:
+    Follow these steps:
 
     ```console
     # Install the requirements
@@ -374,7 +374,7 @@ Installing PowerShell is different depending on your OS:
 
     [Debian](https://learn.microsoft.com/es-es/powershell/scripting/install/install-debian?view=powershell-7.5#installation-on-debian-11-or-12-via-the-package-repository): The required version for installing PowerShell +7.4 on Debian are Debian 11 and Debian 12. The recommended way to install it is downloading the package available on PMC.
 
-    You just need to follow the following steps:
+    Follow these steps:
 
     ```console
     ###################################
@@ -414,7 +414,7 @@ Installing PowerShell is different depending on your OS:
 
     [Rhel](https://learn.microsoft.com/es-es/powershell/scripting/install/install-rhel?view=powershell-7.5#installation-via-the-package-repository): The required version for installing PowerShell +7.4 on Red Hat are RHEL 8 and RHEL 9. The recommended way to install it is downloading the package available on PMC.
 
-    You just need to follow the following steps:
+    Follow these steps:
 
     ```console
     ###################################

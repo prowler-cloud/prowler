@@ -1,7 +1,7 @@
 # Getting Started With Microsoft 365 on Prowler
 
 ???+ note "Government Cloud Support"
-    Government cloud accounts or tenants (Microsoft 365 Government) are not currently supported, but we expect to add support for them in the near future.
+    Government cloud accounts or tenants (Microsoft 365 Government) are currently unsupported, but we expect to add support for them in the near future.
 
 ## Prerequisites
 
@@ -16,57 +16,57 @@ Configure authentication for Microsoft 365 by following the [Microsoft 365 Authe
 
 ### Step 1: Obtain Domain ID
 
-1. Go to the Entra ID portal, then search for `Domain` or go to Identity > Settings > Domain Names
+1. Go to the Entra ID portal, then search for "Domain" or go to Identity > Settings > Domain Names
 
     ![Search Domain Names](./img/search-domain-names.png)
 
     ![Custom Domain Names](./img/custom-domain-names.png)
 
-2. Select the domain to use as unique identifier for Microsoft 365 account in Prowler App
+2. Select the domain to use as unique identifier for the Microsoft 365 account in Prowler App
 
 ### Step 2: Access Prowler App
 
 1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
-2. Navigate to `Configuration` > `Cloud Providers`
+2. Navigate to "Configuration" > "Cloud Providers"
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
 
-3. Click on `Add Cloud Provider`
+3. Click on "Add Cloud Provider"
 
     ![Add a Cloud Provider](../img/add-cloud-provider.png)
 
-4. Select `Microsoft 365`
+4. Select "Microsoft 365"
 
     ![Select Microsoft 365](./img/select-m365-prowler-cloud.png)
 
-5. Add the Domain ID and an optional alias, then click `Next`
+5. Add the Domain ID and an optional alias, then click "Next"
 
     ![Add Domain ID](./img/add-domain-id.png)
 
 ### Step 3: Add Credentials to Prowler App
 
-1. Go to App Registration overview and copy the `Client ID` and `Tenant ID`
+1. Go to App Registration overview and copy the Client ID and Tenant ID
 
     ![App Overview](./img/app-overview.png)
 
 2. Go to Prowler App and paste:
 
-    - `Client ID`
-    - `Tenant ID`
-    - `AZURE_CLIENT_SECRET` from Service Principal setup
+    - Client ID
+    - Tenant ID
+    - `AZURE_CLIENT_SECRET` from the Service Principal setup
 
     If using user authentication, also add:
 
-    - `M365_USER` (email using assigned domain in tenant)
+    - `M365_USER` (email using the assigned domain in tenant)
     - `M365_PASSWORD` (user password)
 
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
 
-3. Click `Next`
+3. Click "Next"
 
     ![Next Detail](./img/click-next-m365.png)
 
-4. Click `Launch Scan`
+4. Click "Launch Scan"
 
     ![Launch Scan M365](./img/launch-scan.png)
 
@@ -74,15 +74,15 @@ Configure authentication for Microsoft 365 by following the [Microsoft 365 Authe
 
 ## Prowler CLI
 
-Use Prowler CLI to scan Microsoft 365 environments from the command line.
+Use Prowler CLI to scan Microsoft 365 environments.
 
 ### PowerShell Requirements
 
-PowerShell 7.4+ is required for full Microsoft 365 security coverage. Installation instructions are available in the [Authentication guide](authentication.md#supported-powershell-versions).
+PowerShell 7.4+ is required for comprehensive Microsoft 365 security coverage. Installation instructions are available in the [Authentication guide](authentication.md#supported-powershell-versions).
 
 ### Authentication Options
 
-Choose an authentication method from the [Microsoft 365 Authentication](authentication.md) guide:
+Select an authentication method from the [Microsoft 365 Authentication](authentication.md) guide:
 
 - **Service Principal Application** (recommended): `--sp-env-auth`
 - **Service Principal with User Credentials**: `--env-auth`
