@@ -2,8 +2,7 @@
   "name": "prowler-next-app",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:turbo": "next dev --turbo",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
