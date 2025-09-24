@@ -2,21 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.14.0] (Prowler UNRELEASED)
-
-### Added
-- Default JWT keys are generated and stored if they are missing from configuration [(#8655)](https://github.com/prowler-cloud/prowler/pull/8655)
-- `compliance_name` for each compliance [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
-
-### Changed
-- Now the MANAGE_ACCOUNT permission is required to modify or read user permissions instead of MANAGE_USERS [(#8281)](https://github.com/prowler-cloud/prowler/pull/8281)
-- Now at least one user with MANAGE_ACCOUNT permission is required in the tenant [(#8729)](https://github.com/prowler-cloud/prowler/pull/8729)
-
----
-
->>>>>>> 56821de2f (feat(tasks): Move compliance tasks to compliance queue (#8755))
 ## [1.13.1] (Prowler 5.12.2)
 
 ### Changed
