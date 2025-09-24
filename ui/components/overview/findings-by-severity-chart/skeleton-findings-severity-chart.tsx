@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardBody, CardHeader, Skeleton } from "@nextui-org/react";
 
 export const SkeletonFindingsBySeverityChart = () => {

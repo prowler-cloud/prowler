@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
 
 import { MembershipDetailData, TenantDetailData } from "@/types/users";

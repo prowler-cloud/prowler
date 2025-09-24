@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardBody, CardHeader, Divider } from "@nextui-org/react";
 import { CardProps as NextUICardProps } from "@nextui-org/react";
 import React from "react";

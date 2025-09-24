@@ -1,5 +1,3 @@
-"use client";
-
 import { Tooltip } from "@nextui-org/react";
 
 import { CustomButton } from "@/components/ui/custom/custom-button";

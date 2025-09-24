@@ -1,5 +1,3 @@
-"use client";
-
 import { Icon } from "@iconify/react";
 import { Divider } from "@nextui-org/react";
 import React from "react";

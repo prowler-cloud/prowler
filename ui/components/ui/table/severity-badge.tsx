@@ -1,5 +1,3 @@
-"use client";
-
 import { Chip } from "@nextui-org/react";
 import clsx from "clsx";
 import React from "react";

@@ -1,5 +1,3 @@
-"use client";
-
 import { Snippet } from "@nextui-org/react";
 
 export const CodeSnippet = ({ value }: { value: string }) => (

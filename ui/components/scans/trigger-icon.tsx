@@ -1,5 +1,3 @@
-"use client";
-
 import { Tooltip } from "@nextui-org/react";
 
 import { ManualIcon, ScheduleIcon } from "@/components/icons";

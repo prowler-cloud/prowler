@@ -1,5 +1,3 @@
-"use client";
-
 import { Chip, Divider, Select, SelectItem, Switch } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";

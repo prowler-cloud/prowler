@@ -1,5 +1,3 @@
-"use client";
-
 import { Tooltip } from "@nextui-org/react";
 import clsx from "clsx";
 import { InfoIcon } from "lucide-react";
