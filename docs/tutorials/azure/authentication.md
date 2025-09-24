@@ -61,35 +61,146 @@ These permissions are required to perform security checks against Azure resource
 - `Reader` – Grants read-only access to Azure resources.
 - `ProwlerRole` – A custom role with minimal permissions, defined in the [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json).
 
-#### Assigning Permissions at the Subscription Level
 
-1. Download the [Prowler Azure Custom Role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json)
+#### Assigning "Reader" Role at the Subscription Level
+By default, Prowler scans all accessible subscriptions. If you need to audit specific subscriptions, you must assign the necessary role `Reader` for each one. For streamlined and less repetitive role assignments in multi-subscription environments, refer to the [following section](subscriptions.md#recommendation-for-managing-multiple-subscriptions).
 
-    ![Azure Custom Role](./img/download-prowler-role.png)
+=== "Azure Portal"
 
-2. Modify `assignableScopes` to match your Subscription ID (e.g. `/subscriptions/xxxx-xxxx-xxxx-xxxx`)
+  1. To grant Prowler access to scan a specific Azure subscription, follow these steps in Azure Portal:
+  Navigate to the subscription you want to audit with Prowler.
 
-3. Go to your Azure Subscription > "Access control (IAM)"
+  1. In the left menu, select “Access control (IAM)”.
 
-    ![IAM Page](./img/iam-azure-page.png)
+  2. Click “+ Add” and select “Add role assignment”.
 
-4. Click "+ Add" > "Add custom role", choose "Start from JSON" and upload the modified file
+  3. In the search bar, enter `Reader`, select it and click “Next”.
 
-    ![Add custom role via JSON](./img/add-custom-role-json.png)
+  4. In the “Members” tab, click “+ Select members”, then add the accounts to assign this role.
 
-5. Click "Review + Create" to finish
+  5. Click “Review + assign” to finalize and apply the role assignment.
 
-    ![Select review and create](./img/review-and-create.png)
+  ![Adding the Reader Role to a Subscription](../../img/add-reader-role.gif)
 
-6. Return to "Access control (IAM)" > "+ Add" > "Add role assignment"
+=== "Azure CLI"
 
-    - Assign the `Reader` role to the Application created in the previous step
-    - Then repeat the same process assigning the custom `ProwlerRole`
+  1. Open a terminal and execute the following command to assign the `Reader` role to the identity that is going to be assumed by Prowler:
 
-    ![Role Assignment](./img/add-role-assigment.png)
+      ```console
+      az role assignment create --role "Reader" --assignee <user, group, or service principal> --scope /subscriptions/<subscription-id>
+      ```
 
-???+ note
-    The `assignableScopes` field in the JSON custom role file must be updated to reflect the correct subscription or management group. Use one of the following formats: `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.
+  2. If the command is executed successfully, the output is going to be similar to the following:
+
+      ```json
+      {
+          "condition": null,
+          "conditionVersion": null,
+          "createdBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
+          "delegatedManagedIdentityResourceId": null,
+          "description": null,
+          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleAssignments/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "principalId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "principalName": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "principalType": "ServicePrincipal",
+          "roleDefinitionId": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "roleDefinitionName": "Reader",
+          "scope": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "type": "Microsoft.Authorization/roleAssignments",
+          "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+          "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
+      }
+      ```
+
+#### Assigning "ProwlerRole" Permissions at the Subscription Level
+
+Some read-only permissions required for specific security checks are not included in the built-in Reader role. To support these checks, Prowler utilizes a custom role, defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json). Once created, this role can be assigned following the same process as the `Reader` role.
+
+The checks requiring this `ProwlerRole` can be found in this [section](../../tutorials/azure/authentication.md#checks-requiring-prowlerrole).
+
+=== "Azure Portal"
+
+    1. Download the [Prowler Azure Custom Role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json)
+
+        ![Azure Custom Role](./img/download-prowler-role.png)
+
+    2. Modify `assignableScopes` to match your Subscription ID (e.g. `/subscriptions/xxxx-xxxx-xxxx-xxxx`)
+
+    3. Go to your Azure Subscription > "Access control (IAM)"
+
+        ![IAM Page](./img/iam-azure-page.png)
+
+    4. Click "+ Add" > "Add custom role", choose "Start from JSON" and upload the modified file
+
+        ![Add custom role via JSON](./img/add-custom-role-json.png)
+
+    5. Click "Review + Create" to finish
+
+        ![Select review and create](./img/review-and-create.png)
+
+    6. Return to "Access control (IAM)" > "+ Add" > "Add role assignment"
+
+        - Assign the `Reader` role to the Application created in the previous step
+        - Then repeat the same process assigning the custom `ProwlerRole`
+
+        ![Role Assignment](./img/add-role-assigment.png)
+
+    ???+ note
+        The `assignableScopes` field in the JSON custom role file must be updated to reflect the correct subscription or management group. Use one of the following formats: `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.
+
+=== "Azure CLI"
+
+1. To create a new custom role, open a terminal and execute the following command:
+
+    ```console
+    az role definition create --role-definition '{                                                                                                                   640ms  lun 16 dic 17:04:17 2024
+                        "Name": "ProwlerRole",
+                        "IsCustom": true,
+                        "Description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
+                        "AssignableScopes": [
+                        "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" // USE YOUR SUBSCRIPTION ID
+                        ],
+                        "Actions": [
+                        "Microsoft.Web/sites/host/listkeys/action",
+                        "Microsoft.Web/sites/config/list/Action"
+                        ]
+                    }'
+    ```
+
+2. If the command is executed successfully, the output is going to be similar to the following:
+
+    ```json
+    {
+        "assignableScopes": [
+            "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+        ],
+        "createdBy": null,
+        "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
+        "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
+        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "permissions": [
+            {
+                "actions": [
+                    "Microsoft.Web/sites/host/listkeys/action",
+                    "Microsoft.Web/sites/config/list/Action"
+                ],
+                "condition": null,
+                "conditionVersion": null,
+                "dataActions": [],
+                "notActions": [],
+                "notDataActions": []
+            }
+        ],
+        "roleName": "ProwlerRole",
+        "roleType": "CustomRole",
+        "type": "Microsoft.Authorization/roleDefinitions",
+        "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+        "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
+    }
+    ```
 
 ### Additional Resources
 
