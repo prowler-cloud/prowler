@@ -138,7 +138,7 @@ This method is required for Prowler App and recommended for Prowler CLI.
 | Value | Description |
 |-------|-----------|
 | Client ID | Application ID |
-| Client Secret | AZURE_CLIENT_SECRET |
+| Client Secret | Application Generated Secret |
 | Tenant ID | Azure Active Directory tenant ID |
 
 ### Environment Variables (CLI)
