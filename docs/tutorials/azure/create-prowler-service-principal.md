@@ -8,16 +8,33 @@ Service Principal Applications can be created using either the Azure Portal or t
 
 ## Creating a Service Principal via Azure Portal / Entra Admin Center
 
-1. Access Microsoft Entra ID.
-2. In the left menu bar, navigate to **"App registrations"**.
-3. Click **"+ New registration"** in the menu bar to register a new application
-4. Fill the **"Name"**, select the **"Supported account types"** and click **"Register"**. You will be redirected to the applications page.
-5. In the left menu bar, select **"Certificates & secrets"**.
-6. Under the **"Certificates & secrets"** view, click **"+ New client secret"**.
-7. Fill the **"Description"** and **"Expires"** fields, then click **"Add"**.
-8. Copy the secret value, as it will be used as `AZURE_CLIENT_SECRET` environment variable.
+1. Access **Microsoft Entra ID** in the [Azure Portal](https://portal.azure.com)
 
-![Registering an Application in Azure CLI for Prowler](../img/create-sp.gif)
+    ![Search Microsoft Entra ID](./img/search-microsoft-entra-id.png)
+
+2. Navigate to "Manage" > "App registrations"
+
+    ![App Registration nav](./img/app-registration-menu.png)
+
+3. Click "+ New registration", complete the form, and click "Register"
+
+    ![New Registration](./img/new-registration.png)
+
+4. Go to "Certificates & secrets" > "+ New client secret"
+
+    ![Certificate & Secrets nav](./img/certificates-and-secrets.png)
+    ![New Client Secret](./img/new-client-secret.png)
+
+5. Fill in the required fields and click "Add", then copy the generated value
+
+| Value | Description |
+|-------|-----------|
+| Client ID | Application ID |
+| Client Secret | AZURE_CLIENT_SECRET |
+| Tenant ID | Azure Active Directory tenant ID |
+
+
+
 
 ## From Azure CLI
 
