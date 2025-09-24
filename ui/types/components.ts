@@ -483,6 +483,7 @@ export interface FindingProps {
           text: string;
         };
       };
+      additionalurls?: string[];
       servicename: string;
       checkaliases: string[];
       resourcetype: string;

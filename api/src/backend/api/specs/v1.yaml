@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.13.0
+  version: 1.14.0
   description: |-
     Prowler API specification.
 
@@ -182,6 +182,7 @@ paths:
             type: string
             enum:
             - id
+            - compliance_name
             - framework_description
             - name
             - framework
@@ -6363,8 +6364,10 @@ paths:
           description: ''
     patch:
       operationId: roles_partial_update
-      description: Update certain fields of an existing role's information without
-        affecting other fields.
+      description: Update selected fields on an existing role. When changing the `users`
+        relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts
+        that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents
+        callers from removing their own assignment to that role.
       summary: Partially update a role
       parameters:
       - in: path
@@ -6399,7 +6402,8 @@ paths:
           description: ''
     delete:
       operationId: roles_destroy
-      description: Remove a role from the system by their ID.
+      description: Delete the specified role. The API rejects deletion of the last
+        role in the tenant that grants MANAGE_ACCOUNT.
       summary: Delete a role
       parameters:
       - in: path
@@ -8220,6 +8224,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8339,6 +8344,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8437,7 +8443,8 @@ paths:
     patch:
       operationId: users_relationships_roles_partial_update
       description: Update the user-roles relationship information without affecting
-        other fields.
+        other fields. If the update would remove MANAGE_ACCOUNT from the last remaining
+        user in the tenant, the API rejects the request with a 400 response.
       summary: Partially update a user-roles relationship
       tags:
       - User
@@ -8461,6 +8468,10 @@ paths:
     delete:
       operationId: users_relationships_roles_destroy
       description: Remove the user-roles relationship from the system by their ID.
+        If removing MANAGE_ACCOUNT would take it away from the last remaining user
+        in the tenant, the API rejects the request with a 400 response. Users also
+        cannot delete their own role assignments; attempting to do so returns a 400
+        response.
       summary: Delete a user-roles relationship
       tags:
       - User
@@ -8652,6 +8663,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8728,6 +8740,8 @@ components:
           properties:
             id:
               type: string
+            compliance_name:
+              type: string
             framework_description:
               type: string
             name:
@@ -8741,6 +8755,7 @@ components:
             attributes: {}
           required:
           - id
+          - compliance_name
           - framework_description
           - name
           - framework
@@ -15553,59 +15568,49 @@ components:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - memberships
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - memberships
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type memberships
-              title: memberships
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
             roles:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - roles
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - roles
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type roles
-              title: roles
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
     UserCreate:
       type: object

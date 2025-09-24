@@ -302,40 +302,12 @@ And many more environments.
 
 ![Architecture](docs/img/architecture.png)
 
-# Deprecations from v3
-
-## General
-- `Allowlist` now is called `Mutelist`.
-- The `--quiet` option has been deprecated. Use the `--status` flag to filter findings based on their status: PASS, FAIL, or MANUAL.
-- All findings with an `INFO` status have been reclassified as `MANUAL`.
-- The CSV output format is standardized across all providers.
-
-**Deprecated Output Formats**
-
-The following formats are now deprecated:
-- Native JSON has been replaced with JSON in [OCSF] v1.1.0 format, which is standardized across all providers (https://schema.ocsf.io/).
-
-## AWS
-
-**AWS Flag Deprecation**
-
-The flag --sts-endpoint-region has been deprecated due to the adoption of AWS STS regional tokens.
-
-**Sending FAIL Results to AWS Security Hub**
-
-- To send only FAILS to AWS Security Hub, use one of the following options: `--send-sh-only-fails` or `--security-hub --status FAIL`.
-
-
 # 📖 Documentation
-
-**Documentation Resources**
 
 For installation instructions, usage details, tutorials, and the Developer Guide, visit https://docs.prowler.com/
 
 # 📃 License
 
-**Prowler License Information**
-
-Prowler is licensed under the Apache License 2.0, as indicated in each file within the repository. Obtaining a Copy of the License
+Prowler is licensed under the Apache License 2.0.
 
 A copy of the License is available at <http://www.apache.org/licenses/LICENSE-2.0>
