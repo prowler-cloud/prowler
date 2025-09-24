@@ -1,4 +1,4 @@
-# Getting Started with Azure on Prowler Cloud/App
+# Getting Started With Azure on Prowler
 
 ## Prowler App
 
@@ -27,9 +27,9 @@ For detailed instructions on how to create the Service Principal and configure p
 
 ---
 
-### Step 2: Access Prowler Cloud/App
+### Step 2: Access Prowler App
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
 2. Navigate to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)

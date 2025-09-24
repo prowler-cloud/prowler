@@ -120,7 +120,7 @@ This method is required for Prowler App and recommended for Prowler CLI.
 
     ![Search Microsoft Entra ID](./img/search-microsoft-entra-id.png)
 
-2. Navigate to `Manage` > `App registrations`
+2. Navigate to "Manage" > "App registrations"
 
     ![App Registration nav](./img/app-registration-menu.png)
 
@@ -128,12 +128,12 @@ This method is required for Prowler App and recommended for Prowler CLI.
 
     ![New Registration](./img/new-registration.png)
 
-4. Go to `Certificates & secrets` > `+ New client secret`
+4. Go to "Certificates & secrets" > "+ New client secret"
 
     ![Certificate & Secrets nav](./img/certificates-and-secrets.png)
     ![New Client Secret](./img/new-client-secret.png)
 
-5. Fill in the required fields and click `Add`, then copy the generated value
+5. Fill in the required fields and click "Add", then copy the generated value
 
 | Value | Description |
 |-------|-----------|
