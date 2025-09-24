@@ -116,14 +116,20 @@ export PROWLER_API_BASE_URL="https://api.prowler.com"
 
 ### MCP Client Configuration
 
-Configure your MCP client to launch the server with the `uvx` command. Below is a generic snippet; consult your client's documentation for exact locations.
+Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the server with the `uvx` command. Below is a generic snippet; consult your client's documentation for exact locations.
 
 ```json
 {
   "mcpServers": {
     "prowler": {
       "command": "uvx",
-      "args": ["/path/to/prowler/mcp_server/"]
+      "args": ["/path/to/prowler/mcp_server/"],
+      "env": {
+        "PROWLER_APP_EMAIL": "your-email@example.com",
+        "PROWLER_APP_PASSWORD": "your-password",
+        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional
+        "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional
+      }
     }
   }
 }
@@ -131,29 +137,18 @@ Configure your MCP client to launch the server with the `uvx` command. Below is 
 
 ### Claude Desktop (macOS/Windows)
 
-Add the server to Claude Desktop's config file, then restart the app.
+Add the example server to Claude Desktop's config file, then restart the app.
 
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%AppData%\Claude\claude_desktop_config.json` (e.g. `C:\\Users\\<you>\\AppData\\Roaming\\Claude\\claude_desktop_config.json`)
 
-Example content to append/merge:
+### Cursor (macOS/Linux)
 
-```json
-{
-  "mcpServers": {
-    "prowler": {
-      "command": "uvx",
-      "args": ["/path/to/prowler/mcp_server/"]
-      "env": {
-        "PROWLER_APP_EMAIL": "your-email@example.com",
-        "PROWLER_APP_PASSWORD": "your-password",
-        "PROWLER_APP_TENANT_ID": "your-tenant-id",
-        "PROWLER_API_BASE_URL": "https://api.prowler.com"
-      }
-    }
-  }
-}
-```
+If you want to have it globally available, add the example server to Cursor's config file, then restart the app.
+
+- macOS/Linux: `~/.cursor/mcp.json`
+
+If you want to have it only for the current project, add the example server to the project's root in a new `.cursor/mcp.json` file.
 
 ## License
 
