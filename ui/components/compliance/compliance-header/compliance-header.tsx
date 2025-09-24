@@ -1,6 +1,7 @@
 "use client";
 
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@nextui-org/spacer";
+
 
 import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";

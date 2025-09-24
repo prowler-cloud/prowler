@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@nextui-org/card";
+
 import { SettingsIcon } from "lucide-react";
 
 import { JiraIcon } from "@/components/icons/services/IconServices";

@@ -1,6 +1,9 @@
 "use client";
 
-import { Card, CardBody, Divider, Snippet } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/card";
+import { Divider } from "@nextui-org/divider";
+import { Snippet } from "@nextui-org/snippet";
+
 
 import { AddIcon } from "../icons";
 import { CustomButton } from "../ui/custom";

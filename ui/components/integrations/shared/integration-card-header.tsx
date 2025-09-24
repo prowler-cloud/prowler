@@ -1,6 +1,7 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
+
 import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
 

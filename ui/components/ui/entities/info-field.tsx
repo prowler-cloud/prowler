@@ -1,4 +1,5 @@
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import clsx from "clsx";
 import { InfoIcon } from "lucide-react";
 

@@ -1,4 +1,10 @@
-import { Modal, ModalBody, ModalContent, ModalHeader } from "@nextui-org/react";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalHeader
+} from "@nextui-org/modal";
+
 import React, { ReactNode } from "react";
 
 interface CustomAlertModalProps {

@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
+import { Button } from "@nextui-org/button";
+
 import { Column } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HTMLAttributes } from "react";

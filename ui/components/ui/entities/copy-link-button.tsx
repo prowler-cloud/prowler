@@ -1,6 +1,7 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import { CheckCheck, ExternalLink } from "lucide-react";
 import { useState } from "react";
 

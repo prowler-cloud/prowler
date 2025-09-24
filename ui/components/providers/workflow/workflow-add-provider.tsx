@@ -1,6 +1,8 @@
 "use client";
 
-import { Progress, Spacer } from "@nextui-org/react";
+import { Progress } from "@nextui-org/progress";
+import { Spacer } from "@nextui-org/spacer";
+
 import { usePathname } from "next/navigation";
 import React from "react";
 

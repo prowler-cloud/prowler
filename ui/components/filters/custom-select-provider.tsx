@@ -1,6 +1,7 @@
 "use client";
 
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@nextui-org/select";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useMemo } from "react";
 

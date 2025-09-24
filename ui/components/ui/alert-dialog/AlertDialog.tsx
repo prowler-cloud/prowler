@@ -1,6 +1,7 @@
 "use client";
 
-import { cn } from "@nextui-org/react";
+import { cn } from "@nextui-org/theme";
+
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import * as React from "react";
 

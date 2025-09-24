@@ -1,8 +1,9 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import type { CardProps } from "@nextui-org/react";
-import { Card, CardBody } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/card";
+import type { CardProps } from "@nextui-org/card";
+
 import React from "react";
 
 import { cn } from "@/lib";

@@ -1,4 +1,5 @@
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { cn } from "@/lib/utils";

@@ -1,4 +1,5 @@
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 
 interface ComplianceAccordionTitleProps {
   label: string;

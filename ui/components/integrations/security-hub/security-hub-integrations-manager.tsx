@@ -1,6 +1,8 @@
 "use client";
 
-import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@nextui-org/card";
+import { Chip } from "@nextui-org/chip";
+
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";

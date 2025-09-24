@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  CheckboxGroup,
-  Divider,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  ScrollShadow,
-} from "@nextui-org/react";
+import { Button } from "@nextui-org/button";
+import { Checkbox, CheckboxGroup } from "@nextui-org/checkbox";
+import { Divider } from "@nextui-org/divider";
+import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
+import { ScrollShadow } from "@nextui-org/scroll-shadow";
+
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PlusCircleIcon } from "@/components/icons";

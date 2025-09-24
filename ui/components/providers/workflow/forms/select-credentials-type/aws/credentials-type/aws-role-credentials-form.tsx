@@ -1,4 +1,8 @@
-import { Chip, Divider, Select, SelectItem, Switch } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
+import { Divider } from "@nextui-org/divider";
+import { Select, SelectItem } from "@nextui-org/select";
+import { Switch } from "@nextui-org/switch";
+
 import { useEffect, useState } from "react";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 

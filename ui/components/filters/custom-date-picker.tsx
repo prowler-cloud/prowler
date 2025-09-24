@@ -6,7 +6,9 @@ import {
   startOfWeek,
   today,
 } from "@internationalized/date";
-import { Button, ButtonGroup, DatePicker } from "@nextui-org/react";
+import { Button, ButtonGroup } from "@nextui-org/button";
+import { DatePicker } from "@nextui-org/date-picker";
+
 import { useLocale } from "@react-aria/i18n";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef } from "react";

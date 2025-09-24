@@ -1,6 +1,7 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import * as React from "react";
 import { useEffect, useState } from "react";
 

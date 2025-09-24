@@ -1,6 +1,7 @@
 "use client";
 
-import { Snippet } from "@nextui-org/react";
+import { Snippet } from "@nextui-org/snippet";
+
 
 import {
   DateWithTime,

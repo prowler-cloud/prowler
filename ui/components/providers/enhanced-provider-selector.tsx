@@ -1,6 +1,9 @@
 "use client";
 
-import { Button, Input, Select, SelectItem } from "@nextui-org/react";
+import { Button } from "@nextui-org/button";
+import { Input } from "@nextui-org/input";
+import { Select, SelectItem } from "@nextui-org/select";
+
 import { CheckSquare, Search, Square } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Control } from "react-hook-form";

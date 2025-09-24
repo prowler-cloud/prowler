@@ -1,6 +1,7 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
+
 import { useState } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";

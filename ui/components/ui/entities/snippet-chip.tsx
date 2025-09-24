@@ -1,4 +1,7 @@
-import { cn, Snippet, Tooltip } from "@nextui-org/react";
+import { cn } from "@nextui-org/theme";
+import { Snippet } from "@nextui-org/snippet";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import React from "react";
 
 import { CopyIcon, DoneIcon } from "@/components/icons";

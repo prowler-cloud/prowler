@@ -1,4 +1,5 @@
-import { Skeleton } from "@nextui-org/react";
+import { Skeleton } from "@nextui-org/skeleton";
+
 import React from "react";
 
 interface SkeletonAccordionProps {

@@ -1,4 +1,5 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@nextui-org/spacer";
+
 import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";

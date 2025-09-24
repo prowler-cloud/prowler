@@ -1,6 +1,7 @@
 "use client";
 
-import { RadioGroup } from "@nextui-org/react";
+import { RadioGroup } from "@nextui-org/radio";
+
 import React from "react";
 import { Control, Controller } from "react-hook-form";
 import { z } from "zod";

@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/card";
+
 import { Bar, BarChart, LabelList, XAxis, YAxis } from "recharts";
 
 import {

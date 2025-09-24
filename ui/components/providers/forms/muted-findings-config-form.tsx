@@ -1,6 +1,7 @@
 "use client";
 
-import { Textarea } from "@nextui-org/react";
+import { Textarea } from "@nextui-org/input";
+
 import {
   Dispatch,
   SetStateAction,

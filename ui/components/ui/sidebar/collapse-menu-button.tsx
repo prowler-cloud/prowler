@@ -1,6 +1,7 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import { DropdownMenuArrow } from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";

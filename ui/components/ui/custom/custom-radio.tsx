@@ -1,4 +1,7 @@
-import { cn, useRadio, VisuallyHidden } from "@nextui-org/react";
+import { cn } from "@nextui-org/theme";
+import { useRadio } from "@nextui-org/radio";
+import { VisuallyHidden } from "@react-aria/visually-hidden";
+
 import React from "react";
 
 interface CustomRadioProps {

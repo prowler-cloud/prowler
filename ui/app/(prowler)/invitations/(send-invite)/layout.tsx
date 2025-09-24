@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@nextui-org/spacer";
+
 import React from "react";
 
 import { WorkflowSendInvite } from "@/components/invitations/workflow";

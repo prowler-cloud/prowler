@@ -1,5 +1,6 @@
 import { Icon } from "@iconify/react";
-import { Divider } from "@nextui-org/react";
+import { Divider } from "@nextui-org/divider";
+
 import React from "react";
 
 import { CustomButton } from "@/components/ui/custom/custom-button";

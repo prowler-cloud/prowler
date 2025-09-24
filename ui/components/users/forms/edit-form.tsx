@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@nextui-org/select";
+
 import { ShieldIcon, UserIcon } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useForm } from "react-hook-form";

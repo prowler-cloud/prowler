@@ -1,7 +1,8 @@
 "use client";
 
-import type { ButtonProps } from "@nextui-org/react";
-import { cn } from "@nextui-org/react";
+import type { ButtonProps } from "@nextui-org/button";
+import { cn } from "@nextui-org/theme";
+
 import { useControlledState } from "@react-stately/utils";
 import { domAnimation, LazyMotion, m } from "framer-motion";
 import type { ComponentProps } from "react";

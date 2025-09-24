@@ -1,6 +1,7 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
+
 import { Ban, Check } from "lucide-react";
 import { useState } from "react";
 

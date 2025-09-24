@@ -1,4 +1,5 @@
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
+
 import React from "react";
 
 export type FindingStatus = "FAIL" | "PASS" | "MANUAL" | "MUTED";

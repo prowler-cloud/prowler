@@ -1,6 +1,7 @@
 "use client";
 
-import { Checkbox } from "@nextui-org/react";
+import { Checkbox } from "@nextui-org/checkbox";
+
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 

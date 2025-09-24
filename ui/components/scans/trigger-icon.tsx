@@ -1,4 +1,5 @@
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 
 import { ManualIcon, ScheduleIcon } from "@/components/icons";
 

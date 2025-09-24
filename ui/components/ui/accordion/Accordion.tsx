@@ -1,10 +1,8 @@
 "use client";
 
-import {
-  Accordion as NextUIAccordion,
-  AccordionItem,
-  Selection,
-} from "@nextui-org/react";
+import { Accordion as NextUIAccordion, AccordionItem } from "@nextui-org/accordion";
+import type { Selection } from "@react-types/shared";
+
 import { ChevronDown } from "lucide-react";
 import React, { ReactNode, useCallback, useMemo, useState } from "react";
 

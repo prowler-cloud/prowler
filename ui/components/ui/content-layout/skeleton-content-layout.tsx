@@ -1,4 +1,5 @@
-import { Skeleton } from "@nextui-org/react";
+import { Skeleton } from "@nextui-org/skeleton";
+
 
 export const SkeletonContentLayout = () => {
   return (

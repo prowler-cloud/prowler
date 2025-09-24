@@ -1,4 +1,5 @@
-import { Input } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
+
 import debounce from "lodash.debounce";
 import { SearchIcon, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";

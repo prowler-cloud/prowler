@@ -1,7 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input, Select, type Selection, SelectItem } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
+import { Select, SelectItem } from "@nextui-org/select";
+import type { Selection } from "@react-types/shared";
+
 import { Search, Send } from "lucide-react";
 import {
   type Dispatch,

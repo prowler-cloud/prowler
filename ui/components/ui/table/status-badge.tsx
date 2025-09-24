@@ -1,4 +1,5 @@
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
+
 import clsx from "clsx";
 import React from "react";
 

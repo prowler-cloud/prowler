@@ -1,13 +1,14 @@
 "use client";
 
+import { Button } from "@nextui-org/button";
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
-  DropdownTrigger,
-} from "@nextui-org/react";
+  DropdownTrigger
+} from "@nextui-org/dropdown";
+
 import { Row } from "@tanstack/react-table";
 import { useState } from "react";
 

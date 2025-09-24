@@ -1,4 +1,5 @@
-import { cn } from "@nextui-org/react";
+import { cn } from "@nextui-org/theme";
+
 import * as React from "react";
 
 const Table = React.forwardRef<

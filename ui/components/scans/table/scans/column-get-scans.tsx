@@ -1,6 +1,7 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 

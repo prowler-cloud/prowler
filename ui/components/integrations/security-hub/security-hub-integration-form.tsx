@@ -1,7 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, Radio, RadioGroup } from "@nextui-org/react";
+import { Checkbox } from "@nextui-org/checkbox";
+import { Divider } from "@nextui-org/divider";
+import { Radio, RadioGroup } from "@nextui-org/radio";
+
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";

@@ -1,6 +1,7 @@
 "use client";
 
-import { Snippet } from "@nextui-org/react";
+import { Snippet } from "@nextui-org/snippet";
+
 import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";

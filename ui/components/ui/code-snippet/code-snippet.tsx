@@ -1,4 +1,5 @@
-import { Snippet } from "@nextui-org/react";
+import { Snippet } from "@nextui-org/snippet";
+
 
 export const CodeSnippet = ({ value }: { value: string }) => (
   <Snippet

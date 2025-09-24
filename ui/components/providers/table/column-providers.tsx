@@ -1,6 +1,7 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
+
 import { ColumnDef } from "@tanstack/react-table";
 
 import { DateWithTime, SnippetChip } from "@/components/ui/entities";

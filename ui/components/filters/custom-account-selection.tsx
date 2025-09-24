@@ -1,5 +1,6 @@
 "use client";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@nextui-org/select";
+
 
 const accounts = [
   { key: "audit-test-1", label: "740350143844" },

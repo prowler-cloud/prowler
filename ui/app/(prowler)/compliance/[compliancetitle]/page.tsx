@@ -1,4 +1,5 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@nextui-org/spacer";
+
 import Image from "next/image";
 import React, { Suspense } from "react";
 

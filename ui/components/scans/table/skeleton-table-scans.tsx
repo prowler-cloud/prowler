@@ -1,4 +1,6 @@
-import { Card, Skeleton } from "@nextui-org/react";
+import { Card } from "@nextui-org/card";
+import { Skeleton } from "@nextui-org/skeleton";
+
 import React from "react";
 
 export const SkeletonTableScans = () => {

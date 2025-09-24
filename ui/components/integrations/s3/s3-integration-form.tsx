@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/react";
+import { Divider } from "@nextui-org/divider";
+
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";

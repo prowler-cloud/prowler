@@ -1,7 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, Tooltip } from "@nextui-org/react";
+import { Checkbox } from "@nextui-org/checkbox";
+import { Divider } from "@nextui-org/divider";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import clsx from "clsx";
 import { InfoIcon, SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";

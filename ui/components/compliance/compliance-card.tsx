@@ -1,6 +1,8 @@
 "use client";
 
-import { Card, CardBody, Progress } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/card";
+import { Progress } from "@nextui-org/progress";
+
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";

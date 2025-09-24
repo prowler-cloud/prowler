@@ -1,5 +1,7 @@
-import { Card, CardBody, CardHeader, Divider } from "@nextui-org/react";
-import { CardProps as NextUICardProps } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@nextui-org/card";
+import type { CardProps as NextUICardProps } from "@nextui-org/card";
+import { Divider } from "@nextui-org/divider";
+
 import React from "react";
 interface CustomBoxProps {
   children: React.ReactNode;

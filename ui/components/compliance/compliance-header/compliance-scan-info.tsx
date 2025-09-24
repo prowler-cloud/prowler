@@ -1,4 +1,6 @@
-import { Divider, Tooltip } from "@nextui-org/react";
+import { Divider } from "@nextui-org/divider";
+import { Tooltip } from "@nextui-org/tooltip";
+
 
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { ProviderType } from "@/types";

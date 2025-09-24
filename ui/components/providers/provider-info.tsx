@@ -1,4 +1,5 @@
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@nextui-org/tooltip";
+
 import React from "react";
 
 import { ProviderType } from "@/types";

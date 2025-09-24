@@ -1,7 +1,8 @@
 "use client";
 
 import { Icon } from "@iconify/react";
-import { Input } from "@nextui-org/react";
+import { Input } from "@nextui-org/input";
+
 import React, { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 

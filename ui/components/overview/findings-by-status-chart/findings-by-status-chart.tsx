@@ -1,7 +1,8 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/react";
-import { Chip } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/card";
+import { Chip } from "@nextui-org/chip";
+
 import { TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

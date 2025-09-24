@@ -1,4 +1,6 @@
-import { Card, CardBody, Skeleton } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/card";
+import { Skeleton } from "@nextui-org/skeleton";
+
 
 export const SkeletonUserInfo = () => {
   return (
