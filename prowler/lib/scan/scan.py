@@ -93,11 +93,17 @@ class Scan:
         # Load bulk compliance frameworks
         self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
 
-        # Get bulk checks metadata for the provider
-        # IaC provider doesn't have traditional checks metadata
+        # Special setup for IaC provider - override inputs to work with traditional flow
         if provider.type == "iac":
+            # IaC doesn't use traditional Prowler checks, so clear all input parameters
+            # to avoid validation errors and let it flow through the normal logic
+            checks = None
+            services = None
+            excluded_checks = None
+            excluded_services = None
             self._bulk_checks_metadata = {}
         else:
+            # Get bulk checks metadata for the provider
             self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
             # Complete checks metadata with the compliance framework specification
             self._bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -111,14 +117,14 @@ class Scan:
                 if category not in valid_categories:
                     valid_categories.add(category)
 
-        # Validate checks (skip for IaC provider)
-        if checks and provider.type != "iac":
+        # Validate checks
+        if checks:
             for check in checks:
                 if check not in self._bulk_checks_metadata.keys():
                     raise ScanInvalidCheckError(f"Invalid check provided: {check}.")
 
-        # Validate services (skip for IaC provider)
-        if services and provider.type != "iac":
+        # Validate services
+        if services:
             for service in services:
                 if service not in list_services(provider.type):
                     raise ScanInvalidServiceError(
@@ -152,7 +158,6 @@ class Scan:
                     )
 
         # Load checks to execute
-        # Special handling for IaC provider - it doesn't have traditional checks
         if provider.type == "iac":
             self._checks_to_execute = ["iac_scan"]  # Dummy check name for IaC
         else:
@@ -170,8 +175,8 @@ class Scan:
                 )
             )
 
-        # Exclude checks (skip for IaC provider)
-        if excluded_checks and provider.type != "iac":
+        # Exclude checks
+        if excluded_checks:
             for check in excluded_checks:
                 if check in self._checks_to_execute:
                     self._checks_to_execute.remove(check)
@@ -180,8 +185,8 @@ class Scan:
                         f"Invalid check provided: {check}. Check does not exist in the provider."
                     )
 
-        # Exclude services (skip for IaC provider)
-        if excluded_services and provider.type != "iac":
+        # Exclude services
+        if excluded_services:
             for check in self._checks_to_execute:
                 if get_service_name_from_check_name(check) in excluded_services:
                     self._checks_to_execute.remove(check)
@@ -192,15 +197,14 @@ class Scan:
 
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
-        # IaC provider doesn't have service-based checks
+        # Set up service-based checks tracking
         if provider.type == "iac":
             service_checks_to_execute = {"iac": set(["iac_scan"])}
-            service_checks_completed = dict()
         else:
             service_checks_to_execute = get_service_checks_to_execute(
                 self._checks_to_execute
             )
-            service_checks_completed = dict()
+        service_checks_completed = dict()
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
@@ -294,19 +298,22 @@ class Scan:
 
                     # Convert IaC reports to Finding objects
                     findings = []
-                    from prowler.lib.outputs.finding import Finding
-                    from prowler.lib.outputs.common import Status
                     from datetime import timezone
-                    
+
+                    from prowler.lib.outputs.common import Status
+                    from prowler.lib.outputs.finding import Finding
+
                     for report in iac_reports:
                         # Generate unique UID for the finding
                         finding_uid = f"{report.check_metadata.CheckID}-{report.resource_name}-{report.resource_line_range}"
-                        
+
                         # Convert status string to Status enum
-                        status_enum = Status.FAIL if report.status == "FAIL" else Status.PASS
+                        status_enum = (
+                            Status.FAIL if report.status == "FAIL" else Status.PASS
+                        )
                         if report.muted:
                             status_enum = Status.MUTED
-                        
+
                         finding = Finding(
                             auth_method="Repository",  # IaC uses repository as auth method
                             timestamp=datetime.datetime.now(timezone.utc),

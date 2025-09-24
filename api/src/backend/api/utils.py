@@ -135,7 +135,6 @@ def get_prowler_provider_kwargs(
     elif provider.provider == Provider.ProviderChoices.IAC.value:
         # For IaC provider, uid contains the repository URL
         # Extract the access token if present in the secret
-        # TODO: review this
         prowler_provider_kwargs = {
             "scan_repository_url": provider.uid,
         }
@@ -197,7 +196,6 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         return Connection(is_connected=False, error=secret_error)
 
     # For IaC provider, construct the kwargs properly for test_connection
-    # TODO: review this
     if provider.provider == Provider.ProviderChoices.IAC.value:
         # Don't pass repository_url from secret, use scan_repository_url with the UID
         iac_test_kwargs = {
