@@ -302,7 +302,14 @@ class ProviderFilter(FilterSet):
 
     class Meta:
         model = Provider
-        fields = []
+        fields = {
+            "provider": ["exact", "in"],
+            "id": ["exact", "in"],
+            "uid": ["exact", "icontains", "in"],
+            "alias": ["exact", "icontains", "in"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
+        }
         filter_overrides = {
             ProviderEnumField: {
                 "filter_class": CharFilter,
@@ -743,7 +750,9 @@ class ProviderSecretFilter(FilterSet):
 
     class Meta:
         model = ProviderSecret
-        fields = []
+        fields = {
+            "name": ["exact", "icontains"],
+        }
 
 
 class InvitationFilter(FilterSet):
