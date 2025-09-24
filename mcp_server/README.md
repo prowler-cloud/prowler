@@ -107,7 +107,7 @@ For Prowler Cloud and Prowler App (Self-Managed) features, you need to set the f
 export PROWLER_APP_EMAIL="your-email@example.com"
 export PROWLER_APP_PASSWORD="your-password"
 
-# Optional - in case not provided the first membership that was added to the user will be used
+# Optional - in case not provided the first membership that was added to the user will be used. This can be found as `Organization ID` in your User Profile in Prowler App
 export PROWLER_APP_TENANT_ID="your-tenant-id"
 
 # Optional - for custom API endpoint, in case not provided Prowler Cloud API will be used
@@ -127,7 +127,7 @@ Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the serve
       "env": {
         "PROWLER_APP_EMAIL": "your-email@example.com",
         "PROWLER_APP_PASSWORD": "your-password",
-        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional
+        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App
         "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional
       }
     }
