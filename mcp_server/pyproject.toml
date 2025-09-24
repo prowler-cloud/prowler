@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prowler-mcp"
+version = "0.1.0"
+description = "MCP server for Prowler ecosystem"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.11.3",
+    "httpx>=0.27.0",
+]
+
+[project.scripts]
+prowler-mcp = "prowler_mcp_server.main:main"
+
+[tool.uv]
+package = true

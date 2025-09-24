@@ -15,6 +15,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Amazon Web Services Foundations Benchmark v1.4.0",
                 Provider="AWS",
                 Version="1.4",
                 Description="The CIS Benchmark for CIS Amazon Web Services Foundations Benchmark, v1.4.0, Level 1 and 2 provides prescriptive guidance for configuring security options for a subset of Amazon Web Services. It has an emphasis on foundational, testable, and architecture agnostic settings",
@@ -42,6 +43,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Amazon Web Services Foundations Benchmark v1.5.0",
                 Provider="AWS",
                 Version="1.5",
                 Description="The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services with an emphasis on foundational, testable, and architecture agnostic settings.",
@@ -95,6 +97,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Google Cloud Platform Foundation Benchmark v2.0.0",
                 Provider="GCP",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
@@ -122,6 +125,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Google Cloud Platform Foundation Benchmark v2.1.0",
                 Provider="GCP",
                 Version="2.1",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
@@ -175,6 +179,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Microsoft Azure Foundations Benchmark v2.0.0",
                 Provider="Azure",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azuee Platform",
@@ -202,6 +207,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Microsoft Azure Foundations Benchmark v2.1.0",
                 Provider="Azure",
                 Version="2.1",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azure Platform",
@@ -255,6 +261,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Kubernetes Benchmark v2.0.0",
                 Provider="Kubernetes",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
@@ -282,6 +289,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Kubernetes Benchmark v2.1.0",
                 Provider="Kubernetes",
                 Version="2.1",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
@@ -335,6 +343,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS GitHub Benchmark v1.0.0",
                 Provider="Github",
                 Version="1.0",
                 Description="This document provides prescriptive guidance for establishing a secure configuration posture for securing GitHub.",
