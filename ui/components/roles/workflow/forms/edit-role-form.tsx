@@ -186,7 +186,7 @@ export const EditRoleForm = ({
           isInvalid={!!form.formState.errors.name}
         />
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <span className="text-lg font-semibold">Admin Permissions</span>
 
           {/* Select All Checkbox */}
@@ -227,7 +227,7 @@ export const EditRoleForm = ({
                     <div className="flex w-fit items-center justify-center">
                       <InfoIcon
                         className={clsx(
-                          "cursor-pointer text-default-400 group-data-[selected=true]:text-foreground",
+                          "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
                         )}
                         aria-hidden={"true"}
                         width={16}
@@ -244,7 +244,7 @@ export const EditRoleForm = ({
           <div className="flex flex-col space-y-4">
             <span className="text-lg font-semibold">Groups visibility</span>
 
-            <p className="text-small font-medium text-default-700">
+            <p className="text-small text-default-700 font-medium">
               Select the groups this role will have access to. If no groups are
               selected and unlimited visibility is not enabled, the role will
               not have access to any accounts.

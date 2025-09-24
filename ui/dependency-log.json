@@ -1,6 +1,30 @@
 [
   {
     "section": "dependencies",
+    "name": "@heroui/react",
+    "from": "2.4.8",
+    "to": "2.8.4",
+    "strategy": "installed",
+    "generatedAt": "2025-09-24T13:59:11.231Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@heroui/system",
+    "from": "2.2.1",
+    "to": "2.4.22",
+    "strategy": "installed",
+    "generatedAt": "2025-09-24T13:59:11.231Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@heroui/theme",
+    "from": "2.2.5",
+    "to": "2.4.22",
+    "strategy": "installed",
+    "generatedAt": "2025-09-24T13:59:11.231Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@hookform/resolvers",
     "from": "3.10.0",
     "to": "3.10.0",
@@ -44,30 +68,6 @@
     "name": "@next/third-parties",
     "from": "15.3.5",
     "to": "15.3.5",
-    "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@heroui/react",
-    "from": "2.4.8",
-    "to": "2.4.8",
-    "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@heroui/system",
-    "from": "2.2.1",
-    "to": "2.2.1",
-    "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@heroui/theme",
-    "from": "2.2.5",
-    "to": "2.2.5",
     "strategy": "installed",
     "generatedAt": "2025-09-10T11:50:17.548Z"
   },
@@ -627,9 +627,9 @@
     "section": "devDependencies",
     "name": "prettier-plugin-tailwindcss",
     "from": "0.6.13",
-    "to": "0.6.13",
+    "to": "0.6.14",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-24T13:59:11.231Z"
   },
   {
     "section": "devDependencies",
@@ -643,9 +643,9 @@
     "section": "devDependencies",
     "name": "tailwindcss",
     "from": "3.4.3",
-    "to": "3.4.3",
+    "to": "4.1.13",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-24T13:59:11.231Z"
   },
   {
     "section": "devDependencies",
