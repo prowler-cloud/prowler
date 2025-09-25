@@ -67,52 +67,52 @@ By default, Prowler scans all accessible subscriptions. If you need to audit spe
 
 === "Azure Portal"
 
-  1. To grant Prowler access to scan a specific Azure subscription, follow these steps in Azure Portal:
-  Navigate to the subscription you want to audit with Prowler.
+    1. To grant Prowler access to scan a specific Azure subscription, follow these steps in Azure Portal:
+    Navigate to the subscription you want to audit with Prowler.
 
-  1. In the left menu, select “Access control (IAM)”.
+    1. In the left menu, select “Access control (IAM)”.
 
-  2. Click “+ Add” and select “Add role assignment”.
+    2. Click “+ Add” and select “Add role assignment”.
 
-  3. In the search bar, enter `Reader`, select it and click “Next”.
+    3. In the search bar, enter `Reader`, select it and click “Next”.
 
-  4. In the “Members” tab, click “+ Select members”, then add the accounts to assign this role.
+    4. In the “Members” tab, click “+ Select members”, then add the accounts to assign this role.
 
-  5. Click “Review + assign” to finalize and apply the role assignment.
+    5. Click “Review + assign” to finalize and apply the role assignment.
 
-  ![Adding the Reader Role to a Subscription](../../img/add-reader-role.gif)
+    ![Adding the Reader Role to a Subscription](../../img/add-reader-role.gif)
 
 === "Azure CLI"
 
-  1. Open a terminal and execute the following command to assign the `Reader` role to the identity that is going to be assumed by Prowler:
+    1. Open a terminal and execute the following command to assign the `Reader` role to the identity that is going to be assumed by Prowler:
 
-      ```console
-      az role assignment create --role "Reader" --assignee <user, group, or service principal> --scope /subscriptions/<subscription-id>
-      ```
+        ```console
+        az role assignment create --role "Reader" --assignee <user, group, or service principal> --scope /subscriptions/<subscription-id>
+        ```
 
-  2. If the command is executed successfully, the output is going to be similar to the following:
+    2. If the command is executed successfully, the output is going to be similar to the following:
 
-      ```json
-      {
-          "condition": null,
-          "conditionVersion": null,
-          "createdBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
-          "delegatedManagedIdentityResourceId": null,
-          "description": null,
-          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleAssignments/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "principalId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "principalName": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "principalType": "ServicePrincipal",
-          "roleDefinitionId": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "roleDefinitionName": "Reader",
-          "scope": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "type": "Microsoft.Authorization/roleAssignments",
-          "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-          "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
-      }
-      ```
+        ```json
+        {
+            "condition": null,
+            "conditionVersion": null,
+            "createdBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
+            "delegatedManagedIdentityResourceId": null,
+            "description": null,
+            "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleAssignments/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "principalId": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "principalName": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "principalType": "ServicePrincipal",
+            "roleDefinitionId": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "roleDefinitionName": "Reader",
+            "scope": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+            "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
+        }
+        ```
 
 #### Assigning "ProwlerRole" Permissions at the Subscription Level
 
