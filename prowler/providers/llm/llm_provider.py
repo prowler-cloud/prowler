@@ -295,68 +295,83 @@ class LlmProvider(Provider):
 
     def _stream_findings(self, process, report_path, streaming_callback):
         """Stream findings in real-time as they are written to the output file."""
+        import queue
         import re
         import threading
         import time
 
         reports = []
         processed_lines = set()  # Track which lines we've already processed
+        error_queue = queue.Queue()  # Thread-safe communication for errors
 
         def monitor_file():
             """Monitor the output file for new findings."""
-            while process.poll() is None:  # While process is still running
-                if os.path.exists(report_path):
-                    try:
-                        with open(report_path, "r", encoding="utf-8") as report_file:
-                            lines = report_file.readlines()
+            try:
+                while process.poll() is None:  # While process is still running
+                    if os.path.exists(report_path):
+                        try:
+                            with open(
+                                report_path, "r", encoding="utf-8"
+                            ) as report_file:
+                                lines = report_file.readlines()
 
-                            # Process only new lines
-                            for i, line in enumerate(lines):
-                                if i not in processed_lines and line.strip():
-                                    if self._process_finding_line(
-                                        line,
-                                        reports,
-                                        streaming_callback,
-                                        progress_counter,
-                                    ):
-                                        processed_lines.add(i)
-                    except Exception as e:
-                        logger.debug(f"Error reading report file: {e}")
+                                # Process only new lines
+                                for i, line in enumerate(lines):
+                                    if i not in processed_lines and line.strip():
+                                        if self._process_finding_line(
+                                            line,
+                                            reports,
+                                            streaming_callback,
+                                            progress_counter,
+                                        ):
+                                            processed_lines.add(i)
+                        except Exception as e:
+                            logger.debug(f"Error reading report file: {e}")
 
-                time.sleep(0.5)  # Check every 500ms
+                    time.sleep(0.5)  # Check every 500ms
+            except Exception as e:
+                logger.debug(f"Monitor file thread error: {e}")
 
-        def process_stdout():
-            """Process stdout to extract test count information."""
-            for line in process.stdout:
-                if (
-                    "Redteam evals require email verification. Please enter your work email"
-                    in line
-                ):
-                    logger.critical(
-                        "Please, provide first your work email in promptfoo with  `promptfoo config set email <email>` command."
+        def process_stdout(error_queue):
+            """Process stdout to extract test count information and detect errors."""
+            try:
+                for line in process.stdout:
+                    if (
+                        "Redteam evals require email verification. Please enter your work email"
+                        in line
+                    ):
+                        error_queue.put(
+                            "Please, provide first your work email in promptfoo with  `promptfoo config set email <email>` command."
+                        )
+                        process.terminate()
+                        return
+                    if "No promptfooconfig found" in line:
+                        error_queue.put(
+                            "No config file found. Please, provide a valid promptfoo config file."
+                        )
+                        process.terminate()
+                        return
+                    if (
+                        "Warning: Config file has a redteam section but no test cases."
+                        in line
+                    ):
+                        error_queue.put(
+                            "Please, generate first the test cases using `promptfoo redteam generate` command."
+                        )
+                        process.terminate()
+                        return
+
+                    # Extract total number of tests from stdout
+                    test_count_match = re.search(
+                        r"Running (\d+) test cases \(up to \d+ at a time\)", line
                     )
-                    sys.exit(1)
-                if "No promptfooconfig found" in line:
-                    logger.critical(
-                        "No config file found. Please, provide a valid promptfoo config file."
-                    )
-                    sys.exit(1)
-                if (
-                    "Warning: Config file has a redteam section but no test cases."
-                    in line
-                ):
-                    logger.critical(
-                        "Please, generate first the test cases using `promptfoo redteam generate` command."
-                    )
-                    sys.exit(1)
-
-                # Extract total number of tests from stdout
-                test_count_match = re.search(
-                    r"Running (\d+) test cases \(up to \d+ at a time\)", line
-                )
-                if test_count_match and progress_counter["total"] == 0:
-                    progress_counter["total"] = int(test_count_match.group(1))
-                    logger.info(f"Found {progress_counter['total']} test cases to run")
+                    if test_count_match and progress_counter["total"] == 0:
+                        progress_counter["total"] = int(test_count_match.group(1))
+                        logger.info(
+                            f"Found {progress_counter['total']} test cases to run"
+                        )
+            except Exception as e:
+                logger.debug(f"Process stdout thread error: {e}")
 
         # Create progress counter dictionary
         progress_counter = {"completed": 0, "total": 0, "completed_test_ids": set()}
@@ -367,16 +382,34 @@ class LlmProvider(Provider):
         monitor_thread.daemon = True
         monitor_thread.start()
 
-        stdout_thread = threading.Thread(target=process_stdout)
+        stdout_thread = threading.Thread(target=process_stdout, args=(error_queue,))
         stdout_thread.daemon = True
         stdout_thread.start()
 
-        # Wait for total number of tests to be detected
+        # Wait for total number of tests to be detected or error
         while process.poll() is None and progress_counter["total"] == 0:
+            # Check for errors from background thread
+            try:
+                error_msg = error_queue.get_nowait()
+                logger.critical(error_msg)
+                process.terminate()
+                process.wait()  # Ensure cleanup
+                sys.exit(1)
+            except queue.Empty:
+                pass
+
             time.sleep(0.5)  # Wait for total to be detected
 
         # If process finished before we detected total, handle it
         if process.poll() is not None and progress_counter["total"] == 0:
+            # Check for any final errors
+            try:
+                error_msg = error_queue.get_nowait()
+                logger.critical(error_msg)
+                sys.exit(1)
+            except queue.Empty:
+                pass
+
             process.wait()
             logger.critical(
                 f"Promptfoo exited with a non-zero exit code {process.returncode} {process.stderr.read()}"
@@ -397,6 +430,17 @@ class LlmProvider(Provider):
 
                 # Update progress bar while process is running
                 while process.poll() is None:
+                    # Check for errors from background thread during execution
+                    try:
+                        error_msg = error_queue.get_nowait()
+                        logger.critical(error_msg)
+                        process.terminate()
+                        process.wait()  # Ensure cleanup
+                        bar.title = "-> LLM security scan failed!"
+                        sys.exit(1)
+                    except queue.Empty:
+                        pass
+
                     # Update the progress by incrementing by the difference
                     if progress_counter["completed"] > previous_completed:
                         bar(progress_counter["completed"] - previous_completed)
