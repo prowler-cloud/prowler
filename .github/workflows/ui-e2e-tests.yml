@@ -2,13 +2,13 @@ name: UI - E2E Tests
 
 on:
   push:
-  pull_request:
-    branches:
-      - master
-      - "v5.*"
-    paths:
-      - '.github/workflows/ui-e2e-tests.yml'
-      - 'ui/**'
+  # pull_request:
+  #   branches:
+  #     - master
+  #     - "v5.*"
+  #   paths:
+  #     - '.github/workflows/ui-e2e-tests.yml'
+  #     - 'ui/**'
 
 jobs:
   e2e-tests:
@@ -45,18 +45,73 @@ jobs:
       - name: Wait for API to be ready
         run: |
           echo "Waiting for prowler-api..."
+          echo "Initial container status:"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
+          echo "Initial API logs (last 20 lines):"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs --tail=20 api || echo "Could not get initial logs"
+          echo "---"
+          
           timeout=150  # 5 minutes max
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
+            # Check if API container is still running
+            if ! docker compose -f docker-compose.yml -f docker-compose.ci.yml ps api | grep -q "Up"; then
+              echo "❌ ERROR: API container is not running!"
+              echo "Container status:"
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml ps api
+              echo "API container logs:"
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml logs api
+              exit 1
+            fi
+            
+            # Test API endpoint
             if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
-              echo "Prowler API is ready!"
+              echo "✅ Prowler API is ready!"
               exit 0
             fi
-            echo "Waiting for prowler-api... (${elapsed}s elapsed)"
+            
+            # Show detailed progress every 30 seconds
+            if [ $((elapsed % 30)) -eq 0 ] && [ $elapsed -gt 0 ]; then
+              echo "⏳ Still waiting... (${elapsed}s elapsed)"
+              echo "Container status:"
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml ps api
+              echo "Recent API logs (last 10 lines):"
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml logs --tail=10 api || echo "Could not get recent logs"
+              echo "Testing endpoint connectivity:"
+              curl -I -s --connect-timeout 2 ${NEXT_PUBLIC_API_BASE_URL}/docs 2>&1 | head -3 || echo "Connection failed"
+              echo "---"
+            else
+              echo "Waiting for prowler-api... (${elapsed}s elapsed)"
+            fi
+            
             sleep 5
             elapsed=$((elapsed + 5))
           done
-          echo "Timeout waiting for prowler-api to start"
+          
+          echo "❌ Timeout waiting for prowler-api to start after ${timeout}s"
+          echo ""
+          echo "=== FINAL DIAGNOSTICS ==="
+          echo "Container status:"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
+          echo ""
+          echo "API container logs (full):"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs api
+          echo ""
+          echo "Worker container logs:"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs worker || echo "No worker logs"
+          echo ""
+          echo "Worker-beat container logs:"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs worker-beat || echo "No worker-beat logs"
+          echo ""
+          echo "System resources:"
+          df -h / || echo "Could not check disk space"
+          free -h || echo "Could not check memory"
+          echo ""
+          echo "Network connectivity test:"
+          curl -v --connect-timeout 5 ${NEXT_PUBLIC_API_BASE_URL}/docs || echo "Network test failed"
+          echo ""
+          echo "Docker system info:"
+          docker system df || echo "Could not get docker info"
           exit 1
       - name: Load database fixtures for E2E tests
         run: |
