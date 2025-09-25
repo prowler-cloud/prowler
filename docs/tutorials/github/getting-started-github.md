@@ -21,7 +21,7 @@
 
     ![Select GitHub](./img/select-github.png)
 
-5. Add the GitHub Account ID (your username or organization name) and an optional alias, then click "Next"
+5. Add the GitHub Account ID (username or organization name) and an optional alias, then click "Next"
 
     ![Add GitHub Account ID](./img/add-github-account-id.png)
 

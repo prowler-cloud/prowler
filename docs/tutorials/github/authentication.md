@@ -1,4 +1,4 @@
-# Github Authentication in Prowler
+# GitHub Authentication in Prowler
 
 Prowler supports multiple methods to [authenticate with GitHub](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api). These include:
 
@@ -208,3 +208,4 @@ Choose the appropriate method based on use case:
 ### Organization Settings
 - Some organizations restrict third-party applications
 - Contact organization administrator if access is denied
+
