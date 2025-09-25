@@ -1,6 +1,7 @@
 name: UI - E2E Tests
 
 on:
+  push:
   pull_request:
     branches:
       - master
@@ -21,6 +22,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Create API data directory with correct permissions
+        run: |
+          # Create the directory and set ownership to match container user (prowler: UID 1000)
+          mkdir -p ./_data/api
+          # Use Docker to set proper ownership, similar to how it works in EC2
+          docker run --rm -v $(pwd)/_data/api:/tmp/api_data alpine:latest chown -R 1000:1000 /tmp/api_data
+          echo "Created API data directory with UID 1000 ownership"
       - name: Start API services
         run: |
           # Override docker-compose image tag to use latest instead of stable
