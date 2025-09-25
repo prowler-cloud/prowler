@@ -32,26 +32,42 @@ Assign the following Microsoft Graph permissions:
 ???+ note
     Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permissions. Note that Entra checks related to DirectoryRoles and GetUsers will not run with this permission.
 
-1. Go to your App Registration > "API permissions"
+=== "Azure Portal"
 
-    ![API Permission Page](./img/api-permissions-page.png)
+    1. Go to your App Registration > "API permissions"
 
-2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
+        ![API Permission Page](./img/api-permissions-page.png)
 
-    ![Add API Permission](./img/add-api-permission.png)
-    ![Microsoft Graph Detail](./img/microsoft-graph-detail.png)
+    2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
 
-3. Search and select:
+        ![Add API Permission](./img/add-api-permission.png)
+        ![Microsoft Graph Detail](./img/microsoft-graph-detail.png)
 
-    - `Directory.Read.All`
-    - `Policy.Read.All`
-    - `UserAuthenticationMethod.Read.All`
+    3. Search and select:
 
-    ![Permission Screenshots](./img/domain-permission.png)
+        - `Directory.Read.All`
+        - `Policy.Read.All`
+        - `UserAuthenticationMethod.Read.All`
 
-4. Click "Add permissions", then grant admin consent
+        ![Permission Screenshots](./img/domain-permission.png)
 
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
+    4. Click "Add permissions", then grant admin consent
+
+        ![Grant Admin Consent](./img/grant-admin-consent.png)
+
+=== "Azure CLI"
+
+    1. To grant permissions to a Service Principal, execute the following command in a terminal:
+
+          ```console
+          az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role 38d9df27-64da-44fd-b7c5-a6fbac20248f=Role
+          ```
+
+    2. Once the permissions are assigned, admin consent is required to finalize the changes. An administrator should run:
+
+          ```console
+          az ad app permission admin-consent --id {appId}
+          ```
 
 
 ### Subscription Scope Permissions
