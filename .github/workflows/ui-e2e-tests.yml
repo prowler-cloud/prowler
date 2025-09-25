@@ -19,48 +19,38 @@ jobs:
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: 'http://localhost:3000'
       NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
+      # Set JWT keys as environment variables to avoid file permission issues
+      DJANGO_TOKEN_SIGNING_KEY: 'LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRERHVjVEWHVGVW1BdVoKSGxjRnhKTnJHMlJjdXRBdTI2RlNTMUdwTjVGQmVUdVRtb0NRcGNkMmY3WUFnZ3JjS2V0TFRsRlNGVVZIcXVMVAo4QjJuNWJPL2pPbmVyaGhiMWVOQWY5TnhyUXNmRzNKdlVhUjNhQkgvWmhCdVFhWUVSdnRsNHFPaVNzTEJIMEZrCkJGUHJ6dVRyNWNkUTJLaGVkUWx4Qk5oMjh4QXFQYk9sSHFhVE5Cd1lTRjF2RG1SeVFqN0hOdGVPWGlzQ1pCZGEKMDVJWkRjTy9Zd2xsM1lQc2tJUGFhVE5mSTBsVVRoMU1vMjhNUmZNakVvaXBJdU5KNGNyQkNEZGNRUkFOTU40VApnTUFhYXZKRzRJT2lGTWZPdFUwVDdXUGNRK3pKZGFXR1NkRm5WUGR0VHBvZkFNUVhYQ1BYWGtIK3VhOE9kOFRkCnUzYVVhS25UQWdNQkFBRUNnZ0VBVWRHVm5aZXVBTXFJV0t5OXNzNUdtQ1ZYK3VRYnRzMzFIVkRHNzRGWmFTTFQKdnFXL2M2VEdGTzZPVmE5UzNTVDUyTUdFRGlzWnVxMUdYTDNCR2xvRzlIcXdTdG1oa0JEeWJtRmtPY1o4VnJBVgpyVlhZMkQxVmNqWGNLUzNkQzJMc0FLdW1pQjFTcUt4L1NwVVJDL0xrVDNjQ0hQcTNWRWZPSGhGRmNLSWNxSVRJCnBrb3NqUUZVZTJzZGlDVVdIRm9OUFJZSHNJa1JsQTJWZk5CdDBCMkdGN3dKcFRGQXFGQVNTQUQ0aXM5T2hOUkgKRzBXRjZJaUJCVjVNRzF6aDFVUUFQcmJvSGRJcXZKTVB5YlJpNzZwVVIwVk9PbUFjRnVOSDNJSkhHZ3VRdnBrZQpwYlVQaTNaUlFrUkNObGlRTzZmNnI0Wk9Qd0YrNHFLT0xZVUhBb1hxUUtCZ1FEeUxLNFpGb1h4V3dZOXFnQTZFCjdGZnlOdGRjVXIzOGc5Q0pGdkZuZVZlVWNDVnNpcVhwZkVyUHl0K1lHWkJXUTd0dHFZMHJVNTJNdUZwNWxGUXIKRUl0VEFiRkNTcmF5MUhFdm1RbXFSNGMrMmU5TWNqeUlpWHNHUWNQNGFaWWJhYWFUNlNhVEFSK2ZtdGVkZFI4TQpjdEpWdVZrNFdCOHpzVVgzaE1KaHRRS0JnUURSNGZMdGxLQS9WRmFvMlRHRUZzUnNmVk1JaVVlbWdUWkNPaGZTCnlOWjBQQzFXSjB3WVg5VjVIRWJIeGhPL2VTVGVXTnNSVmtVVTF4K3pwbk1KRnlNTU1tVHRqTVZDUVJJU1VxbEYKS2l1T3RtOGJiTFZGMFhKd2ozVCtSK2VyTWVSM1JRWCtOejFHdWNvNW1JcGZpM1VBVnI4SzBWcnlKcGVrRXJEWgp1dGVxdVFLQmdGVnpJZWRIcEdGUlJEMFdOYkFJYjBRWEh5Q3VRMFJLbGRGQnVvbmVZMlVtOWJCYnZRZDJyaDRRCnQzWW5qNHhUQTlFbTBqeWNDTW5PVUpWcUNTZDVvQmVkYVgwNWFmQm5kcjlvZjhwdThwSktJNWFjWVBzOGNZQjYKUVFiRWNSWGRyYjVsR1VWQjNYc2pqTzBXOUFkc1pYOGNNR0VBcHdkTWNNVGN1ZjZQMVFLQmdRQ3pQb3R1Wm5qdwpnSGJHVzRVVWl0aHh6T0pRTmVJWXdEMmhVdTZOcVIyRzh0K3FzOVdlaXdFMGU3bGNzSHFxMjRmWkVYcU9aQk9tCjNGWFBjTHN6QVEwMjZFRFNaWWNhZkJGNjdUdHNWU1BYNnpvSjNGV3ZhK3VaVVBiZVBqVXJkT0UwbXdZT1RxMTEKVVN3VUdCcWl1aGVYNmhIU2VFYUNuaWl3VnZRdGNRS0JnUUNKSGFOWmNGZkNqNGVtNGVXTUgvczBJeHI2VkxkdQp3c3BIbDdJTlVZL3F4cHJCYUhLb3luQjJPSVA5WjhRWnJzcXhDbkVGR01lZnJCVXB2RTlxYjNnVXVHUGQwbTNRCjZwQVRyTzFQTjlMSzNzYVlYVHNYaEJ5RmhNYWI1aFVpSGNmZi8vbmk5VzBmZnJpNjZnVmNKd1lYd2Q5SzBvb0IKWG1rUUZnPT0KLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo='
+      DJANGO_TOKEN_VERIFYING_KEY: 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFxeGxlUTE3aFZKZ0xtUjVYQmNTVApheDM2eUU3YnNWSk5VWGsza1VGNVBwdGFnSkNseDNaL3RnQ0NDdHdwNjB0T1VWSVZSVWVxNHRQd0hhZmxzNytNCjZkNnVHRnZWNDBCLzAzR3RDeDhiY205UnBIZG9FZjltRUc1QnBnUkcvMlhpbzZKS3dzRWZRV1FFVS9QTzVPdmwKeDFEWXFGNTFDWEVFMkhiekVDbzlzNlVlcHBNMEhCaElYVzhPWkhKQ1BzYzIxNDVlS3dKa0Yxcktram1Odzc5agpDV1hkZyt5UWc5cHBNMThqU1ZST0hVeWpidzFGOHlNU2lLa2k0MG5oeXNFSU4xeEJFQTB3M2hPQXdCcHE4a2JnCmc2SVV4ODYxVFJQdFk5eEQ3TWwxcFlaSjBXZFU5MjFPbWg4QXhCZGNJOWRlUWY2NXJ3NTN4TjI3ZHBSb3FkTUMKQXdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=='
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Setup Docker user mapping for CI
-        run: |
-          # Get current user UID/GID to run containers with same permissions
-          export DOCKER_USER=$(id -u)
-          export DOCKER_GROUP=$(id -g)
-          echo "DOCKER_USER=${DOCKER_USER}" >> $GITHUB_ENV
-          echo "DOCKER_GROUP=${DOCKER_GROUP}" >> $GITHUB_ENV
-          echo "Will run containers as UID=${DOCKER_USER}, GID=${DOCKER_GROUP}"
-          
-          # Create API data directory with current user ownership
-          mkdir -p ./_data/api
       - name: Start API services
         run: |
           # Override docker-compose image tag to use latest instead of stable
           # This overrides any PROWLER_API_VERSION set in .env file
           export PROWLER_API_VERSION=latest
           echo "Using PROWLER_API_VERSION=${PROWLER_API_VERSION}"
-          
-          # Use CI-specific docker-compose override to set user mapping
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d api worker worker-beat
+          docker compose up -d api worker worker-beat
       - name: Wait for API to be ready
         run: |
           echo "Waiting for prowler-api..."
           echo "Initial container status:"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
+          docker compose ps
           echo "Initial API logs (last 20 lines):"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs --tail=20 api || echo "Could not get initial logs"
+          docker compose logs --tail=20 api || echo "Could not get initial logs"
           echo "---"
           
           timeout=150  # 5 minutes max
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
             # Check if API container is still running
-            if ! docker compose -f docker-compose.yml -f docker-compose.ci.yml ps api | grep -q "Up"; then
+            if ! docker compose ps api | grep -q "Up"; then
               echo "❌ ERROR: API container is not running!"
               echo "Container status:"
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml ps api
+              docker compose ps api
               echo "API container logs:"
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml logs api
+              docker compose logs api
               exit 1
             fi
             
@@ -74,9 +64,9 @@ jobs:
             if [ $((elapsed % 30)) -eq 0 ] && [ $elapsed -gt 0 ]; then
               echo "⏳ Still waiting... (${elapsed}s elapsed)"
               echo "Container status:"
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml ps api
+              docker compose ps api
               echo "Recent API logs (last 10 lines):"
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml logs --tail=10 api || echo "Could not get recent logs"
+              docker compose logs --tail=10 api || echo "Could not get recent logs"
               echo "Testing endpoint connectivity:"
               curl -I -s --connect-timeout 2 ${NEXT_PUBLIC_API_BASE_URL}/docs 2>&1 | head -3 || echo "Connection failed"
               echo "---"
@@ -92,16 +82,16 @@ jobs:
           echo ""
           echo "=== FINAL DIAGNOSTICS ==="
           echo "Container status:"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
+          docker compose ps
           echo ""
           echo "API container logs (full):"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs api
+          docker compose logs api
           echo ""
           echo "Worker container logs:"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs worker || echo "No worker logs"
+          docker compose logs worker || echo "No worker logs"
           echo ""
           echo "Worker-beat container logs:"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml logs worker-beat || echo "No worker-beat logs"
+          docker compose logs worker-beat || echo "No worker-beat logs"
           echo ""
           echo "System resources:"
           df -h / || echo "Could not check disk space"
@@ -115,7 +105,7 @@ jobs:
           exit 1
       - name: Load database fixtures for E2E tests
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T api sh -c '
+          docker compose exec -T api sh -c '
             echo "Loading all fixtures from api/fixtures/dev/..."
             for fixture in api/fixtures/dev/*.json; do
               if [ -f "$fixture" ]; then
@@ -163,5 +153,5 @@ jobs:
         if: always()
         run: |
           echo "Shutting down services..."
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v || true
+          docker compose down -v || true
           echo "Cleanup completed"
