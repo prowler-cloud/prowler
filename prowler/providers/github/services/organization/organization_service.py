@@ -144,10 +144,22 @@ class Organization(GithubService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+        # Base permission (default repository permission for members)
+        base_perm: Optional[str] = None
+        try:
+            base_perm = getattr(org, "default_repository_permission", None)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            base_perm = None
+
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
             mfa_required=require_mfa,
+            base_permission=base_perm,
         )
 
 
@@ -157,3 +169,4 @@ class Org(BaseModel):
     id: int
     name: str
     mfa_required: Optional[bool] = False
+    base_permission: Optional[str] = None

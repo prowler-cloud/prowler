@@ -1,0 +1,32 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_default_repository_permission_strict",
+  "CheckTitle": "Ensure strict base repository permissions are set for the organization",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GitHubOrganization",
+  "Description": "Ensure the organization's base repository permission for members is set to 'read' or 'none' to minimize risk.",
+  "Risk": "If base repository permissions allow 'write' or 'admin' by default, organization members may unintentionally gain excessive privileges across repositories, increasing the risk of unauthorized changes or accidental modifications.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/managing-base-permissions-for-an-organization",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the organization's base repository permission to 'read' or 'none' for members, unless stricter requirements are needed.",
+      "Url": "https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/managing-base-permissions-for-an-organization"
+    }
+  },
+  "AdditionalURLs": [],
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
+
