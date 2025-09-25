@@ -25,6 +25,15 @@ def mock_sqlserver_get_postgresql_flexible_servers(_):
                 name="name",
                 resource_group="resource_group",
                 require_secure_transport="ON",
+                active_directory_auth="ENABLED",
+                entra_id_admins=[
+                    {
+                        "object_id": "11111111-1111-1111-1111-111111111111",
+                        "principal_name": "Test Admin User",
+                        "principal_type": "User",
+                        "tenant_id": "22222222-2222-2222-2222-222222222222",
+                    }
+                ],
                 log_checkpoints="ON",
                 log_connections="ON",
                 log_disconnections="ON",
@@ -111,6 +120,20 @@ class Test_SqlServer_Service:
             postgesql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].log_retention_days
             == "3"
         )
+
+    def test_get_active_directory_auth(self):
+        postgresql = PostgreSQL(set_mocked_azure_provider())
+        assert (
+            postgresql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].active_directory_auth
+            == "ENABLED"
+        )
+
+    def test_get_entra_id_admins(self):
+        postgresql = PostgreSQL(set_mocked_azure_provider())
+        admins = postgresql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].entra_id_admins
+        assert isinstance(admins, list)
+        assert len(admins) == 1
+        assert admins[0]["principal_name"] == "Test Admin User"
 
     def test_get_firewall(self):
         postgesql = PostgreSQL(set_mocked_azure_provider())
