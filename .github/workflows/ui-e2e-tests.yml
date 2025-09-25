@@ -2,13 +2,13 @@ name: UI - E2E Tests
 
 on:
   push:
-  # pull_request:
-  #   branches:
-  #     - master
-  #     - "v5.*"
-  #   paths:
-  #     - '.github/workflows/ui-e2e-tests.yml'
-  #     - 'ui/**'
+  pull_request:
+    branches:
+      - master
+      - "v5.*"
+    paths:
+      - '.github/workflows/ui-e2e-tests.yml'
+      - 'ui/**'
 
 jobs:
   e2e-tests:
@@ -19,9 +19,6 @@ jobs:
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: 'http://localhost:3000'
       NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
-      # Set JWT keys as environment variables to avoid file permission issues
-      DJANGO_TOKEN_SIGNING_KEY: '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDDGV5DXuFUmAuZ\nHlcFxJNrG2RcutAu26FSS1GpN5FBeTuTmoCQpcd2f7YAggrcKetLTlFSFUVHquLT\n8B2n5bO/jOnerhhb1eNAf9NxrQsfG3JvUaR3aBH/ZhBuQaYERvtl4qOiSsLBH0Fk\nBFPrzuTr5cdQ2KhedQlxBNh28xAqPbOlHqaTNBwYSF1vDmRyQj7HNteOXisCZBda\n05IZDcO/Ywll3YPskIPaaTNfI0lUTh1Mo28MRfMjEoipIuNJ4crBCDdcQRANMN4T\ngMAaavJG4IOiFMfOtU0T7WPcQ+zJdaWGSdFnVPdtTpofAMQXXCPXXkH+ua8Od8Td\nu3aUaKnTAgMBAAECggEAUdGVnZeuAMqIWKy9ss5GmCVX+uQbts31HVDG74FZaSLT\nvqW/c6TGFO6OVa9S3ST52MGEDisZuq1GXL3BGloG9HqwStmhkBDybmFkOcZ8VrAV\nrVXY2D1VcjXcKS3dC2LsAKumiB1SqKx/SpURC/LkT3cCHPq3VEfOHhFFcKIcqITI\npkosjQFUe2sdiCUWHFoNPRYHsIkRlA2VfNBt0B2GF7wJpTFAqFASSAD4is9OhNRH\nG0WF6IiBBV5MG1zh1UQAPrboHdIqvJMPybRi76pUR0VOOmAcFuNH3IJHGguQvpke\npbUPi3ZRQkRCNliQO6f6r4ZOPwF+4qKOLYUHAoXqQKBgQDyLK4ZFoXxWwY9qgA6E\n7FfyNtdcUr38g9CJFvFneVeUcCVsiqXpfErPyt+YGZBWQ7ttqY0rU52MuFp5lFQr\nEItTAbFCSray1HEvmQmqR4c+2e9McjyIiXsGQcP4aZYbaaaT6SaTAR+fmteddR8M\nctJVuVk4WB8zsUX3hMJhtQKBgQDR4fLtlKA/VFao2TGEFsRsfVMIiUemgTZCOhfS\nyNZ0PC1WJ0wYX9V5HEbHxhO/eSTeWNsRVkUU1x+zpnMJFyMMMmTtjMVCQRISUqlF\nKiuOtm8bbLVF0XJwj3T+R+erMeR3RQX+Nz1Guco5mIpfi3UAVr8K0VryJpekErDZ\nutequQKBgFVzIedHpGFRRD0WNbAIb0QXHyCuQ0RKldFBuoneY2Um9bBbvQd2rh4Q\nt3Ynj4xTA9Em0jycCMnOUJVqCSd5oBedaX05afBndr9of8pu8pJKI5acYPs8cYB6\nQQbEcRXdrb5lGUVB3XsjjO0W9AdsZX8cMGEApwdMcMTcuf6P1QKBgQCzPotuZnjw\ngHbGW4UUithxzOJQNeIYwD2hUu6NqR2G8t+qs9WeiwE0e7lcsHqq24fZEXqOZBOm\n3FXPcLszAQ026EDSZYcafBF67TtsVSPX6zoJ3FWva+uZUPbePjUrdOE0mwYOTq11\nUSwUGBqiuheX6hHSeEaCniiwVvQtcQKBgQCJHaNZcFfCj4em4eWMH/s0Ixr6VLdu\nwspHl7INUY/qxprBaHKoynB2OIP9Z8QZrsqxCnEFGMefrBUpvE9qb3gUuGPd0m3Q\n6pATrO1PN9LK3saYXTsXhByFhMab5hUiHcff//ni9W0ffri66gVcJwYXwd9K0ooB\nXmkQFg==\n-----END PRIVATE KEY-----'
-      DJANGO_TOKEN_VERIFYING_KEY: '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwxleQ17hVJgLmR5XBcST\naxx0XLrQLtuhUktRqTeRQXk7k5qAkKXHdn+2AIIK3CnrS05RUhVFR6ri0/Adp+Wz\nv4zp3q4YW9XjQH/Tca0LHxtyb1Gkd2gR/2YQbkGmBEb7ZeKjokrCwR9BZART687k\n6+XHUNioXnUJcQTYdvMQKj2zpR6mkzQcGEhdbw5kckI+xzbXjl4rAmQXWtOSGQ3D\nv2MJZd2D7JCD2mkzXyNJVE4dTKNvDEXzIxKIqSLjSeHKwQg3XEEQDTDEE4DAGmry\nRuCDohTHzrVNE+1j3EPsyXWlhknRZ1T3bU6aHwDEF1wj115B/rmvDnfE3bt2lGip\n0wIDAQAB\n-----END PUBLIC KEY-----'
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -35,73 +32,18 @@ jobs:
       - name: Wait for API to be ready
         run: |
           echo "Waiting for prowler-api..."
-          echo "Initial container status:"
-          docker compose ps
-          echo "Initial API logs (last 20 lines):"
-          docker compose logs --tail=20 api || echo "Could not get initial logs"
-          echo "---"
-          
           timeout=150  # 5 minutes max
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            # Check if API container is still running
-            if ! docker compose ps api | grep -q "Up"; then
-              echo "❌ ERROR: API container is not running!"
-              echo "Container status:"
-              docker compose ps api
-              echo "API container logs:"
-              docker compose logs api
-              exit 1
-            fi
-            
-            # Test API endpoint
             if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
-              echo "✅ Prowler API is ready!"
+              echo "Prowler API is ready!"
               exit 0
             fi
-            
-            # Show detailed progress every 30 seconds
-            if [ $((elapsed % 30)) -eq 0 ] && [ $elapsed -gt 0 ]; then
-              echo "⏳ Still waiting... (${elapsed}s elapsed)"
-              echo "Container status:"
-              docker compose ps api
-              echo "Recent API logs (last 10 lines):"
-              docker compose logs --tail=10 api || echo "Could not get recent logs"
-              echo "Testing endpoint connectivity:"
-              curl -I -s --connect-timeout 2 ${NEXT_PUBLIC_API_BASE_URL}/docs 2>&1 | head -3 || echo "Connection failed"
-              echo "---"
-            else
-              echo "Waiting for prowler-api... (${elapsed}s elapsed)"
-            fi
-            
+            echo "Waiting for prowler-api... (${elapsed}s elapsed)"
             sleep 5
             elapsed=$((elapsed + 5))
           done
-          
-          echo "❌ Timeout waiting for prowler-api to start after ${timeout}s"
-          echo ""
-          echo "=== FINAL DIAGNOSTICS ==="
-          echo "Container status:"
-          docker compose ps
-          echo ""
-          echo "API container logs (full):"
-          docker compose logs api
-          echo ""
-          echo "Worker container logs:"
-          docker compose logs worker || echo "No worker logs"
-          echo ""
-          echo "Worker-beat container logs:"
-          docker compose logs worker-beat || echo "No worker-beat logs"
-          echo ""
-          echo "System resources:"
-          df -h / || echo "Could not check disk space"
-          free -h || echo "Could not check memory"
-          echo ""
-          echo "Network connectivity test:"
-          curl -v --connect-timeout 5 ${NEXT_PUBLIC_API_BASE_URL}/docs || echo "Network test failed"
-          echo ""
-          echo "Docker system info:"
-          docker system df || echo "Could not get docker info"
+          echo "Timeout waiting for prowler-api to start"
           exit 1
       - name: Load database fixtures for E2E tests
         run: |
