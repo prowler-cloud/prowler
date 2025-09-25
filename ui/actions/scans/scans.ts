@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
@@ -39,7 +40,7 @@ export const getScans = async ({
   try {
     const response = await fetch(url.toString(), { headers });
 
-    return handleApiResponse(response, "/scans");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching scans:", error);
     return undefined;

@@ -29,7 +29,7 @@ export const getCompliancesOverview = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/compliance");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;

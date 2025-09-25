@@ -33,7 +33,7 @@ export const getFindings = async ({
     const findings = await fetch(url.toString(), {
       headers,
     });
-    return handleApiResponse(findings, "/findings");
+    return handleApiResponse(findings);
   } catch (error) {
     console.error("Error fetching findings:", error);
     return undefined;
@@ -70,7 +70,7 @@ export const getLatestFindings = async ({
     const findings = await fetch(url.toString(), {
       headers,
     });
-    return handleApiResponse(findings, "/findings");
+    return handleApiResponse(findings);
   } catch (error) {
     console.error("Error fetching findings:", error);
     return undefined;

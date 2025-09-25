@@ -39,7 +39,7 @@ export const getProviders = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;
@@ -57,7 +57,7 @@ export const getProvider = async (formData: FormData) => {
       headers,
     });
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }
