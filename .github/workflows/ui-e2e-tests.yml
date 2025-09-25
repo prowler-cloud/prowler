@@ -22,85 +22,45 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Docker user mapping for CI
+        run: |
+          # Get current user UID/GID to run containers with same permissions
+          export DOCKER_USER=$(id -u)
+          export DOCKER_GROUP=$(id -g)
+          echo "DOCKER_USER=${DOCKER_USER}" >> $GITHUB_ENV
+          echo "DOCKER_GROUP=${DOCKER_GROUP}" >> $GITHUB_ENV
+          echo "Will run containers as UID=${DOCKER_USER}, GID=${DOCKER_GROUP}"
+          
+          # Create API data directory with current user ownership
+          mkdir -p ./_data/api
       - name: Start API services
         run: |
           # Override docker-compose image tag to use latest instead of stable
           # This overrides any PROWLER_API_VERSION set in .env file
           export PROWLER_API_VERSION=latest
           echo "Using PROWLER_API_VERSION=${PROWLER_API_VERSION}"
-          docker compose up -d api worker worker-beat
-          echo "Started containers:"
-          docker compose ps
+          
+          # Use CI-specific docker-compose override to set user mapping
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d api worker worker-beat
       - name: Wait for API to be ready
         run: |
-          echo "Waiting for prowler-api to start..."
-          echo "Initial container status:"
-          docker compose ps
-          
-          timeout=300  # 5 minutes max
+          echo "Waiting for prowler-api..."
+          timeout=150  # 5 minutes max
           elapsed=0
-          check_interval=5
-          log_interval=30  # Show detailed logs every 30 seconds
-          
           while [ $elapsed -lt $timeout ]; do
-            # Check if API container is still running
-            if ! docker compose ps api | grep -q "Up"; then
-              echo "❌ ERROR: API container is not running!"
-              echo "Container status:"
-              docker compose ps api
-              echo "API container logs:"
-              docker compose logs api
-              exit 1
+            if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
+              echo "Prowler API is ready!"
+              exit 0
             fi
-            
-            # Test if API endpoint is responding
-            if curl -f -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
-              echo "✅ Prowler API is ready!"
-              echo "API URL: ${NEXT_PUBLIC_API_BASE_URL}/docs"
-              echo "Time taken: ${elapsed} seconds"
-              break
-            fi
-            
-            # Show detailed progress every log_interval seconds
-            if [ $((elapsed % log_interval)) -eq 0 ] && [ $elapsed -gt 0 ]; then
-              echo "⏳ Still waiting... (${elapsed}s elapsed)"
-              echo "Container status:"
-              docker compose ps api
-              echo "Recent API logs (last 10 lines):"
-              docker compose logs --tail=10 api 2>/dev/null || echo "Could not retrieve logs"
-              echo "Testing endpoint connectivity:"
-              curl -I -s --connect-timeout 2 ${NEXT_PUBLIC_API_BASE_URL}/docs 2>&1 | head -3 || echo "Connection failed"
-              echo "---"
-            else
-              echo "Waiting for prowler-api... (${elapsed}s elapsed)"
-            fi
-            
-            sleep $check_interval
-            elapsed=$((elapsed + check_interval))
+            echo "Waiting for prowler-api... (${elapsed}s elapsed)"
+            sleep 5
+            elapsed=$((elapsed + 5))
           done
-          
-          # If we've timed out, show final diagnostics
-          if [ $elapsed -ge $timeout ]; then
-            echo "❌ Timeout waiting for prowler-api to start after ${timeout}s"
-            echo ""
-            echo "=== FINAL DIAGNOSTICS ==="
-            echo "Container status:"
-            docker compose ps
-            echo ""
-            echo "API container logs:"
-            docker compose logs api
-            echo ""
-            echo "System resources:"
-            df -h / || true
-            free -h || true
-            echo ""
-            echo "Network connectivity test:"
-            curl -v --connect-timeout 5 ${NEXT_PUBLIC_API_BASE_URL}/docs || true
-            exit 1
-          fi
+          echo "Timeout waiting for prowler-api to start"
+          exit 1
       - name: Load database fixtures for E2E tests
         run: |
-          docker compose exec -T api sh -c '
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T api sh -c '
             echo "Loading all fixtures from api/fixtures/dev/..."
             for fixture in api/fixtures/dev/*.json; do
               if [ -f "$fixture" ]; then
@@ -148,5 +108,5 @@ jobs:
         if: always()
         run: |
           echo "Shutting down services..."
-          docker compose down -v || true
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v || true
           echo "Cleanup completed"
