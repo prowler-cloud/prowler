@@ -31,52 +31,71 @@ jobs:
           docker compose up -d api worker worker-beat
           echo "Started containers:"
           docker compose ps
-
-          # Wait for API service to be healthy (with healthcheck)
-          echo "Waiting for API service to become healthy..."
-          timeout=300  # 5 minutes max for healthcheck
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for prowler-api to start..."
+          echo "Initial container status:"
+          docker compose ps
+          
+          timeout=300  # 5 minutes max
           elapsed=0
+          check_interval=5
+          log_interval=30  # Show detailed logs every 30 seconds
+          
           while [ $elapsed -lt $timeout ]; do
-            if docker compose ps api | grep -q "healthy"; then
-              echo "API service is healthy!"
-              break
-            elif docker compose ps api | grep -q "unhealthy"; then
-              echo "ERROR: API service became unhealthy!"
+            # Check if API container is still running
+            if ! docker compose ps api | grep -q "Up"; then
+              echo "❌ ERROR: API container is not running!"
               echo "Container status:"
               docker compose ps api
               echo "API container logs:"
               docker compose logs api
               exit 1
             fi
-            echo "Waiting for API healthcheck... (${elapsed}s elapsed)"
-            sleep 10
-            elapsed=$((elapsed + 10))
+            
+            # Test if API endpoint is responding
+            if curl -f -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
+              echo "✅ Prowler API is ready!"
+              echo "API URL: ${NEXT_PUBLIC_API_BASE_URL}/docs"
+              echo "Time taken: ${elapsed} seconds"
+              break
+            fi
+            
+            # Show detailed progress every log_interval seconds
+            if [ $((elapsed % log_interval)) -eq 0 ] && [ $elapsed -gt 0 ]; then
+              echo "⏳ Still waiting... (${elapsed}s elapsed)"
+              echo "Container status:"
+              docker compose ps api
+              echo "Recent API logs (last 10 lines):"
+              docker compose logs --tail=10 api 2>/dev/null || echo "Could not retrieve logs"
+              echo "Testing endpoint connectivity:"
+              curl -I -s --connect-timeout 2 ${NEXT_PUBLIC_API_BASE_URL}/docs 2>&1 | head -3 || echo "Connection failed"
+              echo "---"
+            else
+              echo "Waiting for prowler-api... (${elapsed}s elapsed)"
+            fi
+            
+            sleep $check_interval
+            elapsed=$((elapsed + check_interval))
           done
-
+          
+          # If we've timed out, show final diagnostics
           if [ $elapsed -ge $timeout ]; then
-            echo "Timeout waiting for API service to become healthy"
-            echo "Final container status:"
-            docker compose ps
-            echo "API logs:"
-            docker compose logs api
-            exit 1
-          fi
-      - name: Verify API endpoint is accessible
-        run: |
-          echo "API service is healthy, verifying endpoint accessibility..."
-
-          # Quick verification that the endpoint responds
-          if curl -f -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
-            echo "✅ Prowler API endpoint is accessible!"
-            echo "API URL: ${NEXT_PUBLIC_API_BASE_URL}/docs"
-          else
-            echo "❌ API endpoint not accessible despite healthy status"
+            echo "❌ Timeout waiting for prowler-api to start after ${timeout}s"
+            echo ""
+            echo "=== FINAL DIAGNOSTICS ==="
             echo "Container status:"
             docker compose ps
-            echo "API logs:"
+            echo ""
+            echo "API container logs:"
             docker compose logs api
-            echo "Testing connectivity:"
-            curl -v ${NEXT_PUBLIC_API_BASE_URL}/docs || true
+            echo ""
+            echo "System resources:"
+            df -h / || true
+            free -h || true
+            echo ""
+            echo "Network connectivity test:"
+            curl -v --connect-timeout 5 ${NEXT_PUBLIC_API_BASE_URL}/docs || true
             exit 1
           fi
       - name: Load database fixtures for E2E tests
