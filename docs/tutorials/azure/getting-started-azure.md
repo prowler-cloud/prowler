@@ -58,7 +58,7 @@ Having completed the [Service Principal setup from the Authentication guide](./a
 
     - `Client ID`
     - `Tenant ID`
-    - `AZURE_CLIENT_SECRET` from earlier
+    - `Client Secret` from [earlier](./authentication.md#service-principal-application-authentication-recommended)
 
     ![Prowler Cloud Azure Credentials](./img/add-credentials-azure-prowler-cloud.png)
 

@@ -59,7 +59,7 @@ Assign the following Microsoft Graph permissions:
 These permissions are required to perform security checks against Azure resources. The following **RBAC roles** must be assigned per subscription to the entity used by Prowler:
 
 - `Reader` – Grants read-only access to Azure resources.
-- `ProwlerRole` – A custom role with minimal permissions, defined in the [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json).
+- `ProwlerRole` – A custom role with minimal permissions needed for some specific checks, defined in the [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json).
 
 
 #### Assigning "Reader" Role at the Subscription Level
@@ -283,4 +283,3 @@ prowler azure --browser-auth --tenant-id <tenant-id>
 ```
 
 > **Note:** The `tenant-id` parameter is mandatory for browser authentication.
-
