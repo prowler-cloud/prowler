@@ -328,6 +328,14 @@ class LlmProvider(Provider):
         def process_stdout():
             """Process stdout to extract test count information."""
             for line in process.stdout:
+                if (
+                    "Redteam evals require email verification. Please enter your work email"
+                    in line
+                ):
+                    logger.critical(
+                        "Please, provide first your work email in promptfoo with  `promptfoo config set email <email>` command."
+                    )
+                    sys.exit(1)
                 if "No promptfooconfig found" in line:
                     logger.critical(
                         "No config file found. Please, provide a valid promptfoo config file."
@@ -338,7 +346,7 @@ class LlmProvider(Provider):
                     in line
                 ):
                     logger.critical(
-                        "Please, generate first the test cases using promptfoo redteam generate command."
+                        "Please, generate first the test cases using `promptfoo redteam generate` command."
                     )
                     sys.exit(1)
 
