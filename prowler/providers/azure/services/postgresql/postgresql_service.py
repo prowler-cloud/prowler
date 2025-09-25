@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from azure.mgmt.rdbms.postgresql_flexibleservers import PostgreSQLManagementClient
+from azure.mgmt.postgresqlflexibleservers import PostgreSQLManagementClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -22,6 +22,12 @@ class PostgreSQL(AzureService):
                 for postgresql_server in flexible_servers_list:
                     resource_group = self._get_resource_group(postgresql_server.id)
                     require_secure_transport = self._get_require_secure_transport(
+                        subscription, resource_group, postgresql_server.name
+                    )
+                    active_directory_auth = self._get_active_directory_auth(
+                        subscription, resource_group, postgresql_server.name
+                    )
+                    entra_id_admins = self._get_entra_id_admins(
                         subscription, resource_group, postgresql_server.name
                     )
                     log_checkpoints = self._get_log_checkpoints(
@@ -51,6 +57,8 @@ class PostgreSQL(AzureService):
                             name=postgresql_server.name,
                             resource_group=resource_group,
                             require_secure_transport=require_secure_transport,
+                            active_directory_auth=active_directory_auth,
+                            entra_id_admins=entra_id_admins,
                             log_checkpoints=log_checkpoints,
                             log_connections=log_connections,
                             log_disconnections=log_disconnections,
@@ -104,6 +112,49 @@ class PostgreSQL(AzureService):
         client = self.clients[subscription]
         location = client.servers.get(resouce_group_name, server_name).location
         return location
+
+    def _get_active_directory_auth(self, subscription, resouce_group_name, server_name):
+        client = self.clients[subscription]
+        try:
+            server = client.servers.get(resouce_group_name, server_name)
+            auth_config = getattr(server, "auth_config", None)
+            active_directory_auth = (
+                getattr(auth_config, "active_directory_auth", None)
+                if auth_config is not None
+                else None
+            )
+            # Normalize enum/string to upper string
+            if hasattr(active_directory_auth, "value"):
+                return str(active_directory_auth.value).upper()
+            return (
+                str(active_directory_auth).upper()
+                if active_directory_auth is not None
+                else None
+            )
+        except Exception as e:
+            logger.error(f"Error getting active directory auth for {server_name}: {e}")
+            return None
+
+    def _get_entra_id_admins(self, subscription, resource_group_name, server_name):
+        client = self.clients[subscription]
+        try:
+            admins = client.administrators.list_by_server(
+                resource_group_name, server_name
+            )
+            admin_list = []
+            for admin in admins:
+                admin_list.append(
+                    {
+                        "object_id": admin.object_id,
+                        "principal_name": admin.principal_name,
+                        "principal_type": admin.principal_type,
+                        "tenant_id": admin.tenant_id,
+                    }
+                )
+            return admin_list
+        except Exception as e:
+            logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
+            return []
 
     def _get_connection_throttling(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
@@ -160,3 +211,5 @@ class Server:
     log_retention_days: str
     firewall: list[Firewall]
     location: str
+    active_directory_auth: str = None
+    entra_id_admins: list = None
