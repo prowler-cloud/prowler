@@ -1,7 +1,6 @@
 name: UI - E2E Tests
 
 on:
-  push:
   pull_request:
     branches:
       - master
