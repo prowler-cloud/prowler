@@ -1,6 +1,7 @@
 name: UI - E2E Tests
 
 on:
+  push:
   pull_request:
     branches:
       - master
@@ -28,22 +29,56 @@ jobs:
           export PROWLER_API_VERSION=latest
           echo "Using PROWLER_API_VERSION=${PROWLER_API_VERSION}"
           docker compose up -d api worker worker-beat
-      - name: Wait for API to be ready
-        run: |
-          echo "Waiting for prowler-api..."
-          timeout=150  # 5 minutes max
+          echo "Started containers:"
+          docker compose ps
+
+          # Wait for API service to be healthy (with healthcheck)
+          echo "Waiting for API service to become healthy..."
+          timeout=300  # 5 minutes max for healthcheck
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
-              echo "Prowler API is ready!"
-              exit 0
+            if docker compose ps api | grep -q "healthy"; then
+              echo "API service is healthy!"
+              break
+            elif docker compose ps api | grep -q "unhealthy"; then
+              echo "ERROR: API service became unhealthy!"
+              echo "Container status:"
+              docker compose ps api
+              echo "API container logs:"
+              docker compose logs api
+              exit 1
             fi
-            echo "Waiting for prowler-api... (${elapsed}s elapsed)"
-            sleep 5
-            elapsed=$((elapsed + 5))
+            echo "Waiting for API healthcheck... (${elapsed}s elapsed)"
+            sleep 10
+            elapsed=$((elapsed + 10))
           done
-          echo "Timeout waiting for prowler-api to start"
-          exit 1
+
+          if [ $elapsed -ge $timeout ]; then
+            echo "Timeout waiting for API service to become healthy"
+            echo "Final container status:"
+            docker compose ps
+            echo "API logs:"
+            docker compose logs api
+            exit 1
+          fi
+      - name: Verify API endpoint is accessible
+        run: |
+          echo "API service is healthy, verifying endpoint accessibility..."
+
+          # Quick verification that the endpoint responds
+          if curl -f -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
+            echo "✅ Prowler API endpoint is accessible!"
+            echo "API URL: ${NEXT_PUBLIC_API_BASE_URL}/docs"
+          else
+            echo "❌ API endpoint not accessible despite healthy status"
+            echo "Container status:"
+            docker compose ps
+            echo "API logs:"
+            docker compose logs api
+            echo "Testing connectivity:"
+            curl -v ${NEXT_PUBLIC_API_BASE_URL}/docs || true
+            exit 1
+          fi
       - name: Load database fixtures for E2E tests
         run: |
           docker compose exec -T api sh -c '
