@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "postgresql_flexible_server_entra_id_authentication_enabled",
+  "CheckTitle": "Ensure 'Microsoft Entra ID authentication' is set to 'ENABLED' and administrators are configured for PostgreSQL Flexible Server",
+  "CheckType": [],
+  "ServiceName": "postgresql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "PostgreSQL",
+  "Description": "Enable Microsoft Entra ID (formerly Azure AD) authentication on PostgreSQL Flexible Servers and ensure at least one Entra ID administrator is configured to enforce identity-based access.",
+  "Risk": "Without Microsoft Entra ID authentication or configured administrators, PostgreSQL Flexible Servers may rely on local username/password authentication or have enabled but unusable Entra ID authentication, which lacks MFA, centralized identity lifecycle, conditional access, and auditability, increasing the risk of unauthorized access.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/security-entra-concepts",
+  "Remediation": {
+    "Code": {
+      "CLI": "az postgres flexible-server update --resource-group <resourceGroupName> --name <serverName> --active-directory-auth Enabled && az postgres flexible-server microsoft-entra-admin create --resource-group <resourceGroupName> --server-name <serverName> --object-id <objectId> --display-name <displayName>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "From Azure Portal: 1) Go to Azure Database for PostgreSQL Flexible Server, 2) Select your server, 3) Under Security -> Authentication, enable Microsoft Entra ID authentication only or PostgreSQL and Entra ID authentication, 4) Under Security -> Microsoft Entra ID, add at least one Entra ID administrator, 5) Save. From Azure CLI: az postgres flexible-server update --resource-group <resourceGroupName> --name <serverName> --active-directory-auth Enabled && az postgres flexible-server microsoft-entra-admin create --resource-group <resourceGroupName> --server-name <serverName> --object-id <objectId> --display-name <displayName>",
+      "Url": "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/security-entra-configure"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "."
+}
