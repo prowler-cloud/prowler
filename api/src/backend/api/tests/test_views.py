@@ -51,6 +51,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
 
 
@@ -4720,6 +4721,36 @@ class TestRoleViewSet:
         assert role.users.count() == 0
         assert role.provider_groups.count() == 0
 
+    def test_cannot_remove_own_assignment_via_role_update(
+        self, authenticated_client, roles_fixture
+    ):
+        role = roles_fixture[0]
+        # Ensure the authenticated user is assigned to this role
+        user = User.objects.get(email=TEST_USER)
+        if not UserRoleRelationship.objects.filter(user=user, role=role).exists():
+            UserRoleRelationship.objects.create(
+                user=user, role=role, tenant_id=role.tenant_id
+            )
+
+        # Attempt to update role users to exclude the current user
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "relationships": {"users": {"data": []}},
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            "cannot remove their own role"
+            in response.json()["errors"][0]["detail"].lower()
+        )
+
     def test_role_create_with_invalid_user_relationship(
         self, authenticated_client, provider_groups_fixture
     ):
@@ -4841,15 +4872,134 @@ class TestUserRoleRelationshipViewSet:
             roles_fixture[2].id,
         }
 
-    def test_destroy_relationship(
-        self, authenticated_client, roles_fixture, create_test_user
+    def test_destroy_relationship_other_user(
+        self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
     ):
+        # Create another user in same tenant and assign a role
+        tenant = tenants_fixture[0]
+        other_user = User.objects.create_user(
+            name="other",
+            email="other_user@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+        UserRoleRelationship.objects.create(
+            user=other_user, role=roles_fixture[0], tenant_id=tenant.id
+        )
+
+        # Delete roles for the other user (allowed)
+        response = authenticated_client.delete(
+            reverse("user-roles-relationship", kwargs={"pk": other_user.id}),
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        relationships = UserRoleRelationship.objects.filter(user=other_user.id)
+        assert relationships.count() == 0
+
+    def test_cannot_delete_own_roles(self, authenticated_client, create_test_user):
+        # Attempt to delete own roles should be forbidden
         response = authenticated_client.delete(
             reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
         )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_prevent_removing_last_manage_account_on_patch(
+        self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
+    ):
+        # roles_fixture[1] has manage_account=False
+        limited_role = roles_fixture[1]
+
+        # Ensure there is no other user with MANAGE_ACCOUNT in the tenant
+        tenant = tenants_fixture[0]
+        # Create a secondary user without MANAGE_ACCOUNT
+        user2 = User.objects.create_user(
+            name="limited_user",
+            email="limited_user@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+        UserRoleRelationship.objects.create(
+            user=user2, role=limited_role, tenant_id=tenant.id
+        )
+
+        # Attempt to switch the only MANAGE_ACCOUNT user to a role without it
+        data = {"data": [{"type": "roles", "id": str(limited_role.id)}]}
+        response = authenticated_client.patch(
+            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "MANAGE_ACCOUNT" in response.json()["errors"][0]["detail"]
+
+    def test_allow_role_change_when_other_user_has_manage_account_on_patch(
+        self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
+    ):
+        # roles_fixture[1] has manage_account=False, roles_fixture[0] has manage_account=True
+        limited_role = roles_fixture[1]
+        ma_role = roles_fixture[0]
+
+        tenant = tenants_fixture[0]
+        # Create another user with MANAGE_ACCOUNT
+        user2 = User.objects.create_user(
+            name="ma_user",
+            email="ma_user@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+        UserRoleRelationship.objects.create(
+            user=user2, role=ma_role, tenant_id=tenant.id
+        )
+
+        # Now changing the first user's roles to a non-MA role should succeed
+        data = {"data": [{"type": "roles", "id": str(limited_role.id)}]}
+        response = authenticated_client.patch(
+            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        relationships = UserRoleRelationship.objects.filter(role=roles_fixture[0].id)
-        assert relationships.count() == 0
+
+    def test_role_destroy_only_manage_account_blocked(
+        self, authenticated_client, tenants_fixture
+    ):
+        # Use a tenant without default admin role (tenant3)
+        tenant = tenants_fixture[2]
+        user = User.objects.get(email=TEST_USER)
+        # Add membership for this tenant
+        Membership.objects.create(user=user, tenant=tenant)
+
+        # Create a single MANAGE_ACCOUNT role in this tenant
+        only_role = Role.objects.create(
+            name="only_ma",
+            tenant=tenant,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+
+        # Switch token to this tenant
+        serializer = TokenSerializer(
+            data={
+                "type": "tokens",
+                "email": TEST_USER,
+                "password": TEST_PASSWORD,
+                "tenant_id": str(tenant.id),
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        access_token = serializer.validated_data["access"]
+        authenticated_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+
+        # Attempt to delete the only MANAGE_ACCOUNT role
+        response = authenticated_client.delete(
+            reverse("role-detail", kwargs={"pk": only_role.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Role.objects.filter(id=only_role.id).exists()
 
     def test_invalid_provider_group_id(self, authenticated_client, create_test_user):
         invalid_id = "non-existent-id"

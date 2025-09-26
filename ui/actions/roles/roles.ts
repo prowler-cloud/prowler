@@ -159,8 +159,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
         manage_providers: formData.get("manage_providers") === "true",
         manage_account: formData.get("manage_account") === "true",
         manage_scans: formData.get("manage_scans") === "true",
-        // TODO: Add back when we have integrations ready
-        // manage_integrations: formData.get("manage_integrations") === "true",
+        manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
       relationships: {},

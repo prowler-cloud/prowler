@@ -102,12 +102,6 @@ jobs:
           python -m pip install --upgrade pip
           pipx install poetry==2.1.1
 
-      - name: Update poetry.lock after the branch name change
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry lock
-
       - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push'
@@ -124,6 +118,12 @@ jobs:
           # Verify the change was made
           echo "Updated resolved_reference:"
           grep -A2 -B2 "resolved_reference" poetry.lock
+
+      - name: Update poetry.lock
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry lock
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
