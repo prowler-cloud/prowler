@@ -40,6 +40,7 @@ The LLM provider implementation follows the general [Provider structure](./provi
 ### Configuration Management
 
 The LLM provider uses promptfoo configuration files to define:
+
 - **Target Models**: The LLM models to test (e.g., OpenAI GPT, Anthropic Claude)
 - **Red Team Plugins**: Security test suites (OWASP, MITRE, NIST, EU AI Act)
 - **Test Parameters**: Concurrency, test counts, and evaluation criteria
@@ -47,6 +48,7 @@ The LLM provider uses promptfoo configuration files to define:
 ### Default Configuration
 
 Prowler includes a comprehensive default LLM configuration that:
+
 - Targets OpenAI models by default
 - Includes multiple security test frameworks (OWASP, MITRE, NIST, EU AI Act)
 - Provides extensive test coverage for LLM security vulnerabilities
