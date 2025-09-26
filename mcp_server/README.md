@@ -23,7 +23,25 @@ It is needed to have [uv](https://docs.astral.sh/uv/) installed.
 git clone https://github.com/prowler-cloud/prowler.git
 ```
 
+### Using Docker
+
+Alternatively, you can build and run the MCP server using Docker:
+
+```bash
+# Clone the repository
+git clone https://github.com/prowler-cloud/prowler.git
+cd prowler/mcp_server
+
+# Build the Docker image
+docker build -t prowler-mcp .
+
+# Run the container with environment variables
+docker run --rm --env-file ./.env -it prowler-mcp
+```
+
 ## Running
+
+### Using uv directly
 
 After installation, start the MCP server via the console script:
 
@@ -36,6 +54,15 @@ Alternatively, you can run from wherever you want using `uvx` command:
 
 ```bash
 uvx /path/to/prowler/mcp_server/
+```
+
+### Using Docker
+
+Run the pre-built Docker container:
+
+```bash
+cd prowler/mcp_server
+docker run --rm --env-file ./.env -it prowler-mcp
 ```
 
 ## Available Tools
@@ -116,7 +143,9 @@ export PROWLER_API_BASE_URL="https://api.prowler.com"
 
 ### MCP Client Configuration
 
-Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the server with the `uvx` command. Below is a generic snippet; consult your client's documentation for exact locations.
+Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the server. Below are examples for both direct execution and Docker deployment; consult your client's documentation for exact locations.
+
+#### Using uvx (Direct Execution)
 
 ```json
 {
@@ -127,9 +156,29 @@ Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the serve
       "env": {
         "PROWLER_APP_EMAIL": "your-email@example.com",
         "PROWLER_APP_PASSWORD": "your-password",
-        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App
-        "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional
+        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App,
+        "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional, in case not provided Prowler Cloud API will be used
       }
+    }
+  }
+}
+```
+
+#### Using Docker
+
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "--env", "PROWLER_APP_EMAIL=your-email@example.com",
+        "--env", "PROWLER_APP_PASSWORD=your-password",
+        "--env", "PROWLER_APP_TENANT_ID=your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App
+        "--env", "PROWLER_API_BASE_URL=https://api.prowler.com",  // Optional, in case not provided Prowler Cloud API will be used
+        "prowler-mcp"
+      ]
     }
   }
 }
