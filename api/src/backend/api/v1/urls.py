@@ -17,6 +17,9 @@ from api.v1.views import (
     InvitationAcceptViewSet,
     InvitationViewSet,
     LighthouseConfigViewSet,
+    LighthouseProviderConfigViewSet,
+    LighthouseProviderModelsViewSet,
+    LighthouseTenantConfigViewSet,
     MembershipViewSet,
     OverviewViewSet,
     ProcessorViewSet,
@@ -64,6 +67,16 @@ router.register(
     r"lighthouse-configurations",
     LighthouseConfigViewSet,
     basename="lighthouseconfiguration",
+)
+router.register(
+    r"lighthouse/providers",
+    LighthouseProviderConfigViewSet,
+    basename="lighthouse-providers",
+)
+router.register(
+    r"lighthouse/models",
+    LighthouseProviderModelsViewSet,
+    basename="lighthouse-models",
 )
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
@@ -134,6 +147,14 @@ urlpatterns = [
             {"post": "create", "patch": "partial_update", "delete": "destroy"}
         ),
         name="provider_group-providers-relationship",
+    ),
+    # Lighthouse tenant config as singleton endpoint
+    path(
+        "lighthouse/config",
+        LighthouseTenantConfigViewSet.as_view(
+            {"get": "retrieve", "post": "create", "patch": "partial_update"}
+        ),
+        name="lighthouse-config",
     ),
     # API endpoint to start SAML SSO flow
     path(
