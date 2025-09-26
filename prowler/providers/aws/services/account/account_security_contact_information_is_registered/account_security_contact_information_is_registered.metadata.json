@@ -10,7 +10,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsAccount",
+  "ResourceType": "Other",
   "Description": "Account settings contain a **Security alternate contact** in Alternate Contacts (name, `EmailAddress`, `PhoneNumber`) for targeted AWS security notifications.",
   "Risk": "Missing or outdated **security contact** can delay or prevent AWS advisories from reaching responders, increasing risk to:\n- Confidentiality: data exfiltration from undetected compromise\n- Integrity: unauthorized changes persist longer\n- Availability: resource abuse (e.g., cryptomining) and outages",
   "RelatedUrl": "",
@@ -23,8 +23,6 @@
     "https://sbstjn.com/blog/aws-cdk-update-alternate-contact/",
     "https://support.icompaas.com/support/solutions/articles/62000234161-1-2-ensure-security-contact-information-is-registered-manual-",
     "https://www.plerion.com/cloud-knowledge-base/ensure-security-contact-information-is-registered",
-    "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_19#aws-console",
     "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv"
   ],
   "Remediation": {

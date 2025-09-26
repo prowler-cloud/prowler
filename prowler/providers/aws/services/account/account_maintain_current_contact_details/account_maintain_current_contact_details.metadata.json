@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsIamUser",
+  "ResourceType": "Other",
   "Description": "**AWS account contact information** is current for the **primary contact** and the **alternate contacts** for `security`, `billing`, and `operations`, with accurate email addresses and phone numbers.",
   "Risk": "Outdated or single-person contacts delay **security notifications**, slow **incident response**, and complicate **account recovery**.\n\nAWS may throttle services during abuse mitigation, reducing **availability**. Missed alerts enable ongoing misuse, risking **data exfiltration** and unauthorized changes (**integrity**).",
   "RelatedUrl": "",
@@ -20,7 +20,6 @@
     "https://maartenbruntink.nl/blog/2022/09/26/aws-account-hygiene-101-mass-updating-alternate-account-contacts/",
     "https://docs.aws.amazon.com/security-ir/latest/userguide/update-account-contact-info.html",
     "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact-primary.html",
-    "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html",
     "https://repost.aws/knowledge-center/add-update-billing-contact",
     "https://aws.amazon.com/blogs/security/update-the-alternate-security-contact-across-your-aws-accounts-for-timely-security-notifications/",
     "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_update_contacts.html",
@@ -38,7 +37,9 @@
       "Url": "https://hub.prowler.com/check/account_maintain_current_contact_details"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
