@@ -4,6 +4,8 @@ To enable Prowler to assume an identity for scanning with the required privilege
 
 Service Principal Applications can be created using either the Azure Portal or the Azure CLI.
 
+![Registering an Application in Azure CLI for Prowler](../img/create-sp.gif)
+
 ## Creating a Service Principal via Azure Portal / Entra Admin Center
 
 1. Access **Microsoft Entra ID** in the [Azure Portal](https://portal.azure.com)

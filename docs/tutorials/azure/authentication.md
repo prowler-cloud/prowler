@@ -242,18 +242,6 @@ The following security checks require the `ProwlerRole` permissions for executio
 This method is required for Prowler App and recommended for Prowler CLI.
 
 ### Creating the Service Principal
-
-1. Access Microsoft Entra ID.
-2. In the left menu bar, navigate to **"App registrations"**.
-3. Click **"+ New registration"** in the menu bar to register a new application
-4. Fill the **"Name"**, select the **"Supported account types"** and click **"Register"**. You will be redirected to the applications page.
-5. In the left menu bar, select **"Certificates & secrets"**.
-6. Under the **"Certificates & secrets"** view, click **"+ New client secret"**.
-7. Fill the **"Description"** and **"Expires"** fields, then click **"Add"**.
-8. Copy the secret value, as it will be used as `AZURE_CLIENT_SECRET` environment variable.
-
-![Registering an Application in Azure CLI for Prowler](../img/create-sp.gif)
-
 For more information, see [Creating Prowler Service Principal](create-prowler-service-principal.md).
 
 ### Environment Variables (CLI)
