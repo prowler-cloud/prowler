@@ -146,16 +146,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [messageValue, onFormSubmit]);
 
-  useEffect(() => {
-    if (messagesContainerRef.current && latestUserMsgRef.current) {
-      const container = messagesContainerRef.current;
-      const userMsg = latestUserMsgRef.current;
-      const containerPadding = 16; // p-4 in Tailwind = 16px
-      container.scrollTop =
-        userMsg.offsetTop - container.offsetTop - containerPadding;
-    }
-  }, [messages]);
-
   const suggestedActions: SuggestedAction[] = [
     {
       title: "Are there any exposed S3",
