@@ -16,11 +16,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.12.2] (Prowler v5.12.3)
+## [1.12.3] (Prowler v5.12.3)
 
 ### 🐞 Fixed
 
 - Disable "See Findings" button until scan completes [(#8762)](https://github.com/prowler-cloud/prowler/pull/8762)
+- Scrolling during Lighthouse AI response streaming [(#8669)](https://github.com/prowler-cloud/prowler/pull/8669)
+- Lighthouse textbox to send messages on Enter [(#8747)](https://github.com/prowler-cloud/prowler/pull/8747)
 
 ---
 
