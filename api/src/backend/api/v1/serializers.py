@@ -25,6 +25,9 @@ from api.models import (
     Invitation,
     InvitationRoleRelationship,
     LighthouseConfiguration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    LighthouseTenantConfiguration,
     Membership,
     Processor,
     Provider,
@@ -2931,3 +2934,257 @@ class TenantApiKeyUpdateSerializer(RLSSerializer, BaseWriteSerializer):
         ):
             raise ValidationError("An API key with this name already exists.")
         return value
+
+# Lighthouse: Provider configurations
+
+
+class LighthouseProviderConfigSerializer(RLSSerializer):
+    """
+    Read serializer for LighthouseProviderConfiguration.
+    """
+
+    # Decrypted credentials are only returned in to_representation when requested
+    credentials = serializers.JSONField(required=False, read_only=True)
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "provider_type",
+            "base_url",
+            "is_active",
+            "credentials",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "is_active": {"read_only": True},
+            "url": {"read_only": True},
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Support JSON:API fields filter: fields[lighthouse-providers]=credentials
+        fields_param = self.context.get("request", None) and self.context[
+            "request"
+        ].query_params.get("fields[lighthouse-providers]", "")
+
+        creds = instance.credentials_decoded
+
+        if fields_param == "credentials":
+            # Return full decrypted credentials JSON
+            data["credentials"] = creds
+        else:
+            # Return masked credentials by default
+            def mask_value(value):
+                if isinstance(value, str):
+                    return "*" * len(value)
+                if isinstance(value, dict):
+                    return {k: mask_value(v) for k, v in value.items()}
+                if isinstance(value, list):
+                    return [mask_value(v) for v in value]
+                return value
+
+            data["credentials"] = mask_value(creds) if creds is not None else None
+
+        return data
+
+
+class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Create serializer for LighthouseProviderConfiguration.
+    Accepts credentials as JSON; stored encrypted via credentials_decoded.
+    """
+
+    credentials = serializers.JSONField(write_only=True)
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = [
+            "provider_type",
+            "base_url",
+            "credentials",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "is_active": {"required": False},
+            "base_url": {"required": False, "allow_null": True},
+        }
+
+    def validate(self, attrs):
+        tenant_id = self.context.get("tenant_id")
+        provider_type = attrs.get("provider_type")
+        if LighthouseProviderConfiguration.objects.filter(
+            tenant_id=tenant_id, provider_type=provider_type
+        ).exists():
+            raise ValidationError(
+                {
+                    "provider_type": "Configuration for this provider already exists for the tenant.",
+                }
+            )
+        return super().validate(attrs)
+
+    def create(self, validated_data):
+        credentials = validated_data.pop("credentials")
+        instance = super().create(validated_data)
+        instance.credentials_decoded = credentials
+        instance.save()
+        return instance
+
+
+class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
+    """
+    Update serializer for LighthouseProviderConfiguration.
+    """
+
+    credentials = serializers.JSONField(write_only=True, required=False)
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = [
+            "id",
+            "provider_type",
+            "base_url",
+            "credentials",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "provider_type": {"read_only": True},
+            "base_url": {"required": False, "allow_null": True},
+            "is_active": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        credentials = validated_data.pop("credentials", None)
+        instance = super().update(instance, validated_data)
+        if credentials is not None:
+            instance.credentials_decoded = credentials
+            instance.save()
+        return instance
+
+
+# Lighthouse: Tenant configuration
+
+
+class LighthouseTenantConfigSerializer(RLSSerializer):
+    """
+    Read serializer for LighthouseTenantConfiguration.
+    """
+
+    class Meta:
+        model = LighthouseTenantConfiguration
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "business_context",
+            "default_provider",
+            "default_models",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "url": {"read_only": True},
+        }
+
+
+class LighthouseTenantConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Create serializer for LighthouseTenantConfiguration.
+    Ensures one record per tenant.
+    """
+
+    class Meta:
+        model = LighthouseTenantConfiguration
+        fields = [
+            "business_context",
+            "default_provider",
+            "default_models",
+        ]
+
+    def validate(self, attrs):
+        tenant_id = self.context.get("tenant_id")
+        if LighthouseTenantConfiguration.objects.filter(tenant_id=tenant_id).exists():
+            raise ValidationError(
+                {"tenant_id": "Tenant Lighthouse configuration already exists."}
+            )
+        return super().validate(attrs)
+
+
+class LighthouseTenantConfigUpdateSerializer(BaseWriteSerializer):
+    class Meta:
+        model = LighthouseTenantConfiguration
+        fields = [
+            "id",
+            "business_context",
+            "default_provider",
+            "default_models",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
+# Lighthouse: Provider models
+
+
+class LighthouseProviderModelsSerializer(RLSSerializer):
+    """
+    Read serializer for LighthouseProviderModels.
+    """
+
+    provider_configuration = serializers.ResourceRelatedField(read_only=True)
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "provider_configuration",
+            "model_id",
+            "default_parameters",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "url": {"read_only": True},
+        }
+
+
+class LighthouseProviderModelsCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    provider_configuration = serializers.ResourceRelatedField(
+        queryset=LighthouseProviderConfiguration.objects.all()
+    )
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = [
+            "provider_configuration",
+            "model_id",
+            "default_parameters",
+        ]
+        extra_kwargs = {
+            "default_parameters": {"required": False},
+        }
+
+
+class LighthouseProviderModelsUpdateSerializer(BaseWriteSerializer):
+    class Meta:
+        model = LighthouseProviderModels
+        fields = [
+            "id",
+            "default_parameters",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
