@@ -12,7 +12,7 @@ interface BannerConfig {
 const renderBanner = ({ message, href, gradient }: BannerConfig) => (
   <Link href={href} className="mb-4 block w-full">
     <div
-      className={`w-full rounded-lg ${gradient} shadow-lg transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-opacity-50`}
+      className={`w-full rounded-lg ${gradient} focus:ring-opacity-50 shadow-lg transition-all duration-200 hover:shadow-xl focus:ring-2 focus:outline-none`}
     >
       <div className="px-4 py-3">
         <div className="flex items-center gap-4">
@@ -35,14 +35,14 @@ export const LighthouseBanner = async () => {
         message: "Enable Lighthouse to secure your cloud with AI insights",
         href: "/lighthouse/config",
         gradient:
-          "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
+          "bg-linear-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
       });
     } else {
       return renderBanner({
         message: "Use Lighthouse to review your findings and gain insights",
         href: "/lighthouse",
         gradient:
-          "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
+          "bg-linear-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 focus:ring-green-500/50 dark:from-green-600 dark:to-blue-600 dark:hover:from-green-700 dark:hover:to-blue-700 dark:focus:ring-green-400/50",
       });
     }
   } catch (error) {

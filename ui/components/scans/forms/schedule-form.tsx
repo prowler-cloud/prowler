@@ -65,7 +65,7 @@ export const ScheduleForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         <input type="hidden" name="providerId" value={providerId} />
         <CustomInput
@@ -79,7 +79,7 @@ export const ScheduleForm = ({
           isInvalid={!!form.formState.errors.scheduleDate}
         />
 
-        <div className="flex w-full justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"

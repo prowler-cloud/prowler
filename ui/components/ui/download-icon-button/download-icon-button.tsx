@@ -1,6 +1,6 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/tooltip";
 import { DownloadIcon } from "lucide-react";
 
 import { CustomButton } from "../custom/custom-button";
@@ -29,7 +29,7 @@ export const DownloadIconButton = ({
           variant="ghost"
           isDisabled={isDisabled || isDownloading}
           onPress={() => onDownload(paramId)}
-          className="p-0 text-default-500 hover:text-primary disabled:opacity-30"
+          className="text-default-500 hover:text-primary p-0 disabled:opacity-30"
           isIconOnly
           ariaLabel={ariaLabel}
           size="sm"

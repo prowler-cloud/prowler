@@ -1,8 +1,10 @@
 "use client";
 
+import { Button } from "@heroui/button";
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider } from "@nextui-org/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -190,9 +192,9 @@ export const AuthForm = ({
       {/* Auth Form */}
       <div className="relative flex w-full items-center justify-center lg:w-full">
         {/* Background Pattern */}
-        <div className="absolute h-full w-full bg-[radial-gradient(#6af400_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_10%,transparent_80%)]"></div>
+        <div className="absolute h-full w-full bg-[radial-gradient(#6af400_1px,transparent_1px)] mask-[radial-gradient(ellipse_50%_50%_at_50%_50%,#000_10%,transparent_80%)] bg-size-[16px_16px]"></div>
 
-        <div className="relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-large border-1 border-divider bg-white/90 px-8 py-10 shadow-small dark:bg-background/85 md:max-w-md">
+        <div className="rounded-large border-divider shadow-small dark:bg-background/85 relative z-10 flex w-full max-w-sm flex-col gap-4 border bg-white/90 px-8 py-10 md:max-w-md">
           {/* Prowler Logo */}
           <div className="absolute -top-[100px] left-1/2 z-10 flex h-fit w-fit -translate-x-1/2">
             <ProwlerExtended width={300} />
@@ -350,7 +352,7 @@ export const AuthForm = ({
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
-                <p className="shrink-0 text-tiny text-default-500">OR</p>
+                <p className="text-tiny text-default-500 shrink-0">OR</p>
                 <Divider className="flex-1" />
               </div>
               <div className="flex flex-col gap-2">
@@ -387,7 +389,7 @@ export const AuthForm = ({
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
-                <p className="shrink-0 text-tiny text-default-500">OR</p>
+                <p className="text-tiny text-default-500 shrink-0">OR</p>
                 <Divider className="flex-1" />
               </div>
               <div className="flex flex-col gap-2">
@@ -401,14 +403,14 @@ export const AuthForm = ({
             </>
           )}
           {type === "sign-in" ? (
-            <p className="text-center text-small">
+            <p className="text-small text-center">
               Need to create an account?&nbsp;
               <CustomLink size="base" href="/sign-up" target="_self">
                 Sign up
               </CustomLink>
             </p>
           ) : (
-            <p className="text-center text-small">
+            <p className="text-small text-center">
               Already have an account?&nbsp;
               <CustomLink size="base" href="/sign-in" target="_self">
                 Log in

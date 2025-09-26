@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { CheckIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 

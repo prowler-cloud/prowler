@@ -10,16 +10,17 @@ import { getProviderFormType } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
-  searchParams: {
+  searchParams: Promise<{
     type: ProviderType;
     id: string;
     via?: string;
     secretId?: string;
-  };
+  }>;
 }
 
-export default function UpdateCredentialsPage({ searchParams }: Props) {
-  const { type: providerType, via } = searchParams;
+export default async function UpdateCredentialsPage({ searchParams }: Props) {
+  const resolvedSearchParams = await searchParams;
+  const { type: providerType, via } = resolvedSearchParams;
   const formType = getProviderFormType(providerType, via);
 
   switch (formType) {
@@ -29,13 +30,15 @@ export default function UpdateCredentialsPage({ searchParams }: Props) {
       );
 
     case "credentials":
-      return <UpdateViaCredentialsForm searchParams={searchParams} />;
+      return <UpdateViaCredentialsForm searchParams={resolvedSearchParams} />;
 
     case "role":
-      return <UpdateViaRoleForm searchParams={searchParams} />;
+      return <UpdateViaRoleForm searchParams={resolvedSearchParams} />;
 
     case "service-account":
-      return <UpdateViaServiceAccountForm searchParams={searchParams} />;
+      return (
+        <UpdateViaServiceAccountForm searchParams={resolvedSearchParams} />
+      );
 
     default:
       return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { SettingsIcon } from "lucide-react";
 
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
@@ -19,7 +19,7 @@ export const S3IntegrationCard = () => {
                 Amazon S3
               </h4>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-                <p className="text-nowrap text-xs text-gray-500 dark:text-gray-300">
+                <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   Export security findings to Amazon S3 buckets.
                 </p>
                 <CustomLink

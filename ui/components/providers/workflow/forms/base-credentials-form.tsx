@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider } from "@nextui-org/react";
+import { Divider } from "@heroui/divider";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Control } from "react-hook-form";
 
@@ -68,7 +68,7 @@ export const BaseCredentialsForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         <input
           type="hidden"
@@ -134,7 +134,7 @@ export const BaseCredentialsForm = ({
           />
         )}
 
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (
             <CustomButton
               type="button"

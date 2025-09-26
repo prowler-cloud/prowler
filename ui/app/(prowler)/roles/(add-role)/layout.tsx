@@ -1,6 +1,6 @@
 import "@/styles/globals.css";
 
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import React from "react";
 
 import { WorkflowAddEditRole } from "@/components/roles/workflow";

@@ -1,5 +1,6 @@
+import { Button } from "@heroui/button";
+import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
-import { Button, Tooltip } from "@nextui-org/react";
 
 import { CustomLink } from "@/components/ui/custom/custom-link";
 

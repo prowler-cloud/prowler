@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  CheckboxGroup,
-  Divider,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  ScrollShadow,
-} from "@nextui-org/react";
+import { Button } from "@heroui/button";
+import { Checkbox, CheckboxGroup } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Popover, PopoverContent, PopoverTrigger } from "@heroui/popover";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PlusCircleIcon } from "@/components/icons";
@@ -81,14 +76,14 @@ export const CustomDropdownSelection: React.FC<
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50 dark:bg-prowler-blue-800"
+            className="border-input hover:bg-accent hover:text-accent-foreground bg-background dark:bg-prowler-blue-800 inline-flex h-10 items-center justify-center rounded-md border border-dashed px-3 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
             startContent={<PlusCircleIcon size={16} />}
             size="md"
           >
             <h3 className="text-small">{label}</h3>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 dark:bg-prowler-blue-800">
+        <PopoverContent className="dark:bg-prowler-blue-800 w-80">
           <div className="flex w-full flex-col gap-6 p-2">
             <CheckboxGroup
               color="default"

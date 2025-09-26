@@ -8,13 +8,14 @@ import { SearchParamsProps } from "@/types";
 export default async function CheckDetailsPage({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
     <Suspense key={searchParamsKey} fallback={<SkeletonInvitationInfo />}>
-      <SSRDataInvitation searchParams={searchParams} />
+      <SSRDataInvitation searchParams={resolvedSearchParams} />
     </Suspense>
   );
 }

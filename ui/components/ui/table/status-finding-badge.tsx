@@ -1,4 +1,4 @@
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/chip";
 import React from "react";
 
 export type FindingStatus = "FAIL" | "PASS" | "MANUAL" | "MUTED";
@@ -33,7 +33,7 @@ export const StatusFindingBadge = ({
       color={color}
       {...props}
     >
-      <span className="text-xs font-light tracking-wide text-default-600">
+      <span className="text-default-600 text-xs font-light tracking-wide">
         {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
         {value !== undefined && `: ${value}`}
       </span>

@@ -9,10 +9,25 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Support for Markdown and AdditionalURLs in findings detail page [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
 - `Prowler Hub` menu item with tooltip [(#8692)] (https://github.com/prowler-cloud/prowler/pull/8692)
 - Copy link button to finding detail page [(#8685)] (https://github.com/prowler-cloud/prowler/pull/8685)
+- React Compiler support for automatic optimization [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Turbopack support for faster development builds [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 
 ### 🔄 Changed
 
+- Upgraded React to version 19.1.1 with async components support [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Upgraded Next.js to version 15.5.3 with enhanced App Router [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Updated NextUI to version 2.6.11 for React 19 compatibility [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Updated LangChain to latest versions with API improvements [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Migrated all page components to async `params`/`searchParams` API [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Migrated from `useFormState` to `useActionState` for React 19 compatibility [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Added "use client" directives to all NextUI components [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+
 ### 🐞 Fixed
+
+- Fixed temporal dead zone issues in compliance mapper [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Resolved nested button HTML validation issues [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Fixed null value handling in form components [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Separated server-side `revalidatePath` usage to prevent render errors [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 
 ---
 

@@ -39,7 +39,7 @@ export function Skeleton({
           : undefined,
       }}
       className={cn(
-        "animate-pulse bg-gray-200 dark:bg-prowler-blue-800",
+        "dark:bg-prowler-blue-800 animate-pulse bg-gray-200",
         variantClasses[variant],
         !animate && "animate-none",
         className,
@@ -60,9 +60,9 @@ export function SkeletonTable({
   roundedCells?: boolean;
 }) {
   return (
-    <div className={cn("w-full space-y-4", className)}>
+    <div className={cn("flex w-full flex-col gap-4", className)}>
       {/* Header */}
-      <div className="flex items-center space-x-4 pb-4">
+      <div className="flex items-center gap-4 pb-4">
         {Array.from({ length: columns }).map((_, index) => (
           <Skeleton
             key={`header-${index}`}
@@ -75,10 +75,7 @@ export function SkeletonTable({
 
       {/* Rows */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div
-          key={`row-${rowIndex}`}
-          className="flex items-center space-x-4 py-3"
-        >
+        <div key={`row-${rowIndex}`} className="flex items-center gap-4 py-3">
           {Array.from({ length: columns }).map((_, colIndex) => (
             <Skeleton
               key={`cell-${rowIndex}-${colIndex}`}
@@ -95,7 +92,7 @@ export function SkeletonTable({
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("flex flex-col gap-3", className)}>
       <Skeleton variant="card" />
       <Skeleton className="h-4 w-2/3" />
       <Skeleton className="h-4 w-1/2" />
@@ -113,7 +110,7 @@ export function SkeletonText({
   lastLineWidth?: string;
 }) {
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("flex flex-col gap-2", className)}>
       {Array.from({ length: lines - 1 }).map((_, index) => (
         <Skeleton key={index} className="h-4 w-full" variant="text" />
       ))}

@@ -1,4 +1,4 @@
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/tooltip";
 
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
             ariaLabel="Learn more about findings"
             color="transparent"
             size="sm"
-            className="h-auto min-w-0 p-0 text-primary"
+            className="text-primary h-auto min-w-0 p-0"
             asLink="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
             target="_blank"
           >

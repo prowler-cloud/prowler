@@ -1,7 +1,8 @@
 "use server";
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
-import { apiBaseUrl, getAuthHeaders, handleApiError } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError } from "@/lib/server-actions-helper";
 import type {
   IntegrationProps,
   JiraDispatchRequest,

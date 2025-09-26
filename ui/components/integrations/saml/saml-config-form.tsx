@@ -1,7 +1,13 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { useFormState } from "react-dom";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { z } from "zod";
 
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
@@ -110,7 +116,7 @@ export const SamlConfigForm = ({
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   samlConfig?: any;
 }) => {
-  const [state, formAction, isPending] = useFormState(
+  const [state, formAction, isPending] = useActionState(
     samlConfig?.id ? updateSamlConfig : createSamlConfig,
     null,
   );
@@ -251,7 +257,7 @@ export const SamlConfigForm = ({
     : `${apiBaseUrl}/accounts/saml/your-domain.com/acs/`;
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col space-y-2">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-2">
       <div className="py-1 text-xs">
         Need help configuring SAML SSO?{" "}
         <CustomLink
@@ -287,14 +293,14 @@ export const SamlConfigForm = ({
         }}
       />
 
-      <div className="space-y-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+      <div className="flex flex-col gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
         <h3 className="text-lg font-semibold">
           Identity Provider Configuration
         </h3>
 
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
+            <span className="text-default-500 mb-2 block text-sm font-medium">
               ACS URL:
             </span>
             <SnippetChip
@@ -305,7 +311,7 @@ export const SamlConfigForm = ({
           </div>
 
           <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
+            <span className="text-default-500 mb-2 block text-sm font-medium">
               Audience:
             </span>
             <SnippetChip
@@ -316,19 +322,19 @@ export const SamlConfigForm = ({
           </div>
 
           <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
+            <span className="text-default-500 mb-2 block text-sm font-medium">
               Name ID Format:
             </span>
-            <span className="w-full text-sm text-default-600">
+            <span className="text-default-600 w-full text-sm">
               urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
             </span>
           </div>
 
           <div>
-            <span className="mb-2 block text-sm font-medium text-default-500">
+            <span className="text-default-500 mb-2 block text-sm font-medium">
               Supported Assertion Attributes:
             </span>
-            <ul className="ml-4 space-y-1 text-sm text-default-600">
+            <ul className="text-default-600 ml-4 flex flex-col gap-1 text-sm">
               <li>• firstName</li>
               <li>• lastName</li>
               <li>• userType</li>
@@ -347,8 +353,8 @@ export const SamlConfigForm = ({
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-start space-y-2">
-        <span className="text-xs text-default-500">
+      <div className="flex flex-col items-start gap-2">
+        <span className="text-default-500 text-xs">
           Metadata XML File <span className="text-red-500">*</span>
         </span>
         <CustomButton
@@ -364,7 +370,7 @@ export const SamlConfigForm = ({
             }
           }}
           startContent={<AddIcon size={20} />}
-          className={`h-10 justify-start rounded-medium border-2 text-default-500 ${
+          className={`rounded-medium text-default-500 h-10 justify-start border-2 ${
             (
               clientErrors.metadata_xml === null
                 ? undefined
@@ -378,7 +384,7 @@ export const SamlConfigForm = ({
         >
           <span className="text-small">
             {uploadedFile ? (
-              <span className="flex items-center space-x-2">
+              <span className="flex items-center gap-2">
                 <span className="max-w-36 truncate">{uploadedFile.name}</span>
               </span>
             ) : (

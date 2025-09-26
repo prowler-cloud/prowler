@@ -75,14 +75,14 @@ export function DataTablePagination({
 
   return (
     <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8">
-      <div className="whitespace-nowrap text-sm">
+      <div className="text-sm whitespace-nowrap">
         {totalEntries} entries in total
       </div>
       {totalEntries > 10 && (
         <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
           {/* Rows per page selector */}
-          <div className="flex items-center space-x-2">
-            <p className="whitespace-nowrap text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium whitespace-nowrap">
               Rows per page
             </p>
             <Select
@@ -114,7 +114,7 @@ export function DataTablePagination({
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[4.5rem]">
+              <SelectTrigger className="h-8 w-18">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
@@ -133,7 +133,7 @@ export function DataTablePagination({
           <div className="flex items-center justify-center text-sm font-medium">
             Page {currentPage} of {totalPages}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Link
               aria-label="Go to first page"
               className={`${baseLinkClass} ${isFirstPage ? disabledLinkClass : ""}`}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { SettingsIcon } from "lucide-react";
 
 import { JiraIcon } from "@/components/icons/services/IconServices";
@@ -19,7 +19,7 @@ export const JiraIntegrationCard = () => {
                 Jira
               </h4>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-                <p className="text-nowrap text-xs text-gray-500 dark:text-gray-300">
+                <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   Create and manage security issues in Jira.
                 </p>
                 <CustomLink

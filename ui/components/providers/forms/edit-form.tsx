@@ -67,7 +67,7 @@ export const EditForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         <div className="text-md">
           Current alias: <span className="font-bold">{providerAlias}</span>
@@ -89,7 +89,7 @@ export const EditForm = ({
         </div>
         <input type="hidden" name="providerId" value={providerId} />
 
-        <div className="flex w-full justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
