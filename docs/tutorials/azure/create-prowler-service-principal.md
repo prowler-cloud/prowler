@@ -30,8 +30,8 @@ Service Principal Applications can be created using either the Azure Portal or t
 | Value | Description |
 |-------|-----------|
 | Client ID | Application ID |
-| Client Secret | AZURE_CLIENT_SECRET |
-| Tenant ID | Azure Active Directory tenant ID |
+| Client Secret | Secret to Connect to the App |
+| Tenant ID | Microsoft Entra Tenant ID |
 
 
 ## Creating a Service Principal from Azure CLI
