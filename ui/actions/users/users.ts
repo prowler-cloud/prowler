@@ -116,7 +116,7 @@ export const updateUserRole = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    return handleApiResponseWithRevalidation(response, "/users");
+    return handleApiResponse(response, "/users");
   } catch (error) {
     handleApiError(error);
   }

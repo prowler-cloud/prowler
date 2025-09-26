@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
