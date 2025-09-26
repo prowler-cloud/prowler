@@ -1,5 +1,7 @@
 # Prowler MCP Server
 
+> ⚠️ **Preview Feature**: This MCP server is currently in preview and under active development. Features and functionality may change. We welcome your feedback—please report any issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join our [Slack community](https://goto.prowler.com/slack) to discuss and share your thoughts.
+
 Access the entire Prowler ecosystem through the Model Context Protocol (MCP). This server provides two main capabilities:
 
 - **Prowler Cloud and Prowler App (Self-Managed)**: Full access to Prowler Cloud platform and Prowler Self-Managed for managing providers, running scans, and analyzing security findings
@@ -73,6 +75,9 @@ All tools are exposed under the `prowler_hub` prefix.
 
 - `prowler_hub_get_check_filters`: Return available filter values for checks (providers, services, severities, categories, compliances). Call this before `prowler_hub_get_checks` to build valid queries.
 - `prowler_hub_get_checks`: List checks with option of advanced filtering.
+- `prowler_hub_get_check_raw_metadata`: Fetch raw check metadata JSON (low-level version of get_checks).
+- `prowler_hub_get_check_code`: Fetch check implementation Python code from Prowler.
+- `prowler_hub_get_check_fixer`: Fetch check fixer Python code from Prowler (if it exists).
 - `prowler_hub_search_checks`: Full‑text search across check metadata.
 - `prowler_hub_get_compliance_frameworks`: List/filter compliance frameworks.
 - `prowler_hub_search_compliance_frameworks`: Full-text search across frameworks.
