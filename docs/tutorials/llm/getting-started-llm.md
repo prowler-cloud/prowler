@@ -2,15 +2,15 @@
 
 ## Overview
 
-Prowler's LLM provider enables comprehensive security testing of Large Language Models using red team techniques. It integrates with [promptfoo](https://promptfoo.dev/) to provide extensive security evaluation capabilities.
+Prowler's LLM provider enables comprehensive security testing of large language models using red team techniques. It integrates with [promptfoo](https://promptfoo.dev/) to provide extensive security evaluation capabilities.
 
 ## Prerequisites
 
-Before using the LLM provider, ensure you have:
+Before using the LLM provider, ensure the following requirements are met:
 
-1. **promptfoo installed**: The LLM provider requires promptfoo to be installed on your system
-2. **LLM API access**: Valid API keys for the target LLM models you want to test
-3. **Email verification**: promptfoo requires email verification for red team evaluations
+- **promptfoo installed**: The LLM provider requires promptfoo to be installed on the system
+- **LLM API access**: Valid API keys for the target LLM models to test
+- **Email verification**: promptfoo requires email verification for red team evaluations
 
 ## Installation
 
@@ -41,7 +41,7 @@ promptfoo --version
 
 ### Step 1: Email Verification
 
-promptfoo requires email verification for red team evaluations. Set your email:
+promptfoo requires email verification for red team evaluations. Set the email address:
 
 ```bash
 promptfoo config set email your-email@company.com
@@ -49,7 +49,7 @@ promptfoo config set email your-email@company.com
 
 ### Step 2: Configure LLM API Keys
 
-Set up API keys for your target LLM models. For OpenAI (default configuration):
+Set up API keys for the target LLM models. For OpenAI (default configuration):
 
 ```bash
 export OPENAI_API_KEY="your-openai-api-key"
@@ -59,7 +59,7 @@ For other providers, see the [promptfoo documentation](https://promptfoo.dev/doc
 
 ### Step 3: Generate Test Cases (Optional)
 
-Prowler provides a default suite of red team tests but if you want to customize the test cases, generate them first:
+Prowler provides a default suite of red team tests but to customize the test cases, generate them first:
 
 ```bash
 promptfoo redteam generate
@@ -126,7 +126,7 @@ Prowler includes a comprehensive default LLM configuration that provides:
 
 ### Custom Test Suites
 
-Create custom test configurations by modifying the promptfoo config file in `prowler/config/llm_config.yaml` or pass yours with `--config-file` flag:
+Create custom test configurations by modifying the promptfoo config file in `prowler/config/llm_config.yaml` or pass a custom configuration with `--config-file` flag:
 
 ```yaml
 description: Custom LLM Security Tests
@@ -139,3 +139,4 @@ redteam:
     - id: mitre:atlas
       numTests: 5
 ```
+

@@ -62,7 +62,7 @@ The LLM provider implements security testing through integration with promptfoo,
 
 - **Plugin-based Architecture**: Uses promptfoo plugins for different security test categories
 - **Comprehensive Coverage**: Includes OWASP LLM Top 10, MITRE ATLAS, NIST AI Risk Management, and EU AI Act compliance
-- **Real-time Evaluation**: Streams test results as they are generated
+- **Real-Time Evaluation**: Streams test results as they are generated
 - **Progress Tracking**: Provides detailed progress information during test execution
 
 ### Test Execution Flow
