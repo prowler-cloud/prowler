@@ -32,7 +32,6 @@ export default async function Scans({
   const resolvedSearchParams = await searchParams;
   const filteredParams = { ...resolvedSearchParams };
   delete filteredParams.scanId;
-  const searchParamsKey = JSON.stringify(filteredParams);
 
   const providersData = await getProviders({
     pageSize: 50,
@@ -112,7 +111,7 @@ export default async function Scans({
           <MutedFindingsConfigButton />
         </div>
         <Spacer y={8} />
-        <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
+        <Suspense fallback={<SkeletonTableScans />}>
           <SSRDataTableScans searchParams={resolvedSearchParams} />
         </Suspense>
       </>
@@ -179,6 +178,7 @@ const SSRDataTableScans = async ({
 
   return (
     <DataTable
+      key={`scans-${Date.now()}`}
       columns={ColumnGetScans}
       data={expandedScansData || []}
       metadata={scansData?.meta}

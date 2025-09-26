@@ -36,7 +36,7 @@ export const getRoles = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/roles");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching roles:", error);
     return undefined;

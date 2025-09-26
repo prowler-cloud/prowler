@@ -206,6 +206,7 @@ const SSRDataNewFindingsTable = async ({
       <LighthouseBanner />
 
       <DataTable
+        key={`dashboard-${Date.now()}`}
         columns={ColumnNewFindingsToDate}
         data={expandedResponse?.data || []}
         // metadata={findingsData?.meta}

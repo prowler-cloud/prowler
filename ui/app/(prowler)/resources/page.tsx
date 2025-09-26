@@ -148,6 +148,7 @@ const SSRDataTable = async ({
         </div>
       )}
       <DataTable
+        key={`resources-${Date.now()}`}
         columns={ColumnResources}
         data={expandedResources || []}
         metadata={resourcesData?.meta}

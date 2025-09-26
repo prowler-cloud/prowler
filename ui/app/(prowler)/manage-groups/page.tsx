@@ -183,11 +183,15 @@ const SSRDataTable = async ({
     filters,
     pageSize,
   });
+
   return (
-    <DataTable
-      columns={ColumnGroups}
-      data={providerGroupsData?.data || []}
-      metadata={providerGroupsData?.meta}
-    />
+    <>
+      <DataTable
+        key={`groups-${Date.now()}`}
+        columns={ColumnGroups}
+        data={providerGroupsData?.data || []}
+        metadata={providerGroupsData?.meta}
+      />
+    </>
   );
 };

@@ -165,6 +165,7 @@ const SSRDataTable = async ({
         </div>
       )}
       <DataTable
+        key={Date.now()}
         columns={ColumnFindings}
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}

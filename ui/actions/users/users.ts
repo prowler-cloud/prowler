@@ -4,11 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import {
-  handleApiError,
-  handleApiResponse,
-  handleApiResponseWithRevalidation,
-} from "@/lib/server-actions-helper";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getUsers = async ({
   page = 1,
@@ -85,7 +81,7 @@ export const updateUser = async (formData: FormData) => {
       }),
     });
 
-    return handleApiResponseWithRevalidation(response, "/users");
+    return handleApiResponse(response, "/users");
   } catch (error) {
     handleApiError(error);
   }

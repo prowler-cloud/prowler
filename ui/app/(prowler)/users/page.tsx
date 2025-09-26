@@ -92,6 +92,7 @@ const SSRDataTable = async ({
 
   return (
     <DataTable
+      key={`scans-${Date.now()}`}
       columns={ColumnsUser}
       data={expandedUsers || []}
       metadata={usersData?.meta}

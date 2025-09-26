@@ -56,6 +56,7 @@ const SSRDataTable = async ({
 
   return (
     <DataTable
+      key={`roles-${Date.now()}`}
       columns={ColumnsRoles}
       data={rolesData?.data || []}
       metadata={rolesData?.meta}
