@@ -36,7 +36,7 @@ export const getInvitations = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/invitations");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching invitations:", error);
     return undefined;

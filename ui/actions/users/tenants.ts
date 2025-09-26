@@ -19,7 +19,7 @@ export const getAllTenants = async () => {
       throw new Error(`Failed to fetch tenants data: ${response.statusText}`);
     }
 
-    return handleApiResponse(response, "/profile");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching tenants:", error);
     return undefined;

@@ -47,7 +47,7 @@ export const getResources = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/resources");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching resources:", error);
     return undefined;
@@ -96,7 +96,7 @@ export const getLatestResources = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/resources");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching latest resources:", error);
     return undefined;
