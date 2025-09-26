@@ -1,5 +1,7 @@
 # Prowler MCP Server
 
+> ⚠️ **Preview Feature**: This MCP server is currently in preview and under active development. Features and functionality may change. We welcome your feedback—please report any issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join our [Slack community](https://goto.prowler.com/slack) to discuss and share your thoughts.
+
 Access the entire Prowler ecosystem through the Model Context Protocol (MCP). This server provides two main capabilities:
 
 - **Prowler Cloud and Prowler App (Self-Managed)**: Full access to Prowler Cloud platform and Prowler Self-Managed for managing providers, running scans, and analyzing security findings
