@@ -140,6 +140,9 @@ nav:
             - Authentication: tutorials/mongodbatlas/authentication.md
         - LLM:
             - Getting Started: tutorials/llm/getting-started-llm.md
+      - Compliance:
+        - ThreatScore: tutorials/compliance/threatscore.md
+
   - Developer Guide:
       - Concepts:
         - Introduction: developer-guide/introduction.md
