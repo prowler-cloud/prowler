@@ -1,6 +1,6 @@
 # Getting Started with the IaC Provider
 
-Prowler's Infrastructure as Code (IaC) provider enables you to scan local or remote infrastructure code for security and compliance issues using [Trivy](https://trivy.dev/). This provider supports a wide range of IaC frameworks, allowing you to assess your code before deployment.
+Prowler's Infrastructure as Code (IaC) provider enables scanning of local or remote infrastructure code for security and compliance issues using [Trivy](https://trivy.dev/). This provider supports a wide range of IaC frameworks, allowing assessment of code before deployment.
 
 ## Supported Scanners
 
@@ -13,7 +13,7 @@ The IaC provider leverages [Trivy](https://trivy.dev/latest/docs/scanner/vulnera
 
 ## How It Works
 
-- The IaC provider scans your local directory (or a specified path) for supported IaC files, or scan a remote repository.
+- The IaC provider scans local directories (or specified paths) for supported IaC files, or scans remote repositories.
 - No cloud credentials or authentication are required for local scans.
 - For remote repository scans, authentication can be provided via [git URL](https://git-scm.com/docs/git-clone#_git_urls), CLI flags or environment variables.
   - Check the [IaC Authentication](./authentication.md) page for more details.
@@ -24,7 +24,7 @@ The IaC provider leverages [Trivy](https://trivy.dev/latest/docs/scanner/vulnera
 
 ### Usage
 
-To run Prowler with the IaC provider, use the `iac` argument. You can specify the directory or repository to scan, frameworks to include, and paths to exclude.
+Use the `iac` argument to run Prowler with the IaC provider. Specify the directory or repository to scan, frameworks to include, and paths to exclude.
 
 #### Scan a Local Directory (default)
 
@@ -40,7 +40,7 @@ prowler iac --scan-repository-url https://github.com/user/repo.git
 
 ##### Authentication for Remote Private Repositories
 
-You can provide authentication for private repositories using one of the following methods:
+Authentication for private repositories can be provided using one of the following methods:
 
 - **GitHub Username and Personal Access Token (PAT):**
   ```sh
@@ -55,7 +55,7 @@ You can provide authentication for private repositories using one of the followi
 - If not provided via CLI, the following environment variables will be used (in order of precedence):
     - `GITHUB_OAUTH_APP_TOKEN`
     - `GITHUB_USERNAME` and `GITHUB_PERSONAL_ACCESS_TOKEN`
-- If neither CLI flags nor environment variables are set, the scan will attempt to clone without authentication or using the provided in the  [git URL](https://git-scm.com/docs/git-clone#_git_urls).
+- If neither CLI flags nor environment variables are set, the scan will attempt to clone without authentication or using the credentials provided in the [git URL](https://git-scm.com/docs/git-clone#_git_urls).
 
 ##### Mutually Exclusive Flags
 - `--scan-path` and `--scan-repository-url` are mutually exclusive. Only one can be specified at a time.
@@ -76,7 +76,7 @@ prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/tes
 
 ### Output
 
-You can use the standard Prowler output options, for example:
+Use the standard Prowler output options, for example:
 
 ```sh
 prowler iac --scan-path ./iac --output-formats csv json html
