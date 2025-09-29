@@ -25,7 +25,7 @@ export const SocialButtons = ({
           </CustomLink>
         </div>
       }
-      placement="right-start"
+      placement="top"
       shadow="sm"
       isDisabled={isGoogleOAuthEnabled}
       className="w-96"
@@ -52,7 +52,7 @@ export const SocialButtons = ({
           </CustomLink>
         </div>
       }
-      placement="right-start"
+      placement="top"
       shadow="sm"
       isDisabled={isGithubOAuthEnabled}
       className="w-96"
