@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
 - Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
 - Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
+- GitHub provider check `organization_default_repository_permission_strict` to ensure organization base permissions are set to 'read' or 'none' (CIS GitHub 1.3.8) [(#8662)](https://github.com/prowler-cloud/prowler/issues/8662)
 
 ### Changed
 - Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
