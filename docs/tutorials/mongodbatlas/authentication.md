@@ -2,44 +2,49 @@
 
 MongoDB Atlas provider uses [HTTP Digest Authentication with API key pairs consisting of a public key and private key](https://www.mongodb.com/docs/atlas/configure-api-access/#grant-programmatic-access-to-service).
 
-## Authentication Methods
 
-### Command-Line Arguments
+## Required Permissions
 
-```bash
-prowler mongodbatlas --atlas-public-key <public_key> --atlas-private-key <private_key>
-```
+MongoDB Atlas API keys require appropriate permissions to perform security checks:
 
-### Environment Variables
+- **Organization Read Only**: Provides read-only access to everything in the organization, including all projects in the organization.
+    - If you want to be able to [audit the Auditing configuration for the project](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/group/endpoint-auditing), **Organization Owner** is needed.
 
-```bash
-export ATLAS_PUBLIC_KEY=<public_key>
-export ATLAS_PRIVATE_KEY=<private_key>
-prowler mongodbatlas
-```
+Also, it's important to note that the IP where you are running Prowler must be added to the IP Access List of the MongoDB Atlas organization API key. If you want to skip this step and use your API key in all type of IP addresses you need to uncheck the `Require IP Access List for the Atlas Administration API` button on the Organization Settings, that setting is [enabled by default](https://www.mongodb.com/docs/atlas/configure-api-access/#optional--require-an-ip-access-list-for-the-atlas-administration-api).
 
-## Creating API Keys
+???+ warning
+    If you want the check `organizations_api_access_list_required` to pass you will need to enable the API access list for the organization, so to make sure that your API Key is working you need to add your IP to the IP Access List of the organization. If you are running the check from Prowler Cloud, you will need to add our IP to the IP Access List.
 
-### Step-by-Step Guide
+![Organization Settings](img/ip-access-list.png)
 
-1. **Log into MongoDB Atlas**
-      - Access the MongoDB Atlas console
 
-2. **Navigate to Access Manager**
-      - Go to the organization or project access management section
+## API Key
 
-3. **Select API Keys Tab**
-      - Click on the "API Keys" tab
+1. **Log into MongoDB Atlas**: Access the MongoDB Atlas console
+2. **Navigate to Access Manager**: Go to the organization access management section:
 
-4. **Create API Key**
-      - Click "Create API Key"
-      - Provide a description for the key
+    - Click on Access Manager and Organization Access:
 
-5. **Set Permissions**
-      - Grant minimum required permissions
+        ![Organization Access](./img/organization-access.png)
 
-6. **Save Credentials**
-      - Note the public key and private key
-      - Store credentials securely
+    - After that click on the Applications tab inside the Access Manager:
 
-For more details about MongoDB Atlas, see the [MongoDB Atlas Tutorial](./getting-started-mongodbatlas.md).
+        ![Project Access](./img/access-manager.png)
+
+3. **Select API Keys Tab**: Click on the "API Keys" tab that appears in the image above
+
+4. **Create API Key**: Click "Create API Key" and provide a description
+
+    ![Create API Key](./img/create-api-key.png)
+
+5. **Set Permissions**: Project permissions are recommended for security, you can modify them after creating the key
+
+    ![Set Permissions](./img/modify-permission.png)
+
+6. **Save Credentials**: Note the public key and private key and store them securely
+
+    ![Save Credentials](./img/copy-key.png)
+
+7. **Add IP Access List**: Add the IP where you are running Prowler to the IP Access List of the API Key. If you want to skip this step and use your API key in all type of IP addresses you need to uncheck the `Require IP Access List for the Atlas Administration API` button on the [Organization Settings](#needed-permissions), but this is not recommended.
+
+    ![Organization Settings](./img/add-ip.png)
