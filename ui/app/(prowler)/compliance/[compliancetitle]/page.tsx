@@ -22,7 +22,11 @@ import {
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
-import { Framework, RequirementsTotals } from "@/types/compliance";
+import {
+  AttributesData,
+  Framework,
+  RequirementsTotals,
+} from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
 
 interface ComplianceDetailSearchParams {
@@ -102,16 +106,26 @@ export default async function ComplianceDetail({
 
   const selectedScanId = scanId || selectedScan?.id || null;
 
-  const metadataInfoData = await getComplianceOverviewMetadataInfo({
-    filters: {
-      "filter[scan_id]": selectedScanId,
-    },
-  });
+  const [metadataInfoData, attributesData] = await Promise.all([
+    getComplianceOverviewMetadataInfo({
+      filters: {
+        "filter[scan_id]": selectedScanId,
+      },
+    }),
+    getComplianceAttributes(complianceId),
+  ]);
+
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
+
+  // Use compliance_name from attributes if available, otherwise fallback to formatted title
+  const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
+  const finalPageTitle = complianceName
+    ? `Compliance Details: ${complianceName}`
+    : pageTitle;
 
   return (
     <ContentLayout
-      title={pageTitle}
+      title={finalPageTitle}
       icon={
         logoPath ? (
           <ComplianceIconSmall logoPath={logoPath} title={compliancetitle} />
@@ -155,6 +169,7 @@ export default async function ComplianceDetail({
           region={regionFilter}
           filter={cisProfileFilter}
           logoPath={logoPath}
+          attributesData={attributesData}
         />
       </Suspense>
     </ContentLayout>
@@ -167,21 +182,20 @@ const SSRComplianceContent = async ({
   region,
   filter,
   logoPath,
+  attributesData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
   logoPath?: string;
+  attributesData: AttributesData;
 }) => {
-  const [attributesData, requirementsData] = await Promise.all([
-    getComplianceAttributes(complianceId),
-    getComplianceRequirements({
-      complianceId,
-      scanId,
-      region,
-    }),
-  ]);
+  const requirementsData = await getComplianceRequirements({
+    complianceId,
+    scanId,
+    region,
+  });
   const type = requirementsData?.data?.[0]?.type;
 
   if (!scanId || type === "tasks") {
