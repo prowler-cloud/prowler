@@ -8,12 +8,12 @@ MongoDB Atlas provider uses [HTTP Digest Authentication with API key pairs consi
 MongoDB Atlas API keys require appropriate permissions to perform security checks:
 
 - **Organization Read Only**: Provides read-only access to everything in the organization, including all projects in the organization.
-    - If you want to be able to [audit the Auditing configuration for the project](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/group/endpoint-auditing), **Organization Owner** is needed.
+    - To [audit the Auditing configuration for the project](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/group/endpoint-auditing), **Organization Owner** permission is required.
 
-Also, it's important to note that the IP where you are running Prowler must be added to the IP Access List of the MongoDB Atlas organization API key. If you want to skip this step and use your API key in all type of IP addresses you need to uncheck the `Require IP Access List for the Atlas Administration API` button on the Organization Settings, that setting is [enabled by default](https://www.mongodb.com/docs/atlas/configure-api-access/#optional--require-an-ip-access-list-for-the-atlas-administration-api).
+The IP address where Prowler runs must be added to the IP Access List of the MongoDB Atlas organization API key. To skip this step and use the API key across all IP address types, uncheck the "Require IP Access List for the Atlas Administration API" button in Organization Settings. This setting is [enabled by default](https://www.mongodb.com/docs/atlas/configure-api-access/#optional--require-an-ip-access-list-for-the-atlas-administration-api).
 
 ???+ warning
-    If you want the check `organizations_api_access_list_required` to pass you will need to enable the API access list for the organization, so to make sure that your API Key is working you need to add your IP to the IP Access List of the organization. If you are running the check from Prowler Cloud, you will need to add our IP to the IP Access List.
+    To ensure the check `organizations_api_access_list_required` passes, enable the API access list for the organization and add the execution IP to the organization's IP Access List. When running checks from Prowler Cloud, add our IP to the IP Access List.
 
 ![Organization Settings](img/ip-access-list.png)
 
@@ -23,28 +23,28 @@ Also, it's important to note that the IP where you are running Prowler must be a
 1. **Log into MongoDB Atlas**: Access the MongoDB Atlas console
 2. **Navigate to Access Manager**: Go to the organization access management section:
 
-    - Click on Access Manager and Organization Access:
+    - Click "Access Manager" and "Organization Access":
 
         ![Organization Access](./img/organization-access.png)
 
-    - After that click on the Applications tab inside the Access Manager:
+    - Then click the "Applications" tab inside the Access Manager:
 
         ![Project Access](./img/access-manager.png)
 
-3. **Select API Keys Tab**: Click on the "API Keys" tab that appears in the image above
+3. **Select API Keys Tab**: Click the "API Keys" tab that appears in the image above
 
 4. **Create API Key**: Click "Create API Key" and provide a description
 
     ![Create API Key](./img/create-api-key.png)
 
-5. **Set Permissions**: Project permissions are recommended for security, you can modify them after creating the key
+5. **Set Permissions**: Recommend project permissions for enhanced security; modify them after creating the key
 
     ![Set Permissions](./img/modify-permission.png)
 
-6. **Save Credentials**: Note the public key and private key and store them securely
+6. **Save Credentials**: Record both the public and private keys, then store them securely
 
     ![Save Credentials](./img/copy-key.png)
 
-7. **Add IP Access List**: Add the IP where you are running Prowler to the IP Access List of the API Key. If you want to skip this step and use your API key in all type of IP addresses you need to uncheck the `Require IP Access List for the Atlas Administration API` button on the [Organization Settings](#needed-permissions), but this is not recommended.
+7. **Add IP Access List**: Add the IP address where Prowler runs to the API Key's IP Access List. To skip this step and use the API key for all IP addresses, uncheck the "Require IP Access List for the Atlas Administration API" button in [Organization Settings](#required-permissions), though this is not recommended.
 
     ![Organization Settings](./img/add-ip.png)
