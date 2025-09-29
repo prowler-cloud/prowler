@@ -142,12 +142,20 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
               {capitalizeFirstLetter(hoveredItem.name)}
             </div>
             <div>
-              <span style={{ color: getHeatmapColor(hoveredItem.failurePercentage) }}>
+              <span
+                style={{
+                  color: getHeatmapColor(hoveredItem.failurePercentage),
+                }}
+              >
                 Failure Rate: {hoveredItem.failurePercentage}%
               </span>
             </div>
             <div>
-              <span style={{ color: getHeatmapColor(hoveredItem.failurePercentage) }}>
+              <span
+                style={{
+                  color: getHeatmapColor(hoveredItem.failurePercentage),
+                }}
+              >
                 Failed: {hoveredItem.failedRequirements}/
                 {hoveredItem.totalRequirements}
               </span>

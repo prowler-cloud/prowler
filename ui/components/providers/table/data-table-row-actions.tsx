@@ -53,6 +53,12 @@ export function DataTableRowActions<ProviderProps>({
 
   const hasSecret = (row.original as any).relationships?.secret?.data;
 
+  // Calculate disabled keys based on conditions
+  const disabledKeys = [];
+  if (!hasSecret || loading) {
+    disabledKeys.push("new");
+  }
+
   return (
     <>
       <CustomAlertModal
@@ -85,7 +91,13 @@ export function DataTableRowActions<ProviderProps>({
               <VerticalDotsIcon className="text-default-400" />
             </Button>
           </DropdownTrigger>
-          <DropdownMenu aria-label="Actions" color="default" variant="flat">
+          <DropdownMenu
+            aria-label="Actions"
+            color="default"
+            variant="flat"
+            disabledKeys={disabledKeys}
+            closeOnSelect={false}
+          >
             <DropdownSection title="Actions">
               <DropdownItem
                 key={hasSecret ? "update" : "add"}
@@ -117,7 +129,6 @@ export function DataTableRowActions<ProviderProps>({
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
                 onPress={handleTestConnection}
-                isDisabled={!hasSecret || loading}
                 closeOnSelect={false}
               >
                 {loading ? "Testing..." : "Test Connection"}
