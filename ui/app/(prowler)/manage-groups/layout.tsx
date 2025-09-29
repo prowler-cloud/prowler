@@ -12,7 +12,7 @@ export default function ProviderLayout({ children }: ProviderLayoutProps) {
   return (
     <ContentLayout
       title="Manage Groups"
-      icon="solar:users-group-two-rounded-outline"
+      icon="lucide:group"
     >
       {children}
     </ContentLayout>

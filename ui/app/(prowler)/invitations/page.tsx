@@ -23,7 +23,7 @@ export default async function Invitations({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Invitations" icon="ci:users">
+    <ContentLayout title="Invitations" icon="lucide:mail">
       <FilterControls search />
       <Spacer y={8} />
       <SendInvitationButton />

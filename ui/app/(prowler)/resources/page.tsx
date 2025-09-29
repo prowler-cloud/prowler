@@ -49,7 +49,7 @@ export default async function Resources({
   const uniqueResourceTypes = metadataInfoData?.data?.attributes?.types || [];
 
   return (
-    <ContentLayout title="Resources" icon="carbon:data-view">
+    <ContentLayout title="Resources" icon="lucide:warehouse">
       <FilterControls search date />
       <DataTableFilterCustom
         filters={[

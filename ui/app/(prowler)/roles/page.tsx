@@ -20,7 +20,7 @@ export default async function Roles({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Roles" icon="mdi:account-key-outline">
+    <ContentLayout title="Roles" icon="lucide:user-cog">
       <FilterControls search />
       <Spacer y={8} />
       <AddRoleButton />

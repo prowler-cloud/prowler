@@ -77,14 +77,14 @@ export default async function Scans({
 
   if (thereIsNoProviders) {
     return (
-      <ContentLayout title="Scans" icon="lucide:scan-search">
+      <ContentLayout title="Scans" icon="lucide:timer">
         <NoProvidersAdded />
       </ContentLayout>
     );
   }
 
   return (
-    <ContentLayout title="Scans" icon="lucide:scan-search">
+    <ContentLayout title="Scans" icon="lucide:timer">
       <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
         {!hasManageScansPermission ? (

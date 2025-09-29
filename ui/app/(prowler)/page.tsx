@@ -45,7 +45,7 @@ export default async function Home({
   const resolvedSearchParams = await searchParams;
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
   return (
-    <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
+    <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <FilterControls providers mutedFindings showClearButton={false} />
 
       <div className="grid grid-cols-12 gap-12 lg:gap-6">

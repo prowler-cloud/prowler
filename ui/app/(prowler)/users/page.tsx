@@ -19,7 +19,7 @@ export default async function Users({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Users" icon="ci:users">
+    <ContentLayout title="Users" icon="lucide:user">
       <FilterControls search />
       <Spacer y={8} />
       <AddUserButton />

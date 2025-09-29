@@ -106,7 +106,7 @@ export default async function Compliance({
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   return (
-    <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
+    <ContentLayout title="Compliance" icon="lucide:shield-check">
       {selectedScanId ? (
         <>
           <ComplianceHeader

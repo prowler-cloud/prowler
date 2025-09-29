@@ -83,7 +83,7 @@ export default async function Findings({
   ) as { [uid: string]: ScanEntity }[];
 
   return (
-    <ContentLayout title="Findings" icon="carbon:data-view-alt">
+    <ContentLayout title="Findings" icon="lucide:tag">
       <FindingsFilters
         providerUIDs={providerUIDs}
         providerDetails={providerDetails}

@@ -17,7 +17,7 @@ import {
 
 export default async function Profile() {
   return (
-    <ContentLayout title="User Profile" icon="ci:users">
+    <ContentLayout title="User Profile" icon="lucide:users">
       <Suspense fallback={<SkeletonUserInfo />}>
         <SSRDataUser />
       </Suspense>

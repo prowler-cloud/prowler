@@ -25,7 +25,7 @@ export default async function Providers({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
+    <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
       <FilterControls search customFilters={filterProviders || []} />
       <Spacer y={8} />
       <Suspense
