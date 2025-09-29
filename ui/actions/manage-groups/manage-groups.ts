@@ -156,7 +156,7 @@ export const updateProviderGroup = async (
       body: JSON.stringify(payload),
     });
 
-    return handleApiResponse(response, "/manage-groups");
+    return handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }

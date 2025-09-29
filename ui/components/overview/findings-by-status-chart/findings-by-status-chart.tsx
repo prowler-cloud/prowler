@@ -127,7 +127,12 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
             className="aspect-square w-[250px] min-w-[250px]"
           >
             <PieChart>
-              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+              {!hasDataToShow ?? (
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent />}
+                />
+              )}
               <Pie
                 data={hasDataToShow ? chartData : emptyChartData}
                 dataKey="number"
