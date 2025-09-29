@@ -157,7 +157,11 @@ class CheckMetadata(BaseModel):
             raise ValueError("ServiceName must be a non-empty string")
 
         check_id = values.get("CheckID")
-        if check_id and values.get("Provider") != "iac":
+        if (
+            check_id
+            and values.get("Provider") != "iac"
+            and values.get("Provider") != "llm"
+        ):
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
                 raise ValueError(
@@ -173,7 +177,11 @@ class CheckMetadata(BaseModel):
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if check_id and values.get("Provider") != "iac":
+        if (
+            check_id
+            and values.get("Provider") != "iac"
+            and values.get("Provider") != "llm"
+        ):
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
@@ -692,6 +700,31 @@ class CheckReportIAC(Check_Report):
             if finding.get("CauseMetadata", {}).get("StartLine", "")
             else ""
         )
+
+
+@dataclass
+class CheckReportLLM(Check_Report):
+    """Contains the LLM Check's finding information."""
+
+    prompt: str
+    response: str
+    model: str
+
+    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+        """
+        Initialize the LLM Check's finding information from a promptfoo finding dict.
+
+        Args:
+            metadata (Dict): Optional check metadata (can be None).
+            finding (dict): A single finding result from promptfoo's JSON output.
+        """
+        super().__init__(metadata, finding)
+
+        self.prompt = finding.get("prompt", {}).get("raw", "No prompt available.")
+        self.response = finding.get("response", {}).get(
+            "output", "No output available."
+        )
+        self.model = finding.get("provider", {}).get("id", "No model available.")
 
 
 @dataclass

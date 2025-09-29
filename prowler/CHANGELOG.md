@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Added
 - Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
 - Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
+- LLM provider using `promptfoo` [(#8555)](https://github.com/prowler-cloud/prowler/pull/8555)
 - Documentation for renaming checks [(#8717)](https://github.com/prowler-cloud/prowler/pull/8717)
 - Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
 
