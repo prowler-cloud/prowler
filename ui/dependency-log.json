@@ -1,30 +1,6 @@
 [
   {
     "section": "dependencies",
-    "name": "@heroui/react",
-    "from": "2.4.8",
-    "to": "2.8.4",
-    "strategy": "installed",
-    "generatedAt": "2025-09-24T13:59:11.231Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@heroui/system",
-    "from": "2.2.1",
-    "to": "2.4.22",
-    "strategy": "installed",
-    "generatedAt": "2025-09-24T13:59:11.231Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@heroui/theme",
-    "from": "2.2.5",
-    "to": "2.4.22",
-    "strategy": "installed",
-    "generatedAt": "2025-09-24T13:59:11.231Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@hookform/resolvers",
     "from": "3.10.0",
     "to": "3.10.0",
