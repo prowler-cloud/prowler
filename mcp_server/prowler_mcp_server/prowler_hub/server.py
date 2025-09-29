@@ -4,9 +4,11 @@ Prowler Hub MCP module
 Provides access to Prowler Hub API for security checks and compliance frameworks.
 """
 
-from typing import Optional, Any
+from typing import Any, Optional
+
 import httpx
 from fastmcp import FastMCP
+from prowler_mcp_server import __version__
 
 # Initialize FastMCP for Prowler Hub
 hub_mcp_server = FastMCP("prowler-hub")
@@ -15,8 +17,13 @@ hub_mcp_server = FastMCP("prowler-hub")
 BASE_URL = "https://hub.prowler.com/api"
 
 # HTTP client configuration
-client = httpx.Client(
-    base_url=BASE_URL, timeout=30.0, headers={"Accept": "application/json"}
+prowler_hub_client = httpx.Client(
+    base_url=BASE_URL,
+    timeout=30.0,
+    headers={
+        "Accept": "application/json",
+        "User-Agent": f"prowler-mcp-server/{__version__}",
+    },
 )
 
 # GitHub raw content base URL for Prowler checks
@@ -26,11 +33,11 @@ GITHUB_RAW_BASE = (
 )
 
 # Separate HTTP client for GitHub raw content
-github_client = httpx.Client(
+github_raw_client = httpx.Client(
     timeout=30.0,
     headers={
         "Accept": "*/*",
-        "User-Agent": "prowler-mcp-server/1.0",
+        "User-Agent": f"prowler-mcp-server/{__version__}",
     },
 )
 
@@ -58,7 +65,7 @@ async def get_check_filters() -> dict[str, Any]:
         categories, and compliance frameworks with their respective counts
     """
     try:
-        response = client.get("/check/filters")
+        response = prowler_hub_client.get("/check/filters")
         response.raise_for_status()
         filters = response.json()
 
@@ -133,7 +140,7 @@ async def get_checks(
         params["fields"] = fields
 
     try:
-        response = client.get("/check", params=params)
+        response = prowler_hub_client.get("/check", params=params)
         response.raise_for_status()
         checks = response.json()
 
@@ -178,7 +185,7 @@ async def get_check_raw_metadata(
     if provider_id and check_id:
         url = github_check_path(provider_id, check_id, ".metadata.json")
         try:
-            resp = github_client.get(url)
+            resp = github_raw_client.get(url)
             resp.raise_for_status()
             return resp.json()
         except httpx.HTTPStatusError as e:
@@ -218,7 +225,7 @@ async def get_check_code(
     if provider_id and check_id:
         url = github_check_path(provider_id, check_id, ".py")
         try:
-            resp = github_client.get(url)
+            resp = github_raw_client.get(url)
             resp.raise_for_status()
             return {
                 "content": resp.text,
@@ -260,7 +267,7 @@ async def get_check_fixer(
     if provider_id and check_id:
         url = github_check_path(provider_id, check_id, "_fixer.py")
         try:
-            resp = github_client.get(url)
+            resp = github_raw_client.get(url)
             if resp.status_code == 404:
                 return {
                     "error": f"Fixer not found for check {check_id}",
@@ -300,7 +307,7 @@ async def search_checks(term: str) -> dict[str, Any]:
         List of checks matching the search term
     """
     try:
-        response = client.get("/check/search", params={"term": term})
+        response = prowler_hub_client.get("/check/search", params={"term": term})
         response.raise_for_status()
         checks = response.json()
 
@@ -357,7 +364,7 @@ async def get_compliance_frameworks(
         params["fields"] = fields
 
     try:
-        response = client.get("/compliance", params=params)
+        response = prowler_hub_client.get("/compliance", params=params)
         response.raise_for_status()
         frameworks = response.json()
 
@@ -397,7 +404,7 @@ async def search_compliance_frameworks(term: str) -> dict[str, Any]:
         List of compliance frameworks matching the search term
     """
     try:
-        response = client.get("/compliance/search", params={"term": term})
+        response = prowler_hub_client.get("/compliance/search", params={"term": term})
         response.raise_for_status()
         frameworks = response.json()
 
@@ -433,7 +440,7 @@ async def list_providers() -> dict[str, Any]:
         }
     """
     try:
-        response = client.get("/providers")
+        response = prowler_hub_client.get("/providers")
         response.raise_for_status()
         providers = response.json()
 
@@ -463,7 +470,7 @@ async def get_artifacts_count() -> dict[str, Any]:
         Total number of artifacts in the Prowler Hub.
     """
     try:
-        response = client.get("/n_artifacts")
+        response = prowler_hub_client.get("/n_artifacts")
         response.raise_for_status()
         data = response.json()
 

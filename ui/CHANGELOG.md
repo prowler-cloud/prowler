@@ -2,12 +2,38 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.12.1] (Prowler v5.12.1)
+## [1.13.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
-- `Prowler Hub` menu item with tooltip [(#8692)](https://github.com/prowler-cloud/prowler/pull/8692)
-- Copy link button to finding detail page [(#8685)](https://github.com/prowler-cloud/prowler/pull/8685)
+- Support for Markdown and AdditionalURLs in findings detail page [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
+- `Prowler Hub` menu item with tooltip [(#8692)] (https://github.com/prowler-cloud/prowler/pull/8692)
+- Copy link button to finding detail page [(#8685)] (https://github.com/prowler-cloud/prowler/pull/8685)
+- Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
+
+### 🔄 Changed
+
+### 🐞 Fixed
+
+---
+
+## [1.12.3] (Prowler v5.12.3)
+
+### 🐞 Fixed
+
+- Disable "See Findings" button until scan completes [(#8762)](https://github.com/prowler-cloud/prowler/pull/8762)
+- Scrolling during Lighthouse AI response streaming [(#8669)](https://github.com/prowler-cloud/prowler/pull/8669)
+- Lighthouse textbox to send messages on Enter [(#8747)](https://github.com/prowler-cloud/prowler/pull/8747)
+
+---
+
+## [1.12.2] (Prowler v5.12.2)
+
+### 🐞 Fixed
+
+- Handle 4XX errors consistently and 204 responses properly[(#8722)](https://github.com/prowler-cloud/prowler/pull/8722)
+
+## [1.12.1] (Prowler v5.12.1)
 
 ### 🐞 Fixed
 
@@ -25,7 +51,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Overview chart "Findings by Severity" now shows only failing findings (defaults to `status=FAIL`) and chart links open the Findings page pre-filtered to fails per severity [(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
 - Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
 - No-permission message on the scan page [(#8624)](https://github.com/prowler-cloud/prowler/pull/8624)
-- Markdown rendering in finding details page [(#8604)](https://github.com/prowler-cloud/prowler/pull/8604)
 
 ### 🐞 Fixed
 

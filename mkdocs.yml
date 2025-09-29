@@ -138,6 +138,10 @@ nav:
         - MongoDB Atlas:
             - Getting Started: tutorials/mongodbatlas/getting-started-mongodbatlas.md
             - Authentication: tutorials/mongodbatlas/authentication.md
+
+      - Compliance:
+        - ThreatScore: tutorials/compliance/threatscore.md
+
   - Developer Guide:
       - Concepts:
         - Introduction: developer-guide/introduction.md
@@ -162,6 +166,7 @@ nav:
           - Integration Tests: developer-guide/integration-testing.md
         - Debugging: developer-guide/debugging.md
         - Configurable Checks: developer-guide/configurable-checks.md
+        - Renaming Checks: developer-guide/renaming-checks.md
         - Check Metadata Writting Guidelines: developer-guide/check-metadata-guidelines.md
   - Security: security.md
   - Contact Us: contact.md
