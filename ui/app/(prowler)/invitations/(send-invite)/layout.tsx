@@ -19,8 +19,8 @@ export default function InvitationLayout({ children }: InvitationLayoutProps) {
         href="/invitations"
       />
       <Spacer y={16} />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        <div className="order-1 my-auto hidden h-full lg:col-span-4 lg:col-start-2 lg:block">
+      <div className="grid grid-cols-1 gap-8 px-4 lg:grid-cols-12 lg:px-0">
+        <div className="order-1 my-auto h-full lg:col-span-4 lg:col-start-2">
           <WorkflowSendInvite />
         </div>
         <div className="order-2 my-auto lg:col-span-5 lg:col-start-6">
