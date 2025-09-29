@@ -95,6 +95,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       );
     }
 
+    const regionFilter = searchParams.get("filter[region__in]");
+    if (regionFilter) {
+      params.set("filter[region__in]", regionFilter);
+    }
+
     router.push(`${path}?${params.toString()}`);
   };
   const handleDownload = async () => {
