@@ -188,6 +188,7 @@ class SecurityHub:
         """
 
         findings_per_region = {}
+        disabled_regions_logged = set()
         try:
             # Create a key per audited region
             for region in self._enabled_regions.keys():
@@ -196,9 +197,12 @@ class SecurityHub:
             for finding in findings:
                 # We don't send findings to not enabled regions
                 if finding.Resources[0].Region not in findings_per_region:
-                    logger.error(
-                        f"Skipping finding {finding.Id} in region {finding.Resources[0].Region} because it is not enabled in Security Hub."
-                    )
+                    # Only log once per disabled region
+                    if finding.Resources[0].Region not in disabled_regions_logged:
+                        logger.error(
+                            f"Skipping findings in region {finding.Resources[0].Region} because it is not enabled in Security Hub."
+                        )
+                        disabled_regions_logged.add(finding.Resources[0].Region)
                     continue
 
                 if (
