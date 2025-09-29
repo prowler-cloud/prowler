@@ -26,16 +26,11 @@ class organization_default_repository_permission_strict(Check):
 
             if p in ("read", "none"):
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Organization {org.name} base repository permission is '{p}', which is strict."
-                )
+                report.status_extended = f"Organization {org.name} base repository permission is '{p}', which is strict."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Organization {org.name} base repository permission is '{p}', which is not strict."
-                )
+                report.status_extended = f"Organization {org.name} base repository permission is '{p}', which is not strict."
 
             findings.append(report)
 
         return findings
-

@@ -10,7 +10,11 @@ class FakeOrg:
         self.base_permission = base_permission
 
     def dict(self):
-        return {"id": self.id, "name": self.name, "base_permission": self.base_permission}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "base_permission": self.base_permission,
+        }
 
 
 class Test_organization_default_repository_permission_strict:
@@ -183,4 +187,3 @@ class Test_organization_default_repository_permission_strict:
             check = organization_default_repository_permission_strict()
             result = check.execute()
             assert len(result) == 0
-

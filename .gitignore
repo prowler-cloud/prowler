@@ -39,6 +39,12 @@ secrets-*/
 # JUnit Reports
 junit-reports/
 
+# Test and coverage artifacts
+*_coverage.xml
+pytest_*.xml
+.coverage
+htmlcov/
+
 # VSCode files
 .vscode/
 
@@ -81,3 +87,4 @@ CLAUDE.md
 
 # LLM's (Until we have a standard one)
 AGENTS.md
+airflowinvestigation.md

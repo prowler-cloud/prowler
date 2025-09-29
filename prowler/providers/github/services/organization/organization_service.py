@@ -38,13 +38,15 @@ class Organization(GithubService):
         org_names_to_check = set()
 
         try:
-            for client in self.clients:
-                if self.provider.organizations:
+            for client in getattr(self, "clients", []) or []:
+                if getattr(self.provider, "organizations", None):
                     org_names_to_check.update(self.provider.organizations)
 
                 # If repositories are specified without organizations, don't perform organization checks
                 # Only add repository owners to organization checks if organizations are also specified
-                if self.provider.repositories and self.provider.organizations:
+                if getattr(self.provider, "repositories", None) and getattr(
+                    self.provider, "organizations", None
+                ):
                     for repo_name in self.provider.repositories:
                         if "/" in repo_name:
                             owner_name = repo_name.split("/")[0]
@@ -111,18 +113,19 @@ class Organization(GithubService):
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
-                elif not self.provider.repositories:
+                elif not getattr(self.provider, "repositories", None):
                     # Default behavior: get all organizations the user is a member of
                     # Only when no repositories are specified
-                    if isinstance(self.provider.identity, GithubIdentityInfo):
+                    if isinstance(self.provider.identity, GithubAppIdentityInfo):
+                        orgs = client.get_organizations()
+                        if getattr(orgs, "totalCount", 0) > 0:
+                            for org in orgs:
+                                self._process_organization(org, organizations)
+                    else:
+                        # Default (personal access/OAuth): use user organizations
                         orgs = client.get_user().get_orgs()
                         for org in orgs:
                             self._process_organization(org, organizations)
-                    elif isinstance(self.provider.identity, GithubAppIdentityInfo):
-                        orgs = client.get_organizations()
-                        if orgs.totalCount > 0:
-                            for org in orgs:
-                                self._process_organization(org, organizations)
 
         except github.RateLimitExceededException as error:
             logger.error(f"GitHub API rate limit exceeded: {error}")
