@@ -108,7 +108,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return (
         <TableLink
           href={`/findings?filter[scan__in]=${id}&filter[status__in]=FAIL`}
-          isDisabled={!["completed", "executing"].includes(scanState)}
+          isDisabled={scanState !== "completed"}
           label="See Findings"
         />
       );

@@ -1,6 +1,8 @@
 import asyncio
 import sys
-from prowler_mcp_server.server import setup_main_server, prowler_mcp_server
+
+from prowler_mcp_server.lib.logger import logger
+from prowler_mcp_server.server import prowler_mcp_server, setup_main_server
 
 
 def main():
@@ -9,10 +11,10 @@ def main():
         asyncio.run(setup_main_server())
         prowler_mcp_server.run()
     except KeyboardInterrupt:
-        print("\nShutting down Prowler MCP server...")
+        logger.info("Shutting down Prowler MCP server...")
         sys.exit(0)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        logger.error(f"Error starting server: {e}")
         sys.exit(1)
 
 

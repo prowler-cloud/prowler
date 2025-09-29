@@ -76,8 +76,6 @@ class AWSCIS(ComplianceOutput):
                 for attribute in requirement.Attributes:
                     compliance_row = AWSCISModel(
                         Provider=compliance.Provider.lower(),
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
                         Description=compliance.Description,
                         AccountId="",
                         Region="",
@@ -102,5 +100,7 @@ class AWSCIS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)
