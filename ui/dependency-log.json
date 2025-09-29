@@ -1,6 +1,14 @@
 [
   {
     "section": "dependencies",
+    "name": "@heroui/react",
+    "from": "2.8.4",
+    "to": "2.8.4",
+    "strategy": "installed",
+    "generatedAt": "2025-09-29T14:26:25.838Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@hookform/resolvers",
     "from": "3.10.0",
     "to": "3.10.0",
