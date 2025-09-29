@@ -69,6 +69,7 @@ htmlcov/
 # .env
 ui/.env*
 api/.env*
+mcp_server/.env*
 .env.local
 
 # Coverage
@@ -87,4 +88,4 @@ CLAUDE.md
 
 # LLM's (Until we have a standard one)
 AGENTS.md
-airflowinvestigation.md
+

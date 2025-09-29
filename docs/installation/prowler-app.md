@@ -26,6 +26,9 @@ Refer to the [Prowler App Tutorial](../tutorials/prowler-app.md) for detailed us
         You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
 
     ???+ note
+        For a secure setup, leave empty or remove `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY` in `.env` before first start. When absent, the API auto‑generates a unique key pair and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate, delete the stored key files and restart the API.
+
+    ???+ note
         There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose-dev.yml to run the app in development mode.
 
     ???+ warning

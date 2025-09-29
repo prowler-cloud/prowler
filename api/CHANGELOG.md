@@ -4,7 +4,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.14.0] (Prowler UNRELEASED)
 
-### Added
+### Added
 - Default JWT keys are generated and stored if they are missing from configuration [(#8655)](https://github.com/prowler-cloud/prowler/pull/8655)
 - `compliance_name` for each compliance [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
 
@@ -15,6 +15,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ---
 
 ## [1.13.1] (Prowler 5.12.2)
+
+### Changed
+- Renamed compliance overview task queue to `compliance` [(#8755)](https://github.com/prowler-cloud/prowler/pull/8755)
 
 ### Security
 - Django updated to the latest 5.1 security release, 5.1.12, due to [problems](https://www.djangoproject.com/weblog/2025/sep/03/security-releases/) with potential SQL injection in FilteredRelation column aliases [(#8693)](https://github.com/prowler-cloud/prowler/pull/8693)

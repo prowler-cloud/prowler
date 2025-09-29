@@ -273,14 +273,14 @@ tests-mypy = ["mypy (>=1.11.1) ; platform_python_implementation == \"CPython\" a
 
 [[package]]
 name = "authlib"
-version = "1.6.1"
+version = "1.6.4"
 description = "The ultimate Python library in building OAuth and OpenID Connect servers and clients."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "authlib-1.6.1-py2.py3-none-any.whl", hash = "sha256:e9d2031c34c6309373ab845afc24168fe9e93dc52d252631f52642f21f5ed06e"},
-    {file = "authlib-1.6.1.tar.gz", hash = "sha256:4dffdbb1460ba6ec8c17981a4c67af7d8af131231b5a36a88a1e8c80c111cdfd"},
+    {file = "authlib-1.6.4-py2.py3-none-any.whl", hash = "sha256:39313d2a2caac3ecf6d8f95fbebdfd30ae6ea6ae6a6db794d976405fdd9aa796"},
+    {file = "authlib-1.6.4.tar.gz", hash = "sha256:104b0442a43061dc8bc23b133d1d06a2b0a9c2e3e33f34c4338929e816287649"},
 ]
 
 [package.dependencies]
@@ -382,6 +382,24 @@ azure-core = ">=1.31.0"
 cryptography = ">=2.1.4"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.0.1"
+
+[[package]]
+name = "azure-mgmt-apimanagement"
+version = "5.0.0"
+description = "Microsoft Azure API Management Client Library for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "azure_mgmt_apimanagement-5.0.0-py3-none-any.whl", hash = "sha256:b88c42a392333b60722fb86f15d092dfc19a8d67510dccd15c217381dff4e6ec"},
+    {file = "azure_mgmt_apimanagement-5.0.0.tar.gz", hash = "sha256:0ab7fe17e70fe3154cd840ff47d19d7a4610217003eaa7c21acf3511a6e57999"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-applicationinsights"
@@ -539,6 +557,23 @@ azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
+
+[[package]]
+name = "azure-mgmt-loganalytics"
+version = "12.0.0"
+description = "Microsoft Azure Log Analytics Management Client Library for Python"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "azure-mgmt-loganalytics-12.0.0.zip", hash = "sha256:da128a7e0291be7fa2063848df92a9180cf5c16d42adc09d2bc2efd711536bfb"},
+    {file = "azure_mgmt_loganalytics-12.0.0-py2.py3-none-any.whl", hash = "sha256:75ac1d47dd81179905c40765be8834643d8994acff31056ddc1863017f3faa02"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.2.0,<2.0.0"
+msrest = ">=0.6.21"
 
 [[package]]
 name = "azure-mgmt-monitor"
@@ -747,6 +782,23 @@ files = [
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
+
+[[package]]
+name = "azure-monitor-query"
+version = "2.0.0"
+description = "Microsoft Corporation Azure Monitor Query Client Library for Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "azure_monitor_query-2.0.0-py3-none-any.whl", hash = "sha256:8f52d581271d785e12f49cd5aaa144b8910fb843db2373855a7ef94c7fc462ea"},
+    {file = "azure_monitor_query-2.0.0.tar.gz", hash = "sha256:7b05f2fcac4fb67fc9f77a7d4c5d98a0f3099fb73b57c69ec1b080773994671b"},
+]
+
+[package.dependencies]
+azure-core = ">=1.30.0"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
 
@@ -4003,7 +4055,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.11.0"
+version = "5.13.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">3.9.1,<3.13"
@@ -4016,6 +4068,7 @@ alive-progress = "3.3.0"
 awsipranges = "0.3.3"
 azure-identity = "1.21.0"
 azure-keyvault-keys = "4.10.0"
+azure-mgmt-apimanagement = "5.0.0"
 azure-mgmt-applicationinsights = "4.1.0"
 azure-mgmt-authorization = "4.0.0"
 azure-mgmt-compute = "34.0.0"
@@ -4024,6 +4077,7 @@ azure-mgmt-containerservice = "34.1.0"
 azure-mgmt-cosmosdb = "9.7.0"
 azure-mgmt-databricks = "2.0.0"
 azure-mgmt-keyvault = "10.3.1"
+azure-mgmt-loganalytics = "12.0.0"
 azure-mgmt-monitor = "6.0.2"
 azure-mgmt-network = "28.1.0"
 azure-mgmt-rdbms = "10.1.0"
@@ -4036,6 +4090,7 @@ azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "22.1.1"
 azure-mgmt-subscription = "3.1.1"
 azure-mgmt-web = "8.0.0"
+azure-monitor-query = "2.0.0"
 azure-storage-blob = "12.24.1"
 boto3 = "1.39.15"
 botocore = "1.39.15"
@@ -4047,8 +4102,10 @@ detect-secrets = "1.5.0"
 dulwich = "0.23.0"
 google-api-python-client = "2.163.0"
 google-auth-httplib2 = ">=0.1,<0.3"
+h2 = "4.3.0"
 jsonschema = "4.23.0"
 kubernetes = "32.0.1"
+markdown = "3.9.0"
 microsoft-kiota-abstractions = "1.9.2"
 msgraph-sdk = "1.23.0"
 numpy = "2.0.2"
@@ -4069,7 +4126,7 @@ tzlocal = "5.3.1"
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "525f152e51f82de2110ed158c8dc489e42c289cf"
+resolved_reference = "a52697bfdfee83d14a49c11dcbe96888b5cd767e"
 
 [[package]]
 name = "psutil"
