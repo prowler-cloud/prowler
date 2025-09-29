@@ -15,18 +15,10 @@
   "Risk": "Static **API keys** can be leaked or reused, enabling unauthorized queries and mutations.\n- **Confidentiality**: unrestricted data reads\n- **Integrity**: unauthorized writes and schema misuse\n- **Accountability**: no user identity for auditing, difficult revocation and scoping",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Type_Resource_APSY.html",
     "https://aws.amazon.com/blogs/mobile/graphql-security-appsync-amplify/",
-    "https://docs.aws.amazon.com/config/latest/developerguide/appsync-authorization-check.html",
     "https://docs.aws.amazon.com/appsync/latest/devguide/security-authz.html",
     "https://support.icompaas.com/support/solutions/articles/62000233666-ensure-aws-appsync-graphql-apis-should-not-be-authenticated-with-api-keys",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/appsync-controls.html",
-    "https://docs.aws.amazon.com/appsync/latest/devguide/security-authorization-use-cases.html",
-    "https://docs.datadoghq.com/security/default_rules/aws-appsync-graphql-api-appsync-graphql-apis-should-not-use-api-keys-for-authentication/",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/appsync-controls.html#appsync-5",
-    "https://docs.aws.amazon.com/appsync/latest/devguide/best-practices.html",
-    "https://docs.aws.amazon.com/appsync/latest/devguide/security.html",
-    "https://docs.aws.amazon.com/es_es/appsync/latest/devguide/security-authz.html"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/appsync-controls.html#appsync-5"
   ],
   "Remediation": {
     "Code": {
