@@ -12,6 +12,9 @@ All notable changes to the **Prowler API** are documented in this file.
 - Now the MANAGE_ACCOUNT permission is required to modify or read user permissions instead of MANAGE_USERS [(#8281)](https://github.com/prowler-cloud/prowler/pull/8281)
 - Now at least one user with MANAGE_ACCOUNT permission is required in the tenant [(#8729)](https://github.com/prowler-cloud/prowler/pull/8729)
 
+### Fixed
+- Prowler package version to 5.13.0 [(#8778)](https://github.com/prowler-cloud/prowler/pull/8778)
+
 ---
 
 ## [1.13.1] (Prowler 5.12.2)
