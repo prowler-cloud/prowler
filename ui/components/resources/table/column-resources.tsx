@@ -68,12 +68,15 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
     header: "Resource name",
     cell: ({ row }) => {
       const resourceName = getResourceData(row, "name");
+      const displayName =
+        typeof resourceName === "string" && resourceName.trim().length > 0
+          ? resourceName
+          : "Unnamed resource";
 
       return (
         <SnippetChip
-          value={resourceName as string}
-          formatter={(value: string) => `...${value.slice(-30)}`}
-          className="w-[300px] truncate"
+          value={displayName}
+          className="max-w-[320px]"
           icon={<Database size={16} />}
         />
       );
