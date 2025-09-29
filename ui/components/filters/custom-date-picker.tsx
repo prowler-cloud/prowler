@@ -70,7 +70,7 @@ export const CustomDatePicker = () => {
             className="bg-content1 dark:bg-prowler-blue-400 [&>button]:border-default-200/60 [&>button]:text-default-500 px-3 pt-3 pb-2"
             radius="full"
             size="sm"
-            variant="bordered"
+            variant="flat"
           >
             <Button onPress={() => handleDateChange(now)}>Today</Button>
             <Button onPress={() => handleDateChange(nextWeek)}>

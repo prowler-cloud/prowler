@@ -119,7 +119,7 @@ export const EditForm = ({
             label="Email"
             labelPlacement="outside"
             placeholder={invitationEmail}
-            variant="bordered"
+            variant="flat"
             isRequired={false}
             isInvalid={!!form.formState.errors.invitationEmail}
           />
@@ -136,7 +136,7 @@ export const EditForm = ({
                 classNames={{
                   selectorIcon: "right-2",
                 }}
-                variant="bordered"
+                variant="flat"
                 selectedKeys={[field.value || ""]}
                 onSelectionChange={(selected) =>
                   field.onChange(selected?.currentKey || "")

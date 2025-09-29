@@ -121,7 +121,7 @@ export const AddGroupForm = ({
             label="Provider group name"
             labelPlacement="inside"
             placeholder="Enter the provider group name"
-            variant="bordered"
+            variant="flat"
             isRequired
             isInvalid={!!form.formState.errors.name}
           />

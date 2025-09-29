@@ -102,7 +102,7 @@ export const SendInvitationForm = ({
           label="Email"
           labelPlacement="inside"
           placeholder="Enter the email address"
-          variant="bordered"
+          variant="flat"
           isRequired
           isInvalid={!!form.formState.errors.email}
         />
@@ -119,7 +119,7 @@ export const SendInvitationForm = ({
                 classNames={{
                   selectorIcon: "right-2",
                 }}
-                variant="bordered"
+                variant="flat"
                 isDisabled={isSelectorDisabled}
                 selectedKeys={[field.value]}
                 onSelectionChange={(selected) =>
