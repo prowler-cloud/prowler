@@ -2,10 +2,12 @@
   "Provider": "aws",
   "CheckID": "apigatewayv2_api_authorizers_enabled",
   "CheckTitle": "API Gateway V2 API has an authorizer configured",
+  "CheckAliases": [
+    "apigatewayv2_authorizers_enabled"
+  ],
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
-    "TTPs/Initial Access/Unauthorized Access",
+    "TTPs/Initial Access",
     "Effects/Data Exposure"
   ],
   "ServiceName": "apigatewayv2",
@@ -17,7 +19,9 @@
   "Risk": "Without an authorizer, anyone can invoke routes.\n- Confidentiality: exposure of data and metadata\n- Integrity: unauthorized state changes or actions\n- Availability/Cost: automated abuse of backends, traffic spikes, and unexpected spend",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html"
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html",
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-lambda-authorizer.html",
+    "https://support.icompaas.com/support/solutions/articles/62000127114-ensure-api-gateway-has-configured-authorizers"
   ],
   "Remediation": {
     "Code": {

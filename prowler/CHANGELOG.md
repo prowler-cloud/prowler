@@ -12,7 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
 - Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
-- Update aws apigatewayv2 service metadata to new format [(#8719)](https://github.com/prowler-cloud/prowler/pull/8719)
+- Update AWS Api Gateway V2 service metadata to new format [(#8719)](https://github.com/prowler-cloud/prowler/pull/8719)
 
 ### Fixed
 
