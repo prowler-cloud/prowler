@@ -6,7 +6,7 @@ class ec2_ami_public(Check):
     def execute(self):
         findings = []
         for image in ec2_client.images:
-            if image.owner != "amazon":
+            if image.owner == "self":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=image)
                 report.status = "PASS"
                 report.status_extended = (

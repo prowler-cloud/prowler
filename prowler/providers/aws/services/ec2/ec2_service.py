@@ -352,7 +352,7 @@ class EC2(AWSService):
             for owner in ["self", "amazon"]:
                 try:
                     for image in regional_client.describe_images(
-                        Owners=[owner], IncludeDeprecated=True
+                        Owners=["self", "amazon"], IncludeDeprecated=True
                     )["Images"]:
                         arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
                         if not self.audit_resources or (
@@ -758,7 +758,6 @@ class Image(BaseModel):
     public: bool
     deprecation_time: Optional[str]
     owner: str
-    amazon_public: bool = False
     region: str
     tags: Optional[list] = []
 

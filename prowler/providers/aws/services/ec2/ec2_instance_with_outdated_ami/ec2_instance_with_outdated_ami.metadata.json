@@ -15,12 +15,12 @@
     "Code": {
       "CLI": "aws ec2 describe-images --image-ids <ami-id>",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html",
+      "Other": "https://repost.aws/knowledge-center/ec2-find-deprecated-ami",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Regularly update your EC2 instances to use the latest AMIs to ensure they receive the latest security patches and updates.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html"
+      "Url": "https://repost.aws/knowledge-center/ec2-find-deprecated-ami"
     }
   },
   "Categories": [],
