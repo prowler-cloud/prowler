@@ -352,7 +352,7 @@ class EC2(AWSService):
             for owner in ["self", "amazon"]:
                 try:
                     for image in regional_client.describe_images(
-                        Owners=["self", "amazon"], IncludeDeprecated=True
+                        Owners=[owner], IncludeDeprecated=True
                     )["Images"]:
                         arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
                         if not self.audit_resources or (
