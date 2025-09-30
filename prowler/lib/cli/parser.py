@@ -29,16 +29,17 @@ class ProwlerArgumentParser:
             usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,dashboard,iac} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,iac,nhn,mongodbatlas}
+  {aws,azure,gcp,kubernetes,m365,github,iac,llm,nhn,mongodbatlas}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
     m365                Microsoft 365 Provider
     github              GitHub Provider
-    iac                 IaC Provider (Preview)
+    iac                 IaC Provider (Beta)
+    llm                 LLM Provider (Beta)
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider
+    mongodbatlas        MongoDB Atlas Provider (Beta)
 
 Available components:
     dashboard           Local dashboard
