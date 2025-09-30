@@ -18,7 +18,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.db_router import MainRouter
-from api.exceptions import ConflictException
+from api.exceptions import ConflictException, ModelValidationError
 from api.models import (
     Finding,
     Integration,
@@ -3138,6 +3138,47 @@ class LighthouseTenantConfigUpdateSerializer(BaseWriteSerializer):
         extra_kwargs = {
             "id": {"read_only": True},
         }
+
+    def validate(self, attrs):
+        """
+        Validate only that default_provider (if supplied):
+        - is a supported provider type, and
+        - has an active provider configuration for this tenant.
+        """
+        validated_attrs = super().validate(attrs)
+
+        default_provider = validated_attrs.get("default_provider", None)
+
+        # To set a default provider, it must be one of the supported provider types and have an active configuration for this tenant
+        if default_provider is not None and default_provider != "":
+            supported_providers = [
+                choice[0]
+                for choice in LighthouseProviderConfiguration.ProviderChoices.choices
+            ]
+            if default_provider not in supported_providers:
+                raise ModelValidationError(
+                    detail=f"Unsupported provider '{default_provider}'",
+                    code="unsupported_default_provider",
+                    pointer="/data/attributes/default_provider",
+                )
+
+            tenant_id = (
+                self.instance.tenant_id
+                if self.instance
+                else self.context.get("tenant_id")
+            )
+            if not LighthouseProviderConfiguration.objects.filter(
+                tenant_id=tenant_id,
+                provider_type=default_provider,
+                is_active=True,
+            ).exists():
+                raise ModelValidationError(
+                    detail=f"No active configuration found for provider '{default_provider}'",
+                    code="invalid_default_provider",
+                    pointer="/data/attributes/default_provider",
+                )
+
+        return validated_attrs
 
 
 # Lighthouse: Provider models
