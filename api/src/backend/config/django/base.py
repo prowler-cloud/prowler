@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.saml",
     "dj_rest_auth.registration",
     "rest_framework.authtoken",
-    "drf_simple_apikey"
+    "drf_simple_apikey",
 ]
 
 MIDDLEWARE = [
@@ -142,10 +142,6 @@ DJANGO_GUID = {
     "UUID_LENGTH": 32,
 }
 
-DRF_API_KEY = {
-    "FERNET_SECRET": env.str("DJANGO_SECRETS_ENCRYPTION_KEY", "")
-}
-
 DATABASE_ROUTERS = ["api.db_router.MainRouter"]
 
 
@@ -225,7 +221,8 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "sub",
-    # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the future.
+    # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the
+    # future.
     "AUDIENCE": env.str("DJANGO_JWT_AUDIENCE", "https://api.prowler.com"),
     "ISSUER": env.str("DJANGO_JWT_ISSUER", "https://api.prowler.com"),
     # Additional security settings

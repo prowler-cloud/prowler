@@ -1,4 +1,4 @@
-ALLOWED_APPS = ("django", "socialaccount", "account", "authtoken", "silk", "api")
+ALLOWED_APPS = ("django", "socialaccount", "account", "authtoken", "silk")
 
 
 class MainRouter:

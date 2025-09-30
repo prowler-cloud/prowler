@@ -1,12 +1,12 @@
 from celery import states
 from celery.signals import before_task_publish
 from config.celery import celery_app
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
 from django_celery_results.backends.database import DatabaseBackend
 
 from api.db_utils import delete_related_daily_task
-from api.models import Provider
+from api.models import Provider, TenantAPIKey, User
 
 
 def create_task_result_on_publish(sender=None, headers=None, **kwargs):  # noqa: F841
@@ -32,3 +32,14 @@ before_task_publish.connect(
 def delete_provider_scan_task(sender, instance, **kwargs):  # noqa: F841
     # Delete the associated periodic task when the provider is deleted
     delete_related_daily_task(instance.id)
+
+
+@receiver(pre_delete, sender=User)
+def revoke_user_api_keys(sender, instance, **kwargs):  # noqa: F841
+    """
+    Revoke all API keys associated with a user before deletion.
+
+    The entity field will be set to NULL by on_delete=SET_NULL,
+    but we explicitly revoke the keys to prevent further use.
+    """
+    TenantAPIKey.objects.filter(entity=instance).update(revoked=True)

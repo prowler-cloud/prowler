@@ -22,11 +22,11 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
+from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
-from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 
 from api.db_router import MainRouter
 from api.db_utils import (
@@ -38,11 +38,13 @@ from api.db_utils import (
     ProcessorTypeEnumField,
     ProviderEnumField,
     ProviderSecretTypeEnumField,
+    ProwlerApiCrypto,
     ScanTriggerEnumField,
     SeverityEnumField,
     StateEnumField,
     StatusEnumField,
     enum_to_choices,
+    generate_api_key_prefix,
     generate_random_token,
     one_week_from_now,
 )
@@ -126,6 +128,17 @@ class ActiveProviderPartitionedManager(PostgresManager, ActiveProviderManager):
         return super().get_queryset().filter(self.active_provider_filter())
 
 
+class TenantAPIKeyManager(AbstractAPIKeyManager):
+    separator = "."
+
+    def assign_api_key(self, obj) -> str:
+        payload = {"_pk": str(obj.pk), "_exp": obj.expiry_date.timestamp()}
+        key = ProwlerApiCrypto().encrypt(payload)
+
+        prefixed_key = f"{obj.prefix}{self.separator}{key}"
+        return prefixed_key
+
+
 class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=150, validators=[MinLengthValidator(3)])
@@ -206,14 +219,28 @@ class Membership(models.Model):
 
 
 class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
-    # todovictor: uuid and int?
-    # todovictor: prefix
-    # todovictor: entity on cascade? maybe revoke and set null
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    prefix = models.CharField(
+        max_length=11,
+        unique=True,
+        default=generate_api_key_prefix,
+        editable=False,
+        help_text="Unique prefix to identify the API key",
+    )
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this API key was used for authentication",
+    )
     entity = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="user_api_keys",
     )
+
+    objects = TenantAPIKeyManager()
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "api_keys"
@@ -223,6 +250,16 @@ class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
                 field="tenant_id",
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "prefix"),
+                name="unique_api_key_prefixes",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "prefix"], name="api_keys_tenant_prefix_idx"
             ),
         ]
 

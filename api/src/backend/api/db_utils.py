@@ -1,9 +1,14 @@
+import base64
+import hashlib
+import os
 import re
 import secrets
+import struct
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import connection, models, transaction
@@ -432,6 +437,118 @@ def drop_index_on_partitions(
         idx_name = f"{partition.replace('.', '_')}_{index_name}"
         sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
         schema_editor.execute(sql)
+
+
+def generate_api_key_prefix():
+    """Generate a random 8-character prefix for API keys (e.g., 'pk_abc123de')."""
+    # Generate 6 random characters (alphanumeric)
+    random_chars = generate_random_token(length=8)
+    return f"pk_{random_chars}"
+
+
+class ProwlerApiCrypto:
+    """
+    Secure encryption/decryption for API keys using AES-256-GCM.
+    Uses SECRETS_ENCRYPTION_KEY from settings for symmetric encryption.
+    Uses compact binary format to minimize API key length.
+    Output uses only alphanumeric characters (copy-friendly).
+    """
+
+    def __init__(self):
+        # Derive a 256-bit (32 bytes) key from SECRETS_ENCRYPTION_KEY
+        encryption_key = settings.SECRETS_ENCRYPTION_KEY
+        if not encryption_key:
+            raise ValueError("SECRETS_ENCRYPTION_KEY must be set in settings")
+
+        # Use SHA-256 to ensure we always have exactly 32 bytes
+        key_bytes = hashlib.sha256(encryption_key.encode()).digest()
+        self.aesgcm = AESGCM(key_bytes)
+
+    @staticmethod
+    def _encode_alphanumeric(data: bytes) -> str:
+        """
+        Encode bytes to URL-safe base64 string without padding.
+        Uses standard base64url encoding (A-Z, a-z, 0-9, -, _).
+        """
+        # URL-safe base64: uses - and _ instead of + and /
+        # Remove padding (=) for cleaner output
+        return base64.urlsafe_b64encode(data).decode().rstrip("=")
+
+    @staticmethod
+    def _decode_alphanumeric(data: str) -> bytes:
+        """
+        Decode URL-safe base64 string back to bytes.
+        """
+        # Add back padding if needed
+        padding = (4 - len(data) % 4) % 4
+        data_padded = data + ("=" * padding)
+        return base64.urlsafe_b64decode(data_padded)
+
+    def encrypt(self, payload: dict) -> str:
+        """
+        Encrypt a payload dictionary using AES-256-GCM with compact binary format.
+        Returns an alphanumeric string (letters and numbers only, copy-friendly).
+
+        Payload format (binary):
+        - UUID (_pk): 16 bytes
+        - Timestamp (_exp): 8 bytes (double)
+        Total: 24 bytes before encryption
+        """
+        # Extract values from payload
+        pk_value = payload["_pk"]
+        exp_value = payload["_exp"]
+
+        # Convert UUID string to UUID object if needed
+        if isinstance(pk_value, str):
+            pk_uuid = uuid.UUID(pk_value)
+        else:
+            pk_uuid = pk_value
+
+        # Pack data in binary format: 16 bytes UUID + 8 bytes timestamp
+        # UUID as bytes (16 bytes) + double timestamp (8 bytes)
+        payload_bytes = pk_uuid.bytes + struct.pack("!d", exp_value)
+
+        # Generate a random 96-bit (12 bytes) nonce
+        nonce = os.urandom(12)
+
+        # Encrypt the data (AES-GCM automatically appends the auth tag)
+        ciphertext = self.aesgcm.encrypt(nonce, payload_bytes, None)
+
+        # Combine nonce + ciphertext (which includes the tag)
+        encrypted_data = nonce + ciphertext
+
+        # Return as base64url string (compact and URL-safe)
+        # Result: ~70 characters (52 bytes encoded in base64)
+        return self._encode_alphanumeric(encrypted_data)
+
+    def decrypt(self, key: str) -> dict:
+        """
+        Decrypt an encrypted key string back to the original payload dictionary.
+        Expects a base64url string containing: nonce + ciphertext + auth_tag.
+        """
+        try:
+            # Decode from base64url format
+            encrypted_data = self._decode_alphanumeric(key)
+
+            # Extract nonce (first 12 bytes) and ciphertext (rest)
+            nonce = encrypted_data[:12]
+            ciphertext = encrypted_data[12:]
+
+            # Decrypt (AES-GCM automatically verifies the auth tag)
+            payload_bytes = self.aesgcm.decrypt(nonce, ciphertext, None)
+
+            # Unpack binary data: 16 bytes UUID + 8 bytes timestamp
+            uuid_bytes = payload_bytes[:16]
+            timestamp_bytes = payload_bytes[16:24]
+
+            # Reconstruct UUID and timestamp
+            pk_uuid = uuid.UUID(bytes=uuid_bytes)
+            exp_timestamp = struct.unpack("!d", timestamp_bytes)[0]
+
+            # Return as dictionary (matching original format)
+            return {"_pk": str(pk_uuid), "_exp": exp_timestamp}
+        except Exception as e:
+            raise ValueError(f"Failed to decrypt API key: {str(e)}")
 
 
 # Postgres enum definition for member role
