@@ -1,100 +1,160 @@
-import json
-import pickle
-import re
-from pathlib import Path
-from typing import Dict, List, Optional
+import urllib.parse
+from typing import List, Optional
 
-from prowler_mcp_server.prowler_documentation.models import SearchResult
-from rank_bm25 import BM25Okapi
+import requests
+from pydantic import BaseModel, Field
+
+
+class SearchResult(BaseModel):
+    """Search result model."""
+
+    path: str = Field(description="Document path")
+    title: str = Field(description="Document title")
+    url: str = Field(description="Documentation URL")
+    highlights: List[str] = Field(
+        description="Highlighted content snippets showing query matches with <span> tags",
+        default_factory=list,
+    )
 
 
 class ProwlerDocsSearchEngine:
-    """Prowler documentation server with BM25 search."""
+    """Prowler documentation search using ReadTheDocs API."""
 
     def __init__(self):
-        """Initialize the server and load index."""
+        """Initialize the search engine."""
+        self.api_base_url = "https://docs.prowler.com/_/api/v3/search/"
+        self.project_name = "prowler-prowler"
+        self.github_raw_base = (
+            "https://raw.githubusercontent.com/prowler-cloud/prowler/master/docs"
+        )
 
-        self.base_dir = Path(__file__).parent / "_data"
-        self.index_dir = self.base_dir / "index"
-        self.docs_dir = self.base_dir / "docs"
+    def search(self, query: str, page_size: int = 5) -> List[SearchResult]:
+        """
+        Search documentation using ReadTheDocs API.
 
-        # Load BM25 index and metadata
-        self.bm25: Optional[BM25Okapi] = None
-        self.doc_metadata: List[Dict] = []
-        self._load_index()
+        Args:
+            query: Search query string
+            page_size: Maximum number of results to return
 
-    def _load_index(self):
-        """Load BM25 index and document metadata."""
-        index_file = self.index_dir / "bm25_index.pkl"
-        metadata_file = self.index_dir / "doc_metadata.json"
-
-        if not index_file.exists() or not metadata_file.exists():
-            from prowler_mcp_server.prowler_documentation.utils.setup_prowler_docs import (
-                ProwlerDocsSetup,
-            )
-
-            setup = ProwlerDocsSetup()
-            setup.setup()
-
-            # Try loading again after setup
-            if not index_file.exists() or not metadata_file.exists():
-                return
-
+        Returns:
+            List of search results
+        """
         try:
-            # Load BM25 index
-            with open(index_file, "rb") as f:
-                self.bm25 = pickle.load(f)
+            # Construct the search query with project filter
+            search_query = f"project:{self.project_name} {query}"
 
-            # Load metadata
-            with open(metadata_file, "r", encoding="utf-8") as f:
-                self.doc_metadata = json.load(f)
+            # Make request to ReadTheDocs API with page_size to limit results
+            params = {"q": search_query, "page_size": page_size}
+            response = requests.get(
+                self.api_base_url,
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
 
-        except Exception:
-            pass
+            data = response.json()
 
-    def search(self, query: str, top_k: int = 5) -> List[SearchResult]:
-        """Search documentation using BM25."""
-        if not self.bm25 or not self.doc_metadata:
-            return []
+            # Parse results
+            results = []
+            for hit in data.get("results", []):
+                # Extract relevant fields from API response
+                blocks = hit.get("blocks", [])
+                # Get the document path from the hit's path field
+                hit_path = hit.get("path", "")
+                doc_path = self._extract_doc_path(hit_path)
 
-        # Tokenize query (same as in setup.py)
-        query_tokens = self._tokenize(query)
+                # Construct full URL to docs
+                domain = hit.get("domain", "https://docs.prowler.com")
+                full_url = f"{domain}{hit_path}" if hit_path else ""
 
-        # Get BM25 scores
-        scores = self.bm25.get_scores(query_tokens)
+                # Extract highlights from API response
+                highlights = []
 
-        # Get top-k results
-        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[
-            :top_k
-        ]
+                # Add title highlights
+                page_highlights = hit.get("highlights", {})
+                if page_highlights.get("title"):
+                    highlights.extend(page_highlights["title"])
 
-        results = []
-        for idx in top_indices:
-            if scores[idx] > 0:  # Only include results with positive scores
-                doc = self.doc_metadata[idx]
+                # Add block content highlights (up to 3 snippets)
+                for block in blocks[:3]:
+                    block_highlights = block.get("highlights", {})
+                    if block_highlights.get("content"):
+                        highlights.extend(block_highlights["content"])
+
                 results.append(
                     SearchResult(
-                        id=doc["id"],
-                        path=doc["path"],
-                        title=doc["title"],
-                        url=doc["url"],
-                        preview=doc["preview"],
-                        score=float(scores[idx]),
+                        path=doc_path,
+                        title=hit.get("title", ""),
+                        url=full_url,
+                        highlights=highlights,
                     )
                 )
 
-        return results
+            return results
+
+        except Exception as e:
+            # Return empty list on error
+            print(f"Search error: {e}")
+            return []
 
     def get_document(self, doc_path: str) -> Optional[str]:
-        """Get full document content by path."""
-        doc_file = self.docs_dir / doc_path
-        if doc_file.exists():
-            return doc_file.read_text(encoding="utf-8")
-        return None
+        """
+        Get full document content from GitHub raw API.
 
-    def _tokenize(self, text: str) -> List[str]:
-        """Simple tokenization function (same as in setup.py)."""
-        text = text.lower()
-        text = re.sub(r"[#*`\[\]()]", " ", text)
-        tokens = re.findall(r"\b\w+\b", text)
-        return tokens
+        Args:
+            doc_path: Path to the documentation file (e.g., "getting-started/installation")
+
+        Returns:
+            Full markdown content of the documentation, or None if not found
+        """
+        try:
+            # Clean up the path
+            doc_path = doc_path.rstrip("/")
+
+            # Add .md extension if not present
+            if not doc_path.endswith(".md"):
+                doc_path = f"{doc_path}.md"
+
+            # Construct GitHub raw URL
+            url = f"{self.github_raw_base}/{doc_path}"
+
+            # Fetch the raw markdown
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+
+            return response.text
+
+        except Exception as e:
+            print(f"Error fetching document: {e}")
+            return None
+
+    def _extract_doc_path(self, url: str) -> str:
+        """
+        Extract the document path from a full URL.
+
+        Args:
+            url: Full documentation URL
+
+        Returns:
+            Document path relative to docs base
+        """
+        if not url:
+            return ""
+
+        # Parse URL and extract path
+        try:
+            parsed = urllib.parse.urlparse(url)
+            path = parsed.path
+
+            # Remove the base path prefix if present
+            base_path = "/projects/prowler-open-source/en/latest/"
+            if path.startswith(base_path):
+                path = path[len(base_path) :]
+
+            # Remove .html extension
+            if path.endswith(".html"):
+                path = path[:-5]
+
+            return path.lstrip("/")
+        except Exception:
+            return url
