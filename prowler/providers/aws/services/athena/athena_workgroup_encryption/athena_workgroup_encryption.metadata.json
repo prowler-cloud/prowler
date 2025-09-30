@@ -1,28 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "athena_workgroup_encryption",
-  "CheckTitle": "Ensure that encryption at rest is enabled for Amazon Athena query results stored in Amazon S3 in order to secure data and meet compliance requirements for data-at-rest encryption.",
+  "CheckTitle": "Athena workgroup encrypts query results in S3 with server-side encryption",
   "CheckType": [
-    "Software and Configuration Checks"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "athena",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:athena:region:account-id:workgroup/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAthenaWorkGroup",
-  "Description": "Ensure that encryption at rest is enabled for Amazon Athena query results stored in Amazon S3 in order to secure data and meet compliance requirements for data-at-rest encryption.",
-  "Risk": "If not enabled sensitive information at rest is not protected.",
-  "RelatedUrl": "https://docs.aws.amazon.com/athena/latest/ug/encryption.html",
+  "Description": "**Athena workgroups** are evaluated for **encryption of query results** to confirm result data is stored encrypted at rest, whether saved in Amazon S3 or via managed query results",
+  "Risk": "Unencrypted query outputs can be read at rest by unintended principals through S3 misconfigurations or cross-account access.\n\nImpact: **Confidentiality loss**, enabling **data exfiltration** and supporting **lateral movement** by exposing sensitive fields outside intended boundaries.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-athena-workgroup-is-encrypted#terraform",
+    "https://awslabs.github.io/data-solutions-framework-on-aws/docs/constructs/library/Consumption/athena-workgroup",
+    "https://aws.amazon.com/about-aws/whats-new/2023/03/amazon-athena-minimum-encryption-query-result-security/",
+    "https://aws.amazon.com/blogs/big-data/introducing-managed-query-results-for-amazon-athena/",
+    "https://docs.aws.amazon.com/athena/latest/ug/managed-results.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encryption-enabled.html",
+    "https://docs.aws.amazon.com/athena/latest/ug/encrypting-managed-results.html",
+    "https://docs.aws.amazon.com/athena/latest/ug/encrypting-query-results-stored-in-s3.html",
+    "https://docs.aws.amazon.com/athena/latest/ug/querying.html",
+    "https://docs.aws.amazon.com/athena/latest/ug/workgroups-minimum-encryption.html",
+    "https://aws.amazon.com/blogs/aws/launch-amazon-athena-adds-support-for-querying-encrypted-data/",
+    "https://docs.aws.amazon.com/athena/latest/ug/encryption.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws athena update-work-group --region <REGION> --work-group <workgroup_name> --configuration-updates ResultConfigurationUpdates={EncryptionConfiguration={EncryptionOption=SSE_S3|SSE_KMS|CSE_KMS}}",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encryption-enabled.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-athena-workgroup-is-encrypted#terraform"
+      "CLI": "aws athena update-work-group --work-group <workgroup_name> --configuration-updates ResultConfigurationUpdates={EncryptionConfiguration={EncryptionOption=SSE_S3}}",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable encryption of Athena workgroup query results\nResources:\n  <example_resource_name>:\n    Type: AWS::Athena::WorkGroup\n    Properties:\n      Name: <example_resource_name>\n      WorkGroupConfiguration:\n        ResultConfiguration:\n          EncryptionConfiguration:\n            EncryptionOption: SSE_S3  # Critical: enables server-side encryption for query results\n```",
+      "Other": "1. In the AWS Console, go to Amazon Athena > Workgroups\n2. Select the workgroup and click Edit\n3. Under Query result configuration, set a Results location if empty\n4. Check Encrypt query results and select SSE-S3\n5. Click Save changes",
+      "Terraform": "```hcl\n# Terraform: Enable encryption of Athena workgroup query results\nresource \"aws_athena_workgroup\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  configuration {\n    result_configuration {\n      output_location = \"s3://<example_bucket>/\"  # Required S3 path for query results\n      encryption_configuration {\n        encryption_option = \"SSE_S3\"  # Critical: enables encryption for query results\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
-      "Url": "https://docs.aws.amazon.com/athena/latest/ug/encrypting-query-results-stored-in-s3.html"
+      "Text": "Enable and enforce **workgroup result encryption** with **AWS KMS customer managed keys** (`SSE_KMS` or managed results with a KMS key). Set a minimum encryption level and prevent client overrides. Apply **least privilege** to key and result access, rotate keys, and audit usage to maintain defense in depth.",
+      "Url": "https://hub.prowler.com/check/athena_workgroup_encryption"
     }
   },
   "Categories": [
