@@ -29,6 +29,7 @@ def update_checks_metadata_with_compliance(
                         # Create the Compliance
                         compliance = Compliance(
                             Framework=framework.Framework,
+                            Name=framework.Name,
                             Provider=framework.Provider,
                             Version=framework.Version,
                             Description=framework.Description,

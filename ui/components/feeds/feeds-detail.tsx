@@ -53,7 +53,7 @@ export const FeedsDetail = () => {
             <Icon size={18} />
             {/* TODO: Update this condition once the RSS data response structure is finalized */}
             {feed.length > 0 && (
-              <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-red-500 dark:bg-gray-400"></span>
+              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500 dark:bg-gray-400"></span>
             )}
           </Button>
         </DropdownMenuTrigger>
@@ -72,7 +72,7 @@ export const FeedsDetail = () => {
                     target="_blank"
                     className="flex flex-col"
                   >
-                    <h3 className="text-small font-medium leading-none">
+                    <h3 className="text-small leading-none font-medium">
                       {item.title}
                     </h3>
                     <p className="text-sm text-gray-500">{item.description}</p>

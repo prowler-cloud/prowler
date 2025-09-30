@@ -1,5 +1,6 @@
 {
   "Framework": "CIS",
+  "Name": "CIS Google Cloud Platform Foundation Benchmark v4.0.0",
   "Version": "4.0",
   "Provider": "GCP",
   "Description": "The CIS Google Cloud Platform Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of GCP with an emphasis on foundational, testable, and architecture agnostic settings.",

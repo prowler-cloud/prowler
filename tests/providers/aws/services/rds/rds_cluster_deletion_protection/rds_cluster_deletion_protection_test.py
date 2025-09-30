@@ -40,13 +40,13 @@ class Test_rds_cluster_deletion_protection:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql14",
+            DBParameterGroupFamily="default.postgres14",
             Description="test parameter group",
         )
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
+            Engine="postgres",
             DatabaseName="staging-postgres",
             DeletionProtection=True,
             DBClusterParameterGroupName="test",
@@ -94,14 +94,14 @@ class Test_rds_cluster_deletion_protection:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.mysql8.0",
+            DBParameterGroupFamily="default.postgres8.0",
             Description="test parameter group",
         )
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
-            Engine="aurora-mysql",
-            DatabaseName="staging-mysql",
+            Engine="postgres",
+            DatabaseName="staging-postgres",
             DeletionProtection=False,
             DBClusterParameterGroupName="test",
             MasterUsername="test",

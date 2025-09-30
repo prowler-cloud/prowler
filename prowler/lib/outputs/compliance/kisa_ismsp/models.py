@@ -29,3 +29,5 @@ class AWSKISAISMSPModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
