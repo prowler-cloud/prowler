@@ -7,7 +7,7 @@ from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
 
-from prowler.providers.aws.services.iam.iam_service import IAM, Policy, is_service_role
+from prowler.providers.aws.services.iam.iam_service import IAM, is_service_role
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -876,7 +876,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert policy.arn == user_arn
         assert policy.version_id == "v1"
         assert policy.type == "Inline"
-        assert policy.attached == True
+        assert policy.attached
         assert policy.document == INLINE_POLICY_NOT_ADMIN
         assert policy.entity == user_name
 
@@ -914,7 +914,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert policy.arn == group_arn
         assert policy.version_id == "v1"
         assert policy.type == "Inline"
-        assert policy.attached == True
+        assert policy.attached
         assert policy.document == INLINE_POLICY_NOT_ADMIN
         assert policy.entity == group_name
 
@@ -956,7 +956,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert policy.arn == role_arn
         assert policy.version_id == "v1"
         assert policy.type == "Inline"
-        assert policy.attached == True
+        assert policy.attached
         assert policy.document == INLINE_POLICY_NOT_ADMIN
         assert policy.entity == role_name
 
