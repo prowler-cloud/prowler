@@ -21,6 +21,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Updated LangChain to latest versions with API improvements [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Migrated all page components to async `params`/`searchParams` API [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Migrated from `useFormState` to `useActionState` for React 19 compatibility [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- References display in findings detail page now shows as a proper bulleted list [(#8793)](https://github.com/prowler-cloud/prowler/pull/8793)
 
 ---
 
