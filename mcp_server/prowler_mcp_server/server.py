@@ -43,4 +43,13 @@ async def setup_main_server(transport: str) -> FastMCP:
     except Exception as e:
         logger.error(f"Failed to import Prowler App server: {e}")
 
+    try:
+        logger.info("Importing Prowler Documentation server...")
+        from prowler_mcp_server.prowler_documentation.server import docs_mcp_server
+
+        await prowler_mcp_server.import_server(docs_mcp_server, prefix="prowler_docs")
+        logger.info("Successfully imported Prowler Documentation server")
+    except Exception as e:
+        logger.error(f"Failed to import Prowler Documentation server: {e}")
+
     return prowler_mcp_server
