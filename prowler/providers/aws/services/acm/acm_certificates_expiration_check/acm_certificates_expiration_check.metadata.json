@@ -16,12 +16,7 @@
   "Risk": "Expired or near-expiry **TLS certificates** can break handshakes, causing **service outages** and failed API calls (**availability**). Emergency fixes raise misconfiguration risk, enabling disabled verification or weak ciphers, which allows **MITM** and data exposure (**confidentiality**/**integrity**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloudviz.io/blog/15-aws-config-rules-every-aws-account-should-have",
-    "https://aws.plainenglish.io/streamline-ssl-tls-certificates-with-aws-certificate-manager-acm-7e792e2c575e",
-    "https://www.clouddefense.ai/compliance-rules/cisa-cyber-essentials/data/acm-certificate-expires-30-days",
-    "https://cloudcustodian.io/docs/aws/resources/acm-certificate.html",
-    "https://docs.gruntwork.io/reference/modules/terraform-aws-security/aws-config-rules/",
-    "https://asecure.cloud/a/acm-certificate-expiration-check/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ACM/certificate-expires-in-45-days.html",
     "https://repost.aws/es/knowledge-center/acm-notification-certificate-renewal",
     "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html",
     "https://repost.aws/questions/QU3sMaeZPMRo2kLcsfJsfuVA/acm-notifications-for-expiring-certificates"
@@ -29,18 +24,16 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "```yaml\n# CloudFormation: request a new ACM certificate to replace the expiring one\nResources:\n  <example_resource_name>:\n    Type: AWS::CertificateManager::Certificate\n    Properties:\n      DomainName: <example_domain>         # CRITICAL: create a new certificate for the domain\n      ValidationMethod: DNS                # CRITICAL: DNS validation enables ACM auto-renewal\n```",
+      "NativeIaC": "",
       "Other": "1. In the AWS Console, open Certificate Manager (ACM)\n2. If the expiring certificate is ACM-issued: select it and complete/restore validation (Create records in Route 53 or add the shown CNAME) so renewal can proceed\n3. If the expiring certificate is imported: click Import a certificate, upload the new certificate and private key, then save\n4. Update the service to use the new/renewed certificate:\n   - ALB/NLB: EC2 > Load Balancers > Listeners > Edit > Change certificate to the new ACM certificate\n   - CloudFront: Distributions > Edit > Viewer certificate > Select the new ACM certificate\n   - API Gateway: Custom domain names > Edit > Choose the new ACM certificate\n5. Verify the old certificate is no longer in use; delete it if not needed",
-      "Terraform": "```hcl\n# Terraform: request a new ACM certificate to replace the expiring one\nresource \"aws_acm_certificate\" \"<example_resource_name>\" {\n  domain_name       = \"<example_domain>\"  # CRITICAL: create a new certificate for the domain\n  validation_method = \"DNS\"                # CRITICAL: DNS validation enables ACM auto-renewal\n}\n```"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Adopt **automated certificate lifecycle management**: prefer **ACM-issued certs with auto-renewal**, or integrate imports with an automated renewal/rotation pipeline. Track expirations with alerts, enforce **least privilege** for cert operations, remove unused certs, and test rollovers to avoid downtime.",
       "Url": "https://hub.prowler.com/check/acm_certificates_expiration_check"
     }
   },
-  "Categories": [
-    "encryption"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
