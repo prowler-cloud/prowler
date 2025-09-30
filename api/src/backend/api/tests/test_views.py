@@ -8467,3 +8467,175 @@ class TestTenantApiKeyViewSet:
         # Verify error object structure
         error = response_data["errors"][0]
         assert "detail" in error or "title" in error
+
+
+@pytest.mark.django_db
+class TestLighthouseTenantConfigViewSet:
+    """Test Lighthouse tenant configuration endpoint (singleton pattern)"""
+
+    def test_lighthouse_tenant_config_create(self, authenticated_client):
+        """Test creating a tenant config successfully"""
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "business_context": "Test business context for security analysis",
+                    "default_provider": "",
+                    "default_models": {},
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()["data"]
+        assert (
+            data["attributes"]["business_context"]
+            == "Test business context for security analysis"
+        )
+        assert data["attributes"]["default_provider"] == ""
+        assert data["attributes"]["default_models"] == {}
+
+    def test_lighthouse_tenant_config_create_duplicate(self, authenticated_client):
+        """Test that only one config is allowed per tenant (singleton enforcement)"""
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "business_context": "First config",
+                },
+            }
+        }
+
+        # Create first config (should succeed)
+        response = authenticated_client.post(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Try to create duplicate
+        payload["data"]["attributes"]["business_context"] = "Second config"
+        response = authenticated_client.post(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already exists" in str(response.json()).lower()
+
+    def test_lighthouse_tenant_config_retrieve(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test retrieving the singleton tenant config"""
+        from api.models import LighthouseTenantConfiguration
+
+        # Create config first
+        config = LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Test context",
+            default_provider="openai",
+            default_models={"openai": "gpt-4o"},
+        )
+
+        # Retrieve it
+        response = authenticated_client.get(reverse("lighthouse-config"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(config.id)
+        assert data["attributes"]["business_context"] == "Test context"
+        assert data["attributes"]["default_provider"] == "openai"
+        assert data["attributes"]["default_models"] == {"openai": "gpt-4o"}
+
+    def test_lighthouse_tenant_config_retrieve_not_found(self, authenticated_client):
+        """Test GET when config doesn't exist returns 404"""
+        response = authenticated_client.get(reverse("lighthouse-config"))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "not found" in response.json()["errors"][0]["detail"].lower()
+
+    def test_lighthouse_tenant_config_partial_update(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test updating tenant config fields"""
+        from api.models import LighthouseTenantConfiguration
+
+        # Create config first
+        config = LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Original context",
+            default_provider="",
+            default_models={},
+        )
+
+        # Update it
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "business_context": "Updated context for cloud security",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify update
+        config.refresh_from_db()
+        assert config.business_context == "Updated context for cloud security"
+
+    def test_lighthouse_tenant_config_update_invalid_provider(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test validation fails when default_provider is not configured and active"""
+        from api.models import LighthouseTenantConfiguration
+
+        # Create config first
+        LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Test",
+        )
+
+        # Try to set invalid provider
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "default_provider": "nonexistent-provider",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "provider" in response.json()["errors"][0]["detail"].lower()
+
+    def test_lighthouse_tenant_config_update_invalid_json_format(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that invalid JSON payload is rejected"""
+        from api.models import LighthouseTenantConfiguration
+
+        # Create config first
+        LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Test",
+        )
+
+        # Send invalid JSON
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data="invalid json",
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
