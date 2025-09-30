@@ -400,68 +400,40 @@ class TestComplianceOutput:
         """Test that ComplianceOutput correctly parses file extensions when framework names contain dots."""
         from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 
-        # Create a mock compliance object
         compliance = Compliance(
-            Framework="cis",
-            Version="5.0_aws",
-            Provider="aws",
+            Framework="CIS",
+            Version="5.0",
+            Provider="AWS",
             Name="CIS Amazon Web Services Foundations Benchmark v5.0",
             Description="Test compliance framework",
             Requirements=[],
         )
 
         # Test with problematic file path that contains dots in framework name
+        # This simulates the real scenario from Prowler App S3 integration
         problematic_file_path = "output/compliance/prowler-output-123456789012-20250101120000_cis_5.0_aws.csv"
 
-        # Create GenericCompliance object
+        # Create GenericCompliance object with file_path (no explicit file_extension)
         compliance_output = GenericCompliance(
             findings=[], compliance=compliance, file_path=problematic_file_path
         )
 
-        # Verify that the file extension is correctly parsed as ".csv" not ".0_aws.csv"
         assert compliance_output.file_extension == ".csv"
         assert compliance_output.file_extension != ".0_aws.csv"
-
-    def test_compliance_output_file_extension_simple(self):
-        """Test that ComplianceOutput correctly parses simple file extensions."""
-        from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
-
-        # Create a mock compliance object
-        compliance = Compliance(
-            Framework="cis",
-            Version="1.4_aws",
-            Provider="aws",
-            Name="CIS Amazon Web Services Foundations Benchmark v1.4",
-            Description="Test compliance framework",
-            Requirements=[],
-        )
-
-        # Test with simple file path
-        simple_file_path = "output/compliance/prowler-output-123456789012-20250101120000_cis_1.4_aws.csv"
-
-        # Create GenericCompliance object
-        compliance_output = GenericCompliance(
-            findings=[], compliance=compliance, file_path=simple_file_path
-        )
-
-        # Verify that the file extension is correctly parsed as ".csv"
-        assert compliance_output.file_extension == ".csv"
 
     def test_compliance_output_file_extension_explicit(self):
         """Test that ComplianceOutput uses explicit file_extension when provided."""
         from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 
-        # Create a mock compliance object
         compliance = Compliance(
-            Framework="cis",
-            Version="5.0_aws",
-            Provider="aws",
+            Framework="CIS",
+            Version="5.0",
+            Provider="AWS",
             Name="CIS Amazon Web Services Foundations Benchmark v5.0",
             Description="Test compliance framework",
             Requirements=[],
         )
 
-        # Test with explicit file_extension
         compliance_output = GenericCompliance(
             findings=[],
             compliance=compliance,
@@ -469,5 +441,4 @@ class TestComplianceOutput:
             file_extension=".csv",
         )
 
-        # Verify that the explicit file_extension is used
         assert compliance_output.file_extension == ".csv"
