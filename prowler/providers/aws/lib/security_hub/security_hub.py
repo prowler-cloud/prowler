@@ -401,16 +401,12 @@ class SecurityHub:
                     "get_findings"
                 )
 
-                for page in get_findings_paginator.paginate(
-                    Filters=findings_filter, PaginationConfig={"PageSize": 100}
-                ):
-                    for finding in page["Findings"]:
-                        finding_id = finding["Id"]
-                        existing_findings_timestamps[finding_id] = {
-                            "FirstObservedAt": finding.get("FirstObservedAt"),
-                            "CreatedAt": finding.get("CreatedAt"),
-                            "UpdatedAt": finding.get("UpdatedAt"),
-                        }
+                # Use the same batching pattern as _send_findings_in_batches
+                self._retrieve_findings_in_batches(
+                    get_findings_paginator,
+                    findings_filter,
+                    existing_findings_timestamps,
+                )
 
             except Exception as error:
                 logger.error(
@@ -475,6 +471,34 @@ class SecurityHub:
                     f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
                 )
         return success_count
+
+    def _retrieve_findings_in_batches(
+        self, paginator, findings_filter: dict, existing_findings_timestamps: dict
+    ) -> None:
+        """
+        Retrieves findings from AWS Security Hub in batches using the same pattern as _send_findings_in_batches.
+
+        Args:
+            paginator: The paginator object for get_findings.
+            findings_filter (dict): The filter to apply when retrieving findings.
+            existing_findings_timestamps (dict): Dictionary to store the retrieved findings timestamps.
+        """
+        try:
+            for page in paginator.paginate(
+                Filters=findings_filter,
+                PaginationConfig={"PageSize": SECURITY_HUB_MAX_BATCH},
+            ):
+                for finding in page["Findings"]:
+                    finding_id = finding["Id"]
+                    existing_findings_timestamps[finding_id] = {
+                        "FirstObservedAt": finding.get("FirstObservedAt"),
+                        "CreatedAt": finding.get("CreatedAt"),
+                        "UpdatedAt": finding.get("UpdatedAt"),
+                    }
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _send_findings_in_batches(
         self, findings: list[AWSSecurityFindingFormat], region: str
