@@ -13,6 +13,7 @@ from uuid import uuid4
 import jwt
 import pytest
 from allauth.socialaccount.models import SocialAccount, SocialApp
+from allauth.account.models import EmailAddress
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -323,6 +324,78 @@ class TestUserViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert User.objects.filter(id=another_user.id).exists()
+
+    def test_users_destroy_cascades_allauth_and_memberships(
+        self, authenticated_client, create_test_user
+    ):
+        # Create related admin-side objects (email + SocialAccount)
+        EmailAddress.objects.create(
+            user=create_test_user,
+            email=create_test_user.email,
+            primary=True,
+            verified=True,
+        )
+        SocialAccount.objects.create(
+            user=create_test_user, provider="fake-provider", uid="uid-fake-provider"
+        )
+
+        # Sanity check pre-conditions
+        assert EmailAddress.objects.filter(user=create_test_user).exists()
+        assert SocialAccount.objects.filter(user=create_test_user).exists()
+        assert Membership.objects.filter(user=create_test_user).exists()
+        assert UserRoleRelationship.objects.filter(user=create_test_user).exists()
+
+        # Delete current user
+        response = authenticated_client.delete(
+            reverse("user-detail", kwargs={"pk": str(create_test_user.id)})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Assert user and related objects are gone
+        assert not User.objects.filter(id=create_test_user.id).exists()
+        assert not EmailAddress.objects.filter(user_id=create_test_user.id).exists()
+        assert not SocialAccount.objects.filter(user_id=create_test_user.id).exists()
+        assert not Membership.objects.filter(user_id=create_test_user.id).exists()
+        assert not UserRoleRelationship.objects.filter(
+            user_id=create_test_user.id
+        ).exists()
+
+    def test_users_destroy_with_saml_configuration_and_memberships(
+        self, authenticated_client, create_test_user, saml_setup
+    ):
+        # Ensure SAML configuration exists for tenant (from saml_setup fixture)
+        domain = saml_setup["domain"]
+        config = SAMLConfiguration.objects.get(email_domain=domain)
+
+        # Attach a SAML SocialAccount to the user
+        SocialAccount.objects.create(
+            user=create_test_user, provider="saml", uid="uid-saml"
+        )
+
+        # Sanity check pre-conditions
+        assert SocialAccount.objects.filter(
+            user=create_test_user, provider="saml"
+        ).exists()
+        assert Membership.objects.filter(user=create_test_user).exists()
+        assert UserRoleRelationship.objects.filter(user=create_test_user).exists()
+
+        # Delete current user
+        response = authenticated_client.delete(
+            reverse("user-detail", kwargs={"pk": str(create_test_user.id)})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Assert user-related rows are removed
+        assert not User.objects.filter(id=create_test_user.id).exists()
+        assert not SocialAccount.objects.filter(user_id=create_test_user.id).exists()
+        assert not Membership.objects.filter(user_id=create_test_user.id).exists()
+        assert not UserRoleRelationship.objects.filter(
+            user_id=create_test_user.id
+        ).exists()
+
+        # Tenant-level SAML configuration should remain intact
+        assert SAMLConfiguration.objects.filter(id=config.id).exists()
+        assert SocialApp.objects.filter(provider="saml", client_id=domain).exists()
 
     @pytest.mark.parametrize(
         "attribute_key, attribute_value, error_field",
