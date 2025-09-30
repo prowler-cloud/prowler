@@ -22,7 +22,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
+
+---
+
+## [v5.12.4] (Prowler UNRELEASED)
+
+### Fixed
 - Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
+
+---
 
 ## [v5.12.1] (Prowler v5.12.1)
 
@@ -30,6 +38,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
 - `firehose_stream_encrypted_at_rest` check false positives and new api call in kafka service [(#8599)](https://github.com/prowler-cloud/prowler/pull/8599)
 - Replace defender rules policies key to use old name [(#8702)](https://github.com/prowler-cloud/prowler/pull/8702)
+
+---
 
 ## [v5.12.0] (Prowler v5.12.0)
 
