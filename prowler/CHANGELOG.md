@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Documentation for renaming checks [(#8717)](https://github.com/prowler-cloud/prowler/pull/8717)
 - Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
 - GitHub provider check `organization_default_repository_permission_strict` to ensure organization base permissions are set to 'read' or 'none' (CIS GitHub 1.3.8) [(#8662)](https://github.com/prowler-cloud/prowler/issues/8662)
+- Equality validation for CheckID, filename and classname [(#8690)](https://github.com/prowler-cloud/prowler/pull/8690)
 
 ### Changed
 
@@ -18,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
 - Update AWS Api Gateway V2 service metadata to new format [(#8719)](https://github.com/prowler-cloud/prowler/pull/8719)
 - Update AWS AppSync service metadata to new format [(#8721)](https://github.com/prowler-cloud/prowler/pull/8721)
+- Update AWS ACM service metadata to new format [(#8716)](https://github.com/prowler-cloud/prowler/pull/8716)
 - HTML output now properly renders markdown syntax in Risk and Recommendation fields [(#8727)](https://github.com/prowler-cloud/prowler/pull/8727)
 - Update `moto` dependency from 5.0.28 to 5.1.11 [(#7100)](https://github.com/prowler-cloud/prowler/pull/7100)
 

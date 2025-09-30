@@ -1,6 +1,6 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/chip";
 import { Ban, Check } from "lucide-react";
 import { useState } from "react";
 
@@ -22,7 +22,7 @@ export const PermissionIcon = ({ enabled }: { enabled: boolean }) => (
 );
 
 const PermissionItem = ({ enabled, label }: PermissionItemProps) => (
-  <div className="flex items-center space-x-2 whitespace-nowrap">
+  <div className="flex items-center gap-2 whitespace-nowrap">
     <PermissionIcon enabled={enabled} />
     <span className="text-xs">{label}</span>
   </div>
@@ -55,11 +55,11 @@ export const RoleItem = ({
   return (
     <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Chip size="sm" variant="flat" color="primary">
             {roleName}
           </Chip>
-          <span className="text-xs capitalize text-gray-500">
+          <span className="text-xs text-gray-500 capitalize">
             {permissionState}
           </span>
         </div>

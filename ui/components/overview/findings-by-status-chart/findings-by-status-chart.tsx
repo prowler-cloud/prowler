@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/react";
-import { Chip } from "@nextui-org/react";
+import { Card, CardBody } from "@heroui/card";
+import { Chip } from "@heroui/chip";
 import { TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -114,12 +114,12 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
     {
       findings: "Empty",
       number: 1,
-      fill: "hsl(var(--nextui-default-200))",
+      fill: "hsl(var(--heroui-default-200))",
     },
   ];
 
   return (
-    <Card className="h-full dark:bg-prowler-blue-400">
+    <Card className="dark:bg-prowler-blue-400 h-full">
       <CardBody>
         <div className="flex h-full flex-col items-center justify-around">
           <ChartContainer
@@ -172,10 +172,10 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
 
           <div className="flex min-h-[156px] flex-col justify-start gap-4">
             <div className="flex flex-col gap-2">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Link
                   href="/findings?filter[status]=PASS"
-                  className="flex items-center space-x-2"
+                  className="flex items-center gap-2"
                 >
                   <Chip
                     className="h-5"
@@ -190,7 +190,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                   <span>{updatedChartData[0].percent}</span>
                 </Link>
               </div>
-              <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
+              <div className="text-muted-foreground flex items-center gap-1 text-xs leading-none font-medium">
                 {pass_new > 0 ? (
                   <>
                     +{pass_new} pass findings from last day{" "}
@@ -208,7 +208,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
               <div className="flex items-center align-middle">
                 <Link
                   href="/findings?filter[status]=FAIL"
-                  className="flex items-center space-x-2"
+                  className="flex items-center gap-2"
                 >
                   <Chip
                     className="h-5"
@@ -223,7 +223,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                   <span>{updatedChartData[1].percent}</span>
                 </Link>
               </div>
-              <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
+              <div className="text-muted-foreground flex items-center gap-1 text-xs leading-none font-medium">
                 +{fail_new} fail findings from last day{" "}
                 <TrendingUp className="h-4 w-4" />
               </div>
@@ -232,10 +232,10 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
             <div className="flex min-h-[52px] flex-col gap-2">
               {shouldShowMuted ? (
                 <>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Link
                       href="/findings?filter[muted]=true"
-                      className="flex items-center space-x-2"
+                      className="flex items-center gap-2"
                     >
                       <Chip
                         className="h-5"
@@ -255,7 +255,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                       </span>
                     </Link>
                   </div>
-                  <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
+                  <div className="text-muted-foreground flex items-center gap-1 text-xs leading-none font-medium">
                     {muted_new > 0 ? (
                       <>
                         +{muted_new} muted findings from last day{" "}
