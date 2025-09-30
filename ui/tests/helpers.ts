@@ -2,6 +2,7 @@ import { Page, expect } from "@playwright/test";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
+  INVALID_EMAIL: "Please enter a valid email address.",
 } as const;
 
 export const URLS = {
@@ -69,7 +70,8 @@ export async function verifyLoginError(
   page: Page,
   errorMessage = "Invalid email or password",
 ) {
-  await expect(page.getByText(errorMessage)).toBeVisible();
+  // There may be multiple field-level errors with the same text; assert at least one is visible
+  await expect(page.getByText(errorMessage).first()).toBeVisible();
   await expect(page).toHaveURL("/sign-in");
 }
 

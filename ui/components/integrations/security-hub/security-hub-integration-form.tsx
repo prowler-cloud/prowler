@@ -1,7 +1,9 @@
 "use client";
 
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Radio, RadioGroup } from "@heroui/radio";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, Radio, RadioGroup } from "@nextui-org/react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
@@ -250,7 +252,7 @@ export const SecurityHubIntegrationForm = ({
     if (isEditingCredentials) {
       // When editing credentials, show the credential type selector first
       return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <RadioGroup
             size="sm"
             aria-label="Credential type"
@@ -319,7 +321,7 @@ export const SecurityHubIntegrationForm = ({
         <>
           {!isEditingConfig && (
             <>
-              <div className="space-y-4">
+              <div className="flex flex-col gap-4">
                 <EnhancedProviderSelector
                   control={form.control}
                   name="provider_id"
@@ -344,7 +346,7 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
                   >
@@ -362,7 +364,7 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
                   >
@@ -473,15 +475,15 @@ export const SecurityHubIntegrationForm = ({
               ? handleNext
               : form.handleSubmit(onSubmit)
         }
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="flex items-center gap-2 text-sm text-default-500">
+            <p className="text-default-500 flex items-center gap-2 text-sm">
               Need help configuring your AWS Security Hub integration?
             </p>
             <CustomLink
-              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/security-hub/"
+              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-security-hub-integration/"
               target="_blank"
               size="sm"
             >

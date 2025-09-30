@@ -2,6 +2,72 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.13.0] (Prowler UNRELEASED)
+
+### Added
+- Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
+- Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
+- LLM provider using `promptfoo` [(#8555)](https://github.com/prowler-cloud/prowler/pull/8555)
+- Documentation for renaming checks [(#8717)](https://github.com/prowler-cloud/prowler/pull/8717)
+- Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
+- Equality validation for CheckID, filename and classname [(#8690)](https://github.com/prowler-cloud/prowler/pull/8690)
+
+### Changed
+
+- Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
+- Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
+- Update AWS Api Gateway V2 service metadata to new format [(#8719)](https://github.com/prowler-cloud/prowler/pull/8719)
+- Update AWS AppSync service metadata to new format [(#8721)](https://github.com/prowler-cloud/prowler/pull/8721)
+- Update AWS ACM service metadata to new format [(#8716)](https://github.com/prowler-cloud/prowler/pull/8716)
+- HTML output now properly renders markdown syntax in Risk and Recommendation fields [(#8727)](https://github.com/prowler-cloud/prowler/pull/8727)
+- Update `moto` dependency from 5.0.28 to 5.1.11 [(#7100)](https://github.com/prowler-cloud/prowler/pull/7100)
+
+### Fixed
+- Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
+
+## [v5.12.1] (Prowler v5.12.1)
+
+### Fixed
+- Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+- `firehose_stream_encrypted_at_rest` check false positives and new api call in kafka service [(#8599)](https://github.com/prowler-cloud/prowler/pull/8599)
+- Replace defender rules policies key to use old name [(#8702)](https://github.com/prowler-cloud/prowler/pull/8702)
+
+## [v5.12.0] (Prowler v5.12.0)
+
+### Added
+- Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
+- Support labels on Jira tickets [(#8603)](https://github.com/prowler-cloud/prowler/pull/8603)
+- Add finding url and tenant info inside Jira tickets [(#8607)](https://github.com/prowler-cloud/prowler/pull/8607)
+- Get Jira Project's metadata [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
+- Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
+- `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
+- Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
+- `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
+- Send finding in Jira integration with the needed values [(#8648)](https://github.com/prowler-cloud/prowler/pull/8648)
+- Add language enforcement for Jira requests [(#8674)](https://github.com/prowler-cloud/prowler/pull/8674)
+- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
+  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
+  - `clusters_backup_enabled` - Ensure clusters have backup enabled
+  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
+  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
+  - `organizations_api_access_list_required` - Ensure organization requires API access list
+  - `organizations_mfa_required` - Ensure organization requires MFA
+  - `organizations_security_contact_defined` - Ensure organization has security contact defined
+  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
+  - `projects_auditing_enabled` - Ensure database auditing is enabled
+  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
+
+### Changed
+- Rename ftp and mongo checks to follow pattern `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_*` [(#8293)](https://github.com/prowler-cloud/prowler/pull/8293)
+
+### Fixed
+- Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
+- TypeError from Python 3.9 in Security Hub module by updating type annotations [(#8619)](https://github.com/prowler-cloud/prowler/pull/8619)
+- KeyError when SecurityGroups field is missing in MemoryDB check [(#8666)](https://github.com/prowler-cloud/prowler/pull/8666)
+- NoneType error in Opensearch, Firehose and Cognito checks [(#8670)](https://github.com/prowler-cloud/prowler/pull/8670)
+
+---
+
 ## [v5.11.0] (Prowler v5.11.0)
 
 ### Added

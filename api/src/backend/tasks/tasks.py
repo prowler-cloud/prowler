@@ -22,6 +22,7 @@ from tasks.jobs.export import (
     _upload_to_s3,
 )
 from tasks.jobs.integrations import (
+    send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
 )
@@ -460,7 +461,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="overview")
+@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.
@@ -595,3 +596,20 @@ def security_hub_integration_task(
         scan_id (str): The scan identifier
     """
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+
+@shared_task(
+    base=RLSTask,
+    name="integration-jira",
+    queue="integrations",
+)
+def jira_integration_task(
+    tenant_id: str,
+    integration_id: str,
+    project_key: str,
+    issue_type: str,
+    finding_ids: list[str],
+):
+    return send_findings_to_jira(
+        tenant_id, integration_id, project_key, issue_type, finding_ids
+    )

@@ -4,15 +4,18 @@
 
 The official supported providers right now are:
 
-- **AWS**
-- **Azure**
-- **Google Cloud**
-- **Kubernetes**
-- **M365**
-- **Github**
-- **IaC**
-
-Unofficially, Prowler supports: NHN.
+| Provider | Support | Stage | Interface |
+|----------|--------|-------|----------|
+| **AWS** | Official | Stable | UI, API, CLI |
+| **Azure** | Official | Stable | UI, API, CLI |
+| **Google Cloud** | Official | Stable | UI, API, CLI |
+| **Kubernetes** | Official | Stable | UI, API, CLI |
+| **M365** | Official | Stable | UI, API, CLI |
+| **Github** | Official | Stable | UI, API, CLI |
+| **IaC** | Official | Beta | CLI |
+| **MongoDB Atlas** | Official | Beta | CLI |
+| **LLM** | Official | Beta | CLI |
+| **NHN** | Unofficial | Beta | CLI |
 
 Prowler supports **auditing, incident response, continuous monitoring, hardening, forensic readiness, and remediation**.
 

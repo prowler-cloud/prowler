@@ -1,6 +1,7 @@
 import React from "react";
 
 import {
+  JiraIntegrationCard,
   S3IntegrationCard,
   SecurityHubIntegrationCard,
 } from "@/components/integrations";
@@ -9,8 +10,8 @@ import { ContentLayout } from "@/components/ui";
 export default async function Integrations() {
   return (
     <ContentLayout title="Integrations" icon="lucide:puzzle">
-      <div className="space-y-6">
-        <div className="space-y-4">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Connect external services to enhance your security workflow and
             automatically export your scan results.
@@ -23,6 +24,9 @@ export default async function Integrations() {
 
           {/* AWS Security Hub Integration */}
           <SecurityHubIntegrationCard />
+
+          {/* Jira Integration */}
+          <JiraIntegrationCard />
         </div>
       </div>
     </ContentLayout>

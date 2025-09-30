@@ -1,20 +1,181 @@
-# Microsoft 365 Authentication for Prowler
+# Microsoft 365 Authentication in Prowler
 
-Prowler for Microsoft 365 (M365) supports the following authentication methods:
+Prowler for Microsoft 365 supports multiple authentication types. Authentication methods vary between Prowler App and Prowler CLI:
 
-- [**Service Principal Application**](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (**Recommended**)
-- **Service Principal Application with Microsoft User Credentials**
-- **Stored AZ CLI credentials**
-- **Interactive browser authentication**
+**Prowler App:**
+
+- [**Service Principal Application**](#service-principal-authentication-recommended) (**Recommended**)
+- [**Service Principal with User Credentials**](#service-principal-and-user-credentials-authentication) (Being deprecated)
+
+**Prowler CLI:**
+
+- [**Service Principal Application**](#service-principal-authentication-recommended) (**Recommended**)
+- [**Service Principal with User Credentials**](#service-principal-and-user-credentials-authentication) (Being deprecated)
+- [**Interactive browser authentication**](#interactive-browser-authentication)
 
 ???+ warning
-    Prowler App supports the **Service Principal** authentication method and the **Service Principal with User Credentials** authentication method, but this last one will be deprecated in September once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
+    The Service Principal with User Credentials method will be deprecated in October 2025 when Microsoft enforces MFA in all tenants, which will not allow user authentication without interactive methods.
 
-### Service Principal Authentication (Recommended)
+## Required Permissions
 
-**Authentication flag:** `--sp-env-auth`
+To run the full Prowler provider, including PowerShell checks, two types of permission scopes must be set in **Microsoft Entra ID**.
 
-Enable Prowler authentication as the **Service Principal Application** by configuring the following environment variables:
+### Service Principal Authentication Permissions (Recommended)
+
+When using service principal authentication, add these **Application Permissions**:
+
+**Microsoft Graph API Permissions:**
+
+- `AuditLog.Read.All`: Required for Entra service.
+- `Directory.Read.All`: Required for all services.
+- `Policy.Read.All`: Required for all services.
+- `SharePointTenantSettings.Read.All`: Required for SharePoint service.
+- `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
+
+**External API Permissions:**
+
+- `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. The `Global Reader` role must also be assigned to the app.
+- `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
+
+???+ note
+    `Directory.Read.All` can be replaced with `Domain.Read.All` for more restrictive permissions, but Entra checks related to DirectoryRoles and GetUsers will not run. If using this option, you must also add the `Organization.Read.All` permission to the service principal application for authentication.
+
+???+ note
+    This is the **recommended authentication method** because it allows running the full M365 provider including PowerShell checks, providing complete coverage of all available security checks.
+
+### Service Principal + User Credentials Authentication Permissions
+
+When using service principal with user credentials authentication, you need **both** sets of permissions:
+
+**1. Service Principal Application Permissions**:
+
+- All the Microsoft Graph API permissions listed above are required.
+- External API permissions listed above are **not needed**.
+
+**2. User-Level Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
+
+- `Global Reader` (recommended): Allows reading all required information.
+- `Exchange Administrator` and `Teams Administrator`: User needs both roles for the same access as Global Reader.
+
+### Browser Authentication Permissions
+
+When using browser authentication, permissions are delegated to the user, so the user must have the appropriate permissions rather than the application.
+
+???+ warning
+    With browser authentication, you will only be able to run checks that work through MS Graph API. PowerShell module checks will not be executed.
+
+### Step-by-Step Permission Assignment
+
+#### Create Service Principal Application
+
+1. Access **Microsoft Entra ID**
+
+    ![Overview of Microsoft Entra ID](../microsoft365/img/microsoft-entra-id.png)
+
+2. Navigate to "Applications" > "App registrations"
+
+    ![App Registration nav](../microsoft365/img/app-registration-menu.png)
+
+3. Click "+ New registration", complete the form, and click "Register"
+
+    ![New Registration](../microsoft365/img/new-registration.png)
+
+4. Go to "Certificates & secrets" > "Client secrets" > "+ New client secret"
+
+    ![Certificate & Secrets nav](../microsoft365/img/certificates-and-secrets.png)
+
+5. Fill in the required fields and click "Add", then copy the generated value (this will be `AZURE_CLIENT_SECRET`)
+
+    ![New Client Secret](../microsoft365/img/new-client-secret.png)
+
+#### Grant Microsoft Graph API Permissions
+
+1. Go to App Registration > Select your Prowler App > click on "API permissions"
+
+    ![API Permission Page](../microsoft365/img/api-permissions-page.png)
+
+2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
+
+    ![Add API Permission](../microsoft365/img/add-app-api-permission.png)
+
+3. Search and select the required permissions:
+    - `AuditLog.Read.All`: Required for Entra service
+    - `Directory.Read.All`: Required for all services
+    - `Policy.Read.All`: Required for all services
+    - `SharePointTenantSettings.Read.All`: Required for SharePoint service
+
+    ![Permission Screenshots](../microsoft365/img/directory-permission.png)
+
+    ![Application Permissions](../microsoft365/img/app-permissions.png)
+
+4. Click "Add permissions", then click "Grant admin consent for <your-tenant-name>"
+
+#### Grant PowerShell Module Permissions (For Service Principal Authentication)
+
+1. **Add Exchange API:**
+
+    - Search and select "Office 365 Exchange Online" API in **APIs my organization uses**
+
+    ![Office 365 Exchange Online API](../microsoft365/img/search-exchange-api.png)
+
+    - Select "Exchange.ManageAsApp" permission and click "Add permissions"
+
+    ![Exchange.ManageAsApp Permission](../microsoft365/img/exchange-permission.png)
+
+    - Assign `Global Reader` role to the app: Go to `Roles and administrators` > click `here` for directory level assignment
+
+    ![Roles and administrators](../microsoft365/img/here.png)
+
+    - Search for `Global Reader` and assign it to your application
+
+    ![Global Reader Role](../microsoft365/img/global-reader-role.png)
+
+2. **Add Teams API:**
+
+    - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**
+
+    ![Skype and Teams Tenant Admin API](../microsoft365/img/search-skype-teams-tenant-admin-api.png)
+
+    - Select "application_access" permission and click "Add permissions"
+
+    ![application_access Permission](../microsoft365/img/teams-permission.png)
+
+3. Click "Grant admin consent for <your-tenant-name>" to grant admin consent
+
+    ![Grant Admin Consent](../microsoft365/img/grant-external-api-permissions.png)
+
+#### Assign User Roles (For User Authentication)
+
+When using Service Principal with User Credentials authentication, assign the following roles to the user:
+
+1. Go to Users > All Users > Click on the email for the user
+
+    ![User Overview](../microsoft365/img/user-info-page.png)
+
+2. Click "Assigned Roles"
+
+    ![User Roles](../microsoft365/img/user-role-page.png)
+
+3. Click "Add assignments", then search and select:
+
+    - `Global Reader` (recommended)
+    - OR `Exchange Administrator` and `Teams Administrator` (both required)
+
+    ![Global Reader Screenshots](../microsoft365/img/global-reader.png)
+
+4. Click next, assign the role as "Active", and click "Assign"
+
+    ![Grant Admin Consent for Role](../microsoft365/img/grant-admin-consent-for-role.png)
+
+---
+
+## Service Principal Authentication (Recommended)
+
+*Available for both Prowler App and Prowler CLI*
+
+**Authentication flag for CLI:** `--sp-env-auth`
+
+Authenticate using the **Service Principal Application** by configuring the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -24,21 +185,23 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 
 If these variables are not set or exported, execution using `--sp-env-auth` will fail.
 
-Refer to the [Create Prowler Service Principal](getting-started-m365.md#create-the-service-principal-app) guide for setup instructions.
+Refer to the [Step-by-Step Permission Assignment](#step-by-step-permission-assignment) section below for setup instructions.
 
 If the external API permissions described in the mentioned section above are not added only checks that work through MS Graph will be executed. This means that the full provider will not be executed.
 
 ???+ note
-    In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [External API Permissions Assignment](getting-started-m365.md#grant-powershell-modules-permissions) section for more information.
+    In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-service-principal-authentication) section for more information.
 
-### Service Principal and User Credentials Authentication
+## Service Principal and User Credentials Authentication
 
-Authentication flag: `--env-auth`
+*Available for both Prowler App and Prowler CLI*
+
+**Authentication flag for CLI:** `--env-auth`
 
 ???+ warning
-    This method is not recommended anymore, we recommend just use the **Service Principal Application** authentication method instead.
+    This method is not recommended and will be deprecated in October 2025. Use the **Service Principal Application** authentication method instead.
 
-This method builds upon the Service Principal authentication by adding User Credentials. Configure the following environment variables: `M365_USER` and `M365_PASSWORD`.
+This method builds upon Service Principal authentication by adding User Credentials. Configure the following environment variables: `M365_USER` and `M365_PASSWORD`.
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -72,74 +235,19 @@ These two new environment variables are **required** in this authentication meth
 
 
 
-### Interactive Browser Authentication
+## Interactive Browser Authentication
+
+*Available only for Prowler CLI*
 
 **Authentication flag:** `--browser-auth`
 
-This authentication method requires authentication against Azure using the default browser to start the scan. The `--tenant-id` flag is also required.
+Authenticate against Azure using the default browser to start the scan. The `--tenant-id` flag is also required.
 
 These credentials only enable checks that rely on Microsoft Graph. The entire provider cannot be run with this method. To perform a full M365 security scan, use the **recommended authentication method**.
 
 Since this is a **delegated permission** authentication method, necessary permissions should be assigned to the user rather than the application.
 
-### Required Permissions
-
-To run the full Prowler provider, including PowerShell checks, two types of permission scopes must be set in **Microsoft Entra ID**.
-
-#### Service Principal Authentication (`--sp-env-auth`) - Recommended
-
-When using service principal authentication, add the following **Application Permissions**:
-
-**Microsoft Graph API Permissions:**
-
-- `AuditLog.Read.All`: Required for Entra service.
-- `Directory.Read.All`: Required for all services.
-- `Policy.Read.All`: Required for all services.
-- `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-- `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
-
-**External API Permissions:**
-
-- `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. You also need to assign the `Global Reader` role to the app.
-- `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
-
-???+ note
-    `Directory.Read.All` can be replaced with `Domain.Read.All` that is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
-
-    > If you do this you will need to add also the `Organization.Read.All` permission to the service principal application in order to authenticate.
-
-???+ note
-    This is the **recommended authentication method** because it allows you to run the full M365 provider including PowerShell checks, providing complete coverage of all available security checks, same as the Service Principal Authentication + User Credentials Authentication but this last one will be deprecated in September once Microsoft will enforce MFA in all tenants not allowing User authentication without interactive method.
-
-
-####  Service Principal + User Credentials Authentication (`--env-auth`)
-
-When using service principal with user credentials authentication, you need **both** sets of permissions:
-
-**1. Service Principal Application Permissions**:
-- You **will need** all the Microsoft Graph API permissions listed above.
-- You **won't need** the External API permissions listed above.
-
-**2. User-Level Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
-
-- `Global Reader` (recommended): this allows you to read all roles needed.
-- `Exchange Administrator` and `Teams Administrator`: user needs both roles but with this [roles](https://learn.microsoft.com/en-us/exchange/permissions-exo/permissions-exo#microsoft-365-permissions-in-exchange-online) you can access to the same information as a Global Reader (since only read access is needed, Global Reader is recommended).
-
-
-####  Browser Authentication (`--browser-auth`)
-
-When using browser authentication, permissions are delegated to the user, so the user must have the appropriate permissions rather than the application.
-
-???+ warning
-    With browser authentication, you will only be able to run checks that work through MS Graph API. PowerShell module checks will not be executed.
-
-### Assigning Permissions and Roles
-
-For guidance on assigning the necessary permissions and roles, follow these instructions:
-- [Grant API Permissions](getting-started-m365.md#grant-required-graph-api-permissions)
-- [Assign Required Roles](getting-started-m365.md#if-using-user-authentication)
-
-### Supported PowerShell Versions
+## Supported PowerShell Versions
 
 PowerShell is required to run certain M365 checks.
 
@@ -156,26 +264,32 @@ PowerShell is required to run certain M365 checks.
 
 ### Installing PowerShell
 
-Installing PowerShell is different depending on your OS.
+Installing PowerShell is different depending on your OS:
 
-- [Windows](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#install-powershell-using-winget-recommended): you will need to update PowerShell to +7.4 to be able to run prowler, if not some checks will not show findings and the provider could not work as expected. This version of PowerShell is [supported](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4#supported-versions-of-windows) on Windows 10, Windows 11, Windows Server 2016 and higher versions.
+=== "Windows"
 
-```console
-winget install --id Microsoft.PowerShell --source winget
-```
+    [Windows](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#install-powershell-using-winget-recommended): PowerShell must be updated to version 7.4+ for Prowler to function properly. Otherwise, some checks will not show findings and the provider may not function properly. This version of PowerShell is [supported](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.4#supported-versions-of-windows) on Windows 10, Windows 11, Windows Server 2016 and higher versions.
 
+    ```console
+    winget install --id Microsoft.PowerShell --source winget
+    ```
 
-- [MacOS](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.5#install-the-latest-stable-release-of-powershell): installing PowerShell on MacOS needs to have installed [brew](https://brew.sh/), once you have it is just running the command above, Pwsh is only supported in macOS 15 (Sequoia) x64 and Arm64, macOS 14 (Sonoma) x64 and Arm64, macOS 13 (Ventura) x64 and Arm64
+=== "MacOS"
 
-```console
-brew install powershell/tap/powershell
-```
+    [MacOS](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.5#install-the-latest-stable-release-of-powershell): installing PowerShell on MacOS needs to have installed [brew](https://brew.sh/), once installed, simply run the command shown above, Pwsh is only supported in macOS 15 (Sequoia) x64 and Arm64, macOS 14 (Sonoma) x64 and Arm64, macOS 13 (Ventura) x64 and Arm64
 
-Once it's installed run `pwsh` on your terminal to verify it's working.
+    ```console
+    brew install powershell/tap/powershell
+    ```
 
-- Linux: installing PowerShell on Linux depends on the distro you are using:
+    Once it's installed run `pwsh` on your terminal to verify it's working.
 
-    - [Ubuntu](https://learn.microsoft.com/es-es/powershell/scripting/install/install-ubuntu?view=powershell-7.5#installation-via-package-repository-the-package-repository): The required version for installing PowerShell +7.4 on Ubuntu are Ubuntu 22.04 and Ubuntu 24.04. The recommended way to install it is downloading the package available on PMC. You just need to follow the following steps:
+=== "Linux (Ubuntu)"
+
+    [Ubuntu](https://learn.microsoft.com/es-es/powershell/scripting/install/install-ubuntu?view=powershell-7.5#installation-via-package-repository-the-package-repository): The required version for installing PowerShell +7.4 on Ubuntu are Ubuntu 22.04 and Ubuntu 24.04.
+    The recommended way to install it is downloading the package available on PMC.
+
+    Follow these steps:
 
     ```console
     ###################################
@@ -210,7 +324,11 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
     pwsh
     ```
 
-    - [Alpine](https://learn.microsoft.com/es-es/powershell/scripting/install/install-alpine?view=powershell-7.5#installation-steps): The only supported version for installing PowerShell +7.4 on Alpine is Alpine 3.20. The unique way to install it is downloading the tar.gz package available on [PowerShell github](https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-musl-x64.tar.gz). You just need to follow the following steps:
+=== "Linux (Alpine)"
+
+    [Alpine](https://learn.microsoft.com/es-es/powershell/scripting/install/install-alpine?view=powershell-7.5#installation-steps): The only supported version for installing PowerShell +7.4 on Alpine is Alpine 3.20. The unique way to install it is downloading the tar.gz package available on [PowerShell github](https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-musl-x64.tar.gz).
+
+    Follow these steps:
 
     ```console
     # Install the requirements
@@ -252,7 +370,11 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
     pwsh
     ```
 
-    - [Debian](https://learn.microsoft.com/es-es/powershell/scripting/install/install-debian?view=powershell-7.5#installation-on-debian-11-or-12-via-the-package-repository): The required version for installing PowerShell +7.4 on Debian are Debian 11 and Debian 12. The recommended way to install it is downloading the package available on PMC. You just need to follow the following steps:
+=== "Linux (Debian)"
+
+    [Debian](https://learn.microsoft.com/es-es/powershell/scripting/install/install-debian?view=powershell-7.5#installation-on-debian-11-or-12-via-the-package-repository): The required version for installing PowerShell +7.4 on Debian are Debian 11 and Debian 12. The recommended way to install it is downloading the package available on PMC.
+
+    Follow these steps:
 
     ```console
     ###################################
@@ -287,7 +409,12 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
     pwsh
     ```
 
-    - [Rhel](https://learn.microsoft.com/es-es/powershell/scripting/install/install-rhel?view=powershell-7.5#installation-via-the-package-repository): The required version for installing PowerShell +7.4 on Red Hat are RHEL 8 and RHEL 9. The recommended way to install it is downloading the package available on PMC. You just need to follow the following steps:
+
+=== "Linux (RHEL)"
+
+    [Rhel](https://learn.microsoft.com/es-es/powershell/scripting/install/install-rhel?view=powershell-7.5#installation-via-the-package-repository): The required version for installing PowerShell +7.4 on Red Hat are RHEL 8 and RHEL 9. The recommended way to install it is downloading the package available on PMC.
+
+    Follow these steps:
 
     ```console
     ###################################
@@ -317,7 +444,9 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
     sudo dnf install powershell -y
     ```
 
-- [Docker](https://learn.microsoft.com/es-es/powershell/scripting/install/powershell-in-docker?view=powershell-7.5#use-powershell-in-a-container): The following command download the latest stable versions of PowerShell:
+=== "Docker"
+
+    [Docker](https://learn.microsoft.com/es-es/powershell/scripting/install/powershell-in-docker?view=powershell-7.5#use-powershell-in-a-container): The following command download the latest stable versions of PowerShell:
 
     ```console
     docker pull mcr.microsoft.com/dotnet/sdk:9.0
@@ -328,6 +457,7 @@ Once it's installed run `pwsh` on your terminal to verify it's working.
     ```console
     docker run -it mcr.microsoft.com/dotnet/sdk:9.0 pwsh
     ```
+
 
 ### Required PowerShell Modules
 

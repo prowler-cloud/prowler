@@ -12,7 +12,7 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "5.11.0"
+prowler_version = "5.13.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -32,6 +32,7 @@ class Provider(str, Enum):
     GITHUB = "github"
     IAC = "iac"
     NHN = "nhn"
+    MONGODBATLAS = "mongodbatlas"
 
 
 # Compliance
@@ -74,6 +75,9 @@ default_config_file_path = (
 )
 default_fixer_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
+)
+default_redteam_config_file_path = (
+    f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/llm_config.yaml"
 )
 encoding_format_utf_8 = "utf-8"
 available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]

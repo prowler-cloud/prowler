@@ -278,6 +278,18 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "mongodbatlas":
+                output_data["auth_method"] = "api_key"
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.organization_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.organization_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
             elif provider.type == "nhn":
                 output_data["auth_method"] = (
                     f"passwordCredentials: username={get_nested_attribute(provider, '_identity.username')}, "
@@ -302,6 +314,14 @@ class Finding(BaseModel):
                 output_data["region"] = check_output.resource_line_range
                 output_data["resource_line_range"] = check_output.resource_line_range
                 output_data["framework"] = check_output.check_metadata.ServiceName
+
+            elif provider.type == "llm":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "llm"
+                output_data["account_name"] = "llm"
+                output_data["resource_name"] = check_output.model
+                output_data["resource_uid"] = check_output.model
+                output_data["region"] = check_output.model
 
             # check_output Unique ID
             # TODO: move this to a function

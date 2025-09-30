@@ -1,29 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_iam_authentication_enabled",
-  "CheckTitle": "Check if Neptune Clusters have IAM authentication enabled.",
-  "CheckType": [],
+  "CheckTitle": "Neptune cluster has IAM authentication enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Credential Access"
+  ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if Neptune Clusters have IAM authentication enabled.",
-  "Risk": "Ensure that IAM Database Authentication feature is enabled for your Amazon Neptune database clusters in order to make use of AWS Identity and Access Management (IAM) service to manage database access.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-7",
+  "Description": "Neptune DB clusters are evaluated for **IAM database authentication**. \n\nIf this setting is enabled, the cluster supports IAM-based authentication.\nIf disabled, the cluster requires traditional database credentials instead.",
+  "Risk": "**Disabled IAM database authentication** weakens confidentiality and integrity of the database.\n\n- Static or embedded DB credentials can be stolen or reused, enabling unauthorized queries and data exfiltration\n- Attackers may bypass centralized access controls, escalate privileges, and move laterally without IAM-based audit trails",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-7",
+    "https://docs.aws.amazon.com/config/latest/developerguide/neptune-cluster-iam-database-authentication.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#",
+    "https://hub.steampipe.io/plugins/turbot/terraform/queries/neptune/neptune_cluster_iam_authentication_enabled"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --enable-iam-database-authentication",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/iam-db-authentication.html#"
+      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --enable-iam-database-authentication --apply-immediately",
+      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: <DB_CLUSTER_ID>\n      IamAuthEnabled: true  # Enable IAM authentication instead of static DB credentials\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier                  = \"<DB_CLUSTER_ID>\"\n  iam_database_authentication_enabled = true  # Enable IAM authentication instead of static DB credentials\n}\n```",
+      "Other": "1. Sign in to the AWS Management Console and open Amazon Neptune > Databases\n2. Select the DB cluster and choose **Actions** > **Modify**\n3. In **Authentication**, enable **IAM DB authentication** and check **Apply immediately**\n4. Click **Continue** then **Modify DB cluster**"
     },
     "Recommendation": {
-      "Text": "Enable IAM authentication for Neptune Clusters.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-7"
+      "Text": "Adopt **IAM database authentication** and centralized identity management to remove static DB credentials and improve auditability.\n\n- Enforce **least privilege** for database roles\n- Use short-lived credentials, centralized rotation and logging\n- Apply defense-in-depth and integrate DB access with IAM for accountability",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_iam_authentication_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

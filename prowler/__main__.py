@@ -24,6 +24,7 @@ from prowler.lib.check.check import (
     list_checks_json,
     list_fixers,
     list_services,
+    parse_checks_from_file,
     parse_checks_from_folder,
     print_categories,
     print_checks,
@@ -89,7 +90,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -102,7 +103,9 @@ from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
+from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 
 
@@ -122,6 +125,7 @@ def prowler():
 
     checks = args.check
     excluded_checks = args.excluded_check
+    excluded_checks_file = args.excluded_checks_file
     excluded_services = args.excluded_service
     services = args.service
     categories = args.category
@@ -178,8 +182,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC provider
-    if provider != "iac":
+    # Skip compliance frameworks for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -236,8 +240,8 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Skip service and check loading for IAC provider
-    if provider != "iac":
+    # Skip service and check loading for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -256,6 +260,15 @@ def prowler():
         if excluded_checks:
             checks_to_execute = exclude_checks_to_run(
                 checks_to_execute, excluded_checks
+            )
+
+        # Exclude checks if --excluded-checks-file
+        if excluded_checks_file:
+            excluded_checks_from_file = parse_checks_from_file(
+                excluded_checks_file, provider
+            )
+            checks_to_execute = exclude_checks_to_run(
+                checks_to_execute, list(excluded_checks_from_file)
             )
 
         # Exclude services if --excluded-services
@@ -301,12 +314,18 @@ def prowler():
         output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "mongodbatlas":
+        output_options = MongoDBAtlasOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
     elif provider == "nhn":
         output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "llm":
+        output_options = LLMOutputOptions(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -316,9 +335,20 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider == "iac":
-        # For IAC provider, run the scan directly
-        findings = global_provider.run()
+    if provider == "iac" or provider == "llm":
+        # For IAC and LLM providers, run the scan directly
+        if provider == "llm":
+
+            def streaming_callback(findings_batch):
+                """Callback to report findings as they are processed in real-time."""
+                report(findings_batch, global_provider, output_options)
+
+            findings = global_provider.run_scan(streaming_callback=streaming_callback)
+        else:
+            # Original behavior for IAC or non-verbose LLM
+            findings = global_provider.run()
+            # Report findings for verbose output
+            report(findings, global_provider, output_options)
     elif len(checks_to_execute):
         findings = execute_checks(
             checks_to_execute,

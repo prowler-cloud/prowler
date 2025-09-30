@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.12.0
+  version: 1.14.0
   description: |-
     Prowler API specification.
 
@@ -182,6 +182,7 @@ paths:
             type: string
             enum:
             - id
+            - compliance_name
             - framework_description
             - name
             - framework
@@ -2846,6 +2847,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/IntegrationCreateResponse'
           description: ''
+  /api/v1/integrations/{integration_pk}/jira/dispatches:
+    post:
+      operationId: integrations_jira_dispatches_create
+      description: Send a set of filtered findings to the given integration. At least
+        one finding filter must be provided.
+      summary: Send findings to a Jira integration
+      parameters:
+      - in: query
+        name: filter[finding_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[finding_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: path
+        name: integration_pk
+        schema:
+          type: string
+        required: true
+      tags:
+      - Integration
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
+          description: ''
   /api/v1/integrations/{id}:
     get:
       operationId: integrations_retrieve
@@ -3027,8 +3093,8 @@ paths:
   /api/v1/lighthouse-configurations:
     get:
       operationId: lighthouse_configurations_list
-      description: Retrieve a list of all Lighthouse configurations.
-      summary: List all Lighthouse configurations
+      description: Retrieve a list of all Lighthouse AI configurations.
+      summary: List all Lighthouse AI configurations
       parameters:
       - in: query
         name: fields[lighthouse-configurations]
@@ -3087,7 +3153,7 @@ paths:
             - -is_active
         explode: false
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3099,10 +3165,10 @@ paths:
           description: ''
     post:
       operationId: lighthouse_configurations_create
-      description: Create a new Lighthouse configuration with the specified details.
-      summary: Create a new Lighthouse configuration
+      description: Create a new Lighthouse AI configuration with the specified details.
+      summary: Create a new Lighthouse AI configuration
       tags:
-      - Lighthouse
+      - Lighthouse AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3127,8 +3193,8 @@ paths:
   /api/v1/lighthouse-configurations/{id}:
     patch:
       operationId: lighthouse_configurations_partial_update
-      description: Update certain fields of an existing Lighthouse configuration.
-      summary: Partially update a Lighthouse configuration
+      description: Update certain fields of an existing Lighthouse AI configuration.
+      summary: Partially update a Lighthouse AI configuration
       parameters:
       - in: path
         name: id
@@ -3136,7 +3202,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       requestBody:
         content:
           application/vnd.api+json:
@@ -3160,8 +3226,8 @@ paths:
           description: ''
     delete:
       operationId: lighthouse_configurations_destroy
-      description: Remove a Lighthouse configuration by its ID.
-      summary: Delete a Lighthouse configuration
+      description: Remove a Lighthouse AI configuration by its ID.
+      summary: Delete a Lighthouse AI configuration
       parameters:
       - in: path
         name: id
@@ -3169,7 +3235,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3179,7 +3245,7 @@ paths:
     post:
       operationId: lighthouse_configurations_connection_create
       description: Verify the connection to the OpenAI API for a specific Lighthouse
-        configuration.
+        AI configuration.
       summary: Check the connection to the OpenAI API
       parameters:
       - in: path
@@ -3188,7 +3254,7 @@ paths:
           type: string
         required: true
       tags:
-      - Lighthouse
+      - Lighthouse AI
       security:
       - jwtAuth: []
       responses:
@@ -3506,6 +3572,25 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: sort
         required: false
         in: query
@@ -6279,8 +6364,10 @@ paths:
           description: ''
     patch:
       operationId: roles_partial_update
-      description: Update certain fields of an existing role's information without
-        affecting other fields.
+      description: Update selected fields on an existing role. When changing the `users`
+        relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts
+        that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents
+        callers from removing their own assignment to that role.
       summary: Partially update a role
       parameters:
       - in: path
@@ -6315,7 +6402,8 @@ paths:
           description: ''
     delete:
       operationId: roles_destroy
-      description: Remove a role from the system by their ID.
+      description: Delete the specified role. The API rejects deletion of the last
+        role in the tenant that grants MANAGE_ACCOUNT.
       summary: Delete a role
       parameters:
       - in: path
@@ -8136,6 +8224,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8255,6 +8344,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8353,7 +8443,8 @@ paths:
     patch:
       operationId: users_relationships_roles_partial_update
       description: Update the user-roles relationship information without affecting
-        other fields.
+        other fields. If the update would remove MANAGE_ACCOUNT from the last remaining
+        user in the tenant, the API rejects the request with a 400 response.
       summary: Partially update a user-roles relationship
       tags:
       - User
@@ -8377,6 +8468,10 @@ paths:
     delete:
       operationId: users_relationships_roles_destroy
       description: Remove the user-roles relationship from the system by their ID.
+        If removing MANAGE_ACCOUNT would take it away from the last remaining user
+        in the tenant, the API rejects the request with a 400 response. Users also
+        cannot delete their own role assignments; attempting to do so returns a 400
+        response.
       summary: Delete a user-roles relationship
       tags:
       - User
@@ -8568,6 +8663,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8644,6 +8740,8 @@ components:
           properties:
             id:
               type: string
+            compliance_name:
+              type: string
             framework_description:
               type: string
             name:
@@ -8657,6 +8755,7 @@ components:
             attributes: {}
           required:
           - id
+          - compliance_name
           - framework_description
           - name
           - framework
@@ -9132,6 +9231,12 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9171,6 +9276,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                required:
+                - user_mail
+                - api_token
+                - domain
               writeOnly: true
           required:
           - integration_type
@@ -9292,6 +9415,12 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -9332,6 +9461,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    required:
+                    - user_mail
+                    - api_token
+                    - domain
                   writeOnly: true
               required:
               - integration_type
@@ -9375,6 +9522,39 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/IntegrationCreate'
+      required:
+      - data
+    IntegrationJiraDispatchRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - integrations-jira-dispatches
+            attributes:
+              type: object
+              properties:
+                project_key:
+                  type: string
+                  minLength: 1
+                issue_type:
+                  enum:
+                  - Task
+                  type: string
+                  description: '* `Task` - Task'
+                  x-spec-enum-id: b527b0cec62087c1
+              required:
+              - project_key
+              - issue_type
       required:
       - data
     IntegrationResponse:
@@ -9468,6 +9648,12 @@ components:
                     default: false
                     description: If true, archives findings that are not present in
                       the current execution.
+              - type: object
+                title: JIRA
+                description: JIRA integration does not accept any configuration in
+                  the payload. Leave it as an empty JSON object (`{}`).
+                properties: {}
+                additionalProperties: false
             credentials:
               oneOf:
               - type: object
@@ -9507,6 +9693,24 @@ components:
                       - User_Session-1
                       - Test.Session@2
                     pattern: ^[a-zA-Z0-9=,.@_-]+$
+              - type: object
+                title: JIRA Credentials
+                properties:
+                  user_mail:
+                    type: string
+                    format: email
+                    description: The email address of the JIRA user account.
+                  api_token:
+                    type: string
+                    description: The API token for authentication with JIRA. This
+                      can be generated from your Atlassian account settings.
+                  domain:
+                    type: string
+                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                required:
+                - user_mail
+                - api_token
+                - domain
               writeOnly: true
         relationships:
           type: object
@@ -10873,6 +11077,12 @@ components:
                         default: false
                         description: If true, archives findings that are not present
                           in the current execution.
+                  - type: object
+                    title: JIRA
+                    description: JIRA integration does not accept any configuration
+                      in the payload. Leave it as an empty JSON object (`{}`).
+                    properties: {}
+                    additionalProperties: false
                 credentials:
                   oneOf:
                   - type: object
@@ -10913,6 +11123,24 @@ components:
                           - User_Session-1
                           - Test.Session@2
                         pattern: ^[a-zA-Z0-9=,.@_-]+$
+                  - type: object
+                    title: JIRA Credentials
+                    properties:
+                      user_mail:
+                        type: string
+                        format: email
+                        description: The email address of the JIRA user account.
+                      api_token:
+                        type: string
+                        description: The API token for authentication with JIRA. This
+                          can be generated from your Atlassian account settings.
+                      domain:
+                        type: string
+                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    required:
+                    - user_mail
+                    - api_token
+                    - domain
                   writeOnly: true
             relationships:
               type: object
@@ -15340,59 +15568,49 @@ components:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - memberships
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - memberships
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type memberships
-              title: memberships
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
             roles:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - roles
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - roles
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type roles
-              title: roles
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
     UserCreate:
       type: object
@@ -15607,8 +15825,8 @@ tags:
   description: Endpoints for managing third-party integrations, including registration,
     configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
     services.
-- name: Lighthouse
-  description: Endpoints for managing Lighthouse configurations, including creation,
+- name: Lighthouse AI
+  description: Endpoints for managing Lighthouse AI configurations, including creation,
     retrieval, updating, and deletion of configurations such as OpenAI keys, models,
     and business context.
 - name: SAML

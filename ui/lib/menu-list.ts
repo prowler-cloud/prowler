@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Bookmark,
   CloudCog,
@@ -21,6 +19,7 @@ import {
   Warehouse,
 } from "lucide-react";
 
+import { ProwlerShort } from "@/components/icons";
 import {
   APIdocIcon,
   AWSIcon,
@@ -80,6 +79,7 @@ export const getMenuList = ({
           href: "/lighthouse",
           label: "Lighthouse AI",
           icon: LighthouseIcon,
+          active: pathname === "/lighthouse",
         },
       ],
     },
@@ -193,6 +193,18 @@ export const getMenuList = ({
             { href: "/invitations", label: "Invitations", icon: Mail },
           ],
           defaultOpen: false,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "https://hub.prowler.com/",
+          label: "Prowler Hub",
+          icon: ProwlerShort,
+          target: "_blank",
+          tooltip: "Looking for all available checks? learn more.",
         },
       ],
     },
