@@ -26,3 +26,5 @@ class GenericComplianceModel(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+    Framework: str
+    Name: str

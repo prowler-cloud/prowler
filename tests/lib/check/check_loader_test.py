@@ -243,6 +243,7 @@ class TestCheckLoader:
         bulk_compliance_frameworks = {
             "soc2_aws": Compliance(
                 Framework="SOC2",
+                Name="SOC2",
                 Provider="aws",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azuee Platform",
@@ -295,6 +296,7 @@ class TestCheckLoader:
         bulk_compliance_frameworks = {
             "soc2_aws": Compliance(
                 Framework="SOC2",
+                Name="SOC2",
                 Provider="aws",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azuee Platform",

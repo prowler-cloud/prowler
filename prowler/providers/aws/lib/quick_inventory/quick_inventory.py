@@ -267,6 +267,9 @@ def create_output(resources: list, provider: AwsProvider, args):
                 resource["AWS_ResourceID"] = "/".join(
                     item["arn"].split(":")[-1].split("/")[1:]
                 )
+            # Cover SNS case
+            if resource["AWS_Service"] == "sns":
+                resource["AWS_ResourceID"] = item["arn"].split(":")[-1]
             resource["AWS_Tags"] = item["tags"]
             json_output.append(resource)
 

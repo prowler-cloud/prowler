@@ -1,7 +1,8 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
@@ -47,6 +48,9 @@ export const LaunchScanWorkflow = ({
       scannerArgs: undefined,
     },
   });
+
+  const providerId = useWatch({ control: form.control, name: "providerId" });
+  const hasProviderSelected = Boolean(providerId);
 
   const isLoading = form.formState.isSubmitting;
 
@@ -97,7 +101,7 @@ export const LaunchScanWorkflow = ({
           />
         </div>
         <AnimatePresence>
-          {form.watch("providerId") && (
+          {hasProviderSelected && (
             <>
               <div className="flex flex-wrap gap-6 md:gap-4">
                 <motion.div

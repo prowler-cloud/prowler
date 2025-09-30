@@ -57,7 +57,7 @@ export const DeleteGroupForm = ({
     <Form {...form}>
       <form action={onSubmitClient}>
         <input type="hidden" name="id" value={groupId} />
-        <div className="flex w-full justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"

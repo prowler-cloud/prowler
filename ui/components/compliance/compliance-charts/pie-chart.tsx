@@ -113,7 +113,7 @@ export const PieChart = ({ pass, fail, manual }: PieChartProps) => {
 
   return (
     <div className="flex h-[320px] flex-col items-center justify-between">
-      <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
+      <h3 className="text-xs font-semibold tracking-wide whitespace-nowrap uppercase">
         Requirements Status
       </h3>
 
@@ -176,15 +176,15 @@ export const PieChart = ({ pass, fail, manual }: PieChartProps) => {
       <div className="mt-2 grid grid-cols-3 gap-4">
         <div className="flex flex-col items-center">
           <div className="text-muted-foreground text-sm">Pass</div>
-          <div className="font-semibold text-system-success-medium">{pass}</div>
+          <div className="text-system-success-medium font-semibold">{pass}</div>
         </div>
         <div className="flex flex-col items-center">
           <div className="text-muted-foreground text-sm">Fail</div>
-          <div className="font-semibold text-system-error-medium">{fail}</div>
+          <div className="text-system-error-medium font-semibold">{fail}</div>
         </div>
         <div className="flex flex-col items-center">
           <div className="text-muted-foreground text-sm">Manual</div>
-          <div className="font-semibold text-prowler-grey-light">{manual}</div>
+          <div className="text-prowler-grey-light font-semibold">{manual}</div>
         </div>
       </div>
     </div>

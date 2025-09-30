@@ -6,6 +6,7 @@ repos:
       - id: check-merge-conflict
       - id: check-yaml
         args: ["--unsafe"]
+        exclude: prowler/config/llm_config.yaml
       - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
