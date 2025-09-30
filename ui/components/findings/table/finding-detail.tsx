@@ -209,7 +209,7 @@ export const FindingDetail = ({
             {attributes.check_metadata.additionalurls &&
               attributes.check_metadata.additionalurls.length > 0 && (
                 <InfoField label="References">
-                  <ul className="list-disc list-inside space-y-1">
+                  <ul className="list-inside list-disc space-y-1">
                     {attributes.check_metadata.additionalurls.map(
                       (link, idx) => (
                         <li key={idx}>
