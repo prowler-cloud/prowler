@@ -22,6 +22,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
+- Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
 
 ## [v5.12.1] (Prowler v5.12.1)
 
