@@ -803,7 +803,9 @@ class UserViewSet(BaseUserViewset):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
 
-        return super().destroy(request, *args, **kwargs)
+        user = self.get_object()
+        user.delete(using=MainRouter.admin_db)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         parameters=[
