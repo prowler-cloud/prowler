@@ -44,7 +44,7 @@
     "@tailwindcss/typography": "0.5.16",
     "@tanstack/react-table": "8.21.3",
     "@types/js-yaml": "4.0.9",
-    "ai": "4.3.16",
+    "ai": "5.0.59",
     "alert": "6.0.2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
