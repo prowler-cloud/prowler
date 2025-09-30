@@ -124,9 +124,9 @@ from api.models import (
     SeverityChoices,
     StateChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
-    TenantAPIKey
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
@@ -190,6 +190,8 @@ from api.v1.serializers import (
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
     TaskSerializer,
+    TenantApiKeyCreateSerializer,
+    TenantApiKeySerializer,
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
@@ -199,8 +201,6 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
-    TenantApiKeySerializer,
-    TenantApiKeyCreateSerializer
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -814,7 +814,9 @@ class UserViewSet(BaseUserViewset):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
 
-        return super().destroy(request, *args, **kwargs)
+        user = self.get_object()
+        user.delete(using=MainRouter.admin_db)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         parameters=[

@@ -1,6 +1,6 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
@@ -108,7 +108,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return (
         <TableLink
           href={`/findings?filter[scan__in]=${id}&filter[status__in]=FAIL`}
-          isDisabled={!["completed", "executing"].includes(scanState)}
+          isDisabled={scanState !== "completed"}
           label="See Findings"
         />
       );
@@ -139,7 +139,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
           content="Download a ZIP file that includes the JSON (OCSF), CSV, and HTML scan reports, along with the compliance report."
         >
           <div className="flex items-center gap-2">
-            <InfoIcon className="mb-1 text-primary" size={12} />
+            <InfoIcon className="text-primary mb-1" size={12} />
           </div>
         </Tooltip>
       </div>

@@ -1,7 +1,9 @@
 "use client";
 
+import { Input } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input, Select, type Selection, SelectItem } from "@nextui-org/react";
+import type { Selection } from "@react-types/shared";
 import { Search, Send } from "lucide-react";
 import {
   type Dispatch,
@@ -222,7 +224,10 @@ export const SendToJiraModal = ({
       }
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex flex-col gap-4"
+        >
           {/* Integration Selection */}
           {integrations.length > 1 && (
             <FormField
@@ -256,7 +261,7 @@ export const SendToJiraModal = ({
                         trigger: "min-h-12",
                         popoverContent: "dark:bg-gray-800",
                         label:
-                          "tracking-tight font-light !text-default-500 text-xs !z-0",
+                          "tracking-tight font-light !text-default-500 text-xs z-0!",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                     >
@@ -277,7 +282,7 @@ export const SendToJiraModal = ({
                       ))}
                     </Select>
                   </FormControl>
-                  <FormMessage className="text-xs text-system-error" />
+                  <FormMessage className="text-system-error text-xs" />
                 </>
               )}
             />
@@ -312,13 +317,13 @@ export const SendToJiraModal = ({
                         popoverContent: "dark:bg-gray-800",
                         listboxWrapper: "max-h-[300px] dark:bg-gray-800",
                         label:
-                          "tracking-tight font-light !text-default-500 text-xs !z-0",
+                          "tracking-tight font-light !text-default-500 text-xs z-0!",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                       listboxProps={{
                         topContent:
                           filteredProjects.length > 5 ? (
-                            <div className="sticky top-0 z-10 bg-content1 py-2 dark:bg-gray-800">
+                            <div className="bg-content1 sticky top-0 z-10 py-2 dark:bg-gray-800">
                               <Input
                                 isClearable
                                 placeholder="Search projects..."
@@ -350,7 +355,7 @@ export const SendToJiraModal = ({
                                   <span className="text-tiny text-default-500">
                                     -
                                   </span>
-                                  <span className="truncate text-small">
+                                  <span className="text-small truncate">
                                     {name}
                                   </span>
                                 </div>
@@ -361,7 +366,7 @@ export const SendToJiraModal = ({
                       ))}
                     </Select>
                   </FormControl>
-                  <FormMessage className="text-xs text-system-error" />
+                  <FormMessage className="text-system-error text-xs" />
                 </>
               )}
             />
@@ -393,7 +398,7 @@ export const SendToJiraModal = ({
                         popoverContent: "dark:bg-gray-800",
                         listboxWrapper: "max-h-[300px] dark:bg-gray-800",
                         label:
-                          "tracking-tight font-light !text-default-500 text-xs !z-0",
+                          "tracking-tight font-light !text-default-500 text-xs z-0!",
                         value: "text-default-500 text-small dark:text-gray-300",
                       }}
                       listboxProps={{

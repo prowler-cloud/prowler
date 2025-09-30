@@ -9,7 +9,7 @@ export const NoScansAvailable = () => {
   return (
     <div className="flex h-full min-h-[calc(100vh-56px)] items-center justify-center">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="flex items-center justify-start rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-prowler-blue-400">
+        <div className="dark:bg-prowler-blue-400 flex items-center justify-start rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700">
           <div className="flex w-full items-center justify-between gap-6">
             <div className="flex items-start gap-4">
               <InfoIcon className="mt-1 h-5 w-5 text-gray-400 dark:text-gray-300" />
@@ -25,7 +25,7 @@ export const NoScansAvailable = () => {
             </div>
             <CustomButton
               asLink="/scans"
-              className="flex-shrink-0"
+              className="shrink-0"
               ariaLabel="Go to Scans page"
               variant="solid"
               color="action"

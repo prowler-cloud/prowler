@@ -1,6 +1,8 @@
 "use client";
 
-import { Card, CardBody, Divider, Snippet } from "@nextui-org/react";
+import { Card, CardBody } from "@heroui/card";
+import { Divider } from "@heroui/divider";
+import { Snippet } from "@heroui/snippet";
 
 import { AddIcon } from "../icons";
 import { CustomButton } from "../ui/custom";
@@ -53,16 +55,16 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
     <div className="flex flex-col gap-x-4 gap-y-8">
       <Card
         isBlurred
-        className="border-none bg-background/60 dark:bg-prowler-blue-800"
+        className="bg-background/60 dark:bg-prowler-blue-800 border-none"
         shadow="sm"
       >
         <CardBody>
-          <h2 className="text-md font-bold text-foreground/90">
+          <h2 className="text-md text-foreground/90 font-bold">
             Invitation details
           </h2>
           <Divider className="my-4" />
 
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             <InfoField label="Email">{attributes.email}</InfoField>
 
             <InfoField label="Token">{attributes.token}</InfoField>
@@ -87,7 +89,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
           </div>
 
           <Divider className="my-4" />
-          <h3 className="pb-2 text-small font-bold text-foreground/90">
+          <h3 className="text-small text-foreground/90 pb-2 font-bold">
             Share this link with the user:
           </h3>
 
@@ -98,9 +100,9 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
               }}
               hideSymbol
               variant="bordered"
-              className="overflow-hidden text-ellipsis whitespace-nowrap bg-gray-50 py-1 dark:bg-slate-800"
+              className="overflow-hidden bg-gray-50 py-1 text-ellipsis whitespace-nowrap dark:bg-slate-800"
             >
-              <p className="no-scrollbar w-fit overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-small">
+              <p className="no-scrollbar text-small w-fit overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap">
                 {invitationLink}
               </p>
             </Snippet>

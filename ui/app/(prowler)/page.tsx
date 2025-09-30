@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getLatestFindings } from "@/actions/findings/findings";
@@ -37,14 +37,15 @@ function pickFilterParams(
   );
 }
 
-export default function Home({
+export default async function Home({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
   return (
-    <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
+    <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <FilterControls providers mutedFindings showClearButton={false} />
 
       <div className="grid grid-cols-12 gap-12 lg:gap-6">
@@ -56,13 +57,13 @@ export default function Home({
 
         <div className="col-span-12 lg:col-span-4">
           <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
-            <SSRFindingsBySeverity searchParams={searchParams} />
+            <SSRFindingsBySeverity searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
 
         <div className="col-span-12 lg:col-span-4">
           <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-            <SSRFindingsByStatus searchParams={searchParams} />
+            <SSRFindingsByStatus searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
 
@@ -72,7 +73,7 @@ export default function Home({
             key={searchParamsKey}
             fallback={<SkeletonTableNewFindings />}
           >
-            <SSRDataNewFindingsTable searchParams={searchParams} />
+            <SSRDataNewFindingsTable searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
       </div>
@@ -205,6 +206,7 @@ const SSRDataNewFindingsTable = async ({
       <LighthouseBanner />
 
       <DataTable
+        key={`dashboard-${Date.now()}`}
         columns={ColumnNewFindingsToDate}
         data={expandedResponse?.data || []}
         // metadata={findingsData?.meta}
