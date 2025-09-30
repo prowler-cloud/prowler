@@ -10,12 +10,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCertificateManagerCertificate",
-  "Description": "**ACM\u2011issued certificates** are checked for **Certificate Transparency (CT) logging** being enabled. Certificates with type `IMPORTED` are excluded from evaluation.",
-  "Risk": "Disabling **CT logging** reduces visibility into **misissued or rogue certificates**, weakening confidentiality and integrity. Attackers can **impersonate sites** or run **TLS man\u2011in\u2011the\u2011middle** without timely detection. Unlogged public certs may be distrusted by browsers, impacting availability and user trust.",
+  "Description": "**ACM-issued certificates** are checked for **Certificate Transparency (CT) logging** being enabled. Certificates with type `IMPORTED` are excluded from evaluation.",
+  "Risk": "Disabling **CT logging** reduces visibility into **misissued or rogue certificates**, weakening confidentiality and integrity. Attackers can **impersonate sites** or run **TLS man-in-the-middle** without timely detection. Unlogged public certs may be distrusted by browsers, impacting availability and user trust.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://aws.amazon.com/blogs/security/how-to-get-ready-for-certificate-transparency/",
-"https://support.icompaas.com/support/solutions/articles/62000129491-ensure-acm-certificates-have-certificate-transparency-logging-enabled"
+    "https://support.icompaas.com/support/solutions/articles/62000129491-ensure-acm-certificates-have-certificate-transparency-logging-enabled"
   ],
   "Remediation": {
     "Code": {
@@ -25,7 +25,7 @@
       "Terraform": "```hcl\n# Enable Certificate Transparency logging on an ACM certificate\nresource \"aws_acm_certificate\" \"<example_resource_name>\" {\n  domain_name = \"<example_domain_name>\"\n  options {\n    certificate_transparency_logging_preference = \"ENABLED\"  # Critical: turns on CT logging to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable **CT logging** on all ACM\u2011issued public certificates to maintain transparency and rapid revocation.\n\nMonitor CT logs for your domains and alert on unexpected issuances. For sensitive internal names, favor private PKI or non\u2011public hostnames instead of disabling CT, and apply **defense in depth** with short certificate lifetimes.",
+      "Text": "Enable **CT logging** on all ACM-issued public certificates to maintain transparency and rapid revocation.\n\nMonitor CT logs for your domains and alert on unexpected issuances. For sensitive internal names, favor private PKI or non-public hostnames instead of disabling CT, and apply **defense in depth** with short certificate lifetimes.",
       "Url": "https://hub.prowler.com/check/acm_certificates_transparency_logs_enabled"
     }
   },
