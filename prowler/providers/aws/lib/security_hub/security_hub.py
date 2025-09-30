@@ -199,7 +199,7 @@ class SecurityHub:
                 if finding.Resources[0].Region not in findings_per_region:
                     # Only log once per disabled region
                     if finding.Resources[0].Region not in disabled_regions_logged:
-                        logger.error(
+                        logger.warning(
                             f"Skipping findings in region {finding.Resources[0].Region} because it is not enabled in Security Hub."
                         )
                         disabled_regions_logged.add(finding.Resources[0].Region)
