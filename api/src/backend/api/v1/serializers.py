@@ -8,6 +8,7 @@ from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
@@ -3075,6 +3076,13 @@ class LighthouseTenantConfigSerializer(RLSSerializer):
     """
     Read serializer for LighthouseTenantConfiguration.
     """
+
+    # Build singleton URL without pk
+    url = serializers.SerializerMethodField()
+
+    def get_url(self, obj):
+        request = self.context.get("request")
+        return reverse("lighthouse-config", request=request)
 
     class Meta:
         model = LighthouseTenantConfiguration
