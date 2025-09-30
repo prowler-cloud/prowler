@@ -1,4 +1,5 @@
 import glob
+import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -4280,6 +4281,7 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_object(self):
+        """Retrieve the singleton instance for the current tenant."""
         obj = LighthouseTenantConfiguration.objects.filter(
             tenant_id=self.request.tenant_id
         ).first()
@@ -4287,6 +4289,28 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
             raise NotFound("Tenant Lighthouse configuration not found")
         self.check_object_permissions(self.request, obj)
         return obj
+
+    def retrieve(self, request, *args, **kwargs):
+        """GET endpoint for singleton - no pk required."""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """PATCH endpoint for singleton - no pk required."""
+        instance = self.get_object()
+
+        # Extract attributes from JSON:API payload
+        try:
+            payload = json.loads(request.body)
+            attributes = payload.get("data", {}).get("attributes", {})
+        except (json.JSONDecodeError, AttributeError):
+            raise ValidationError("Invalid JSON:API payload")
+
+        serializer = self.get_serializer(instance, data=attributes, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 @extend_schema_view(
