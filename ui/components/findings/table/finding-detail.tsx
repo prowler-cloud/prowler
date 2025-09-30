@@ -209,20 +209,21 @@ export const FindingDetail = ({
             {attributes.check_metadata.additionalurls &&
               attributes.check_metadata.additionalurls.length > 0 && (
                 <InfoField label="References">
-                  <div className="flex flex-col gap-1">
+                  <ul className="list-disc list-inside space-y-1">
                     {attributes.check_metadata.additionalurls.map(
                       (link, idx) => (
-                        <CustomLink
-                          key={idx}
-                          href={link}
-                          size="sm"
-                          className="break-all whitespace-normal!"
-                        >
-                          {link}
-                        </CustomLink>
+                        <li key={idx}>
+                          <CustomLink
+                            href={link}
+                            size="sm"
+                            className="break-all whitespace-normal!"
+                          >
+                            {link}
+                          </CustomLink>
+                        </li>
                       ),
                     )}
-                  </div>
+                  </ul>
                 </InfoField>
               )}
           </div>
