@@ -110,6 +110,10 @@ component/ui:
   - changed-files:
       - any-glob-to-any-file: "ui/**"
 
+component/mcp-server:
+  - changed-files:
+      - any-glob-to-any-file: "mcp_server/**"
+
 compliance:
   - changed-files:
       - any-glob-to-any-file: "prowler/compliance/**"

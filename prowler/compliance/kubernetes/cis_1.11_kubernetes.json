@@ -1,5 +1,6 @@
 {
   "Framework": "CIS",
+  "Name": "CIS Kubernetes Benchmark v1.11.0",
   "Version": "1.11.1",
   "Provider": "Kubernetes",
   "Description": "This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.28 - v1.31",

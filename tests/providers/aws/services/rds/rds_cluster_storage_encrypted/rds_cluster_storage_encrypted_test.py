@@ -41,8 +41,8 @@ class Test_rds_cluster_storage_encrypted:
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
-            Engine="aurora-mysql",
-            DatabaseName="staging-mysql",
+            Engine="postgres",
+            DatabaseName="staging-postgres",
             DBClusterParameterGroupName="test",
             MasterUsername="test",
             MasterUserPassword="password",
@@ -88,8 +88,8 @@ class Test_rds_cluster_storage_encrypted:
         conn.create_db_cluster(
             DBClusterIdentifier="db-cluster-1",
             AllocatedStorage=10,
-            Engine="aurora-mysql",
-            DatabaseName="staging-mysql",
+            Engine="postgres",
+            DatabaseName="staging-postgres",
             StorageEncrypted=True,
             DBClusterParameterGroupName="test",
             MasterUsername="test",

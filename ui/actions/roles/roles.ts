@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getRoles = async ({
   page = 1,
@@ -40,7 +36,7 @@ export const getRoles = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/roles");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching roles:", error);
     return undefined;
@@ -159,8 +155,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
         manage_providers: formData.get("manage_providers") === "true",
         manage_account: formData.get("manage_account") === "true",
         manage_scans: formData.get("manage_scans") === "true",
-        // TODO: Add back when we have integrations ready
-        // manage_integrations: formData.get("manage_integrations") === "true",
+        manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
       relationships: {},

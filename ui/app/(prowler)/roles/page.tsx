@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";
@@ -14,12 +14,13 @@ import { SearchParamsProps } from "@/types";
 export default async function Roles({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Roles" icon="mdi:account-key-outline">
+    <ContentLayout title="Roles" icon="lucide:user-cog">
       <FilterControls search />
       <Spacer y={8} />
       <AddRoleButton />
@@ -28,7 +29,7 @@ export default async function Roles({
       <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
@@ -55,6 +56,7 @@ const SSRDataTable = async ({
 
   return (
     <DataTable
+      key={`roles-${Date.now()}`}
       columns={ColumnsRoles}
       data={rolesData?.data || []}
       metadata={rolesData?.meta}

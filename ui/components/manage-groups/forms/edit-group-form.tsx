@@ -1,7 +1,7 @@
 "use client";
 
+import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -105,7 +105,8 @@ export const EditGroupForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/name":
               form.setError("name", {
                 type: "server",
@@ -146,7 +147,7 @@ export const EditGroupForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Field for the name */}
         <div className="flex flex-col gap-2">
@@ -157,7 +158,7 @@ export const EditGroupForm = ({
             label="Provider group name"
             labelPlacement="inside"
             placeholder="Enter the provider group name"
-            variant="bordered"
+            variant="flat"
             isRequired
             isInvalid={!!form.formState.errors.name}
           />
@@ -240,7 +241,7 @@ export const EditGroupForm = ({
           </p>
         )}
 
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
