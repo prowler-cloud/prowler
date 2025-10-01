@@ -8639,3 +8639,163 @@ class TestLighthouseTenantConfigViewSet:
             content_type=API_JSON_CONTENT_TYPE,
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestLighthouseProviderConfigViewSet:
+    """Tests for LighthouseProviderConfiguration create validations"""
+
+    def test_invalid_provider_type(self, authenticated_client):
+        """Add invalid provider (testprovider) should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "testprovider",
+                    "credentials": {"api_key": "sk-testT3BlbkFJkey"},
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_openai_missing_credentials(self, authenticated_client):
+        """OpenAI provider without credentials should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "credentials",
+        [
+            {},  # empty credentials
+            {"token": "sk-testT3BlbkFJkey"},  # wrong key name
+            {"api_key": "sk-invalid-format"},  # wrong format
+        ],
+    )
+    def test_openai_invalid_credentials(self, authenticated_client, credentials):
+        """OpenAI provider with invalid credentials should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_openai_valid_credentials_success(self, authenticated_client):
+        """OpenAI provider with valid sk-xxx format should succeed"""
+        valid_key = "sk-abc123T3BlbkFJxyz456"
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()["data"]
+
+        masked_creds = data["attributes"].get("credentials")
+        assert masked_creds is not None
+        assert "api_key" in masked_creds
+        assert masked_creds["api_key"] == ("*" * len(valid_key))
+
+    def test_openai_provider_duplicate_per_tenant(self, authenticated_client):
+        """If an OpenAI provider exists for tenant, creating again should error"""
+        valid_key = "sk-dup123T3BlbkFJdup456"
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        # First creation succeeds
+        resp1 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp1.status_code == status.HTTP_201_CREATED
+
+        # Second creation should fail with validation error
+        resp2 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp2.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already exists" in str(resp2.json()).lower()
+
+    def test_openai_patch_base_url_and_is_active(self, authenticated_client):
+        """After creating, should be able to patch base_url and is_active"""
+        valid_key = "sk-patch123T3BlbkFJpatch456"
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": "https://api.example.com/v1",
+                    "is_active": False,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated = patch_resp.json()["data"]["attributes"]
+        assert updated["base_url"] == "https://api.example.com/v1"
+        assert updated["is_active"] is False
