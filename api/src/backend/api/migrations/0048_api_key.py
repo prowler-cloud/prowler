@@ -12,7 +12,6 @@ import api.rls
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0047_remove_integration_unique_configuration_per_tenant"),
     ]

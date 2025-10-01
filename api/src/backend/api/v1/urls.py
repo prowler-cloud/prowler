@@ -39,7 +39,7 @@ from api.v1.views import (
     TenantViewSet,
     UserRoleRelationshipView,
     UserViewSet,
-    TenantApiKeyViewSet
+    TenantApiKeyViewSet,
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
