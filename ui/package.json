@@ -26,7 +26,7 @@
     "@ai-sdk/langchain": "1.0.59",
     "@ai-sdk/react": "2.0.59",
     "@heroui/react": "2.8.4",
-    "@hookform/resolvers": "3.10.0",
+    "@hookform/resolvers": "5.2.2",
     "@langchain/core": "0.3.77",
     "@langchain/langgraph": "0.4.9",
     "@langchain/langgraph-supervisor": "0.0.20",

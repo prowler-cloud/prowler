@@ -27,9 +27,9 @@
     "section": "dependencies",
     "name": "@hookform/resolvers",
     "from": "3.10.0",
-    "to": "3.10.0",
+    "to": "5.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T15:09:44.056Z"
   },
   {
     "section": "dependencies",
