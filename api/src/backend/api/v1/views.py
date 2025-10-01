@@ -60,11 +60,13 @@ from tasks.tasks import (
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
     jira_integration_task,
     perform_scan_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
@@ -85,6 +87,7 @@ from api.filters import (
     LatestFindingFilter,
     LatestResourceFilter,
     LighthouseProviderConfigFilter,
+    LighthouseProviderModelsFilter,
     MembershipFilter,
     ProcessorFilter,
     ProviderFilter,
@@ -4233,6 +4236,8 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
             return LighthouseProviderConfigCreateSerializer
         elif self.action == "partial_update":
             return LighthouseProviderConfigUpdateSerializer
+        elif self.action in ["connection", "refresh_models"]:
+            return TaskSerializer
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):
@@ -4264,6 +4269,87 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
             instance, context=self.get_serializer_context()
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Check provider connection",
+        description="Validate provider credentials asynchronously and toggle is_active.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        instance = self.get_object()
+        if (
+            instance.provider_type
+            != LighthouseProviderConfiguration.ProviderChoices.OPENAI
+        ):
+            return Response(
+                data={
+                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            task = check_lighthouse_provider_connection_task.delay(
+                provider_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+    @extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Refresh provider models",
+        description="Fetch available models for this provider configuration and upsert into catalog.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="refresh-models",
+        url_name="refresh-models",
+    )
+    def refresh_models(self, request, pk=None):
+        instance = self.get_object()
+        if (
+            instance.provider_type
+            != LighthouseProviderConfiguration.ProviderChoices.OPENAI
+        ):
+            return Response(
+                data={
+                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            task = refresh_lighthouse_provider_models_task.delay(
+                provider_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
 
 
 @extend_schema_view(
@@ -4375,6 +4461,7 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
 class LighthouseProviderModelsViewSet(BaseRLSViewSet):
     queryset = LighthouseProviderModels.objects.all()
     serializer_class = LighthouseProviderModelsSerializer
+    filterset_class = LighthouseProviderModelsFilter
     # Expose as read-only catalog collection
     http_method_names = ["get"]
 
