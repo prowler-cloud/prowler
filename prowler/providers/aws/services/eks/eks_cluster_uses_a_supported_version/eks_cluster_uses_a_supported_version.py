@@ -18,11 +18,6 @@ class eks_cluster_uses_a_supported_version(Check):
 
             # Handle case where cluster.version might be None (edge case during cluster creation/deletion)
             if not cluster.version:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"EKS cluster {cluster.name} version information is not available."
-                )
-                findings.append(report)
                 continue
 
             cluster_version_major, cluster_version_minor = map(

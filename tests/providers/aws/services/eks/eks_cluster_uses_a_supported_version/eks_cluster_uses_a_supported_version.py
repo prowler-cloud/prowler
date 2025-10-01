@@ -227,14 +227,4 @@ class Test_eks_cluster_ensure_version_is_supported:
             check = eks_cluster_uses_a_supported_version()
             result = check.execute()
 
-            # This should now work correctly and return FAIL for None version
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"EKS cluster {cluster_name} version information is not available."
-            )
-            assert result[0].resource_id == cluster_name
-            assert result[0].resource_arn == cluster_arn
-            assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert len(result) == 0
