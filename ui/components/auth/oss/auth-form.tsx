@@ -111,6 +111,9 @@ export const AuthForm = ({
       const result = await authenticate(null, {
         email: data.email.toLowerCase(),
         password: data.password,
+        name: undefined,
+        confirmPassword: undefined,
+        termsAndConditions: undefined,
       });
       if (result?.message === "Success") {
         router.push("/");

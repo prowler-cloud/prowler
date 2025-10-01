@@ -101,7 +101,7 @@ export const authFormSchema = (type: string) =>
         .string()
         .trim()
         .toLowerCase()
-        .email({ message: "Please enter a valid email address." }),
+        .email({ error: "Please enter a valid email address." }),
       password: type === "sign-in" ? z.string() : validatePassword(),
       isSamlMode: z.boolean().optional(),
     })

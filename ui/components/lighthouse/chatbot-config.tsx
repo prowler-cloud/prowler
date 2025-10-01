@@ -21,8 +21,8 @@ import {
 import { Form } from "@/components/ui/form";
 
 const chatbotConfigSchema = z.object({
-  model: z.string().nonempty("Model selection is required"),
-  apiKey: z.string().nonempty("API Key is required").optional(),
+  model: z.string().min(1, "Model selection is required"),
+  apiKey: z.string().min(1, "API Key is required").optional(),
   businessContext: z
     .string()
     .max(1000, "Business context cannot exceed 1000 characters")

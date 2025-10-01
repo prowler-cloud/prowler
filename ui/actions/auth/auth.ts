@@ -13,6 +13,9 @@ const formSchemaSignUp = authFormSchema("sign-up");
 const defaultValues: z.infer<typeof formSchemaSignIn> = {
   email: "",
   password: "",
+  name: undefined,
+  confirmPassword: undefined,
+  termsAndConditions: undefined,
 };
 
 export async function authenticate(
