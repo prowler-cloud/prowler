@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [v5.13.0] (Prowler UNRELEASED)
 
 ### Added
@@ -42,7 +40,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> e279f7fcf (fix: handle eks cluster version and listener certificate arn not in acm (#8802))
 ## [v5.12.1] (Prowler v5.12.1)
 
 ### Fixed
