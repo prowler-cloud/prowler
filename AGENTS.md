@@ -30,9 +30,6 @@ Prowler is an open-source cloud security assessment tool that supports multiple 
 - `LICENSE`: License file
 - `README.md`: README file
 - `CONTRIBUTING.md`: Contributing guide
-- `prowler/__main__.py`: Main CLI entry point and argument parsing
-- `prowler/providers/`: All Prowler SDK providers
-- `api/src/backend/`: Django API implementation
 
 ## Python Development
 
