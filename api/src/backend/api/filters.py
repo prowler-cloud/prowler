@@ -28,6 +28,7 @@ from api.models import (
     Integration,
     Invitation,
     LighthouseProviderConfiguration,
+    LighthouseProviderModels,
     Membership,
     OverviewStatusChoices,
     PermissionChoices,
@@ -946,4 +947,27 @@ class LighthouseProviderConfigFilter(FilterSet):
         fields = {
             "provider_type": ["exact", "in"],
             "is_active": ["exact"],
+        }
+
+
+class LighthouseProviderModelsFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.ProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.ProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+        lookup_expr="in",
+    )
+
+    # Allow filtering by model id
+    model_id = CharFilter(field_name="model_id", lookup_expr="exact")
+    model_id__icontains = CharFilter(field_name="model_id", lookup_expr="icontains")
+    model_id__in = CharInFilter(field_name="model_id", lookup_expr="in")
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = {
+            "model_id": ["exact", "icontains", "in"],
         }
