@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - Default JWT keys are generated and stored if they are missing from configuration [(#8655)](https://github.com/prowler-cloud/prowler/pull/8655)
 - `compliance_name` for each compliance [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
+- Support for M365 Certificate authentication [(#8538)](https://github.com/prowler-cloud/prowler/pull/8538)
 
 ### Changed
 - Now the MANAGE_ACCOUNT permission is required to modify or read user permissions instead of MANAGE_USERS [(#8281)](https://github.com/prowler-cloud/prowler/pull/8281)
@@ -57,7 +58,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
 - Integration with Amazon S3, enabling storage and retrieval of scan data via S3 buckets [(#8056)](https://github.com/prowler-cloud/prowler/pull/8056)
-- Support for M365 Certificate authentication [(#8538)](https://github.com/prowler-cloud/prowler/pull/8538)
 
 ### Fixed
 - Avoid sending errors to Sentry in M365 provider when user authentication fails [(#8420)](https://github.com/prowler-cloud/prowler/pull/8420)
