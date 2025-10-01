@@ -62,6 +62,7 @@ from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
+    jira_integration_task,
     perform_scan_task,
 )
 
@@ -75,8 +76,10 @@ from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
+    CustomDjangoFilterBackend,
     FindingFilter,
     IntegrationFilter,
+    IntegrationJiraFindingsFilter,
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
@@ -89,6 +92,7 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
@@ -142,6 +146,7 @@ from api.v1.serializers import (
     FindingMetadataSerializer,
     FindingSerializer,
     IntegrationCreateSerializer,
+    IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -214,6 +219,8 @@ class RelationshipViewSchema(JsonApiAutoSchema):
     description="Obtain a token by providing valid credentials and an optional tenant ID.",
 )
 class CustomTokenObtainView(GenericAPIView):
+    throttle_scope = "token-obtain"
+
     resource_name = "tokens"
     serializer_class = TokenSerializer
     http_method_names = ["post"]
@@ -293,7 +300,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.11.0"
+        spectacular_settings.VERSION = "1.14.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -314,6 +321,11 @@ class SchemaView(SpectacularAPIView):
                 "invitations, creating new invitations, accepting and revoking them.",
             },
             {
+                "name": "Role",
+                "description": "Endpoints for managing RBAC roles within tenants, allowing creation, retrieval, "
+                "updating, and deletion of role configurations and permissions.",
+            },
+            {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
             },
@@ -322,8 +334,18 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing provider groups.",
             },
             {
+                "name": "Task",
+                "description": "Endpoints for task management, allowing retrieval of task status and "
+                "revoking tasks that have not started.",
+            },
+            {
                 "name": "Scan",
                 "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Schedule",
+                "description": "Endpoints for managing scan schedules, allowing configuration of automated "
+                "scans with different scheduling options.",
             },
             {
                 "name": "Resource",
@@ -336,8 +358,9 @@ class SchemaView(SpectacularAPIView):
                 "findings that result from scans.",
             },
             {
-                "name": "Overview",
-                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
+                "name": "Processor",
+                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
+                "registration, configuration, and deletion of post-processing actions.",
             },
             {
                 "name": "Compliance Overview",
@@ -345,9 +368,8 @@ class SchemaView(SpectacularAPIView):
                 " compliance framework ID.",
             },
             {
-                "name": "Task",
-                "description": "Endpoints for task management, allowing retrieval of task status and "
-                "revoking tasks that have not started.",
+                "name": "Overview",
+                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
             },
             {
                 "name": "Integration",
@@ -355,14 +377,15 @@ class SchemaView(SpectacularAPIView):
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
             {
-                "name": "Lighthouse",
-                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
-                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
+                "name": "Lighthouse AI",
+                "description": "Endpoints for managing Lighthouse AI configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business "
+                "context.",
             },
             {
-                "name": "Processor",
-                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
-                "registration, configuration, and deletion of post-processing actions.",
+                "name": "SAML",
+                "description": "Endpoints for Single Sign-On authentication management via SAML for seamless user "
+                "authentication.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -745,11 +768,13 @@ class UserViewSet(BaseUserViewset):
         # If called during schema generation, return an empty queryset
         if getattr(self, "swagger_fake_view", False):
             return User.objects.none()
+
         queryset = (
             User.objects.filter(membership__tenant__id=self.request.tenant_id)
             if hasattr(self.request, "tenant_id")
             else User.objects.all()
         )
+
         return queryset.prefetch_related("memberships", "roles")
 
     def get_permissions(self):
@@ -767,6 +792,12 @@ class UserViewSet(BaseUserViewset):
         else:
             return UserSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.request.user.is_authenticated:
+            context["role"] = get_role(self.request.user)
+        return context
+
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
         user = self.request.user
@@ -780,7 +811,9 @@ class UserViewSet(BaseUserViewset):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
 
-        return super().destroy(request, *args, **kwargs)
+        user = self.get_object()
+        user.delete(using=MainRouter.admin_db)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         parameters=[
@@ -871,7 +904,11 @@ class UserViewSet(BaseUserViewset):
     partial_update=extend_schema(
         tags=["User"],
         summary="Partially update a user-roles relationship",
-        description="Update the user-roles relationship information without affecting other fields.",
+        description=(
+            "Update the user-roles relationship information without affecting other fields. "
+            "If the update would remove MANAGE_ACCOUNT from the last remaining user in the "
+            "tenant, the API rejects the request with a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship updated successfully"
@@ -881,7 +918,12 @@ class UserViewSet(BaseUserViewset):
     destroy=extend_schema(
         tags=["User"],
         summary="Delete a user-roles relationship",
-        description="Remove the user-roles relationship from the system by their ID.",
+        description=(
+            "Remove the user-roles relationship from the system by their ID. If removing "
+            "MANAGE_ACCOUNT would take it away from the last remaining user in the tenant, "
+            "the API rejects the request with a 400 response. Users also cannot delete their "
+            "own role assignments; attempting to do so returns a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship deleted successfully"
@@ -896,10 +938,47 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_USERS]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         return User.objects.filter(membership__tenant__id=self.request.tenant_id)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Prevent deleting role relationships if it would leave the tenant with no
+        users having MANAGE_ACCOUNT. Supports deleting specific roles via JSON:API
+        relationship payload or clearing all roles for the user when no payload.
+        """
+        user = self.get_object()
+        # Disallow deleting own roles
+        if str(user.id) == str(request.user.id):
+            return Response(
+                data={
+                    "detail": "Users cannot delete the relationship with their role."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        tenant_id = self.request.tenant_id
+        payload = request.data if isinstance(request.data, dict) else None
+
+        # If a user has more than one role, we will delete the relationship with the roles in the payload
+        data = payload.get("data") if payload else None
+        if data:
+            try:
+                role_ids = [item["id"] for item in data]
+            except KeyError:
+                role_ids = []
+            roles_to_remove = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
+        else:
+            roles_to_remove = user.roles.filter(tenant_id=tenant_id)
+
+        UserRoleRelationship.objects.filter(
+            user=user,
+            tenant_id=tenant_id,
+            role_id__in=roles_to_remove.values_list("id", flat=True),
+        ).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def create(self, request, *args, **kwargs):
         user = self.get_object()
@@ -937,12 +1016,6 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def destroy(self, request, *args, **kwargs):
-        user = self.get_object()
-        user.roles.clear()
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2849,13 +2922,11 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
     partial_update=extend_schema(
         tags=["Role"],
         summary="Partially update a role",
-        description="Update certain fields of an existing role's information without affecting other fields.",
         responses={200: RoleSerializer},
     ),
     destroy=extend_schema(
         tags=["Role"],
         summary="Delete a role",
-        description="Remove a role from the system by their ID.",
     ),
 )
 class RoleViewSet(BaseRLSViewSet):
@@ -2877,6 +2948,14 @@ class RoleViewSet(BaseRLSViewSet):
             return RoleUpdateSerializer
         return super().get_serializer_class()
 
+    @extend_schema(
+        description=(
+            "Update selected fields on an existing role. When changing the `users` "
+            "relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts "
+            "that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents "
+            "callers from removing their own assignment to that role."
+        )
+    )
     def partial_update(self, request, *args, **kwargs):
         user_role = get_role(request.user)
         # If the user is the owner of the role, the manage_account field is not editable
@@ -2884,12 +2963,33 @@ class RoleViewSet(BaseRLSViewSet):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
+    @extend_schema(
+        description=(
+            "Delete the specified role. The API rejects deletion of the last role "
+            "in the tenant that grants MANAGE_ACCOUNT."
+        )
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if (
             instance.name == "admin"
         ):  # TODO: Move to a constant/enum (in case other roles are created by default)
             raise ValidationError(detail="The admin role cannot be deleted.")
+
+        # Prevent deleting the last MANAGE_ACCOUNT role in the tenant
+        if instance.manage_account:
+            has_other_ma = (
+                Role.objects.filter(tenant_id=instance.tenant_id, manage_account=True)
+                .exclude(id=instance.id)
+                .exists()
+            )
+            if not has_other_ma:
+                return Response(
+                    data={
+                        "detail": "Cannot delete the only role with MANAGE_ACCOUNT in the tenant."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         return super().destroy(request, *args, **kwargs)
 
@@ -3033,7 +3133,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews metadata obtained successfully",
                 response=ComplianceOverviewMetadataSerializer,
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3065,7 +3167,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance requirement details obtained successfully",
                 response=ComplianceOverviewDetailSerializer(many=True),
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3443,6 +3547,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     ),
                     "name": requirement.get("name", ""),
                     "framework": compliance_framework.get("framework", ""),
+                    "compliance_name": compliance_framework.get("name", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
                     "attributes": base_attributes,
@@ -3526,8 +3631,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "findings_severity"]:
+        elif self.action == "findings":
             return ScanSummaryFilter
+        elif self.action == "findings_severity":
+            return ScanSummarySeverityFilter
         elif self.action == "services":
             return ServiceOverviewFilter
         return None
@@ -3649,7 +3756,12 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
         tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
+
+        # Load only required fields
+        queryset = self.get_queryset().only(
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
+        )
+
         filtered_queryset = self.filter_queryset(queryset)
         provider_filter = (
             {"provider__in": self.allowed_providers}
@@ -3669,16 +3781,22 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
+        # The filter will have added a status_count annotation if any status filter was used
+        if "status_count" in filtered_queryset.query.annotations:
+            sum_expression = Sum("status_count")
+        else:
+            sum_expression = Sum("total")
+
         severity_counts = (
             filtered_queryset.values("severity")
-            .annotate(count=Sum("total"))
+            .annotate(count=sum_expression)
             .order_by("severity")
         )
 
         severity_data = {sev[0]: 0 for sev in SeverityChoices}
-
-        for item in severity_counts:
-            severity_data[item["severity"]] = item["count"]
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
 
         serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -3867,30 +3985,110 @@ class IntegrationViewSet(BaseRLSViewSet):
 
 
 @extend_schema_view(
+    dispatches=extend_schema(
+        tags=["Integration"],
+        summary="Send findings to a Jira integration",
+        description="Send a set of filtered findings to the given integration. At least one finding filter must be "
+        "provided.",
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+        filters=True,
+    )
+)
+class IntegrationJiraViewSet(BaseRLSViewSet):
+    queryset = Finding.all_objects.all()
+    serializer_class = IntegrationJiraDispatchSerializer
+    http_method_names = ["post"]
+    filter_backends = [CustomDjangoFilterBackend]
+    filterset_class = IntegrationJiraFindingsFilter
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    def get_queryset(self):
+        tenant_id = self.request.tenant_id
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
+        else:
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
+                scan__provider__in=get_providers(user_roles)
+            )
+
+        return queryset
+
+    @action(detail=False, methods=["post"], url_name="dispatches")
+    def dispatches(self, request, integration_pk=None):
+        get_object_or_404(Integration, pk=integration_pk)
+        serializer = self.get_serializer(
+            data=request.data, context={"integration_id": integration_pk}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        if self.filter_queryset(self.get_queryset()).count() == 0:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
+        finding_ids = [
+            str(finding_id)
+            for finding_id in self.filter_queryset(self.get_queryset()).values_list(
+                "id", flat=True
+            )
+        ]
+        project_key = serializer.validated_data["project_key"]
+        issue_type = serializer.validated_data["issue_type"]
+
+        with transaction.atomic():
+            task = jira_integration_task.delay(
+                tenant_id=self.request.tenant_id,
+                integration_id=integration_pk,
+                project_key=project_key,
+                issue_type=issue_type,
+                finding_ids=finding_ids,
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+@extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse"],
-        summary="List all Lighthouse configurations",
-        description="Retrieve a list of all Lighthouse configurations.",
+        tags=["Lighthouse AI"],
+        summary="List all Lighthouse AI configurations",
+        description="Retrieve a list of all Lighthouse AI configurations.",
     ),
     create=extend_schema(
-        tags=["Lighthouse"],
-        summary="Create a new Lighthouse configuration",
-        description="Create a new Lighthouse configuration with the specified details.",
+        tags=["Lighthouse AI"],
+        summary="Create a new Lighthouse AI configuration",
+        description="Create a new Lighthouse AI configuration with the specified details.",
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse"],
-        summary="Partially update a Lighthouse configuration",
-        description="Update certain fields of an existing Lighthouse configuration.",
+        tags=["Lighthouse AI"],
+        summary="Partially update a Lighthouse AI configuration",
+        description="Update certain fields of an existing Lighthouse AI configuration.",
     ),
     destroy=extend_schema(
-        tags=["Lighthouse"],
-        summary="Delete a Lighthouse configuration",
-        description="Remove a Lighthouse configuration by its ID.",
+        tags=["Lighthouse AI"],
+        summary="Delete a Lighthouse AI configuration",
+        description="Remove a Lighthouse AI configuration by its ID.",
     ),
     connection=extend_schema(
-        tags=["Lighthouse"],
+        tags=["Lighthouse AI"],
         summary="Check the connection to the OpenAI API",
-        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),

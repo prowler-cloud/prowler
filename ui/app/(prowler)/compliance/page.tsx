@@ -22,12 +22,15 @@ import { ComplianceOverviewData } from "@/types/compliance";
 export default async function Compliance({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    Object.entries(resolvedSearchParams).filter(([key]) =>
+      key.startsWith("filter["),
+    ),
   );
 
   const scansData = await getScans({
@@ -72,7 +75,7 @@ export default async function Compliance({
     .filter(Boolean) as ExpandedScanData[];
 
   const selectedScanId =
-    searchParams.scanId || expandedScansData[0]?.id || null;
+    resolvedSearchParams.scanId || expandedScansData[0]?.id || null;
   const query = (filters["filter[search]"] as string) || "";
 
   // Find the selected scan
@@ -91,17 +94,19 @@ export default async function Compliance({
       }
     : undefined;
 
-  const metadataInfoData = await getComplianceOverviewMetadataInfo({
-    query,
-    filters: {
-      "filter[scan_id]": selectedScanId,
-    },
-  });
+  const metadataInfoData = selectedScanId
+    ? await getComplianceOverviewMetadataInfo({
+        query,
+        filters: {
+          "filter[scan_id]": selectedScanId,
+        },
+      })
+    : { data: { attributes: { regions: [] } } };
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   return (
-    <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
+    <ContentLayout title="Compliance" icon="lucide:shield-check">
       {selectedScanId ? (
         <>
           <ComplianceHeader
@@ -110,7 +115,7 @@ export default async function Compliance({
           />
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid
-              searchParams={searchParams}
+              searchParams={resolvedSearchParams}
               selectedScan={selectedScanData}
             />
           </Suspense>
@@ -140,11 +145,15 @@ const SSRComplianceGrid = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const compliancesData = await getCompliancesOverview({
-    scanId,
-    region: regionFilter,
-    query,
-  });
+  // Only fetch compliance data if we have a valid scanId
+  const compliancesData =
+    scanId && scanId.trim() !== ""
+      ? await getCompliancesOverview({
+          scanId,
+          region: regionFilter,
+          query,
+        })
+      : { data: [], errors: [] };
 
   const type = compliancesData?.data?.type;
 
@@ -157,7 +166,7 @@ const SSRComplianceGrid = async ({
   ) {
     return (
       <div className="flex h-full items-center">
-        <div className="text-sm text-default-500">
+        <div className="text-default-500 text-sm">
           No compliance data available for the selected scan.
         </div>
       </div>
@@ -168,7 +177,7 @@ const SSRComplianceGrid = async ({
   if (compliancesData?.errors?.length > 0) {
     return (
       <div className="flex h-full items-center">
-        <div className="text-sm text-default-500">Provide a valid scan ID.</div>
+        <div className="text-default-500 text-sm">Provide a valid scan ID.</div>
       </div>
     );
   }

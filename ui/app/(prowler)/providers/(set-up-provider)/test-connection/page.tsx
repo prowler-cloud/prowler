@@ -6,11 +6,12 @@ import { SkeletonProviderWorkflow } from "@/components/providers/workflow";
 import { TestConnectionForm } from "@/components/providers/workflow/forms";
 
 interface Props {
-  searchParams: { type: string; id: string; updated: string };
+  searchParams: Promise<{ type: string; id: string; updated: string }>;
 }
 
 export default async function TestConnectionPage({ searchParams }: Props) {
-  const providerId = searchParams.id;
+  const resolvedSearchParams = await searchParams;
+  const providerId = resolvedSearchParams.id;
 
   if (!providerId) {
     redirect("/providers/connect-account");
@@ -18,7 +19,7 @@ export default async function TestConnectionPage({ searchParams }: Props) {
 
   return (
     <Suspense fallback={<SkeletonProviderWorkflow />}>
-      <SSRTestConnection searchParams={searchParams} />
+      <SSRTestConnection searchParams={resolvedSearchParams} />
     </Suspense>
   );
 }

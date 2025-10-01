@@ -1,17 +1,17 @@
 "use client";
 
+import { Button } from "@heroui/button";
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
-} from "@nextui-org/react";
+} from "@heroui/dropdown";
 import {
   DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
+} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
@@ -24,8 +24,7 @@ import { DeleteRoleForm } from "../workflow/forms";
 interface DataTableRowActionsProps<RoleProps> {
   row: Row<RoleProps>;
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<RoleProps>({
   row,
@@ -45,7 +44,7 @@ export function DataTableRowActions<RoleProps>({
       </CustomAlertModal>
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="dark:bg-prowler-blue-800 shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>

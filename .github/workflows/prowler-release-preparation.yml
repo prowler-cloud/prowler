@@ -1,4 +1,4 @@
-name: Prowler Release Preparation
+name: Prowler - Release Preparation
 
 run-name: Prowler Release Preparation for ${{ inputs.prowler_version }}
 

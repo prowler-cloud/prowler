@@ -77,7 +77,7 @@ class M365PowerShell(PowerShellSession):
         Initialize PowerShell credential object for Microsoft 365 authentication.
 
         Supports three authentication methods:
-        1. User authentication (username/password) - Will be deprecated in September 2025
+        1. User authentication (username/password) - Will be deprecated in October 2025
         2. Application authentication (client_id/client_secret)
         3. Certificate authentication (certificate_content in base64/application_id)
 
@@ -115,7 +115,7 @@ class M365PowerShell(PowerShellSession):
             self.execute(f'$tenantID = "{sanitized_tenant_id}"')
             self.execute(f'$tenantDomain = "{credentials.tenant_domains[0]}"')
 
-        # User Auth (Will be deprecated in September 2025)
+        # User Auth (Will be deprecated in October 2025)
         elif credentials.user and credentials.passwd:
             credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
 
@@ -981,6 +981,20 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
+
+    def get_user_account_status(self) -> dict:
+        """
+        Get User Account Status.
+
+        Retrieves the current user account status settings for Exchange Online.
+
+        Returns:
+            dict: User account status settings in JSON format.
+        """
+        return self.execute(
+            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json",
+            json_parse=True,
+        )
 
 
 # This function is used to install the required M365 PowerShell modules in Docker containers

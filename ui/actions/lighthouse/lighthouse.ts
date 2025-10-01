@@ -104,7 +104,7 @@ export const getLighthouseConfig = async () => {
 
     // Check if data array exists and has at least one item
     if (data?.data && data.data.length > 0) {
-      return data.data[0];
+      return data.data[0].attributes;
     }
 
     return undefined;

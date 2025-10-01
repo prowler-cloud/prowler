@@ -51,6 +51,9 @@ def display_summary_table(
         elif provider.type == "m365":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "mongodbatlas":
+            entity_type = "Organization"
+            audited_entities = provider.identity.organization_name
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
@@ -61,6 +64,9 @@ def display_summary_table(
             else:
                 entity_type = "Directory"
                 audited_entities = provider.scan_path
+        elif provider.type == "llm":
+            entity_type = "LLM"
+            audited_entities = provider.model
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
@@ -86,6 +92,8 @@ def display_summary_table(
                 "Muted": [],
             }
             pass_count = fail_count = muted_count = 0
+            # Sort findings by ServiceName
+            findings.sort(key=lambda x: x.check_metadata.ServiceName)
             for finding in findings:
                 # If new service and not first, add previous row
                 if (

@@ -27,6 +27,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "CIS-1.4": [
@@ -158,6 +159,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "CIS-1.4": [
@@ -286,6 +288,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "KISA-ISMS-P-2023": [
@@ -391,6 +394,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "CIS-1.4": [
@@ -525,6 +529,7 @@
       "categories": [],
       "depends_on": [],
       "related_to": [],
+      "additional_urls": [],
       "notes": "",
       "compliance": {
         "CIS-1.4": [

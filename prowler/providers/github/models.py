@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic.v1 import BaseModel
 
 from prowler.config.config import output_file_timestamp
@@ -14,10 +16,12 @@ class GithubIdentityInfo(BaseModel):
     account_id: str
     account_name: str
     account_url: str
+    account_email: Optional[str] = None
 
 
 class GithubAppIdentityInfo(BaseModel):
     app_id: str
+    app_name: str
     installations: list[str]
 
 

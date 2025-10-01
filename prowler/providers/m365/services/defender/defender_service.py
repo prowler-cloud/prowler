@@ -91,7 +91,7 @@ class Defender(M365Service):
                 malware_rule = [malware_rule]
             for rule in malware_rule:
                 if rule:
-                    malware_rules[rule.get("Name", "")] = MalwareRule(
+                    malware_rules[rule.get("MalwareFilterPolicy", "")] = MalwareRule(
                         state=rule.get("State", ""),
                         priority=rule.get("Priority", 0),
                         users=rule.get("SentTo", None),
@@ -152,12 +152,14 @@ class Defender(M365Service):
                 antiphishing_rule = [antiphishing_rule]
             for rule in antiphishing_rule:
                 if rule:
-                    antiphishing_rules[rule.get("Name", "")] = AntiphishingRule(
-                        state=rule.get("State", ""),
-                        priority=rule.get("Priority", 0),
-                        users=rule.get("SentTo", None),
-                        groups=rule.get("SentToMemberOf", None),
-                        domains=rule.get("RecipientDomainIs", None),
+                    antiphishing_rules[rule.get("AntiPhishPolicy", "")] = (
+                        AntiphishingRule(
+                            state=rule.get("State", ""),
+                            priority=rule.get("Priority", 0),
+                            users=rule.get("SentTo", None),
+                            groups=rule.get("SentToMemberOf", None),
+                            domains=rule.get("RecipientDomainIs", None),
+                        )
                     )
         except Exception as error:
             logger.error(
@@ -250,7 +252,9 @@ class Defender(M365Service):
                 outbound_spam_rule = [outbound_spam_rule]
             for rule in outbound_spam_rule:
                 if rule:
-                    outbound_spam_rules[rule.get("Name", "")] = OutboundSpamRule(
+                    outbound_spam_rules[
+                        rule.get("HostedOutboundSpamFilterPolicy", "")
+                    ] = OutboundSpamRule(
                         state=rule.get("State", "Disabled"),
                         priority=rule.get("Priority", 0),
                         users=rule.get("From", None),
@@ -330,12 +334,14 @@ class Defender(M365Service):
                 inbound_spam_rule = [inbound_spam_rule]
             for rule in inbound_spam_rule:
                 if rule:
-                    inbound_spam_rules[rule.get("Name", "")] = InboundSpamRule(
-                        state=rule.get("State", "Disabled"),
-                        priority=rule.get("Priority", 0),
-                        users=rule.get("SentTo", None),
-                        groups=rule.get("SentToMemberOf", None),
-                        domains=rule.get("RecipientDomainIs", None),
+                    inbound_spam_rules[rule.get("HostedContentFilterPolicy", "")] = (
+                        InboundSpamRule(
+                            state=rule.get("State", "Disabled"),
+                            priority=rule.get("Priority", 0),
+                            users=rule.get("SentTo", None),
+                            groups=rule.get("SentToMemberOf", None),
+                            domains=rule.get("RecipientDomainIs", None),
+                        )
                     )
         except Exception as error:
             logger.error(

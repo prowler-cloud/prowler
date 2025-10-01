@@ -134,7 +134,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   // Global keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (messageValue?.trim()) {
           onFormSubmit();
@@ -145,16 +145,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [messageValue, onFormSubmit]);
-
-  useEffect(() => {
-    if (messagesContainerRef.current && latestUserMsgRef.current) {
-      const container = messagesContainerRef.current;
-      const userMsg = latestUserMsgRef.current;
-      const containerPadding = 16; // p-4 in Tailwind = 16px
-      container.scrollTop =
-        userMsg.offsetTop - container.offsetTop - containerPadding;
-    }
-  }, [messages]);
 
   const suggestedActions: SuggestedAction[] = [
     {
@@ -184,9 +174,9 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const shouldDisableChat = !hasConfig || !isActive;
 
   return (
-    <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
+    <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">
       {shouldDisableChat && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
               {!hasConfig
@@ -200,7 +190,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             </p>
             <CustomLink
               href="/lighthouse/config"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
               target="_self"
               size="sm"
             >
@@ -214,7 +204,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
       {(error || errorMessage) && (
         <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <div className="flex items-start">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg
                 className="h-5 w-5 text-red-400"
                 viewBox="0 0 20 20"
@@ -283,7 +273,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       ) : (
         <div
-          className="flex-1 space-y-4 overflow-y-auto p-4"
+          className="flex flex-1 flex-col gap-4 overflow-y-auto p-4"
           ref={messagesContainerRef}
         >
           {messages.map((message, idx) => {
@@ -304,12 +294,12 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground dark:!text-black"
+                      ? "bg-primary text-primary-foreground dark:text-black!"
                       : "bg-muted"
                   }`}
                 >
                   <div
-                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:!text-black" : ""}`}
+                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:text-black!" : ""}`}
                   >
                     <MemoizedMarkdown
                       id={message.id}
@@ -359,7 +349,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 status === "submitted" ? "Stop generation" : "Send message"
               }
               isDisabled={status === "submitted" || !messageValue?.trim()}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 disabled:opacity-50"
             >
               {status === "submitted" ? <span>■</span> : <span>➤</span>}
             </CustomButton>

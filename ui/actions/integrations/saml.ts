@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib/helper";
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 import { samlConfigFormSchema } from "@/types/formSchemas";
 
 export const createSamlConfig = async (_prevState: any, formData: FormData) => {
@@ -39,16 +40,7 @@ export const createSamlConfig = async (_prevState: any, formData: FormData) => {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.errors?.[0]?.detail ||
-          `Failed to create SAML config: ${response.statusText}`,
-      );
-    }
-
-    await response.json();
-    revalidatePath("/integrations");
+    await handleApiResponse(response, "/integrations", false);
     return { success: "SAML configuration created successfully!" };
   } catch (error) {
     console.error("Error creating SAML config:", error);
@@ -98,16 +90,7 @@ export const updateSamlConfig = async (_prevState: any, formData: FormData) => {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.errors?.[0]?.detail ||
-          `Failed to update SAML config: ${response.statusText}`,
-      );
-    }
-
-    await response.json();
-    revalidatePath("/integrations");
+    await handleApiResponse(response, "/integrations", false);
     return { success: "SAML configuration updated successfully!" };
   } catch (error) {
     console.error("Error updating SAML config:", error);
@@ -132,13 +115,7 @@ export const getSamlConfig = async () => {
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch SAML config: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching SAML config:", error);
     return undefined;

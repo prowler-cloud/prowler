@@ -28,6 +28,8 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreAzureModel(BaseModel):
@@ -55,6 +57,8 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreGCPModel(BaseModel):
@@ -82,6 +86,8 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreM365Model(BaseModel):
@@ -109,3 +115,5 @@ class ProwlerThreatScoreM365Model(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str

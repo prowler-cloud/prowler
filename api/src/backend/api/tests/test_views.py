@@ -13,6 +13,7 @@ from uuid import uuid4
 import jwt
 import pytest
 from allauth.socialaccount.models import SocialAccount, SocialApp
+from allauth.account.models import EmailAddress
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -51,6 +52,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
 
 
@@ -323,6 +325,78 @@ class TestUserViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert User.objects.filter(id=another_user.id).exists()
+
+    def test_users_destroy_cascades_allauth_and_memberships(
+        self, authenticated_client, create_test_user
+    ):
+        # Create related admin-side objects (email + SocialAccount)
+        EmailAddress.objects.create(
+            user=create_test_user,
+            email=create_test_user.email,
+            primary=True,
+            verified=True,
+        )
+        SocialAccount.objects.create(
+            user=create_test_user, provider="fake-provider", uid="uid-fake-provider"
+        )
+
+        # Sanity check pre-conditions
+        assert EmailAddress.objects.filter(user=create_test_user).exists()
+        assert SocialAccount.objects.filter(user=create_test_user).exists()
+        assert Membership.objects.filter(user=create_test_user).exists()
+        assert UserRoleRelationship.objects.filter(user=create_test_user).exists()
+
+        # Delete current user
+        response = authenticated_client.delete(
+            reverse("user-detail", kwargs={"pk": str(create_test_user.id)})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Assert user and related objects are gone
+        assert not User.objects.filter(id=create_test_user.id).exists()
+        assert not EmailAddress.objects.filter(user_id=create_test_user.id).exists()
+        assert not SocialAccount.objects.filter(user_id=create_test_user.id).exists()
+        assert not Membership.objects.filter(user_id=create_test_user.id).exists()
+        assert not UserRoleRelationship.objects.filter(
+            user_id=create_test_user.id
+        ).exists()
+
+    def test_users_destroy_with_saml_configuration_and_memberships(
+        self, authenticated_client, create_test_user, saml_setup
+    ):
+        # Ensure SAML configuration exists for tenant (from saml_setup fixture)
+        domain = saml_setup["domain"]
+        config = SAMLConfiguration.objects.get(email_domain=domain)
+
+        # Attach a SAML SocialAccount to the user
+        SocialAccount.objects.create(
+            user=create_test_user, provider="saml", uid="uid-saml"
+        )
+
+        # Sanity check pre-conditions
+        assert SocialAccount.objects.filter(
+            user=create_test_user, provider="saml"
+        ).exists()
+        assert Membership.objects.filter(user=create_test_user).exists()
+        assert UserRoleRelationship.objects.filter(user=create_test_user).exists()
+
+        # Delete current user
+        response = authenticated_client.delete(
+            reverse("user-detail", kwargs={"pk": str(create_test_user.id)})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Assert user-related rows are removed
+        assert not User.objects.filter(id=create_test_user.id).exists()
+        assert not SocialAccount.objects.filter(user_id=create_test_user.id).exists()
+        assert not Membership.objects.filter(user_id=create_test_user.id).exists()
+        assert not UserRoleRelationship.objects.filter(
+            user_id=create_test_user.id
+        ).exists()
+
+        # Tenant-level SAML configuration should remain intact
+        assert SAMLConfiguration.objects.filter(id=config.id).exists()
+        assert SocialApp.objects.filter(provider="saml", client_id=domain).exists()
 
     @pytest.mark.parametrize(
         "attribute_key, attribute_value, error_field",
@@ -4772,6 +4846,36 @@ class TestRoleViewSet:
         assert role.users.count() == 0
         assert role.provider_groups.count() == 0
 
+    def test_cannot_remove_own_assignment_via_role_update(
+        self, authenticated_client, roles_fixture
+    ):
+        role = roles_fixture[0]
+        # Ensure the authenticated user is assigned to this role
+        user = User.objects.get(email=TEST_USER)
+        if not UserRoleRelationship.objects.filter(user=user, role=role).exists():
+            UserRoleRelationship.objects.create(
+                user=user, role=role, tenant_id=role.tenant_id
+            )
+
+        # Attempt to update role users to exclude the current user
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "relationships": {"users": {"data": []}},
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            "cannot remove their own role"
+            in response.json()["errors"][0]["detail"].lower()
+        )
+
     def test_role_create_with_invalid_user_relationship(
         self, authenticated_client, provider_groups_fixture
     ):
@@ -4893,15 +4997,134 @@ class TestUserRoleRelationshipViewSet:
             roles_fixture[2].id,
         }
 
-    def test_destroy_relationship(
-        self, authenticated_client, roles_fixture, create_test_user
+    def test_destroy_relationship_other_user(
+        self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
     ):
+        # Create another user in same tenant and assign a role
+        tenant = tenants_fixture[0]
+        other_user = User.objects.create_user(
+            name="other",
+            email="other_user@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=other_user, tenant=tenant)
+        UserRoleRelationship.objects.create(
+            user=other_user, role=roles_fixture[0], tenant_id=tenant.id
+        )
+
+        # Delete roles for the other user (allowed)
+        response = authenticated_client.delete(
+            reverse("user-roles-relationship", kwargs={"pk": other_user.id}),
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        relationships = UserRoleRelationship.objects.filter(user=other_user.id)
+        assert relationships.count() == 0
+
+    def test_cannot_delete_own_roles(self, authenticated_client, create_test_user):
+        # Attempt to delete own roles should be forbidden
         response = authenticated_client.delete(
             reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
         )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_prevent_removing_last_manage_account_on_patch(
+        self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
+    ):
+        # roles_fixture[1] has manage_account=False
+        limited_role = roles_fixture[1]
+
+        # Ensure there is no other user with MANAGE_ACCOUNT in the tenant
+        tenant = tenants_fixture[0]
+        # Create a secondary user without MANAGE_ACCOUNT
+        user2 = User.objects.create_user(
+            name="limited_user",
+            email="limited_user@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+        UserRoleRelationship.objects.create(
+            user=user2, role=limited_role, tenant_id=tenant.id
+        )
+
+        # Attempt to switch the only MANAGE_ACCOUNT user to a role without it
+        data = {"data": [{"type": "roles", "id": str(limited_role.id)}]}
+        response = authenticated_client.patch(
+            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "MANAGE_ACCOUNT" in response.json()["errors"][0]["detail"]
+
+    def test_allow_role_change_when_other_user_has_manage_account_on_patch(
+        self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
+    ):
+        # roles_fixture[1] has manage_account=False, roles_fixture[0] has manage_account=True
+        limited_role = roles_fixture[1]
+        ma_role = roles_fixture[0]
+
+        tenant = tenants_fixture[0]
+        # Create another user with MANAGE_ACCOUNT
+        user2 = User.objects.create_user(
+            name="ma_user",
+            email="ma_user@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=user2, tenant=tenant)
+        UserRoleRelationship.objects.create(
+            user=user2, role=ma_role, tenant_id=tenant.id
+        )
+
+        # Now changing the first user's roles to a non-MA role should succeed
+        data = {"data": [{"type": "roles", "id": str(limited_role.id)}]}
+        response = authenticated_client.patch(
+            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        relationships = UserRoleRelationship.objects.filter(role=roles_fixture[0].id)
-        assert relationships.count() == 0
+
+    def test_role_destroy_only_manage_account_blocked(
+        self, authenticated_client, tenants_fixture
+    ):
+        # Use a tenant without default admin role (tenant3)
+        tenant = tenants_fixture[2]
+        user = User.objects.get(email=TEST_USER)
+        # Add membership for this tenant
+        Membership.objects.create(user=user, tenant=tenant)
+
+        # Create a single MANAGE_ACCOUNT role in this tenant
+        only_role = Role.objects.create(
+            name="only_ma",
+            tenant=tenant,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+
+        # Switch token to this tenant
+        serializer = TokenSerializer(
+            data={
+                "type": "tokens",
+                "email": TEST_USER,
+                "password": TEST_PASSWORD,
+                "tenant_id": str(tenant.id),
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        access_token = serializer.validated_data["access"]
+        authenticated_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+
+        # Attempt to delete the only MANAGE_ACCOUNT role
+        response = authenticated_client.delete(
+            reverse("role-detail", kwargs={"pk": only_role.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Role.objects.filter(id=only_role.id).exists()
 
     def test_invalid_provider_group_id(self, authenticated_client, create_test_user):
         invalid_id = "non-existent-id"
@@ -5760,6 +5983,47 @@ class TestIntegrationViewSet:
             == data["data"]["relationships"]["providers"]["data"][0]["id"]
         )
 
+    def test_integrations_create_valid_jira(
+        self,
+        authenticated_client,
+    ):
+        """Jira integrations are special"""
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "domain": "prowlerdomain",
+                        "api_token": "this-is-an-api-token-for-jira-that-works-for-sure",
+                        "user_mail": "testing@prowler.com",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.count() == 1
+        integration = Integration.objects.first()
+        integration_configuration = response.json()["data"]["attributes"][
+            "configuration"
+        ]
+        assert "projects" in integration_configuration
+        assert "issue_types" in integration_configuration
+        assert "domain" in integration_configuration
+        assert integration.enabled == data["data"]["attributes"]["enabled"]
+        assert (
+            integration.integration_type
+            == data["data"]["attributes"]["integration_type"]
+        )
+        assert "credentials" not in response.json()["data"]["attributes"]
+
     def test_integrations_create_valid_relationships(
         self,
         authenticated_client,
@@ -5857,6 +6121,46 @@ class TestIntegrationViewSet:
                     },
                     "invalid",
                     None,
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {
+                            "projects": ["JIRA"],
+                        },
+                        "credentials": {"domain": "prowlerdomain"},
+                    },
+                    "invalid",
+                    "configuration",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "credentialss": {
+                            "domain": "prowlerdomain",
+                            "api_token": "api-token",
+                            "user_mail": "test@prowler.com",
+                        },
+                    },
+                    "required",
+                    "configuration",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {},
+                    },
+                    "required",
+                    "credentials",
+                ),
+                (
+                    {
+                        "integration_type": "jira",
+                        "configuration": {},
+                        "credentials": {"api_token": "api-token"},
+                    },
+                    "invalid",
+                    "credentials",
                 ),
             ]
         ),
@@ -6046,6 +6350,217 @@ class TestIntegrationViewSet:
             {f"filter[{filter_name}]": "whatever"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_integrations_create_duplicate_amazon_s3(
+        self, authenticated_client, providers_fixture
+    ):
+        provider = providers_fixture[0]
+
+        # Create first S3 integration
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.AMAZON_S3,
+                    "configuration": {
+                        "bucket_name": "test-bucket",
+                        "output_directory": "test-output",
+                    },
+                    "credentials": {
+                        "role_arn": "arn:aws:iam::123456789012:role/test-role",
+                        "external_id": "test-external-id",
+                    },
+                    "enabled": True,
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [{"type": "providers", "id": str(provider.id)}]
+                    }
+                },
+            }
+        }
+
+        # First creation should succeed
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Attempt to create duplicate should return 409
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert (
+            "This integration already exists" in response.json()["errors"][0]["detail"]
+        )
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/configuration"
+        )
+
+    def test_integrations_create_duplicate_jira(self, authenticated_client):
+        # Create first JIRA integration
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "test-api-token",
+                        "domain": "prowlerdomain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        # First creation should succeed
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Attempt to create duplicate should return 409
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert (
+            "This integration already exists" in response.json()["errors"][0]["detail"]
+        )
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/configuration"
+        )
+
+    def test_integrations_update_jira_configuration_readonly(
+        self, authenticated_client
+    ):
+        # Create JIRA integration first
+        create_data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "test-api-token",
+                        "domain": "initial-domain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        # Create the integration
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(create_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        integration_id = response.json()["data"]["id"]
+
+        # Attempt to update configuration - should be ignored/not allowed
+        update_data = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": {
+                    "configuration": {
+                        "projects": {"NEW_PROJECT": "New Project"},
+                        "issue_types": ["Epic", "Story"],
+                        "domain": "malicious-domain",
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration_id}),
+            data=json.dumps(update_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_integrations_update_jira_credentials_domain_reflects_in_configuration(
+        self, authenticated_client
+    ):
+        # Create JIRA integration first
+        create_data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "test-api-token",
+                        "domain": "original-domain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        # Create the integration
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(create_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        integration_id = response.json()["data"]["id"]
+
+        # Verify initial domain in configuration
+        initial_integration = response.json()["data"]
+        assert (
+            initial_integration["attributes"]["configuration"]["domain"]
+            == "original-domain"
+        )
+
+        # Update credentials with new domain
+        update_data = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": {
+                    "credentials": {
+                        "user_mail": "updated@example.com",
+                        "api_token": "updated-api-token",
+                        "domain": "updated-domain",
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration_id}),
+            data=json.dumps(update_data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify the new domain is reflected in configuration
+        updated_integration = response.json()["data"]
+        configuration = updated_integration["attributes"]["configuration"]
+        assert configuration["domain"] == "updated-domain"
+
+        # Verify other configuration fields are preserved
+        assert "projects" in configuration
+        assert "issue_types" in configuration
 
 
 @pytest.mark.django_db

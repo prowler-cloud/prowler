@@ -1,6 +1,7 @@
-import html
 import sys
 from io import TextIOWrapper
+
+import markdown
 
 from prowler.config.config import (
     html_logo_url,
@@ -15,6 +16,42 @@ from prowler.providers.common.provider import Provider
 
 
 class HTML(Output):
+    @staticmethod
+    def process_markdown(text: str) -> str:
+        """
+        Process markdown syntax in text and convert to HTML using the markdown library.
+
+        Args:
+            text (str): Text containing markdown syntax
+
+        Returns:
+            str: HTML with markdown syntax converted
+        """
+        if not text:
+            return text
+
+        # Initialize markdown converter with safe mode to prevent XSS
+        md = markdown.Markdown(extensions=["nl2br"])
+
+        # Convert markdown to HTML
+        html_content = md.convert(text)
+
+        # Strip outer <p> tags if present, as we're embedding in existing HTML
+        # Handle single paragraph case
+        if (
+            html_content.startswith("<p>")
+            and html_content.endswith("</p>")
+            and html_content.count("<p>") == 1
+        ):
+            html_content = html_content[3:-4]
+        # Handle multiple paragraphs case - replace <p> and </p> with <br><br>
+        elif "<p>" in html_content and "</p>" in html_content:
+            html_content = html_content.replace("</p>\n<p>", "<br />\n<br />\n")
+            html_content = html_content.replace("<p>", "")
+            html_content = html_content.replace("</p>", "")
+
+        return html_content
+
     def transform(self, findings: list[Finding]) -> None:
         """Transforms the findings into the HTML format.
 
@@ -41,14 +78,14 @@ class HTML(Output):
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
                             <td>{finding.metadata.ServiceName}</td>
-                            <td>{":".join([finding.resource_metadata['file_path'], "-".join(map(str, finding.resource_metadata['file_line_range']))]) if finding.metadata.Provider == "iac" else finding.region.lower()}</td>
+                            <td>{finding.region.lower()}</td>
                             <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
                             <td>{finding.metadata.CheckTitle}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                             <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
                             <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td><p class="show-read-more">{html.escape(finding.metadata.Risk)}</p></td>
-                            <td><p class="show-read-more">{html.escape(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
                         """
@@ -204,7 +241,7 @@ class HTML(Output):
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
                     <th scope="col">Service Name</th>
-                    <th scope="col">{"File" if provider.type == "iac" else "Region"}</th>
+                    <th scope="col">{"Line Range" if provider.type == "iac" else "Region"}</th>
                     <th style="width:20%" scope="col">Check ID</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>
@@ -558,10 +595,65 @@ class HTML(Output):
         try:
             if hasattr(provider.identity, "account_name"):
                 # GithubIdentityInfo (Personal Access Token, OAuth)
-                account_display = provider.identity.account_name
+                account_info_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub account:</b> {provider.identity.account_name}
+                            </li>
+                            """
+                # Add email if available
+                if (
+                    hasattr(provider.identity, "account_email")
+                    and provider.identity.account_email
+                ):
+                    account_info_items += f"""
+                                <li class="list-group-item">
+                                    <b>GitHub account email:</b> {provider.identity.account_email}
+                                </li>"""
             elif hasattr(provider.identity, "app_id"):
                 # GithubAppIdentityInfo (GitHub App)
-                account_display = f"app-{provider.identity.app_id}"
+                # Assessment items: App Name and Installations
+                account_info_items = f"""
+                                <li class="list-group-item">
+                                    <b>GitHub App Name:</b> {provider.identity.app_name}
+                                </li>"""
+                # Add installations if available
+                if (
+                    hasattr(provider.identity, "installations")
+                    and provider.identity.installations
+                ):
+                    installations_display = ", ".join(provider.identity.installations)
+                    account_info_items += f"""
+                            <li class="list-group-item">
+                                <b>Installations:</b> {installations_display}
+                            </li>"""
+                else:
+                    account_info_items += """
+                            <li class="list-group-item">
+                                <b>Installations:</b> No installations found
+                            </li>"""
+
+                # Credentials items: Authentication method and App ID
+                credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> {provider.auth_method}
+                            </li>
+                            <li class="list-group-item">
+                                <b>GitHub App ID:</b> {provider.identity.app_id}
+                            </li>"""
+            else:
+                # Fallback for other identity types
+                account_info_items = ""
+                credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> {provider.auth_method}
+                            </li>"""
+
+            # For PAT/OAuth, use default credentials structure
+            if hasattr(provider.identity, "account_name"):
+                credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> {provider.auth_method}
+                            </li>"""
 
             return f"""
                 <div class="col-md-2">
@@ -569,11 +661,8 @@ class HTML(Output):
                         <div class="card-header">
                             GitHub Assessment Summary
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
-                            <li class="list-group-item">
-                                <b>GitHub account:</b> {account_display}
-                            </li>
+                        <ul class="list-group list-group-flush">
+                            {account_info_items}
                         </ul>
                     </div>
                 </div>
@@ -582,11 +671,8 @@ class HTML(Output):
                         <div class="card-header">
                             GitHub Credentials
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
-                            <li class="list-group-item">
-                                <b>GitHub authentication method:</b> {provider.auth_method}
-                            </li>
+                        <ul class="list-group list-group-flush">
+                            {credentials_items}
                         </ul>
                     </div>
                 </div>"""
@@ -697,6 +783,51 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_mongodbatlas_assessment_summary(provider: Provider) -> str:
+        """
+        get_mongodbatlas_assessment_summary gets the HTML assessment summary for the provider
+
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas organization:</b> {provider.identity.organization_name}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas authentication method:</b> API Key
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_iac_assessment_summary(provider: Provider) -> str:
         """
         get_iac_assessment_summary gets the HTML assessment summary for the provider
@@ -731,6 +862,49 @@ class HTML(Output):
                         list-group-flush">
                             <li class="list-group-item">
                                 <b>IAC authentication method:</b> {provider.auth_method}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_llm_assessment_summary(provider: Provider) -> str:
+        """
+        get_llm_assessment_summary gets the HTML assessment summary for the LLM provider
+
+        Args:
+            provider (Provider): the LLM provider object
+
+        Returns:
+            str: HTML assessment summary for the LLM provider
+        """
+        try:
+            return f"""
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-robot"></i> LLM Security Assessment Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Target LLM:</b> {provider.model}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Plugins:</b> {", ".join(provider.plugins)}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Max concurrency:</b> {provider.max_concurrency}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Config file:</b> {provider.config_path if provider.config_path else "Using promptfoo defaults"}
                             </li>
                         </ul>
                     </div>
