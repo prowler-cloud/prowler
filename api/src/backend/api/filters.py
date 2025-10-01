@@ -27,6 +27,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseProviderConfiguration,
     Membership,
     OverviewStatusChoices,
     PermissionChoices,
@@ -926,4 +927,23 @@ class TenantApiKeyFilter(FilterSet):
             "prefix": ["exact", "icontains"],
             "revoked": ["exact"],
             "name": ["exact", "icontains"],
+        }
+
+
+class LighthouseProviderConfigFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.ProviderChoices.choices,
+        field_name="provider_type",
+        lookup_expr="in",
+    )
+    is_active = BooleanFilter()
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = {
+            "provider_type": ["exact", "in"],
+            "is_active": ["exact"],
         }

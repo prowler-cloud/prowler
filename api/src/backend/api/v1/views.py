@@ -84,6 +84,7 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
+    LighthouseProviderConfigFilter,
     MembershipFilter,
     ProcessorFilter,
     ProviderFilter,
@@ -4218,6 +4219,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     queryset = LighthouseProviderConfiguration.objects.all()
     serializer_class = LighthouseProviderConfigSerializer
     http_method_names = ["get", "post", "patch", "delete"]
+    filterset_class = LighthouseProviderConfigFilter
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
@@ -4232,6 +4234,36 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return LighthouseProviderConfigUpdateSerializer
         return super().get_serializer_class()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        read_serializer = LighthouseProviderConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        headers = self.get_success_headers(read_serializer.data)
+        return Response(
+            data=read_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        read_serializer = LighthouseProviderConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
