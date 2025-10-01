@@ -87,9 +87,9 @@ jobs:
             .github/workflows/api-pull-request.yml
           files_ignore: ${{ env.IGNORE_FILES }}
 
-      - name: Replace @master with current branch in pyproject.toml
+      - name: Replace @master with current branch in pyproject.toml - Only for pull requests to `master`
         working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'pull_request' && github.base_ref == 'master'
         run: |
           BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           echo "Using branch: $BRANCH_NAME"
@@ -110,7 +110,7 @@ jobs:
 
       - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
         working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           # Get the latest commit hash from the prowler-cloud/prowler repository
           LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
