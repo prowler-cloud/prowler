@@ -16,7 +16,6 @@
   "Risk": "**Unauthenticated API methods** enable:\n- Arbitrary reads exposing data (**confidentiality**)\n- Unauthorized actions against backends (**integrity**)\n- Abuse and high traffic causing cost spikes or outages (**availability**)\n\nAttackers can enumerate endpoints and invoke integrations without tokens.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/public-policies/public_6-api-gateway-authorizer-set#terraform",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html"
   ],
   "Remediation": {
