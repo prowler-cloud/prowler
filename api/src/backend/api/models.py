@@ -2161,16 +2161,32 @@ class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
     default_provider = models.CharField(max_length=50, blank=True)
 
     # Mapping of provider -> model id, e.g., {"openai": "gpt-4o", "bedrock": "anthropic.claude-v2"}
-    default_models = models.JSONField(default=dict)
+    default_models = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"Lighthouse Tenant Config for {self.tenant_id}"
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def clean(self):
         super().clean()
 
-        # Validate default_provider is configured and active (if provided)
+        # Validate default_provider is supported, configured and active (if provided)
         if self.default_provider:
+            # Check if provider type is supported
+            supported_providers = set(
+                LighthouseProviderConfiguration.ProviderChoices.values
+            )
+            if self.default_provider not in supported_providers:
+                raise ModelValidationError(
+                    detail=f"Unsupported provider: '{self.default_provider}'. Supported providers: {', '.join(supported_providers)}",
+                    code="unsupported_provider",
+                    pointer="/data/attributes/default_provider",
+                )
+
+            # Check if provider is configured and active
             if not LighthouseProviderConfiguration.objects.filter(
                 tenant_id=self.tenant_id,
                 provider_type=self.default_provider,
