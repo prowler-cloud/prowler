@@ -13,6 +13,7 @@ class Test_eks_cluster_ensure_version_is_supported:
     def test_no_clusters(self):
         eks_client = mock.MagicMock
         eks_client.clusters = []
+        eks_client.audit_config = {"eks_cluster_oldest_version_supported": "1.28"}
         with mock.patch(
             "prowler.providers.aws.services.eks.eks_service.EKS",
             eks_client,
@@ -53,7 +54,7 @@ class Test_eks_cluster_ensure_version_is_supported:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EKS cluster {cluster_name} is in version 1.22. It should be one of the next supported versions: 1.28 or higher"
+                == f"EKS cluster {cluster_name} is using version 1.22. It should be one of the supported versions: 1.28 or higher."
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
@@ -88,7 +89,7 @@ class Test_eks_cluster_ensure_version_is_supported:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EKS cluster {cluster_name} is in version 0.22. It should be one of the next supported versions: 1.28 or higher"
+                == f"EKS cluster {cluster_name} is using version 0.22. It should be one of the supported versions: 1.28 or higher."
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
@@ -194,6 +195,44 @@ class Test_eks_cluster_ensure_version_is_supported:
             assert (
                 result[0].status_extended
                 == f"EKS cluster {cluster_name} is using version 1.30 that is supported by AWS."
+            )
+            assert result[0].resource_id == cluster_name
+            assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_eks_cluster_with_none_version(self):
+        """Test EKS cluster with version=None - should return FAIL gracefully"""
+        eks_client = mock.MagicMock
+        eks_client.audit_config = {"eks_cluster_oldest_version_supported": "1.28"}
+        eks_client.clusters = []
+        eks_client.clusters.append(
+            EKSCluster(
+                name=cluster_name,
+                version=None,  # This should trigger the AttributeError in current implementation
+                arn=cluster_arn,
+                region=AWS_REGION_EU_WEST_1,
+                logging=None,
+            )
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.services.eks.eks_service.EKS",
+            eks_client,
+        ):
+            from prowler.providers.aws.services.eks.eks_cluster_uses_a_supported_version.eks_cluster_uses_a_supported_version import (
+                eks_cluster_uses_a_supported_version,
+            )
+
+            check = eks_cluster_uses_a_supported_version()
+            result = check.execute()
+
+            # This should now work correctly and return FAIL for None version
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"EKS cluster {cluster_name} version information is not available."
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
