@@ -17,7 +17,6 @@
   "AdditionalURLs": [
     "https://www.clouddefense.ai/compliance-rules/nist-800-53-5/au/apigateway-stage-cache-encryption-at-rest-enabled",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html#enable-api-gateway-caching",
-    "https://repost.aws/questions/QUccQgg1WkTXWc8-Xa7fsPKw/how-does-api-gateway-encrypt-its-cache",
     "https://support.icompaas.com/support/solutions/articles/62000233641-ensure-api-gateway-rest-api-cache-data-is-encrypted-at-rest",
     "https://docs.fortifyfox.com/docs/aws-foundational-security-best-practices/apigateway/api-gw-cache-encrypted/index.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-5",
