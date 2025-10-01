@@ -73,14 +73,6 @@ The GitHub checks pattern is described in [checks page](./checks.md). You can fi
 
 The best reference to understand how to implement a new check is the [GitHub check implementation documentation](./checks.md#creating-a-check) and by taking other checks as reference.
 
-### New check: organization_default_repository_permission_strict
-
-- Path: `prowler/providers/github/services/organization/organization_default_repository_permission_strict/`
-- Purpose: Verifies organization base (default repository) permission is set to a strict level ("read" or "none").
-- Output: PASS if base permission is "read" or "none"; FAIL if "write" or "admin"; SKIP if unavailable.
-- Compliance: Mapped to CIS GitHub Benchmark v1.0.0 control 1.3.8.
-- Related docs: https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/managing-base-permissions-for-an-organization
-
 ### Check Report Class
 
 The `CheckReportGithub` class models a single finding for a GitHub resource in a check report. It is defined in [`prowler/lib/check/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py) and inherits from the generic `Check_Report` base class.
