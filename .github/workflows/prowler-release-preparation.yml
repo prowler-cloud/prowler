@@ -64,7 +64,7 @@ jobs:
             local changelog_file="$1"
             if [ -f "$changelog_file" ]; then
               # Extract the first version entry (most recent) from changelog
-              # Format: ## [version] or ## [vversion]
+              # Format: ## [version] (1.2.3) or ## [vversion] (v1.2.3)
               local version=$(grep -m 1 '^## \[' "$changelog_file" | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
               echo "$version"
             else
@@ -72,7 +72,7 @@ jobs:
             fi
           }
 
-                    # Read actual versions from changelogs (source of truth)
+          # Read actual versions from changelogs (source of truth)
           UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
           API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
           SDK_VERSION=$(extract_latest_version "prowler/CHANGELOG.md")
