@@ -69,7 +69,7 @@ export interface ComplianceMapper {
   getDetailsComponent: (requirement: Requirement) => React.ReactNode;
 }
 
-const defaultMapper: ComplianceMapper = {
+const getDefaultMapper = (): ComplianceMapper => ({
   mapComplianceData: mapGenericComplianceData,
   toAccordionItems: toGenericAccordionItems,
   getTopFailedSections,
@@ -77,22 +77,9 @@ const defaultMapper: ComplianceMapper = {
     calculateCategoryHeatmapData(data),
   getDetailsComponent: (requirement: Requirement) =>
     React.createElement(GenericCustomDetails, { requirement }),
-};
+});
 
-/**
- * Get the appropriate compliance mapper based on the framework name
- * @param framework - The framework name (e.g., "ENS", "ISO27001", "CIS")
- * @returns ComplianceMapper object with specific functions for the framework
- */
-export const getComplianceMapper = (framework?: string): ComplianceMapper => {
-  if (!framework) {
-    return defaultMapper;
-  }
-
-  return complianceMappers[framework] || defaultMapper;
-};
-
-export const complianceMappers: Record<string, ComplianceMapper> = {
+const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
   ENS: {
     mapComplianceData: mapENSComplianceData,
     toAccordionItems: toENSAccordionItems,
@@ -164,4 +151,18 @@ export const complianceMappers: Record<string, ComplianceMapper> = {
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(ThreatCustomDetails, { requirement }),
   },
+});
+
+/**
+ * Get the appropriate compliance mapper based on the framework name
+ * @param framework - The framework name (e.g., "ENS", "ISO27001", "CIS")
+ * @returns ComplianceMapper object with specific functions for the framework
+ */
+export const getComplianceMapper = (framework?: string): ComplianceMapper => {
+  if (!framework) {
+    return getDefaultMapper();
+  }
+
+  const complianceMappers = getComplianceMappers();
+  return complianceMappers[framework] || getDefaultMapper();
 };

@@ -1,7 +1,8 @@
 "use client";
 
+import { Select, SelectItem } from "@heroui/select";
+import { Spacer } from "@heroui/spacer";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem, Spacer } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -98,7 +99,7 @@ export const ChatbotConfig = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col space-y-6"
+          className="flex flex-col gap-6"
         >
           <Controller
             name="model"
@@ -115,24 +116,14 @@ export const ChatbotConfig = ({
                 size="md"
                 isRequired
               >
-                <SelectItem key="gpt-4o-2024-08-06" value="gpt-4o-2024-08-06">
+                <SelectItem key="gpt-4o-2024-08-06">
                   GPT-4o (Recommended)
                 </SelectItem>
-                <SelectItem
-                  key="gpt-4o-mini-2024-07-18"
-                  value="gpt-4o-mini-2024-07-18"
-                >
+                <SelectItem key="gpt-4o-mini-2024-07-18">
                   GPT-4o Mini
                 </SelectItem>
-                <SelectItem key="gpt-5-2025-08-07" value="gpt-5-2025-08-07">
-                  GPT-5
-                </SelectItem>
-                <SelectItem
-                  key="gpt-5-mini-2025-08-07"
-                  value="gpt-5-mini-2025-08-07"
-                >
-                  GPT-5 Mini
-                </SelectItem>
+                <SelectItem key="gpt-5-2025-08-07">GPT-5</SelectItem>
+                <SelectItem key="gpt-5-mini-2025-08-07">GPT-5 Mini</SelectItem>
               </Select>
             )}
           />

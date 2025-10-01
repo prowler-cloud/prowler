@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getInvitations = async ({
   page = 1,
@@ -40,7 +36,7 @@ export const getInvitations = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/invitations");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching invitations:", error);
     return undefined;

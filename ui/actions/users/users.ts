@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getUsers = async ({
   page = 1,
@@ -40,7 +36,7 @@ export const getUsers = async ({
       headers,
     });
 
-    return handleApiResponse(users, "/users");
+    return handleApiResponse(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     return undefined;
@@ -178,7 +174,7 @@ export const getUserInfo = async () => {
       throw new Error(`Failed to fetch user data: ${response.statusText}`);
     }
 
-    return handleApiResponse(response, "/profile");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching profile:", error);
     return undefined;

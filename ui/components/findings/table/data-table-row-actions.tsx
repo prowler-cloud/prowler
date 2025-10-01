@@ -1,13 +1,13 @@
 "use client";
 
+import { Button } from "@heroui/button";
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
-} from "@nextui-org/react";
+} from "@heroui/dropdown";
 import { Row } from "@tanstack/react-table";
 import { useState } from "react";
 
@@ -38,7 +38,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="dark:bg-prowler-blue-800 shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>
@@ -60,7 +60,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
                 startContent={
                   <JiraIcon
                     size={20}
-                    className="pointer-events-none flex-shrink-0 text-default-500"
+                    className="text-default-500 pointer-events-none shrink-0"
                   />
                 }
                 onPress={() => setIsJiraModalOpen(true)}

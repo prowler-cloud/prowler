@@ -64,8 +64,8 @@ export const UserNav = () => {
 
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-small font-medium leading-none">
+          <div className="flex flex-col gap-1">
+            <p className="text-small leading-none font-medium">
               {name}
               {companyName && (
                 <span className="text-xs">{` | ${companyName}`}</span>
@@ -81,7 +81,7 @@ export const UserNav = () => {
           <DropdownMenuItem className="hover:cursor-pointer" asChild>
             <CustomLink
               href="/profile"
-              className="flex items-center font-normal text-prowler-black dark:text-prowler-white"
+              className="text-prowler-black dark:text-prowler-white flex items-center font-normal"
               target="_self"
             >
               <User className="text-muted-foreground mr-3 h-4 w-4" />

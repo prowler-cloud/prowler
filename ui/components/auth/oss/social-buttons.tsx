@@ -1,5 +1,6 @@
+import { Button } from "@heroui/button";
+import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
-import { Button, Tooltip } from "@nextui-org/react";
 
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
@@ -24,7 +25,7 @@ export const SocialButtons = ({
           </CustomLink>
         </div>
       }
-      placement="right-start"
+      placement="top"
       shadow="sm"
       isDisabled={isGoogleOAuthEnabled}
       className="w-96"
@@ -51,7 +52,7 @@ export const SocialButtons = ({
           </CustomLink>
         </div>
       }
-      placement="right-start"
+      placement="top"
       shadow="sm"
       isDisabled={isGithubOAuthEnabled}
       className="w-96"

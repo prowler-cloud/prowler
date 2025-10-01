@@ -5,7 +5,7 @@ export const ComplianceDetailContainer = ({
 }: {
   children: React.ReactNode;
 }) => {
-  return <div className="space-y-4">{children}</div>;
+  return <div className="flex flex-col gap-4">{children}</div>;
 };
 
 export const ComplianceDetailSection = ({
@@ -107,7 +107,7 @@ export const ComplianceBulletList = ({
 
   return (
     <ComplianceDetailSection title={title}>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         {items.map((item: string, index: number) => (
           <div key={index} className="flex items-start gap-2">
             <span className="text-muted-foreground mt-1 text-xs">•</span>
@@ -134,7 +134,7 @@ export const ComplianceChipContainer = ({
         {items.map((item: string, index: number) => (
           <span
             key={index}
-            className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20"
+            className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-500/10 ring-inset dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20"
           >
             {item}
           </span>

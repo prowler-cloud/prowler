@@ -1,4 +1,5 @@
-import { Divider, Tooltip } from "@nextui-org/react";
+import { Divider } from "@heroui/divider";
+import { Tooltip } from "@heroui/tooltip";
 
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { ProviderType } from "@/types";
@@ -34,7 +35,7 @@ export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
           placement="top"
           size="sm"
         >
-          <p className="text-xs text-default-500">
+          <p className="text-default-500 text-xs">
             {scan.attributes.name || "- -"}
           </p>
         </Tooltip>

@@ -12,6 +12,7 @@ node_modules
 coverage
 .next
 build
+next-env.d.ts
 !.commitlintrc.cjs
 !.lintstagedrc.cjs
 !jest.config.js

@@ -15,7 +15,7 @@ export const TableLink = ({ href, label, isDisabled }: TableLinkProps) => {
       asLink={href}
       ariaLabel={label}
       variant="ghost"
-      className="text-xs font-medium text-default-500 hover:text-primary disabled:opacity-30"
+      className="text-default-500 hover:text-primary text-xs font-medium disabled:opacity-30"
       size="sm"
       isDisabled={isDisabled}
     >

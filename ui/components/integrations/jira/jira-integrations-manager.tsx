@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -214,7 +214,7 @@ export const JiraIntegrationsManager = ({
         title="Delete Jira Integration"
         description="This action cannot be undone. This will permanently delete your Jira integration."
       >
-        <div className="flex w-full justify-center space-x-6">
+        <div className="flex w-full justify-center gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
@@ -265,7 +265,7 @@ export const JiraIntegrationsManager = ({
         />
       </CustomAlertModal>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         {/* Header with Add Button */}
         <div className="flex items-center justify-between">
           <div>

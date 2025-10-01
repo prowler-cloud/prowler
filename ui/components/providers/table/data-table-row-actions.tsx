@@ -1,18 +1,18 @@
 "use client";
 
+import { Button } from "@heroui/button";
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
-} from "@nextui-org/react";
+} from "@heroui/dropdown";
 import {
   AddNoteBulkIcon,
   DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
+} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
@@ -28,8 +28,7 @@ import { DeleteForm } from "../forms/delete-form";
 interface DataTableRowActionsProps<ProviderProps> {
   row: Row<ProviderProps>;
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<ProviderProps>({
   row,
@@ -53,6 +52,12 @@ export function DataTableRowActions<ProviderProps>({
   };
 
   const hasSecret = (row.original as any).relationships?.secret?.data;
+
+  // Calculate disabled keys based on conditions
+  const disabledKeys = [];
+  if (!hasSecret || loading) {
+    disabledKeys.push("new");
+  }
 
   return (
     <>
@@ -78,7 +83,7 @@ export function DataTableRowActions<ProviderProps>({
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="dark:bg-prowler-blue-800 shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>
@@ -86,7 +91,13 @@ export function DataTableRowActions<ProviderProps>({
               <VerticalDotsIcon className="text-default-400" />
             </Button>
           </DropdownTrigger>
-          <DropdownMenu aria-label="Actions" color="default" variant="flat">
+          <DropdownMenu
+            aria-label="Actions"
+            color="default"
+            variant="flat"
+            disabledKeys={disabledKeys}
+            closeOnSelect={false}
+          >
             <DropdownSection title="Actions">
               <DropdownItem
                 key={hasSecret ? "update" : "add"}
@@ -118,7 +129,6 @@ export function DataTableRowActions<ProviderProps>({
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
                 onPress={handleTestConnection}
-                isDisabled={!hasSecret || loading}
                 closeOnSelect={false}
               >
                 {loading ? "Testing..." : "Test Connection"}

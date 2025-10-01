@@ -97,7 +97,7 @@ export const FormButtons = ({
   leftIcon,
 }: FormButtonsProps) => {
   return (
-    <div className="flex w-full justify-center space-x-6">
+    <div className="flex w-full justify-center gap-6">
       <FormCancelButton
         setIsOpen={setIsOpen}
         onCancel={onCancel}

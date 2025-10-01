@@ -1,7 +1,7 @@
 "use client";
 
+import { Input } from "@heroui/input";
 import { Icon } from "@iconify/react";
-import { Input } from "@nextui-org/react";
 import React, { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
@@ -79,7 +79,7 @@ export const CustomInput = <T extends FieldValues>({
   const endContent = (password || confirmPassword) && (
     <button type="button" onClick={toggleVisibility}>
       <Icon
-        className="pointer-events-none text-2xl text-default-400"
+        className="text-default-400 pointer-events-none text-2xl"
         icon={
           (password && isPasswordVisible) ||
           (confirmPassword && isConfirmPasswordVisible)
@@ -101,7 +101,7 @@ export const CustomInput = <T extends FieldValues>({
               id={name}
               classNames={{
                 label:
-                  "tracking-tight font-light !text-default-500 text-xs !z-0",
+                  "tracking-tight font-light !text-default-500 text-xs z-0!",
                 input: "text-default-500 text-small",
               }}
               isRequired={inputIsRequired}
@@ -117,10 +117,11 @@ export const CustomInput = <T extends FieldValues>({
               isDisabled={isDisabled}
               isReadOnly={isReadOnly}
               {...field}
+              value={field.value ?? ""}
             />
           </FormControl>
           {showFormMessage && (
-            <FormMessage className="max-w-full text-xs text-system-error dark:text-system-error" />
+            <FormMessage className="text-system-error dark:text-system-error max-w-full text-xs" />
           )}
         </>
       )}

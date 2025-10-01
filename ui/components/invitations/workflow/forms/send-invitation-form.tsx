@@ -1,7 +1,7 @@
 "use client";
 
+import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -92,7 +92,7 @@ export const SendInvitationForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Email Field */}
         <CustomInput
@@ -102,7 +102,7 @@ export const SendInvitationForm = ({
           label="Email"
           labelPlacement="inside"
           placeholder="Enter the email address"
-          variant="bordered"
+          variant="flat"
           isRequired
           isInvalid={!!form.formState.errors.email}
         />
@@ -119,7 +119,7 @@ export const SendInvitationForm = ({
                 classNames={{
                   selectorIcon: "right-2",
                 }}
-                variant="bordered"
+                variant="flat"
                 isDisabled={isSelectorDisabled}
                 selectedKeys={[field.value]}
                 onSelectionChange={(selected) =>
@@ -144,7 +144,7 @@ export const SendInvitationForm = ({
         />
 
         {/* Submit Button */}
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           <CustomButton
             type="submit"
             ariaLabel="Send Invitation"

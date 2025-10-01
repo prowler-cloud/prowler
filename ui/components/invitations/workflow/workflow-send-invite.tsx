@@ -1,6 +1,7 @@
 "use client";
 
-import { Progress, Spacer } from "@nextui-org/react";
+import { Progress } from "@heroui/progress";
+import { Spacer } from "@heroui/spacer";
 import { usePathname } from "next/navigation";
 import React from "react";
 
@@ -31,34 +32,51 @@ export const WorkflowSendInvite = () => {
   const currentStep = currentStepIndex === -1 ? 0 : currentStepIndex;
 
   return (
-    <section className="max-w-sm">
-      <h1 className="mb-2 text-xl font-medium" id="getting-started">
+    <section className="w-full max-w-none p-3 sm:max-w-sm sm:p-0">
+      <h1 className="mb-2 text-lg font-medium sm:text-xl" id="getting-started">
         Send invitation
       </h1>
-      <p className="mb-5 text-small text-default-500">
+      <p className="sm:text-small text-default-500 mb-3 text-xs sm:mb-5">
         Follow the steps to send an invitation to the users.
       </p>
       <Progress
         classNames={{
-          base: "px-0.5 mb-5",
-          label: "text-small",
-          value: "text-small text-default-400",
+          base: "px-0.5 mb-3 sm:mb-5",
+          label: "text-xs sm:text-small",
+          value: "text-xs sm:text-small text-default-400",
         }}
         label="Steps"
         maxValue={steps.length - 1}
         minValue={0}
         showValueLabel={true}
-        size="md"
+        size="sm"
         value={currentStep}
         valueLabel={`${currentStep + 1} of ${steps.length}`}
       />
-      <VerticalSteps
-        hideProgressBars
-        currentStep={currentStep}
-        stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-prowler-blue-800 cursor-default"
-        steps={steps}
-      />
-      <Spacer y={4} />
+
+      {/* Desktop: Full vertical steps */}
+      <div className="hidden sm:block">
+        <VerticalSteps
+          hideProgressBars
+          currentStep={currentStep}
+          stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-prowler-blue-800 cursor-default"
+          steps={steps}
+        />
+      </div>
+
+      {/* Mobile: Compact current step indicator */}
+      <div className="sm:hidden">
+        <div className="text-default-400 border-l-2 border-blue-500 py-1 pl-3 text-xs">
+          <div className="font-medium">
+            Current: {steps[currentStep]?.title}
+          </div>
+          <div className="text-default-300 mt-1 text-xs">
+            {steps[currentStep]?.description}
+          </div>
+        </div>
+      </div>
+
+      <Spacer y={2} />
     </section>
   );
 };

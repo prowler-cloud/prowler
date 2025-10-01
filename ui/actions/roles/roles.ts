@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getRoles = async ({
   page = 1,
@@ -40,7 +36,7 @@ export const getRoles = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/roles");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching roles:", error);
     return undefined;

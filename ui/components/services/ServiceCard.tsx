@@ -1,4 +1,5 @@
-import { Card, CardBody, Chip } from "@nextui-org/react";
+import { Card, CardBody } from "@heroui/card";
+import { Chip } from "@heroui/chip";
 
 import { getAWSIcon, NotificationIcon, SuccessIcon } from "../icons";
 
@@ -12,11 +13,11 @@ export const ServiceCard: React.FC<CardServiceProps> = ({
 }) => {
   return (
     <Card fullWidth isPressable isHoverable shadow="sm">
-      <CardBody className="flex flex-row items-center justify-between space-x-4">
-        <div className="flex items-center space-x-4">
+      <CardBody className="flex flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
           {getAWSIcon(serviceAlias)}
           <div className="flex flex-col">
-            <h4 className="text-md font-bold leading-5">{serviceAlias}</h4>
+            <h4 className="text-md leading-5 font-bold">{serviceAlias}</h4>
             <small className="text-default-500">
               {fidingsFailed > 0
                 ? `${fidingsFailed} Failed Findings`

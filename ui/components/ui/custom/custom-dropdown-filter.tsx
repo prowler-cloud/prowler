@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  CheckboxGroup,
-  Divider,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  ScrollShadow,
-} from "@nextui-org/react";
+import { Button } from "@heroui/button";
+import { Checkbox, CheckboxGroup } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Popover, PopoverContent, PopoverTrigger } from "@heroui/popover";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 import { ChevronDown, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, {
@@ -221,7 +216,7 @@ export const CustomDropdownFilter = ({
       >
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-auto min-h-10 items-center justify-between whitespace-nowrap rounded-md border border-dashed bg-background px-3 py-2 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50 dark:bg-prowler-blue-800"
+            className="border-input hover:bg-accent hover:text-accent-foreground bg-background dark:bg-prowler-blue-800 inline-flex h-auto min-h-10 items-center justify-between rounded-md border px-3 py-2 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
             endContent={
               <ChevronDown
                 className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -231,26 +226,23 @@ export const CustomDropdownFilter = ({
             variant="flat"
           >
             <div className="flex min-w-0 flex-1 items-center gap-2">
-              <span className="flex-shrink-0 text-small">
+              <span className="text-small shrink-0">
                 {filter?.labelCheckboxGroup}
               </span>
 
               {selectedValues.length > 0 && (
                 <>
-                  <Divider
-                    orientation="vertical"
-                    className="h-4 flex-shrink-0"
-                  />
-                  <div className="flex min-w-0 flex-shrink items-center">
+                  <Divider orientation="vertical" className="h-4 shrink-0" />
+                  <div className="flex min-w-0 shrink items-center">
                     {selectedValues.length <= 2 ? (
                       <span
-                        className="max-w-32 truncate text-xs text-default-500"
+                        className="text-default-500 max-w-32 truncate text-xs"
                         title={selectedValues.map(getDisplayLabel).join(", ")}
                       >
                         {selectedValues.map(getDisplayLabel).join(", ")}
                       </span>
                     ) : (
-                      <span className="truncate text-xs text-default-500">
+                      <span className="text-default-500 truncate text-xs">
                         {isAllSelected
                           ? "All selected"
                           : `${selectedValues.length} selected`}
@@ -258,7 +250,7 @@ export const CustomDropdownFilter = ({
                     )}
                     <div
                       onClick={handleClearAll}
-                      className="ml-1 flex h-4 w-4 flex-shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-default-200"
+                      className="hover:bg-default-200 ml-1 flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors"
                       aria-label="Clear selection"
                       role="button"
                       tabIndex={0}
@@ -269,7 +261,7 @@ export const CustomDropdownFilter = ({
                         }
                       }}
                     >
-                      <X className="h-3 w-3 text-default-400 hover:text-default-600" />
+                      <X className="text-default-400 hover:text-default-600 h-3 w-3" />
                     </div>
                   </div>
                 </>
@@ -277,7 +269,7 @@ export const CustomDropdownFilter = ({
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto min-w-80 dark:bg-prowler-blue-800">
+        <PopoverContent className="dark:bg-prowler-blue-800 w-auto min-w-80">
           <div className="flex w-full flex-col gap-4 p-2">
             <CheckboxGroup
               color="default"

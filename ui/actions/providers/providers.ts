@@ -3,16 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getFormValue,
-  handleApiError,
-  handleApiResponse,
-  wait,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-crendentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
 export const getProviders = async ({
@@ -45,7 +39,7 @@ export const getProviders = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;
@@ -63,7 +57,7 @@ export const getProvider = async (formData: FormData) => {
       headers,
     });
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }

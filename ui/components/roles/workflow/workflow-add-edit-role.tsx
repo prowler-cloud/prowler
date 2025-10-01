@@ -1,6 +1,7 @@
 "use client";
 
-import { Progress, Spacer } from "@nextui-org/react";
+import { Progress } from "@heroui/progress";
+import { Spacer } from "@heroui/spacer";
 import { usePathname } from "next/navigation";
 import React from "react";
 
@@ -34,7 +35,7 @@ export const WorkflowAddEditRole = () => {
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
         Manage Role Permissions
       </h1>
-      <p className="mb-5 text-small text-default-500">
+      <p className="text-small text-default-500 mb-5">
         Define a new role with customized permissions or modify an existing one
         to meet your needs.
       </p>

@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { apiBaseUrl, getAuthHeaders, handleApiResponse } from "@/lib/helper";
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 import { samlConfigFormSchema } from "@/types/formSchemas";
 
 export const createSamlConfig = async (_prevState: any, formData: FormData) => {

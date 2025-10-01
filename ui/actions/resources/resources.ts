@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, handleApiResponse } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getResources = async ({
   page = 1,
@@ -46,7 +47,7 @@ export const getResources = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/resources");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching resources:", error);
     return undefined;
@@ -95,7 +96,7 @@ export const getLatestResources = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/resources");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching latest resources:", error);
     return undefined;

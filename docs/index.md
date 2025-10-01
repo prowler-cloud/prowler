@@ -14,6 +14,7 @@ The official supported providers right now are:
 | **Github** | Official | Stable | UI, API, CLI |
 | **IaC** | Official | Beta | CLI |
 | **MongoDB Atlas** | Official | Beta | CLI |
+| **LLM** | Official | Beta | CLI |
 | **NHN** | Unofficial | Beta | CLI |
 
 Prowler supports **auditing, incident response, continuous monitoring, hardening, forensic readiness, and remediation**.

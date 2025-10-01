@@ -1,6 +1,6 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/tooltip";
 import { CheckCheck, ExternalLink } from "lucide-react";
 import { useState } from "react";
 
@@ -27,7 +27,7 @@ export const CopyLinkButton = ({ url }: CopyLinkButtonProps) => {
       <button
         type="button"
         onClick={handleCopy}
-        className="ml-2 cursor-pointer p-0"
+        className="ml-2 inline-flex cursor-pointer flex-row items-center gap-2 p-0"
         aria-label="Copy URL to clipboard"
       >
         {copied ? (

@@ -17,7 +17,7 @@ import {
 
 export default async function Profile() {
   return (
-    <ContentLayout title="User Profile" icon="ci:users">
+    <ContentLayout title="User Profile" icon="lucide:users">
       <Suspense fallback={<SkeletonUserInfo />}>
         <SSRDataUser />
       </Suspense>
@@ -96,10 +96,10 @@ const SSRDataUser = async () => {
     <div className="flex w-full flex-col gap-6">
       <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
       <div className="flex flex-col gap-6 xl:flex-row">
-        <div className="w-full lg:w-2/3 xl:w-1/2">
+        <div className="w-full">
           <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
         </div>
-        <div className="w-full lg:w-2/3 xl:w-1/2">
+        <div className="w-full">
           <MembershipsCard
             memberships={membershipsIncluded}
             tenantsMap={tenantsMap}
@@ -108,7 +108,7 @@ const SSRDataUser = async () => {
         </div>
       </div>
       {hasManageIntegrations && (
-        <div className="w-full pr-0 lg:w-2/3 xl:w-1/2 xl:pr-3">
+        <div className="w-full pr-0 xl:w-1/2 xl:pr-3">
           <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
         </div>
       )}

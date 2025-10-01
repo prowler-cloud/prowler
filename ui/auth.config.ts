@@ -32,11 +32,12 @@ const refreshAccessToken = async (token: JwtPayload) => {
       },
       body: JSON.stringify(bodyData),
     });
-    const newTokens = await response.json();
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const newTokens = await response.json();
 
     return {
       ...token,

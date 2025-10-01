@@ -1,6 +1,7 @@
 "use server";
 
-import { apiBaseUrl, getAuthHeaders, handleApiResponse } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getCompliancesOverview = async ({
   scanId,
@@ -28,7 +29,7 @@ export const getCompliancesOverview = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/compliance");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;

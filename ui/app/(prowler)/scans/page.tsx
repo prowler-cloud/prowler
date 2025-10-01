@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -26,12 +26,12 @@ import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
 export default async function Scans({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
   const session = await auth();
-  const filteredParams = { ...searchParams };
+  const resolvedSearchParams = await searchParams;
+  const filteredParams = { ...resolvedSearchParams };
   delete filteredParams.scanId;
-  const searchParamsKey = JSON.stringify(filteredParams);
 
   const providersData = await getProviders({
     pageSize: 50,
@@ -77,14 +77,14 @@ export default async function Scans({
 
   if (thereIsNoProviders) {
     return (
-      <ContentLayout title="Scans" icon="lucide:scan-search">
+      <ContentLayout title="Scans" icon="lucide:timer">
         <NoProvidersAdded />
       </ContentLayout>
     );
   }
 
   return (
-    <ContentLayout title="Scans" icon="lucide:scan-search">
+    <ContentLayout title="Scans" icon="lucide:timer">
       <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
         {!hasManageScansPermission ? (
@@ -111,8 +111,8 @@ export default async function Scans({
           <MutedFindingsConfigButton />
         </div>
         <Spacer y={8} />
-        <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-          <SSRDataTableScans searchParams={searchParams} />
+        <Suspense fallback={<SkeletonTableScans />}>
+          <SSRDataTableScans searchParams={resolvedSearchParams} />
         </Suspense>
       </>
     </ContentLayout>
@@ -178,6 +178,7 @@ const SSRDataTableScans = async ({
 
   return (
     <DataTable
+      key={`scans-${Date.now()}`}
       columns={ColumnGetScans}
       data={expandedScansData || []}
       metadata={scansData?.meta}

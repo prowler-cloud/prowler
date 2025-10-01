@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import Image from "next/image";
 import React, { Suspense } from "react";
 
@@ -48,12 +48,12 @@ const ComplianceIconSmall = ({
   title: string;
 }) => {
   return (
-    <div className="relative h-6 w-6 flex-shrink-0">
+    <div className="relative h-6 w-6 shrink-0">
       <Image
         src={logoPath}
         alt={`${title} logo`}
         fill
-        className="h-8 w-8 min-w-8 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
+        className="h-8 w-8 min-w-8 rounded-md border border-gray-300 bg-white object-contain p-[2px]"
       />
     </div>
   );
@@ -76,18 +76,19 @@ export default async function ComplianceDetail({
   params,
   searchParams,
 }: {
-  params: { compliancetitle: string };
-  searchParams: ComplianceDetailSearchParams;
+  params: Promise<{ compliancetitle: string }>;
+  searchParams: Promise<ComplianceDetailSearchParams>;
 }) {
-  const { compliancetitle } = params;
-  const { complianceId, version, scanId, scanData } = searchParams;
-  const regionFilter = searchParams["filter[region__in]"];
-  const cisProfileFilter = searchParams["filter[cis_profile_level]"];
+  const { compliancetitle } = await params;
+  const resolvedSearchParams = await searchParams;
+  const { complianceId, version, scanId, scanData } = resolvedSearchParams;
+  const regionFilter = resolvedSearchParams["filter[region__in]"];
+  const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
   // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
   const paramsForKey = Object.fromEntries(
-    Object.entries(searchParams).filter(
+    Object.entries(resolvedSearchParams).filter(
       ([key]) => key !== "page" && key !== "pageSize",
     ),
   );
@@ -153,7 +154,7 @@ export default async function ComplianceDetail({
       <Suspense
         key={searchParamsKey}
         fallback={
-          <div className="space-y-8">
+          <div className="flex flex-col gap-8">
             <ChartsWrapper logoPath={logoPath}>
               <PieChartSkeleton />
               <BarChartSkeleton />
@@ -200,7 +201,7 @@ const SSRComplianceContent = async ({
 
   if (!scanId || type === "tasks") {
     return (
-      <div className="space-y-8">
+      <div className="flex flex-col gap-8">
         <ChartsWrapper logoPath={logoPath}>
           <PieChart pass={0} fail={0} manual={0} />
           <BarChart sections={[]} />
@@ -231,7 +232,7 @@ const SSRComplianceContent = async ({
   const topFailedSections = mapper.getTopFailedSections(data);
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-8">
       <ChartsWrapper logoPath={logoPath}>
         <PieChart
           pass={totalRequirements.pass}
