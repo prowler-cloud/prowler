@@ -19,7 +19,7 @@
     "https://docs.aws.amazon.com/athena/latest/ug/security-logging-monitoring.html",
     "https://docs.aws.amazon.com/athena/latest/ug/athena-cloudwatch-metrics-enable.html",
     "https://stackoverflow.com/questions/68896809/how-to-save-queries-executed-by-athena-in-logsgroup-cloudwatch",
-    "https://jayendrapatil.com/amazon-athena/",
+    "https://support.icompaas.com/support/solutions/articles/62000233405-ensure-that-logging-is-enabled-for-amazon-athena-workgroups-to-capture-query-activity-",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/athena-controls.html#athena-4"
   ],
   "Remediation": {

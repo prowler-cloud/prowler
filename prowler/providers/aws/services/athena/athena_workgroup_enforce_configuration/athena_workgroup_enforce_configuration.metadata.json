@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_33#terraform"
+    "https://support.icompaas.com/support/solutions/articles/62000233407-ensure-that-workgroup-configuration-is-enforced-so-it-cannot-be-overriden-by-client-side-settings-"
   ],
   "Remediation": {
     "Code": {
