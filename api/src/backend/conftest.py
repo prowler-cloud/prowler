@@ -1375,6 +1375,19 @@ def api_keys_fixture(tenants_fixture, create_test_user):
     tenant = tenants_fixture[0]
     user = create_test_user
 
+    # Create and assign role to user for API key authentication
+    role = Role.objects.create(
+        tenant_id=tenant.id,
+        name="Test API Key Role",
+        unlimited_visibility=True,
+        manage_account=True,
+    )
+    UserRoleRelationship.objects.create(
+        user=user,
+        role=role,
+        tenant_id=tenant.id,
+    )
+
     # Create API keys with different states
     api_key1, raw_key1 = TenantAPIKey.objects.create_api_key(
         name="Test API Key 1",
@@ -1395,7 +1408,8 @@ def api_keys_fixture(tenants_fixture, create_test_user):
         tenant_id=tenant.id,
         entity=user,
     )
-    TenantAPIKey.objects.revoke_api_key(api_key3.pk)
+    api_key3.revoked = True
+    api_key3.save()
 
     # Store raw keys on instances for testing
     api_key1._raw_key = raw_key1
