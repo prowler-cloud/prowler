@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -27,33 +28,36 @@ interface ChatFormData {
 export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const {
-    messages,
-    handleSubmit,
-    handleInputChange,
-    append,
-    status,
-    error,
-    setMessages,
-  } = useChat({
-    api: "/api/lighthouse/analyst",
-    credentials: "same-origin",
+  const { messages, sendMessage, status, error, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/lighthouse/analyst",
+      credentials: "same-origin",
+    }),
     experimental_throttle: 100,
-    sendExtraMessageFields: true,
-    onFinish: (message) => {
+    onFinish: ({ message }) => {
       // There is no specific way to output the error message from langgraph supervisor
       // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
       // Detect error messages sent from backend using specific prefix and display the error
-      if (message.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")) {
-        const errorText = message.content
+      const firstTextPart = message.parts.find((p) => p.type === "text");
+      if (
+        firstTextPart &&
+        "text" in firstTextPart &&
+        firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+      ) {
+        const errorText = firstTextPart.text
           .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
           .trim();
         setErrorMessage(errorText);
         // Remove error message from chat history
         setMessages((prev) =>
-          prev.filter(
-            (m) => !m.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:"),
-          ),
+          prev.filter((m) => {
+            const textPart = m.parts.find((p) => p.type === "text");
+            return !(
+              textPart &&
+              "text" in textPart &&
+              textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+            );
+          }),
         );
       }
     },
@@ -98,7 +102,10 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           .pop();
 
         if (lastUserMessage) {
-          form.setValue("message", lastUserMessage.content);
+          const textPart = lastUserMessage.parts.find((p) => p.type === "text");
+          if (textPart && "text" in textPart) {
+            form.setValue("message", textPart.text);
+          }
           // Remove the last user message from history since it's now in the input
           return currentMessages.slice(0, -1);
         }
@@ -107,14 +114,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
       });
     }
   }, [errorMessage, form, setMessages]);
-
-  // Sync form value with chat input
-  useEffect(() => {
-    const syntheticEvent = {
-      target: { value: messageValue },
-    } as React.ChangeEvent<HTMLInputElement>;
-    handleInputChange(syntheticEvent);
-  }, [messageValue, handleInputChange]);
 
   // Reset form when message is sent
   useEffect(() => {
@@ -127,7 +126,8 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     if (data.message.trim()) {
       // Clear error on new submission
       setErrorMessage(null);
-      handleSubmit();
+      sendMessage({ text: data.message });
+      form.reset();
     }
   });
 
@@ -257,9 +257,8 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                   key={`suggested-action-${index}`}
                   ariaLabel={`Send message: ${action.action}`}
                   onPress={() => {
-                    append({
-                      role: "user",
-                      content: action.action,
+                    sendMessage({
+                      text: action.action,
                     });
                   }}
                   className="hover:bg-muted flex h-auto w-full flex-col items-start justify-start rounded-xl border bg-gray-50 px-4 py-3.5 text-left font-sans text-sm dark:bg-gray-900"
@@ -303,7 +302,10 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                   >
                     <MemoizedMarkdown
                       id={message.id}
-                      content={message.content}
+                      content={message.parts
+                        .filter((p) => p.type === "text")
+                        .map((p) => ("text" in p ? p.text : ""))
+                        .join("")}
                     />
                   </div>
                 </div>

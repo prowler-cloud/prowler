@@ -1,4 +1,5 @@
-import { LangChainAdapter, Message } from "ai";
+import { toUIMessageStream } from "@ai-sdk/langchain";
+import { UIMessage } from "ai";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 import { getErrorMessage } from "@/lib/helper";
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
     const {
       messages,
     }: {
-      messages: Message[];
+      messages: UIMessage[];
     } = await req.json();
 
     if (!messages) {
@@ -32,14 +33,19 @@ export async function POST(req: Request) {
     const currentData = await getCurrentDataSection();
 
     // Add context messages at the beginning
-    const contextMessages: Message[] = [];
+    const contextMessages: UIMessage[] = [];
 
     // Add business context if available
     if (businessContext) {
       contextMessages.push({
         id: "business-context",
         role: "assistant",
-        content: `Business Context Information:\n${businessContext}`,
+        parts: [
+          {
+            type: "text",
+            text: `Business Context Information:\n${businessContext}`,
+          },
+        ],
       });
     }
 
@@ -48,7 +54,12 @@ export async function POST(req: Request) {
       contextMessages.push({
         id: "current-data",
         role: "assistant",
-        content: currentData,
+        parts: [
+          {
+            type: "text",
+            text: currentData,
+          },
+        ],
       });
     }
 
@@ -61,7 +72,7 @@ export async function POST(req: Request) {
       {
         messages: processedMessages
           .filter(
-            (message: Message) =>
+            (message: UIMessage) =>
               message.role === "user" || message.role === "assistant",
           )
           .map(convertVercelMessageToLangChainMessage),
@@ -98,7 +109,14 @@ export async function POST(req: Request) {
       },
     });
 
-    return LangChainAdapter.toDataStreamResponse(stream);
+    const uiStream = toUIMessageStream(stream);
+    return new Response(uiStream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Error in POST request:", error);
     return Response.json(
