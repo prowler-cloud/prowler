@@ -4,6 +4,7 @@ import { Select, SelectItem } from "@heroui/select";
 import { Spacer } from "@heroui/spacer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -22,7 +23,7 @@ import { Form } from "@/components/ui/form";
 
 const chatbotConfigSchema = z.object({
   model: z.string().min(1, "Model selection is required"),
-  apiKey: z.string().min(1, "API Key is required").optional(),
+  apiKey: z.string(),
   businessContext: z
     .string()
     .max(1000, "Business context cannot exceed 1000 characters")
@@ -40,6 +41,7 @@ export const ChatbotConfig = ({
   initialValues,
   configExists: initialConfigExists,
 }: ChatbotConfigClientProps) => {
+  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [configExists, setConfigExists] = useState(initialConfigExists);
@@ -52,6 +54,16 @@ export const ChatbotConfig = ({
 
   const onSubmit = async (data: FormValues) => {
     if (isLoading) return;
+
+    // Validate API key: required for new config, or if changing an existing masked key
+    if (!configExists && (!data.apiKey || data.apiKey.trim().length === 0)) {
+      form.setError("apiKey", {
+        type: "manual",
+        message: "API Key is required",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const configData: any = {
@@ -74,6 +86,8 @@ export const ChatbotConfig = ({
             configExists ? "updated" : "created"
           } successfully`,
         });
+        // Navigate to lighthouse chat page after successful save
+        router.push("/lighthouse");
       } else {
         throw new Error("Failed to save configuration");
       }

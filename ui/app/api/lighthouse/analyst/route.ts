@@ -1,13 +1,10 @@
 import { toUIMessageStream } from "@ai-sdk/langchain";
-import { UIMessage } from "ai";
+import { createUIMessageStreamResponse, UIMessage } from "ai";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 import { getErrorMessage } from "@/lib/helper";
 import { getCurrentDataSection } from "@/lib/lighthouse/data";
-import {
-  convertLangChainMessageToVercelMessage,
-  convertVercelMessageToLangChainMessage,
-} from "@/lib/lighthouse/utils";
+import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
 import { initLighthouseWorkflow } from "@/lib/lighthouse/workflow";
 
 export async function POST(req: Request) {
@@ -86,12 +83,12 @@ export async function POST(req: Request) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const { event, data, tags } of agentStream) {
+          for await (const streamEvent of agentStream) {
+            const { event, data, tags } = streamEvent;
             if (event === "on_chat_model_stream") {
               if (data.chunk.content && !!tags && tags.includes("supervisor")) {
-                const chunk = data.chunk;
-                const aiMessage = convertLangChainMessageToVercelMessage(chunk);
-                controller.enqueue(aiMessage);
+                // Pass the raw LangChain stream event - toUIMessageStream will handle conversion
+                controller.enqueue(streamEvent);
               }
             }
           }
@@ -99,23 +96,16 @@ export async function POST(req: Request) {
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
-          controller.enqueue({
-            id: "error-" + Date.now(),
-            role: "assistant",
-            content: `[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`,
-          });
+          // For errors, send a plain string that toUIMessageStream will convert to text chunks
+          controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
           controller.close();
         }
       },
     });
 
-    const uiStream = toUIMessageStream(stream);
-    return new Response(uiStream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
+    // Convert LangChain stream to UI message stream and return as SSE response
+    return createUIMessageStreamResponse({
+      stream: toUIMessageStream(stream),
     });
   } catch (error) {
     console.error("Error in POST request:", error);
