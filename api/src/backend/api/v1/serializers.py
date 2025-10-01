@@ -3176,7 +3176,7 @@ class LighthouseProviderModelsSerializer(RLSSerializer):
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
-            "url": {"read_only": True},
+            "url": {"read_only": True, "view_name": "lighthouse-models-detail"},
         }
 
 
