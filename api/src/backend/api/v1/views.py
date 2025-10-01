@@ -4242,13 +4242,15 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
     serializer_class = TenantApiKeySerializer
     filterset_class = TenantApiKeyFilter
     http_method_names = ["get", "post", "delete"]
-    ordering = ["-created"]
-    ordering_fields = ["name", "prefix", "revoked", "created", "expiry_date"]
+    ordering = ["revoked", "-created"]
+    ordering_fields = ["name", "prefix", "revoked", "inserted_at", "expires_at"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
-        queryset = TenantAPIKey.objects.filter(tenant_id=self.request.tenant_id)
+        queryset = TenantAPIKey.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).annotate(inserted_at=F("created"), expires_at=F("expiry_date"))
         return queryset
 
     def get_serializer_class(self):

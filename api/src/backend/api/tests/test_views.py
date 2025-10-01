@@ -7840,7 +7840,10 @@ class TestTenantApiKeyViewSet:
                 "name",
                 "prefix",
                 "revoked",
+                "inserted_at",
+                "expires_at",
                 "-name",
+                "-inserted_at",
             ]
         ),
     )
