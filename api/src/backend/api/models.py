@@ -1995,6 +1995,35 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
     class ProviderChoices(models.TextChoices):
         OPENAI = "openai", _("OpenAI")
 
+    @staticmethod
+    def validate_openai_credentials(credentials: dict):
+        """
+        Validate OpenAI provider credentials.
+
+        Checks:
+        - api_key is present and is a string
+        - api_key matches expected OpenAI format
+
+        Raises:
+            ModelValidationError: If credentials are invalid
+        """
+        api_key = credentials.get("api_key")
+        if not isinstance(api_key, str) or not api_key:
+            raise ModelValidationError(
+                detail="OpenAI credentials must include 'api_key'",
+                code="invalid_openai_credentials",
+                pointer="/data/attributes/credentials/api_key",
+            )
+
+        # Validate OpenAI API key format
+        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
+        if not re.match(openai_key_pattern, api_key):
+            raise ModelValidationError(
+                detail="Invalid OpenAI API key format.",
+                code="invalid_openai_api_key_format",
+                pointer="/data/attributes/credentials/api_key",
+            )
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -2010,7 +2039,7 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
 
     # Encrypted JSON for provider-specific auth
     credentials = models.BinaryField(
-        help_text="Encrypted JSON credentials for the provider"
+        blank=False, null=False, help_text="Encrypted JSON credentials for the provider"
     )
 
     is_active = models.BooleanField(default=True)
@@ -2039,6 +2068,18 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
 
     @credentials_decoded.setter
     def credentials_decoded(self, value):
+        """
+        Set and encrypt credentials.
+
+        This is the single source of truth for credential validation.
+        Validates based on provider_type and encrypts before storage.
+
+        Args:
+            value: Dict containing provider-specific credentials
+
+        Raises:
+            ModelValidationError: If credentials are invalid or missing
+        """
         if not value:
             raise ModelValidationError(
                 detail="Credentials are required",
@@ -2046,18 +2087,11 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
                 pointer="/data/attributes/credentials",
             )
 
-        self._validate_credentials_for_provider(self.provider_type, value)
-        self.credentials = fernet.encrypt(json.dumps(value).encode())
+        # Validate credentials based on provider type
+        if self.provider_type == self.ProviderChoices.OPENAI:
+            self.validate_openai_credentials(value)
 
-    def _validate_credentials_for_provider(self, provider_type: str, credentials: dict):
-        if provider_type == self.ProviderChoices.OPENAI:
-            api_key = credentials.get("api_key")
-            if not isinstance(api_key, str) or not api_key:
-                raise ModelValidationError(
-                    detail="OpenAI credentials must include 'api_key'",
-                    code="invalid_openai_credentials",
-                    pointer="/data/attributes/credentials/api_key",
-                )
+        self.credentials = fernet.encrypt(json.dumps(value).encode())
 
     def delete(self, *args, **kwargs):
         # Cleanup tenant defaults that reference this provider
