@@ -1,6 +1,22 @@
 [
   {
     "section": "dependencies",
+    "name": "@ai-sdk/langchain",
+    "from": "1.0.59",
+    "to": "1.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-01T11:13:12.025Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@ai-sdk/react",
+    "from": "2.0.59",
+    "to": "2.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-01T11:13:12.025Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@heroui/react",
     "from": "2.8.4",
     "to": "2.8.4",
