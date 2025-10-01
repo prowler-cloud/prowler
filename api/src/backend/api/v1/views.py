@@ -4241,7 +4241,7 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
     queryset = TenantAPIKey.objects.all()
     serializer_class = TenantApiKeySerializer
     filterset_class = TenantApiKeyFilter
-    http_method_names = ["get", "post", "delete"]
+    http_method_names = ["get", "post", "patch", "delete"]
     ordering = ["revoked", "-created"]
     ordering_fields = ["name", "prefix", "revoked", "inserted_at", "expires_at"]
     # RBAC required permissions

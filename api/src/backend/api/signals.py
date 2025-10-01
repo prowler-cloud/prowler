@@ -6,7 +6,7 @@ from django.dispatch import receiver
 from django_celery_results.backends.database import DatabaseBackend
 
 from api.db_utils import delete_related_daily_task
-from api.models import Provider, TenantAPIKey, User
+from api.models import Membership, Provider, TenantAPIKey, User
 
 
 def create_task_result_on_publish(sender=None, headers=None, **kwargs):  # noqa: F841
@@ -43,3 +43,16 @@ def revoke_user_api_keys(sender, instance, **kwargs):  # noqa: F841
     but we explicitly revoke the keys to prevent further use.
     """
     TenantAPIKey.objects.filter(entity=instance).update(revoked=True)
+
+
+@receiver(post_delete, sender=Membership)
+def revoke_membership_api_keys(sender, instance, **kwargs):  # noqa: F841
+    """
+    Revoke all API keys when a user is removed from a tenant.
+
+    When a membership is deleted, all API keys created by that user
+    in that tenant should be revoked to prevent further access.
+    """
+    TenantAPIKey.objects.filter(
+        entity=instance.user, tenant_id=instance.tenant.id
+    ).update(revoked=True)
