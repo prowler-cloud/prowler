@@ -2760,8 +2760,6 @@ class TenantApiKeySerializer(RLSSerializer):
             "revoked",
             "inserted_at",
             "last_used_at",
-            "whitelisted_ips",
-            "blacklisted_ips",
             "entity",
         ]
 
@@ -2781,6 +2779,7 @@ class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "name",
             "prefix",
             "expires_at",
+            "revoked",
             "entity",
             "inserted_at",
             "last_used_at",
@@ -2789,6 +2788,7 @@ class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
         extra_kwargs = {
             "id": {"read_only": True},
             "prefix": {"read_only": True},
+            "revoked": {"read_only": True},
             "entity": {"read_only": True},
             "inserted_at": {"read_only": True},
             "last_used_at": {"read_only": True},

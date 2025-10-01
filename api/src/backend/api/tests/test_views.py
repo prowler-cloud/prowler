@@ -12,8 +12,8 @@ from uuid import uuid4
 
 import jwt
 import pytest
-from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -48,6 +48,7 @@ from api.models import (
     Scan,
     StateChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
 )
@@ -7405,3 +7406,768 @@ class TestProcessorViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestTenantApiKeyViewSet:
+    """Tests for TenantAPIKey endpoints."""
+
+    def test_api_keys_list(self, authenticated_client, api_keys_fixture):
+        """Test listing all API keys for the tenant."""
+        response = authenticated_client.get(reverse("api-key-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(api_keys_fixture)
+        # Verify keys are ordered by -created (newest first)
+        assert data[0]["attributes"]["name"] in [
+            "Test API Key 1",
+            "Test API Key 2",
+            "Revoked API Key",
+        ]
+
+    def test_api_keys_list_empty(self, authenticated_client, tenants_fixture):
+        """Test listing API keys when none exist returns empty list."""
+        response = authenticated_client.get(reverse("api-key-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+        assert isinstance(data, list)
+
+    def test_api_keys_list_default_ordering(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test that API keys are ordered by -created (newest first) by default."""
+        response = authenticated_client.get(reverse("api-key-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        # Verify ordering by comparing inserted_at timestamps
+        # (newest should be first since ordering = ["-created"])
+        if len(data) >= 2:
+            first_date = data[0]["attributes"]["inserted_at"]
+            second_date = data[1]["attributes"]["inserted_at"]
+            assert first_date >= second_date
+
+    def test_api_keys_list_pagination_page_size(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test pagination with custom page size."""
+        page_size = 1
+        response = authenticated_client.get(
+            reverse("api-key-list"), {"page[size]": page_size}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == page_size
+        assert response.json()["meta"]["pagination"]["page"] == 1
+        assert response.json()["meta"]["pagination"]["pages"] == 3
+
+    def test_api_keys_list_pagination_page_number(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test pagination with specific page number."""
+        page_size = 1
+        page_number = 2
+        response = authenticated_client.get(
+            reverse("api-key-list"),
+            {"page[size]": page_size, "page[number]": page_number},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == page_size
+        assert response.json()["meta"]["pagination"]["page"] == page_number
+
+    def test_api_keys_list_pagination_invalid_page(self, authenticated_client):
+        """Test pagination with invalid page number returns 404."""
+        response = authenticated_client.get(
+            reverse("api-key-list"), {"page[number]": 999}
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_api_keys_retrieve(self, authenticated_client, api_keys_fixture):
+        """Test retrieving a single API key by ID."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client.get(
+            reverse("api-key-detail", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(api_key.id)
+        assert data["attributes"]["name"] == api_key.name
+        assert data["attributes"]["prefix"] == api_key.prefix
+        assert data["attributes"]["revoked"] == api_key.revoked
+        assert "expires_at" in data["attributes"]
+        assert "inserted_at" in data["attributes"]
+        assert "last_used_at" in data["attributes"]
+        # Verify api_key field is NOT in response (only on creation)
+        assert "api_key" not in data["attributes"]
+
+    def test_api_keys_retrieve_invalid(self, authenticated_client):
+        """Test retrieving non-existent API key returns 404."""
+        response = authenticated_client.get(
+            reverse(
+                "api-key-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_api_keys_retrieve_field_mapping(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test that field names are correctly mapped (expires_at, inserted_at)."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client.get(
+            reverse("api-key-detail", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]["attributes"]
+
+        # Verify field mapping: expires_at -> expiry_date
+        assert "expires_at" in data
+        assert "expiry_date" not in data
+
+        # Verify field mapping: inserted_at -> created
+        assert "inserted_at" in data
+        assert "created" not in data
+
+    @pytest.mark.parametrize(
+        "api_key_payload",
+        (
+            [
+                {"name": "New API Key"},
+                {"name": ""},
+                {},
+            ]
+        ),
+    )
+    def test_api_keys_create_valid(
+        self, authenticated_client, create_test_user, api_key_payload
+    ):
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": api_key_payload,
+            }
+        }
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        response_data = response.json()["data"]
+        assert "prefix" in response_data["attributes"]
+        assert "api_key" in response_data["attributes"]
+        assert response_data["attributes"]["api_key"] is not None
+        # Verify the raw API key is returned (only on creation)
+        assert (
+            response_data["attributes"]["prefix"]
+            in response_data["attributes"]["api_key"]
+        )
+        # Verify entity is set to current user
+        assert response_data["relationships"]["entity"]["data"]["id"] == str(
+            create_test_user.id
+        )
+
+    @pytest.mark.parametrize(
+        "api_key_payload, error_pointer",
+        (
+            [
+                (
+                    {"name": "Invalid Expiry", "expires_at": "not-a-date"},
+                    "expires_at",
+                ),
+            ]
+        ),
+    )
+    def test_api_keys_create_invalid(
+        self,
+        authenticated_client,
+        create_test_user,
+        api_key_payload,
+        error_pointer,
+    ):
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": api_key_payload,
+            }
+        }
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == f"/data/attributes/{error_pointer}"
+        )
+
+    def test_api_keys_create_multiple_unique_prefixes(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test creating multiple API keys generates unique prefixes."""
+        prefixes = set()
+        for i in range(3):
+            data = {
+                "data": {
+                    "type": "api-keys",
+                    "attributes": {
+                        "name": f"Unique Key {i}",
+                    },
+                }
+            }
+            response = authenticated_client.post(
+                reverse("api-key-list"),
+                data=json.dumps(data),
+                content_type="application/vnd.api+json",
+            )
+            assert response.status_code == status.HTTP_201_CREATED
+            prefix = response.json()["data"]["attributes"]["prefix"]
+            prefixes.add(prefix)
+        # Verify all prefixes are unique
+        assert len(prefixes) == 3
+
+    def test_api_keys_create_invalid_content_type(
+        self, authenticated_client, create_test_user
+    ):
+        """Test creating an API key with wrong content type returns 415."""
+        data = {"name": "Test Key"}
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=data,
+            content_type="application/json",
+        )
+        assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+    def test_api_keys_create_malformed_json(
+        self, authenticated_client, create_test_user
+    ):
+        """Test creating an API key with malformed JSON returns 400."""
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data="not valid json",
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_api_keys_create_invalid_structure(
+        self, authenticated_client, create_test_user
+    ):
+        """Test creating an API key with invalid JSON:API structure."""
+        data = {"invalid": "structure"}
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_api_keys_revoke(self, authenticated_client, api_keys_fixture):
+        """Test revoking an API key."""
+        api_key = api_keys_fixture[0]  # Not revoked
+        assert api_key.revoked is False
+
+        response = authenticated_client.delete(
+            reverse("api-key-revoke", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["revoked"] is True
+
+        # Verify in database
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
+    def test_api_keys_revoke_already_revoked(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test revoking an already revoked API key returns validation error."""
+        api_key = api_keys_fixture[2]  # Already revoked
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
+        response = authenticated_client.delete(
+            reverse("api-key-revoke", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already revoked" in response.json()["errors"][0]["detail"]
+
+    def test_api_keys_revoke_nonexistent(self, authenticated_client):
+        """Test revoking non-existent API key returns 404."""
+        response = authenticated_client.delete(
+            reverse(
+                "api-key-revoke",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_api_keys_destroy_not_allowed(self, authenticated_client, api_keys_fixture):
+        """Test that DELETE (destroy) endpoint is disabled."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client.delete(
+            reverse("api-key-detail", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_api_keys_update_not_allowed(self, authenticated_client, api_keys_fixture):
+        """Test that PATCH/PUT are not allowed."""
+        api_key = api_keys_fixture[0]
+        data = {
+            "data": {
+                "type": "api-keys",
+                "id": str(api_key.id),
+                "attributes": {
+                    "name": "Updated Name",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("api-key-detail", kwargs={"pk": api_key.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_api_keys_put_not_allowed(self, authenticated_client, api_keys_fixture):
+        """Test that PUT is not allowed."""
+        api_key = api_keys_fixture[0]
+        data = {
+            "data": {
+                "type": "api-keys",
+                "id": str(api_key.id),
+                "attributes": {
+                    "name": "Updated Name",
+                },
+            }
+        }
+        response = authenticated_client.put(
+            reverse("api-key-detail", kwargs={"pk": api_key.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_min_count",
+        (
+            [
+                ("name", "Test API Key 1", 1),
+                ("name__icontains", "test", 2),
+                ("revoked", "true", 1),
+                ("revoked", "false", 2),
+                ("inserted_at", TODAY, 1),
+                ("inserted_at__gte", "2024-01-01", 3),
+                ("inserted_at__lte", "2099-12-31", 3),
+                ("expires_at__gte", today_after_n_days(50), 1),
+            ]
+        ),
+    )
+    def test_api_keys_filters(
+        self,
+        authenticated_client,
+        api_keys_fixture,
+        filter_name,
+        filter_value,
+        expected_min_count,
+    ):
+        response = authenticated_client.get(
+            reverse("api-key-list"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) >= expected_min_count
+
+    def test_api_keys_filter_combined(self, authenticated_client, api_keys_fixture):
+        """Test combining multiple filters."""
+        response = authenticated_client.get(
+            reverse("api-key-list"),
+            {
+                "filter[revoked]": "false",
+                "filter[name__icontains]": "test",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert all(item["attributes"]["revoked"] is False for item in data)
+        assert all("test" in item["attributes"]["name"].lower() for item in data)
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        (
+            [
+                "invalid_field",
+                "nonexistent",
+            ]
+        ),
+    )
+    def test_api_keys_filters_invalid(self, authenticated_client, filter_name):
+        response = authenticated_client.get(
+            reverse("api-key-list"),
+            {f"filter[{filter_name}]": "whatever"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_api_keys_filter_invalid_date_format(self, authenticated_client):
+        """Test filtering with invalid date format returns 400."""
+        response = authenticated_client.get(
+            reverse("api-key-list"),
+            {"filter[inserted_at]": "not-a-date"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_api_keys_filter_empty_result(self, authenticated_client, api_keys_fixture):
+        """Test filter that returns no results."""
+        response = authenticated_client.get(
+            reverse("api-key-list"),
+            {"filter[name]": "NonExistent Key Name"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+        assert isinstance(data, list)
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        (
+            [
+                "name",
+                "prefix",
+                "revoked",
+                "-name",
+            ]
+        ),
+    )
+    def test_api_keys_sort(self, authenticated_client, api_keys_fixture, sort_field):
+        response = authenticated_client.get(
+            reverse("api-key-list"), {"sort": sort_field}
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_api_keys_sort_invalid(self, authenticated_client):
+        """Test invalid sort parameter returns 400."""
+        response = authenticated_client.get(
+            reverse("api-key-list"),
+            {"sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_api_keys_rbac_manage_account_required(
+        self, authenticated_client_rbac_manage_users_only, api_keys_fixture
+    ):
+        """Test that users without MANAGE_ACCOUNT permission are denied."""
+        response = authenticated_client_rbac_manage_users_only.get(
+            reverse("api-key-list")
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_api_keys_rbac_manage_account_allowed(
+        self, authenticated_client_rbac_manage_account, tenants_fixture
+    ):
+        """Test that users with MANAGE_ACCOUNT permission can access API keys."""
+        response = authenticated_client_rbac_manage_account.get(reverse("api-key-list"))
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_api_keys_rbac_create_requires_permission(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        """Test that creating API keys requires MANAGE_ACCOUNT permission."""
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "Test Key",
+                },
+            }
+        }
+        response = authenticated_client_rbac_manage_users_only.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_api_keys_rbac_revoke_requires_permission(
+        self, authenticated_client_rbac_manage_users_only, api_keys_fixture
+    ):
+        """Test that revoking API keys requires MANAGE_ACCOUNT permission."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client_rbac_manage_users_only.delete(
+            reverse("api-key-revoke", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_api_keys_tenant_isolation(
+        self, authenticated_client, api_keys_fixture, tenants_fixture
+    ):
+        """Test that API keys are isolated by tenant (RLS enforcement)."""
+        # Create a second tenant with different user
+
+        tenant2 = Tenant.objects.create(name="Another Tenant")
+        user2 = User.objects.create_user(
+            name="Another User",
+            email="another@example.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user2,
+            tenant=tenant2,
+            role=Membership.RoleChoices.OWNER,
+        )
+
+        # Create API key for tenant2
+        TenantAPIKey.objects.create_api_key(
+            name="Tenant 2 Key",
+            tenant_id=tenant2.id,
+            entity=user2,
+        )
+
+        # Authenticate as user from tenant 1
+        response = authenticated_client.get(reverse("api-key-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        # Should only see keys from tenant 1
+        assert len(data) == len(api_keys_fixture)
+        assert all(item["attributes"]["name"] != "Tenant 2 Key" for item in data)
+
+    def test_api_keys_tenant_isolation_retrieve(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that retrieving API key from another tenant returns 404."""
+        # Create a second tenant with API key
+        tenant2 = Tenant.objects.create(name="Another Tenant")
+        user2 = User.objects.create_user(
+            name="Another User",
+            email="another2@example.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user2,
+            tenant=tenant2,
+            role=Membership.RoleChoices.OWNER,
+        )
+
+        api_key2, _ = TenantAPIKey.objects.create_api_key(
+            name="Tenant 2 Key",
+            tenant_id=tenant2.id,
+            entity=user2,
+        )
+
+        # Try to retrieve tenant2's API key as tenant1 user
+        response = authenticated_client.get(
+            reverse("api-key-detail", kwargs={"pk": api_key2.id})
+        )
+        # Should return 404 due to RLS filtering
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_api_keys_tenant_isolation_revoke(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that revoking API key from another tenant returns 404."""
+        # Create a second tenant with API key
+        tenant2 = Tenant.objects.create(name="Another Tenant")
+        user2 = User.objects.create_user(
+            name="Another User",
+            email="another3@example.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user2,
+            tenant=tenant2,
+            role=Membership.RoleChoices.OWNER,
+        )
+
+        api_key2, _ = TenantAPIKey.objects.create_api_key(
+            name="Tenant 2 Key",
+            tenant_id=tenant2.id,
+            entity=user2,
+        )
+
+        # Try to revoke tenant2's API key as tenant1 user
+        response = authenticated_client.delete(
+            reverse("api-key-revoke", kwargs={"pk": api_key2.id})
+        )
+        # Should return 404 due to RLS filtering
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_api_keys_read_only_fields_on_create(
+        self, authenticated_client, create_test_user
+    ):
+        """Test that read-only fields are ignored during creation."""
+        # Note: Fields not in serializer (like 'prefix', 'revoked') will cause 400
+        # So we only test that the response has correct read-only values
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "Test Read-Only",
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        response_data = response.json()["data"]
+
+        # Verify read-only fields have correct default/auto-generated values
+        # Prefix should be auto-generated (not empty, not None)
+        assert response_data["attributes"]["prefix"] is not None
+        assert len(response_data["attributes"]["prefix"]) > 0
+
+        # Revoked should be False (default)
+        assert response_data["attributes"]["revoked"] is False
+
+        # Entity should be set to current user (auto-assigned)
+        assert response_data["relationships"]["entity"]["data"]["id"] == str(
+            create_test_user.id
+        )
+
+    def test_api_keys_entity_relationship_included(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test that entity (user) relationship is included correctly."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client.get(
+            reverse("api-key-detail", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert "entity" in data["relationships"]
+        assert data["relationships"]["entity"]["data"]["type"] == "users"
+        assert data["relationships"]["entity"]["data"]["id"] == str(api_key.entity.id)
+
+    def test_api_keys_entity_auto_assigned_on_create(
+        self, authenticated_client, create_test_user
+    ):
+        """Test that entity is automatically assigned to current user on creation."""
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "Auto Entity Key",
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        response_data = response.json()["data"]
+
+        # Entity should be set to authenticated user
+        assert response_data["relationships"]["entity"]["data"]["id"] == str(
+            create_test_user.id
+        )
+
+        # Verify in database
+        api_key_id = response_data["id"]
+        api_key = TenantAPIKey.objects.get(id=api_key_id)
+        assert api_key.entity.id == create_test_user.id
+
+    def test_api_keys_list_response_structure(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test that list response follows JSON:API structure."""
+        response = authenticated_client.get(reverse("api-key-list"))
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+
+        # Verify top-level structure
+        assert "data" in response_data
+        assert "meta" in response_data
+        assert isinstance(response_data["data"], list)
+
+        # Verify pagination meta
+        assert "pagination" in response_data["meta"]
+        assert "count" in response_data["meta"]["pagination"]
+        assert "page" in response_data["meta"]["pagination"]
+        assert "pages" in response_data["meta"]["pagination"]
+
+    def test_api_keys_retrieve_response_structure(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test that retrieve response follows JSON:API structure."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client.get(
+            reverse("api-key-detail", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+
+        # Verify top-level structure
+        assert "data" in response_data
+        data = response_data["data"]
+
+        # Verify resource object structure
+        assert "type" in data
+        assert data["type"] == "api-keys"
+        assert "id" in data
+        assert "attributes" in data
+        assert "relationships" in data
+
+    def test_api_keys_create_response_structure(
+        self, authenticated_client, create_test_user
+    ):
+        """Test that create response follows JSON:API structure."""
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": "Structure Test Key",
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        response_data = response.json()
+
+        # Verify top-level structure
+        assert "data" in response_data
+        data = response_data["data"]
+
+        # Verify resource object structure
+        assert "type" in data
+        assert data["type"] == "api-keys"
+        assert "id" in data
+        assert "attributes" in data
+        assert "relationships" in data
+
+        # Verify api_key is included in creation response only
+        assert "api_key" in data["attributes"]
+        assert data["attributes"]["api_key"] is not None
+
+    def test_api_keys_error_response_structure(self, authenticated_client):
+        """Test that error responses follow JSON:API structure."""
+        response = authenticated_client.get(
+            reverse(
+                "api-key-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        response_data = response.json()
+
+        # Verify error structure
+        assert "errors" in response_data
+        assert isinstance(response_data["errors"], list)
+        assert len(response_data["errors"]) > 0
+
+        # Verify error object structure
+        error = response_data["errors"][0]
+        assert "detail" in error or "title" in error

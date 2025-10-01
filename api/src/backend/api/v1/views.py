@@ -4243,6 +4243,7 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
     filterset_class = TenantApiKeyFilter
     http_method_names = ["get", "post", "delete"]
     ordering = ["-created"]
+    ordering_fields = ["name", "prefix", "revoked", "created", "expiry_date"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
