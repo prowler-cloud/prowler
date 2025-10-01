@@ -1272,9 +1272,19 @@ class M365ProviderSecret(serializers.Serializer):
     password = serializers.CharField(required=False)
     certificate_content = serializers.CharField(required=False)
 
+    def validate(self, attrs):
+        if attrs.get("client_secret") and attrs.get("certificate_content"):
+            raise serializers.ValidationError(
+                "You cannot provide both client_secret and certificate_content."
+            )
+        if not attrs.get("client_secret") and not attrs.get("certificate_content"):
+            raise serializers.ValidationError(
+                "You must provide either client_secret or certificate_content."
+            )
+        return super().validate(attrs)
+
     def validate_certificate_content(self, value):
         """Validate that certificate_content is valid base64 encoded data."""
-        from api.models import Provider
 
         Provider.validate_m365_certificate_content(value)
         return value
