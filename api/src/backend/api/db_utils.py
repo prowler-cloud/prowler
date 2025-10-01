@@ -441,7 +441,6 @@ def drop_index_on_partitions(
 
 def generate_api_key_prefix():
     """Generate a random 8-character prefix for API keys (e.g., 'pk_abc123de')."""
-    # Generate 6 random characters (alphanumeric)
     random_chars = generate_random_token(length=8)
     return f"pk_{random_chars}"
 
