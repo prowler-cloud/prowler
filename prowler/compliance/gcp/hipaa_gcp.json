@@ -1,0 +1,658 @@
+{
+  "Framework": "HIPAA",
+  "Name": "HIPAA compliance framework",
+  "Version": "",
+  "Provider": "GCP",
+  "Description": "The Health Insurance Portability and Accountability Act of 1996 (HIPAA) is legislation that helps US workers to retain health insurance coverage when they change or lose jobs. The legislation also seeks to encourage electronic health records to improve the efficiency and quality of the US healthcare system through improved information sharing.",
+  "Requirements": [
+    {
+      "Id": "164_308_a_1_ii_a",
+      "Name": "164.308(a)(1)(ii)(A) Risk analysis",
+      "Description": "Conduct an accurate and thorough assessment of the potential risks and vulnerabilities to the confidentiality, integrity, and availability of electronic protected health information held by the covered entity or business associate.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_1_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled",
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_1_ii_b",
+      "Name": "164.308(a)(1)(ii)(B) Risk Management",
+      "Description": "Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable and appropriate level to comply with 164.306(a): Ensure the confidentiality, integrity, and availability of all electronic protected health information the covered entity or business associate creates, receives, maintains, or transmits.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_1_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_dataset_public_access",
+        "bigquery_table_cmk_encryption",
+        "cloudsql_instance_automated_backups",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_ssl_connections",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "compute_instance_encryption_with_csek_enabled",
+        "compute_instance_public_ip",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_shielded_vm_enabled",
+        "compute_public_address_shodan",
+        "dataproc_encrypted_with_cmks_disabled",
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_1_ii_d",
+      "Name": "164.308(a)(1)(ii)(D) Information system activity review",
+      "Description": "Implement procedures to regularly review records of information system activity, such as audit logs, access reports, and security incident tracking reports.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_1_ii_d",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_i",
+      "Name": "164.308(a)(3)(i) Workforce security",
+      "Description": "Implement policies and procedures to ensure that all members of its workforce have appropriate access to electronic protected health information, and to prevent those workforce members who do not have access from obtaining access to electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_public_access",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudstorage_bucket_public_access",
+        "compute_instance_public_ip",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_public_address_shodan",
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_ii_a",
+      "Name": "164.308(a)(3)(ii)(A) Authorization and/or supervision",
+      "Description": "Implement procedures for the authorization and/or supervision of workforce members who work with electronic protected health information or in locations where it might be accessed.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "iam_account_access_approval_enabled",
+        "iam_organization_essential_contacts_configured",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_ii_b",
+      "Name": "164.308(a)(3)(ii)(B) Workforce clearance procedure",
+      "Description": "Implement procedures to determine that the access of a workforce member to electronic protected health information is appropriate.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_3_ii_c",
+      "Name": "164.308(a)(3)(ii)(C) Termination procedures",
+      "Description": "Implement procedures for terminating access to electronic protected health information when the employment of, or other arrangement with, a workforce member ends or as required by determinations made as specified in paragraph (a)(3)(ii)(B) of this section.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_3_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_service_account_unused",
+        "iam_sa_user_managed_key_unused",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_i",
+      "Name": "164.308(a)(4)(i) Information access management",
+      "Description": "Implement policies and procedures for authorizing access to electronic protected health information that are consistent with the applicable requirements of subpart E of this part.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_ii_a",
+      "Name": "164.308(a)(4)(ii)(A) Isolating health care clearinghouse functions",
+      "Description": "If a health care clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the electronic protected health information of the clearinghouse from unauthorized access by the larger organization.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_network_default_in_use",
+        "compute_instance_ip_forwarding_is_enabled",
+        "cloudsql_instance_private_ip_assignment"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_ii_b",
+      "Name": "164.308(a)(4)(ii)(B) Access authorization",
+      "Description": "Implement policies and procedures for granting access to electronic protected health information, for example, through access to a workstation, transaction, program, process, or other mechanism.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_account_access_approval_enabled",
+        "compute_project_os_login_enabled",
+        "compute_instance_block_project_wide_ssh_keys_disabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_4_ii_c",
+      "Name": "164.308(a)(4)(ii)(C) Access establishment and modification",
+      "Description": "Implement policies and procedures that, based upon the covered entity's or the business associate's access authorization policies, establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_4_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_5_ii_b",
+      "Name": "164.308(a)(5)(ii)(B) Protection from malicious software",
+      "Description": "Implement procedures for guarding against, detecting, and reporting malicious software.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_5_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled",
+        "compute_instance_shielded_vm_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_5_ii_c",
+      "Name": "164.308(a)(5)(ii)(C) Log-in monitoring",
+      "Description": "Implement procedures for monitoring log-in attempts and reporting discrepancies.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_5_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "compute_subnet_flow_logs_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "164_308_a_5_ii_d",
+      "Name": "164.308(a)(5)(ii)(D) Password management",
+      "Description": "Implement procedures for creating, changing, and safeguarding passwords.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_5_ii_d",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_no_user_managed_keys",
+        "compute_project_os_login_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_6_i",
+      "Name": "164.308(a)(6)(i) Security incident procedures",
+      "Description": "Implement policies and procedures to address security incidents.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_6_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_6_ii",
+      "Name": "164.308(a)(6)(ii) Response and reporting",
+      "Description": "Identify and respond to suspected or known security incidents; mitigate, to the extent practicable, harmful effects of security incidents that are known to the covered entity or business associate; and document security incidents and their outcomes.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_6_ii",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_organization_essential_contacts_configured",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_i",
+      "Name": "164.308(a)(7)(i) Contingency plan",
+      "Description": "Establish (and implement as needed) policies and procedures for responding to an emergency or other occurrence (for example, fire, vandalism, system failure, and natural disaster) that damages systems that contain electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_i",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_ii_a",
+      "Name": "164.308(a)(7)(ii)(A) Data backup plan",
+      "Description": "Establish and implement procedures to create and maintain retrievable exact copies of electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_ii_a",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_ii_b",
+      "Name": "164.308(a)(7)(ii)(B) Disaster recovery plan",
+      "Description": "Establish (and implement as needed) procedures to restore any loss of data.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_ii_b",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "164_308_a_7_ii_c",
+      "Name": "164.308(a)(7)(ii)(C) Emergency mode operation plan",
+      "Description": "Establish (and implement as needed) procedures to enable continuation of critical business processes for protection of the security of electronic protected health information while operating in emergency mode.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_7_ii_c",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "164_308_a_8",
+      "Name": "164.308(a)(8) Evaluation",
+      "Description": "Perform a periodic technical and nontechnical evaluation, based initially upon the standards implemented under this rule and, subsequently, in response to environmental or operational changes affecting the security of electronic protected health information, that establishes the extent to which a covered entity's or business associate's security policies and procedures meet the requirements of this subpart.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_a_8",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "164_310_a_1",
+      "Name": "164.310(a)(1) Facility access controls",
+      "Description": "Implement policies and procedures to limit physical access to its electronic information systems and the facility or facilities in which they are housed, while ensuring that properly authorized access is allowed.",
+      "Attributes": [
+        {
+          "ItemId": "164_310_a_1",
+          "Section": "164.310 Physical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_310_d_1",
+      "Name": "164.310(d)(1) Device and media controls",
+      "Description": "Implement policies and procedures that govern the receipt and removal of hardware and electronic media that contain electronic protected health information into and out of a facility, and the movement of these items within the facility.",
+      "Attributes": [
+        {
+          "ItemId": "164_310_d_1",
+          "Section": "164.310 Physical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled"
+      ]
+    },
+    {
+      "Id": "164_310_d_2_i",
+      "Name": "164.310(d)(2)(i) Disposal",
+      "Description": "Implement policies and procedures to address the final disposition of electronic protected health information, and/or the hardware or electronic media on which it is stored.",
+      "Attributes": [
+        {
+          "ItemId": "164_310_d_2_i",
+          "Section": "164.310 Physical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_service_account_unused",
+        "iam_sa_user_managed_key_unused"
+      ]
+    },
+    {
+      "Id": "164_310_d_2_iii",
+      "Name": "164.310(d)(2)(iii) Accountability",
+      "Description": "Maintain a record of the movements of hardware and electronic media and any person responsible therefore.",
+      "Attributes": [
+        {
+          "ItemId": "164_310_d_2_iii",
+          "Section": "164.310 Physical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "164_312_a_1",
+      "Name": "164.312(a)(1) Access control",
+      "Description": "Implement technical policies and procedures for electronic information systems that maintain electronic protected health information to allow access only to those persons or software programs that have been granted access rights as specified in 164.308(a)(4).",
+      "Attributes": [
+        {
+          "ItemId": "164_312_a_1",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_public_access",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_ssl_connections",
+        "cloudstorage_bucket_public_access",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level"
+      ]
+    },
+    {
+      "Id": "164_312_a_2_i",
+      "Name": "164.312(a)(2)(i) Unique user identification",
+      "Description": "Assign a unique name and/or number for identifying and tracking user identity.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_a_2_i",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_project_os_login_enabled",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "164_312_b",
+      "Name": "164.312(b) Audit controls",
+      "Description": "Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use electronic protected health information.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_b",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ]
+    },
+    {
+      "Id": "164_312_c_1",
+      "Name": "164.312(c)(1) Integrity",
+      "Description": "Implement policies and procedures to protect electronic protected health information from improper alteration or destruction.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_c_1",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "cloudstorage_bucket_uniform_bucket_level_access"
+      ]
+    },
+    {
+      "Id": "164_312_d",
+      "Name": "164.312(d) Person or entity authentication",
+      "Description": "Implement procedures to verify that a person or entity seeking access to electronic protected health information is the one claimed.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_d",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_project_os_login_enabled",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "iam_sa_no_user_managed_keys"
+      ]
+    },
+    {
+      "Id": "164_312_e_1",
+      "Name": "164.312(e)(1) Transmission security",
+      "Description": "Implement technical security measures to guard against unauthorized access to electronic protected health information that is being transmitted over an electronic communications network.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_e_1",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_ssl_connections",
+        "compute_instance_serial_ports_in_use"
+      ]
+    },
+    {
+      "Id": "164_312_e_2_i",
+      "Name": "164.312(e)(2)(i) Encryption",
+      "Description": "Implement a mechanism to encrypt electronic protected health information whenever deemed appropriate.",
+      "Attributes": [
+        {
+          "ItemId": "164_312_e_2_i",
+          "Section": "164.312 Technical Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "cloudsql_instance_ssl_connections",
+        "compute_instance_encryption_with_csek_enabled",
+        "dataproc_encrypted_with_cmks_disabled",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "164_314_b_1",
+      "Name": "164.314(b)(1) Business associate contracts or other arrangements",
+      "Description": "A covered entity may permit a business associate to create, receive, maintain, or transmit electronic protected health information on the covered entity's behalf only if the covered entity obtains satisfactory assurances that the business associate will appropriately safeguard the information.",
+      "Attributes": [
+        {
+          "ItemId": "164_314_b_1",
+          "Section": "164.314 Organizational Requirements",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_account_access_approval_enabled"
+      ]
+    },
+    {
+      "Id": "164_316_b_1_i",
+      "Name": "164.316(b)(1)(i) Policies and procedures",
+      "Description": "Implement reasonable and appropriate policies and procedures to comply with the standards, implementation specifications, or other requirements of this subpart, taking into account those factors specified in 164.306(b)(2)(i), (ii), (iii), and (iv). This standard is not to be construed to permit or excuse an action that violates any other standard, implementation specification, or other requirement of this subpart.",
+      "Attributes": [
+        {
+          "ItemId": "164_316_b_1_i",
+          "Section": "164.316 Policies and Procedures and Documentation Requirements",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "logging_sink_created"
+      ]
+    }
+  ]
+}
