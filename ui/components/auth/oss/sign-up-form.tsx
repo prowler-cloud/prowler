@@ -24,14 +24,12 @@ import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 export const SignUpForm = ({
   invitationToken,
-  isCloudEnv,
   googleAuthUrl,
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
 }: {
   invitationToken?: string | null;
-  isCloudEnv?: boolean;
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
@@ -67,7 +65,7 @@ export const SignUpForm = ({
       });
       form.reset();
 
-      if (isCloudEnv) {
+      if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
         router.push("/email-verification");
       } else {
         router.push("/sign-in");

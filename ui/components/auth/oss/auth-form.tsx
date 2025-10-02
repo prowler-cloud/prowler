@@ -4,7 +4,6 @@ import { SignUpForm } from "@/components/auth/oss/sign-up-form";
 export const AuthForm = ({
   type,
   invitationToken,
-  isCloudEnv,
   googleAuthUrl,
   githubAuthUrl,
   isGoogleOAuthEnabled,
@@ -12,7 +11,6 @@ export const AuthForm = ({
 }: {
   type: string;
   invitationToken?: string | null;
-  isCloudEnv?: boolean;
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
@@ -32,7 +30,6 @@ export const AuthForm = ({
   return (
     <SignUpForm
       invitationToken={invitationToken}
-      isCloudEnv={isCloudEnv}
       googleAuthUrl={googleAuthUrl}
       githubAuthUrl={githubAuthUrl}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}
