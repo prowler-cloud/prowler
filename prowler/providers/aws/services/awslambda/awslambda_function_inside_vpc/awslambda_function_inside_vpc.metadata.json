@@ -1,29 +1,48 @@
 {
   "Provider": "aws",
   "CheckID": "awslambda_function_inside_vpc",
-  "CheckTitle": "Ensure AWS Lambda Functions Are Deployed Inside a VPC",
-  "CheckType": [],
+  "CheckTitle": "Lambda function is deployed inside a VPC",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "awslambda",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsLambdaFunction",
-  "Description": "This check verifies whether an AWS Lambda function is deployed within a Virtual Private Cloud (VPC). Deploying Lambda functions inside a VPC improves security by allowing control over the network environment, reducing the exposure to public internet threats.",
-  "Risk": "Lambda functions not deployed in a VPC may expose your application to increased security risks, including unauthorized access and data breaches. Without the network isolation provided by a VPC, your Lambda functions are more vulnerable to attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
+  "Description": "**AWS Lambda function** uses **VPC networking** with specified subnets and security groups, rather than the default Lambda-managed network.\n\nPresence of a VPC association (`vpc_id`) indicates private connectivity to VPC resources.",
+  "Risk": "Without VPC attachment, functions lack network isolation and granular egress control, weakening **confidentiality** and **integrity**.\n\nTraffic must use public endpoints, raising risks of data exfiltration and SSRF via unrestricted outbound. If private databases are required, missing VPC access can impact **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-aws-lambda-function-is-configured-inside-a-vpc-1/",
+    "https://repost.aws/pt/knowledge-center/lambda-dedicated-vpc",
+    "https://www.getorchestra.io/guides/networking-and-vpc-configurations-in-aws-lambda",
+    "https://notes.kodekloud.com/docs/AWS-Certified-Developer-Associate/Serverless/Lambda-Networking",
+    "https://www.linkedin.com/pulse/unlocking-aws-lambda-networking-guide-software-filip-konkowski-chtre",
+    "https://dev.to/chinmay13/configuring-a-lambda-function-in-a-vpc-to-access-external-api-via-nat-gateway-and-store-in-dynamodb-1b29",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-3",
+    "https://stackoverflow.com/questions/55074793/how-can-we-force-aws-lamda-to-run-securely-in-a-vpc",
+    "https://www.techtarget.com/searchCloudComputing/answer/How-do-I-configure-AWS-Lambda-functions-in-a-VPC/",
+    "https://medium.com/@arunasilva86/how-to-use-vpc-networking-effectively-for-lambda-445abefdf8cf",
+    "https://docs.datadoghq.com/security/default_rules/9ga-poq-w7v/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws lambda update-function-configuration --region <region-name> --function-name <function-name> --vpc-config SubnetIds=<subnet-id-1>,<subnet-id-2>,SecurityGroupIds=<security-group-id>",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-in-vpc.html",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-3",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-aws-lambda-function-is-configured-inside-a-vpc-1/"
+      "CLI": "aws lambda update-function-configuration --function-name <example_resource_name> --vpc-config SubnetIds=<example_subnet_id>,SecurityGroupIds=<example_security_group_id>",
+      "NativeIaC": "```yaml\nAWSTemplateFormatVersion: '2010-09-09'\nResources:\n  LambdaFunction:\n    Type: AWS::Lambda::Function\n    Properties:\n      FunctionName: <example_resource_name>\n      Role: <example_role_arn>\n      Handler: index.handler\n      Runtime: python3.12\n      Code:\n        S3Bucket: <example_code_bucket>\n        S3Key: <example_code_key>\n      # Critical: Attach the function to a VPC by specifying at least one subnet and one security group\n      # This sets VpcConfig, which gives the function a VPC ID and makes the check PASS\n      VpcConfig:\n        SubnetIds:\n          - <example_subnet_id>\n        SecurityGroupIds:\n          - <example_security_group_id>\n```",
+      "Other": "1. In the AWS Lambda console, open your function\n2. Go to Configuration > VPC and click Edit\n3. Select the target VPC\n4. Choose at least one Subnet and one Security group\n5. Click Save",
+      "Terraform": "```hcl\nresource \"aws_lambda_function\" \"example\" {\n  function_name = \"<example_resource_name>\"\n  role          = \"<example_role_arn>\"\n  handler       = \"index.handler\"\n  runtime       = \"python3.12\"\n  filename      = \"<example_package.zip>\"\n\n  # Critical: VPC config attaches the function to a VPC, providing a VPC ID so the check passes\n  vpc_config {\n    subnet_ids         = [\"<example_subnet_id>\"]      # at least one subnet\n    security_group_ids = [\"<example_security_group_id>\"]\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure your AWS Lambda functions to operate within a Virtual Private Cloud (VPC) to enhance security and control network access.",
-      "Url": ""
+      "Text": "Attach functions to a VPC with private subnets and restrictive security groups to enforce **least privilege** and egress control.\n- Prefer **VPC endpoints** for AWS services\n- Use NAT only when necessary\n- Spread subnets across AZs for resilience\n- Govern with IAM conditions requiring `VpcIds`, `SubnetIds`, and `SecurityGroupIds`.",
+      "Url": "https://hub.prowler.com/check/awslambda_function_inside_vpc"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

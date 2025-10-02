@@ -1,26 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "awslambda_function_url_public",
-  "CheckTitle": "Check Public Lambda Function URL.",
-  "CheckType": [],
+  "CheckTitle": "Lambda function URL is not publicly accessible",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure",
+    "Effects/Resource Consumption"
+  ],
   "ServiceName": "awslambda",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsLambdaFunction",
-  "Description": "Check Public Lambda Function URL.",
-  "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
-  "RelatedUrl": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
+  "Description": "**AWS Lambda function URLs** are assessed to determine whether `AuthType` enforces **AWS IAM authentication** or permits **public invocation**.\n\nApplies to functions with a function URL and highlights when requests must be authenticated and authorized via IAM principals.",
+  "Risk": "An unauthenticated function URL lets anyone invoke code:\n- Confidentiality: data exposure\n- Integrity: unintended changes via over-privileged logic\n- Availability: DoS/denial-of-wallet through high request rates\n\nAttackers can script calls, exfiltrate data, and pivot using the function's permissions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://aws.amazon.com/th/blogs/compute/protecting-an-aws-lambda-function-url-with-amazon-cloudfront-and-lambdaedge/?nc1=f_ls",
+    "https://medium.com/@dimuthuarangala/securing-lambda-function-url-using-iam-authentication-5ccbc7c839ab",
+    "https://rianbk.com/aws-lambda-function-urls/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/iam-auth-function-url.html",
+    "https://www.roastdev.com/post/aws-lambda-url-invocations-with-iam-authentication-and-throttling-limits",
+    "https://docs.cgn.portal.checkpoint.com/docs/d9_aws_iam_107",
+    "https://www.wiz.io/blog/securing-aws-lambda-function-urls",
+    "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
+    "https://engineering.teknasyon.com/fine-details-of-aws-lambda-function-url-feature-f3b65b894c5f",
+    "https://dev.to/aws-builders/hands-on-aws-lambda-function-url-with-aws-iam-authentication-type-180g",
+    "https://www.rahulpnath.com/blog/how-to-secure-and-authenticate-lambda-function-urls/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws lambda update-function-url-config --region AWS_REGION --function-name FUNCTION-NAME --auth-type AWS_IAM",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws lambda update-function-url-config --function-name <FUNCTION_NAME> --auth-type AWS_IAM",
+      "NativeIaC": "```yaml\n# CloudFormation: set Lambda Function URL to require IAM auth\nResources:\n  FunctionUrl:\n    Type: AWS::Lambda::Url\n    Properties:\n      TargetFunctionArn: arn:aws:lambda:<region>:<account-id>:function/<example_resource_name>\n      AuthType: AWS_IAM  # CRITICAL: requires IAM authentication, preventing public access\n```",
+      "Other": "1. In AWS Console, go to Lambda > Functions and open <example_resource_name>\n2. Select Configuration > Function URL > Edit\n3. Set Auth type to AWS_IAM\n4. Click Save",
+      "Terraform": "```hcl\n# Set Lambda Function URL to require IAM authentication\nresource \"aws_lambda_function_url\" \"example\" {\n  function_name      = \"<example_resource_name>\"\n  authorization_type = \"AWS_IAM\"  # CRITICAL: blocks public access by requiring IAM auth\n}\n```"
     },
     "Recommendation": {
-      "Text": "Grant usage permission on a per-resource basis and applying least privilege principle.",
-      "Url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html"
+      "Text": "Enforce `AWS_IAM` on function URLs and apply **least privilege**:\n- Grant `lambda:InvokeFunctionUrl` only to required principals\n- Avoid `*` principals or broad conditions\n- Limit CORS to trusted origins and methods\n- Set reserved concurrency to contain abuse\n\nConsider **defense in depth** (WAF/CDN or private access) for Internet use.",
+      "Url": "https://hub.prowler.com/check/awslambda_function_url_public"
     }
   },
   "Categories": [

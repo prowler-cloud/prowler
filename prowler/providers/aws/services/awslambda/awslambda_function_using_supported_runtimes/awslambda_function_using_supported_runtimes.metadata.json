@@ -1,29 +1,47 @@
 {
   "Provider": "aws",
   "CheckID": "awslambda_function_using_supported_runtimes",
-  "CheckTitle": "Find obsolete Lambda runtimes.",
-  "CheckType": [],
+  "CheckTitle": "Lambda function uses a supported runtime",
+  "CheckType": [
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "awslambda",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsLambdaFunction",
-  "Description": "Find obsolete Lambda runtimes.",
-  "Risk": "If you have functions running on a runtime that will be deprecated in the next 60 days, Lambda notifies you by email that you should prepare by migrating your function to a supported runtime. In some cases, such as security issues that require a backwards-incompatible update, or software that does not support a long-term support (LTS) schedule, advance notice might not be possible. After a runtime is deprecated, Lambda might retire it completely at any time by disabling invocation. Deprecated runtimes are not eligible for security updates or technical support.",
-  "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html",
+  "Description": "**Lambda functions** using **obsolete runtimes**-such as `python3.8`, `nodejs14.x`, `go1.x`, `ruby2.7`-are identified against a curated list of deprecated runtime identifiers.",
+  "Risk": "Unmaintained runtimes lack security patches, exposing code and libraries to known CVEs (**confidentiality, integrity**).\n\nDeprecation can block create/update and break builds, causing failed deployments or runtime errors (**availability**). Tooling may stop supporting builds, slowing fixes and recovery.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/aws/aws-lambda-builders/issues/577",
+    "https://aws.amazon.com/blogs/compute/managing-aws-lambda-runtime-upgrades/",
+    "https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/supported-runtime-environment.html",
+    "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html",
+    "https://github.com/aws/aws-sam-cli/issues/6298",
+    "https://github.com/awsdocs/aws-lambda-developer-guide/blob/master/doc_source/runtime-support-policy.md",
+    "https://aws.amazon.com/blogs/compute/announcing-end-of-support-for-python-2-7-in-aws-lambda/",
+    "https://aws.amazon.com/blogs/compute/introducing-the-amazon-linux-2023-runtime-for-aws-lambda/",
+    "https://endoflife.date/aws-lambda"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws lambda update-function-configuration --region AWS-REGION --function-name FUNCTION-NAME --runtime 'RUNTIME'",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws lambda update-function-configuration --function-name <FUNCTION_NAME> --runtime <SUPPORTED_RUNTIME>",
+      "NativeIaC": "```yaml\n# CloudFormation: set Lambda to a supported runtime\nResources:\n  <example_resource_name>:\n    Type: AWS::Lambda::Function\n    Properties:\n      Role: <example_role_arn>\n      Handler: <example_handler>\n      Runtime: <SUPPORTED_RUNTIME>  # FIX: change to a supported runtime (e.g., python3.12) to pass the check\n      Code:\n        S3Bucket: <example_bucket_name>\n        S3Key: <example_object_key>\n```",
+      "Other": "1. Open the AWS Lambda console and select the function\n2. Go to Configuration > Runtime settings > Edit\n3. In Runtime, choose a supported runtime (e.g., python3.12) and click Save",
+      "Terraform": "```hcl\n# Set Lambda to a supported runtime\nresource \"aws_lambda_function\" \"<example_resource_name>\" {\n  function_name = \"<example_resource_name>\"\n  role          = \"<example_role_arn>\"\n  handler       = \"<example_handler>\"\n  runtime       = \"<SUPPORTED_RUNTIME>\" # FIX: use a supported runtime (e.g., python3.12) to pass the check\n  filename      = \"<example_package.zip>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Test new runtimes as they are made available. Implement them in production as soon as possible.",
-      "Url": "https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html"
+      "Text": "Upgrade to **supported LTS runtimes** (AL2/AL2023) and include runtime upgrades in a secure SDLC.\n\nTest in staging, deploy via versions/aliases, and keep dependencies current. Monitor deprecation notices. Apply guardrails to block deprecated `runtime` values and allow only approved runtimes, aligning with **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/awslambda_function_using_supported_runtimes"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

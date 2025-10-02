@@ -1,29 +1,48 @@
 {
   "Provider": "aws",
   "CheckID": "awslambda_function_url_cors_policy",
-  "CheckTitle": "Check Lambda Function URL CORS configuration.",
-  "CheckType": [],
+  "CheckTitle": "Lambda function URL CORS does not allow wildcard origins (*)",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "awslambda",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsLambdaFunction",
-  "Description": "Check Lambda Function URL CORS configuration.",
-  "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
-  "RelatedUrl": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
+  "Description": "**Lambda function URL** CORS policy is reviewed for `AllowOrigins`. The presence of `*` indicates a wide origin allowance in the CORS configuration.",
+  "Risk": "**Wildcard origins** allow any website to call the endpoint from a browser and read responses, weakening origin isolation.\n\nThis can lead to data exposure (C) and unauthorized actions (I) if state-changing methods are reachable, enabling scripted abuse and cross-origin attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://boto3.amazonaws.com/v1/documentation/api/1.27.1/reference/services/lambda/client/create_function_url_config.html",
+    "https://support.icompaas.com/support/solutions/articles/62000229584-ensure-lambda-function-url-cors-configurations-were-checked",
+    "https://www.serverless.com/blog/aws-lambda-function-urls-with-serverless-framework",
+    "https://medium.com/@mb20261/aws-cli-v2-by-examples-master-lambda-function-urls-9b4837224cb7",
+    "https://docs.aws.amazon.com/lambda/latest/api/API_Cors.html",
+    "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
+    "https://tutorialsdojo.com/how-to-configure-aws-lambda-function-url-with-cross-origin-resource-sharing/",
+    "https://dev.to/rimutaka/aws-lambda-function-url-with-cors-explained-by-example-14df",
+    "https://www.examcollection.com/blog/a-deep-dive-into-aws-lambda-function-urls-with-cross-origin-resource-sharing/",
+    "https://stackoverflow.com/questions/76944724/aws-lambda-function-url-cors-allow-origin-is-not-working-properly",
+    "https://mastra.ai/en/docs/deployment/cloud-providers/aws-lambda",
+    "https://www.example.com,AllowMethods=*,ExposeHeaders=keep-alive,MaxAge=3600,AllowCredentials=false'"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws lambda update-function-url-config --region AWS_REGION --function-name FUNCTION-NAME --auth-type AWS_IAM --cors 'AllowOrigins=https://www.example.com,AllowMethods=*,ExposeHeaders=keep-alive,MaxAge=3600,AllowCredentials=false'",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws lambda update-function-url-config --function-name <example_resource_name> --cors AllowOrigins=https://www.example.com",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict Lambda Function URL CORS to a specific origin\nResources:\n  FunctionUrl:\n    Type: AWS::Lambda::Url\n    Properties:\n      TargetFunctionArn: <example_resource_arn>\n      AuthType: AWS_IAM\n      Cors:\n        AllowOrigins:\n          - https://www.example.com  # Critical: removes '*' wildcard by allowing only this origin\n```",
+      "Other": "1. In the AWS Console, go to Lambda > Functions and select <example_resource_name>\n2. Open Configuration > Function URL > Edit\n3. In CORS, remove '*' from Allowed origins and enter https://www.example.com\n4. Save changes",
+      "Terraform": "```hcl\n# Terraform: restrict Lambda Function URL CORS to a specific origin\nresource \"aws_lambda_function_url\" \"example\" {\n  function_name      = \"<example_resource_name>\"\n  authorization_type = \"AWS_IAM\"\n  cors {\n    allow_origins = [\"https://www.example.com\"] # Critical: removes '*' wildcard by allowing only this origin\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Grant usage permission on a per-resource basis and applying least privilege principle.",
-      "Url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html"
+      "Text": "Apply least privilege to CORS:\n- Restrict `AllowOrigins` to trusted domains; avoid `*`\n- Limit `AllowMethods`/`AllowHeaders`; disable `AllowCredentials` unless required\n- Prefer authenticated access (e.g., `AWS_IAM`) and enforce resource policies for defense in depth",
+      "Url": "https://hub.prowler.com/check/awslambda_function_url_cors_policy"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
