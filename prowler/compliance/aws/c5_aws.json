@@ -1,7 +1,7 @@
 {
   "Framework": "C5",
-  "Name": "C5",
-  "Version": "Cloud Computing Compliance Criteria Catalogue C5:2025",
+  "Name": "Cloud Computing Compliance Criteria Catalogue C5",
+  "Version": "C5:2025",
   "Provider": "AWS",
   "Description": "This Directive lays down measures that aim to achieve a high common level of cybersecurity across the Union, with a view to improving the functioning of the internal market.",
   "Requirements": [
