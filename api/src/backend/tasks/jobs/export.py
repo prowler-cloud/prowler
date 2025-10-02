@@ -74,7 +74,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AWSISO27001),
         (lambda name: name.startswith("kisa"), AWSKISAISMSP),
         (lambda name: name == "prowler_threatscore_aws", ProwlerThreatScoreAWS),
-        (lambda name: name == "c5_aws", AWSC5),
+        (lambda name: name.startswith("c5_"), AWSC5),
     ],
     "azure": [
         (lambda name: name.startswith("cis_"), AzureCIS),
