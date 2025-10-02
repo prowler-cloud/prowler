@@ -114,44 +114,52 @@ export const ChatbotConfig = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col gap-6"
         >
-          <Controller
-            name="model"
-            control={form.control}
-            render={({ field }) => (
-              <Select
-                label="Model"
-                placeholder="Select a model"
-                labelPlacement="inside"
-                value={field.value}
-                defaultSelectedKeys={[field.value]}
-                onChange={(e) => field.onChange(e.target.value)}
-                variant="bordered"
-                size="md"
-                isRequired
-              >
-                <SelectItem key="gpt-4o-2024-08-06">
-                  GPT-4o (Recommended)
-                </SelectItem>
-                <SelectItem key="gpt-4o-mini-2024-07-18">
-                  GPT-4o Mini
-                </SelectItem>
-                <SelectItem key="gpt-5-2025-08-07">GPT-5</SelectItem>
-                <SelectItem key="gpt-5-mini-2025-08-07">GPT-5 Mini</SelectItem>
-              </Select>
-            )}
-          />
+          <div className="flex flex-col gap-6 md:flex-row">
+            <div className="md:w-1/3">
+              <Controller
+                name="model"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    label="Model"
+                    placeholder="Select a model"
+                    labelPlacement="inside"
+                    value={field.value}
+                    defaultSelectedKeys={[field.value]}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    variant="bordered"
+                    size="md"
+                    isRequired
+                  >
+                    <SelectItem key="gpt-4o-2024-08-06">
+                      GPT-4o (Recommended)
+                    </SelectItem>
+                    <SelectItem key="gpt-4o-mini-2024-07-18">
+                      GPT-4o Mini
+                    </SelectItem>
+                    <SelectItem key="gpt-5-2025-08-07">GPT-5</SelectItem>
+                    <SelectItem key="gpt-5-mini-2025-08-07">
+                      GPT-5 Mini
+                    </SelectItem>
+                  </Select>
+                )}
+              />
+            </div>
 
-          <CustomInput
-            control={form.control}
-            name="apiKey"
-            type="password"
-            label="API Key"
-            labelPlacement="inside"
-            placeholder="Enter your API key"
-            variant="bordered"
-            isRequired
-            isInvalid={!!form.formState.errors.apiKey}
-          />
+            <div className="md:flex-1">
+              <CustomInput
+                control={form.control}
+                name="apiKey"
+                type="password"
+                label="API Key"
+                labelPlacement="inside"
+                placeholder="Enter your API key"
+                variant="bordered"
+                isRequired
+                isInvalid={!!form.formState.errors.apiKey}
+              />
+            </div>
+          </div>
 
           <CustomTextarea
             control={form.control}
