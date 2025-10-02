@@ -85,9 +85,6 @@ export const authConfig = {
         const tokenResponse = await getToken({
           email,
           password,
-          name: undefined,
-          confirmPassword: undefined,
-          termsAndConditions: undefined,
         });
         if (!tokenResponse) return null;
 

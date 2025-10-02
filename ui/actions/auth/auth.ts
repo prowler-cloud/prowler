@@ -1,16 +1,10 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
-import { authFormSchema } from "@/types";
-
-const formSchemaSignIn = authFormSchema("sign-in");
-const formSchemaSignUp = authFormSchema("sign-up");
-
-type SignInFormData = z.infer<typeof formSchemaSignIn>;
+import type { SignInFormData, SignUpFormData } from "@/types";
 
 export async function authenticate(
   prevState: unknown,
@@ -50,9 +44,7 @@ export async function authenticate(
   }
 }
 
-export const createNewUser = async (
-  formData: z.infer<typeof formSchemaSignUp>,
-) => {
+export const createNewUser = async (formData: SignUpFormData) => {
   const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
@@ -99,7 +91,7 @@ export const createNewUser = async (
   }
 };
 
-export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
+export const getToken = async (formData: SignInFormData) => {
   const url = new URL(`${apiBaseUrl}/tokens`);
 
   const bodyData = {
