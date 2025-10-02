@@ -175,6 +175,35 @@ class Test_Organization_Scoping:
 
             assert len(orgs) == 0
 
+    def test_base_permission_extraction(self):
+        """Test that base_permission is populated from organization's default_repository_permission"""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = ["test-org1"]
+
+        mock_client = MagicMock()
+        # Organization with default_repository_permission set to "read"
+        org_with_perm = MagicMock()
+        org_with_perm.id = 1
+        org_with_perm.login = "test-org1"
+        org_with_perm.two_factor_requirement_enabled = True
+        org_with_perm.default_repository_permission = "read"
+        mock_client.get_organization.return_value = org_with_perm
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 1
+            assert 1 in orgs
+            assert orgs[1].name == "test-org1"
+            assert orgs[1].base_permission == "read"
+
     def test_specific_organization_scoping(self):
         """Test that only specified organizations are returned"""
         provider = set_mocked_github_provider()
