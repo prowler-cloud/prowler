@@ -1,5 +1,11 @@
 # Repository Guidelines
 
+## How to Use This Guide
+
+- Start here for cross-project norms, Prowler is a monorepo with several components. Every component should have an `AGENTS.md` file that contains the guidelines for the agents in that component. The file is located beside the code you are touching (e.g. `api/AGENTS.md`, `ui/AGENTS.md`, `prowler/AGENTS.md`).
+- Follow the stricter rule when guidance conflicts; component docs override this file for their scope.
+- Keep instructions synchronized. When you add new workflows or scripts, update both, the relevant component `AGENTS.md` and this file if they apply broadly.
+
 ## Project Overview
 
 Prowler is an open-source cloud security assessment tool that supports multiple cloud providers (AWS, Azure, GCP, Kubernetes, GitHub, M365, etc.). The project consists in a monorepo with the following main components:
