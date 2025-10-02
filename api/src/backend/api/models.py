@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import re
@@ -255,8 +256,6 @@ class Provider(RowLevelSecurityProtectedModel):
     def validate_m365_certificate_content(value):
         """Validate that M365 certificate content is valid base64 encoded data."""
         if value:
-            import base64
-
             try:
                 base64.b64decode(value, validate=True)
             except Exception as e:
