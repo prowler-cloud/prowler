@@ -1,61 +1,19 @@
-# Variables
+# Local validation for conditional requirements
 ###################################
-variable "external_id" {
-  type        = string
-  description = "This is the External ID that Prowler will use to assume the role ProwlerScan IAM Role."
+locals {
+  s3_integration_validation = (
+    !var.enable_s3_integration ||
+    (var.enable_s3_integration && var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account_id != "")
+  )
+}
 
-  validation {
-    condition     = length(var.external_id) > 0
-    error_message = "ExternalId must not be empty."
+# Validation check using check block (Terraform 1.5+)
+check "s3_integration_requirements" {
+  assert {
+    condition     = !var.enable_s3_integration || (var.s3_integration_bucket_name != "" && var.s3_integration_bucket_account_id != "")
+    error_message = "When enable_s3_integration is true, both s3_integration_bucket_name and s3_integration_bucket_account_id must be provided and non-empty."
   }
 }
-
-variable "account_id" {
-  type        = string
-  description = "AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud please do not edit this."
-  default     = "232136659152"
-
-  validation {
-    condition     = length(var.account_id) == 12
-    error_message = "AccountId must be a valid AWS Account ID."
-  }
-}
-
-variable "iam_principal" {
-  type        = string
-  description = "The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this."
-  default     = "role/prowler*"
-}
-
-##### PLEASE, DO NOT EDIT BELOW THIS LINE #####
-
-
-# Terraform Provider Configuration
-###################################
-terraform {
-  required_version = ">= 1.5"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.83"
-    }
-  }
-}
-
-provider "aws" {
-  region = "us-east-1"
-  default_tags {
-    tags = {
-      "Name"      = "ProwlerScan",
-      "Terraform" = "true",
-      "Service"   = "https://prowler.com",
-      "Support"   = "support@prowler.com"
-    }
-  }
-}
-
-data "aws_partition" "current" {}
-
 
 # IAM Role
 ###################################
@@ -86,7 +44,6 @@ data "aws_iam_policy_document" "prowler_assume_role_policy" {
 resource "aws_iam_role" "prowler_scan" {
   name               = "ProwlerScan"
   assume_role_policy = data.aws_iam_policy_document.prowler_assume_role_policy.json
-
 }
 
 resource "aws_iam_policy" "prowler_scan_policy" {
@@ -108,4 +65,17 @@ resource "aws_iam_role_policy_attachment" "prowler_scan_securityaudit_policy_att
 resource "aws_iam_role_policy_attachment" "prowler_scan_viewonly_policy_attachment" {
   role       = aws_iam_role.prowler_scan.name
   policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/job-function/ViewOnlyAccess"
+}
+
+# S3 Integration Module
+###################################
+module "s3_integration" {
+  count = var.enable_s3_integration ? 1 : 0
+
+  source = "./s3-integration"
+
+  s3_integration_bucket_name    = var.s3_integration_bucket_name
+  s3_integration_bucket_account_id = var.s3_integration_bucket_account_id
+
+  prowler_role_name = aws_iam_role.prowler_scan.name
 }

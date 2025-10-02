@@ -285,19 +285,16 @@ export function decryptKey(passkey: string) {
   return atob(passkey);
 }
 
-export const getErrorMessage = async (error: unknown): Promise<string> => {
-  let message: string;
-
+export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    message = error.message;
+    return error.message;
   } else if (error && typeof error === "object" && "message" in error) {
-    message = String(error.message);
+    return String(error.message);
   } else if (typeof error === "string") {
-    message = error;
+    return error;
   } else {
-    message = "Oops! Something went wrong.";
+    return "Oops! Something went wrong.";
   }
-  return message;
 };
 
 export const permissionFormFields: PermissionInfo[] = [
@@ -323,12 +320,12 @@ export const permissionFormFields: PermissionInfo[] = [
     description:
       "Allows configuration and management of cloud provider connections",
   },
-  // {
-  //   field: "manage_integrations",
-  //   label: "Manage Integrations",
-  //   description:
-  //     "Controls the setup and management of third-party integrations",
-  // },
+  {
+    field: "manage_integrations",
+    label: "Manage Integrations",
+    description:
+      "Allows configuration and management of third-party integrations",
+  },
   {
     field: "manage_scans",
     label: "Manage Scans",

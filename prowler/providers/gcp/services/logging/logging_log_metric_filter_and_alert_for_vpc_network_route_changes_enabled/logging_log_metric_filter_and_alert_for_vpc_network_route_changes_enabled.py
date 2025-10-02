@@ -18,6 +18,7 @@ class logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled(
                     metadata=self.metadata(),
                     resource=metric,
                     location=logging_client.region,
+                    resource_name=metric.name if metric.name else "Log Metric Filter",
                 )
                 projects_with_metric.add(metric.project_id)
                 report.status = "FAIL"

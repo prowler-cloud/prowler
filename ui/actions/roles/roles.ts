@@ -3,12 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getRoles = async ({
   page = 1,
@@ -36,15 +32,12 @@ export const getRoles = async ({
   });
 
   try {
-    const roles = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await roles.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/roles");
-    return parsedData;
+
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching roles:", error);
     return undefined;
   }
@@ -60,16 +53,9 @@ export const getRoleInfoById = async (roleId: string) => {
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch role info: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -92,14 +78,8 @@ export const getRolesByIds = async (roleIds: string[]) => {
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch roles: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching roles by IDs:", error);
     return { data: [] };
   }
@@ -120,8 +100,7 @@ export const addRole = async (formData: FormData) => {
         manage_providers: formData.get("manage_providers") === "true",
         manage_scans: formData.get("manage_scans") === "true",
         manage_account: formData.get("manage_account") === "true",
-        // TODO: Add back when we have integrations ready
-        // manage_integrations: formData.get("manage_integrations") === "true",
+        manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
       relationships: {},
@@ -154,15 +133,9 @@ export const addRole = async (formData: FormData) => {
       body,
     });
 
-    const data = await response.json();
-    revalidatePath("/roles");
-    return data;
+    return handleApiResponse(response, "/roles", false);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error during API call:", error);
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -182,8 +155,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
         manage_providers: formData.get("manage_providers") === "true",
         manage_account: formData.get("manage_account") === "true",
         manage_scans: formData.get("manage_scans") === "true",
-        // TODO: Add back when we have integrations ready
-        // manage_integrations: formData.get("manage_integrations") === "true",
+        manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
       relationships: {},
@@ -216,15 +188,9 @@ export const updateRole = async (formData: FormData, roleId: string) => {
       body,
     });
 
-    const data = await response.json();
-    revalidatePath("/roles");
-    return data;
+    return handleApiResponse(response, "/roles", false);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error during API call:", error);
-    return {
-      error: getErrorMessage(error),
-    };
+    handleApiError(error);
   }
 };
 
@@ -255,8 +221,6 @@ export const deleteRole = async (roleId: string) => {
     revalidatePath("/roles");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting role:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };

@@ -1,33 +1,8 @@
-FRAMEWORK_CHOICES = [
-    "ansible",
-    "argo_workflows",
-    "arm",
-    "azure_pipelines",
-    "bicep",
-    "bitbucket",
-    "bitbucket_pipelines",
-    "cdk",
-    "circleci_pipelines",
-    "cloudformation",
-    "dockerfile",
-    "github",
-    "github_actions",
-    "gitlab",
-    "gitlab_ci",
-    "helm",
-    "json_doc",
-    "kubernetes",
-    "kustomize",
-    "openapi",
-    "policies_3d",
-    "sast",
-    "sca_image",
-    "sca_package_2",
-    "secrets",
-    "serverless",
-    "terraform",
-    "terraform_json",
-    "yaml_doc",
+SCANNERS_CHOICES = [
+    "vuln",
+    "misconfig",
+    "secret",
+    "license",
 ]
 
 
@@ -56,14 +31,13 @@ def init_parser(self):
     )
 
     iac_scan_subparser.add_argument(
-        "--frameworks",
-        "-f",
-        "--framework",
-        dest="frameworks",
+        "--scanners",
+        "--scanner",
+        dest="scanners",
         nargs="+",
-        default=["all"],
-        choices=FRAMEWORK_CHOICES,
-        help="Comma-separated list of frameworks to scan. Default: all",
+        default=["vuln", "misconfig", "secret"],
+        choices=SCANNERS_CHOICES,
+        help="Comma-separated list of scanners to scan. Default: vuln, misconfig, secret",
     )
     iac_scan_subparser.add_argument(
         "--exclude-path",

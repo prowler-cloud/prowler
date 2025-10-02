@@ -30,9 +30,6 @@ class TestS3ConfigSerializer:
         """Test that empty values raise validation errors."""
         serializer = S3ConfigSerializer()
 
-        with pytest.raises(ValidationError, match="Output directory cannot be empty"):
-            serializer.validate_output_directory("")
-
         with pytest.raises(
             ValidationError, match="Output directory cannot be empty or just"
         ):

@@ -36,7 +36,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
                     notify_sender_blocked_addresses=["admin@example.com"],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=True,
                 )
             }
@@ -93,7 +93,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
                     notify_sender_blocked_addresses=["admin@example.com"],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=True,
                 ),
                 "Policy1": OutboundSpamPolicy(
@@ -102,7 +102,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
                     notify_sender_blocked_addresses=["admin@example.com"],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=False,
                 ),
             }
@@ -177,7 +177,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
                     notify_sender_blocked_addresses=["admin@example.com"],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=True,
                 ),
                 "Policy1": OutboundSpamPolicy(
@@ -186,7 +186,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
                     notify_sender_blocked_addresses=[],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=False,
                 ),
             }
@@ -261,7 +261,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
                     notify_sender_blocked_addresses=[],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=True,
                 ),
                 "Policy1": OutboundSpamPolicy(
@@ -270,7 +270,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=True,
                     notify_limit_exceeded_addresses=["admin@example.com"],
                     notify_sender_blocked_addresses=["admin@example.com"],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=False,
                 ),
             }
@@ -344,7 +344,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
                     notify_sender_blocked_addresses=[],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=True,
                 )
             }
@@ -398,7 +398,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
                     notify_sender_blocked_addresses=[],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=True,
                 ),
                 "Policy1": OutboundSpamPolicy(
@@ -407,7 +407,7 @@ class Test_defender_antispam_outbound_policy_configured:
                     notify_sender_blocked=False,
                     notify_limit_exceeded_addresses=[],
                     notify_sender_blocked_addresses=[],
-                    auto_forwarding_mode=False,
+                    auto_forwarding_mode="Off",
                     default=False,
                 ),
             }

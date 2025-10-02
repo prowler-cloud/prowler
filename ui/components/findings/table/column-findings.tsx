@@ -5,6 +5,7 @@ import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
+import { DataTableRowActions } from "@/components/findings/table/data-table-row-actions";
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
@@ -108,18 +109,18 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       const { delta } = row.original.attributes;
 
       return (
-        <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
+        <div className="3xl:max-w-[660px] relative flex max-w-[410px] flex-row items-center gap-2">
           <div className="flex flex-row items-center gap-4">
             {delta === "new" || delta === "changed" ? (
               <DeltaIndicator delta={delta} />
             ) : (
               <div className="w-2" />
             )}
-            <p className="mr-7 whitespace-normal break-words text-sm">
+            <p className="mr-7 text-sm break-words whitespace-normal">
               {checktitle}
             </p>
           </div>
-          <span className="absolute -right-2 top-1/2 -translate-y-1/2">
+          <span className="absolute top-1/2 -right-2 -translate-y-1/2">
             <Muted isMuted={muted} mutedReason={muted_reason || ""} />
           </span>
         </div>
@@ -228,7 +229,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "cloudProvider",
-    header: "Cloud provider",
+    header: "Cloud Provider",
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");
@@ -243,6 +244,13 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
           />
         </>
       );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      return <DataTableRowActions row={row} />;
     },
   },
 ];

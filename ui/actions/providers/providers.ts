@@ -3,20 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  getFormValue,
-  parseStringify,
-  wait,
-} from "@/lib";
-import {
-  buildSecretConfig,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib/provider-credentials/build-crendentials";
+import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
+import { buildSecretConfig } from "@/lib/provider-credentials/build-crendentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
 export const getProviders = async ({
@@ -45,15 +35,12 @@ export const getProviders = async ({
   });
 
   try {
-    const providers = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await providers.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/providers");
-    return parsedData;
+
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching providers:", error);
     return undefined;
   }
@@ -66,16 +53,13 @@ export const getProvider = async (formData: FormData) => {
   const url = new URL(`${apiBaseUrl}/providers/${providerId}`);
 
   try {
-    const providers = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await providers.json();
-    const parsedData = parseStringify(data);
-    return parsedData;
+
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -131,15 +115,9 @@ export const addProvider = async (formData: FormData) => {
       body: JSON.stringify(bodyData),
     });
 
-    const data = await response.json();
-    revalidatePath("/providers");
-    return parseStringify(data);
+    return handleApiResponse(response, "/providers");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -206,11 +184,6 @@ export const updateCredentialsProvider = async (
       }),
     });
 
-    if (!response.ok) {
-      const data = await response.json();
-      return parseStringify(data); // Return API errors for UI handling
-    }
-
     return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
@@ -225,6 +198,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
     await wait(2000);
+
     return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
@@ -265,9 +239,7 @@ export const deleteCredentials = async (secretId: string) => {
     revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting credentials:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };
 
@@ -304,8 +276,6 @@ export const deleteProvider = async (formData: FormData) => {
     revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error deleting provider:", error);
-    return { error: getErrorMessage(error) };
+    handleApiError(error);
   }
 };

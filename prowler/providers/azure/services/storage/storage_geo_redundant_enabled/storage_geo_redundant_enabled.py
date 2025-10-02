@@ -1,6 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.storage.storage_client import storage_client
-from prowler.providers.azure.services.storage.storage_service import ReplicationSettings
 
 
 class storage_geo_redundant_enabled(Check):
@@ -27,14 +26,16 @@ class storage_geo_redundant_enabled(Check):
                 report.subscription = subscription
 
                 if (
-                    storage_account.replication_settings
-                    == ReplicationSettings.STANDARD_GRS
+                    storage_account.replication_settings == "Standard_GRS"
+                    or storage_account.replication_settings == "Standard_GZRS"
+                    or storage_account.replication_settings == "Standard_RAGRS"
+                    or storage_account.replication_settings == "Standard_RAGZRS"
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has Geo-redundant storage (GRS) enabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has Geo-redundant storage {storage_account.replication_settings} enabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not have Geo-redundant storage (GRS) enabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not have Geo-redundant storage enabled, it has {storage_account.replication_settings} instead."
 
                 findings.append(report)
 

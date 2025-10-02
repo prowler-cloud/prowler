@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -19,12 +19,13 @@ import { ProviderProps, SearchParamsProps } from "@/types";
 export default async function Providers({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
+    <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
       <FilterControls search customFilters={filterProviders || []} />
       <Spacer y={8} />
       <Suspense
@@ -33,7 +34,7 @@ export default async function Providers({
           <>
             <div className="flex items-center gap-4 md:justify-end">
               <ManageGroupsButton />
-              <MutedFindingsConfigButton isDisabled={true} />
+              <MutedFindingsConfigButton />
               <AddProviderButton />
             </div>
             <Spacer y={8} />
@@ -45,7 +46,7 @@ export default async function Providers({
           </>
         }
       >
-        <ProvidersContent searchParams={searchParams} />
+        <ProvidersContent searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
@@ -76,8 +77,6 @@ const ProvidersContent = async ({
     pageSize,
   });
 
-  const hasProviders = providersData?.data && providersData.data.length > 0;
-
   const providerGroupDict =
     providersData?.included
       ?.filter((item: any) => item.type === "provider-groups")
@@ -100,7 +99,7 @@ const ProvidersContent = async ({
     <>
       <div className="flex items-center gap-4 md:justify-end">
         <ManageGroupsButton />
-        <MutedFindingsConfigButton isDisabled={!hasProviders} />
+        <MutedFindingsConfigButton />
         <AddProviderButton />
       </div>
       <Spacer y={8} />
@@ -108,6 +107,7 @@ const ProvidersContent = async ({
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12">
           <DataTable
+            key={`providers-${Date.now()}`}
             columns={ColumnProviders}
             data={enrichedProviders || []}
             metadata={providersData?.meta}

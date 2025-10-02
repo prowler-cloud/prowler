@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getResources = async ({
   page = 1,
@@ -43,15 +43,11 @@ export const getResources = async ({
   });
 
   try {
-    const resources = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
 
-    const data = await resources.json();
-    const parsedData = parseStringify(data);
-
-    revalidatePath("/resources");
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching resources:", error);
     return undefined;
@@ -96,15 +92,11 @@ export const getLatestResources = async ({
   });
 
   try {
-    const resources = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
 
-    const data = await resources.json();
-    const parsedData = parseStringify(data);
-
-    revalidatePath("/resources");
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching latest resources:", error);
     return undefined;
@@ -128,16 +120,12 @@ export const getMetadataInfo = async ({
   });
 
   try {
-    const metadata = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
 
-    const data = await metadata.json();
-    const parsedData = parseStringify(data);
-
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching metadata info:", error);
     return undefined;
   }
@@ -160,14 +148,11 @@ export const getLatestMetadataInfo = async ({
   });
 
   try {
-    const metadata = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
 
-    const data = await metadata.json();
-    const parsedData = parseStringify(data);
-
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching latest metadata info:", error);
     return undefined;
@@ -205,10 +190,7 @@ export const getResourceById = async (
       throw new Error(`Error fetching resource: ${resource.status}`);
     }
 
-    const data = await resource.json();
-    const parsedData = parseStringify(data);
-
-    return parsedData;
+    return handleApiResponse(resource);
   } catch (error) {
     console.error("Error fetching resource by ID:", error);
     return undefined;

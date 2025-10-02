@@ -1,11 +1,18 @@
-import { FilterType } from "@/types/filters";
+import { CONNECTION_STATUS_MAPPING } from "@/lib/helper-filters";
+import { FilterOption, FilterType } from "@/types/filters";
 import { PROVIDER_TYPES } from "@/types/providers";
 
-export const filterProviders = [
+export const filterProviders: FilterOption[] = [
   {
     key: "connected",
     labelCheckboxGroup: "Connection",
-    values: ["false", "true"],
+    values: ["true", "false"],
+    valueLabelMapping: CONNECTION_STATUS_MAPPING,
+  },
+  {
+    key: "provider__in",
+    labelCheckboxGroup: "Cloud Provider",
+    values: [...PROVIDER_TYPES],
   },
   // Add more filter categories as needed
 ];

@@ -41,7 +41,9 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     onFinish: (message) => {
-      // Detect error messages sent from backend using specific prefix
+      // There is no specific way to output the error message from langgraph supervisor
+      // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
+      // Detect error messages sent from backend using specific prefix and display the error
       if (message.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")) {
         const errorText = message.content
           .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
@@ -57,6 +59,15 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     },
     onError: (error) => {
       console.error("Chat error:", error);
+
+      if (
+        error?.message?.includes("<html>") &&
+        error?.message?.includes("<title>403 Forbidden</title>")
+      ) {
+        setErrorMessage("403 Forbidden");
+        return;
+      }
+
       setErrorMessage(
         error?.message || "An error occurred. Please retry your message.",
       );
@@ -72,6 +83,30 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const messageValue = form.watch("message");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
+  const messageValueRef = useRef<string>("");
+
+  // Keep ref in sync with current value
+  messageValueRef.current = messageValue;
+
+  // Restore last user message to input when any error occurs
+  useEffect(() => {
+    if (errorMessage) {
+      // Capture current messages to avoid dependency issues
+      setMessages((currentMessages) => {
+        const lastUserMessage = currentMessages
+          .filter((m) => m.role === "user")
+          .pop();
+
+        if (lastUserMessage) {
+          form.setValue("message", lastUserMessage.content);
+          // Remove the last user message from history since it's now in the input
+          return currentMessages.slice(0, -1);
+        }
+
+        return currentMessages;
+      });
+    }
+  }, [errorMessage, form, setMessages]);
 
   // Sync form value with chat input
   useEffect(() => {
@@ -88,25 +123,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     }
   }, [status, form]);
 
-  // Populate input with last user message when any error occurs
-  useEffect(() => {
-    if (errorMessage && messages.length > 0) {
-      // Filter out the error message itself before finding the last user message
-      const nonErrorMessages = messages.filter(
-        (m) => !m.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:"),
-      );
-      if (nonErrorMessages.length > 0) {
-        const lastUserMessage = nonErrorMessages
-          .filter((m) => m.role === "user")
-          .pop();
-        if (lastUserMessage && !messageValue) {
-          form.setValue("message", lastUserMessage.content);
-          setMessages(nonErrorMessages.slice(0, -1));
-        }
-      }
-    }
-  }, [errorMessage, messages, messageValue, form, setMessages]);
-
   const onFormSubmit = form.handleSubmit((data) => {
     if (data.message.trim()) {
       // Clear error on new submission
@@ -118,7 +134,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   // Global keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (messageValue?.trim()) {
           onFormSubmit();
@@ -129,16 +145,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [messageValue, onFormSubmit]);
-
-  useEffect(() => {
-    if (messagesContainerRef.current && latestUserMsgRef.current) {
-      const container = messagesContainerRef.current;
-      const userMsg = latestUserMsgRef.current;
-      const containerPadding = 16; // p-4 in Tailwind = 16px
-      container.scrollTop =
-        userMsg.offsetTop - container.offsetTop - containerPadding;
-    }
-  }, [messages]);
 
   const suggestedActions: SuggestedAction[] = [
     {
@@ -168,9 +174,9 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const shouldDisableChat = !hasConfig || !isActive;
 
   return (
-    <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
+    <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">
       {shouldDisableChat && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
               {!hasConfig
@@ -184,7 +190,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             </p>
             <CustomLink
               href="/lighthouse/config"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
               target="_self"
               size="sm"
             >
@@ -198,7 +204,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
       {(error || errorMessage) && (
         <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <div className="flex items-start">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg
                 className="h-5 w-5 text-red-400"
                 viewBox="0 0 20 20"
@@ -267,7 +273,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       ) : (
         <div
-          className="flex-1 space-y-4 overflow-y-auto p-4"
+          className="flex flex-1 flex-col gap-4 overflow-y-auto p-4"
           ref={messagesContainerRef}
         >
           {messages.map((message, idx) => {
@@ -288,12 +294,12 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground dark:!text-black"
+                      ? "bg-primary text-primary-foreground dark:text-black!"
                       : "bg-muted"
                   }`}
                 >
                   <div
-                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:!text-black" : ""}`}
+                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:text-black!" : ""}`}
                   >
                     <MemoizedMarkdown
                       id={message.id}
@@ -343,7 +349,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                 status === "submitted" ? "Stop generation" : "Send message"
               }
               isDisabled={status === "submitted" || !messageValue?.trim()}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 disabled:opacity-50"
             >
               {status === "submitted" ? <span>■</span> : <span>➤</span>}
             </CustomButton>

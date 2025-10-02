@@ -1,209 +1,90 @@
 # Getting Started with GitHub
 
-This guide explains how to set up authentication with GitHub for Prowler. The documentation covers credential retrieval processes for each supported authentication method.
+## Prowler App
 
-## Prerequisites
+<iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/9ETI84Xpu2g" title="Prowler Cloud Onboarding Github" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
-- GitHub account
-- Token creation permissions (organization-level access requires admin permissions)
+> Walkthrough video onboarding a GitHub Account using GitHub App.
 
-## Authentication Methods
+### Step 1: Access Prowler Cloud/App
 
-### 1. Personal Access Token (PAT)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
+2. Go to "Configuration" > "Cloud Providers"
 
-Personal Access Tokens provide the simplest GitHub authentication method and support individual user authentication or testing scenarios.
+    ![Cloud Providers Page](../img/cloud-providers-page.png)
 
-#### How to Create a Personal Access Token
+3. Click "Add Cloud Provider"
 
-1. **Navigate to GitHub Settings**
-    - Open [GitHub](https://github.com) and sign in
-    - Click the profile picture in the top right corner
-    - Select "Settings" from the dropdown menu
+    ![Add a Cloud Provider](../img/add-cloud-provider.png)
 
-2. **Access Developer Settings**
-    - Scroll down the left sidebar
-    - Click "Developer settings"
+4. Select "GitHub"
 
-3. **Generate New Token**
-    - Click "Personal access tokens"
-    - Select "Tokens (classic)"
-    - Click "Generate new token"
+    ![Select GitHub](./img/select-github.png)
 
-4. **Configure Token Permissions**
-    To enable Prowler functionality, configure the following scopes:
-    - `repo`: Full control of private repositories
-    - `read:org`: Read organization and team membership
-    - `read:user`: Read user profile data
-    - `read:discussion`: Read discussions
-    - `read:enterprise`: Read enterprise data (if applicable)
+5. Add the GitHub Account ID (username or organization name) and an optional alias, then click "Next"
 
-5. **Copy and Store the Token**
-    - Copy the generated token immediately (GitHub displays tokens only once)
-    - Store tokens securely using environment variables
+    ![Add GitHub Account ID](./img/add-github-account-id.png)
 
-#### How to Use Personal Access Tokens
+### Step 2: Choose the preferred authentication method
 
-Choose one of the following methods:
+6. Choose the preferred authentication method:
 
-**Command-line flag:**
+    ![Select auth method](./img/select-auth-method.png)
 
-```console
-prowler github --personal-access-token your_token_here
-```
+7. Configure the authentication method:
 
-**Environment variable:**
+=== "Personal Access Token"
+    ![Configure Personal Access Token](./img/auth-pat.png)
 
-```console
-export GITHUB_PERSONAL_ACCESS_TOKEN="your_token_here"
-prowler github
-```
+    For more details on how to create a Personal Access Token, see [Authentication > Personal Access Token](./authentication.md#personal-access-token-pat).
 
-### 2. OAuth App Token
+=== "OAuth App Token"
 
-OAuth Apps enable applications to act on behalf of users with explicit consent.
+    ![Configure OAuth App Token](./img/auth-oauth.png)
 
-#### How to Create an OAuth App
+    For more details on how to create an OAuth App Token, see [Authentication > OAuth App Token](./authentication.md#oauth-app-token).
 
-1. **Navigate to Developer Settings**
-    - Open GitHub Settings → Developer settings
-    - Click "OAuth Apps"
+=== "GitHub App"
 
-2. **Register New Application**
-    - Click "New OAuth App"
-    - Complete the required fields:
-        - **Application name**: Descriptive application name
-        - **Homepage URL**: Application homepage
-        - **Authorization callback URL**: User redirection URL after authorization
+    ![Configure GitHub App](./img/auth-github-app.png)
 
-3. **Obtain Authorization Code**
-    - Request authorization code (replace `{app_id}` with the application ID):
-   ```
-   https://github.com/login/oauth/authorize?client_id={app_id}
-   ```
+    For more details on how to create a GitHub App, see [Authentication > GitHub App](./authentication.md#github-app-credentials).
 
-4. **Exchange Code for Token**
-    - Exchange authorization code for access token (replace `{app_id}`, `{secret}`, and `{code}`):
-   ```
-   https://github.com/login/oauth/access_token?code={code}&client_id={app_id}&client_secret={secret}
-   ```
 
-#### How to Use OAuth Tokens
+## Prowler CLI
 
-Choose one of the following methods:
+### Automatic Login Method Detection
 
-**Command-line flag:**
+If no login method is explicitly provided, Prowler will automatically attempt to authenticate using environment variables in the following order of precedence:
+
+1. `GITHUB_PERSONAL_ACCESS_TOKEN`
+2. `GITHUB_OAUTH_APP_TOKEN`
+3. `GITHUB_APP_ID` and `GITHUB_APP_KEY` (where the key is the content of the private key file)
+
+???+ note
+    Ensure the corresponding environment variables are set up before running Prowler for automatic detection when not specifying the login method.
+
+For more details on how to set up authentication with GitHub, see [Authentication > GitHub](./authentication.md).
+
+### Personal Access Token (PAT)
+
+Use this method by providing your personal access token directly.
 
 ```console
-prowler github --oauth-app-token your_oauth_token
+prowler github --personal-access-token pat
 ```
 
-**Environment variable:**
+### OAuth App Token
+
+Authenticate using an OAuth app token.
 
 ```console
-export GITHUB_OAUTH_APP_TOKEN="your_oauth_token"
-prowler github
+prowler github --oauth-app-token oauth_token
 ```
 
-### 3. GitHub App Credentials
-
-GitHub Apps provide the recommended integration method for accessing multiple repositories or organizations.
-
-#### How to Create a GitHub App
-
-1. **Navigate to Developer Settings**
-    - Open GitHub Settings → Developer settings
-    - Click "GitHub Apps"
-
-2. **Create New GitHub App**
-    - Click "New GitHub App"
-    - Complete the required fields:
-        - **GitHub App name**: Unique application name
-        - **Homepage URL**: Application homepage
-        - **Webhook URL**: Webhook payload URL (optional)
-        - **Permissions**: Application permission requirements
-
-3. **Configure Permissions**
-    To enable Prowler functionality, configure these permissions:
-    - **Repository permissions**:
-        - Contents (Read)
-        - Metadata (Read)
-        - Pull requests (Read)
-    - **Organization permissions**:
-        - Members (Read)
-        - Administration (Read)
-    - **Account permissions**:
-        - Email addresses (Read)
-
-4. **Generate Private Key**
-    - Scroll to the "Private keys" section after app creation
-    - Click "Generate a private key"
-    - Download the `.pem` file and store securely
-
-5. **Record App ID**
-    - Locate the App ID at the top of the GitHub App settings page
-
-#### How to Install the GitHub App
-
-1. **Install Application**
-    - Navigate to GitHub App settings
-    - Click "Install App" in the left sidebar
-    - Select the target account/organization
-    - Choose specific repositories or select "All repositories"
-
-#### How to Use GitHub App Credentials
-
-Choose one of the following methods:
-
-**Command-line flags:**
+### GitHub App Credentials
+Use GitHub App credentials by specifying the App ID and the private key path.
 
 ```console
-prowler github --github-app-id your_app_id --github-app-key /path/to/private-key.pem
+prowler github --github-app-id app_id --github-app-key-path app_key_path
 ```
-
-**Environment variables:**
-
-```console
-export GITHUB_APP_ID="your_app_id"
-export GITHUB_APP_KEY="private-key-content"
-prowler github
-```
-
-## Best Practices
-
-### Security Considerations
-
-Implement the following security measures:
-
-- **Secure Credential Storage**: Store credentials using environment variables instead of hardcoding tokens
-- **Secrets Management**: Use dedicated secrets management systems in production environments
-- **Regular Token Rotation**: Rotate tokens and keys regularly
-- **Least Privilege Principle**: Grant only minimum required permissions
-- **Permission Auditing**: Review and audit permissions regularly
-- **Token Expiration**: Set appropriate expiration times for tokens
-- **Usage Monitoring**: Monitor token usage and revoke unused tokens
-
-### Authentication Method Selection
-
-Choose the appropriate method based on use case:
-
-- **Personal Access Token**: Individual use, testing, or simple automation
-- **OAuth App Token**: Applications requiring user consent and delegation
-- **GitHub App**: Production integrations, especially for organizations
-
-## Troubleshooting Common Issues
-
-### Insufficient Permissions
-- Verify token/app has necessary scopes/permissions
-- Check organization restrictions on third-party applications
-
-### Token Expiration
-- Confirm token has not expired
-- Verify fine-grained tokens have correct resource access
-
-### Rate Limiting
-- GitHub implements API call rate limits
-- Consider GitHub Apps for higher rate limits
-
-### Organization Settings
-- Some organizations restrict third-party applications
-- Contact organization administrator if access is denied
