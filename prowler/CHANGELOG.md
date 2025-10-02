@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
 - Documentation for renaming checks [(#8717)](https://github.com/prowler-cloud/prowler/pull/8717)
 - Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
+- Add C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
 
 ### Changed
 - Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)

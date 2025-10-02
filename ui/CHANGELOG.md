@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - `Prowler Hub` menu item with tooltip [(#8692)] (https://github.com/prowler-cloud/prowler/pull/8692)
 - Copy link button to finding detail page [(#8685)] (https://github.com/prowler-cloud/prowler/pull/8685)
 - Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
+- Support compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
 
 ### 🔄 Changed
 
