@@ -1,12 +1,7 @@
 "use client";
 
-import * as React from "react";
-
+import { SpinnerIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
-
-// ============================================================================
-// Loader Component - Loading spinner for AI operations
-// ============================================================================
 
 interface LoaderProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -19,37 +14,39 @@ interface LoaderProps extends React.HTMLAttributes<HTMLDivElement> {
    */
   text?: string;
   className?: string;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 const loaderSizes = {
-  sm: "h-4 w-4 border-2",
-  default: "h-6 w-6 border-2",
-  lg: "h-8 w-8 border-3",
+  sm: 16,
+  default: 24,
+  lg: 32,
 };
 
-const Loader = React.forwardRef<HTMLDivElement, LoaderProps>(
-  ({ size = "default", text, className, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn("flex items-center gap-2", className)}
-        role="status"
-        aria-live="polite"
-        aria-label={text || "Loading"}
-        {...props}
-      >
-        <div
-          className={cn(
-            "border-prowler-green animate-spin rounded-full border-t-transparent",
-            loaderSizes[size],
-          )}
-        />
-        {text && <span className="text-muted-foreground text-sm">{text}</span>}
-        <span className="sr-only">{text || "Loading..."}</span>
-      </div>
-    );
-  },
-);
-Loader.displayName = "Loader";
+function Loader({
+  size = "default",
+  text,
+  className,
+  ref,
+  ...props
+}: LoaderProps) {
+  return (
+    <div
+      ref={ref}
+      className={cn("flex items-center gap-2", className)}
+      role="status"
+      aria-live="polite"
+      aria-label={text || "Loading"}
+      {...props}
+    >
+      <SpinnerIcon
+        size={loaderSizes[size]}
+        className="text-prowler-green animate-spin"
+      />
+      {text && <span className="text-muted-foreground text-sm">{text}</span>}
+      <span className="sr-only">{text || "Loading..."}</span>
+    </div>
+  );
+}
 
 export { Loader };
