@@ -73,6 +73,7 @@ class Organization(GithubService):
                                             id=user.id,
                                             name=user.login,
                                             mfa_required=None,  # Users don't have MFA requirements like orgs
+                                            is_verified=None,  # Users don't have verified badges like orgs
                                         )
                                         logger.info(
                                             f"Added user '{user.login}' as organization for checks"
@@ -144,10 +145,20 @@ class Organization(GithubService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        
+        try:
+            is_verified = org.is_verified
+        except Exception as error:
+            is_verified = None
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
             mfa_required=require_mfa,
+            is_verified=is_verified,
         )
 
 
@@ -157,3 +168,4 @@ class Org(BaseModel):
     id: int
     name: str
     mfa_required: Optional[bool] = False
+    is_verified: Optional[bool] = None

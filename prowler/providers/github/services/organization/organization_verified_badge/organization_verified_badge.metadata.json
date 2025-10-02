@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_verified_badge",
+  "CheckTitle": "Check if organization has a verified badge.",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "GitHubOrganization",
+  "Description": "Ensure that an organization's domain is verified by obtaining a 'Verified' badge on its profile page. This verifies the authenticity of the organization, helping to protect against phishing attacks and domain spoofing. A 'Verified' badge provides assurance that the organization's identity is legitimate, fostering trust among developers and the broader community.",
+  "Risk": "Without a verified badge, organizations are more susceptible to impersonation and phishing attacks. Malicious actors can create fake organizations with similar names to legitimate ones, potentially deceiving developers into contributing to or using compromised repositories. This can lead to supply chain attacks, credential theft, and compromise of sensitive code or intellectual property.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Verify your organization's domain to obtain a 'Verified' badge. This involves adding a TXT record to your domain's DNS configuration to prove ownership. Once verified, the badge will appear on your organization's profile page, providing assurance to users that the organization is authentic and legitimate.",
+      "Url": "https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CIS Control 1.3.9"
+}
