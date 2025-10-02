@@ -8528,13 +8528,49 @@ class TestLighthouseTenantConfigViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "already exists" in str(response.json()).lower()
 
+    @patch("openai.OpenAI")
     def test_lighthouse_tenant_config_retrieve(
-        self, authenticated_client, tenants_fixture
+        self, mock_openai_client, authenticated_client, tenants_fixture
     ):
-        """Test retrieving the singleton tenant config"""
-        from api.models import LighthouseTenantConfiguration
+        """Test retrieving the singleton tenant config with proper provider and model validation"""
+        from api.models import (
+            LighthouseProviderConfiguration,
+            LighthouseProviderModels,
+            LighthouseTenantConfiguration,
+        )
 
-        # Create config first
+        # Mock OpenAI client and models response
+        mock_models_response = Mock()
+        mock_models_response.data = [
+            Mock(id="gpt-4o"),
+            Mock(id="gpt-4o-mini"),
+            Mock(id="gpt-5"),
+        ]
+        mock_openai_client.return_value.models.list.return_value = mock_models_response
+
+        # Create OpenAI provider configuration
+        provider_config = LighthouseProviderConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_type="openai",
+            credentials=b'{"api_key": "sk-test1234567890T3BlbkFJtest1234567890"}',
+            is_active=True,
+        )
+
+        # Create provider models (simulating refresh)
+        LighthouseProviderModels.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_configuration=provider_config,
+            model_id="gpt-4o",
+            default_parameters={},
+        )
+        LighthouseProviderModels.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_configuration=provider_config,
+            model_id="gpt-4o-mini",
+            default_parameters={},
+        )
+
+        # Create tenant configuration with valid provider and model
         config = LighthouseTenantConfiguration.objects.create(
             tenant_id=tenants_fixture[0].id,
             business_context="Test context",
@@ -8542,7 +8578,7 @@ class TestLighthouseTenantConfigViewSet:
             default_models={"openai": "gpt-4o"},
         )
 
-        # Retrieve it
+        # Retrieve and verify the configuration
         response = authenticated_client.get(reverse("lighthouse-config"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
