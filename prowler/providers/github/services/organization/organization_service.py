@@ -73,6 +73,7 @@ class Organization(GithubService):
                                             id=user.id,
                                             name=user.login,
                                             mfa_required=None,  # Users don't have MFA requirements like orgs
+                                            base_permissions=None,  # Users don't have base permissions like orgs
                                         )
                                         logger.info(
                                             f"Added user '{user.login}' as organization for checks"
@@ -144,10 +145,20 @@ class Organization(GithubService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+        try:
+            base_permissions = org.default_repository_permission
+        except Exception as error:
+            base_permissions = None
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
             mfa_required=require_mfa,
+            base_permissions=base_permissions,
         )
 
 
@@ -157,3 +168,4 @@ class Org(BaseModel):
     id: int
     name: str
     mfa_required: Optional[bool] = False
+    base_permissions: Optional[str] = None
