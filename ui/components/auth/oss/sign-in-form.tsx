@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@heroui/button";
-import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,12 +9,12 @@ import { useForm } from "react-hook-form";
 
 import { authenticate } from "@/actions/auth";
 import { initiateSamlAuth } from "@/actions/integrations/saml";
+import { AuthDivider } from "@/components/auth/oss/auth-divider";
+import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
+import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { ProwlerExtended } from "@/components/icons";
-import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { SignInFormData, signInSchema } from "@/types";
 
@@ -108,108 +107,88 @@ export const SignInForm = ({
     }
   };
 
+  const title = isSamlMode ? "Sign in with SAML SSO" : "Sign in";
+
   return (
-    <div className="relative flex h-screen w-screen">
-      <div className="relative flex w-full items-center justify-center lg:w-full">
-        <div className="absolute h-full w-full bg-[radial-gradient(#6af400_1px,transparent_1px)] mask-[radial-gradient(ellipse_50%_50%_at_50%_50%,#000_10%,transparent_80%)] bg-size-[16px_16px]"></div>
+    <AuthLayout title={title}>
+      <Form {...form}>
+        <form
+          noValidate
+          method="post"
+          className="flex flex-col gap-4"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <CustomInput
+            control={form.control}
+            name="email"
+            type="email"
+            label="Email"
+            placeholder="Enter your email"
+            isInvalid={!!form.formState.errors.email}
+            showFormMessage
+          />
+          {!isSamlMode && (
+            <CustomInput
+              control={form.control}
+              name="password"
+              password
+              isInvalid={!!form.formState.errors.password}
+            />
+          )}
 
-        <div className="rounded-large border-divider shadow-small dark:bg-background/85 relative z-10 flex w-full max-w-sm flex-col gap-4 border bg-white/90 px-8 py-10 md:max-w-md">
-          <div className="absolute -top-[100px] left-1/2 z-10 flex h-fit w-fit -translate-x-1/2">
-            <ProwlerExtended width={300} />
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="pb-2 text-xl font-medium">
-              {isSamlMode ? "Sign in with SAML SSO" : "Sign in"}
-            </p>
-            <ThemeSwitch aria-label="Toggle theme" />
-          </div>
+          <CustomButton
+            type="submit"
+            ariaLabel="Log in"
+            ariaDisabled={isLoading}
+            className="w-full"
+            variant="solid"
+            color="action"
+            size="md"
+            radius="md"
+            isLoading={isLoading}
+            isDisabled={isLoading}
+          >
+            {isLoading ? <span>Loading</span> : <span>Log in</span>}
+          </CustomButton>
+        </form>
+      </Form>
 
-          <Form {...form}>
-            <form
-              noValidate
-              method="post"
-              className="flex flex-col gap-4"
-              onSubmit={form.handleSubmit(onSubmit)}
-            >
-              <CustomInput
-                control={form.control}
-                name="email"
-                type="email"
-                label="Email"
-                placeholder="Enter your email"
-                isInvalid={!!form.formState.errors.email}
-                showFormMessage
+      <AuthDivider />
+
+      <div className="flex flex-col gap-2">
+        {!isSamlMode && (
+          <SocialButtons
+            googleAuthUrl={googleAuthUrl}
+            githubAuthUrl={githubAuthUrl}
+            isGoogleOAuthEnabled={isGoogleOAuthEnabled}
+            isGithubOAuthEnabled={isGithubOAuthEnabled}
+          />
+        )}
+        <Button
+          startContent={
+            !isSamlMode && (
+              <Icon
+                className="text-default-500"
+                icon="mdi:shield-key"
+                width={24}
               />
-              {!isSamlMode && (
-                <CustomInput
-                  control={form.control}
-                  name="password"
-                  password
-                  isInvalid={!!form.formState.errors.password}
-                />
-              )}
-
-              <CustomButton
-                type="submit"
-                ariaLabel="Log in"
-                ariaDisabled={isLoading}
-                className="w-full"
-                variant="solid"
-                color="action"
-                size="md"
-                radius="md"
-                isLoading={isLoading}
-                isDisabled={isLoading}
-              >
-                {isLoading ? <span>Loading</span> : <span>Log in</span>}
-              </CustomButton>
-            </form>
-          </Form>
-
-          <>
-            <div className="flex items-center gap-4 py-2">
-              <Divider className="flex-1" />
-              <p className="text-tiny text-default-500 shrink-0">OR</p>
-              <Divider className="flex-1" />
-            </div>
-            <div className="flex flex-col gap-2">
-              {!isSamlMode && (
-                <SocialButtons
-                  googleAuthUrl={googleAuthUrl}
-                  githubAuthUrl={githubAuthUrl}
-                  isGoogleOAuthEnabled={isGoogleOAuthEnabled}
-                  isGithubOAuthEnabled={isGithubOAuthEnabled}
-                />
-              )}
-              <Button
-                startContent={
-                  !isSamlMode && (
-                    <Icon
-                      className="text-default-500"
-                      icon="mdi:shield-key"
-                      width={24}
-                    />
-                  )
-                }
-                variant="bordered"
-                className="w-full"
-                onClick={() => {
-                  form.setValue("isSamlMode", !isSamlMode);
-                }}
-              >
-                {isSamlMode ? "Back" : "Continue with SAML SSO"}
-              </Button>
-            </div>
-          </>
-
-          <p className="text-small text-center">
-            Need to create an account?&nbsp;
-            <CustomLink size="base" href="/sign-up" target="_self">
-              Sign up
-            </CustomLink>
-          </p>
-        </div>
+            )
+          }
+          variant="bordered"
+          className="w-full"
+          onClick={() => {
+            form.setValue("isSamlMode", !isSamlMode);
+          }}
+        >
+          {isSamlMode ? "Back" : "Continue with SAML SSO"}
+        </Button>
       </div>
-    </div>
+
+      <AuthFooterLink
+        text="Need to create an account?"
+        linkText="Sign up"
+        href="/sign-up"
+      />
+    </AuthLayout>
   );
 };
