@@ -17,12 +17,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-private-apis.html",
-    "https://heeki.medium.com/using-scps-to-block-deployments-of-public-rest-api-endpoints-in-amazon-api-gateway-df0dedc2ca2d",
-    "https://github.com/aws/aws-cdk/issues/31660",
-    "https://d1.awsstatic.com/whitepapers/api-gateway-security.pdf?svrd_sip6",
-    "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-resource-policies-examples.html",
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-resource-policies-examples.html#apigateway-resource-policies-source-vpc-example",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-control-access-to-api.html",
-    "https://medium.com/@ndlovuthobekani6/securing-public-and-private-rest-apis-on-aws-api-gateway-best-practices-5ec60d6cc189",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-resource-policies.html"
   ],
   "Remediation": {
