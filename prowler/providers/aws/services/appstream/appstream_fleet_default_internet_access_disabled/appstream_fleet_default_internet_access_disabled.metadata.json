@@ -16,13 +16,10 @@
   "Risk": "**Direct Internet access** gives streaming instances public exposure. Threats include:\n- Remote exploitation and malware, undermining **confidentiality** and **integrity**\n- Uncontrolled egress enabling **data exfiltration**\n\nIt also enforces ~100-instance limits, reducing **availability** for high-concurrency deployments.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html",
     "https://support.icompaas.com/support/solutions/articles/62000233540-ensure-default-internet-access-from-your-amazon-appstream-fleet-streaming-instances-remains-unchecked",
     "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-appstream-fleet.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/1.18.39/reference/services/appstream.html",
-    "https://docs.aws.amazon.com/powershell/latest/reference/items/New-APSFleet.html",
-    "https://docs.aws.amazon.com/appstream2/latest/developerguide/internet-access.html",
-    "https://docs.aws.amazon.com/powershell/latest/reference/items/Update-APSFleet.html",
-    "https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html"
+    "https://docs.aws.amazon.com/appstream2/latest/developerguide/internet-access.html"
   ],
   "Remediation": {
     "Code": {
