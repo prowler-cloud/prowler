@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "organization_base_permissions_strict",
+  "CheckTitle": "Check if organization base permissions are set to strict values.",
+  "CheckType": [],
+  "ServiceName": "organization",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GitHubOrganization",
+  "Description": "Ensure that strict base permissions are enforced across all organization repositories. Base permissions should be set to the lowest privilege level, such as 'Read' or 'None,' to minimize risk. This configuration restricts excessive access and helps prevent unintentional or malicious actions by users who do not require elevated permissions.",
+  "Risk": "Setting base permissions to 'Write' or 'Admin' grants all organization members elevated access to all repositories by default. This can lead to unauthorized code changes, data leaks, or malicious modifications, as users with no legitimate need for write access can modify critical repositories.",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/setting-base-permissions-for-an-organization",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set organization base permissions to 'Read' or 'None'. This ensures that organization members only have the minimum necessary access to repositories. Explicitly grant write or admin permissions on a per-repository basis only to users who require them. This principle of least privilege significantly reduces the attack surface and limits potential damage from compromised accounts.",
+      "Url": "https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/setting-base-permissions-for-an-organization"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CIS GitHub Foundations Benchmark v1.0.0 - Control 1.3.8"
+}
