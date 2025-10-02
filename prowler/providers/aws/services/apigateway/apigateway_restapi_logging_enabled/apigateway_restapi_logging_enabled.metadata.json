@@ -19,14 +19,10 @@
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/cloudwatch-logs.html",
-    "https://cagrihankara.medium.com/how-to-enable-cloudwatch-logs-for-api-gateway-d36c55c50e56",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html",
     "https://repost.aws/knowledge-center/api-gateway-cloudwatch-logs",
     "https://repost.aws/knowledge-center/api-gateway-missing-cloudwatch-logs",
-    "https://docs.aws.amazon.com/apigateway/latest/developerguide/view-cloudwatch-log-events-in-cloudwatch-console.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/ensure-api-gateway-stage-have-logging-level-defined-as-appropiate#terraform",
-    "https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-stages.html",
-    "https://docs.aws.amazon.com/es_es/apigateway/latest/developerguide/set-up-logging.html"
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/view-cloudwatch-log-events-in-cloudwatch-console.html"
   ],
   "Remediation": {
     "Code": {
