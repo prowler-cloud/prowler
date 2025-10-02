@@ -6,8 +6,8 @@ import { Copy, Play, Plus, RotateCcw, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { Action, Actions } from "@/components/ai-elements";
-import { Loader } from "@/components/ai-elements";
+import { Action, Actions } from "@/components/lighthouse/actions";
+import { Loader } from "@/components/lighthouse/loader";
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomTextarea } from "@/components/ui/custom";
