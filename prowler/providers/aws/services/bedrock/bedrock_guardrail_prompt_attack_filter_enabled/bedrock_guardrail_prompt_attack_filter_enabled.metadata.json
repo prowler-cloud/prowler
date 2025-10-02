@@ -1,29 +1,48 @@
 {
   "Provider": "aws",
   "CheckID": "bedrock_guardrail_prompt_attack_filter_enabled",
-  "CheckTitle": "Configure Prompt Attack Filter with the highest strength for Amazon Bedrock Guardrails.",
-  "CheckType": [],
+  "CheckTitle": "Amazon Bedrock guardrail has prompt attack filter strength set to HIGH",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs/Defense Evasion",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "bedrock",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:guardrails/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "Ensure that prompt attack filter strength is set to HIGH for Amazon Bedrock guardrails to mitigate prompt injection and bypass techniques.",
-  "Risk": "If prompt attack filter strength is not set to HIGH, Bedrock models may be more vulnerable to prompt injection attacks or jailbreak attempts, which could allow harmful or sensitive content to bypass filters and reach end users.",
-  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
+  "Description": "**Amazon Bedrock guardrails** have the **Prompt attack** filter set to `HIGH` strength to detect and block injection and jailbreak patterns. Guardrails missing this setting or using lower strengths are identified.",
+  "Risk": "Without **HIGH** prompt-attack filtering, models are exposed to **prompt injection/jailbreaks**:\n- Confidentiality: coerced disclosure of sensitive data\n- Integrity: policy evasion and manipulated outputs\n- Operations: unintended tool execution and workflow tampering",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.datacamp.com/tutorial/aws-bedrock",
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/prompt-attack-strength.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-injection.html",
+    "https://cloudelligent.com/blog/amazon-bedrock-agents-prompt-injections-security/",
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/",
+    "https://support.icompaas.com/support/solutions/articles/62000233535-ensure-prompt-attack-filter-is-configured-at-highest-strength-for-amazon-bedrock-guardrails",
+    "https://blog.kinto-technologies.com/posts/2025-06-16-aispm-en/",
+    "https://pmsquare.com/resource/blogs/2024-6-17-amazon-bedrock-guardrails/",
+    "https://medium.com/@vinayakdeshpande111/aws-guardrails-with-langchain-6554411d4d74",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/prompt-attack-strength.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws bedrock put-guardrails-configuration --guardrails-config 'promptAttackStrength=HIGH'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/prompt-attack-strength.html",
-      "Terraform": ""
+      "CLI": "aws bedrock update-guardrail --guardrail-identifier <example_resource_id> --content-policy '{\"Filters\":[{\"Type\":\"PROMPT_ATTACK\",\"InputStrength\":\"HIGH\"}]}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::Bedrock::Guardrail\n    Properties:\n      Name: <example_resource_name>\n      BlockedInputMessaging: \"Blocked\"\n      BlockedOutputsMessaging: \"Blocked\"\n      ContentPolicy:\n        Filters:\n          - Type: PROMPT_ATTACK         # Critical: enables the Prompt Attack filter\n            InputStrength: HIGH         # Critical: sets filter strength to HIGH to pass the check\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select Guardrails, then choose your guardrail\n3. In Content filters, find Prompt attacks\n4. Set Strength to High\n5. Click Save",
+      "Terraform": "```hcl\nresource \"aws_bedrock_guardrail\" \"<example_resource_name>\" {\n  name                      = \"<example_resource_name>\"\n  blocked_input_messaging   = \"Blocked\"\n  blocked_outputs_messaging = \"Blocked\"\n\n  content_policy {\n    filters {\n      type           = \"PROMPT_ATTACK\"   # Critical: enables the Prompt Attack filter\n      input_strength = \"HIGH\"            # Critical: sets filter strength to HIGH to pass the check\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Set the prompt attack filter strength to HIGH for Amazon Bedrock guardrails to prevent prompt injection attacks and ensure robust protection against content manipulation.",
-      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-injection.html"
+      "Text": "Set the **Prompt attack** filter to `HIGH` and apply **defense in depth**:\n- Tag user/external inputs as untrusted for evaluation\n- Combine with denied topics and sensitive-info filters\n- Enforce **least privilege** and approvals for risky actions\n- Monitor guardrail hits and tune to reduce false negatives",
+      "Url": "https://hub.prowler.com/check/bedrock_guardrail_prompt_attack_filter_enabled"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Ensure that prompt attack protection is set to the highest strength to minimize the risk of prompt injection attacks."

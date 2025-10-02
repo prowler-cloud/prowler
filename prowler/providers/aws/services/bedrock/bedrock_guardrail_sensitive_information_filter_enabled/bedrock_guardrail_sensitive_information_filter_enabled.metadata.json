@@ -1,29 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "bedrock_guardrail_sensitive_information_filter_enabled",
-  "CheckTitle": "Configure Sensitive Information Filters for Amazon Bedrock Guardrails.",
-  "CheckType": [],
+  "CheckTitle": "Amazon Bedrock guardrail blocks or masks sensitive information",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Effects/Data Exposure",
+    "Sensitive Data Identifications/PII"
+  ],
   "ServiceName": "bedrock",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:guardrails/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "Ensure that sensitive information filters are enabled for Amazon Bedrock guardrails to prevent the leakage of sensitive data such as personally identifiable information (PII), financial data, or confidential corporate information.",
-  "Risk": "If sensitive information filters are not enabled, Bedrock models may inadvertently generate or expose confidential or sensitive information in responses, leading to data breaches, regulatory violations, or reputational damage.",
-  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
+  "Description": "**Amazon Bedrock guardrails** use **sensitive information filters** to `block` or `mask` detected PII and custom pattern matches in prompts and responses.\n\nThe evaluation looks for guardrails with this filtering configured.",
+  "Risk": "Absent filtering, prompts or outputs can reveal **PII**, credentials, or financial records, compromising **confidentiality**.\n- Exposed tokens enable unauthorized access and data tampering (integrity)\n- Disclosed customer details facilitate fraud and identity theft, with potential lateral movement",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/guardrails-with-pii-mask-block.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws bedrock put-guardrails-configuration --guardrails-config 'sensitiveInformationFilter=true'",
+      "CLI": "aws bedrock update-guardrail --guardrail-identifier <example_resource_id> --sensitive-information-policy-config '{\"piiEntitiesConfig\":[{\"type\":\"EMAIL\",\"action\":\"ANONYMIZE\"}]}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/guardrails-with-pii-mask-block.html",
+      "Other": "1. Sign in to the AWS Console and open Amazon Bedrock\n2. Go to Guardrails and select <example_resource_name>\n3. Click Edit (or Open draft) and open Sensitive information filters\n4. Add PII type EMAIL and set action to Mask (or Block)\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable sensitive information filters for Amazon Bedrock guardrails to prevent the exposure of sensitive or confidential information.",
-      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html"
+      "Text": "Enable and tune **sensitive information filters** for inputs and outputs.\n- Use `BLOCK` for high-risk disclosures; `ANONYMIZE` when context is needed\n- Add custom regex for org-specific IDs\n- Apply least privilege and data minimization\n- Test regularly and monitor outcomes as part of defense-in-depth",
+      "Url": "https://hub.prowler.com/check/bedrock_guardrail_sensitive_information_filter_enabled"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
