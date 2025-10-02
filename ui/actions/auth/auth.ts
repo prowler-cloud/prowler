@@ -10,17 +10,11 @@ import { authFormSchema } from "@/types";
 const formSchemaSignIn = authFormSchema("sign-in");
 const formSchemaSignUp = authFormSchema("sign-up");
 
-const defaultValues: z.infer<typeof formSchemaSignIn> = {
-  email: "",
-  password: "",
-  name: undefined,
-  confirmPassword: undefined,
-  termsAndConditions: undefined,
-};
+type SignInFormData = z.infer<typeof formSchemaSignIn>;
 
 export async function authenticate(
   prevState: unknown,
-  formData: z.infer<typeof formSchemaSignIn>,
+  formData: SignInFormData,
 ) {
   try {
     await signIn("credentials", {
@@ -37,7 +31,6 @@ export async function authenticate(
           return {
             message: "Credentials error",
             errors: {
-              ...defaultValues,
               credentials: "Invalid email or password",
             },
           };
@@ -49,7 +42,6 @@ export async function authenticate(
           return {
             message: "Unknown error",
             errors: {
-              ...defaultValues,
               unknown: "Unknown error",
             },
           };

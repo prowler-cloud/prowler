@@ -34,28 +34,6 @@ export const convertVercelMessageToLangChainMessage = (
   }
 };
 
-/**
- * Converts a LangChain message to a Vercel message.
- * @param message - The message to convert.
- * @returns The converted Vercel message.
- */
-export const convertLangChainMessageToVercelMessage = (
-  message: BaseMessage,
-) => {
-  switch (message._getType()) {
-    case "human":
-      return { content: message.content, role: "user" };
-    case "ai":
-      return {
-        content: message.content,
-        role: "assistant",
-        tool_calls: (message as AIMessage).tool_calls,
-      };
-    default:
-      return { content: message.content, role: message._getType() };
-  }
-};
-
 export const getModelParams = (config: any): ModelParams => {
   const modelId = config.model;
 
