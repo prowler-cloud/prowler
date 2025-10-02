@@ -20,6 +20,8 @@ class ProwlerAppAuth:
         self.base_url = base_url.rstrip("/")
         logger.info(f"Using Prowler App API base URL: {self.base_url}")
         self.mode = mode
+        self.access_token: Optional[str] = None
+        self.api_key: Optional[str] = None
 
         if mode == "stdio":  # STDIO mode
             self.api_key = os.getenv("PROWLER_APP_API_KEY")
@@ -29,10 +31,6 @@ class ProwlerAppAuth:
 
             if not self.api_key.startswith("pk_"):
                 raise ValueError("Prowler App API key format is incorrect")
-        else:
-            self.api_key = None
-
-        self.access_token: Optional[str] = None
 
     def _parse_jwt(self, token: str) -> Optional[Dict]:
         """Parse JWT token and return payload, similar to JS parseJwt function."""
@@ -62,12 +60,7 @@ class ProwlerAppAuth:
 
     async def authenticate(self) -> str:
         """Authenticate and return token (API key for STDIO, API key or JWT for HTTP)."""
-        logger.info("Starting authentication with Prowler App API")
-        if self.mode == "stdio":
-            # For STDIO mode, use API key directly
-            logger.info("Using API key for STDIO mode authentication")
-            return self.api_key
-        elif self.mode == "http":
+        if self.mode == "http":
             headers = get_http_headers()
             authorization_header = headers.get("authorization", None)
 
@@ -85,11 +78,9 @@ class ProwlerAppAuth:
             # Check if it's an API key or JWT token
             if token.startswith("pk_"):
                 # API key - no expiration check needed
-                logger.info("Using API key for HTTP mode authentication")
                 return token
             else:
                 # JWT token - validate and check expiration
-                logger.info("Using JWT token for HTTP mode authentication")
                 payload = self._parse_jwt(token)
                 if not payload:
                     raise ValueError("Invalid JWT token format")
@@ -106,7 +97,10 @@ class ProwlerAppAuth:
 
     async def get_valid_token(self) -> str:
         """Get a valid token (API key or JWT token)."""
-        return await self.authenticate()
+        if self.mode == "stdio" and self.api_key:
+            return self.api_key
+        else:
+            return await self.authenticate()
 
     def get_headers(self, token: str) -> Dict[str, str]:
         """Get headers for API requests with authentication."""
