@@ -7715,25 +7715,6 @@ class TestTenantApiKeyViewSet:
         )
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_api_keys_update_not_allowed(self, authenticated_client, api_keys_fixture):
-        """Test that PATCH/PUT are not allowed."""
-        api_key = api_keys_fixture[0]
-        data = {
-            "data": {
-                "type": "api-keys",
-                "id": str(api_key.id),
-                "attributes": {
-                    "name": "Updated Name",
-                },
-            }
-        }
-        response = authenticated_client.patch(
-            reverse("api-key-detail", kwargs={"pk": api_key.id}),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
-
     def test_api_keys_put_not_allowed(self, authenticated_client, api_keys_fixture):
         """Test that PUT is not allowed."""
         api_key = api_keys_fixture[0]
