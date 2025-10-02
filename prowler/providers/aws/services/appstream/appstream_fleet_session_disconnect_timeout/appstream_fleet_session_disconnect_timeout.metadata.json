@@ -3,7 +3,8 @@
   "CheckID": "appstream_fleet_session_disconnect_timeout",
   "CheckTitle": "AppStream fleet session disconnect timeout is 5 minutes or less",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "appstream",
   "SubServiceName": "",
@@ -14,14 +15,8 @@
   "Risk": "Long disconnect times keep sessions active, enabling **session hijacking** or unintended reconnection on lost/stolen devices. This raises data exposure (confidentiality), permits unauthorized actions (integrity), and ties up capacity and costs (availability/operations).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://paws-r.github.io/docs/appstream_update_fleet/",
-    "https://awscli.amazonaws.com/v2/documentation/api/2.9.6/reference/appstream/update-fleet.html",
-    "https://awscli.amazonaws.com/v2/documentation/api/2.0.33/reference/appstream/update-fleet.html",
-    "https://fig.io/manual/aws/appstream",
     "https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html",
-    "https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/appstream",
-    "https://pkg.go.dev/github.com/aws/aws-sdk-go/service/appstream",
-    "https://fig.io/manual/aws/appstream/update-fleet"
+    "https://awscli.amazonaws.com/v2/documentation/api/2.9.6/reference/appstream/update-fleet.html"
   ],
   "Remediation": {
     "Code": {
@@ -35,9 +30,7 @@
       "Url": "https://hub.prowler.com/check/appstream_fleet_session_disconnect_timeout"
     }
   },
-  "Categories": [
-    "identity-access"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Infrastructure Security"
