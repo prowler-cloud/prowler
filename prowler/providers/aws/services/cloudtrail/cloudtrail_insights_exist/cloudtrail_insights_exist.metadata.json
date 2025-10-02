@@ -1,34 +1,47 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_insights_exist",
-  "CheckTitle": "Ensure CloudTrail Insight is enabled",
+  "CheckTitle": "CloudTrail trail has Insights enabled",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "cloudtrail",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure CloudTrail Insight is enabled",
-  "Risk": "CloudTrail Insights provides a powerful way to search and analyze CloudTrail log data using pre-built queries and machine learning algorithms. This can help you to identify potential security threats and suspicious activity in near real-time, such as unauthorized access attempts, policy changes, or resource modifications.",
+  "Description": "**CloudTrail trails** that are logging are evaluated for **Insights** via `insight selectors`, which enable anomaly detection on management-event patterns (API call and error rates). The finding pinpoints logging trails where these selectors are missing.",
+  "Risk": "Without **Insights**, abnormal API call or error rates can go unnoticed, delaying detection of credential abuse, privilege escalation, or runaway automation. Attackers may rapidly alter policies, delete resources, or exfiltrate data before response, impacting confidentiality and availability.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://tutorialsdojo.com/aws-cloudtrail/",
+    "https://constructs.dev/packages/aws-cdk-lib/v/2.178.1?lang=typescript&submodule=aws_cloudtrail",
+    "https://support.icompaas.com/support/solutions/articles/62000233456-ensure-cloudtrail-insight-is-enabled-",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-insights-events-with-cloudtrail.html",
+    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudtrail/client/put_insight_selectors.html",
+    "https://cloudchipr.com/blog/aws-cloudtrail",
+    "https://medium.com/panther-labs/aws-security-logging-fundamentals-cloudtrail-c7733789a5dd",
+    "https://fig.io/manual/aws/cloudtrail/put-insight-selectors",
+    "https://awscli.amazonaws.com/v2/documentation/api/2.18.18/reference/cloudtrail/put-insight-selectors.html",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudtrail",
+    "https://www.fig.io/manual/aws/cloudtrail/get-insight-selectors"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws cloudtrail put-insight-selectors --trail-name <TRAIL_NAME> --insight-selectors '[{\"InsightType\":\"ApiCallRateInsight\"}]'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      TrailName: <example_resource_name>\n      S3BucketName: <example_resource_name>\n      IsLogging: true\n      InsightSelectors:\n        - InsightType: ApiCallRateInsight  # Critical fix: enables CloudTrail Insights on the trail\n```",
+      "Other": "1. In the AWS Console, go to CloudTrail > Trails\n2. Select the trail that is logging\n3. Click Edit on the CloudTrail Insights section\n4. Enable Insights and select API call rate (or Error rate)\n5. Save changes",
+      "Terraform": "```hcl\nresource \"aws_cloudtrail\" \"<example_resource_name>\" {\n  name           = \"<example_resource_name>\"\n  s3_bucket_name = \"<example_resource_name>\"\n  enable_logging = true\n\n  insight_selector {\n    insight_type = \"ApiCallRateInsight\"  # Critical fix: enables CloudTrail Insights on the trail\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable CloudTrail Insight",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-insights-events-with-cloudtrail.html"
+      "Text": "Enable **CloudTrail Insights** on all logging trails (ideally all-Region or organization trails). Activate both `ApiCallRateInsight` and `ApiErrorRateInsight`. Integrate alerts with monitoring and review anomalies regularly. Apply **defense in depth** and least privilege to reduce potential blast radius.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_insights_exist"
     }
   },
   "Categories": [
-    "forensics-ready"
+    "threat-detection"
   ],
   "DependsOn": [],
   "RelatedTo": [],
