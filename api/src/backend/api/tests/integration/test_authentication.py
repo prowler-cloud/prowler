@@ -5,9 +5,9 @@ from uuid import uuid4
 import pytest
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
+from drf_simple_apikey.crypto import get_crypto
 from rest_framework.test import APIClient
 
-from api.db_utils import ProwlerApiCrypto
 from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
 
 
@@ -483,11 +483,11 @@ class TestAPIKeyErrors:
         client = APIClient()
 
         # Create a valid-looking key with non-existent UUID
-        crypto = ProwlerApiCrypto()
+        crypto = get_crypto()
         fake_uuid = str(uuid4())
         fake_expiry = (datetime.now(timezone.utc) + timedelta(days=30)).timestamp()
         payload = {"_pk": fake_uuid, "_exp": fake_expiry}
-        encrypted_payload = crypto.encrypt(payload)
+        encrypted_payload = crypto.generate(payload)
 
         fake_key = f"pk_fakepfx.{encrypted_payload}"
         api_key_headers = get_api_key_header(fake_key)

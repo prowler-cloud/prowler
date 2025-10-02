@@ -231,6 +231,13 @@ SIMPLE_JWT = {
 
 SECRETS_ENCRYPTION_KEY = env.str("DJANGO_SECRETS_ENCRYPTION_KEY", "")
 
+# DRF Simple API Key settings
+DRF_API_KEY = {
+    "FERNET_SECRET": SECRETS_ENCRYPTION_KEY,
+    "API_KEY_LIFETIME": 365,
+    "AUTHENTICATION_KEYWORD_HEADER": "Api-Key",
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 

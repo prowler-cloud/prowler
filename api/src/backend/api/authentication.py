@@ -1,14 +1,15 @@
 from typing import Optional, Tuple
 from uuid import UUID
 
+from cryptography.fernet import InvalidToken
 from django.utils import timezone
 from drf_simple_apikey.backends import APIKeyAuthentication as BaseAPIKeyAuth
+from drf_simple_apikey.crypto import get_crypto
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from api.db_utils import ProwlerApiCrypto
 from api.models import TenantAPIKey, TenantAPIKeyManager
 
 
@@ -16,7 +17,7 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
     model = TenantAPIKey
 
     def __init__(self):
-        self.key_crypto = ProwlerApiCrypto()
+        self.key_crypto = get_crypto()
 
     def authenticate(self, request: Request):
         prefixed_key = self.get_key(request)
@@ -27,7 +28,10 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         except ValueError:
             raise AuthenticationFailed("Invalid API Key.")
 
-        entity, _ = self._authenticate_credentials(request, key)
+        try:
+            entity, _ = self._authenticate_credentials(request, key)
+        except InvalidToken:
+            raise AuthenticationFailed("Invalid API Key.")
 
         # Get the API key instance to update last_used_at and retrieve tenant info
         # We need to decrypt again to get the pk (already validated by _authenticate_credentials)
@@ -38,7 +42,10 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         if isinstance(api_key_pk, str):
             api_key_pk = UUID(api_key_pk)
 
-        api_key_instance = TenantAPIKey.objects.get(id=api_key_pk)
+        try:
+            api_key_instance = TenantAPIKey.objects.get(id=api_key_pk, prefix=prefix)
+        except TenantAPIKey.DoesNotExist:
+            raise AuthenticationFailed("Invalid API Key.")
 
         # Update last_used_at
         api_key_instance.last_used_at = timezone.now()

@@ -22,6 +22,7 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
+from drf_simple_apikey.crypto import get_crypto
 from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
@@ -38,7 +39,6 @@ from api.db_utils import (
     ProcessorTypeEnumField,
     ProviderEnumField,
     ProviderSecretTypeEnumField,
-    ProwlerApiCrypto,
     ScanTriggerEnumField,
     SeverityEnumField,
     StateEnumField,
@@ -133,7 +133,7 @@ class TenantAPIKeyManager(AbstractAPIKeyManager):
 
     def assign_api_key(self, obj) -> str:
         payload = {"_pk": str(obj.pk), "_exp": obj.expiry_date.timestamp()}
-        key = ProwlerApiCrypto().encrypt(payload)
+        key = get_crypto().generate(payload)
 
         prefixed_key = f"{obj.prefix}{self.separator}{key}"
         return prefixed_key
