@@ -43,6 +43,43 @@ docker run --rm --env-file ./.env -it prowler-mcp
 
 ## Running
 
+The Prowler MCP server supports two transport modes:
+- **STDIO mode** (default): For direct integration with MCP clients like Claude Desktop
+- **HTTP mode**: For remote access over HTTP with Bearer token authentication
+
+### Transport Modes
+
+#### STDIO Mode (Default)
+
+STDIO mode is the standard MCP transport for direct client integration:
+
+```bash
+cd prowler/mcp_server
+uv run prowler-mcp
+# or
+uv run prowler-mcp --transport stdio
+```
+
+#### HTTP Mode (Remote Server)
+
+HTTP mode allows the server to run as a remote service accessible over HTTP:
+
+```bash
+cd prowler/mcp_server
+# Run on default host and port (127.0.0.1:8000)
+uv run prowler-mcp --transport http
+
+# Run on custom host and port
+uv run prowler-mcp --transport http --host 0.0.0.0 --port 8080
+```
+
+For self-deployed MCP remote server, you can use also configure the server to use a custom API base URL with the environment variable `PROWLER_API_BASE_URL`; and the transport mode with the environment variable `PROWLER_MCP_MODE`.
+
+```bash
+export PROWLER_API_BASE_URL="https://api.prowler.com"
+export PROWLER_MCP_MODE="http"
+```
+
 ### Using uv directly
 
 After installation, start the MCP server via the console script:
@@ -60,11 +97,59 @@ uvx /path/to/prowler/mcp_server/
 
 ### Using Docker
 
-Run the pre-built Docker container:
+#### STDIO Mode (Default)
+
+Run the pre-built Docker container in STDIO mode:
 
 ```bash
 cd prowler/mcp_server
 docker run --rm --env-file ./.env -it prowler-mcp
+```
+
+#### HTTP Mode (Remote Server)
+
+Run as a remote HTTP server:
+
+```bash
+cd prowler/mcp_server
+# Run on port 8000 (accessible from host)
+docker run --rm --env-file ./.env -p 8000:8000 -it prowler-mcp --transport http --host 0.0.0.0 --port 8000
+
+# Run on custom port
+docker run --rm --env-file ./.env -p 8080:8080 -it prowler-mcp --transport http --host 0.0.0.0 --port 8080
+```
+
+## Command Line Arguments
+
+The Prowler MCP server supports the following command line arguments:
+
+```
+prowler-mcp [--transport {stdio,http}] [--host HOST] [--port PORT]
+```
+
+**Arguments:**
+- `--transport {stdio,http}`: Transport method (default: stdio)
+  - `stdio`: Standard input/output transport for direct MCP client integration
+  - `http`: HTTP transport for remote server access
+- `--host HOST`: Host to bind to for HTTP transport (default: 127.0.0.1)
+- `--port PORT`: Port to bind to for HTTP transport (default: 8000)
+
+**Examples:**
+```bash
+# Default STDIO mode
+prowler-mcp
+
+# Explicit STDIO mode
+prowler-mcp --transport stdio
+
+# HTTP mode with default host and port (127.0.0.1:8000)
+prowler-mcp --transport http
+
+# HTTP mode accessible from any network interface
+prowler-mcp --transport http --host 0.0.0.0
+
+# HTTP mode with custom port
+prowler-mcp --transport http --host 0.0.0.0 --port 8080
 ```
 
 ## Available Tools
@@ -130,9 +215,16 @@ All tools are exposed under the `prowler_app` prefix.
 
 ## Configuration
 
-### Environment Variables
+### Prowler Cloud and Prowler App (Self-Managed) Authentication
 
-For Prowler Cloud and Prowler App (Self-Managed) features, you need to set the following environment variables:
+> [!IMPORTANT]
+> Authentication is not needed for using Prowler Hub features.
+
+The Prowler MCP server supports different authentication in Prowler Cloud and Prowler App (Self-Managed) methods depending on the transport mode:
+
+#### STDIO Mode Authentication
+
+For STDIO mode, authentication is handled via environment variables:
 
 ```bash
 # Required for Prowler Cloud and Prowler App (Self-Managed) authentication
@@ -146,11 +238,36 @@ export PROWLER_APP_TENANT_ID="your-tenant-id"
 export PROWLER_API_BASE_URL="https://api.prowler.com"
 ```
 
+#### HTTP Mode Authentication
+
+For HTTP mode (remote server), authentication is handled via Bearer tokens. You need to obtain a JWT token from Prowler Cloud/App and include the generated token in the MCP client configuration. To get a valid token, you can use the following command (replace the email and password with your own credentials):
+
+```bash
+curl -X POST https://api.prowler.com/api/v1/tokens \
+  -H "Content-Type: application/vnd.api+json" \
+  -H "Accept: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "tokens",
+      "attributes": {
+        "email": "your-email@example.com",
+        "password": "your-password"
+      }
+    }
+  }'
+```
+
+The response will be a JWT token that you can use to [authenticate your MCP client](#http-mode-configuration-remote-server).
+
 ### MCP Client Configuration
 
-Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the server. Below are examples for both direct execution and Docker deployment; consult your client's documentation for exact locations.
+Configure your MCP client, like Claude Desktop, Cursor, etc, to connect to the server. The configuration depends on whether you're running in STDIO mode (local) or HTTP mode (remote).
 
-#### Using uvx (Direct Execution)
+#### STDIO Mode Configuration
+
+For local execution, configure your MCP client to launch the server directly. Below are examples for both direct execution and Docker deployment; consult your client's documentation for exact locations.
+
+##### Using uvx (Direct Execution)
 
 ```json
 {
@@ -169,7 +286,7 @@ Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the serve
 }
 ```
 
-#### Using Docker
+##### Using Docker
 
 ```json
 {
@@ -184,6 +301,29 @@ Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the serve
         "--env", "PROWLER_API_BASE_URL=https://api.prowler.com",  // Optional, in case not provided Prowler Cloud API will be used
         "prowler-mcp"
       ]
+    }
+  }
+}
+```
+
+#### HTTP Mode Configuration (Remote Server)
+
+For HTTP mode, you can configure your MCP client to connect to a remote Prowler MCP server.
+
+**Important Limitations:**
+- HTTP mode support varies by client - some clients may not support HTTP transport yet.
+- Some MCP clients like Claude Desktop only support OAuth authentication for HTTP connections, which is not currently supported by our MCP server.
+
+Example configuration for clients that support HTTP transport:
+
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "url": "http://mcp.prowler.com/mcp",  // Replace with your own MCP server URL, by default when server is run in local it is http://localhost:8000/mcp
+      "headers": {
+        "Authorization": "Bearer <your-jwt-token-here>"
+      }
     }
   }
 }

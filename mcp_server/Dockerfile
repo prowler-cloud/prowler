@@ -51,4 +51,9 @@ COPY --from=builder --chown=prowler /app/pyproject.toml /app/pyproject.toml
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Entry point for the MCP server
+# Default to stdio mode, but allow overriding via command arguments
+# Examples:
+#   docker run -p 8000:8000 prowler-mcp --transport http --host 0.0.0.0 --port 8000
+#   docker run prowler-mcp --transport stdio
 ENTRYPOINT ["prowler-mcp"]
+CMD ["--transport", "stdio"]

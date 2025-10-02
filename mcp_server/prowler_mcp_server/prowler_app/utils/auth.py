@@ -1,5 +1,3 @@
-"""Authentication manager for Prowler App API."""
-
 import base64
 import json
 import os
@@ -7,6 +5,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 import httpx
+from fastmcp.server.dependencies import get_http_headers
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 
@@ -14,25 +13,31 @@ from prowler_mcp_server.lib.logger import logger
 class ProwlerAppAuth:
     """Handles authentication and token management for Prowler App API."""
 
-    def __init__(self):
-        self.base_url = os.getenv(
-            "PROWLER_API_BASE_URL", "https://api.prowler.com"
-        ).rstrip("/")
-        self.email = os.getenv("PROWLER_APP_EMAIL")
-        self.password = os.getenv("PROWLER_APP_PASSWORD")
-        self.tenant_id = os.getenv("PROWLER_APP_TENANT_ID", None)
+    def __init__(
+        self,
+        mode: str = os.getenv("PROWLER_MCP_MODE", "stdio"),
+        base_url: str = os.getenv("PROWLER_API_BASE_URL", "https://api.prowler.com"),
+    ):
+        self.base_url = base_url.rstrip("/")
+        logger.info(f"Using Prowler App API base URL: {self.base_url}")
+        self.mode = mode
+
+        if mode == "stdio":  # STDIO mode
+            self.email = os.getenv("PROWLER_APP_EMAIL")
+            self.password = os.getenv("PROWLER_APP_PASSWORD")
+            self.tenant_id = os.getenv("PROWLER_APP_TENANT_ID", None)
+
+            if not self.email or not self.password:
+                raise ValueError(
+                    "PROWLER_APP_EMAIL and PROWLER_APP_PASSWORD environment variables are required"
+                )
+        else:
+            self.email = None
+            self.password = None
+            self.tenant_id = None
 
         self.access_token: Optional[str] = None
         self.refresh_token: Optional[str] = None
-
-        self._validate_credentials()
-
-    def _validate_credentials(self):
-        """Validate that all required credentials are present."""
-        if not self.email:
-            raise ValueError("PROWLER_APP_EMAIL environment variable is required")
-        if not self.password:
-            raise ValueError("PROWLER_APP_PASSWORD environment variable is required")
 
     def _parse_jwt(self, token: str) -> Optional[Dict]:
         """Parse JWT token and return payload, similar to JS parseJwt function."""
@@ -63,56 +68,80 @@ class ProwlerAppAuth:
     async def authenticate(self) -> str:
         """Authenticate with Prowler App API and return access token."""
         logger.info("Starting authentication with Prowler App API")
-        async with httpx.AsyncClient() as client:
-            try:
-                # Prepare JSON:API formatted request body
-                auth_attributes = {"email": self.email, "password": self.password}
-                if self.tenant_id:
-                    auth_attributes["tenant_id"] = self.tenant_id
+        if self.mode == "stdio":
+            async with httpx.AsyncClient() as client:
+                try:
+                    # Prepare JSON:API formatted request body
+                    auth_attributes = {"email": self.email, "password": self.password}
+                    if self.tenant_id:
+                        auth_attributes["tenant_id"] = self.tenant_id
 
-                request_body = {
-                    "data": {
-                        "type": "tokens",
-                        "attributes": auth_attributes,
+                    request_body = {
+                        "data": {
+                            "type": "tokens",
+                            "attributes": auth_attributes,
+                        }
                     }
-                }
 
-                response = await client.post(
-                    f"{self.base_url}/api/v1/tokens",
-                    json=request_body,
-                    headers={
-                        "Content-Type": "application/vnd.api+json",
-                        "Accept": "application/vnd.api+json",
-                    },
-                )
-                response.raise_for_status()
+                    response = await client.post(
+                        f"{self.base_url}/api/v1/tokens",
+                        json=request_body,
+                        headers={
+                            "Content-Type": "application/vnd.api+json",
+                            "Accept": "application/vnd.api+json",
+                        },
+                    )
+                    response.raise_for_status()
 
-                data = response.json()
-                # Extract token from JSON:API response format
-                self.access_token = (
-                    data.get("data", {}).get("attributes", {}).get("access")
-                )
-                self.refresh_token = (
-                    data.get("data", {}).get("attributes", {}).get("refresh")
-                )
+                    data = response.json()
+                    # Extract token from JSON:API response format
+                    self.access_token = (
+                        data.get("data", {}).get("attributes", {}).get("access")
+                    )
+                    self.refresh_token = (
+                        data.get("data", {}).get("attributes", {}).get("refresh")
+                    )
 
-                logger.debug(f"Access token: {self.access_token}")
+                    if not self.access_token:
+                        raise ValueError("Token not found in response")
 
-                if not self.access_token:
-                    raise ValueError("Token not found in response")
+                    logger.info("Authentication successful")
 
-                logger.info("Authentication successful")
+                    return self.access_token
 
-                return self.access_token
+                except httpx.HTTPStatusError as e:
+                    logger.error(
+                        f"Authentication failed with HTTP status {e.response.status_code}: {e.response.text}"
+                    )
+                    raise ValueError(f"Authentication failed: {e.response.text}")
+                except Exception as e:
+                    logger.error(f"Authentication failed with error: {e}")
+                    raise ValueError(f"Authentication failed: {e}")
+        elif self.mode == "http":
+            headers = get_http_headers()
+            access_token = headers.get("authorization", None)
 
-            except httpx.HTTPStatusError as e:
-                logger.error(
-                    f"Authentication failed with HTTP status {e.response.status_code}: {e.response.text}"
-                )
-                raise ValueError(f"Authentication failed: {e.response.text}")
-            except Exception as e:
-                logger.error(f"Authentication failed with error: {e}")
-                raise ValueError(f"Authentication failed: {e}")
+            # Validate the token
+            if access_token:
+                if access_token.startswith("Bearer "):
+                    access_token = access_token.replace("Bearer ", "")
+
+                payload = self._parse_jwt(access_token)
+                if not payload:
+                    raise ValueError("Invalid JWT token format")
+
+                # Check if token is expired
+                now = int(datetime.now().timestamp())
+                exp = payload.get("exp", 0)
+                if exp <= now:
+                    raise ValueError("Token has expired")
+            else:
+                raise ValueError("No authorization token provided")
+
+            # Don't cache tokens in HTTP mode to prevent sharing between clients
+            return access_token
+        else:
+            raise ValueError(f"Invalid mode: {self.mode}")
 
     async def refresh_access_token(self) -> str:
         """Refresh the access token using the refresh token."""
@@ -161,28 +190,33 @@ class ProwlerAppAuth:
     async def get_valid_token(self) -> str:
         """Get a valid access token, checking JWT expiry."""
 
-        current_token = self.access_token
-        need_new_token = True
-
-        if current_token:
-            payload = self._parse_jwt(current_token)
-
-            if payload:
-                now = int(datetime.now().timestamp())
-                time_left = payload.get("exp", 0) - now
-
-                if time_left > 120:  # 2 minutes margin
-                    need_new_token = False
-
-        if need_new_token:
-            token = await self.authenticate()
-
-            # Verify the new token
-            payload = self._parse_jwt(token)
-
-            return token
+        if self.mode == "http":
+            # In HTTP mode, always authenticate fresh to prevent token sharing between clients
+            return await self.authenticate()
         else:
-            return current_token
+            # In STDIO mode, cache tokens for efficiency
+            current_token = self.access_token
+            need_new_token = True
+
+            if current_token:
+                payload = self._parse_jwt(current_token)
+
+                if payload:
+                    now = int(datetime.now().timestamp())
+                    time_left = payload.get("exp", 0) - now
+
+                    if time_left > 120:  # 2 minutes margin
+                        need_new_token = False
+
+            if need_new_token:
+                token = await self.authenticate()
+
+                # Verify the new token
+                payload = self._parse_jwt(token)
+
+                return token
+            else:
+                return current_token
 
     def get_headers(self, token: str) -> Dict[str, str]:
         """Get headers for API requests with authentication."""

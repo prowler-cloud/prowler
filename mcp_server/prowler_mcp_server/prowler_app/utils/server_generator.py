@@ -15,7 +15,6 @@ from typing import Dict, List, Optional
 
 import requests
 import yaml
-from prowler_mcp_server.lib.logger import logger
 
 
 class OpenAPIToMCPGenerator:
@@ -730,7 +729,6 @@ class OpenAPIToMCPGenerator:
 
         # Check excluded tags
         if any(tag in self.exclude_tags for tag in tags):
-            logger.debug(f"Excluding endpoint {path} due to tag {tags}")
             return True
 
         return False
