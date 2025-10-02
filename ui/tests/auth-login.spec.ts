@@ -48,7 +48,10 @@ test.describe("Login Flow", () => {
   test("should handle empty form submission", async ({ page }) => {
     // Submit empty form
     await submitLoginForm(page);
+
+    // Should show both email and password validation errors
     await verifyLoginError(page, ERROR_MESSAGES.INVALID_EMAIL);
+    await verifyLoginError(page, ERROR_MESSAGES.PASSWORD_REQUIRED);
 
     // Verify we're still on login page
     await expect(page).toHaveURL(URLS.LOGIN);
@@ -59,6 +62,18 @@ test.describe("Login Flow", () => {
     await login(page, TEST_CREDENTIALS.INVALID_EMAIL_FORMAT);
     // Verify field-level email validation message
     await verifyLoginError(page, ERROR_MESSAGES.INVALID_EMAIL);
+    // Verify we're still on login page
+    await expect(page).toHaveURL(URLS.LOGIN);
+  });
+
+  test("should require password when email is filled", async ({ page }) => {
+    // Fill only email, leave password empty
+    await page.getByLabel("Email").fill(TEST_CREDENTIALS.VALID.email);
+    await submitLoginForm(page);
+
+    // Should show password required error
+    await verifyLoginError(page, ERROR_MESSAGES.PASSWORD_REQUIRED);
+
     // Verify we're still on login page
     await expect(page).toHaveURL(URLS.LOGIN);
   });
