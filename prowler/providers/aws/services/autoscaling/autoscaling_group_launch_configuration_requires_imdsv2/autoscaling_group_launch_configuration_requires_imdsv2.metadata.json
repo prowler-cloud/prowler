@@ -1,31 +1,48 @@
 {
   "Provider": "aws",
   "CheckID": "autoscaling_group_launch_configuration_requires_imdsv2",
-  "CheckTitle": "Check if Auto Scaling group launch configurations require Instance Metadata Service Version 2 (IMDSv2).",
+  "CheckTitle": "Auto Scaling group enforces IMDSv2 or disables the instance metadata service",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Credential Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "autoscaling",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:launchConfiguration/launchConfigurationName",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsAutoScalingLaunchConfiguration",
-  "Description": "This control checks whether IMDSv2 is enabled on all instances launched by Amazon EC2 Auto Scaling groups. The control fails if the Instance Metadata Service (IMDS) version isn't included in the launch configuration or is configured as token optional, which allows either IMDSv1 or IMDSv2.",
-  "Risk": "If IMDSv2 is not enforced, instances may be vulnerable to certain types of attacks that target the metadata service, potentially exposing sensitive instance information.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
+  "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "Description": "Amazon EC2 Auto Scaling launch configurations are evaluated for **Instance Metadata Service** settings. Instances should have the metadata endpoint `enabled` with `http_tokens=required` (enforcing **IMDSv2**), or have the metadata service `disabled`.\n\nAllowing `http_tokens=optional` or omitting the version leaves legacy access enabled.",
+  "Risk": "Without enforced **IMDSv2**, **SSRF** and local escape paths can access **IAM role credentials**, enabling unauthorized API calls.\n\nAttackers could:\n- Exfiltrate data with stolen tokens\n- Move laterally and modify resources, degrading confidentiality and integrity",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31",
+    "https://medium.com/@nagendren.rajmohan/accessing-aws-instance-metadata-for-an-ec2-instance-a-comprehensive-guide-baab77ef5fc1",
+    "https://github.com/aws/aws-cdk/issues/5137",
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/require-imds-v2.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-3",
+    "https://kb.cynergy.app/space/MD/991855102",
+    "https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/autoscaling_launch_configuration",
+    "https://aws.plainenglish.io/dont-let-metadata-leak-why-imdsv2-is-a-must-and-how-to-migrate-a88e1e285394"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws autoscaling create-launch-configuration --launch-configuration-name <new-launch-config> --metadata-options 'HttpTokens=required'",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-3",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: ASG launch configuration enforces IMDSv2\nResources:\n  LaunchConfig:\n    Type: AWS::AutoScaling::LaunchConfiguration\n    Properties:\n      ImageId: <example_ami_id>\n      InstanceType: <example_instance_type>\n      MetadataOptions:\n        HttpTokens: required     # critical: require IMDSv2 tokens (disables IMDSv1)\n        HttpEndpoint: enabled    # critical: keep IMDS enabled while enforcing v2\n\n  AutoScalingGroup:\n    Type: AWS::AutoScaling::AutoScalingGroup\n    Properties:\n      LaunchConfigurationName: !Ref LaunchConfig\n      MinSize: 1\n      MaxSize: 1\n      VPCZoneIdentifier:\n        - <example_subnet_id>\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Auto Scaling > Launch configurations\n2. Click Create launch configuration and choose the same AMI and instance type used by the group\n3. Expand Advanced details and set Metadata options to: Metadata accessible = Enabled, Metadata version = V2 only (token required)\n4. Create the launch configuration\n5. Go to EC2 > Auto Scaling > Auto Scaling groups, select the group, click Edit\n6. Under Launch configuration, select the new launch configuration and Save\n7. (Alternative) To disable IMDS entirely: when creating the launch configuration, set Metadata accessible = Disabled",
+      "Terraform": "```hcl\n# ASG launch configuration enforces IMDSv2\nresource \"aws_launch_configuration\" \"example\" {\n  image_id      = \"<example_ami_id>\"\n  instance_type = \"<example_instance_type>\"\n\n  metadata_options {\n    http_tokens   = \"required\"  # critical: require IMDSv2 tokens (blocks IMDSv1)\n    http_endpoint = \"enabled\"   # critical: IMDS enabled while enforcing v2\n  }\n}\n\nresource \"aws_autoscaling_group\" \"example\" {\n  launch_configuration = aws_launch_configuration.example.name\n  min_size             = 1\n  max_size             = 1\n  vpc_zone_identifier  = [\"<example_subnet_id>\"]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create a new launch configuration that requires IMDSv2 and update your Auto Scaling groups to use the new configuration.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html"
+      "Text": "Require **IMDSv2** for Auto Scaling-launched instances by setting `http_tokens=required` when metadata is `enabled`. *If metadata is not needed*, disable it.\n\nApply **least privilege** to instance roles, set IMDSv2 as an account default, and use **defense in depth** (egress filtering, SSRF protections) to limit exposure.",
+      "Url": "https://hub.prowler.com/check/autoscaling_group_launch_configuration_requires_imdsv2"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "secrets"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
