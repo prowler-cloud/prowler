@@ -1,29 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "bedrock_agent_guardrail_enabled",
-  "CheckTitle": "Ensure that Guardrails are enabled for Amazon Bedrock agent sessions.",
-  "CheckType": [],
+  "CheckTitle": "Amazon Bedrock agent uses a guardrail to protect agent sessions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "bedrock",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:agent/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "This check ensures that Guardrails are enabled to protect Amazon Bedrock agent sessions. Guardrails help mitigate security risks by filtering and blocking harmful or sensitive content during interactions with AI models.",
-  "Risk": "Without guardrails enabled, Amazon Bedrock agent sessions are vulnerable to harmful prompts or inputs that could expose sensitive information or generate inappropriate content. This could lead to privacy violations, data leaks, or other security risks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
+  "Description": "**Amazon Bedrock agents** should have an associated **guardrail** for their sessions. The evaluation identifies agents without a guardrail linked for input/output screening during interactions.",
+  "Risk": "Without **guardrails**, agent exchanges may expose **PII** or internal data (confidentiality), accept **prompt injections** that manipulate tool calls or outputs (integrity), and produce unsafe or out-of-scope responses that erode trust and cause policy violations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-create.html",
+    "https://practicaldev-herokuapp-com.freetls.fastly.net/aws-builders/guardrail-support-for-the-generic-bedrock-agent-test-ui-4om5",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-guardrail.html",
+    "https://aws.plainenglish.io/how-to-secure-amazon-bedrock-with-guardrails-for-safe-ai-operations-in-the-cloud-2e18a2d70688",
+    "https://itnext.io/use-guardrails-to-prevent-hallucinations-in-generative-ai-applications-2f0b002e15fe",
+    "https://aihub.hkuspace.hku.hk/2024/10/12/improve-llm-application-robustness-with-amazon-bedrock-guardrails-and-amazon-bedrock-agents/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/protect-agent-sessions-with-guardrails.html",
+    "https://github.com/aws-samples/amazon-bedrock-workshop/blob/main/05_Agents/README.md",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/protect-agent-sessions-with-guardrails.html",
-      "Terraform": ""
+      "CLI": "aws bedrock-agent update-agent --agent-id <example_resource_id> --guardrail-configuration guardrailIdentifier=<example_resource_id>,guardrailVersion=DRAFT",
+      "NativeIaC": "```yaml\n# CloudFormation: Associate a guardrail with a Bedrock Agent\nResources:\n  ExampleAgent:\n    Type: AWS::Bedrock::Agent\n    Properties:\n      AgentName: <example_resource_name>\n      AgentResourceRoleArn: <example_resource_id>\n      FoundationModel: <example_resource_name>\n      Instruction: \"<example_resource_name>\"\n      GuardrailConfiguration:  # CRITICAL: associates a guardrail to protect sessions\n        GuardrailIdentifier: <example_resource_id>  # CRITICAL: guardrail ID used by the agent\n        GuardrailVersion: DRAFT  # CRITICAL: version applied\n```",
+      "Other": "1. Open the Amazon Bedrock console and go to Agents\n2. Select the agent and click Edit\n3. In Guardrail details, select an existing guardrail and its version (e.g., DRAFT)\n4. Click Save (deploy changes if prompted)\n5. Verify the agent now shows the selected guardrail",
+      "Terraform": "```hcl\n# Terraform (AWS Cloud Control): Associate a guardrail with a Bedrock Agent\nresource \"awscc_bedrock_agent\" \"example\" {\n  agent_name               = \"<example_resource_name>\"\n  agent_resource_role_arn  = \"<example_resource_id>\"\n  foundation_model         = \"<example_resource_name>\"\n  instruction              = \"<example_resource_name>\"\n\n  # CRITICAL: associates a guardrail to protect agent sessions\n  guardrail_configuration {\n    guardrail_identifier = \"<example_resource_id>\"   # CRITICAL: guardrail ID\n    guardrail_version    = \"DRAFT\"                   # CRITICAL: version applied\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Guardrails for Amazon Bedrock agent sessions to protect against harmful inputs and outputs during interactions.",
-      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-create.html"
+      "Text": "Associate a **guardrail** with every agent and tailor policies to your use case:\n- Enable content/word filters, denied topics, and sensitive-data masking\n- Use contextual grounding for RAG where relevant\n- Test and iterate across versions\nApply **least privilege** to agent tools and use **defense in depth** with monitoring and review.",
+      "Url": "https://hub.prowler.com/check/bedrock_agent_guardrail_enabled"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

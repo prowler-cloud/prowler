@@ -1,26 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "bedrock_model_invocation_logging_enabled",
-  "CheckTitle": "Ensure that model invocation logging is enabled for Amazon Bedrock.",
-  "CheckType": [],
+  "CheckTitle": "Amazon Bedrock model invocation logging is enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "bedrock",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:model/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure that model invocation logging is enabled for Amazon Bedrock service in order to collect metadata, requests, and responses for all model invocations in your AWS cloud account.",
-  "Risk": "In Amazon Bedrock, model invocation logging enables you to collect the invocation request and response data, along with metadata, for all 'Converse', 'ConverseStream', 'InvokeModel', and 'InvokeModelWithResponseStream' API calls in your AWS account. Each log entry includes important details such as the timestamp, request ID, model ID, and token usage. Invocation logs can be utilized for troubleshooting, performance enhancements, abuse detection, and security auditing. By default, model invocation logging is disabled.",
-  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html",
+  "Description": "**Amazon Bedrock** model invocation logging captures request, response, and metadata for `Converse`, `ConverseStream`, `InvokeModel`, and `InvokeModelWithResponseStream` calls per Region, delivering records to **CloudWatch Logs** and/or **S3** when configured.",
+  "Risk": "Without **invocation logs**, you lose **auditability** and **forensic visibility** into model activity.\n\nCredential misuse or **prompt injection/jailbreak** attempts may go unnoticed, enabling data exfiltration and unauthorized spend. Missing traceability weakens **integrity** controls and slows incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html#model-invocation-logging-console",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/enable-model-invocation-logging.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws bedrock put-model-invocation-logging-configuration --logging-config 's3Config={bucketName='tm-bedrock-logging-data',keyPrefix='invocation-logs'},textDataDeliveryEnabled=true,imageDataDeliveryEnabled=true,embeddingDataDeliveryEnabled=true'",
+      "CLI": "aws bedrock put-model-invocation-logging-configuration --logging-config '{\"s3Config\":{\"bucketName\":\"<example_resource_name>\"},\"textDataDeliveryEnabled\":true}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/enable-model-invocation-logging.html",
+      "Other": "1. Open the Amazon Bedrock console in the target Region\n2. Go to Settings > Model invocation logging\n3. Toggle Logging to On\n4. Select Amazon S3 as the destination and choose <example_resource_name> bucket\n5. Under Data types, select Text\n6. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable model invocation logging for Amazon Bedrock service in order to collect metadata, requests, and responses for all model invocations in your AWS cloud account.",
-      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-invocation-logging.html#model-invocation-logging-console"
+      "Text": "Enable **model invocation logging** and route events to **CloudWatch Logs** and/or **S3**.\n\nEnforce **least privilege** on log access, use encryption, and set retention/lifecycle policies. Monitor for anomalies and alerts to support **defense in depth** and **separation of duties**.",
+      "Url": "https://hub.prowler.com/check/bedrock_model_invocation_logging_enabled"
     }
   },
   "Categories": [
