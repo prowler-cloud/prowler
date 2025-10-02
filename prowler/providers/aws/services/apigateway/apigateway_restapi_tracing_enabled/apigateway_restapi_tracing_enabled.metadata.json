@@ -15,9 +15,9 @@
   "Risk": "Without X-Ray tracing, you lose end-to-end visibility, hindering detection of timeouts, errors, and anomalous latency.\n\nThis delays incident response and root-cause analysis, increasing MTTR and risking partial outages (availability) and undetected integration failures (integrity).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/tracing.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-3",
-    "https://docs.aws.amazon.com/xray/latest/devguide/xray-services-apigateway.html"
+    "https://docs.aws.amazon.com/xray/latest/devguide/xray-services-apigateway.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/tracing.html"
   ],
   "Remediation": {
     "Code": {
