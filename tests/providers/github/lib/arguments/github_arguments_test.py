@@ -61,7 +61,7 @@ class Test_GitHubArguments:
         arguments.init_parser(mock_github_args)
 
         # Verify authentication arguments were added
-        assert self.mock_auth_group.add_argument.call_count == 4
+        assert self.mock_auth_group.add_argument.call_count == 5
 
         # Check that all authentication arguments are present
         calls = self.mock_auth_group.add_argument.call_args_list
@@ -76,8 +76,8 @@ class Test_GitHubArguments:
         assert "--personal-access-token" in auth_args
         assert "--oauth-app-token" in auth_args
         assert "--github-app-id" in auth_args
-        assert "--github-app-key-path" in auth_args
         assert "--github-app-key" in auth_args
+        assert "--github-app-key-path" in auth_args
 
     def test_init_parser_adds_scoping_arguments(self):
         """Test that init_parser adds all scoping arguments"""
@@ -309,3 +309,81 @@ class Test_GitHubArguments_Integration:
         assert args.personal_access_token == "test-token"
         assert args.repository == []
         assert args.organization == []
+
+
+class Test_GitHubArguments_Validation:
+    def test_validate_arguments_both_key_methods_provided(self):
+        """Test validation fails when both key methods are provided"""
+        from argparse import Namespace
+
+        args = Namespace()
+        args.github_app_key = "key-content"
+        args.github_app_key_path = "/path/to/key.pem"
+        args.github_app_id = "12345"
+
+        is_valid, error_msg = arguments.validate_arguments(args)
+
+        assert not is_valid
+        assert (
+            "Cannot specify both --github-app-key and --github-app-key-path simultaneously"
+            in error_msg
+        )
+
+    def test_validate_arguments_app_id_without_key(self):
+        """Test validation fails when app ID is provided without any key"""
+        from argparse import Namespace
+
+        args = Namespace()
+        args.github_app_key = None
+        args.github_app_key_path = None
+        args.github_app_id = "12345"
+
+        is_valid, error_msg = arguments.validate_arguments(args)
+
+        assert not is_valid
+        assert (
+            "GitHub App ID requires either --github-app-key or --github-app-key-path"
+            in error_msg
+        )
+
+    def test_validate_arguments_valid_key_content(self):
+        """Test validation passes with valid key content"""
+        from argparse import Namespace
+
+        args = Namespace()
+        args.github_app_key = "-----BEGIN RSA PRIVATE KEY-----"
+        args.github_app_key_path = None
+        args.github_app_id = "12345"
+
+        is_valid, error_msg = arguments.validate_arguments(args)
+
+        assert is_valid
+        assert error_msg == ""
+
+    def test_validate_arguments_valid_key_path(self):
+        """Test validation passes with valid key path"""
+        from argparse import Namespace
+
+        args = Namespace()
+        args.github_app_key = None
+        args.github_app_key_path = "/path/to/key.pem"
+        args.github_app_id = "12345"
+
+        is_valid, error_msg = arguments.validate_arguments(args)
+
+        assert is_valid
+        assert error_msg == ""
+
+    def test_validate_arguments_no_app_auth(self):
+        """Test validation passes when no app authentication is used"""
+        from argparse import Namespace
+
+        args = Namespace()
+        args.github_app_key = None
+        args.github_app_key_path = None
+        args.github_app_id = None
+
+        is_valid, error_msg = arguments.validate_arguments(args)
+
+        assert is_valid
+        assert error_msg == ""

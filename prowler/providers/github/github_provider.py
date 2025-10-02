@@ -102,6 +102,7 @@ class GithubProvider(Provider):
         # Authentication credentials
         personal_access_token: str = "",
         oauth_app_token: str = "",
+        github_app_key: str = "",
         github_app_key_path: str = "",
         github_app_key_content: str = "",
         github_app_id: int = 0,
@@ -120,8 +121,9 @@ class GithubProvider(Provider):
         Args:
             personal_access_token (str): GitHub personal access token.
             oauth_app_token (str): GitHub OAuth App token.
+            github_app_key (str): GitHub App key content.
             github_app_key_path (str): Path to GitHub App private key file.
-            github_app_key_content (str): GitHub App private key content.
+            github_app_key_content (str): GitHub App private key content (legacy parameter).
             github_app_id (int): GitHub App ID.
             config_path (str): Path to the audit configuration file.
             config_content (dict): Audit configuration content.
@@ -147,6 +149,7 @@ class GithubProvider(Provider):
             personal_access_token,
             oauth_app_token,
             github_app_id,
+            github_app_key,
             github_app_key_path,
             github_app_key_content,
         )
@@ -156,7 +159,9 @@ class GithubProvider(Provider):
             self._auth_method = "Personal Access Token"
         elif oauth_app_token:
             self._auth_method = "OAuth App Token"
-        elif github_app_id and (github_app_key_path or github_app_key_content):
+        elif github_app_id and (
+            github_app_key or github_app_key_path or github_app_key_content
+        ):
             self._auth_method = "GitHub App Token"
         elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
             self._auth_method = "Environment Variable for Personal Access Token"
@@ -250,6 +255,7 @@ class GithubProvider(Provider):
         personal_access_token: str = None,
         oauth_app_token: str = None,
         github_app_id: int = 0,
+        github_app_key: str = None,
         github_app_key_path: str = None,
         github_app_key_content: str = None,
     ) -> GithubSession:
@@ -260,8 +266,9 @@ class GithubProvider(Provider):
             personal_access_token (str): GitHub personal access token.
             oauth_app_token (str): GitHub OAuth App token.
             github_app_id (int): GitHub App ID.
+            github_app_key (str): GitHub App key content.
             github_app_key_path (str): Path to GitHub App private key file.
-            github_app_key_content (str): GitHub App private key content.
+            github_app_key_content (str): GitHub App private key content (legacy parameter).
         Returns:
             GithubSession: Authenticated session token for API requests.
         """
@@ -278,11 +285,35 @@ class GithubProvider(Provider):
             elif oauth_app_token:
                 session_token = oauth_app_token
 
-            elif github_app_id and (github_app_key_path or github_app_key_content):
+            elif github_app_id and (
+                github_app_key or github_app_key_path or github_app_key_content
+            ):
                 app_id = github_app_id
                 if github_app_key_path:
-                    with open(github_app_key_path, "r") as rsa_key:
-                        app_key = rsa_key.read()
+                    try:
+                        with open(github_app_key_path, "r") as rsa_key:
+                            app_key = rsa_key.read()
+                    except OSError as e:
+                        if e.errno == 63:
+                            raise GithubEnvironmentVariableError(
+                                file=os.path.basename(__file__),
+                                message="--github-app-key-path expects a file path, not key content. Use --github-app-key for key content instead.",
+                            )
+                        else:
+                            raise GithubEnvironmentVariableError(
+                                file=os.path.basename(__file__),
+                                message=f"Could not read GitHub App key file '{github_app_key_path}': {e.message}",
+                            )
+                elif github_app_key:
+                    if github_app_key.startswith("-----BEGIN"):
+                        app_key = format_rsa_key(github_app_key)
+                    elif os.path.isfile(github_app_key):
+                        raise GithubEnvironmentVariableError(
+                            file=os.path.basename(__file__),
+                            message="--github-app-key expects key content, not a file path. Use --github-app-key-path for file paths instead.",
+                        )
+                    else:
+                        app_key = format_rsa_key(github_app_key)
                 else:
                     app_key = format_rsa_key(github_app_key_content)
 
@@ -303,22 +334,27 @@ class GithubProvider(Provider):
                     if not session_token:
                         # APP
                         logger.info(
-                            "Looking for GITHUB_APP_ID and GITHUB_APP_KEY environment variables as user has not provided any token...."
+                            "Looking for GitHub App environment variables as user has not provided any token...."
                         )
                         app_id = environ.get("GITHUB_APP_ID", "")
-                        env_key = environ.get("GITHUB_APP_KEY", "")
 
-                        if app_id and env_key:
-                            if env_key.startswith("-----BEGIN"):
-                                app_key = format_rsa_key(env_key)
-                            elif os.path.isfile(env_key):
-                                with open(env_key, "r") as rsa_key:
-                                    app_key = rsa_key.read()
-                            else:
-                                raise GithubEnvironmentVariableError(
-                                    file=os.path.basename(__file__),
-                                    message="GITHUB_APP_KEY must contain either RSA key content (starting with -----BEGIN) or a valid file path.",
-                                )
+                        app_key_path = environ.get("GITHUB_APP_KEY_PATH", "")
+                        if app_key_path:
+                            with open(app_key_path, "r") as rsa_key:
+                                app_key = rsa_key.read()
+                        else:
+                            env_key = environ.get("GITHUB_APP_KEY", "")
+                            if env_key:
+                                if env_key.startswith("-----BEGIN"):
+                                    app_key = format_rsa_key(env_key)
+                                elif os.path.isfile(env_key):
+                                    with open(env_key, "r") as rsa_key:
+                                        app_key = rsa_key.read()
+                                else:
+                                    raise GithubEnvironmentVariableError(
+                                        file=os.path.basename(__file__),
+                                        message="GITHUB_APP_KEY must contain either RSA key content (starting with -----BEGIN) or a valid file path.",
+                                    )
 
             if not session_token and not (app_id and app_key):
                 raise GithubEnvironmentVariableError(
@@ -528,6 +564,7 @@ class GithubProvider(Provider):
     def test_connection(
         personal_access_token: str = "",
         oauth_app_token: str = "",
+        github_app_key: str = "",
         github_app_key_path: str = "",
         github_app_key_content: str = "",
         github_app_id: int = 0,
@@ -541,8 +578,9 @@ class GithubProvider(Provider):
         Args:
             personal_access_token (str): GitHub personal access token.
             oauth_app_token (str): GitHub OAuth App token.
+            github_app_key (str): GitHub App key content.
             github_app_key_path (str): Path to GitHub App private key file.
-            github_app_key_content (str): GitHub App private key content.
+            github_app_key_content (str): GitHub App private key content (legacy parameter).
             github_app_id (int): GitHub App ID.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             provider_id (str): The provider ID, in this case it's the GitHub organization/username.
@@ -573,6 +611,7 @@ class GithubProvider(Provider):
                 personal_access_token=personal_access_token,
                 oauth_app_token=oauth_app_token,
                 github_app_id=github_app_id,
+                github_app_key=github_app_key,
                 github_app_key_path=github_app_key_path,
                 github_app_key_content=github_app_key_content,
             )

@@ -217,7 +217,7 @@ class TestGitHubProvider:
             ),
         ):
             connection = GithubProvider.test_connection(
-                github_app_id=APP_ID, github_app_key_path=APP_KEY
+                github_app_id=APP_ID, github_app_key_content=APP_KEY
             )
 
             assert isinstance(connection, Connection)
