@@ -4,8 +4,7 @@
   "CheckTitle": "AppStream fleet session idle disconnect timeout is 10 minutes or less",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Effects/Data Exposure",
-    "Effects/Resource Consumption"
+    "Effects/Data Exposure"
   ],
   "ServiceName": "appstream",
   "SubServiceName": "",

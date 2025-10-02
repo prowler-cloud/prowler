@@ -26,7 +26,7 @@
       "Terraform": "```hcl\n# Terraform: Set AppStream Fleet disconnect timeout to 5 minutes or less\nresource \"aws_appstream_fleet\" \"<example_resource_name>\" {\n  name          = \"<example_resource_name>\"\n  instance_type = \"stream.standard.medium\"\n  image_name    = \"<example_image_name>\"\n\n  compute_capacity {\n    desired_instances = 1\n  }\n\n  disconnect_timeout_in_seconds = 300  # CRITICAL: ensures timeout is <= 300s\n}\n```"
     },
     "Recommendation": {
-      "Text": "Set `DisconnectTimeoutInSeconds` to `300` or less across fleets. Require re-authentication on reconnect, and enforce **least privilege**. Monitor session events and use **defense in depth** (network restrictions, device posture) to reduce takeover risk.",
+      "Text": "Set `DisconnectTimeoutInSeconds` to `300` or less across fleets. Pair with a short `IdleDisconnectTimeoutInSeconds`, require re-authentication on reconnect, and enforce **least privilege**. Monitor session events and use **defense in depth** (network restrictions, device posture) to reduce takeover risk.",
       "Url": "https://hub.prowler.com/check/appstream_fleet_session_disconnect_timeout"
     }
   },
