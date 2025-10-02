@@ -22,6 +22,14 @@ import {
 } from "@/components/ui/form";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
+const AUTH_ERROR_PATHS = {
+  NAME: "/data/attributes/name",
+  EMAIL: "/data/attributes/email",
+  PASSWORD: "/data/attributes/password",
+  COMPANY_NAME: "/data/attributes/company_name",
+  INVITATION_TOKEN: "/data",
+} as const;
+
 export const SignUpForm = ({
   invitationToken,
   googleAuthUrl,
@@ -75,25 +83,25 @@ export const SignUpForm = ({
         const errorMessage = error.detail;
         const pointer = error.source?.pointer;
         switch (pointer) {
-          case "/data/attributes/name":
+          case AUTH_ERROR_PATHS.NAME:
             form.setError("name", { type: "server", message: errorMessage });
             break;
-          case "/data/attributes/email":
+          case AUTH_ERROR_PATHS.EMAIL:
             form.setError("email", { type: "server", message: errorMessage });
             break;
-          case "/data/attributes/company_name":
+          case AUTH_ERROR_PATHS.COMPANY_NAME:
             form.setError("company", {
               type: "server",
               message: errorMessage,
             });
             break;
-          case "/data/attributes/password":
+          case AUTH_ERROR_PATHS.PASSWORD:
             form.setError("password", {
               type: "server",
               message: errorMessage,
             });
             break;
-          case "/data":
+          case AUTH_ERROR_PATHS.INVITATION_TOKEN:
             form.setError("invitationToken", {
               type: "server",
               message: errorMessage,

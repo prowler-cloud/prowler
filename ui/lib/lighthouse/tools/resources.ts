@@ -8,9 +8,12 @@ import {
 } from "@/actions/lighthouse/resources";
 import { getResourceSchema, getResourcesSchema } from "@/types/lighthouse";
 
+const parseResourcesInput = (input: unknown) =>
+  input as z.infer<typeof getResourcesSchema>;
+
 export const getResourcesTool = tool(
   async (input) => {
-    const typedInput = input as z.infer<typeof getResourcesSchema>;
+    const typedInput = parseResourcesInput(input);
     return await getLighthouseResources({
       page: typedInput.page,
       query: typedInput.query,
@@ -46,7 +49,7 @@ export const getResourceTool = tool(
 
 export const getLatestResourcesTool = tool(
   async (input) => {
-    const typedInput = input as z.infer<typeof getResourcesSchema>;
+    const typedInput = parseResourcesInput(input);
     return await getLighthouseLatestResources({
       page: typedInput.page,
       query: typedInput.query,
