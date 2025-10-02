@@ -23,7 +23,7 @@ import { Form } from "@/components/ui/form";
 
 const chatbotConfigSchema = z.object({
   model: z.string().min(1, "Model selection is required"),
-  apiKey: z.string(),
+  apiKey: z.string().min(1, "API Key is required"),
   businessContext: z
     .string()
     .max(1000, "Business context cannot exceed 1000 characters")
@@ -142,8 +142,6 @@ export const ChatbotConfig = ({
             )}
           />
 
-          <Spacer y={2} />
-
           <CustomInput
             control={form.control}
             name="apiKey"
@@ -155,8 +153,6 @@ export const ChatbotConfig = ({
             isRequired
             isInvalid={!!form.formState.errors.apiKey}
           />
-
-          <Spacer y={2} />
 
           <CustomTextarea
             control={form.control}
@@ -170,8 +166,6 @@ export const ChatbotConfig = ({
             description={`${form.watch("businessContext")?.length || 0}/1000 characters`}
             isInvalid={!!form.formState.errors.businessContext}
           />
-
-          <Spacer y={4} />
 
           <div className="flex w-full justify-end">
             <CustomButton
