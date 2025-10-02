@@ -17,7 +17,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.icompaas.com/support/solutions/articles/62000233640-check-if-api-gateway-public-endpoint-has-an-authorizer-configured",
-    "https://www.solo.io/topics/api-gateway/authentication",
     "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-endpoint-types.html",
     "https://api7.ai/blog/secure-rest-api-in-aws-api-gateway",
     "https://supertokens.com/blog/lambda-authorizers",
