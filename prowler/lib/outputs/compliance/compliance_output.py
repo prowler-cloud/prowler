@@ -42,7 +42,10 @@ class ComplianceOutput(Output):
         self._from_cli = from_cli
 
         if not file_extension and file_path:
-            self._file_extension = "".join(Path(file_path).suffixes)
+            # Compliance reports are always CSV, so just use the last suffix
+            # e.g., "cis_5.0_aws.csv" should have extension ".csv", not ".0_aws.csv"
+            path_obj = Path(file_path)
+            self._file_extension = path_obj.suffix if path_obj.suffix else ""
         if file_extension:
             self._file_extension = file_extension
             self.file_path = f"{file_path}{self.file_extension}"
