@@ -15,13 +15,8 @@
   "Risk": "**Long idle sessions** keep desktops/apps accessible without user presence, enabling **session hijacking**, **shoulder surfing**, and **data exposure**. They also **consume capacity** and extend **billing**, reducing **availability** for other users.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://awscli.amazonaws.com/v2/documentation/api/2.9.6/reference/appstream/create-fleet.html",
-    "https://pkg.go.dev/github.com/aws/aws-sdk-go/service/appstream",
-    "https://grep.metacpan.org/search?qci=&q=streaming&qft=&qd=Paws&=l2d_qifl=&f=lib/Paws/AppStream.pm",
     "https://docs.aws.amazon.com/appstream2/latest/developerguide/set-up-stacks-fleets.html",
-    "https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/appstream",
-    "https://www.pulumi.com/registry/packages/aws/api-docs/appstream/fleet/",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/appstream/client/create_fleet.html"
+    "https://awscli.amazonaws.com/v2/documentation/api/2.9.6/reference/appstream/update-fleet.html"
   ],
   "Remediation": {
     "Code": {
