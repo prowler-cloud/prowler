@@ -11,7 +11,7 @@ interface ActionsProps extends React.HTMLAttributes<HTMLDivElement> {
   ref?: React.Ref<HTMLDivElement>;
 }
 
-function Actions({ className, children, ref, ...props }: ActionsProps) {
+const Actions = ({ className, children, ref, ...props }: ActionsProps) => {
   return (
     <div
       ref={ref}
@@ -24,7 +24,7 @@ function Actions({ className, children, ref, ...props }: ActionsProps) {
       {children}
     </div>
   );
-}
+};
 
 interface ActionProps {
   /**
@@ -49,7 +49,7 @@ interface ActionProps {
   ref?: React.Ref<HTMLButtonElement>;
 }
 
-function Action({
+const Action = ({
   label,
   icon,
   onClick,
@@ -58,7 +58,7 @@ function Action({
   isDisabled = false,
   ref,
   ...props
-}: ActionProps) {
+}: ActionProps) => {
   return (
     <Button
       ref={ref}
@@ -76,6 +76,6 @@ function Action({
       {label}
     </Button>
   );
-}
+};
 
 export { Action, Actions };

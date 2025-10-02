@@ -23,13 +23,13 @@ const loaderSizes = {
   lg: 32,
 };
 
-function Loader({
+const Loader = ({
   size = "default",
   text,
   className,
   ref,
   ...props
-}: LoaderProps) {
+}: LoaderProps) => {
   return (
     <div
       ref={ref}
@@ -47,6 +47,6 @@ function Loader({
       <span className="sr-only">{text || "Loading..."}</span>
     </div>
   );
-}
+};
 
 export { Loader };
