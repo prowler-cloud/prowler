@@ -1,0 +1,176 @@
+{
+  "Framework": "RBI-Cyber-Security-Framework",
+  "Name": "Reserve Bank of India (RBI) Cyber Security Framework",
+  "Version": "",
+  "Provider": "GCP",
+  "Description": "The Reserve Bank had prescribed a set of baseline cyber security controls for primary (Urban) cooperative banks (UCBs) in October 2018. On further examination, it has been decided to prescribe a comprehensive cyber security framework for the UCBs, as a graded approach, based on their digital depth and interconnectedness with the payment systems landscape, digital products offered by them and assessment of cyber security risk. The framework would mandate implementation of progressively stronger security measures based on the nature, variety and scale of digital product offerings of banks.",
+  "Requirements": [
+    {
+      "Id": "annex_i_1_1",
+      "Name": "Annex I (1.1)",
+      "Description": "UCBs should maintain an up-to-date business IT Asset Inventory Register containing the following fields, as a minimum: a) Details of the IT Asset (viz., hardware/software/network devices, key personnel, services, etc.), b. Details of systems where customer data are stored, c. Associated business applications, if any, d. Criticality of the IT asset (For example, High/Medium/Low).",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_1_1",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "annex_i_1_3",
+      "Name": "Annex I (1.3)",
+      "Description": "Appropriately manage and provide protection within and outside UCB/network, keeping in mind how the data/information is stored, transmitted, processed, accessed and put to use within/outside the UCB's network, and level of risk they are exposed to depending on the sensitivity of the data/information.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_1_3",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_dataset_public_access",
+        "bigquery_table_cmk_encryption",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_ssl_connections",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_encryption_with_csek_enabled",
+        "compute_instance_public_ip",
+        "compute_network_default_in_use",
+        "compute_network_not_legacy",
+        "dataproc_encrypted_with_cmks_disabled",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "annex_i_5_1",
+      "Name": "Annex I (5.1)",
+      "Description": "The firewall configurations should be set to the highest security level and evaluation of critical device (such as firewall, network switches, security devices, etc.) configurations should be done periodically.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_5_1",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_dns_logging_enabled",
+        "compute_subnet_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "annex_i_6",
+      "Name": "Annex I (6)",
+      "Description": "Put in place systems and processes to identify, track, manage and monitor the status of patches to servers, operating system and application software running at the systems used by the UCB officials (end-users). Implement and update antivirus protection for all servers and applicable end points preferably through a centralised system.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_6",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "compute_instance_shielded_vm_enabled",
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "annex_i_7_1",
+      "Name": "Annex I (7.1)",
+      "Description": "Disallow administrative rights on end-user workstations/PCs/laptops and provide access rights on a 'need to know' and 'need to do' basis.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_1",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "gke_cluster_no_default_service_account",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "annex_i_7_2",
+      "Name": "Annex I (7.2)",
+      "Description": "Passwords should be set as complex and lengthy and users should not use same passwords for all the applications/systems/devices.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_2",
+          "Service": "iam"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "annex_i_7_3",
+      "Name": "Annex I (7.3)",
+      "Description": "Remote Desktop Protocol (RDP) which allows others to access the computer remotely over a network or over the internet should be always disabled and should be enabled only with the approval of the authorised officer of the UCB. Logs for such remote access shall be enabled and monitored for suspicious activities.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_3",
+          "Service": "compute"
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_serial_ports_in_use",
+        "compute_project_os_login_enabled"
+      ]
+    },
+    {
+      "Id": "annex_i_7_4",
+      "Name": "Annex I (7.4)",
+      "Description": "Implement appropriate (e.g. centralised) systems and controls to allow, manage, log and monitor privileged/super user/administrative access to critical systems (servers/databases, applications, network devices etc.)",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_4",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "annex_i_12",
+      "Name": "Annex I (12)",
+      "Description": "Take periodic back up of the important data and store this data 'off line' (i.e., transferring important files to a storage device that can be detached from a computer/system after copying all the files).",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_12",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    }
+  ]
+}
