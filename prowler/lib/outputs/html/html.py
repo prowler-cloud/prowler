@@ -332,10 +332,68 @@ class HTML(Output):
             var maxLength = 30;
             // ReadMore ReadLess
             $(".show-read-more").each(function () {
-                var myStr = $(this).text();
-                if ($.trim(myStr).length > maxLength) {
-                    var newStr = myStr.substring(0, maxLength);
-                    var removedStr = myStr.substring(maxLength, $.trim(myStr).length);
+                var myStr = $(this).html();
+                var textLength = $(this).text().length;
+                if (textLength > maxLength) {
+                    // Find the position where to cut while preserving HTML tags and breaking at word boundaries
+                    var cutPosition = 0;
+                    var currentLength = 0;
+                    var inTag = false;
+                    var lastWordBoundary = 0;
+                    var tagStack = [];
+
+                    for (var i = 0; i < myStr.length; i++) {
+                        if (myStr[i] === '<') {
+                            inTag = true;
+                            // Track opening tags
+                            if (myStr[i + 1] !== '/') {
+                                var tagEnd = myStr.indexOf('>', i);
+                                if (tagEnd !== -1) {
+                                    var tagName = myStr.substring(i + 1, tagEnd).split(' ')[0];
+                                    tagStack.push(tagName);
+                                }
+                            } else {
+                                // Closing tag
+                                var tagEnd = myStr.indexOf('>', i);
+                                if (tagEnd !== -1) {
+                                    var tagName = myStr.substring(i + 2, tagEnd).split(' ')[0];
+                                    if (tagStack.length > 0) {
+                                        tagStack.pop();
+                                    }
+                                }
+                            }
+                        } else if (myStr[i] === '>') {
+                            inTag = false;
+                        } else if (!inTag) {
+                            currentLength++;
+                            // Only consider word boundaries if we're not inside any HTML tags
+                            if (tagStack.length === 0 && (myStr[i] === ' ' || myStr[i] === '.' || myStr[i] === ',' || myStr[i] === ';' || myStr[i] === ':' || myStr[i] === '!' || myStr[i] === '?')) {
+                                lastWordBoundary = i + 1;
+                            }
+
+                            if (currentLength >= maxLength) {
+                                // If we're inside HTML tags, find the next closing tag
+                                if (tagStack.length > 0) {
+                                    // Find the next closing tag for the current open tag
+                                    var nextClosingTag = '</' + tagStack[tagStack.length - 1] + '>';
+                                    var closingTagPos = myStr.indexOf(nextClosingTag, i);
+                                    if (closingTagPos !== -1) {
+                                        cutPosition = closingTagPos + nextClosingTag.length;
+                                    } else {
+                                        // If no closing tag found, use current position
+                                        cutPosition = i + 1;
+                                    }
+                                } else {
+                                    // Use the last word boundary if available, otherwise use current position
+                                    cutPosition = lastWordBoundary > 0 ? lastWordBoundary : i + 1;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    var newStr = myStr.substring(0, cutPosition);
+                    var removedStr = myStr.substring(cutPosition);
                     $(this).empty().html(newStr);
                     $(this).append(' <a href="javascript:void(0);" class="read-more">read more...</a>');
                     $(this).append('<span class="more-text">' + removedStr + '</span>');
