@@ -1244,6 +1244,7 @@ class FindingSerializer(RLSSerializer):
             "muted",
             "muted_reason",
             "url",
+            "compliance",
             # Relationships
             "scan",
             "resources",
@@ -1274,6 +1275,7 @@ class FindingIncludeSerializer(RLSSerializer):
             "first_seen_at",
             "muted",
             "muted_reason",
+            "compliance",
         ]
 
 
@@ -1952,6 +1954,8 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
     version = serializers.CharField()
     description = serializers.CharField()
     status = serializers.ChoiceField(choices=StatusChoices.choices)
+    passed_findings = serializers.IntegerField()
+    total_findings = serializers.IntegerField()
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-details"
