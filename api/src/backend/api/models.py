@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 import re
@@ -251,19 +250,6 @@ class Provider(RowLevelSecurityProtectedModel):
                 code="m365-uid",
                 pointer="/data/attributes/uid",
             )
-
-    @staticmethod
-    def validate_m365_certificate_content(value):
-        """Validate that M365 certificate content is valid base64 encoded data."""
-        if value:
-            try:
-                base64.b64decode(value, validate=True)
-            except Exception as e:
-                raise ModelValidationError(
-                    detail=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
-                    code="m365-certificate-content",
-                    pointer="/data/attributes/secret/certificate_content",
-                )
 
     @staticmethod
     def validate_gcp_uid(value):

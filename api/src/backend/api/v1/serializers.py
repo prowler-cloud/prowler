@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import datetime, timedelta, timezone
 
@@ -1378,11 +1379,18 @@ class M365ProviderSecret(serializers.Serializer):
             )
         return super().validate(attrs)
 
-    def validate_certificate_content(self, value):
-        """Validate that certificate_content is valid base64 encoded data."""
-
-        Provider.validate_m365_certificate_content(value)
-        return value
+    def validate_certificate_content(self, certificate_content):
+        """Validate that M365 certificate content is valid base64 encoded data."""
+        if certificate_content:
+            try:
+                base64.b64decode(certificate_content, validate=True)
+            except Exception as e:
+                raise ValidationError(
+                    detail=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+                    code="m365-certificate-content",
+                    pointer="/data/attributes/secret/certificate_content",
+                )
+        return certificate_content
 
     class Meta:
         resource_name = "provider-secrets"
