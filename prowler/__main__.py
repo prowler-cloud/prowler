@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-<<<<<<< HEAD
-# This is the main entry point for Prowler
-=======
-# This is the primary entry point for Prowler application
->>>>>>> test-conflicts
-
 
 import sys
 from os import environ
@@ -49,13 +43,8 @@ from prowler.lib.check.custom_checks_metadata import (
     update_checks_metadata,
 )
 from prowler.lib.check.models import CheckMetadata
-<<<<<<< HEAD
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
-=======
-from prowler.lib.cli.parser import ProwlerArgumentParser
-from prowler.lib.logger import logger, set_logging_config, configure_logging
->>>>>>> feature-branch
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
