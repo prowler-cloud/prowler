@@ -16,17 +16,11 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-aws-lambda-function-is-configured-inside-a-vpc-1/",
     "https://repost.aws/pt/knowledge-center/lambda-dedicated-vpc",
-    "https://www.getorchestra.io/guides/networking-and-vpc-configurations-in-aws-lambda",
-    "https://notes.kodekloud.com/docs/AWS-Certified-Developer-Associate/Serverless/Lambda-Networking",
-    "https://www.linkedin.com/pulse/unlocking-aws-lambda-networking-guide-software-filip-konkowski-chtre",
-    "https://dev.to/chinmay13/configuring-a-lambda-function-in-a-vpc-to-access-external-api-via-nat-gateway-and-store-in-dynamodb-1b29",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-in-vpc.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-3",
     "https://stackoverflow.com/questions/55074793/how-can-we-force-aws-lamda-to-run-securely-in-a-vpc",
-    "https://www.techtarget.com/searchCloudComputing/answer/How-do-I-configure-AWS-Lambda-functions-in-a-VPC/",
-    "https://medium.com/@arunasilva86/how-to-use-vpc-networking-effectively-for-lambda-445abefdf8cf",
-    "https://docs.datadoghq.com/security/default_rules/9ga-poq-w7v/"
+    "https://www.techtarget.com/searchCloudComputing/answer/How-do-I-configure-AWS-Lambda-functions-in-a-VPC/"
   ],
   "Remediation": {
     "Code": {
