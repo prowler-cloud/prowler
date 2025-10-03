@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
-    "TTPs/Defense Evasion/Disable Security Tools"
+    "TTPs/Defense Evasion"
   ],
   "ServiceName": "awslambda",
   "SubServiceName": "",
@@ -16,7 +16,8 @@
   "Risk": "Without Lambda `Invoke` data events, per-invocation accountability is lost. Adversaries or misused automation can run code without an audit trail, obscuring actor, time, and source. This hinders forensics and enables covert exfiltration or unauthorized changes, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/lambda/latest/dg/logging-using-cloudtrail.html"
+    "https://docs.aws.amazon.com/lambda/latest/dg/logging-using-cloudtrail.html",
+    "https://support.icompaas.com/support/solutions/articles/62000127055-ensure-lambda-functions-invoke-api-operations-are-being-recorded-by-cloudtrail"
   ],
   "Remediation": {
     "Code": {
@@ -31,8 +32,7 @@
     }
   },
   "Categories": [
-    "logging",
-    "forensics-ready"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],
