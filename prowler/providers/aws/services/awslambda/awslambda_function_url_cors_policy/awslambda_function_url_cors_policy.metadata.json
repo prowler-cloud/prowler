@@ -15,18 +15,10 @@
   "Risk": "**Wildcard origins** allow any website to call the endpoint from a browser and read responses, weakening origin isolation.\n\nThis can lead to data exposure (C) and unauthorized actions (I) if state-changing methods are reachable, enabling scripted abuse and cross-origin attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://boto3.amazonaws.com/v1/documentation/api/1.27.1/reference/services/lambda/client/create_function_url_config.html",
     "https://support.icompaas.com/support/solutions/articles/62000229584-ensure-lambda-function-url-cors-configurations-were-checked",
-    "https://www.serverless.com/blog/aws-lambda-function-urls-with-serverless-framework",
-    "https://medium.com/@mb20261/aws-cli-v2-by-examples-master-lambda-function-urls-9b4837224cb7",
     "https://docs.aws.amazon.com/lambda/latest/api/API_Cors.html",
-    "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
     "https://tutorialsdojo.com/how-to-configure-aws-lambda-function-url-with-cross-origin-resource-sharing/",
-    "https://dev.to/rimutaka/aws-lambda-function-url-with-cors-explained-by-example-14df",
-    "https://www.examcollection.com/blog/a-deep-dive-into-aws-lambda-function-urls-with-cross-origin-resource-sharing/",
-    "https://stackoverflow.com/questions/76944724/aws-lambda-function-url-cors-allow-origin-is-not-working-properly",
-    "https://mastra.ai/en/docs/deployment/cloud-providers/aws-lambda",
-    "https://www.example.com,AllowMethods=*,ExposeHeaders=keep-alive,MaxAge=3600,AllowCredentials=false'"
+    "https://dev.to/rimutaka/aws-lambda-function-url-with-cors-explained-by-example-14df"
   ],
   "Remediation": {
     "Code": {
