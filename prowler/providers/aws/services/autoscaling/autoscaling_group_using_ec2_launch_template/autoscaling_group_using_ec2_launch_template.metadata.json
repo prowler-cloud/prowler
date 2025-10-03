@@ -1,31 +1,46 @@
 {
   "Provider": "aws",
   "CheckID": "autoscaling_group_using_ec2_launch_template",
-  "CheckTitle": "Check if Amazon EC2 Auto Scaling groups use EC2 launch templates.",
+  "CheckTitle": "Amazon EC2 Auto Scaling group uses an EC2 launch template",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "autoscaling",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:autoScalingGroup/autoScalingGroupName",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
-  "Description": "This control checks whether an Amazon EC2 Auto Scaling group is created using an EC2 launch template. The control fails if the Auto Scaling group is not created with a launch template or if a launch template is not specified in a mixed instances policy.",
-  "Risk": "Using launch configurations instead of launch templates may limit your access to the latest EC2 features and improvements, reducing the flexibility and efficiency of your Auto Scaling groups.",
-  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-asg-launch-template.html",
+  "Description": "**EC2 Auto Scaling groups** use an **EC2 launch template** directly or via a `mixed instances policy` to define instance configuration and versioned settings.",
+  "Risk": "Without a launch template, there is no **versioned, auditable baseline** for instance settings, increasing configuration drift. Inconsistent metadata and network options can enable unauthorized access or unstable deployments, degrading confidentiality and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://sdk.amazonaws.com/swift/api/awsautoscaling/1.2.42/documentation/awsautoscaling/autoscalingclienttypes/mixedinstancespolicy",
+    "https://marketplace.upbound.io/providers/crossplane-contrib/provider-aws/v0.47.2/resources/autoscaling.aws.crossplane.io/AutoScalingGroup/v1beta1",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-launch-template.html",
+    "https://awscli.amazonaws.com/v2/documentation/api/2.4.18/reference/autoscaling/update-auto-scaling-group.html",
+    "https://spot.io/resources/aws-autoscaling/ec2-autoscaling-the-basics-and-4-best-practices/",
+    "https://repost.aws/articles/ARQeKDQX68TcqipYaaisl6bA/cloudformation-auto-scaling-group-sample-template-for-mixed-x86-intel-amd-and-aws-graviton-instances",
+    "https://repost.aws/questions/QUvQeV97pOSu-4cwIN6AS-Ag/using-mixed-instance-asg-policies-for-multi-architecture-ecs-clusters",
+    "https://www.rubydoc.info/gems/aws-sdk-autoscaling/1.104.0/Aws/AutoScaling/Types/MixedInstancesPolicy",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-9",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group",
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-asg-launch-template.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws autoscaling create-auto-scaling-group --launch-template LaunchTemplateId=<template-id>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-9",
-      "Terraform": ""
+      "CLI": "aws autoscaling update-auto-scaling-group --auto-scaling-group-name <example_resource_name> --launch-template LaunchTemplateId=<template-id>",
+      "NativeIaC": "```yaml\n# CloudFormation: attach a Launch Template to the ASG\nResources:\n  ASG:\n    Type: AWS::AutoScaling::AutoScalingGroup\n    Properties:\n      MinSize: '0'\n      MaxSize: '1'\n      VPCZoneIdentifier:\n        - <example_subnet_id>\n      LaunchTemplate: # critical: ensures the ASG uses an EC2 launch template (fixes the check)\n        LaunchTemplateId: <example_launch_template_id> # references the EC2 Launch Template\n        Version: $Default\n```",
+      "Other": "1. In the AWS console, go to EC2 > Auto Scaling Groups\n2. Select <example_resource_name> and click Edit\n3. Under \"Launch template or configuration\", choose Launch template and select your template and version (Default or Latest)\n4. Click Update to save",
+      "Terraform": "```hcl\n# Terraform: attach a Launch Template to the ASG\nresource \"aws_autoscaling_group\" \"example\" {\n  min_size            = 0\n  max_size            = 1\n  vpc_zone_identifier = [\"<example_subnet_id>\"]\n\n  launch_template {\n    id      = \"<example_launch_template_id>\" # critical: ensures the ASG uses an EC2 launch template (fixes the check)\n    version = \"$Default\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use EC2 launch templates when creating Auto Scaling groups to ensure access to the latest features and improvements.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-launch-template.html"
+      "Text": "Adopt **launch templates** for all Auto Scaling groups and include them in any `mixed instances policy`. Use versioning with approvals, enforce hardened defaults (least privilege roles, secure metadata like `IMDSv2`, encrypted storage), and apply change control to ensure consistency and defense in depth.",
+      "Url": "https://hub.prowler.com/check/autoscaling_group_using_ec2_launch_template"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

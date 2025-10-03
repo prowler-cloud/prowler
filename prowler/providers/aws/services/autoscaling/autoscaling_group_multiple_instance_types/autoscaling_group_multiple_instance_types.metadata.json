@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "autoscaling_group_multiple_instance_types",
-  "CheckTitle": "EC2 Auto Scaling Group should use multiple instance types in multiple Availability Zones.",
+  "CheckTitle": "Auto Scaling group spans multiple Availability Zones and has multiple instance types per Availability Zone",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "autoscaling",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:autoscaling:region:account-id:autoScalingGroupName/resource-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
-  "Description": "This control checks whether an Amazon EC2 Auto Scaling group uses multiple instance types in all the Availability Zones, meaning that there should be multiple Availability Zones with multiple instances on each one. The control fails if the Auto Scaling group has only one instance type defined.",
-  "Risk": "Using only one instance type in an Auto Scaling group reduces the flexibility to launch new instances when there is insufficient capacity for that specific type, potentially affecting the availability of the application.",
-  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html",
+  "Description": "**EC2 Auto Scaling groups** are evaluated for using **multiple instance types** in each **Availability Zone** and spanning more than one AZ.\n\nGroups are identified when every AZ defines at least two instance types; groups with any AZ using a single or no type, or confined to one AZ, are noted.",
+  "Risk": "Limited to one instance type per AZ or a single AZ, scaling can stall during **capacity shortages**, hindering **failover** and degrading **availability** (timeouts, backlog growth). Costs may spike if only expensive capacity is available. Reduced diversity increases the likelihood of prolonged outages during zonal or market disruptions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-multiple-instance-type-az.html",
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-6"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws autoscaling create-auto-scaling-group --mixed-instances-policy ...",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-6",
-      "Terraform": ""
+      "CLI": "aws autoscaling update-auto-scaling-group --auto-scaling-group-name <example_resource_name> --mixed-instances-policy '{\"LaunchTemplate\":{\"LaunchTemplateSpecification\":{\"LaunchTemplateName\":\"<example_resource_name>\",\"Version\":\"$Latest\"},\"Overrides\":[{\"InstanceType\":\"<INSTANCE_TYPE_1>\"},{\"InstanceType\":\"<INSTANCE_TYPE_2>\"}]}}' --vpc-zone-identifier \"<subnet_id_1>,<subnet_id_2>\"",
+      "NativeIaC": "```yaml\n# CloudFormation: Ensure ASG uses multiple instance types across multiple AZs\nResources:\n  <example_resource_name>:\n    Type: AWS::AutoScaling::AutoScalingGroup\n    Properties:\n      MinSize: \"1\"\n      MaxSize: \"1\"\n      VPCZoneIdentifier:\n        - <subnet_id_1>  # CRITICAL: Use subnets in different AZs to span multiple AZs\n        - <subnet_id_2>  # CRITICAL: Ensures at least two Availability Zones\n      MixedInstancesPolicy:\n        LaunchTemplate:\n          LaunchTemplateSpecification:\n            LaunchTemplateName: <example_resource_name>\n            Version: $Latest\n          Overrides:\n            - InstanceType: <INSTANCE_TYPE_1>  # CRITICAL: Multiple instance types per AZ\n            - InstanceType: <INSTANCE_TYPE_2>  # CRITICAL: Multiple instance types per AZ\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Auto Scaling Groups and select <example_resource_name>\n2. Click Edit\n3. Under Network, add at least two subnets in different Availability Zones\n4. Under Launch options, choose Mixed instance types\n5. Select your Launch template and set Version to $Latest\n6. Add at least two Instance types in Overrides\n7. Click Update to save",
+      "Terraform": "```hcl\n# Terraform: Ensure ASG uses multiple instance types across multiple AZs\nresource \"aws_autoscaling_group\" \"<example_resource_name>\" {\n  name               = \"<example_resource_name>\"\n  min_size           = 1\n  max_size           = 1\n  vpc_zone_identifier = [\"<subnet_id_1>\", \"<subnet_id_2>\"] # CRITICAL: Subnets in different AZs\n\n  mixed_instances_policy {\n    launch_template {\n      launch_template_specification {\n        launch_template_name = \"<example_resource_name>\"\n        version              = \"$Latest\"\n      }\n      override { instance_type = \"<INSTANCE_TYPE_1>\" } # CRITICAL: Multiple instance types per AZ\n      override { instance_type = \"<INSTANCE_TYPE_2>\" } # CRITICAL: Multiple instance types per AZ\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure your EC2 Auto Scaling group to use multiple instance types across multiple Availability Zones.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-multiple-instance-type-az.html"
+      "Text": "Adopt a **mixed instances** strategy for resilience:\n- Use diverse instance families and sizes per AZ\n- Distribute capacity across multiple AZs\n- Favor allocation approaches that tolerate spot/on-demand scarcity\nApply **redundancy** and **fault tolerance** principles and validate scaling policies to avoid single points of capacity failure.",
+      "Url": "https://hub.prowler.com/check/autoscaling_group_multiple_instance_types"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
