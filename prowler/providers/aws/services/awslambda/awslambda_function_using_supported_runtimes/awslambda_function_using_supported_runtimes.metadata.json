@@ -4,8 +4,7 @@
   "CheckTitle": "Lambda function uses a supported runtime",
   "CheckType": [
     "Software and Configuration Checks/Patch Management",
-    "Software and Configuration Checks/AWS Security Best Practices",
-    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "awslambda",
   "SubServiceName": "",
@@ -16,16 +15,10 @@
   "Risk": "Unmaintained runtimes lack security patches, exposing code and libraries to known CVEs (**confidentiality, integrity**).\n\nDeprecation can block create/update and break builds, causing failed deployments or runtime errors (**availability**). Tooling may stop supporting builds, slowing fixes and recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/aws/aws-lambda-builders/issues/577",
     "https://aws.amazon.com/blogs/compute/managing-aws-lambda-runtime-upgrades/",
     "https://docs.aws.amazon.com/lambda/latest/dg/runtime-support-policy.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/supported-runtime-environment.html",
-    "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html",
-    "https://github.com/aws/aws-sam-cli/issues/6298",
-    "https://github.com/awsdocs/aws-lambda-developer-guide/blob/master/doc_source/runtime-support-policy.md",
-    "https://aws.amazon.com/blogs/compute/announcing-end-of-support-for-python-2-7-in-aws-lambda/",
-    "https://aws.amazon.com/blogs/compute/introducing-the-amazon-linux-2023-runtime-for-aws-lambda/",
-    "https://endoflife.date/aws-lambda"
+    "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html"
   ],
   "Remediation": {
     "Code": {
@@ -40,7 +33,7 @@
     }
   },
   "Categories": [
-    "vulnerabilities"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
