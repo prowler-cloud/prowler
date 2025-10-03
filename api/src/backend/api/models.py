@@ -1913,3 +1913,319 @@ class Processor(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "processors"
+
+
+class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Per-tenant configuration for an LLM provider (credentials, base URL, activation).
+
+    One configuration per provider type per tenant.
+    """
+
+    class ProviderChoices(models.TextChoices):
+        OPENAI = "openai", _("OpenAI")
+
+    @staticmethod
+    def validate_openai_credentials(credentials: dict):
+        """
+        Validate OpenAI provider credentials.
+
+        Checks:
+        - api_key is present and is a string
+        - api_key matches expected OpenAI format
+
+        Raises:
+            ModelValidationError: If credentials are invalid
+        """
+        api_key = credentials.get("api_key")
+        if not isinstance(api_key, str) or not api_key:
+            raise ModelValidationError(
+                detail="OpenAI credentials must include 'api_key'",
+                code="invalid_openai_credentials",
+                pointer="/data/attributes/credentials/api_key",
+            )
+
+        # Validate OpenAI API key format
+        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
+        if not re.match(openai_key_pattern, api_key):
+            raise ModelValidationError(
+                detail="Invalid OpenAI API key format.",
+                code="invalid_openai_api_key_format",
+                pointer="/data/attributes/credentials/api_key",
+            )
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    provider_type = models.CharField(
+        max_length=50,
+        choices=ProviderChoices.choices,
+        help_text="LLM provider name",
+    )
+
+    # For OpenAI-compatible providers
+    base_url = models.URLField(blank=True, null=True)
+
+    # Encrypted JSON for provider-specific auth
+    credentials = models.BinaryField(
+        blank=False, null=False, help_text="Encrypted JSON credentials for the provider"
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.get_provider_type_display()} ({self.tenant_id})"
+
+    def clean(self):
+        super().clean()
+
+    @property
+    def credentials_decoded(self):
+        if not self.credentials:
+            return None
+        try:
+            decrypted_data = fernet.decrypt(bytes(self.credentials))
+            return json.loads(decrypted_data.decode())
+        except (InvalidToken, json.JSONDecodeError) as e:
+            logger.warning("Failed to decrypt provider credentials: %s", e)
+            return None
+        except Exception as e:
+            logger.exception(
+                "Unexpected error while decrypting provider credentials: %s", e
+            )
+            return None
+
+    @credentials_decoded.setter
+    def credentials_decoded(self, value):
+        """
+        Set and encrypt credentials.
+
+        This is the single source of truth for credential validation.
+        Validates based on provider_type and encrypts before storage.
+
+        Args:
+            value: Dict containing provider-specific credentials
+
+        Raises:
+            ModelValidationError: If credentials are invalid or missing
+        """
+        if not value:
+            raise ModelValidationError(
+                detail="Credentials are required",
+                code="invalid_credentials",
+                pointer="/data/attributes/credentials",
+            )
+
+        # Validate credentials based on provider type
+        if self.provider_type == self.ProviderChoices.OPENAI:
+            self.validate_openai_credentials(value)
+
+        self.credentials = fernet.encrypt(json.dumps(value).encode())
+
+    def delete(self, *args, **kwargs):
+        # Cleanup tenant defaults that reference this provider
+        try:
+            tenant_cfg = LighthouseTenantConfiguration.objects.get(
+                tenant_id=self.tenant_id
+            )
+        except LighthouseTenantConfiguration.DoesNotExist:
+            tenant_cfg = None
+
+        if tenant_cfg:
+            updated = False
+            defaults = tenant_cfg.default_models or {}
+            if self.provider_type in defaults:
+                defaults.pop(self.provider_type, None)
+                tenant_cfg.default_models = defaults
+                updated = True
+
+            if tenant_cfg.default_provider == self.provider_type:
+                tenant_cfg.default_provider = ""
+                updated = True
+
+            if updated:
+                tenant_cfg.save()
+
+        return super().delete(*args, **kwargs)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_provider_configurations"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=["tenant_id", "provider_type"],
+                name="unique_provider_config_per_tenant",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_type"],
+                name="lh_pc_tenant_type_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-providers"
+
+
+class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Tenant-level Lighthouse settings (business context and defaults).
+    One record per tenant.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    business_context = models.TextField(blank=True, default="")
+
+    # Preferred provider key (e.g., "openai", "bedrock", "openai_compatible")
+    default_provider = models.CharField(max_length=50, blank=True)
+
+    # Mapping of provider -> model id, e.g., {"openai": "gpt-4o", "bedrock": "anthropic.claude-v2"}
+    default_models = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return f"Lighthouse Tenant Config for {self.tenant_id}"
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        # Validate default_provider is supported, configured and active (if provided)
+        if self.default_provider:
+            # Check if provider type is supported
+            supported_providers = set(
+                LighthouseProviderConfiguration.ProviderChoices.values
+            )
+            if self.default_provider not in supported_providers:
+                raise ModelValidationError(
+                    detail=f"Unsupported provider: '{self.default_provider}'. Supported providers: {', '.join(supported_providers)}",
+                    code="unsupported_provider",
+                    pointer="/data/attributes/default_provider",
+                )
+
+            # Check if provider is configured and active
+            if not LighthouseProviderConfiguration.objects.filter(
+                tenant_id=self.tenant_id,
+                provider_type=self.default_provider,
+                is_active=True,
+            ).exists():
+                raise ModelValidationError(
+                    detail=f"No active configuration found for provider '{self.default_provider}'",
+                    code="invalid_default_provider",
+                    pointer="/data/attributes/default_provider",
+                )
+
+        # Validate default_models mapping
+        if self.default_models is not None and not isinstance(
+            self.default_models, dict
+        ):
+            raise ModelValidationError(
+                detail="default_models must be an object mapping provider->model",
+                code="invalid_default_models",
+                pointer="/data/attributes/default_models",
+            )
+
+        for provider_type, model_id in (self.default_models or {}).items():
+            # Provider must exist and be active
+            provider_cfg = LighthouseProviderConfiguration.objects.filter(
+                tenant_id=self.tenant_id,
+                provider_type=provider_type,
+                is_active=True,
+            ).first()
+
+            if not provider_cfg:
+                raise ModelValidationError(
+                    detail=f"No active configuration found for provider '{provider_type}'",
+                    code="invalid_default_models_provider",
+                    pointer="/data/attributes/default_models",
+                )
+
+            # Model must exist under that provider configuration
+            if not LighthouseProviderModels.objects.filter(
+                tenant_id=self.tenant_id,
+                provider_configuration=provider_cfg,
+                model_id=model_id,
+            ).exists():
+                raise ModelValidationError(
+                    detail=f"Invalid model '{model_id}' for provider '{provider_type}'",
+                    code="invalid_default_models_model",
+                    pointer="/data/attributes/default_models",
+                )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_tenant_config"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=["tenant_id"], name="unique_tenant_lighthouse_config"
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-config"
+
+
+class LighthouseProviderModels(RowLevelSecurityProtectedModel):
+    """
+    Per-tenant, per-provider configuration list of available LLM models.
+    RLS-protected; populated via provider API using tenant-scoped credentials.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    # Scope to a specific provider configuration within a tenant
+    provider_configuration = models.ForeignKey(
+        LighthouseProviderConfiguration,
+        on_delete=models.CASCADE,
+        related_name="available_models",
+    )
+    model_id = models.CharField(max_length=100)
+
+    # Model-specific default parameters (e.g., temperature, max_tokens)
+    default_parameters = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return f"{self.provider_configuration.provider_type}:{self.model_id} ({self.tenant_id})"
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_provider_models"
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=["tenant_id", "provider_configuration", "model_id"],
+                name="unique_provider_model_per_configuration",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_configuration"],
+                name="lh_prov_models_cfg_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-models"
