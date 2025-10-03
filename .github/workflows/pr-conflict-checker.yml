@@ -166,3 +166,9 @@ jobs:
             ✅ **Conflict Markers Resolved**
 
             All conflict markers have been successfully resolved in this pull request.
+      
+      - name: Fail workflow if conflicts detected
+        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        run: |
+          echo "::error::Workflow failed due to conflict markers in files: ${{ steps.conflict-check.outputs.conflict_files }}"
+          exit 1
