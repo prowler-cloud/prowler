@@ -81,10 +81,13 @@ export const SecurityHubIntegrationForm = ({
       integration_type: "aws_security_hub" as const,
       provider_id: integration?.relationships?.providers?.data?.[0]?.id || "",
       send_only_fails:
-        integration?.attributes.configuration.send_only_fails ?? true,
+        (integration?.attributes.configuration.send_only_fails as
+          | boolean
+          | undefined) ?? true,
       archive_previous_findings:
-        integration?.attributes.configuration.archive_previous_findings ??
-        false,
+        (integration?.attributes.configuration.archive_previous_findings as
+          | boolean
+          | undefined) ?? false,
       use_custom_credentials: false,
       enabled: integration?.attributes.enabled ?? true,
       credentials_type: "access-secret-key" as const,

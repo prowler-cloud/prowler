@@ -25,7 +25,7 @@ import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
 
-type FormValues = z.infer<typeof testConnectionFormSchema>;
+type FormValues = z.input<typeof testConnectionFormSchema>;
 
 export const TestConnectionForm = ({
   searchParams,

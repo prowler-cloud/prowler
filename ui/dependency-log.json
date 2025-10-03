@@ -1,6 +1,22 @@
 [
   {
     "section": "dependencies",
+    "name": "@ai-sdk/langchain",
+    "from": "1.0.59",
+    "to": "1.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-01T11:13:12.025Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@ai-sdk/react",
+    "from": "2.0.59",
+    "to": "2.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-01T11:13:12.025Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@heroui/react",
     "from": "2.8.4",
     "to": "2.8.4",
@@ -11,9 +27,9 @@
     "section": "dependencies",
     "name": "@hookform/resolvers",
     "from": "3.10.0",
-    "to": "3.10.0",
+    "to": "5.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T15:09:44.056Z"
   },
   {
     "section": "dependencies",
@@ -171,9 +187,9 @@
     "section": "dependencies",
     "name": "ai",
     "from": "4.3.16",
-    "to": "4.3.16",
+    "to": "5.0.59",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T10:03:22.788Z"
   },
   {
     "section": "dependencies",
@@ -395,17 +411,17 @@
     "section": "dependencies",
     "name": "zod",
     "from": "3.25.73",
-    "to": "3.25.73",
+    "to": "4.1.11",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T09:40:25.207Z"
   },
   {
     "section": "dependencies",
     "name": "zustand",
     "from": "4.5.7",
-    "to": "4.5.7",
+    "to": "5.0.8",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T09:40:25.207Z"
   },
   {
     "section": "devDependencies",
