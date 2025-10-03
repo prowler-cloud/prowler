@@ -4598,8 +4598,8 @@ paths:
   /api/v1/providers:
     get:
       operationId: providers_list
-      description: Retrieve a list of all providers with options for filtering by
-        various criteria.
+      description: Retrieve a list of all configured providers with options for filtering
+        by various criteria.
       summary: List all providers
       parameters:
       - in: query
@@ -4625,28 +4625,36 @@ paths:
         name: filter[alias]
         schema:
           type: string
+        description: Filter by exact provider alias name
       - in: query
         name: filter[alias__icontains]
         schema:
           type: string
+        description: Filter by partial provider alias match
       - in: query
         name: filter[alias__in]
         schema:
           type: array
           items:
             type: string
-        description: Multiple values may be separated by commas.
+        description: Filter by multiple provider aliases. Provide a comma-separated
+          list, e.g. "aws_alias_1,azure_alias_2"
         explode: false
         style: form
       - in: query
         name: filter[connected]
         schema:
           type: boolean
+        description: Filter by connection status. Set to True to return only connected
+          providers, or False to return only providers with failed connections. If
+          not specified, both connected and failed providers are included. Providers
+          with no connection attempt (status is null) are excluded from this filter.
       - in: query
         name: filter[id]
         schema:
           type: string
           format: uuid
+        description: Filter by exact Prowler provider ID (UUIDv4)
       - in: query
         name: filter[id__in]
         schema:
@@ -4654,7 +4662,8 @@ paths:
           items:
             type: string
             format: uuid
-        description: Multiple values may be separated by commas.
+        description: Filter by multiple Prowler provider IDs. Provide a comma-separated
+          list of UUIDs
         explode: false
         style: form
       - in: query
@@ -4666,12 +4675,16 @@ paths:
         name: filter[inserted_at__gte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Only return providers inserted on or after this date (format:
+          YYYY-MM-DD)'
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Only return providers inserted on or before this date (format:
+          YYYY-MM-DD)'
       - in: query
         name: filter[provider]
         schema:
@@ -4685,6 +4698,8 @@ paths:
           - kubernetes
           - m365
         description: |-
+          Filter by single provider type
+
           * `aws` - AWS
           * `azure` - Azure
           * `gcp` - GCP
@@ -4697,7 +4712,23 @@ paths:
           type: array
           items:
             type: string
-        description: Multiple values may be separated by commas.
+            x-spec-enum-id: 4c1e219dad1cc0e7
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Filter by multiple provider types (comma-separated, e.g. "aws,azure,gcp")
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - name: filter[search]
@@ -4710,17 +4741,22 @@ paths:
         name: filter[uid]
         schema:
           type: string
+        description: Filter by exact provider ID (AWS account ID, Azure subscription
+          ID, GCP project ID, etc.)
       - in: query
         name: filter[uid__icontains]
         schema:
           type: string
+        description: Filter by partial provider ID match (AWS account ID, Azure subscription
+          ID, GCP project ID, etc.)
       - in: query
         name: filter[uid__in]
         schema:
           type: array
           items:
             type: string
-        description: Multiple values may be separated by commas.
+        description: 'Filter by multiple provider IDs (AWS account ID, Azure subscription
+          ID, GCP project ID, etc.). For example: "1234567890,a1b2c3d4-5678-90ab-cdef-1234567890ab"'
         explode: false
         style: form
       - in: query
@@ -4728,16 +4764,21 @@ paths:
         schema:
           type: string
           format: date
+        description: 'Only return providers updated on this exact date (format: YYYY-MM-DD)'
       - in: query
         name: filter[updated_at__gte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Only return providers updated on or after this date (format:
+          YYYY-MM-DD)'
       - in: query
         name: filter[updated_at__lte]
         schema:
           type: string
-          format: date-time
+          format: date
+        description: 'Only return providers updated on or before this date (format:
+          YYYY-MM-DD)'
       - in: query
         name: include
         schema:
@@ -4796,9 +4837,10 @@ paths:
           description: ''
     post:
       operationId: providers_create
-      description: Add a new provider to the system by providing the required provider
-        details.
-      summary: Create a new provider
+      description: Create a new provider in the current Prowler Tenant. A provider
+        is any platform or service that offers resources, data, or functionality that
+        can be security audited with Prowler.
+      summary: Create new provider
       tags:
       - Provider
       requestBody:
@@ -4820,13 +4862,14 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderCreateResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/providers/{id}:
     get:
       operationId: providers_retrieve
-      description: Fetch detailed information about a specific provider by their ID.
-      summary: Retrieve data from a provider
+      description: Fetch detailed information about a specific provider by their Prowler
+        provider ID (UUIDv4 generated by Prowler).
+      summary: Retrieve data from specific provider
       parameters:
       - in: query
         name: fields[providers]
@@ -4880,7 +4923,7 @@ paths:
       operationId: providers_partial_update
       description: Update certain fields of an existing provider's information without
         affecting other fields.
-      summary: Partially update a provider
+      summary: Update provider details
       parameters:
       - in: path
         name: id
@@ -4914,8 +4957,9 @@ paths:
           description: ''
     delete:
       operationId: providers_destroy
-      description: Remove a provider from the system by their ID.
-      summary: Delete a provider
+      description: Remove a configured provider from the Prowler Tenant by their Prowler
+        provider ID (UUIDv4 generated by Prowler).
+      summary: Delete provider
       parameters:
       - in: path
         name: id
@@ -4953,16 +4997,16 @@ paths:
   /api/v1/providers/{id}/connection:
     post:
       operationId: providers_connection_create
-      description: Try to verify connection. For instance, Role & Credentials are
-        set correctly
-      summary: Check connection
+      description: Verify that the configured provider secret can successfully establish
+        a connection to the actual provider endpoints.
+      summary: Test provider connection
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this provider.
+        description: Prowler provider ID (UUIDv4 generated by Prowler)
         required: true
       tags:
       - Provider
@@ -4993,9 +5037,9 @@ paths:
   /api/v1/providers/secrets:
     get:
       operationId: providers_secrets_list
-      description: Retrieve a list of all secrets with options for filtering by various
-        criteria.
-      summary: List all secrets
+      description: List all provider secrets in the current Prowler Tenant with options
+        for filtering by various criteria
+      summary: List all provider secrets
       parameters:
       - in: query
         name: fields[provider-secrets]
@@ -5018,19 +5062,23 @@ paths:
         schema:
           type: string
           format: date
+        description: 'Filter by exact date when the secret was added (format: YYYY-MM-DD)'
       - in: query
         name: filter[name]
         schema:
           type: string
+        description: Filter by exact secret name
       - in: query
         name: filter[name__icontains]
         schema:
           type: string
+        description: Filter by partial secret name match
       - in: query
         name: filter[provider]
         schema:
           type: string
           format: uuid
+        description: Prowler provider ID (UUIDv4 generated by Prowler)
       - name: filter[search]
         required: false
         in: query
@@ -5042,6 +5090,7 @@ paths:
         schema:
           type: string
           format: date
+        description: 'Filter by exact update date (format: YYYY-MM-DD)'
       - name: page[number]
         required: false
         in: query
@@ -5083,9 +5132,9 @@ paths:
           description: ''
     post:
       operationId: providers_secrets_create
-      description: Add a new secret to the system by providing the required secret
-        details.
-      summary: Create a new secret
+      description: Add a new provider secret to an existing provider in the current
+        Prowler Tenant.
+      summary: Add provider secret
       tags:
       - Provider
       requestBody:
@@ -5107,13 +5156,14 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderSecretCreateResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/providers/secrets/{id}:
     get:
       operationId: providers_secrets_retrieve
-      description: Fetch detailed information about a specific secret by their ID.
-      summary: Retrieve data from a secret
+      description: Fetch detailed information about a specific provider secret by
+        their Prowler provider secret ID (UUIDv4 generated by Prowler).
+      summary: Retrieve data from a specific provider secret
       parameters:
       - in: query
         name: fields[provider-secrets]
@@ -5152,7 +5202,7 @@ paths:
       operationId: providers_secrets_partial_update
       description: Update certain fields of an existing secret's information without
         affecting other fields.
-      summary: Partially update a secret
+      summary: Update provider secret
       parameters:
       - in: path
         name: id
@@ -5181,12 +5231,13 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderSecretUpdateResponse'
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
     delete:
       operationId: providers_secrets_destroy
-      description: Remove a secret from the system by their ID.
-      summary: Delete a secret
+      description: Remove a configured provider secret from the Prowler Tenant by
+        their Prowler provider secret ID (UUIDv4 generated by Prowler).
+      summary: Delete provider secret
       parameters:
       - in: path
         name: id
@@ -5200,7 +5251,7 @@ paths:
       - JWT or API Key: []
       responses:
         '204':
-          description: No response body
+          description: Secret deleted successfully
   /api/v1/resources:
     get:
       operationId: resources_list
@@ -12099,6 +12150,8 @@ components:
                 alias:
                   type: string
                   nullable: true
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
                   maxLength: 100
                   minLength: 3
       required:
@@ -13121,51 +13174,6 @@ components:
               readOnly: true
           required:
           - secret
-    ProviderCreate:
-      type: object
-      required:
-      - type
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - providers
-        attributes:
-          type: object
-          properties:
-            alias:
-              type: string
-              nullable: true
-              maxLength: 100
-              minLength: 3
-            provider:
-              enum:
-              - aws
-              - azure
-              - gcp
-              - kubernetes
-              - m365
-              - github
-              type: string
-              description: |-
-                * `aws` - AWS
-                * `azure` - Azure
-                * `gcp` - GCP
-                * `kubernetes` - Kubernetes
-                * `m365` - M365
-                * `github` - GitHub
-              x-spec-enum-id: 4c1e219dad1cc0e7
-            uid:
-              type: string
-              title: Unique identifier for the provider, set by the provider
-              maxLength: 250
-              minLength: 3
-          required:
-          - uid
     ProviderCreateRequest:
       type: object
       properties:
@@ -13188,6 +13196,8 @@ components:
                 alias:
                   type: string
                   nullable: true
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
                   maxLength: 100
                   minLength: 3
                 provider:
@@ -13199,28 +13209,26 @@ components:
                   - m365
                   - github
                   type: string
+                  x-spec-enum-id: 4c1e219dad1cc0e7
                   description: |-
+                    Type of provider to create.
+
                     * `aws` - AWS
                     * `azure` - Azure
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
-                  x-spec-enum-id: 4c1e219dad1cc0e7
                 uid:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
+                  description: The unique identifier for the provider account. Format
+                    depends on the provider, e. g. AWS account ID, Azure subscription
+                    ID, GCP project ID, etc.
                   maxLength: 250
               required:
               - uid
-      required:
-      - data
-    ProviderCreateResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ProviderCreate'
       required:
       - data
     ProviderGroup:
@@ -13681,250 +13689,6 @@ components:
               title: Resource Identifier
           required:
           - provider
-    ProviderSecretCreate:
-      type: object
-      required:
-      - type
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - provider-secrets
-        attributes:
-          type: object
-          properties:
-            inserted_at:
-              type: string
-              format: date-time
-              readOnly: true
-            updated_at:
-              type: string
-              format: date-time
-              readOnly: true
-            name:
-              type: string
-              nullable: true
-              maxLength: 100
-              minLength: 3
-            secret_type:
-              enum:
-              - static
-              - role
-              - service_account
-              type: string
-              description: |-
-                * `static` - Key-value pairs
-                * `role` - Role assumption
-                * `service_account` - GCP Service Account Key
-              x-spec-enum-id: 20c74ebcd6671497
-            secret:
-              oneOf:
-              - type: object
-                title: AWS Static Credentials
-                properties:
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Required for environments
-                      where no IAM role is being assumed and direct AWS access is
-                      needed.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Must accompany 'aws_access_key_id'
-                      to authorize access to AWS resources.
-                  aws_session_token:
-                    type: string
-                    description: The session token associated with temporary credentials.
-                      Only needed for session-based or temporary AWS access.
-                required:
-                - aws_access_key_id
-                - aws_secret_access_key
-              - type: object
-                title: AWS Assume Role
-                properties:
-                  role_arn:
-                    type: string
-                    description: The Amazon Resource Name (ARN) of the role to assume.
-                      Required for AWS role assumption.
-                  external_id:
-                    type: string
-                    description: An identifier to enhance security for role assumption.
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Only required if the environment
-                      lacks pre-configured AWS credentials.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Required if 'aws_access_key_id'
-                      is provided or if no AWS credentials are pre-configured.
-                  aws_session_token:
-                    type: string
-                    description: The session token for temporary credentials, if applicable.
-                  session_duration:
-                    type: integer
-                    minimum: 900
-                    maximum: 43200
-                    default: 3600
-                    description: The duration (in seconds) for the role session.
-                  role_session_name:
-                    type: string
-                    description: |-
-                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
-
-                      Examples:
-                      - MySession123
-                      - User_Session-1
-                      - Test.Session@2
-                    pattern: ^[a-zA-Z0-9=,.@_-]+$
-                required:
-                - role_arn
-                - external_id
-              - type: object
-                title: Azure Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-              - type: object
-                title: M365 Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                  user:
-                    type: email
-                    description: User microsoft email address.
-                  password:
-                    type: string
-                    description: User password.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-                - user
-                - password
-              - type: object
-                title: GCP Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The client ID from Google Cloud, used to identify
-                      the application for GCP access.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the GCP client
-                      ID, required for secure access.
-                  refresh_token:
-                    type: string
-                    description: A refresh token that allows the application to obtain
-                      new access tokens for extended use.
-                required:
-                - client_id
-                - client_secret
-                - refresh_token
-              - type: object
-                title: GCP Service Account Key
-                properties:
-                  service_account_key:
-                    type: object
-                    description: The service account key for GCP.
-                required:
-                - service_account_key
-              - type: object
-                title: Kubernetes Static Credentials
-                properties:
-                  kubeconfig_content:
-                    type: string
-                    description: The content of the Kubernetes kubeconfig file, encoded
-                      as a string.
-                required:
-                - kubeconfig_content
-              - type: object
-                title: GitHub Personal Access Token
-                properties:
-                  personal_access_token:
-                    type: string
-                    description: GitHub personal access token for authentication.
-                required:
-                - personal_access_token
-              - type: object
-                title: GitHub OAuth App Token
-                properties:
-                  oauth_app_token:
-                    type: string
-                    description: GitHub OAuth App token for authentication.
-                required:
-                - oauth_app_token
-              - type: object
-                title: GitHub App Credentials
-                properties:
-                  github_app_id:
-                    type: integer
-                    description: GitHub App ID for authentication.
-                  github_app_key:
-                    type: string
-                    description: Path to the GitHub App private key file.
-                required:
-                - github_app_id
-                - github_app_key
-              writeOnly: true
-          required:
-          - secret_type
-          - secret
-        relationships:
-          type: object
-          properties:
-            provider:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                      - providers
-                      title: Resource Type Name
-                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                        member is used to describe resource objects that share common
-                        attributes and relationships.
-                  required:
-                  - id
-                  - type
-              required:
-              - data
-              description: The identifier of the related object.
-              title: Resource Identifier
-          required:
-          - provider
     ProviderSecretCreateRequest:
       type: object
       properties:
@@ -14175,271 +13939,11 @@ components:
               - provider
       required:
       - data
-    ProviderSecretCreateResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ProviderSecretCreate'
-      required:
-      - data
     ProviderSecretResponse:
       type: object
       properties:
         data:
           $ref: '#/components/schemas/ProviderSecret'
-      required:
-      - data
-    ProviderSecretUpdate:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - provider-secrets
-        id:
-          type: string
-          format: uuid
-        attributes:
-          type: object
-          properties:
-            inserted_at:
-              type: string
-              format: date-time
-              readOnly: true
-            updated_at:
-              type: string
-              format: date-time
-              readOnly: true
-            name:
-              type: string
-              nullable: true
-              maxLength: 100
-              minLength: 3
-            secret_type:
-              enum:
-              - static
-              - role
-              - service_account
-              type: string
-              description: |-
-                * `static` - Key-value pairs
-                * `role` - Role assumption
-                * `service_account` - GCP Service Account Key
-              x-spec-enum-id: 20c74ebcd6671497
-            secret:
-              oneOf:
-              - type: object
-                title: AWS Static Credentials
-                properties:
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Required for environments
-                      where no IAM role is being assumed and direct AWS access is
-                      needed.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Must accompany 'aws_access_key_id'
-                      to authorize access to AWS resources.
-                  aws_session_token:
-                    type: string
-                    description: The session token associated with temporary credentials.
-                      Only needed for session-based or temporary AWS access.
-                required:
-                - aws_access_key_id
-                - aws_secret_access_key
-              - type: object
-                title: AWS Assume Role
-                properties:
-                  role_arn:
-                    type: string
-                    description: The Amazon Resource Name (ARN) of the role to assume.
-                      Required for AWS role assumption.
-                  external_id:
-                    type: string
-                    description: An identifier to enhance security for role assumption.
-                  aws_access_key_id:
-                    type: string
-                    description: The AWS access key ID. Only required if the environment
-                      lacks pre-configured AWS credentials.
-                  aws_secret_access_key:
-                    type: string
-                    description: The AWS secret access key. Required if 'aws_access_key_id'
-                      is provided or if no AWS credentials are pre-configured.
-                  aws_session_token:
-                    type: string
-                    description: The session token for temporary credentials, if applicable.
-                  session_duration:
-                    type: integer
-                    minimum: 900
-                    maximum: 43200
-                    default: 3600
-                    description: The duration (in seconds) for the role session.
-                  role_session_name:
-                    type: string
-                    description: |-
-                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
-
-                      Examples:
-                      - MySession123
-                      - User_Session-1
-                      - Test.Session@2
-                    pattern: ^[a-zA-Z0-9=,.@_-]+$
-                required:
-                - role_arn
-                - external_id
-              - type: object
-                title: Azure Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-              - type: object
-                title: M365 Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The Azure application (client) ID for authentication
-                      in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
-                  tenant_id:
-                    type: string
-                    description: The Azure tenant ID, representing the directory where
-                      the application is registered.
-                  user:
-                    type: email
-                    description: User microsoft email address.
-                  password:
-                    type: string
-                    description: User password.
-                required:
-                - client_id
-                - client_secret
-                - tenant_id
-                - user
-                - password
-              - type: object
-                title: GCP Static Credentials
-                properties:
-                  client_id:
-                    type: string
-                    description: The client ID from Google Cloud, used to identify
-                      the application for GCP access.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the GCP client
-                      ID, required for secure access.
-                  refresh_token:
-                    type: string
-                    description: A refresh token that allows the application to obtain
-                      new access tokens for extended use.
-                required:
-                - client_id
-                - client_secret
-                - refresh_token
-              - type: object
-                title: GCP Service Account Key
-                properties:
-                  service_account_key:
-                    type: object
-                    description: The service account key for GCP.
-                required:
-                - service_account_key
-              - type: object
-                title: Kubernetes Static Credentials
-                properties:
-                  kubeconfig_content:
-                    type: string
-                    description: The content of the Kubernetes kubeconfig file, encoded
-                      as a string.
-                required:
-                - kubeconfig_content
-              - type: object
-                title: GitHub Personal Access Token
-                properties:
-                  personal_access_token:
-                    type: string
-                    description: GitHub personal access token for authentication.
-                required:
-                - personal_access_token
-              - type: object
-                title: GitHub OAuth App Token
-                properties:
-                  oauth_app_token:
-                    type: string
-                    description: GitHub OAuth App token for authentication.
-                required:
-                - oauth_app_token
-              - type: object
-                title: GitHub App Credentials
-                properties:
-                  github_app_id:
-                    type: integer
-                    description: GitHub App ID for authentication.
-                  github_app_key:
-                    type: string
-                    description: Path to the GitHub App private key file.
-                required:
-                - github_app_id
-                - github_app_key
-              writeOnly: true
-          required:
-          - secret
-        relationships:
-          type: object
-          properties:
-            provider:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    type:
-                      type: string
-                      enum:
-                      - providers
-                      title: Resource Type Name
-                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                        member is used to describe resource objects that share common
-                        attributes and relationships.
-                  required:
-                  - id
-                  - type
-              required:
-              - data
-              description: The identifier of the related object.
-              title: Resource Identifier
-              readOnly: true
-    ProviderSecretUpdateResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/ProviderSecretUpdate'
       required:
       - data
     Resource:
