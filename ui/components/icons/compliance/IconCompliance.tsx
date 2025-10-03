@@ -1,6 +1,7 @@
 import AWSLogo from "./aws.svg";
 import CISLogo from "./cis.svg";
 import CISALogo from "./cisa.svg";
+import C5Logo from "./c5.svg";
 import ENSLogo from "./ens.png";
 import FedRAMPLogo from "./fedramp.svg";
 import FFIECLogo from "./ffiec.svg";
@@ -16,7 +17,6 @@ import PCILogo from "./pci-dss.svg";
 import PROWLERTHREATLogo from "./prowlerThreat.svg";
 import RBILogo from "./rbi.svg";
 import SOC2Logo from "./soc2.svg";
-import C5Logo from "./c5.svg";
 
 export const getComplianceIcon = (complianceTitle: string) => {
   if (complianceTitle.toLowerCase().includes("aws")) {

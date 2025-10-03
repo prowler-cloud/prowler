@@ -15,7 +15,7 @@ export const ComplianceAccordionRequirementTitle = ({
     <div className="flex w-full items-center justify-between gap-2">
       <div className="flex w-5/6 items-center gap-2">
         {type && (
-          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+          <span className="bg-primary/10 text-primary rounded-md px-2 py-0.5 text-xs font-medium">
             {type}
           </span>
         )}
