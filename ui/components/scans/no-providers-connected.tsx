@@ -7,9 +7,9 @@ import { CustomButton } from "../ui/custom";
 
 export const NoProvidersConnected = () => {
   return (
-    <div className="flex items-center justify-start rounded-lg border-1 border-system-warning-light px-4 py-6 shadow-box dark:bg-prowler-blue-400">
+    <div className="border-system-warning-light shadow-box dark:bg-prowler-blue-400 flex items-center justify-start rounded-lg border px-4 py-6">
       <div className="flex w-full flex-col items-start gap-6 md:flex-row md:items-center md:justify-between md:gap-8">
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-start gap-3">
             <InfoIcon className="h-6 w-6 text-gray-800 dark:text-white" />
             <h2 className="text-lg font-bold text-gray-800 dark:text-white">
@@ -25,7 +25,7 @@ export const NoProvidersConnected = () => {
             disappear, and on-demand scans can be launched.
           </p>
         </div>
-        <div className="w-full md:w-auto md:flex-shrink-0">
+        <div className="w-full md:w-auto md:shrink-0">
           <CustomButton
             asLink="/providers"
             className="w-full justify-center md:w-fit"

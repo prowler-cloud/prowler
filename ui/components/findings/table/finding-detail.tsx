@@ -1,6 +1,6 @@
 "use client";
 
-import { Snippet } from "@nextui-org/react";
+import { Snippet } from "@heroui/snippet";
 import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
@@ -20,7 +20,7 @@ import { DeltaIndicator } from "./delta-indicator";
 
 const MarkdownContainer = ({ children }: { children: string }) => {
   return (
-    <div className="prose prose-sm max-w-none whitespace-normal break-words dark:prose-invert">
+    <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-normal">
       <ReactMarkdown>{children}</ReactMarkdown>
     </div>
   );
@@ -65,7 +65,7 @@ export const FindingDetail = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="line-clamp-2 text-lg font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
+          <h2 className="dark:text-prowler-theme-pale/90 line-clamp-2 text-lg leading-tight font-medium text-gray-800">
             {renderValue(attributes.check_metadata.checktitle)}
             <CopyLinkButton url={url} />
           </h2>
@@ -82,7 +82,7 @@ export const FindingDetail = ({
                 ? "bg-green-100 text-green-600"
                 : attributes.status === "MANUAL"
                   ? "bg-gray-100 text-gray-600"
-                  : "bg-red-100 text-system-severity-critical"
+                  : "text-system-severity-critical bg-red-100"
             }`}
           >
             {renderValue(attributes.status)}
@@ -159,7 +159,7 @@ export const FindingDetail = ({
 
         {attributes.check_metadata.remediation && (
           <div className="flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-gray-700 dark:text-prowler-theme-pale/90">
+            <h4 className="dark:text-prowler-theme-pale/90 text-sm font-bold text-gray-700">
               Remediation Details
             </h4>
 
@@ -189,7 +189,7 @@ export const FindingDetail = ({
             {attributes.check_metadata.remediation.code.cli && (
               <InfoField label="CLI Command" variant="simple">
                 <Snippet className="bg-gray-50 py-1 dark:bg-slate-800">
-                  <span className="whitespace-pre-line text-xs">
+                  <span className="text-xs whitespace-pre-line">
                     {attributes.check_metadata.remediation.code.cli}
                   </span>
                 </Snippet>
@@ -216,7 +216,7 @@ export const FindingDetail = ({
                           key={idx}
                           href={link}
                           size="sm"
-                          className="!whitespace-normal break-all"
+                          className="break-all whitespace-normal!"
                         >
                           {link}
                         </CustomLink>
@@ -237,7 +237,7 @@ export const FindingDetail = ({
       <CustomSection title="Resource Details">
         <InfoField label="Resource ID" variant="simple">
           <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            <span className="whitespace-pre-line text-xs">
+            <span className="text-xs whitespace-pre-line">
               {renderValue(resource.uid)}
             </span>
           </Snippet>

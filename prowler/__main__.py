@@ -13,6 +13,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    orange_color,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -90,7 +91,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -103,6 +104,7 @@ from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
@@ -181,8 +183,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC provider
-    if provider != "iac":
+    # Skip compliance frameworks for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -239,8 +241,8 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Skip service and check loading for IAC provider
-    if provider != "iac":
+    # Skip service and check loading for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -323,6 +325,8 @@ def prowler():
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "llm":
+        output_options = LLMOutputOptions(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -332,9 +336,20 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider == "iac":
-        # For IAC provider, run the scan directly
-        findings = global_provider.run()
+    if provider == "iac" or provider == "llm":
+        # For IAC and LLM providers, run the scan directly
+        if provider == "llm":
+
+            def streaming_callback(findings_batch):
+                """Callback to report findings as they are processed in real-time."""
+                report(findings_batch, global_provider, output_options)
+
+            findings = global_provider.run_scan(streaming_callback=streaming_callback)
+        else:
+            # Original behavior for IAC or non-verbose LLM
+            findings = global_provider.run()
+            # Report findings for verbose output
+            report(findings, global_provider, output_options)
     elif len(checks_to_execute):
         findings = execute_checks(
             checks_to_execute,
@@ -915,9 +930,14 @@ def prowler():
             )
             # Send the findings to Security Hub
             findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
-            print(
-                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
-            )
+            if findings_sent_to_security_hub == 0:
+                print(
+                    f"{Style.BRIGHT}{orange_color}\nNo findings sent to AWS Security Hub.{Style.RESET_ALL}"
+                )
+            else:
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+                )
 
             # Resolve previous fails of Security Hub
             if not args.skip_sh_update:
@@ -927,9 +947,14 @@ def prowler():
                 findings_archived_in_security_hub = (
                     security_hub.archive_previous_findings()
                 )
-                print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
-                )
+                if findings_archived_in_security_hub == 0:
+                    print(
+                        f"{Style.BRIGHT}{orange_color}\nNo findings archived in AWS Security Hub.{Style.RESET_ALL}"
+                    )
+                else:
+                    print(
+                        f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                    )
 
     # Display summary table
     if not args.only_logs:

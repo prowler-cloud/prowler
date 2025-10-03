@@ -9,14 +9,15 @@ on:
     branches:
       - "master"
       - "v5.*"
-  pull_request_target:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    branches:
-      - "master"
-      - "v5.*"
+  # Leaving this commented until we find a way to run it for forks but in Prowler's context
+  # pull_request_target:
+  #   types:
+  #     - opened
+  #     - synchronize
+  #     - reopened
+  #   branches:
+  #     - "master"
+  #     - "v5.*"
 
 jobs:
   conflict-checker:
@@ -28,11 +29,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
           files: |
             **
@@ -70,7 +71,7 @@ jobs:
 
       - name: Add conflict label
         if: steps.conflict-check.outputs.has_conflicts == 'true'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           github-token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           script: |
@@ -96,7 +97,7 @@ jobs:
 
       - name: Remove conflict label
         if: steps.conflict-check.outputs.has_conflicts == 'false'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           github-token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           script: |
@@ -118,7 +119,7 @@ jobs:
 
       - name: Find existing conflict comment
         if: steps.conflict-check.outputs.has_conflicts == 'true'
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: find-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -148,7 +149,7 @@ jobs:
 
       - name: Find existing conflict comment when resolved
         if: steps.conflict-check.outputs.has_conflicts == 'false'
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: find-resolved-comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -166,3 +167,9 @@ jobs:
             ✅ **Conflict Markers Resolved**
 
             All conflict markers have been successfully resolved in this pull request.
+
+      - name: Fail workflow if conflicts detected
+        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        run: |
+          echo "::error::Workflow failed due to conflict markers in files: ${{ steps.conflict-check.outputs.conflict_files }}"
+          exit 1

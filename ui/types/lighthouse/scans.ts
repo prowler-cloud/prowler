@@ -32,9 +32,9 @@ export const getScansSchema = z.object({
   query: z
     .string()
     .describe("The query to search for. Default is empty string."),
-  sort: z
-    .string(getScansSortEnum)
-    .describe("The sort order to use. Default is empty string."),
+  sort: getScansSortEnum.describe(
+    "The sort order to use. Default is empty string.",
+  ),
   filters: z
     .object({
       // Date filters
