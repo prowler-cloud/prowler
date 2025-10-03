@@ -12,8 +12,8 @@ from uuid import uuid4
 
 import jwt
 import pytest
-from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -1869,39 +1869,7 @@ class TestProviderSecretViewSet:
                     "kubeconfig_content": "kubeconfig-content",
                 },
             ),
-            # M365 with STATIC secret - no user or password
-            (
-                Provider.ProviderChoices.M365.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "client_id": "client-id",
-                    "client_secret": "client-secret",
-                    "tenant_id": "tenant-id",
-                },
-            ),
-            # M365 with user only
-            (
-                Provider.ProviderChoices.M365.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "client_id": "client-id",
-                    "client_secret": "client-secret",
-                    "tenant_id": "tenant-id",
-                    "user": "test@domain.com",
-                },
-            ),
-            # M365 with password only
-            (
-                Provider.ProviderChoices.M365.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "client_id": "client-id",
-                    "client_secret": "client-secret",
-                    "tenant_id": "tenant-id",
-                    "password": "supersecret",
-                },
-            ),
-            # M365 with user and password
+            # M365 client secret credentials
             (
                 Provider.ProviderChoices.M365.value,
                 ProviderSecret.TypeChoices.STATIC,
@@ -1913,14 +1881,16 @@ class TestProviderSecretViewSet:
                     "password": "supersecret",
                 },
             ),
-            # M365 with certificate (valid base64)
+            # M365 certificate credentials (valid base64)
             (
                 Provider.ProviderChoices.M365.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
                     "tenant_id": "tenant-id",
-                    "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",  # Valid base64: "Test certificate content"
+                    "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",
+                    "user": "test@domain.com",
+                    "password": "supersecret",
                 },
             ),
         ],
@@ -2311,6 +2281,8 @@ class TestProviderSecretViewSet:
                         "client_id": "client-id",
                         "tenant_id": "tenant-id",
                         "certificate_content": "invalid-base64-content!@#$%",
+                        "user": "test@domain.com",
+                        "password": "supersecret",
                     },
                 },
                 "relationships": {
@@ -5832,10 +5804,12 @@ class TestScheduleViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("tasks.beat.perform_scheduled_scan_task.apply_async")
     @patch("api.v1.views.Task.objects.get")
     def test_schedule_daily_already_scheduled(
         self,
         mock_task_get,
+        mock_apply_async,
         authenticated_client,
         providers_fixture,
         tasks_fixture,
@@ -5843,6 +5817,7 @@ class TestScheduleViewSet:
         provider, *_ = providers_fixture
         prowler_task = tasks_fixture[0]
         mock_task_get.return_value = prowler_task
+        mock_apply_async.return_value.id = prowler_task.id
         json_payload = {
             "provider_id": str(provider.id),
         }
