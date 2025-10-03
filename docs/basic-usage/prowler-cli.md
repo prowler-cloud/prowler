@@ -211,7 +211,8 @@ Prowler enables security scanning of your **GitHub account**, including **Reposi
     prowler github --oauth-app-token oauth_token
 
     # GitHub App Credentials:
-    prowler github --github-app-id app_id --github-app-key app_key
+    prowler github --github-app-id app_id --github-app-key-path path/to/app_key.pem
+    prowler github --github-app-id app_id --github-app-key $APP_KEY_CONTENT
     ```
 
     ???+ note
@@ -219,7 +220,8 @@ Prowler enables security scanning of your **GitHub account**, including **Reposi
 
         1. `GITHUB_PERSONAL_ACCESS_TOKEN`
         2. `OAUTH_APP_TOKEN`
-        3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
+        3. `GITHUB_APP_ID` and `GITHUB_APP_KEY_PATH`
+        4. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
 ## Infrastructure as Code (IaC)
 
