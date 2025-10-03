@@ -1386,9 +1386,12 @@ class M365ProviderSecret(serializers.Serializer):
                 base64.b64decode(certificate_content, validate=True)
             except Exception as e:
                 raise ValidationError(
-                    detail=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+                    {
+                        "certificate_content": [
+                            f"The provided certificate content is not valid base64 encoded data: {str(e)}"
+                        ]
+                    },
                     code="m365-certificate-content",
-                    pointer="/data/attributes/secret/certificate_content",
                 )
         return certificate_content
 
