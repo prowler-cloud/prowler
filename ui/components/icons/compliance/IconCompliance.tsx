@@ -1,6 +1,7 @@
 import AWSLogo from "./aws.svg";
 import CISLogo from "./cis.svg";
 import CISALogo from "./cisa.svg";
+import C5Logo from "./c5.svg";
 import ENSLogo from "./ens.png";
 import FedRAMPLogo from "./fedramp.svg";
 import FFIECLogo from "./ffiec.svg";
@@ -71,5 +72,8 @@ export const getComplianceIcon = (complianceTitle: string) => {
   }
   if (complianceTitle.toLowerCase().includes("nis2")) {
     return NIS2Logo;
+  }
+  if (complianceTitle.toLowerCase().includes("c5")) {
+    return C5Logo;
   }
 };

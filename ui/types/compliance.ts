@@ -133,6 +133,14 @@ export interface KISAAttributesMetadata {
   NonComplianceCases: string[];
 }
 
+export interface C5AttributesMetadata {
+  Section: string;
+  SubSection: string;
+  Type: string;
+  AboutCriteria: string;
+  ComplementaryCriteria: string;
+}
+
 export interface MITREAttributesMetadata {
   // Dynamic cloud service field - could be AWSService, GCPService, AzureService, etc.
   [key: string]: string;
@@ -167,6 +175,7 @@ export interface AttributesItemData {
         | AWSWellArchitectedAttributesMetadata[]
         | ThreatAttributesMetadata[]
         | KISAAttributesMetadata[]
+        | C5AttributesMetadata[]
         | MITREAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
