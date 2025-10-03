@@ -1,34 +1,46 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
-  "CheckTitle": "Ensure the S3 bucket CloudTrail logs is not publicly accessible",
+  "CheckTitle": "CloudTrail trail S3 bucket is not publicly accessible",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "cloudtrail",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure the S3 bucket CloudTrail logs to is not publicly accessible",
-  "Risk": "Allowing public access to CloudTrail log content may aid an adversary in identifying weaknesses in the affected accounts use or configuration.",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "CloudTrail log destination **S3 buckets** are inspected for ACL grants that expose data to the public `AllUsers` group.\n\nBuckets hosted in other accounts are flagged for out-of-scope review.",
+  "Risk": "Exposed CloudTrail logs erode **confidentiality** and **integrity**.\n\nAdversaries can harvest API activity to map accounts, roles, and keys, enabling **reconnaissance** and evasion. If write is allowed, logs can be **poisoned** or deleted, thwarting investigations and compromising incident timelines.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.icompaas.com/support/solutions/articles/62000083427-ensure-the-s3-bucket-used-to-store-cloudtrail-logs-is-not-publicly-accessible",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-bucket-publicly-accessible.html",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_3#aws-console",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/cloudtrail-s3-bucket-public-access-prohibited.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html",
+    "https://docs.panther.com/alerts/alert-runbooks/built-in-policies/aws-cloudtrail-logs-s3-bucket-not-publicly-accessible",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html",
+    "https://docs.cloudyali.io/docs/rules/cloudtrail_s3bucket_not_public/",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-s3-bucket-policy-for-cloudtrail.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_3#aws-console",
-      "Terraform": ""
+      "CLI": "aws s3api put-bucket-acl --bucket <example_resource_name> --acl private",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure the CloudTrail S3 bucket ACL is not public\nResources:\n  CloudTrailLogsBucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketName: <example_resource_name>\n      AccessControl: Private  # CRITICAL: sets bucket ACL to private, removing any AllUsers (public) grants\n```",
+      "Other": "1. Open the AWS S3 Console\n2. Select the bucket used by CloudTrail\n3. Go to Permissions > Access control list (ACL)\n4. Click Edit under Public access, remove any grants to \"Everyone (public access)\" (uncheck Read/Write)\n5. Save changes",
+      "Terraform": "```hcl\n# Ensure the CloudTrail S3 bucket ACL is private\nresource \"aws_s3_bucket_acl\" \"fix_cloudtrail_logs_bucket\" {\n  bucket = \"<example_resource_name>\"\n  acl    = \"private\"  # CRITICAL: removes any public (AllUsers) ACL grants\n}\n```"
     },
     "Recommendation": {
-      "Text": "Analyze Bucket policy to validate appropriate permissions. Ensure the AllUsers principal is not granted privileges. Ensure the AuthenticatedUsers principal is not granted privileges.",
-      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html"
+      "Text": "Apply **least privilege** to the log bucket:\n- Enable S3 `Block Public Access` (account and bucket)\n- Remove `AllUsers`/`AuthenticatedUsers` ACLs; avoid wildcard principals\n- Permit only CloudTrail and constrain with `aws:SourceArn`\n\nUse a dedicated private bucket and monitor for permission changes.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_logs_s3_bucket_is_not_publicly_accessible"
     }
   },
   "Categories": [
-    "forensics-ready",
     "internet-exposed"
   ],
   "DependsOn": [],

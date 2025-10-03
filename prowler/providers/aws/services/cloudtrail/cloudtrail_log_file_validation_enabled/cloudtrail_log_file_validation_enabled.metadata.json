@@ -1,33 +1,48 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_log_file_validation_enabled",
-  "CheckTitle": "Ensure CloudTrail log file validation is enabled",
+  "CheckTitle": "CloudTrail trail has log file validation enabled",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "cloudtrail",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure CloudTrail log file validation is enabled",
-  "Risk": "Enabling log file validation will provide additional integrity checking of CloudTrail logs. ",
+  "Description": "**AWS CloudTrail trails** are evaluated for **log file integrity validation** being enabled (`LogFileValidationEnabled`).\n\nWhen enabled, CloudTrail generates signed digest files to verify that S3-delivered log files remain unchanged.",
+  "Risk": "Without validation, adversaries can alter, forge, or delete audit entries without detection, compromising log **integrity** and non-repudiation.\n\nThis impairs investigations, enables alert evasion, and obscures unauthorized changes across regions or accounts.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.stream.security/rules/ensure-cloudtrail-log-file-integrity-validation-is-enabled",
+    "https://www.linkedin.com/pulse/validating-cloudtrail-log-file-integrity-neeraj-pandey-jkkkc",
+    "https://medium.com/@uzomae59/aws-cloudtrail-with-log-file-integrity-74b4e6f31f09",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_2#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-log-file-integrity-validation.html",
+    "https://www.plerion.com/cloud-knowledge-base/ensure-cloudtrail-log-file-validation-is-enabled",
+    "https://support.icompaas.com/support/solutions/articles/62000233133-3-2-ensure-cloudtrail-log-file-validation-is-enabled-automated-",
+    "https://deepwiki.com/acantril/learn-cantrill-io-labs/7.1-cloudtrail-log-file-integrity",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html",
+    "http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-filevalidation-enabling.html",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_2/",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-enabling.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudtrail update-trail --name <trail_name>  --enable-log-file-validation",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_2#cloudformation",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_2#terraform"
+      "CLI": "aws cloudtrail update-trail --name <trail_name> --enable-log-file-validation",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable log file validation on a CloudTrail trail\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      S3BucketName: <example_resource_name>\n      EnableLogFileValidation: true  # Critical: enables integrity validation for delivered log files\n```",
+      "Other": "1. Open the AWS Console and go to CloudTrail\n2. Click Trails and select <trail_name>\n3. Click Edit\n4. In Additional/Advanced settings, check Enable log file validation\n5. Click Save changes",
+      "Terraform": "```hcl\n# Enable log file validation on a CloudTrail trail\nresource \"aws_cloudtrail\" \"<example_resource_name>\" {\n  name               = \"<example_resource_name>\"\n  s3_bucket_name     = \"<example_resource_name>\"\n  enable_log_file_validation = true  # Critical: ensures CloudTrail writes signed digests to detect tampering\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure LogFileValidationEnabled is set to true for each trail.",
-      "Url": "http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-filevalidation-enabling.html"
+      "Text": "Enable **log file integrity validation** on all trails (`LogFileValidationEnabled=true`).\n\nEnforce **least privilege** on the logs bucket, retain and protect digest files (e.g., S3 Object Lock/MFA Delete), and monitor validation results to support **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_log_file_validation_enabled"
     }
   },
   "Categories": [
+    "logging",
     "forensics-ready"
   ],
   "DependsOn": [],
