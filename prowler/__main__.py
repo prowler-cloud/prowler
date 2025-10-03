@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+>>>>>>> test-conflicts
+
 
 import sys
 from os import environ
