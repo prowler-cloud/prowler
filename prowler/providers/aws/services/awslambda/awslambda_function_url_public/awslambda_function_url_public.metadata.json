@@ -4,9 +4,7 @@
   "CheckTitle": "Lambda function URL is not publicly accessible",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
-    "TTPs/Initial Access/Unauthorized Access",
-    "Effects/Data Exposure",
-    "Effects/Resource Consumption"
+    "Effects/Data Exposure"
   ],
   "ServiceName": "awslambda",
   "SubServiceName": "",
@@ -17,15 +15,9 @@
   "Risk": "An unauthenticated function URL lets anyone invoke code:\n- Confidentiality: data exposure\n- Integrity: unintended changes via over-privileged logic\n- Availability: DoS/denial-of-wallet through high request rates\n\nAttackers can script calls, exfiltrate data, and pivot using the function's permissions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://aws.amazon.com/th/blogs/compute/protecting-an-aws-lambda-function-url-with-amazon-cloudfront-and-lambdaedge/?nc1=f_ls",
-    "https://medium.com/@dimuthuarangala/securing-lambda-function-url-using-iam-authentication-5ccbc7c839ab",
-    "https://rianbk.com/aws-lambda-function-urls/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/iam-auth-function-url.html",
     "https://www.roastdev.com/post/aws-lambda-url-invocations-with-iam-authentication-and-throttling-limits",
-    "https://docs.cgn.portal.checkpoint.com/docs/d9_aws_iam_107",
-    "https://www.wiz.io/blog/securing-aws-lambda-function-urls",
     "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
-    "https://engineering.teknasyon.com/fine-details-of-aws-lambda-function-url-feature-f3b65b894c5f",
     "https://dev.to/aws-builders/hands-on-aws-lambda-function-url-with-aws-iam-authentication-type-180g",
     "https://www.rahulpnath.com/blog/how-to-secure-and-authenticate-lambda-function-urls/"
   ],
