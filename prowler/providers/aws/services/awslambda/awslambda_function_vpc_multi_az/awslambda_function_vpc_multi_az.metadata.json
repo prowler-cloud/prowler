@@ -14,15 +14,9 @@
   "Risk": "Single-AZ placement limits **availability**. An AZ outage or subnet/IP exhaustion can block ENI creation and VPC access, causing failed invocations, timeouts, and event backlogs.\n\nThis degrades uptime and can delay processing of critical events.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
-    "https://www.clouddefense.ai/compliance-rules/aws-fs-practices/cloudtrail/foundational-security-lambda-5",
     "https://docs.aws.amazon.com/lambda/latest/operatorguide/networking-vpc.html",
     "https://stackzonecom.tawk.help/article/aws-config-rule-lambda-vpc-multi-az-check",
-    "https://www.clouddefense.ai/compliance-rules/aws-fs-practices/lambda/foundational-security-lambda-5",
-    "https://serverlessland.com/content/service/lambda/guides/aws-lambda-operator-guide/networking-vpc",
-    "https://d1.awsstatic.com/events/reinvent/2020/AWS_Lambda_networking_best_practices_SVS312.pdf",
     "https://stackoverflow.com/questions/62052490/why-aws-lambda-suggests-to-set-up-two-subnets-if-vpc-is-configured",
-    "https://medium.com/@arunasilva86/how-to-use-vpc-networking-effectively-for-lambda-445abefdf8cf",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html#lambda-5"
   ],
   "Remediation": {
