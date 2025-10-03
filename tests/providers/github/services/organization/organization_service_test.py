@@ -15,6 +15,7 @@ def mock_list_organizations(_):
             id=1,
             name="test-organization",
             mfa_required=True,
+            is_verified=True,
         ),
     }
 
@@ -45,11 +46,13 @@ class Test_Organization_Scoping:
         self.mock_org1.id = 1
         self.mock_org1.login = "test-org1"
         self.mock_org1.two_factor_requirement_enabled = True
+        self.mock_org1.is_verified = True
 
         self.mock_org2 = MagicMock()
         self.mock_org2.id = 2
         self.mock_org2.login = "test-org2"
         self.mock_org2.two_factor_requirement_enabled = False
+        self.mock_org2.is_verified = False
 
         self.mock_user = MagicMock()
         self.mock_user.id = 100
@@ -287,11 +290,13 @@ class Test_Organization_Scoping:
         mock_owner_org.id = 1
         mock_owner_org.login = "owner1"
         mock_owner_org.two_factor_requirement_enabled = True
+        mock_owner_org.is_verified = True
 
         mock_specific_org = MagicMock()
         mock_specific_org.id = 2
         mock_specific_org.login = "specific-org"
         mock_specific_org.two_factor_requirement_enabled = False
+        mock_specific_org.is_verified = False
 
         mock_client.get_organization.side_effect = [
             mock_owner_org,
@@ -393,6 +398,7 @@ class Test_Organization_ErrorHandling:
         self.mock_org1.id = 1
         self.mock_org1.login = "test-org1"
         self.mock_org1.two_factor_requirement_enabled = True
+        self.mock_org1.is_verified = True
 
     def test_github_api_error_handling(self):
         """Test that GitHub API errors are handled properly"""
