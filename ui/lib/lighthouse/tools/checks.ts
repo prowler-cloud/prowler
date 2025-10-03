@@ -1,4 +1,5 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import {
   getLighthouseCheckDetails,
@@ -7,12 +8,13 @@ import {
 import { checkDetailsSchema, checkSchema } from "@/types/lighthouse";
 
 export const getProviderChecksTool = tool(
-  async ({ providerType, service, severity, compliances }) => {
+  async (input) => {
+    const typedInput = input as z.infer<typeof checkSchema>;
     const checks = await getLighthouseProviderChecks({
-      providerType,
-      service: service || [],
-      severity: severity || [],
-      compliances: compliances || [],
+      providerType: typedInput.providerType,
+      service: typedInput.service || [],
+      severity: typedInput.severity || [],
+      compliances: typedInput.compliances || [],
     });
     return checks;
   },
@@ -25,8 +27,11 @@ export const getProviderChecksTool = tool(
 );
 
 export const getProviderCheckDetailsTool = tool(
-  async ({ checkId }: { checkId: string }) => {
-    const check = await getLighthouseCheckDetails({ checkId });
+  async (input) => {
+    const typedInput = input as z.infer<typeof checkDetailsSchema>;
+    const check = await getLighthouseCheckDetails({
+      checkId: typedInput.checkId,
+    });
     return check;
   },
   {

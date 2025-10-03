@@ -3,13 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ManageGroupPayload, ProviderGroupsResponse } from "@/types/components";
 
 export const getProviderGroups = async ({
@@ -48,7 +43,7 @@ export const getProviderGroups = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/manage-groups");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching provider groups:", error);
     return undefined;
@@ -161,7 +156,7 @@ export const updateProviderGroup = async (
       body: JSON.stringify(payload),
     });
 
-    return handleApiResponse(response, "/manage-groups");
+    return handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }

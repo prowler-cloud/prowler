@@ -32,11 +32,12 @@ const refreshAccessToken = async (token: JwtPayload) => {
       },
       body: JSON.stringify(bodyData),
     });
-    const newTokens = await response.json();
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const newTokens = await response.json();
 
     return {
       ...token,
@@ -73,14 +74,18 @@ export const authConfig = {
       async authorize(credentials) {
         const parsedCredentials = z
           .object({
-            email: z.string().email(),
+            email: z.email(),
             password: z.string().min(12),
           })
           .safeParse(credentials);
 
         if (!parsedCredentials.success) return null;
 
-        const tokenResponse = await getToken(parsedCredentials.data);
+        const { email, password } = parsedCredentials.data;
+        const tokenResponse = await getToken({
+          email,
+          password,
+        });
         if (!tokenResponse) return null;
 
         const userMeResponse = await getUserByMe(tokenResponse.accessToken);
