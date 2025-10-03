@@ -4,7 +4,7 @@ import {
   ChatMessage,
   HumanMessage,
 } from "@langchain/core/messages";
-import type { Message } from "ai";
+import type { UIMessage } from "ai";
 
 import type { ModelParams } from "@/types/lighthouse";
 
@@ -15,37 +15,22 @@ import type { ModelParams } from "@/types/lighthouse";
  * @returns The converted LangChain message.
  */
 export const convertVercelMessageToLangChainMessage = (
-  message: Message,
+  message: UIMessage,
 ): BaseMessage => {
+  // Extract text content from message parts
+  const content =
+    message.parts
+      ?.filter((p) => p.type === "text")
+      .map((p) => ("text" in p ? p.text : ""))
+      .join("") || "";
+
   switch (message.role) {
     case "user":
-      return new HumanMessage({ content: message.content });
+      return new HumanMessage({ content });
     case "assistant":
-      return new AIMessage({ content: message.content });
+      return new AIMessage({ content });
     default:
-      return new ChatMessage({ content: message.content, role: message.role });
-  }
-};
-
-/**
- * Converts a LangChain message to a Vercel message.
- * @param message - The message to convert.
- * @returns The converted Vercel message.
- */
-export const convertLangChainMessageToVercelMessage = (
-  message: BaseMessage,
-) => {
-  switch (message._getType()) {
-    case "human":
-      return { content: message.content, role: "user" };
-    case "ai":
-      return {
-        content: message.content,
-        role: "assistant",
-        tool_calls: (message as AIMessage).tool_calls,
-      };
-    default:
-      return { content: message.content, role: message._getType() };
+      return new ChatMessage({ content, role: message.role });
   }
 };
 

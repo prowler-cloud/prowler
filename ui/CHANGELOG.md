@@ -15,6 +15,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Upgraded Zod to version 4.1.11 with comprehensive migration of deprecated syntax [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
+- Upgraded Zustand to version 5.0.8 (no code changes required) [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
+- Upgraded AI SDK to version 5.0.59 with new transport and message structure [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
 - Upgraded React to version 19.1.1 with async components support [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Upgraded Next.js to version 15.5.3 with enhanced App Router [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Updated from NextUI to HeroUI [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
