@@ -60,8 +60,8 @@ const CustomDot = (props: any) => {
     <circle
       cx={cx}
       cy={cy}
-      r={6}
-      fill="#5F1551"
+      r={isSelected ? 9 : 6}
+      fill={isSelected ? "#86DA26" : "#5F1551"}
       fillOpacity={1}
       style={{ cursor: onSelectPoint ? "pointer" : "default", pointerEvents: "all" }}
       onClick={onSelectPoint ? handleClick : undefined}
