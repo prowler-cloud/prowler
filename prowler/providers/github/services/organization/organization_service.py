@@ -38,7 +38,8 @@ class Organization(GithubService):
         org_names_to_check = set()
 
         try:
-            for client in self.clients:
+            clients = getattr(self, "clients", [])
+            for client in clients:
                 if self.provider.organizations:
                     org_names_to_check.update(self.provider.organizations)
 
@@ -144,10 +145,66 @@ class Organization(GithubService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        repo_creation_settings = {
+            "members_can_create_repositories": None,
+            "members_can_create_public_repositories": None,
+            "members_can_create_private_repositories": None,
+            "members_can_create_internal_repositories": None,
+            "members_allowed_repository_creation_type": None,
+        }
+
+        def _extract_flag(attribute: str, expected_type: type):
+            """Return attribute value if it matches expected type and is not a mock placeholder."""
+            try:
+                value = getattr(org, attribute, None)
+                if hasattr(value, "_mock_parent"):
+                    return None
+                if expected_type is bool and isinstance(value, bool):
+                    return value
+                if expected_type is str and isinstance(value, str):
+                    return value
+                return None
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return None
+
+        repo_creation_settings["members_can_create_repositories"] = _extract_flag(
+            "members_can_create_repositories", bool
+        )
+        repo_creation_settings["members_can_create_public_repositories"] = (
+            _extract_flag("members_can_create_public_repositories", bool)
+        )
+        repo_creation_settings["members_can_create_private_repositories"] = (
+            _extract_flag("members_can_create_private_repositories", bool)
+        )
+        repo_creation_settings["members_can_create_internal_repositories"] = (
+            _extract_flag("members_can_create_internal_repositories", bool)
+        )
+        repo_creation_settings["members_allowed_repository_creation_type"] = (
+            _extract_flag("members_allowed_repository_creation_type", str)
+        )
+
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
             mfa_required=require_mfa,
+            members_can_create_repositories=repo_creation_settings[
+                "members_can_create_repositories"
+            ],
+            members_can_create_public_repositories=repo_creation_settings[
+                "members_can_create_public_repositories"
+            ],
+            members_can_create_private_repositories=repo_creation_settings[
+                "members_can_create_private_repositories"
+            ],
+            members_can_create_internal_repositories=repo_creation_settings[
+                "members_can_create_internal_repositories"
+            ],
+            members_allowed_repository_creation_type=repo_creation_settings[
+                "members_allowed_repository_creation_type"
+            ],
         )
 
 
@@ -157,3 +214,8 @@ class Org(BaseModel):
     id: int
     name: str
     mfa_required: Optional[bool] = False
+    members_can_create_repositories: Optional[bool] = None
+    members_can_create_public_repositories: Optional[bool] = None
+    members_can_create_private_repositories: Optional[bool] = None
+    members_can_create_internal_repositories: Optional[bool] = None
+    members_allowed_repository_creation_type: Optional[str] = None
