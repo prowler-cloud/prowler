@@ -1,0 +1,158 @@
+{
+  "Framework": "RBI-Cyber-Security-Framework",
+  "Name": "Reserve Bank of India (RBI) Cyber Security Framework",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "The Reserve Bank had prescribed a set of baseline cyber security controls for primary (Urban) cooperative banks (UCBs) in October 2018. On further examination, it has been decided to prescribe a comprehensive cyber security framework for the UCBs, as a graded approach, based on their digital depth and interconnectedness with the payment systems landscape, digital products offered by them and assessment of cyber security risk. The framework would mandate implementation of progressively stronger security measures based on the nature, variety and scale of digital product offerings of banks.",
+  "Requirements": [
+    {
+      "Id": "annex_i_1_1",
+      "Name": "Annex I (1.1)",
+      "Description": "UCBs should maintain an up-to-date business IT Asset Inventory Register containing the following fields, as a minimum: a) Details of the IT Asset (viz., hardware/software/network devices, key personnel, services, etc.), b. Details of systems where customer data are stored, c. Associated business applications, if any, d. Criticality of the IT asset (For example, High/Medium/Low).",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_1_1",
+          "Service": "vm"
+        }
+      ],
+      "Checks": [
+        "vm_ensure_using_approved_images",
+        "vm_ensure_using_managed_disks"
+      ]
+    },
+    {
+      "Id": "annex_i_1_3",
+      "Name": "Annex I (1.3)",
+      "Description": "Appropriately manage and provide protection within and outside UCB/network, keeping in mind how the data/information is stored, transmitted, processed, accessed and put to use within/outside the UCB’s network, and level of risk they are exposed to depending on the sensitivity of the data/information.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_1_3",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "keyvault_access_only_through_private_endpoints",
+        "app_function_not_publicly_accessible",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_secure_transfer_required_is_enabled",
+        "network_ssh_internet_access_restricted",
+        "sqlserver_unrestricted_inbound_access",
+        "app_minimum_tls_version_12"
+      ]
+    },
+    {
+      "Id": "annex_i_5_1",
+      "Name": "Annex I (5.1)",
+      "Description": "The firewall configurations should be set to the highest security level and evaluation of critical device (such as firewall, network switches, security devices, etc.) configurations should be done periodically.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_5_1",
+          "Service": "network"
+        }
+      ],
+      "Checks": [
+        "network_rdp_internet_access_restricted",
+        "network_http_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_flow_log_captured_sent"
+      ]
+    },
+    {
+      "Id": "annex_i_6",
+      "Name": "Annex I (6)",
+      "Description": "Put in place systems and processes to identify, track, manage and monitor the status of patches to servers, operating system and application software running at the systems used by the UCB officials (end-users). Implement and update antivirus protection for all servers and applicable end points preferably through a centralised system.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_6",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "defender_ensure_system_updates_are_applied",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "vm_backup_enabled"
+      ]
+    },
+    {
+      "Id": "annex_i_7_1",
+      "Name": "Annex I (7.1)",
+      "Description": "Disallow administrative rights on end-user workstations/PCs/laptops and provide access rights on a ‘need to know’ and ‘need to do’ basis.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_1",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_role_user_access_admin_restricted",
+        "iam_subscription_roles_owner_custom_not_created"
+      ]
+    },
+    {
+      "Id": "annex_i_7_2",
+      "Name": "Annex I (7.2)",
+      "Description": "Passwords should be set as complex and lengthy and users should not use same passwords for all the applications/systems/devices.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_2",
+          "Service": "entra"
+        }
+      ],
+      "Checks": [
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_policy_user_consent_for_verified_apps"
+      ]
+    },
+    {
+      "Id": "annex_i_7_3",
+      "Name": "Annex I (7.3)",
+      "Description": "Remote Desktop Protocol (RDP) which allows others to access the computer remotely over a network or over the internet should be always disabled and should be enabled only with the approval of the authorised officer of the UCB. Logs for such remote access shall be enabled and monitored for suspicious activities.",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_3",
+          "Service": "network"
+        }
+      ],
+      "Checks": [
+        "network_rdp_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "annex_i_7_4",
+      "Name": "Annex I (7.4)",
+      "Description": "Implement appropriate (e.g. centralised) systems and controls to allow, manage, log and monitor privileged/super user/administrative access to critical systems (servers/databases, applications, network devices etc.)",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_7_4",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_delete_nsg",
+        "vpc_flow_logs_enabled",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists"
+      ]
+    },
+    {
+      "Id": "annex_i_12",
+      "Name": "Annex I (12)",
+      "Description": "Take periodic back up of the important data and store this data ‘off line’ (i.e., transferring important files to a storage device that can be detached from a computer/system after copying all the files).",
+      "Attributes": [
+        {
+          "ItemId": "annex_i_12",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "vm_backup_enabled",
+        "storage_ensure_file_shares_soft_delete_is_enabled",
+        "storage_blob_versioning_is_enabled"
+      ]
+    }
+  ]
+}

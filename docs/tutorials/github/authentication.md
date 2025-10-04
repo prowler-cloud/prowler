@@ -208,4 +208,3 @@ Choose the appropriate method based on use case:
 ### Organization Settings
 - Some organizations restrict third-party applications
 - Contact organization administrator if access is denied
-

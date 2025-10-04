@@ -480,4 +480,3 @@ rate_i = pass_i / total_i (when total_i > 0)
     - Use score trends to identify systematic issues
     - Correlate score changes with security incidents or changes
     - Adjust weights and risk levels based on lessons learned
-
