@@ -1797,11 +1797,22 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
     version = serializers.CharField()
     description = serializers.CharField()
     status = serializers.ChoiceField(choices=StatusChoices.choices)
-    passed_findings = serializers.IntegerField()
-    total_findings = serializers.IntegerField()
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-details"
+
+    def to_representation(self, instance):
+        """
+        Include 'passed_findings' and 'total_findings' only for threatscore.
+        """
+        representation = super().to_representation(instance)
+
+        # Only include these fields for threatscore framework
+        if "threatscore" in instance.get("framework").lower():
+            representation["passed_findings"] = instance.get("passed_findings")
+            representation["total_findings"] = instance.get("total_findings")
+
+        return representation
 
 
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):

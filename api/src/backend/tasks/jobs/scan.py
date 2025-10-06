@@ -612,19 +612,24 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                         current_status[finding.check_id] = finding.status
 
                     for framework_id, requirements in finding.compliance.items():
-                        for requirement_id in requirements:
-                            compliance_key = findings_count_by_compliance.setdefault(
-                                region, {}
-                            ).setdefault(framework_id.lower().replace("-", ""), {})
-                            if requirement_id not in compliance_key:
-                                compliance_key[requirement_id] = {
-                                    "total": 0,
-                                    "pass": 0,
-                                }
+                        if "threatscore" in framework_id.lower():
+                            for requirement_id in requirements:
+                                compliance_key = (
+                                    findings_count_by_compliance.setdefault(
+                                        region, {}
+                                    ).setdefault(
+                                        framework_id.lower().replace("-", ""), {}
+                                    )
+                                )
+                                if requirement_id not in compliance_key:
+                                    compliance_key[requirement_id] = {
+                                        "total": 0,
+                                        "pass": 0,
+                                    }
 
-                            compliance_key[requirement_id]["total"] += 1
-                            if finding.status == "PASS":
-                                compliance_key[requirement_id]["pass"] += 1
+                                compliance_key[requirement_id]["total"] += 1
+                                if finding.status == "PASS":
+                                    compliance_key[requirement_id]["pass"] += 1
 
         try:
             # Try to get regions from provider
