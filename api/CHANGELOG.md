@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
+- Support for passed_findings and total_findings for each requirement [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 
 ## [1.11.0] (Prowler 5.10.0)
 

@@ -19,6 +19,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
+- ThreatScore for each pillar in Prowler ThreatScore specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 
 ### ❌ Removed
 

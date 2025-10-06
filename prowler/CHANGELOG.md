@@ -19,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
 
 ### Fixed
+- Prowler ThreatScore scoring calculation CLI [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 
 ---
 
