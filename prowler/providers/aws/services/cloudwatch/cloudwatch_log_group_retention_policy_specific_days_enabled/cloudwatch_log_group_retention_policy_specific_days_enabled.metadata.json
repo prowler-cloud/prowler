@@ -1,31 +1,51 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_log_group_retention_policy_specific_days_enabled",
-  "CheckTitle": "Check if CloudWatch Log Groups have a retention policy of specific days.",
+  "CheckTitle": "CloudWatch log group has a retention policy of at least the configured minimum days or never expires",
   "CheckType": [
-    "Data Retention"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS",
+    "Software and Configuration Checks/Industry and Regulatory Standards/SOC 2"
   ],
   "ServiceName": "cloudwatch",
-  "SubServiceName": "logs",
-  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsLogsLogGroup",
-  "Description": "Check if CloudWatch Log Groups have a retention policy of specific days.",
-  "Risk": "If log groups have a low retention policy of less than specific days, crucial logs and data can be lost.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",
+  "Description": "**CloudWatch Log Groups** are assessed for a retention period at or above the configured threshold (e.g., `365` days) or for being set to **never expire**. Log groups with shorter retention are identified.",
+  "Risk": "Short log retention erodes audit evidence. Adversaries can wait out the window, creating gaps in detection, forensics, and compliance reporting. This degrades the **availability** of historical logs and the **integrity** of incident timelines.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.thecloudplaybook.com/p/tcp-46-mastering-cloudwatch-retention",
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/cloudwatch-logs-retention-period.html",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_13#terraform",
+    "https://boto3.amazonaws.com/v1/documentation/api/1.26.93/reference/services/logs/client/put_retention_policy.html",
+    "https://www.cloudthat.com/resources/blog/automating-amazon-cloudwatch-log-retention-with-aws-lambda-and-amazon-eventbridge/",
+    "https://medium.com/pareture/aws-cloudwatch-log-group-retention-periods-bb8a2fb9c358",
+    "https://stackoverflow.com/questions/46094657/what-is-the-default-retention-period-for-loggroup-in-cloud-watch",
+    "https://www.blinkops.com/blog/cloudwatch-retention",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_13",
+    "https://www.reddit.com/r/aws/comments/1g0oa3x/cloudwatch_log_group_management_log_retention/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws logs put-retention-policy --log-group-name <LOG_GROUP_NAME> --retention-in-days <DAYS>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_13",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: set retention on a CloudWatch Log Group\nResources:\n  <example_resource_name>:\n    Type: AWS::Logs::LogGroup\n    Properties:\n      LogGroupName: \"<example_resource_name>\"\n      RetentionInDays: <DAYS>  # Critical: sets log retention to the required minimum to pass the check\n```",
+      "Other": "1. In the AWS Console, go to CloudWatch > Log groups\n2. Select the target log group\n3. In the Expire events after/Retention column, click the current value\n4. Choose a retention value >= <DAYS> or select Never expire\n5. Click Save",
+      "Terraform": "```hcl\n# Set retention on a CloudWatch Log Group\nresource \"aws_cloudwatch_log_group\" \"<example_resource_name>\" {\n  name              = \"<example_resource_name>\"\n  retention_in_days = <DAYS> # Critical: set to at least the required minimum to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Add Log Retention policy of specific days to log groups. This will persist logs and traces for a long time.",
-      "Url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html"
+      "Text": "Define a minimum retention baseline (e.g., `>=365` days) aligned to legal and investigative needs. Apply it consistently with documented exceptions. Automate enforcement, monitor changes, and restrict who can modify retention under **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_group_retention_policy_specific_days_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

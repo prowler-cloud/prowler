@@ -1,31 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_log_metric_filter_aws_organizations_changes",
-  "CheckTitle": "Ensure a log metric filter and alarm exist for AWS Organizations changes.",
+  "CheckTitle": "CloudWatch Logs metric filter and alarm exist for AWS Organizations changes",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs/Privilege Escalation"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "Ensure a log metric filter and alarm exist for AWS Organizations changes.",
-  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
-  "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+  "Description": "**CloudWatch Logs** metric filters and alarms monitor **AWS Organizations** change events recorded by CloudTrail, including actions like `CreateAccount`, `AttachPolicy`, `MoveAccount`, and `UpdateOrganizationalUnit`.\n\nThe evaluation looks for a filter on the trail log group matching `organizations.amazonaws.com` events and an alarm linked to that metric.",
+  "Risk": "Without alerting on **AWS Organizations changes**, attackers or misconfigurations can silently alter governance, enabling unauthorized access and policy bypass. They could create/remove accounts, change or detach SCPs, or delete the organization, risking data exposure (C), privilege escalation (I), and service disruption (A).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+    "https://support.icompaas.com/support/solutions/articles/62000228348-ensure-a-log-metric-filter-and-alarm-exist-for-aws-organizations-changes",
+    "https://gsl.dome9.com/D9.AWS.AAA.93.html",
+    "https://repost.aws/questions/QUHpHFtqpiQ-uMO0OZaeoB_Q/security-hub-findings-with-organizations",
+    "https://www.plerion.com/cloud-knowledge-base/ensure-aws-organizations-changes-are-monitored",
+    "https://shisho.dev/docs/g/managed/standards/aws-cis-v1.5.0/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/organizations-changes-alarm.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/organizations-changes-alarm.html",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: CloudWatch Logs metric filter and alarm for AWS Organizations changes\nResources:\n  OrganizationsChangesMetricFilter:\n    Type: AWS::Logs::MetricFilter\n    Properties:\n      LogGroupName: <example_log_group_name>\n      FilterPattern: '{ ($.eventSource = organizations.amazonaws.com) && (($.eventName = \"AcceptHandshake\") || ($.eventName = \"AttachPolicy\") || ($.eventName = \"CancelHandshake\") || ($.eventName = \"CreateAccount\") || ($.eventName = \"CreateOrganization\") || ($.eventName = \"CreateOrganizationalUnit\") || ($.eventName = \"CreatePolicy\") || ($.eventName = \"DeclineHandshake\") || ($.eventName = \"DeleteOrganization\") || ($.eventName = \"DeleteOrganizationalUnit\") || ($.eventName = \"DeletePolicy\") || ($.eventName = \"EnableAllFeatures\") || ($.eventName = \"EnablePolicyType\") || ($.eventName = \"InviteAccountToOrganization\") || ($.eventName = \"LeaveOrganization\") || ($.eventName = \"DetachPolicy\") || ($.eventName = \"DisablePolicyType\") || ($.eventName = \"MoveAccount\") || ($.eventName = \"RemoveAccountFromOrganization\") || ($.eventName = \"UpdateOrganizationalUnit\") || ($.eventName = \"UpdatePolicy\")) }'  # Critical: matches AWS Organizations change events\n      MetricTransformations:\n        - MetricValue: \"1\"\n          MetricNamespace: CISBenchmark\n          MetricName: <example_resource_name>  # Critical: creates metric used by the alarm\n\n  OrganizationsChangesAlarm:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      ComparisonOperator: GreaterThanOrEqualToThreshold\n      EvaluationPeriods: 1\n      MetricName: <example_resource_name>   # Critical: alarms on the metric from the filter\n      Namespace: CISBenchmark               # Critical: must match the metric filter namespace\n      Period: 300\n      Statistic: Sum\n      Threshold: 1\n```",
+      "Other": "1. Open CloudWatch > Logs > Log groups and select the CloudTrail log group for your trail\n2. Choose Create metric filter and set Filter pattern to:\n   { ($.eventSource = organizations.amazonaws.com) && (($.eventName = \"AcceptHandshake\") || ($.eventName = \"AttachPolicy\") || ($.eventName = \"CancelHandshake\") || ($.eventName = \"CreateAccount\") || ($.eventName = \"CreateOrganization\") || ($.eventName = \"CreateOrganizationalUnit\") || ($.eventName = \"CreatePolicy\") || ($.eventName = \"DeclineHandshake\") || ($.eventName = \"DeleteOrganization\") || ($.eventName = \"DeleteOrganizationalUnit\") || ($.eventName = \"DeletePolicy\") || ($.eventName = \"EnableAllFeatures\") || ($.eventName = \"EnablePolicyType\") || ($.eventName = \"InviteAccountToOrganization\") || ($.eventName = \"LeaveOrganization\") || ($.eventName = \"DetachPolicy\") || ($.eventName = \"DisablePolicyType\") || ($.eventName = \"MoveAccount\") || ($.eventName = \"RemoveAccountFromOrganization\") || ($.eventName = \"UpdateOrganizationalUnit\") || ($.eventName = \"UpdatePolicy\")) }\n3. Assign a metric: Namespace = CISBenchmark, Metric name = OrganizationsChanges, Metric value = 1, then Create metric filter\n4. On the metric filter, select Create alarm; set Statistic = Sum, Period = 5 minutes, Threshold type = Static, Threshold = 1, Evaluation periods = 1; Create alarm",
+      "Terraform": "```hcl\n# CloudWatch Logs metric filter for AWS Organizations changes\nresource \"aws_cloudwatch_log_metric_filter\" \"organizations_changes\" {\n  name           = \"<example_resource_name>\"\n  log_group_name = \"<example_log_group_name>\"\n  pattern        = \"{ ($.eventSource = organizations.amazonaws.com) && (($.eventName = \\\"AcceptHandshake\\\") || ($.eventName = \\\"AttachPolicy\\\") || ($.eventName = \\\"CancelHandshake\\\") || ($.eventName = \\\"CreateAccount\\\") || ($.eventName = \\\"CreateOrganization\\\") || ($.eventName = \\\"CreateOrganizationalUnit\\\") || ($.eventName = \\\"CreatePolicy\\\") || ($.eventName = \\\"DeclineHandshake\\\") || ($.eventName = \\\"DeleteOrganization\\\") || ($.eventName = \\\"DeleteOrganizationalUnit\\\") || ($.eventName = \\\"DeletePolicy\\\") || ($.eventName = \\\"EnableAllFeatures\\\") || ($.eventName = \\\"EnablePolicyType\\\") || ($.eventName = \\\"InviteAccountToOrganization\\\") || ($.eventName = \\\"LeaveOrganization\\\") || ($.eventName = \\\"DetachPolicy\\\") || ($.eventName = \\\"DisablePolicyType\\\") || ($.eventName = \\\"MoveAccount\\\") || ($.eventName = \\\"RemoveAccountFromOrganization\\\") || ($.eventName = \\\"UpdateOrganizationalUnit\\\") || ($.eventName = \\\"UpdatePolicy\\\")) }\"  # Critical: matches AWS Organizations change events\n\n  metric_transformation {\n    name      = \"<example_resource_name>\"   # Critical: metric created by the filter\n    namespace = \"CISBenchmark\"              # Critical: used by the alarm\n    value     = \"1\"\n  }\n}\n\n# Alarm on the metric generated by the filter\nresource \"aws_cloudwatch_metric_alarm\" \"organizations_changes\" {\n  alarm_name          = \"<example_resource_name>\"\n  comparison_operator = \"GreaterThanOrEqualToThreshold\"\n  evaluation_periods  = 1\n  metric_name         = \"<example_resource_name>\"  # Critical: matches metric filter name\n  namespace           = \"CISBenchmark\"             # Critical: matches metric filter namespace\n  period              = 300\n  statistic           = \"Sum\"\n  threshold           = 1\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
+      "Text": "Send CloudTrail events to **CloudWatch Logs**, add a metric filter for `organizations.amazonaws.com` change events, and attach an alarm that notifies responders. Enforce **least privilege** and **separation of duties** for org admins, require MFA and approvals, and regularly test alerts to ensure timely detection and response.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_metric_filter_aws_organizations_changes"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "threat-detection"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Logging and Monitoring"
