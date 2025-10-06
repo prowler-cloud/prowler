@@ -273,7 +273,7 @@ The `CheckTitle` field must be plain text, clearly and succinctly define **the b
 
 **Always write the `CheckTitle` to describe the *PASS* case**, the desired secure or compliant state of the resource(s). This helps ensure that findings are easy to interpret and that the title always reflects the best practice being met.
 
-For detailed guidelines on writing effective check titles, including how to determine singular vs. plural scope and common mistakes to avoid, see [CheckTitle Guidelines](./check-metadata-guidelines.md#check-title-guidelines).
+For detailed guidelines on writing effective check titles, including how to determine singular vs. plural scope and common mistakes to avoid, see [Check Title Guidelines](./check-metadata-guidelines.md#check-title-guidelines).
 
 #### CheckType
 
@@ -282,7 +282,7 @@ For detailed guidelines on writing effective check titles, including how to dete
 
 It follows the [AWS Security Hub Types](https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html#Types) format using the pattern `namespace/category/classifier`.
 
-For the complete AWS Security Hub selection guidelines, see [CheckType Guidelines](./check-metadata-guidelines.md#check-type-guidelines-aws-only).
+For the complete AWS Security Hub selection guidelines, see [Check Type Guidelines](./check-metadata-guidelines.md#check-type-guidelines-aws-only).
 
 #### ServiceName
 

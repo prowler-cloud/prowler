@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Chip } from "@heroui/chip";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -263,7 +264,7 @@ export const SecurityHubIntegrationsManager = ({
         title="Delete Security Hub Integration"
         description="This action cannot be undone. This will permanently delete your Security Hub integration."
       >
-        <div className="flex w-full justify-center space-x-6">
+        <div className="flex w-full justify-center gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
@@ -321,7 +322,7 @@ export const SecurityHubIntegrationsManager = ({
         />
       </CustomAlertModal>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">

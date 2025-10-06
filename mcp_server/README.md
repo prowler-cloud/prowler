@@ -1,5 +1,7 @@
 # Prowler MCP Server
 
+> ⚠️ **Preview Feature**: This MCP server is currently in preview and under active development. Features and functionality may change. We welcome your feedback—please report any issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join our [Slack community](https://goto.prowler.com/slack) to discuss and share your thoughts.
+
 Access the entire Prowler ecosystem through the Model Context Protocol (MCP). This server provides two main capabilities:
 
 - **Prowler Cloud and Prowler App (Self-Managed)**: Full access to Prowler Cloud platform and Prowler Self-Managed for managing providers, running scans, and analyzing security findings
@@ -23,7 +25,25 @@ It is needed to have [uv](https://docs.astral.sh/uv/) installed.
 git clone https://github.com/prowler-cloud/prowler.git
 ```
 
+### Using Docker
+
+Alternatively, you can build and run the MCP server using Docker:
+
+```bash
+# Clone the repository
+git clone https://github.com/prowler-cloud/prowler.git
+cd prowler/mcp_server
+
+# Build the Docker image
+docker build -t prowler-mcp .
+
+# Run the container with environment variables
+docker run --rm --env-file ./.env -it prowler-mcp
+```
+
 ## Running
+
+### Using uv directly
 
 After installation, start the MCP server via the console script:
 
@@ -38,6 +58,15 @@ Alternatively, you can run from wherever you want using `uvx` command:
 uvx /path/to/prowler/mcp_server/
 ```
 
+### Using Docker
+
+Run the pre-built Docker container:
+
+```bash
+cd prowler/mcp_server
+docker run --rm --env-file ./.env -it prowler-mcp
+```
+
 ## Available Tools
 
 ### Prowler Hub
@@ -46,6 +75,9 @@ All tools are exposed under the `prowler_hub` prefix.
 
 - `prowler_hub_get_check_filters`: Return available filter values for checks (providers, services, severities, categories, compliances). Call this before `prowler_hub_get_checks` to build valid queries.
 - `prowler_hub_get_checks`: List checks with option of advanced filtering.
+- `prowler_hub_get_check_raw_metadata`: Fetch raw check metadata JSON (low-level version of get_checks).
+- `prowler_hub_get_check_code`: Fetch check implementation Python code from Prowler.
+- `prowler_hub_get_check_fixer`: Fetch check fixer Python code from Prowler (if it exists).
 - `prowler_hub_search_checks`: Full‑text search across check metadata.
 - `prowler_hub_get_compliance_frameworks`: List/filter compliance frameworks.
 - `prowler_hub_search_compliance_frameworks`: Full-text search across frameworks.
@@ -116,7 +148,9 @@ export PROWLER_API_BASE_URL="https://api.prowler.com"
 
 ### MCP Client Configuration
 
-Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the server with the `uvx` command. Below is a generic snippet; consult your client's documentation for exact locations.
+Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the server. Below are examples for both direct execution and Docker deployment; consult your client's documentation for exact locations.
+
+#### Using uvx (Direct Execution)
 
 ```json
 {
@@ -127,9 +161,29 @@ Configure your MCP client, like Claude Desktop, Cursor, etc, to launch the serve
       "env": {
         "PROWLER_APP_EMAIL": "your-email@example.com",
         "PROWLER_APP_PASSWORD": "your-password",
-        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App
-        "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional
+        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App,
+        "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional, in case not provided Prowler Cloud API will be used
       }
+    }
+  }
+}
+```
+
+#### Using Docker
+
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "--env", "PROWLER_APP_EMAIL=your-email@example.com",
+        "--env", "PROWLER_APP_PASSWORD=your-password",
+        "--env", "PROWLER_APP_TENANT_ID=your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App
+        "--env", "PROWLER_API_BASE_URL=https://api.prowler.com",  // Optional, in case not provided Prowler Cloud API will be used
+        "prowler-mcp"
+      ]
     }
   }
 }
