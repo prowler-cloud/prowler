@@ -2,7 +2,7 @@
 
 import { Tooltip } from "@heroui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
 import { TableLink } from "@/components/ui/custom";
@@ -21,9 +21,22 @@ const getScanData = (row: { original: ScanProps }) => {
 };
 
 const ScanDetailsCell = ({ row }: { row: any }) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const scanId = searchParams.get("scanId");
   const isOpen = scanId === row.original.id;
+
+  const handleOpenChange = (open: boolean) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (open) {
+      params.set("scanId", row.original.id);
+    } else {
+      params.delete("scanId");
+    }
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <div className="flex w-9 items-center justify-center">
@@ -31,9 +44,10 @@ const ScanDetailsCell = ({ row }: { row: any }) => {
         triggerComponent={<InfoIcon className="text-primary" size={16} />}
         title="Scan Details"
         description="View the scan details"
-        defaultOpen={isOpen}
+        open={isOpen}
+        onOpenChange={handleOpenChange}
       >
-        <DataTableRowDetails entityId={row.original.id} />
+        {isOpen && <DataTableRowDetails entityId={row.original.id} />}
       </TriggerSheet>
     </div>
   );
