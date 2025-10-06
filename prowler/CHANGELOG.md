@@ -110,13 +110,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Improve AWS Security Hub region check using multiple threads [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 
 ### Fixed
-- Prowler ThreatScore scoring calculation CLI [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
-
----
-
-## [v5.10.3] (Prowler UNRELEASED)
-
-### Fixed
 - Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
 - GitHub App authentication through API fails with auth_method validation error [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
 - AWS resource-arn filtering [(#8533)](https://github.com/prowler-cloud/prowler/pull/8533)

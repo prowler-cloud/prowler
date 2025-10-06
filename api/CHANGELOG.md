@@ -46,7 +46,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
-- Support for passed_findings and total_findings for each requirement [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 - Integration with Amazon Security Hub, enabling sending findings to Security Hub [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 - Generate ASFF output for AWS providers with SecurityHub integration enabled [(#8569)](https://github.com/prowler-cloud/prowler/pull/8569)
 
