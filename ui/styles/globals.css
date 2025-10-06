@@ -35,7 +35,12 @@
 @layer utilities {
   /* Hide scrollbar */
   .no-scrollbar {
-    scrollbar-width: none;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .checkbox-update {
