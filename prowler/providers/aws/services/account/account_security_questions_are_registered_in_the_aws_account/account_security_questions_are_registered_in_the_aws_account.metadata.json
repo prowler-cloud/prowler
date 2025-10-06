@@ -29,9 +29,7 @@
       "Url": "https://hub.prowler.com/check/account_security_questions_are_registered_in_the_aws_account"
     }
   },
-  "Categories": [
-    "identity-access"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
