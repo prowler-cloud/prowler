@@ -32,11 +32,12 @@ const refreshAccessToken = async (token: JwtPayload) => {
       },
       body: JSON.stringify(bodyData),
     });
-    const newTokens = await response.json();
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const newTokens = await response.json();
 
     return {
       ...token,
@@ -73,14 +74,18 @@ export const authConfig = {
       async authorize(credentials) {
         const parsedCredentials = z
           .object({
-            email: z.string().email(),
+            email: z.email(),
             password: z.string().min(12),
           })
           .safeParse(credentials);
 
         if (!parsedCredentials.success) return null;
 
-        const tokenResponse = await getToken(parsedCredentials.data);
+        const { email, password } = parsedCredentials.data;
+        const tokenResponse = await getToken({
+          email,
+          password,
+        });
         if (!tokenResponse) return null;
 
         const userMeResponse = await getUserByMe(tokenResponse.accessToken);
@@ -142,18 +147,17 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith("/");
       const isSignUpPage = nextUrl.pathname === "/sign-up";
+      const isSignInPage = nextUrl.pathname === "/sign-in";
 
-      // Allow access to sign-up page
-      if (isSignUpPage) return true;
+      // Allow access to sign-up and sign-in pages
+      if (isSignUpPage || isSignInPage) return true;
 
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirect users who are not logged in to the login page
-      } else if (isLoggedIn) {
-        return Response.redirect(new URL("/", nextUrl));
+      // For all other routes, require authentication
+      if (!isLoggedIn) {
+        return false; // Will redirect to signIn page defined in pages config
       }
+
       return true;
     },
 

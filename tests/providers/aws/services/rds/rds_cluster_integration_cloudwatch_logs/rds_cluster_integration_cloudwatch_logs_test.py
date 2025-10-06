@@ -17,7 +17,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "CreateDBCluster":
         return {
             "DBClusterIdentifier": "cluster-1",
-            "Engine": "aurora",
+            "Engine": "postgres",
             "MasterUsername": "admin",
             "MasterUserPassword": "password",
         }
@@ -58,7 +58,7 @@ class Test_rds_cluster_integration_cloudwatch_logs:
             conn = client("rds", region_name=AWS_REGION_US_EAST_1)
             conn.create_db_cluster(
                 DBClusterIdentifier="cluster-1",
-                Engine="aurora",
+                Engine="postgres",
                 MasterUsername="admin",
                 MasterUserPassword="password",
             )
@@ -90,7 +90,7 @@ class Test_rds_cluster_integration_cloudwatch_logs:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="aurora-cluster-1",
-            Engine="aurora-mysql",
+            Engine="postgres",
             MasterUsername="admin",
             MasterUserPassword="password",
         )
@@ -134,7 +134,7 @@ class Test_rds_cluster_integration_cloudwatch_logs:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="aurora-cluster-1",
-            Engine="aurora-mysql",
+            Engine="postgres",
             MasterUsername="admin",
             MasterUserPassword="password",
             EnableCloudwatchLogsExports=["audit", "error"],

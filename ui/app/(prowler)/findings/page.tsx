@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import React, { Suspense } from "react";
 
 import {
@@ -33,13 +33,15 @@ import { FindingProps, SearchParamsProps } from "@/types/components";
 export default async function Findings({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
-  const { filters, query } = extractFiltersAndQuery(searchParams);
+  const resolvedSearchParams = await searchParams;
+  const { searchParamsKey, encodedSort } =
+    extractSortAndKey(resolvedSearchParams);
+  const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
   const [metadataInfoData, providersData, scansData] = await Promise.all([
     (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
@@ -81,7 +83,7 @@ export default async function Findings({
   ) as { [uid: string]: ScanEntity }[];
 
   return (
-    <ContentLayout title="Findings" icon="carbon:data-view-alt">
+    <ContentLayout title="Findings" icon="lucide:tag">
       <FindingsFilters
         providerUIDs={providerUIDs}
         providerDetails={providerDetails}
@@ -94,7 +96,7 @@ export default async function Findings({
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
@@ -157,12 +159,13 @@ const SSRDataTable = async ({
   return (
     <>
       {findingsData?.errors && (
-        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-small text-red-700">
+        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{findingsData.errors[0].detail}</p>
         </div>
       )}
       <DataTable
+        key={Date.now()}
         columns={ColumnFindings}
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}

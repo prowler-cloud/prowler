@@ -177,6 +177,7 @@ class Test_elbv2_insecure_ssl_ciphers:
         response = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTPS",
+            Port=443,
             SslPolicy="ELBSecurityPolicy-TLS-1-1-2017-01",
             DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
         )

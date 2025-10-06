@@ -1,5 +1,3 @@
-import { revalidatePath } from "next/cache";
-
 import { getComplianceCsv, getExportsZip } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
@@ -340,25 +338,3 @@ export const permissionFormFields: PermissionInfo[] = [
     description: "Provides access to billing settings and invoices",
   },
 ];
-
-// Helper function to handle API responses consistently
-export const handleApiResponse = async (
-  response: Response,
-  pathToRevalidate?: string,
-) => {
-  const data = await response.json();
-
-  if (pathToRevalidate) {
-    revalidatePath(pathToRevalidate);
-  }
-
-  return parseStringify(data);
-};
-
-// Helper function to handle API errors consistently
-export const handleApiError = (error: unknown) => {
-  console.error(error);
-  return {
-    error: getErrorMessage(error),
-  };
-};

@@ -2,7 +2,7 @@
 
 This page details the [Google Cloud Platform (GCP)](https://cloud.google.com/) provider implementation in Prowler.
 
-By default, Prowler will audit all the GCP projects that the authenticated identity can access. To configure it, follow the [getting started](../index.md#google-cloud) page.
+By default, Prowler will audit all the GCP projects that the authenticated identity can access. To configure it, follow the [GCP getting started guide](../tutorials/gcp/getting-started-gcp.md).
 
 ## GCP Provider Classes Architecture
 

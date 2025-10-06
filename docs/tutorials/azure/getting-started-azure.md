@@ -1,28 +1,23 @@
-# Getting Started with Azure on Prowler Cloud/App
+# Getting Started With Azure on Prowler
+
+## Prowler App
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg" title="Prowler Cloud Onboarding Azure" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+> Walkthrough video onboarding an Azure Subscription using Service Principal.
 
-Set up your Azure subscription to enable security scanning using Prowler Cloud/App.
 
-## Requirements
+???+ note "Government Cloud Support"
+    Government cloud subscriptions (Azure Government) are not currently supported, but we expect to add support for them in the near future.
 
-To configure your Azure subscription, you’ll need:
+### Prerequisites
 
-1. Get the `Subscription ID`
-2. Access to Prowler Cloud/App
-3. Configure authentication in Azure:
+Before setting up Azure in Prowler App, you need to create a Service Principal with proper permissions.
 
-    3.1 Create a Service Principal
-
-    3.2 Assign required permissions
-
-    3.3 Assign permissions at the subscription level
-
-4. Add the credentials to Prowler Cloud/App
+For detailed instructions on how to create the Service Principal and configure permissions, see [Authentication > Service Principal](./authentication.md#service-principal-application-authentication-recommended).
 
 ---
 
-## Step 1: Get the Subscription ID
+### Step 1: Get the Subscription ID
 
 1. Go to the [Azure Portal](https://portal.azure.com/#home) and search for `Subscriptions`
 2. Locate and copy your Subscription ID
@@ -32,9 +27,9 @@ To configure your Azure subscription, you’ll need:
 
 ---
 
-## Step 2: Access Prowler Cloud/App
+### Step 2: Access Prowler App
 
-1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
 2. Navigate to `Configuration` > `Cloud Providers`
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
@@ -51,117 +46,19 @@ To configure your Azure subscription, you’ll need:
 
     ![Add Subscription ID](./img/add-subscription-id.png)
 
----
+### Step 3: Add Credentials to Prowler App
 
-## Step 3: Configure the Azure Subscription
-
-### Create the Service Principal
-
-A Service Principal is required to grant Prowler the necessary privileges.
-
-1. Access **Microsoft Entra ID**
-
-    ![Search Microsoft Entra ID](./img/search-microsoft-entra-id.png)
-
-2. Navigate to `Manage` > `App registrations`
-
-    ![App Registration nav](./img/app-registration-menu.png)
-
-3. Click `+ New registration`, complete the form, and click `Register`
-
-    ![New Registration](./img/new-registration.png)
-
-4. Go to `Certificates & secrets` > `+ New client secret`
-
-    ![Certificate & Secrets nav](./img/certificates-and-secrets.png)
-    ![New Client Secret](./img/new-client-secret.png)
-
-5. Fill in the required fields and click `Add`, then copy the generated value
-
-| Value | Description |
-|-------|-------------|
-| Client ID | Application ID |
-| Client Secret | AZURE_CLIENT_SECRET |
-| Tenant ID | Azure Active Directory tenant ID |
-
----
-
-### Assign Required API Permissions
-
-Assign the following Microsoft Graph permissions:
-
-- Directory.Read.All
-
-- Policy.Read.All
-
-- UserAuthenticationMethod.Read.All (optional, for MFA checks)
-
-???+ note
-    You can replace `Directory.Read.All` with `Domain.Read.All` that is a more restrictive permission but you won't be able to run the Entra checks related with DirectoryRoles and GetUsers.
-
-1. Go to your App Registration > `API permissions`
-
-    ![API Permission Page](./img/api-permissions-page.png)
-
-2. Click `+ Add a permission` > `Microsoft Graph` > `Application permissions`
-
-    ![Add API Permission](./img/add-api-permission.png)
-    ![Microsoft Graph Detail](./img/microsoft-graph-detail.png)
-
-3. Search and select:
-
-    - `Directory.Read.All`
-    - `Policy.Read.All`
-    - `UserAuthenticationMethod.Read.All`
-
-    ![Permission Screenshots](./img/domain-permission.png)
-
-4. Click `Add permissions`, then grant admin consent
-
-    ![Grant Admin Consent](./img/grant-admin-consent.png)
-
----
-
-### Assign Permissions at the Subscription Level
-
-1. Download the [Prowler Azure Custom Role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json)
-
-    ![Azure Custom Role](./img/download-prowler-role.png)
-
-2. Modify `assignableScopes` to match your Subscription ID (e.g. `/subscriptions/xxxx-xxxx-xxxx-xxxx`)
-
-3. Go to your Azure Subscription > `Access control (IAM)`
-
-    ![IAM Page](./img/iam-azure-page.png)
-
-4. Click `+ Add` > `Add custom role`, choose "Start from JSON" and upload the modified file
-
-    ![Add custom role via JSON](./img/add-custom-role-json.png)
-
-5. Click `Review + Create` to finish
-
-    ![Select review and create](./img/review-and-create.png)
-
-6. Return to `Access control (IAM)` > `+ Add` > `Add role assignment`
-
-    - Assign the `Reader` role to the Application created in the previous step
-    - Then repeat the same process assigning the custom `ProwlerRole`
-
-    ![Role Assignment](./img/add-role-assigment.png)
-
----
-
-## Step 4: Add Credentials to Prowler Cloud/App
+Having completed the [Service Principal setup from the Authentication guide](./authentication.md#service-principal-application-authentication-recommended):
 
 1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
 
     ![App Overview](./img/app-overview.png)
 
-2. Go to Prowler Cloud/App and paste:
+2. Go to Prowler App and paste:
 
     - `Client ID`
     - `Tenant ID`
-    - `AZURE_CLIENT_SECRET` from earlier
+    - `Client Secret` from [earlier](./authentication.md#service-principal-application-authentication-recommended)
 
     ![Prowler Cloud Azure Credentials](./img/add-credentials-azure-prowler-cloud.png)
 
@@ -169,6 +66,70 @@ Assign the following Microsoft Graph permissions:
 
     ![Next Detail](./img/click-next-azure.png)
 
-4. Click `Launch Scan`
+4. Click "Launch Scan"
 
     ![Launch Scan Azure](./img/launch-scan.png)
+
+---
+
+## Prowler CLI
+
+### Configure Azure Credentials
+
+To authenticate with Azure, Prowler CLI supports multiple authentication methods. Choose the method that best suits your environment.
+
+For detailed authentication setup instructions, see [Authentication](./authentication.md).
+
+**Service Principal (Recommended)**
+
+Set up environment variables:
+
+```console
+export AZURE_CLIENT_ID="XXXXXXXXX"
+export AZURE_TENANT_ID="XXXXXXXXX"
+export AZURE_CLIENT_SECRET="XXXXXXX"
+```
+
+Then run:
+
+```console
+prowler azure --sp-env-auth
+```
+
+**Azure CLI Credentials**
+
+Use stored Azure CLI credentials:
+
+```console
+prowler azure --az-cli-auth
+```
+
+**Browser Authentication**
+
+Authenticate using your default browser:
+
+```console
+prowler azure --browser-auth --tenant-id <tenant-id>
+```
+
+**Managed Identity**
+
+When running on Azure resources:
+
+```console
+prowler azure --managed-identity-auth
+```
+
+### Subscription Selection
+
+To scan a specific Azure subscription:
+
+```console
+prowler azure --subscription-ids <subscription-id>
+```
+
+To scan multiple Azure subscriptions:
+
+```console
+prowler azure --subscription-ids <subscription-id1> <subscription-id2> <subscription-id3>
+```

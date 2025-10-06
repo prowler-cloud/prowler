@@ -19,19 +19,16 @@
   <a href="https://goto.prowler.com/slack"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
   <a href="https://pypi.org/project/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/v/prowler.svg"></a>
   <a href="https://pypi.python.org/pypi/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/prowler.svg"></a>
-  <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Prowler Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=prowler%20downloads"></a>
+  <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=downloads"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
-  <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
-  <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
   <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
   <a href="https://codecov.io/gh/prowler-cloud/prowler"><img src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
 </p>
 <p align="center">
-  <a href="https://github.com/prowler-cloud/prowler"><img alt="Repo size" src="https://img.shields.io/github/repo-size/prowler-cloud/prowler"></a>
-  <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
-  <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
+    <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/release-date/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Contributors" src="https://img.shields.io/github/contributors-anon/prowler-cloud/prowler"></a>
+  <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="License" src="https://img.shields.io/github/license/prowler-cloud/prowler"></a>
   <a href="https://twitter.com/ToniBlyx"><img alt="Twitter" src="https://img.shields.io/twitter/follow/toniblyx?style=social"></a>
   <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
@@ -55,15 +52,11 @@ Prowler includes hundreds of built-in controls to ensure compliance with standar
 - **National Security Standards:** ENS (Spanish National Security Scheme)
 - **Custom Security Frameworks:** Tailored to your needs
 
-## Prowler CLI and Prowler Cloud
-
-Prowler offers a Command Line Interface (CLI), known as Prowler Open Source, and an additional service built on top of it, called <a href="https://prowler.com">Prowler Cloud</a>.
-
 ## Prowler App
 
 Prowler App is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
-![Prowler App](docs/img/overview.png)
+![Prowler App](docs/products/img/overview.png)
 
 >For more details, refer to the [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
@@ -80,28 +73,37 @@ prowler <provider>
 ```console
 prowler dashboard
 ```
-![Prowler Dashboard](docs/img/dashboard.png)
+![Prowler Dashboard](docs/products/img/dashboard.png)
 
 # Prowler at a Glance
+> [!Tip]
+> For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
 
-| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
-|---|---|---|---|---|
-| AWS | 571 | 82 | 36 | 10 |
-| GCP | 79 | 13 | 10 | 3 |
-| Azure | 162 | 19 | 11 | 4 |
-| Kubernetes | 83 | 7 | 5 | 7 |
-| GitHub | 17 | 2 | 1 | 0 |
-| M365 | 70 | 7 | 3 | 2 |
-| NHN (Unofficial) | 6 | 2 | 1 | 0 |
+
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Stage | Interface |
+|---|---|---|---|---|---|---|---|
+| AWS | 576 | 82 | 36 | 10 | Official | Stable | UI, API, CLI |
+| GCP | 79 | 13 | 10 | 3 | Official | Stable | UI, API, CLI |
+| Azure | 162 | 19 | 11 | 4 | Official | Stable | UI, API, CLI |
+| Kubernetes | 83 | 7 | 5 | 7 | Official | Stable | UI, API, CLI |
+| GitHub | 17 | 2 | 1 | 0 | Official | Stable | UI, API, CLI |
+| M365 | 70 | 7 | 3 | 2 | Official | Stable | UI, API, CLI |
+| IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | Beta | CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | Beta | CLI |
+| LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | Beta | CLI |
+| NHN | 6 | 2 | 1 | 0 | Unofficial | Beta | CLI |
 
 > [!Note]
 > The numbers in the table are updated periodically.
 
-> [!Tip]
-> For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
+
 
 > [!Note]
-> Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories: `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
+> Use the following commands to list Prowler's available checks, services, compliance frameworks, and categories:
+> - `prowler <provider> --list-checks`
+> - `prowler <provider> --list-services`
+> - `prowler <provider> --list-compliance`
+> - `prowler <provider> --list-categories`
 
 # 💻 Installation
 
@@ -239,7 +241,7 @@ The following versions of Prowler CLI are available, depending on your requireme
 
 The container images are available here:
 - Prowler CLI:
-    - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+    - [DockerHub](https://hub.docker.com/r/prowlercloud/prowler/tags)
     - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
 - Prowler App:
     - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
@@ -274,7 +276,7 @@ python prowler-cli.py -v
 - **Prowler API**: A backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
 
-![Prowler App Architecture](docs/img/prowler-app-architecture.png)
+![Prowler App Architecture](docs/products/img/prowler-app-architecture.png)
 
 ## Prowler CLI
 
@@ -300,40 +302,12 @@ And many more environments.
 
 ![Architecture](docs/img/architecture.png)
 
-# Deprecations from v3
-
-## General
-- `Allowlist` now is called `Mutelist`.
-- The `--quiet` option has been deprecated. Use the `--status` flag to filter findings based on their status: PASS, FAIL, or MANUAL.
-- All findings with an `INFO` status have been reclassified as `MANUAL`.
-- The CSV output format is standardized across all providers.
-
-**Deprecated Output Formats**
-
-The following formats are now deprecated:
-- Native JSON has been replaced with JSON in [OCSF] v1.1.0 format, which is standardized across all providers (https://schema.ocsf.io/).
-
-## AWS
-
-**AWS Flag Deprecation**
-
-The flag --sts-endpoint-region has been deprecated due to the adoption of AWS STS regional tokens.
-
-**Sending FAIL Results to AWS Security Hub**
-
-- To send only FAILS to AWS Security Hub, use one of the following options: `--send-sh-only-fails` or `--security-hub --status FAIL`.
-
-
 # 📖 Documentation
-
-**Documentation Resources**
 
 For installation instructions, usage details, tutorials, and the Developer Guide, visit https://docs.prowler.com/
 
 # 📃 License
 
-**Prowler License Information**
-
-Prowler is licensed under the Apache License 2.0, as indicated in each file within the repository. Obtaining a Copy of the License
+Prowler is licensed under the Apache License 2.0.
 
 A copy of the License is available at <http://www.apache.org/licenses/LICENSE-2.0>

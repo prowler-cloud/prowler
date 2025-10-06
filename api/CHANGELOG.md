@@ -2,11 +2,57 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.12.0] (Prowler 5.11.0 - UNRELEASED)
+## [1.14.0] (Prowler UNRELEASED)
+
+### Added
+- Default JWT keys are generated and stored if they are missing from configuration [(#8655)](https://github.com/prowler-cloud/prowler/pull/8655)
+- `compliance_name` for each compliance [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
+- API Key support [(#8805)](https://github.com/prowler-cloud/prowler/pull/8805)
+
+### Changed
+- Now the MANAGE_ACCOUNT permission is required to modify or read user permissions instead of MANAGE_USERS [(#8281)](https://github.com/prowler-cloud/prowler/pull/8281)
+- Now at least one user with MANAGE_ACCOUNT permission is required in the tenant [(#8729)](https://github.com/prowler-cloud/prowler/pull/8729)
+
+---
+
+## [1.13.2] (Prowler 5.12.3)
+
+### Fixed
+- 500 error when deleting user [(#8731)](https://github.com/prowler-cloud/prowler/pull/8731)
+
+---
+
+## [1.13.1] (Prowler 5.12.2)
+
+### Changed
+- Renamed compliance overview task queue to `compliance` [(#8755)](https://github.com/prowler-cloud/prowler/pull/8755)
+
+### Security
+- Django updated to the latest 5.1 security release, 5.1.12, due to [problems](https://www.djangoproject.com/weblog/2025/sep/03/security-releases/) with potential SQL injection in FilteredRelation column aliases [(#8693)](https://github.com/prowler-cloud/prowler/pull/8693)
+
+---
+
+## [1.13.0] (Prowler 5.12.0)
+
+### Added
+- Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622), [(#8637)](https://github.com/prowler-cloud/prowler/pull/8637)
+- `GET /overviews/findings_severity` now supports `filter[status]` and `filter[status__in]` to aggregate by specific statuses (`FAIL`, `PASS`)[(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
+- Throttling options for `/api/v1/tokens` using the `DJANGO_THROTTLE_TOKEN_OBTAIN` environment variable [(#8647)](https://github.com/prowler-cloud/prowler/pull/8647)
+
+---
+
+## [1.12.0] (Prowler 5.11.0)
 
 ### Added
 - Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
 - Support for passed_findings and total_findings for each requirement [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- Integration with Amazon Security Hub, enabling sending findings to Security Hub [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
+- Generate ASFF output for AWS providers with SecurityHub integration enabled [(#8569)](https://github.com/prowler-cloud/prowler/pull/8569)
+
+### Fixed
+- GitHub provider always scans user instead of organization when using provider UID [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
+
+---
 
 ## [1.11.0] (Prowler 5.10.0)
 

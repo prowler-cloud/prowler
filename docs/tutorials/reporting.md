@@ -106,6 +106,7 @@ The CSV format follows a standardized structure across all providers. The follow
 - RELATED\_TO
 - NOTES
 - PROWLER\_VERSION
+- ADDITIONAL\_URLS
 
 #### CSV Headers Mapping
 
@@ -163,6 +164,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
          "depends_on": [],
          "related_to": [],
          "notes": "",
+         "additional_urls": [],
          "compliance": {
              "MITRE-ATTACK": [
                  "T1552"
@@ -398,6 +400,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | Categories| unmapped.categories
 | DependsOn| unmapped.depends\_on
 | RelatedTo| unmapped.related\_to
+| AdditionalURLs| unmapped.additional\_urls
 | Notes| unmapped.notes
 | Profile| _Not mapped yet_
 | AccountId| cloud.account.uid

@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getLatestFindings } from "@/actions/findings/findings";
@@ -25,14 +25,27 @@ import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
-export default function Home({
+const FILTER_PREFIX = "filter[";
+
+// Extract only query params that start with "filter[" for API calls
+function pickFilterParams(
+  params: SearchParamsProps | undefined | null,
+): Record<string, string | string[] | undefined> {
+  if (!params) return {};
+  return Object.fromEntries(
+    Object.entries(params).filter(([key]) => key.startsWith(FILTER_PREFIX)),
+  );
+}
+
+export default async function Home({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
   return (
-    <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
+    <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <FilterControls providers mutedFindings showClearButton={false} />
 
       <div className="grid grid-cols-12 gap-12 lg:gap-6">
@@ -44,13 +57,13 @@ export default function Home({
 
         <div className="col-span-12 lg:col-span-4">
           <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
-            <SSRFindingsBySeverity searchParams={searchParams} />
+            <SSRFindingsBySeverity searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
 
         <div className="col-span-12 lg:col-span-4">
           <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-            <SSRFindingsByStatus searchParams={searchParams} />
+            <SSRFindingsByStatus searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
 
@@ -60,7 +73,7 @@ export default function Home({
             key={searchParamsKey}
             fallback={<SkeletonTableNewFindings />}
           >
-            <SSRDataNewFindingsTable searchParams={searchParams} />
+            <SSRDataNewFindingsTable searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
       </div>
@@ -84,13 +97,7 @@ const SSRFindingsByStatus = async ({
 }: {
   searchParams: SearchParamsProps | undefined | null;
 }) => {
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
+  const filters = pickFilterParams(searchParams);
 
   const findingsByStatus = await getFindingsByStatus({ filters });
 
@@ -107,19 +114,23 @@ const SSRFindingsBySeverity = async ({
 }: {
   searchParams: SearchParamsProps | undefined | null;
 }) => {
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
+  const defaultFilters = {
+    "filter[status]": "FAIL",
+  } as const;
 
-  const findingsBySeverity = await getFindingsBySeverity({ filters });
+  const filters = pickFilterParams(searchParams);
+
+  const combinedFilters = { ...defaultFilters, ...filters };
+
+  const findingsBySeverity = await getFindingsBySeverity({
+    filters: combinedFilters,
+  });
 
   return (
     <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Findings by Severity</h3>
+      <h3 className="mb-4 text-sm font-bold uppercase">
+        Failed Findings by Severity
+      </h3>
       <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
     </>
   );
@@ -138,13 +149,7 @@ const SSRDataNewFindingsTable = async ({
     "filter[delta]": "new",
   };
 
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
+  const filters = pickFilterParams(searchParams);
 
   const combinedFilters = { ...defaultFilters, ...filters };
 
@@ -201,6 +206,7 @@ const SSRDataNewFindingsTable = async ({
       <LighthouseBanner />
 
       <DataTable
+        key={`dashboard-${Date.now()}`}
         columns={ColumnNewFindingsToDate}
         data={expandedResponse?.data || []}
         // metadata={findingsData?.meta}

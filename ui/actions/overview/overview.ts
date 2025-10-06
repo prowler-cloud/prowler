@@ -1,8 +1,8 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getProvidersOverview = async ({
   page = 1,
@@ -32,12 +32,8 @@ export const getProvidersOverview = async ({
       headers,
     });
 
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/");
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching providers overview:", error);
     return undefined;
   }
@@ -61,7 +57,13 @@ export const getFindingsByStatus = async ({
 
   // Handle multiple filters, but exclude muted filter as overviews endpoint doesn't support it
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]" && key !== "filter[muted]") {
+    // The overviews/findings endpoint does not support status or muted filters
+    // (allowed filters include date, region, provider fields). Exclude unsupported ones.
+    if (
+      key !== "filter[search]" &&
+      key !== "filter[muted]" &&
+      key !== "filter[status]"
+    ) {
       url.searchParams.append(key, String(value));
     }
   });
@@ -71,16 +73,8 @@ export const getFindingsByStatus = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch findings severity: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/");
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching findings severity overview:", error);
     return undefined;
   }
@@ -102,7 +96,8 @@ export const getFindingsBySeverity = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters, but exclude muted filter as overviews endpoint doesn't support it
+  // Handle multiple filters, but exclude unsupported filters
+  // The overviews/findings_severity endpoint does not support status or muted filters
   Object.entries(filters).forEach(([key, value]) => {
     if (key !== "filter[search]" && key !== "filter[muted]") {
       url.searchParams.append(key, String(value));
@@ -114,16 +109,8 @@ export const getFindingsBySeverity = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch findings severity: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/");
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching findings severity overview:", error);
     return undefined;
   }

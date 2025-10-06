@@ -1,4 +1,4 @@
-# Managing Users and Roles
+# Managing Users and Role-Based Access Control (RBAC)
 
 **Prowler App** supports multiple users within a single tenant, enabling seamless collaboration by allowing team members to easily share insights and manage security findings.
 
@@ -207,7 +207,7 @@ Follow these steps to remove a role of your account:
 Assign administrative permissions by selecting from the following options:
 
 **Invite and Manage Users:** Invite new users and manage existing ones.<br>
-**Manage Account:** Adjust account settings and delete users.<br>
+**Manage Account:** Adjust account settings, delete users and read/manage users permissions.<br>
 **Manage Scans:** Run and review scans.<br>
 **Manage Cloud Providers:** Add or modify connected cloud providers.<br>
 **Manage Integrations:** Add or modify the Prowler Integrations.
