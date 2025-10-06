@@ -1,30 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "codeartifact_packages_external_public_publishing_disabled",
-  "CheckTitle": "Ensure CodeArtifact internal packages do not allow external public source publishing.",
-  "CheckType": [],
+  "CheckTitle": "Internal CodeArtifact package does not allow publishing versions already present in external public sources",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Initial Access"
+  ],
   "ServiceName": "codeartifact",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:repository/repository-name",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Other",
-  "Description": "Ensure CodeArtifact internal packages do not allow external public source publishing.",
-  "Risk": "Allowing package versions of a package to be added both by direct publishing and ingesting from public repositories makes you vulnerable to a dependency substitution attack.",
-  "RelatedUrl": "https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html",
+  "Description": "**AWS CodeArtifact packages** with an **internal or unknown origin** are evaluated for their **package origin controls**. The check identifies packages where the `upstream` setting allows ingesting versions from external or upstream repositories.",
+  "Risk": "Allowing upstream on internal packages enables **dependency confusion**: public repos can supply higher versions to builds, leading to malicious code execution and package tampering. This threatens **integrity**, exposes secrets and data (**confidentiality**), and may disrupt pipelines and services (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://repost.aws/questions/QURD7aFNj_R9-8odJY5mfgrw/npm-publish-for-a-package-to-aws-codeartifact-repo-fails-with-error-the-provided-package-is-configured-to-block-new-version-publishes",
+    "https://stackoverflow.com/questions/72985669/npm-publish-for-a-package-to-aws-codeartifact-repo-fails-with-error-the-provide",
+    "https://noise.getoto.net/2022/07/15/tighten-your-package-security-with-codeartifact-package-origin-control-toolkit/",
+    "https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html",
+    "https://repost.aws/es/questions/QURD7aFNj_R9-8odJY5mfgrw/npm-publish-for-a-package-to-aws-codeartifact-repo-fails-with-error-the-provided-package-is-configured-to-block-new-version-publishes",
+    "https://newstar.cloud/blog/improve-the-security-of-your-software-supply-chain-with-amazon-codeartifact-package-group-configuration/",
+    "https://classic.yarnpkg.com/en/package/@aws-sdk/client-codeartifact",
+    "https://noise.getoto.net/tag/aws-codeartifact/",
+    "https://zego.engineering/dependency-confusion-in-aws-codeartifact-86b9ff68963d"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws codeartifact put-package-origin-configuration --package 'MyPackage' --namespace 'MyNamespace' --domain 'MyDomain' --repository 'MyRepository' --domain-owner 'MyOwnerAccount' --format 'MyFormat' --restrictions 'publish=ALLOW,upstream=BLOCK'",
+      "CLI": "aws codeartifact put-package-origin-configuration --domain <DOMAIN> --repository <REPOSITORY> --format <FORMAT> --package <PACKAGE_NAME> --restrictions publish=ALLOW,upstream=BLOCK",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the AWS Console, go to CodeArtifact > Repositories and select <REPOSITORY>\n2. In Packages, open the internal package <PACKAGE_NAME>\n3. Under Origin controls, choose Edit\n4. Set Upstream to Block (leave Publish as Allow if required)\n5. Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure package origin controls on a package in a repository to limit how versions of that package can be added to the repository.",
-      "Url": "https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html"
+      "Text": "Enforce **Package Origin Controls** so internal packages use `upstream=BLOCK` and only trusted publish paths. Apply **least privilege** with package groups and private namespaces, pin versions, and prefer private endpoints. Add artifact signing and CI isolation, and monitor package events for unexpected source changes.",
+      "Url": "https://hub.prowler.com/check/codeartifact_packages_external_public_publishing_disabled"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "software-supply-chain"
   ],
   "DependsOn": [],
   "RelatedTo": [],
