@@ -25,8 +25,12 @@ const ScanDetailsCell = ({ row }: { row: any }) => {
   const searchParams = useSearchParams();
   const scanId = searchParams.get("scanId");
   const isOpen = scanId === row.original.id;
+  const scanState = row.original.attributes?.state;
+  const isExecuting = scanState === "executing" || scanState === "available";
 
   const handleOpenChange = (open: boolean) => {
+    if (isExecuting) return;
+
     const params = new URLSearchParams(searchParams.toString());
 
     if (open) {
@@ -41,7 +45,14 @@ const ScanDetailsCell = ({ row }: { row: any }) => {
   return (
     <div className="flex w-9 items-center justify-center">
       <TriggerSheet
-        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        triggerComponent={
+          <InfoIcon
+            className={
+              isExecuting ? "cursor-default text-gray-400" : "text-primary"
+            }
+            size={16}
+          />
+        }
         title="Scan Details"
         description="View the scan details"
         open={isOpen}
