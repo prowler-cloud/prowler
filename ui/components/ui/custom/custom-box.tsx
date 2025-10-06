@@ -1,5 +1,6 @@
-import { Card, CardBody, CardHeader, Divider } from "@nextui-org/react";
-import { CardProps as NextUICardProps } from "@nextui-org/react";
+import type { CardProps as NextUICardProps } from "@heroui/card";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Divider } from "@heroui/divider";
 import React from "react";
 interface CustomBoxProps {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ export const CustomBox = ({
           <Divider />
         </>
       )}
-      <CardBody className="px-3 pb-4 pt-3">{children}</CardBody>
+      <CardBody className="px-3 pt-3 pb-4">{children}</CardBody>
     </Card>
   );
 };

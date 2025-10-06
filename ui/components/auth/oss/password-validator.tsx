@@ -69,25 +69,28 @@ export const PasswordRequirementsMessage = ({
         {allRequirementsMet ? (
           <div className="flex items-center gap-2">
             <CheckCircle
-              className="h-4 w-4 flex-shrink-0 text-system-success"
+              className="text-system-success h-4 w-4 shrink-0"
               aria-hidden="true"
             />
-            <p className="text-xs font-medium leading-tight text-system-success">
+            <p className="text-system-success text-xs leading-tight font-medium">
               Password meets all requirements
             </p>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <AlertCircle
-                className="h-4 w-4 flex-shrink-0 text-red-600"
+                className="h-4 w-4 shrink-0 text-red-600"
                 aria-hidden="true"
               />
-              <p className="text-xs font-medium leading-tight text-red-700">
+              <p className="text-xs leading-tight font-medium text-red-700">
                 Password must include:
               </p>
             </div>
-            <ul className="ml-6 space-y-0.5" aria-label="Password requirements">
+            <ul
+              className="ml-6 flex flex-col gap-0.5"
+              aria-label="Password requirements"
+            >
               {results.map((req) => (
                 <li
                   key={req.key}
@@ -95,7 +98,7 @@ export const PasswordRequirementsMessage = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                      className={`h-2 w-2 shrink-0 rounded-full ${
                         req.isMet ? "bg-system-success" : "bg-red-400"
                       }`}
                       aria-hidden="true"

@@ -20,7 +20,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-20 h-screen -translate-x-full transition-[width] duration-300 ease-in-out lg:translate-x-0",
+        "fixed top-0 left-0 z-20 h-screen -translate-x-full transition-[width] duration-300 ease-in-out lg:translate-x-0",
         !getOpenState() ? "w-[90px]" : "w-72",
         settings.disabled && "hidden",
       )}
@@ -29,7 +29,7 @@ export function Sidebar() {
       <div
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
-        className="no-scrollbar relative flex h-full flex-col overflow-y-auto overflow-x-hidden px-3 py-4 shadow-md dark:shadow-primary"
+        className="no-scrollbar dark:shadow-primary relative flex h-full flex-col overflow-x-hidden overflow-y-auto px-3 py-4 shadow-md"
       >
         <Button
           className={cn(
@@ -58,7 +58,7 @@ export function Sidebar() {
             <div
               className={clsx({
                 hidden: !isOpen,
-                "!mt-0": isOpen,
+                "mt-0!": isOpen,
               })}
             >
               <ProwlerExtended />

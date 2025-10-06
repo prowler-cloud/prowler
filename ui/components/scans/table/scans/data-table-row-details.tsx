@@ -77,7 +77,7 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
 
   if (isLoading) {
     return (
-      <Alert className="text-center text-small font-bold text-gray-500">
+      <Alert className="text-small text-center font-bold text-gray-500">
         Scan details are loading and will be available once the scan is
         completed.
       </Alert>

@@ -43,6 +43,7 @@ from api.models import (
     StateChoices,
     StatusChoices,
     Task,
+    TenantAPIKey,
     User,
 )
 from api.rls import Tenant
@@ -976,3 +977,20 @@ class IntegrationJiraFindingsFilter(FilterSet):
                 }
             )
         return super().filter_queryset(queryset)
+
+
+class TenantApiKeyFilter(FilterSet):
+    inserted_at = DateFilter(field_name="created", lookup_expr="date")
+    inserted_at__gte = DateFilter(field_name="created", lookup_expr="gte")
+    inserted_at__lte = DateFilter(field_name="created", lookup_expr="lte")
+    expires_at = DateFilter(field_name="expiry_date", lookup_expr="date")
+    expires_at__gte = DateFilter(field_name="expiry_date", lookup_expr="gte")
+    expires_at__lte = DateFilter(field_name="expiry_date", lookup_expr="lte")
+
+    class Meta:
+        model = TenantAPIKey
+        fields = {
+            "prefix": ["exact", "icontains"],
+            "revoked": ["exact"],
+            "name": ["exact", "icontains"],
+        }
