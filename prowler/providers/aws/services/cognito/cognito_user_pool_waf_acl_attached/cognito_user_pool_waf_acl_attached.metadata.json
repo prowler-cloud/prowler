@@ -1,29 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "cognito_user_pool_waf_acl_attached",
-  "CheckTitle": "Ensure that Amazon Cognito User Pool is associated with a WAF Web ACL",
-  "CheckType": [],
+  "CheckTitle": "Amazon Cognito user pool is associated with a WAF Web ACL",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Denial of Service"
+  ],
   "ServiceName": "cognito",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsCognitoUserPool",
-  "Description": "Web ACLs are used to control access to your content. You can use a Web ACL to control who can access your content. You can also use a Web ACL to block requests based on IP address, HTTP headers, HTTP body, URI, or URI query string parameters. You can associate a Web ACL with a Cognito User Pool to control access to your content.",
-  "Risk": "If a Web ACL is not associated with a Cognito User Pool, then the content is not protected by the Web ACL. This could lead to unauthorized access to your content.",
-  "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-waf.html",
+  "ResourceType": "AwsWafv2WebAcl",
+  "Description": "Amazon Cognito user pools are evaluated for an association with an **AWS WAFv2 web ACL** that filters and controls requests to the hosted UI and public user pool API endpoints.",
+  "Risk": "Without a web ACL, Cognito endpoints lack layer-7 filtering, enabling:\n- Credential stuffing and account enumeration\n- Bot abuse and high-rate requests degrading service\n- Malicious payload probes\n\nThis threatens **availability**, risks unauthorized access to user data (**confidentiality**), and undermines session **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-waf.html",
+    "https://awscli.amazonaws.com/v2/documentation/api/2.9.6/reference/wafv2/associate-web-acl.html",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl_association",
+    "https://stackoverflow.com/questions/76068360/how-to-add-waf-to-my-cognito-userpool-with-cdk",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl",
+    "https://github.com/aws-ss/terraform-aws-wafv2",
+    "https://medium.com/@umashankarn/deploying-waf-to-protect-cognito-resources-841ea24216d2"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws wafv2 associate-web-acl --web-acl-arn <WEB_ACL_ARN> --resource-arn <COGNITO_USER_POOL_ARN>",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::WAFv2::WebACLAssociation\n    Properties:\n      ResourceArn: <example_resource_arn>  # Critical: Cognito User Pool ARN to protect\n      WebACLArn: <example_web_acl_arn>     # Critical: WAF Web ACL ARN to associate\n```",
+      "Other": "1. Open the AWS Console and go to Cognito > User pools\n2. Select the user pool\n3. In Security, open the AWS WAF tab and click Edit\n4. Check Use AWS WAF with your user pool\n5. Select the existing regional Web ACL\n6. Click Save changes",
+      "Terraform": "```hcl\nresource \"aws_wafv2_web_acl_association\" \"<example_resource_name>\" {\n  resource_arn = \"<example_resource_arn>\"  # Critical: Cognito User Pool ARN\n  web_acl_arn  = \"<example_web_acl_arn>\"   # Critical: WAF Web ACL ARN\n}\n```"
     },
     "Recommendation": {
-      "Text": "The Web ACL should be associated with the Cognito User Pool. To associate a Web ACL with a Cognito User Pool, use the AWS Management Console.",
-      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-waf.html"
+      "Text": "Associate an **AWS WAFv2 web ACL** with each user pool to enforce layer-7 controls. Use defense-in-depth: managed rule groups, `rate-based` limits, IP reputation, and bot mitigation. Enable request logging and continuously tune rules to reduce false positives. *Avoid rule sets incompatible with Cognito endpoints.*",
+      "Url": "https://hub.prowler.com/check/cognito_user_pool_waf_acl_attached"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "threat-detection",
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
