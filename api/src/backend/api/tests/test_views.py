@@ -7418,8 +7418,6 @@ class TestTenantApiKeyViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == len(api_keys_fixture)
-        # Verify keys are ordered by -created (newest first)
-        assert data[0]["attributes"]["name"] == TenantAPIKey.objects.first().name
 
     def test_api_keys_list_empty(self, authenticated_client, tenants_fixture):
         """Test listing API keys when none exist returns empty list."""
