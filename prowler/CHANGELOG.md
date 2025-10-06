@@ -38,14 +38,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix KeyError in `elb_ssl_listeners_use_acm_certificate` check and handle None cluster version in `eks_cluster_uses_a_supported_version` check [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
-
----
-
----
-
-## [v5.12.4] (Prowler UNRELEASED)
-
-### Fixed
 - Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
 
 ---
