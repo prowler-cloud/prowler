@@ -28,7 +28,7 @@
   "Remediation": {
     "Code": {
       "CLI": "aws account put-alternate-contact --alternate-contact-type=SECURITY --email-address=<SECURITY_EMAIL> --name=\"<SECURITY_CONTACT_NAME>\" --phone-number=\"<SECURITY_PHONE>\" --title=\"Security\"",
-      "NativeIaC": "```yaml\n# CloudFormation: set the Security alternate contact for the AWS account\nResources:\n  <example_resource_name>:\n    Type: AWS::Account::AlternateContact\n    Properties:\n      AlternateContactType: SECURITY  # Critical: ensures AWS can reach your security team\n      EmailAddress: <SECURITY_EMAIL>  # Critical: contact destination\n      Name: <SECURITY_CONTACT_NAME>\n      PhoneNumber: <SECURITY_PHONE>\n      Title: Security\n```",
+      "NativeIaC": "",
       "Other": "1. Sign in to the AWS Management Console\n2. Open Billing and Cost Management, then click your account name > Account\n3. Under Contact information, click Edit, update details, then Update\n4. Under Alternate contacts, click Edit\n5. Enter Security contact name, email, and phone (use a team alias), then Update\n6. Repeat for Billing and Operations if needed",
       "Terraform": "```hcl\n# Set the Security alternate contact for the AWS account\nresource \"aws_account_alternate_contact\" \"<example_resource_name>\" {\n  alternate_contact_type = \"SECURITY\"  # Critical: ensures AWS can reach your security team\n  email_address          = \"<SECURITY_EMAIL>\"  # Critical: contact destination\n  name                   = \"<SECURITY_CONTACT_NAME>\"\n  phone_number           = \"<SECURITY_PHONE>\"\n  title                  = \"Security\"\n}\n```"
     },
@@ -37,9 +37,7 @@
       "Url": "https://hub.prowler.com/check/account_maintain_current_contact_details"
     }
   },
-  "Categories": [
-    "resilience"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

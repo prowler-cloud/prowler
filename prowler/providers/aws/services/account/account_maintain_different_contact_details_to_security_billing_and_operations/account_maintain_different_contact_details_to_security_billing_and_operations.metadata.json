@@ -17,15 +17,11 @@
   "AdditionalURLs": [
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_alternate_contact",
     "https://docs.prowler.com/checks/aws/iam-policies/iam_18-maintain-contact-details#aws-console",
-    "https://sbstjn.com/blog/aws-cdk-update-alternate-contact/",
-    "https://d0.awsstatic.com/aws-answers/AWS_Secure_Account_Setup.pdf",
     "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact-alternate.html",
     "https://builder.aws.com/content/2qRw97fe8JFwfk2AbpJ3sYNpNvM/aws-bulk-update-alternate-contacts-across-organization",
     "https://github.com/aws-samples/aws-account-alternate-contact-with-terraform",
-    "https://docs.cloud.ucsb.edu/campus-cloud-docs/docs/bestpractices/contacts",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/account-security-alternate-contacts.html",
     "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv",
-    "https://repost.aws/es/questions/QU14Aq5-zfTkem_2qRCKK6Ng/multiple-aws-account-setup"
   ],
   "Remediation": {
     "Code": {

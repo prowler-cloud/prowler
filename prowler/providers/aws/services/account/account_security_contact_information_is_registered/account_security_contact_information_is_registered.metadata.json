@@ -17,10 +17,6 @@
   "AdditionalURLs": [
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_alternate_contact",
     "https://docs.prowler.com/checks/aws/iam-policies/iam_19/",
-    "https://support.icompaas.com/support/solutions/articles/62000233104-1-2-ensure-security-contact-information-is-registered-manual-",
-    "https://notes.kodekloud.com/docs/AWS-Certified-Developer-Associate/AWS-Fundamentals/AWS-Account-Setup",
-    "https://d0.awsstatic.com/aws-answers/AWS_Secure_Account_Setup.pdf",
-    "https://sbstjn.com/blog/aws-cdk-update-alternate-contact/",
     "https://support.icompaas.com/support/solutions/articles/62000234161-1-2-ensure-security-contact-information-is-registered-manual-",
     "https://www.plerion.com/cloud-knowledge-base/ensure-security-contact-information-is-registered",
     "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv"
@@ -28,7 +24,7 @@
   "Remediation": {
     "Code": {
       "CLI": "aws account put-alternate-contact --alternate-contact-type SECURITY --email-address <EMAIL_ADDRESS> --name <CONTACT_NAME> --phone-number <PHONE_NUMBER>",
-      "NativeIaC": "```yaml\n# CloudFormation using the community resource type to set the SECURITY alternate contact\nResources:\n  AlternateSecurityContact:\n    Type: AwsCommunity::Account::AlternateContact\n    Properties:\n      AlternateContactType: SECURITY  # Critical: sets the Security alternate contact type\n      EmailAddress: security@example.com  # Critical: contact email used by AWS\n      Name: Security Team  # Critical: required contact name\n      PhoneNumber: +1-555-0100  # Critical: required contact phone\n```",
+      "NativeIaC": "",
       "Other": "1. Sign in to the AWS Management Console as the root user or an admin with account:PutAlternateContact\n2. Click your account name (top-right) and select My Account (or Account)\n3. Scroll to Alternate Contacts and click Edit in the Security section\n4. Enter Security Email, Name, and Phone Number\n5. Click Update (or Save changes)",
       "Terraform": "```hcl\n# Set the SECURITY alternate contact for the current AWS account\nresource \"aws_account_alternate_contact\" \"<example_resource_name>\" {\n  alternate_contact_type = \"SECURITY\"  # Critical: sets Security contact type\n  email_address          = \"security@example.com\"  # Contact email\n  name                   = \"Security Team\"         # Contact name\n  phone_number           = \"+1-555-0100\"          # Contact phone\n}\n```"
     },
