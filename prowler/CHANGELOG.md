@@ -41,6 +41,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+---
+
+## [v5.12.4] (Prowler UNRELEASED)
+
+### Fixed
+- Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
+
+---
+
 ## [v5.12.1] (Prowler v5.12.1)
 
 ### Fixed
