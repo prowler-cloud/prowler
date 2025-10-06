@@ -77,27 +77,36 @@ class AdminCenter(M365Service):
         logger.info("M365 - Getting users...")
         users = {}
         try:
-            users_list = await self.client.users.get()
             users.update({})
-            for user in users_list.value:
-                license_details = await self.client.users.by_user_id(
-                    user.id
-                ).license_details.get()
-                users.update(
-                    {
-                        user.id: User(
-                            id=user.id,
-                            name=getattr(user, "display_name", ""),
-                            license=(
-                                getattr(
-                                    license_details.value[0], "sku_part_number", None
-                                )
-                                if license_details.value
-                                else None
-                            ),
-                        )
-                    }
-                )
+            users_response = await self.client.users.get()
+
+            while users_response:
+                for user in getattr(users_response, "value", []) or []:
+                    license_details = await self.client.users.by_user_id(
+                        user.id
+                    ).license_details.get()
+                    users.update(
+                        {
+                            user.id: User(
+                                id=user.id,
+                                name=getattr(user, "display_name", ""),
+                                license=(
+                                    getattr(
+                                        license_details.value[0],
+                                        "sku_part_number",
+                                        None,
+                                    )
+                                    if license_details.value
+                                    else None
+                                ),
+                            )
+                        }
+                    )
+
+                next_link = getattr(users_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                users_response = await self.client.users.with_url(next_link).get()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
