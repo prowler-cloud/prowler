@@ -33,9 +33,7 @@
       "Url": "https://hub.prowler.com/check/account_security_contact_information_is_registered"
     }
   },
-  "Categories": [
-    "forensics-ready"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
