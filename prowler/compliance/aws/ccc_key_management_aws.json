@@ -1,0 +1,184 @@
+{
+  "Framework": "CCC-Key-Management",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "Key Management Service is a tool provided by cloud service providers to securely create, store, and manage cryptographic keys used to encrypt and decrypt sensitive data.",
+  "Requirements": [
+    {
+      "Id": "CCC.KeyMgmt.C01.TR01",
+      "Description": "When a key version is scheduled for deletion or disabled, an\nalert MUST be generated within five minutes.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging and Metrics Publication",
+          "FamilyDescription": "Controls that collect, alert, and retain key-management events.",
+          "Section": "CCC.KeyMgmt.C01 Alert on Key-version Changes",
+          "SubSection": "",
+          "SubSectionObjective": "Generate near-real-time alerts when a KMS key version is disabled or scheduled for deletion, enabling rapid investigation and recovery.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Use native event services (e.g., CloudWatch Events, Azure Monitor, Cloud Audit Logs) to route notifications to an incident-response channel.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "RS.AN-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "IR-5"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_cmk_not_deleted_unintentionally"
+      ]
+    },
+    {
+      "Id": "CCC.KeyMgmt.C02.TR01",
+      "Description": "When IAM roles and key policies are reviewed, Decrypt permission\nMUST be granted exclusively to documented authorised principals.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that enforce least-privilege use of KMS operations.",
+          "Section": "CCC.KeyMgmt.C02 Limit Decrypt Permissions",
+          "SubSection": "",
+          "SubSectionObjective": "Restrict the Decrypt operation to authorised principals only, applying the principle of least privilege to protect sensitive data.",
+          "Applicability": [
+            "tlp-green"
+          ],
+          "Recommendation": "Periodically audit policy documents via automated tooling and report any deviations.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_cmk_not_multi_region",
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_are_used",
+        "iam_inline_policy_no_full_access_to_kms"
+      ]
+    },
+    {
+      "Id": "CCC.KeyMgmt.C03.TR01",
+      "Description": "When rotation settings are examined, rotation MUST be enabled with\nan interval not exceeding 365 days.",
+      "Attributes": [
+        {
+          "FamilyName": "Key Lifecycle Management",
+          "FamilyDescription": "Controls that govern creation, rotation, import, and retirement of cryptographic keys.",
+          "Section": "CCC.KeyMgmt.C03 Enforce Automatic Rotation",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure symmetric keys rotate automatically within policy intervals to reduce exposure of key material.",
+          "Applicability": [
+            "tlp-green"
+          ],
+          "Recommendation": "Use cloud-provider rotation features and verify via configuration scanning.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_cmk_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.KeyMgmt.C04.TR01",
+      "Description": "When a key import request is processed, the key MUST use an\napproved algorithm (RSA-2048+, EC-P256+) and originate from a\ncertified HSM.",
+      "Attributes": [
+        {
+          "FamilyName": "Key Lifecycle Management",
+          "FamilyDescription": "Controls that govern creation, rotation, import, and retirement of cryptographic keys.",
+          "Section": "CCC.KeyMgmt.C04 Validate Imported Keys",
+          "SubSection": "",
+          "SubSectionObjective": "Accept only externally generated keys that meet approved cryptographic strength and provenance requirements.",
+          "Applicability": [
+            "tlp-green"
+          ],
+          "Recommendation": "Implement an approval workflow that validates attestation data before import.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_not_multi_region",
+        "kms_cmk_are_used"
+      ]
+    }
+  ]
+}

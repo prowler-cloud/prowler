@@ -1,0 +1,157 @@
+{
+  "Framework": "CCC-Data-Warehouse",
+  "Version": "",
+  "Provider": "GCP",
+  "Description": "A data warehouse is a centralized repository designed to store, manage, and analyze large volumes of data from various sources.",
+  "Requirements": [
+    {
+      "Id": "CCC.DataWar.C01.TR01",
+      "Description": "Attempt to access underlying database tables directly without\nusing managed views and verify that access is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.DataWar.C01 Enforce Use of Managed Views for Data Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that data access is provided through managed views, restricting users\nfrom accessing underlying tables directly and enforcing consistent security policies.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.DataWar.C02.TR01",
+      "Description": "Attempt to query sensitive columns without the necessary permissions and\nverify that access is denied or data is masked.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.DataWar.C02 Enforce Column-Level Security Policies",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access to sensitive data columns is restricted based on user roles,\npreventing unauthorized access to sensitive information.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.DataWar.C03.TR01",
+      "Description": "Attempt to query data rows that the user should not have access to and verify\nthat access is denied or data is not returned.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.DataWar.C03 Enforce Row-Level Security Policies",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access to data rows is restricted based on user roles or attributes,\npreventing unauthorized access to specific subsets of data.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "cloudsql_instance_postgres_enable_pgaudit_flag",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_private_ip_assignment",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_instance_public_ip"
+      ]
+    }
+  ]
+}

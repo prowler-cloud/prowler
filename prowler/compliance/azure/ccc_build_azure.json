@@ -1,0 +1,144 @@
+{
+  "Framework": "CCC-Build",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "This documents the minimal set of capabilities that should be present for a build service to be considered for use in financial services ecosystems.",
+  "Requirements": [
+    {
+      "Id": "CCC.Build.C01.TR01",
+      "Description": "Attempt to initiate a build using an unauthorized build agent and verify that the build is rejected.",
+      "Attributes": [
+        {
+          "FamilyName": "Access Control",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.Build.C01 Restrict Allowed Build Agents",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that builds are executed only on authorized build agents to maintain\ncontrol over the build environment and prevent unauthorized code execution.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Build.C02.TR01",
+      "Description": "Attempt to trigger a build from an unauthorized external service or\nrepository and verify that the build does not start.",
+      "Attributes": [
+        {
+          "FamilyName": "Access Control",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.Build.C02 Restrict Allowed External Services for Build Triggers",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that builds can only be triggered by authorized external services or\nrepositories to prevent unauthorized code execution or tampering.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Build.C03.TR01",
+      "Description": "Attempt to access the build environment from an external network and verify that access is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.Build.C03 Deny External Network Access for Build Environments",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that build environments do not have external network access to\nprevent unauthorized external access and data exfiltration.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH02",
+                "CCC.TH05"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7",
+                "SC-5"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "aks_clusters_public_access_disabled",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "app_function_not_publicly_accessible",
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted"
+      ]
+    }
+  ]
+}

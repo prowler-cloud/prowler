@@ -1,0 +1,446 @@
+{
+  "Framework": "CCC-Load-Balancer",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "This documents the minimual set of capabilities that should be present for a load balancer service to be considered for use in financial services ecosystems.",
+  "Requirements": [
+    {
+      "Id": "CCC.LB.C01.TR01",
+      "Description": "When a single client sends more than 2000 requests within any\n5-minute sliding window, the load balancer MUST throttle all\nsubsequent requests from that client for at least 60 seconds.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that detect anomalous traffic and record load-balancer activity.\n",
+          "Section": "CCC.LB.C01 Enforce and Detect Rate Limiting",
+          "SubSection": "",
+          "SubSectionObjective": "Detect and throttle malicious or excessive requests to prevent downstream resource exhaustion and brute-force activity.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Implement per-IP token-bucket limits with and verify via\nsynthetic traffic tests.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH01",
+                "CCC.LB.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-1",
+                "PR.AC-7",
+                "PR.PT-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-6",
+                "SC-5",
+                "AC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C01.TR02",
+      "Description": "When throttling is invoked, the load balancer MUST\nrecord the event in the access log within 5 minutes\nfor alerting and trend analysis.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that detect anomalous traffic and record load-balancer activity.\n",
+          "Section": "CCC.LB.C01 Enforce and Detect Rate Limiting",
+          "SubSection": "",
+          "SubSectionObjective": "Detect and throttle malicious or excessive requests to prevent downstream resource exhaustion and brute-force activity.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Enable access logging and configure metric filters\non HTTP 429 counts to trigger alerts.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH01",
+                "CCC.LB.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-1",
+                "PR.AC-7",
+                "PR.PT-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-6",
+                "SC-5",
+                "AC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C06.TR01",
+      "Description": "When more than 10 percent of targets change from healthy to\nunhealthy within five minutes, an alert MUST be issued.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that detect anomalous traffic and record load-balancer activity.\n",
+          "Section": "CCC.LB.C06 Secure Health-Check Telemetry",
+          "SubSection": "",
+          "SubSectionObjective": "Monitor health-check endpoints for tampering and alert on\nabnormal status changes.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Instrument metrics for health check results and target\nremoval events. Configure monitoring alarms to alert\non abnormal spikes in unhealthy targets.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH05"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.AE-2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "cloudwatch_alarm_actions_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "vpc_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C04.TR01",
+      "Description": "When routing weights change, the request MUST originate\nfrom an explicitly defined and trusted identity and MUST\nbe logged.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can change or query load-balancer resources.\n",
+          "Section": "CCC.LB.C04 Enforce Distribution Policies",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure traffic-splitting weights and algorithms are modified\nonly by trusted identities.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Define a list of trusted principals allowed to modify\nrouting configurations. Enforce via conditional access\npolicies, and log changes using audit logging.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_group_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_user_administrator_access_policy"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C05.TR01",
+      "Description": "When stickiness is enabled, session cookies MUST expire\nwithin 30 minutes of inactivity.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can change or query load-balancer resources.\n",
+          "Section": "CCC.LB.C05 Validate Session Affinity",
+          "SubSection": "",
+          "SubSectionObjective": "Configure session persistence to minimise fixation and hijacking\nrisks.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Audit CCC.LB.F15 parameters via configuration scans.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-7"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-23"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_user_administrator_access_policy",
+        "iam_group_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_inline_policy_no_full_access_to_cloudtrail",
+        "iam_inline_policy_no_full_access_to_kms",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_allows_privilege_escalation",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_policy_attached_only_to_group_or_roles"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C09.TR01",
+      "Description": "When an API call originates outside the approved CIDR\nset, the request MUST be denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can change or query load-balancer resources.\n",
+          "Section": "CCC.LB.C09 Restrict Management API Access",
+          "SubSection": "",
+          "SubSectionObjective": "Limit load-balancer API calls to authorised identities and\ntrusted networks.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Combine VPC endpoints with IAM condition-key filters for protected APIs.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH08"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_for_ec2_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C02.TR01",
+      "Description": "When concurrent connections reach 80 percent of capacity, the\nautoscaling group MUST add at least one instance within five\nminutes.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls that preserve availability and confidentiality of\ntraffic processed by the load balancer.\n",
+          "Section": "CCC.LB.C02 Auto-Scale Load Balancer Capacity",
+          "SubSection": "",
+          "SubSectionObjective": "Expand load-balancer capacity to maintain availability during traffic\nspikes.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Enable autoscaling policies.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "ID.BE-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_elb_health_check_enabled",
+        "autoscaling_group_multiple_az",
+        "autoscaling_group_multiple_instance_types",
+        "autoscaling_group_using_ec2_launch_template"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C07.TR01",
+      "Description": "When responses pass through the load balancer, the\n\"Server\" header MUST be replaced with \"lb\".",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls that preserve availability and confidentiality of\ntraffic processed by the load balancer.\n",
+          "Section": "CCC.LB.C07 Scrub Sensitive Headers",
+          "SubSection": "",
+          "SubSectionObjective": "Remove headers that disclose internal details or software\nversions from HTTP responses.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Configure header-transformation rules.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.TH15"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.LB.C08.TR01",
+      "Description": "When a certificate is within 30 days of expiry, automated renewal\nMUST complete and deploy a new certificate within 24 hours.",
+      "Attributes": [
+        {
+          "FamilyName": "Encryption",
+          "FamilyDescription": "Controls that ensure trustworthy TLS certificates and ciphers.",
+          "Section": "CCC.LB.C08 Automate Certificate Renewal",
+          "SubSection": "",
+          "SubSectionObjective": "Maintain valid TLS certificates by automating renewal and\ndeployment before expiry.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Use certificate-manager auto-renewal workflows.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check",
+        "acm_certificates_transparency_logs_enabled",
+        "acm_certificates_with_secure_key_algorithms"
+      ]
+    }
+  ]
+}

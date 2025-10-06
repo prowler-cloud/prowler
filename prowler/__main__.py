@@ -511,7 +511,7 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
-            elif compliance_name == "ccc_objects_aws":
+            elif compliance_name.startswith("ccc_"):
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
@@ -602,7 +602,7 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
-            elif compliance_name == "ccc_objects_azure":
+            elif compliance_name.startswith("ccc_"):
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
@@ -693,7 +693,7 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
-            elif compliance_name == "ccc_objects_gcp":
+            elif compliance_name.startswith("ccc_"):
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
