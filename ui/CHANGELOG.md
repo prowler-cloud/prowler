@@ -26,6 +26,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Migrated from `useFormState` to `useActionState` for React 19 compatibility [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - References display in findings detail page now shows as a proper bulleted list [(#8793)](https://github.com/prowler-cloud/prowler/pull/8793)
 
+### 🐞 Fixed
+
+- ThreatScore for each pillar in Prowler ThreatScore specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+
 ---
 
 ## [1.12.3] (Prowler v5.12.3)
