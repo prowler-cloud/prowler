@@ -1,4 +1,5 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import {
   getFindingsBySeverity,
@@ -12,8 +13,14 @@ import {
 } from "@/types/lighthouse";
 
 export const getProvidersOverviewTool = tool(
-  async ({ page, query, sort, filters }) => {
-    return await getProvidersOverview({ page, query, sort, filters });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getProvidersOverviewSchema>;
+    return await getProvidersOverview({
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+    });
   },
   {
     name: "getProvidersOverview",
@@ -24,8 +31,14 @@ export const getProvidersOverviewTool = tool(
 );
 
 export const getFindingsByStatusTool = tool(
-  async ({ page, query, sort, filters }) => {
-    return await getFindingsByStatus({ page, query, sort, filters });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getFindingsByStatusSchema>;
+    return await getFindingsByStatus({
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+    });
   },
   {
     name: "getFindingsByStatus",
@@ -36,8 +49,14 @@ export const getFindingsByStatusTool = tool(
 );
 
 export const getFindingsBySeverityTool = tool(
-  async ({ page, query, sort, filters }) => {
-    return await getFindingsBySeverity({ page, query, sort, filters });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getFindingsBySeveritySchema>;
+    return await getFindingsBySeverity({
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+    });
   },
   {
     name: "getFindingsBySeverity",

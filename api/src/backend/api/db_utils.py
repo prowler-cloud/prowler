@@ -61,7 +61,7 @@ def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
     with transaction.atomic():
         with connection.cursor() as cursor:
             try:
-                # just in case the value is an UUID object
+                # just in case the value is a UUID object
                 uuid.UUID(str(value))
             except ValueError:
                 raise ValidationError("Must be a valid UUID")
@@ -432,6 +432,12 @@ def drop_index_on_partitions(
         idx_name = f"{partition.replace('.', '_')}_{index_name}"
         sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
         schema_editor.execute(sql)
+
+
+def generate_api_key_prefix():
+    """Generate a random 8-character prefix for API keys (e.g., 'pk_abc123de')."""
+    random_chars = generate_random_token(length=8)
+    return f"pk_{random_chars}"
 
 
 # Postgres enum definition for member role

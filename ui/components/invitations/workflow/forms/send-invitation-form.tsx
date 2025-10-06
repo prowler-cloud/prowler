@@ -1,7 +1,7 @@
 "use client";
 
+import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -14,8 +14,8 @@ import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
 const sendInvitationFormSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  roleId: z.string().nonempty("Role is required"),
+  email: z.email({ error: "Please enter a valid email" }),
+  roleId: z.string().min(1, "Role is required"),
 });
 
 export type FormValues = z.infer<typeof sendInvitationFormSchema>;
@@ -53,7 +53,8 @@ export const SendInvitationForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/email":
               form.setError("email", {
                 type: "server",
@@ -91,7 +92,7 @@ export const SendInvitationForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Email Field */}
         <CustomInput
@@ -101,7 +102,7 @@ export const SendInvitationForm = ({
           label="Email"
           labelPlacement="inside"
           placeholder="Enter the email address"
-          variant="bordered"
+          variant="flat"
           isRequired
           isInvalid={!!form.formState.errors.email}
         />
@@ -118,7 +119,7 @@ export const SendInvitationForm = ({
                 classNames={{
                   selectorIcon: "right-2",
                 }}
-                variant="bordered"
+                variant="flat"
                 isDisabled={isSelectorDisabled}
                 selectedKeys={[field.value]}
                 onSelectionChange={(selected) =>
@@ -143,7 +144,7 @@ export const SendInvitationForm = ({
         />
 
         {/* Submit Button */}
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           <CustomButton
             type="submit"
             ariaLabel="Send Invitation"

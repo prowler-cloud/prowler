@@ -2,7 +2,7 @@
 
 This page provides instructions for creating and configuring a Microsoft Entra ID (formerly Azure AD) application to use SAML SSO with Prowler App.
 
-You can find a walkthrough video [here](https://youtu.be/UtcjDh5cAjI).
+You can find a walkthrough video [here](https://www.youtube.com/watch?v=zegqm55oJVk).
 
 ## Creating and Configuring the Enterprise Application
 

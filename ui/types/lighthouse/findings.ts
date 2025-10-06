@@ -40,9 +40,9 @@ export const getFindingsSchema = z.object({
   query: z
     .string()
     .describe("The query to search for. Default is empty string."),
-  sort: z
-    .string(sortFieldsEnum)
-    .describe("The sort order to use. Default is empty string."),
+  sort: sortFieldsEnum.describe(
+    "The sort order to use. Default is empty string.",
+  ),
   filters: z
     .object({
       "filter[check_id]": z

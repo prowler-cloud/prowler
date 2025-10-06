@@ -14,12 +14,6 @@ import {
   ProviderType,
 } from "@/types";
 
-type CredentialsFormData = {
-  providerId: string;
-  providerType: ProviderType;
-  [key: string]: any;
-};
-
 type UseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
@@ -56,7 +50,7 @@ export const useCredentialsForm = ({
   const formSchema = getFormSchema();
 
   // Get default values based on provider type and via parameter
-  const getDefaultValues = (): CredentialsFormData => {
+  const getDefaultValues = () => {
     const baseDefaults = {
       [ProviderCredentialFields.PROVIDER_ID]: providerId,
       [ProviderCredentialFields.PROVIDER_TYPE]: providerType,
@@ -152,7 +146,7 @@ export const useCredentialsForm = ({
     }
   };
 
-  const form = useForm<CredentialsFormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: getDefaultValues(),
   });
@@ -170,7 +164,7 @@ export const useCredentialsForm = ({
   };
 
   // Form submit handler
-  const handleSubmit = async (values: CredentialsFormData) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     const formData = new FormData();
 
     // Filter out empty values first, then append all remaining values

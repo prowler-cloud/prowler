@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "account_security_questions_are_registered_in_the_aws_account",
-  "CheckTitle": "AWS root user has security challenge questions configured",
+  "CheckTitle": "[DEPRECATED] AWS root user has security challenge questions configured",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
@@ -9,20 +9,19 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsIamUser",
-  "Description": "**AWS account root** configuration may include legacy **security challenge questions** for support identity verification. This evaluates whether those questions are set on the account. *New configuration is discontinued by AWS and remaining support for this feature is time-limited.*",
+  "ResourceType": "Other",
+  "Description": "[DEPRECATED] **AWS account root** configuration may include legacy **security challenge questions** for support identity verification. This evaluates whether those questions are set on the account. *New configuration is discontinued by AWS and remaining support for this feature is time-limited.*",
   "Risk": "Absence of these questions can limit support-assisted recovery if root credentials or MFA are lost, reducing **availability** and slowing **incident response**. Reliance on KBA also weakens **confidentiality** due to **social engineering**. Treat this as a recovery gap and adopt stronger, phishing-resistant factors.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-security-challenge.html",
-    "https://aws.amazon.com/console/",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_15"
+    "https://docs.prowler.com/checks/aws/iam-policies/iam_15",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/security-challenge-questions.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. AWS removed security challenge questions on Jan 6, 2025; this setting cannot be configured.\n2. Treat this finding as Not Applicable.\n3. Mitigate by enabling root MFA: sign in as the root user, open your account menu (top right) > Security credentials, then under Multi-factor authentication (MFA) choose Activate MFA and complete setup.",
+      "Other": "1. Sign in to the AWS Management Console\n2. Navigate to your AWS account settings page at https://console.aws.amazon.com/billing/home?#/account/\n3. Scroll down to Configure Security Challenge Questions section and click the Edit link\n4. Select three different questions made available by Amazon and provide appropriate answers\n5. Store the answers in a secure but accessible location\n6. Click the Update button to save the changes",
       "Terraform": ""
     },
     "Recommendation": {
@@ -30,9 +29,7 @@
       "Url": "https://hub.prowler.com/check/account_security_questions_are_registered_in_the_aws_account"
     }
   },
-  "Categories": [
-    "identity-access"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

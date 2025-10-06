@@ -2,13 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getScans = async ({
   page = 1,
@@ -44,7 +39,7 @@ export const getScans = async ({
   try {
     const response = await fetch(url.toString(), { headers });
 
-    return handleApiResponse(response, "/scans");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching scans:", error);
     return undefined;

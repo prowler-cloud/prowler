@@ -10,29 +10,24 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsIamUser",
+  "ResourceType": "Other",
   "Description": "**AWS account alternate contacts** are defined for **Security**, **Billing**, and **Operations** with `name`, `email`, and `phone`. The finding evaluates that all three exist, are distinct from one another, and differ from the **primary (root) contact**.",
   "Risk": "Missing or shared contacts can delay response to abuse alerts, credential compromise, or billing anomalies, reducing **availability** (possible AWS traffic throttling) and raising **confidentiality** and **integrity** risk through extended exposure. If AWS cannot reach you, urgent mitigation may disrupt service.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_alternate_contact",
     "https://docs.prowler.com/checks/aws/iam-policies/iam_18-maintain-contact-details#aws-console",
-    "https://sbstjn.com/blog/aws-cdk-update-alternate-contact/",
-    "https://d0.awsstatic.com/aws-answers/AWS_Secure_Account_Setup.pdf",
-    "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html",
     "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact-alternate.html",
     "https://builder.aws.com/content/2qRw97fe8JFwfk2AbpJ3sYNpNvM/aws-bulk-update-alternate-contacts-across-organization",
     "https://github.com/aws-samples/aws-account-alternate-contact-with-terraform",
-    "https://docs.cloud.ucsb.edu/campus-cloud-docs/docs/bestpractices/contacts",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/account-security-alternate-contacts.html",
     "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv",
-    "https://repost.aws/es/questions/QU14Aq5-zfTkem_2qRCKK6Ng/multiple-aws-account-setup"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to the AWS Management Console with a user that can edit account contacts (root, or IAM with account:PutAlternateContact)\n2. In the upper right, click your account name > Account\n3. Scroll to \"Alternate contacts\" and click Edit\n4. Add all three contacts with unique details:\n   - Billing contact (distinct name, email, phone)\n   - Operations contact (distinct name, email, phone)\n   - Security contact (distinct name, email, phone)\n5. Ensure each contact\u2019s email/phone differs from each other and from the primary (root) contact, then click Update",
+      "Other": "1. Sign in to the AWS Management Console with a user that can edit account contacts (root, or IAM with account:PutAlternateContact)\n2. In the upper right, click your account name > Account\n3. Scroll to \"Alternate contacts\" and click Edit\n4. Add all three contacts with unique details:\n   - Billing contact (distinct name, email, phone)\n   - Operations contact (distinct name, email, phone)\n   - Security contact (distinct name, email, phone)\n5. Ensure each contact’s email/phone differs from each other and from the primary (root) contact, then click Update",
       "Terraform": "```hcl\n# Set distinct alternate contacts for SECURITY, BILLING, and OPERATIONS\n# Critical: each resource sets a required contact type to satisfy the check\n\nresource \"aws_account_alternate_contact\" \"security\" {\n  alternate_contact_type = \"SECURITY\"  # Sets SECURITY contact\n  email_address          = \"security@example.com\"\n  name                   = \"Security Team\"\n  phone_number           = \"+1-555-0100\"\n  title                  = \"Security\"\n}\n\nresource \"aws_account_alternate_contact\" \"billing\" {\n  alternate_contact_type = \"BILLING\"   # Sets BILLING contact\n  email_address          = \"billing@example.com\"\n  name                   = \"Billing Team\"\n  phone_number           = \"+1-555-0101\"\n  title                  = \"Billing\"\n}\n\nresource \"aws_account_alternate_contact\" \"operations\" {\n  alternate_contact_type = \"OPERATIONS\" # Sets OPERATIONS contact\n  email_address          = \"operations@example.com\"\n  name                   = \"Operations Team\"\n  phone_number           = \"+1-555-0102\"\n  title                  = \"Operations\"\n}\n```"
     },
     "Recommendation": {
