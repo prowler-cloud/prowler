@@ -382,3 +382,54 @@ class TestCompliance:
         assert get_check_compliance(finding, "github", bulk_checks_metadata) == {
             "CIS-1.0": ["1.1.11"],
         }
+
+
+class TestComplianceOutput:
+    """Test ComplianceOutput file extension parsing fix."""
+
+    def test_compliance_output_file_extension_with_dots(self):
+        """Test that ComplianceOutput correctly parses file extensions when framework names contain dots."""
+        from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+
+        compliance = Compliance(
+            Framework="CIS",
+            Version="5.0",
+            Provider="AWS",
+            Name="CIS Amazon Web Services Foundations Benchmark v5.0",
+            Description="Test compliance framework",
+            Requirements=[],
+        )
+
+        # Test with problematic file path that contains dots in framework name
+        # This simulates the real scenario from Prowler App S3 integration
+        problematic_file_path = "output/compliance/prowler-output-123456789012-20250101120000_cis_5.0_aws.csv"
+
+        # Create GenericCompliance object with file_path (no explicit file_extension)
+        compliance_output = GenericCompliance(
+            findings=[], compliance=compliance, file_path=problematic_file_path
+        )
+
+        assert compliance_output.file_extension == ".csv"
+        assert compliance_output.file_extension != ".0_aws.csv"
+
+    def test_compliance_output_file_extension_explicit(self):
+        """Test that ComplianceOutput uses explicit file_extension when provided."""
+        from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+
+        compliance = Compliance(
+            Framework="CIS",
+            Version="5.0",
+            Provider="AWS",
+            Name="CIS Amazon Web Services Foundations Benchmark v5.0",
+            Description="Test compliance framework",
+            Requirements=[],
+        )
+
+        compliance_output = GenericCompliance(
+            findings=[],
+            compliance=compliance,
+            file_path="output/compliance/test",
+            file_extension=".csv",
+        )
+
+        assert compliance_output.file_extension == ".csv"
