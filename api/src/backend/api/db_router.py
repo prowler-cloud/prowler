@@ -1,5 +1,7 @@
 from contextvars import ContextVar
 
+from django.conf import settings
+
 ALLOWED_APPS = ("django", "socialaccount", "account", "authtoken", "silk")
 
 _read_db_alias = ContextVar("read_db_alias", default=None)
@@ -50,3 +52,8 @@ class MainRouter:
         if {obj1._state.db, obj2._state.db} <= {self.default_db, self.admin_db}:
             return True
         return None
+
+
+READ_REPLICA_ALIAS = (
+    MainRouter.replica_db if MainRouter.replica_db in settings.DATABASES else None
+)

@@ -14,6 +14,7 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import (
     create_objects_in_batches,
     rls_transaction,
@@ -143,7 +144,7 @@ def perform_prowler_scan(
         scan_instance.save()
 
     # Find the mutelist processor if it exists
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         try:
             mutelist_processor = Processor.objects.get(
                 tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
@@ -272,7 +273,7 @@ def perform_prowler_scan(
                 unique_resources.add((resource_instance.uid, resource_instance.region))
 
                 # Process finding
-                with rls_transaction(tenant_id):
+                with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
                     finding_uid = finding.uid
                     last_first_seen_at = None
                     if finding_uid not in last_status_cache:
@@ -305,6 +306,12 @@ def perform_prowler_scan(
                     # If the finding is muted at this time the reason must be the configured Mutelist
                     muted_reason = "Muted by mutelist" if finding.muted else None
 
+                    # Increment failed_findings_count cache if the finding status is FAIL and not muted
+                    if status == FindingStatus.FAIL and not finding.muted:
+                        resource_uid = finding.resource_uid
+                        resource_failed_findings_cache[resource_uid] += 1
+
+                with rls_transaction(tenant_id):
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
@@ -324,11 +331,6 @@ def perform_prowler_scan(
                         compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
-
-                    # Increment failed_findings_count cache if the finding status is FAIL and not muted
-                    if status == FindingStatus.FAIL and not finding.muted:
-                        resource_uid = finding.resource_uid
-                        resource_failed_findings_cache[resource_uid] += 1
 
                 # Update scan resource summaries
                 scan_resource_cache.add(
@@ -439,7 +441,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_new: Muted findings with a delta of 'new'.
         - muted_changed: Muted findings with a delta of 'changed'.
     """
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
 
         aggregation = findings.values(
@@ -582,7 +584,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         ValidationError: If tenant_id is not a valid UUID.
     """
     try:
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             scan_instance = Scan.objects.get(pk=scan_id)
             provider_instance = scan_instance.provider
             prowler_provider = return_prowler_provider(provider_instance)
@@ -602,7 +604,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         )
 
         check_status_by_region = {}
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             for finding in findings:
                 for resource in finding.small_resources:
                     region = resource.region
