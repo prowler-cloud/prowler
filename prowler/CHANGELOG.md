@@ -26,7 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update `moto` dependency from 5.0.28 to 5.1.11 [(#7100)](https://github.com/prowler-cloud/prowler/pull/7100)
 - Update AWS API Gateway service metadata to new format [(#8788)](https://github.com/prowler-cloud/prowler/pull/8788)
 - Update AWS Athena service metadata to new format [(#8790)](https://github.com/prowler-cloud/prowler/pull/8790)
-
+- Update AWS Lambda service metadata to new format [(#8825)](https://github.com/prowler-cloud/prowler/pull/8825)
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
@@ -38,6 +38,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Fix KeyError in `elb_ssl_listeners_use_acm_certificate` check and handle None cluster version in `eks_cluster_uses_a_supported_version` check [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
+
+---
+
+---
+
+## [v5.12.4] (Prowler UNRELEASED)
+
+### Fixed
+- Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
 
 ---
 

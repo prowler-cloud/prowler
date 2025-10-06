@@ -11,6 +11,7 @@ from api.db_utils import (
     batch_delete,
     create_objects_in_batches,
     enum_to_choices,
+    generate_api_key_prefix,
     generate_random_token,
     one_week_from_now,
     update_objects_in_batches,
@@ -313,3 +314,28 @@ class TestUpdateObjectsInBatches:
 
         qs = Provider.objects.filter(tenant=tenant, uid__endswith="_upd")
         assert qs.count() == total
+
+
+class TestGenerateApiKeyPrefix:
+    def test_prefix_format(self):
+        """Test that generated prefix starts with 'pk_'."""
+        prefix = generate_api_key_prefix()
+        assert prefix.startswith("pk_")
+
+    def test_prefix_length(self):
+        """Test that prefix has correct length (pk_ + 8 random chars = 11)."""
+        prefix = generate_api_key_prefix()
+        assert len(prefix) == 11
+
+    def test_prefix_uniqueness(self):
+        """Test that multiple generations produce unique prefixes."""
+        prefixes = {generate_api_key_prefix() for _ in range(100)}
+        assert len(prefixes) == 100
+
+    def test_prefix_character_set(self):
+        """Test that random part uses only allowed characters."""
+        allowed_chars = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
+        for _ in range(50):
+            prefix = generate_api_key_prefix()
+            random_part = prefix[3:]  # Strip 'pk_'
+            assert all(char in allowed_chars for char in random_part)
