@@ -900,7 +900,6 @@ class ProviderIncludeSerializer(RLSSerializer):
 
 
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
-
     class Meta:
         model = Provider
         fields = [
@@ -917,7 +916,7 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
                 "help_text": "Type of provider to create.",
             },
             "uid": {
-                "help_text": "The unique identifier for the provider account. Format depends on the provider, e. g. AWS account ID, Azure subscription ID, GCP project ID, etc.",
+                "help_text": "Unique identifier for the provider, set by the provider, e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.",
             },
         }
 
