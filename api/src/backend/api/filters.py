@@ -225,80 +225,10 @@ class ProviderFilter(FilterSet):
     connected = BooleanFilter(
         help_text="Filter by connection status. Set to True to return only connected providers, or False to return only providers with failed connections. If not specified, both connected and failed providers are included. Providers with no connection attempt (status is null) are excluded from this filter."
     )
-    provider = ChoiceFilter(
-        choices=Provider.ProviderChoices.choices,
-        help_text="Filter by single provider type",
-    )
-    id = UUIDFilter(
-        field_name="id",
-        lookup_expr="exact",
-        help_text="Filter by exact Prowler provider ID (UUIDv4)",
-    )
-    id__in = UUIDInFilter(
-        field_name="id",
-        lookup_expr="in",
-        help_text="Filter by multiple Prowler provider IDs. Provide a comma-separated list of UUIDs",
-    )
-    provider__in = ChoiceInFilter(
-        field_name="provider",
-        choices=Provider.ProviderChoices.choices,
-        lookup_expr="in",
-        help_text='Filter by multiple provider types (comma-separated, e.g. "aws,azure,gcp")',
-    )
-    uid = CharFilter(
-        field_name="uid",
-        lookup_expr="exact",
-        help_text="Filter by exact provider ID (AWS account ID, Azure subscription ID, GCP project ID, etc.)",
-    )
-    uid__icontains = CharFilter(
-        field_name="uid",
-        lookup_expr="icontains",
-        help_text="Filter by partial provider ID match (AWS account ID, Azure subscription ID, GCP project ID, etc.)",
-    )
-    uid__in = CharInFilter(
-        field_name="uid",
-        lookup_expr="in",
-        help_text='Filter by multiple provider IDs (AWS account ID, Azure subscription ID, GCP project ID, etc.). For example: "1234567890,a1b2c3d4-5678-90ab-cdef-1234567890ab"',
-    )
-    alias = CharFilter(
-        field_name="alias",
-        lookup_expr="exact",
-        help_text="Filter by exact provider alias name",
-    )
-    alias__icontains = CharFilter(
-        field_name="alias",
-        lookup_expr="icontains",
-        help_text="Filter by partial provider alias match",
-    )
-    alias__in = CharInFilter(
-        field_name="alias",
-        lookup_expr="in",
-        help_text='Filter by multiple provider aliases. Provide a comma-separated list, e.g. "aws_alias_1,azure_alias_2"',
-    )
-    inserted_at__gte = DateFilter(
-        field_name="inserted_at",
-        lookup_expr="gte",
-        help_text="Only return providers inserted on or after this date (format: YYYY-MM-DD)",
-    )
-    inserted_at__lte = DateFilter(
-        field_name="inserted_at",
-        lookup_expr="lte",
-        help_text="Only return providers inserted on or before this date (format: YYYY-MM-DD)",
-    )
     updated_at = DateFilter(
         field_name="updated_at",
         lookup_expr="date",
-        help_text="Only return providers updated on this exact date (format: YYYY-MM-DD)",
-    )
-    updated_at__gte = DateFilter(
-        field_name="updated_at",
-        lookup_expr="gte",
-        help_text="Only return providers updated on or after this date (format: YYYY-MM-DD)",
-    )
-    updated_at__lte = DateFilter(
-        field_name="updated_at",
-        lookup_expr="lte",
-        help_text="Only return providers updated on or before this date (format: YYYY-MM-DD)",
+        help_text="Filter by date when the provider was updated (format: YYYY-MM-DD)",
     )
 
     class Meta:
