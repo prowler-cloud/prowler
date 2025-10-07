@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -13,7 +12,7 @@ import {
 } from "recharts";
 
 import { AlertPill } from "./shared/AlertPill";
-import { CHART_COLORS, SEVERITY_COLORS } from "./shared/chart-constants";
+import { CHART_COLORS } from "./shared/chart-constants";
 import { getSeverityColorByRiskScore } from "./shared/severity-utils";
 
 interface ScatterDataPoint {

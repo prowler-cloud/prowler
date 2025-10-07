@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { SORT_OPTIONS } from "../shared/chart-constants";
+import { DEFAULT_SORT_OPTION, SORT_OPTIONS } from "../shared/chart-constants";
 
 type SortOption = (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS];
 
@@ -10,13 +10,13 @@ interface SortableItem {
 }
 
 export function useSortableData<T extends SortableItem>(data: T[]) {
-  const [sortBy, setSortBy] = useState<SortOption>(SORT_OPTIONS["high-low"]);
+  const [sortBy, setSortBy] = useState<SortOption>(DEFAULT_SORT_OPTION);
 
   const sortedData = [...data].sort((a, b) => {
     switch (sortBy) {
-      case SORT_OPTIONS["high-low"]:
+      case SORT_OPTIONS.highLow:
         return b.value - a.value;
-      case SORT_OPTIONS["low-high"]:
+      case SORT_OPTIONS.lowHigh:
         return a.value - b.value;
       case SORT_OPTIONS.alphabetical:
         return a.name.localeCompare(b.name);

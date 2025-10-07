@@ -25,10 +25,12 @@ export const CHART_DIMENSIONS = {
 } as const;
 
 export const SORT_OPTIONS = {
-  "high-low": "high-low",
-  "low-high": "low-high",
+  highLow: "high-low",
+  lowHigh: "low-high",
   alphabetical: "alphabetical",
 } as const;
+
+export const DEFAULT_SORT_OPTION = SORT_OPTIONS.highLow;
 
 export const LAYOUT_OPTIONS = {
   horizontal: "horizontal",

@@ -51,8 +51,8 @@ export function HorizontalBarChart({
                 color: CHART_COLORS.textPrimary,
               }}
             >
-              <option value={SORT_OPTIONS["high-low"]}>Risk high-low</option>
-              <option value={SORT_OPTIONS["low-high"]}>Risk low-high</option>
+              <option value={SORT_OPTIONS.highLow}>Risk high-low</option>
+              <option value={SORT_OPTIONS.lowHigh}>Risk low-high</option>
               <option value={SORT_OPTIONS.alphabetical}>Alphabetical</option>
             </select>
           )}
