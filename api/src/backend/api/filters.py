@@ -241,12 +241,15 @@ class ProviderFilter(FilterSet):
     )
     provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
     provider__in = ChoiceInFilter(
-        choices=Provider.ProviderChoices.choices, lookup_expr="in"
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
     )
 
     class Meta:
         model = Provider
         fields = {
+            "provider": ["exact", "in"],
             "id": ["exact", "in"],
             "uid": ["exact", "icontains", "in"],
             "alias": ["exact", "icontains", "in"],
