@@ -125,6 +125,50 @@ When using browser authentication, permissions are delegated to the user, so the
 
     ![Grant Admin Consent](../microsoft365/img/grant-external-api-permissions.png)
 
+
+## Service Principal Authentication (Recommended)
+
+*Available for both Prowler App and Prowler CLI*
+
+**Authentication flag for CLI:** `--sp-env-auth`
+
+Authenticate using the **Service Principal Application** by configuring the following environment variables:
+
+```console
+export AZURE_CLIENT_ID="XXXXXXXXX"
+export AZURE_CLIENT_SECRET="XXXXXXXXX"
+export AZURE_TENANT_ID="XXXXXXXXX"
+```
+
+If these variables are not set or exported, execution using `--sp-env-auth` will fail.
+
+Refer to the [Step-by-Step Permission Assignment](#step-by-step-permission-assignment) section below for setup instructions.
+
+If the external API permissions described in the mentioned section above are not added only checks that work through MS Graph will be executed. This means that the full provider will not be executed.
+
+???+ note
+    In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-service-principal-authentication) section for more information.
+
+
+## Interactive Browser Authentication
+
+*Available only for Prowler CLI*
+
+**Authentication flag:** `--browser-auth`
+
+Authenticate against Azure using the default browser to start the scan. The `--tenant-id` flag is also required.
+
+These credentials only enable checks that rely on Microsoft Graph. The entire provider cannot be run with this method. To perform a full M365 security scan, use the **recommended authentication method**.
+
+Since this is a **delegated permission** authentication method, necessary permissions should be assigned to the user rather than the application.
+
+## Supported PowerShell Versions
+
+PowerShell is required to run certain M365 checks.
+
+**Supported versions:**
+- **PowerShell 7.4 or higher** (7.5 is recommended)
+
 #### Why Is PowerShell 7.4+ Required?
 
 - **PowerShell 5.1** (default on some Windows systems) does not support required cmdlets.
