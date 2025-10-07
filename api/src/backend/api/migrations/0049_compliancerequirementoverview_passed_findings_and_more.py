@@ -8,7 +8,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ("api", "0048_api_key"),
     ]
-
     operations = [
         migrations.AddField(
             model_name="compliancerequirementoverview",
