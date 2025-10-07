@@ -1958,23 +1958,15 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
         resource_name = "compliance-requirements-details"
 
 
-class ComplianceOverviewDetailThreatscoreSerializer(serializers.Serializer):
+class ComplianceOverviewDetailThreatscoreSerializer(ComplianceOverviewDetailSerializer):
     """
     Serializer for detailed compliance requirement information for Threatscore.
 
     Includes additional fields specific to the Threatscore framework.
     """
 
-    id = serializers.CharField()
-    framework = serializers.CharField()
-    version = serializers.CharField()
-    description = serializers.CharField()
-    status = serializers.ChoiceField(choices=StatusChoices.choices)
     passed_findings = serializers.IntegerField()
     total_findings = serializers.IntegerField()
-
-    class JSONAPIMeta:
-        resource_name = "compliance-requirements-details"
 
 
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):

@@ -3491,15 +3491,12 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
 
         # Use different serializer for threatscore framework
-        if (
-            requirements_summary
-            and "threatscore" in requirements_summary[0].get("framework", "").lower()
-        ):
+        if "threatscore" not in compliance_id:
+            serializer = self.get_serializer(requirements_summary, many=True)
+        else:
             serializer = ComplianceOverviewDetailThreatscoreSerializer(
                 requirements_summary, many=True
             )
-        else:
-            serializer = self.get_serializer(requirements_summary, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
