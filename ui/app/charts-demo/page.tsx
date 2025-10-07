@@ -23,6 +23,7 @@ export default function ChartsDemoPage() {
       percentage: 22,
       color: "#971348",
       newFindings: 5,
+      change: 18,
     },
     {
       name: "High",
@@ -30,6 +31,7 @@ export default function ChartsDemoPage() {
       percentage: 32,
       color: "#FF3077",
       newFindings: 21,
+      change: -12,
     },
     {
       name: "Medium",
@@ -37,6 +39,7 @@ export default function ChartsDemoPage() {
       percentage: 18,
       color: "#FF7D19",
       newFindings: 8,
+      change: 5,
     },
     {
       name: "Low",
@@ -44,6 +47,7 @@ export default function ChartsDemoPage() {
       percentage: 25,
       color: "#FDD34F",
       newFindings: 15,
+      change: -8,
     },
     {
       name: "Info",
@@ -51,6 +55,7 @@ export default function ChartsDemoPage() {
       percentage: 3,
       color: "#2E51B2",
       newFindings: 2,
+      change: 22,
     },
   ];
 
@@ -81,6 +86,16 @@ export default function ChartsDemoPage() {
       medium: 900,
       high: 1300,
       critical: 1100,
+      info_newFindings: 2,
+      info_change: 5,
+      low_newFindings: 4,
+      low_change: 8,
+      medium_newFindings: 6,
+      medium_change: 12,
+      high_newFindings: 8,
+      high_change: 15,
+      critical_newFindings: 5,
+      critical_change: 10,
     },
     {
       date: "12/2",
@@ -89,6 +104,16 @@ export default function ChartsDemoPage() {
       medium: 800,
       high: 1100,
       critical: 1000,
+      info_newFindings: 1,
+      info_change: -13,
+      low_newFindings: 3,
+      low_change: -17,
+      medium_newFindings: 2,
+      medium_change: -11,
+      high_newFindings: 4,
+      high_change: -15,
+      critical_newFindings: 3,
+      critical_change: -9,
     },
     {
       date: "12/3",
@@ -97,6 +122,16 @@ export default function ChartsDemoPage() {
       medium: 900,
       high: 2000,
       critical: 2100,
+      info_newFindings: 3,
+      info_change: -14,
+      low_newFindings: 8,
+      low_change: 40,
+      medium_newFindings: 5,
+      medium_change: 13,
+      high_newFindings: 15,
+      high_change: 82,
+      critical_newFindings: 12,
+      critical_change: 110,
     },
     {
       date: "12/4",
@@ -105,6 +140,16 @@ export default function ChartsDemoPage() {
       medium: 800,
       high: 1500,
       critical: 1300,
+      info_newFindings: 1,
+      info_change: -17,
+      low_newFindings: 5,
+      low_change: -14,
+      medium_newFindings: 4,
+      medium_change: -11,
+      high_newFindings: 7,
+      high_change: -25,
+      critical_newFindings: 6,
+      critical_change: -38,
     },
     {
       date: "12/5",
@@ -113,6 +158,16 @@ export default function ChartsDemoPage() {
       medium: 1000,
       high: 2500,
       critical: 2400,
+      info_newFindings: 5,
+      info_change: 80,
+      low_newFindings: 10,
+      low_change: 67,
+      medium_newFindings: 8,
+      medium_change: 25,
+      high_newFindings: 12,
+      high_change: 67,
+      critical_newFindings: 10,
+      critical_change: 85,
     },
   ];
 
@@ -125,14 +180,14 @@ export default function ChartsDemoPage() {
   ];
 
   const radarChartData = [
-    { category: "Trust Boundaries", value: 455 },
-    { category: "Internet Exposed", value: 320 },
-    { category: "Forensics-ready", value: 180 },
-    { category: "Secrets", value: 250 },
-    { category: "Cluster Security", value: 200 },
-    { category: "Container Security", value: 290 },
-    { category: "Logging", value: 280 },
-    { category: "Encryption", value: 340 },
+    { category: "Trust Boundaries", value: 455, change: 12 },
+    { category: "Internet Exposed", value: 320, change: -8 },
+    { category: "Forensics-ready", value: 180, change: 15 },
+    { category: "Secrets", value: 250, change: -5 },
+    { category: "Cluster Security", value: 200, change: 22 },
+    { category: "Container Security", value: 290, change: -3 },
+    { category: "Logging", value: 280, change: 7 },
+    { category: "Encryption", value: 340, change: -10 },
   ];
 
   const sankeyData = {

@@ -12,7 +12,8 @@ import {
   YAxis,
 } from "recharts";
 
-import { CHART_COLORS } from "./shared/chart-constants";
+import { AlertPill } from "./shared/AlertPill";
+import { CHART_COLORS, SEVERITY_COLORS } from "./shared/chart-constants";
 
 interface ScatterDataPoint {
   x: number;
@@ -37,9 +38,19 @@ const PROVIDER_COLORS = {
   Google: "var(--color-red)",
 };
 
+const getSeverityColorByRiskScore = (riskScore: number): string => {
+  if (riskScore >= 7) return SEVERITY_COLORS.Critical;
+  if (riskScore >= 5) return SEVERITY_COLORS.High;
+  if (riskScore >= 3) return SEVERITY_COLORS.Medium;
+  if (riskScore >= 1) return SEVERITY_COLORS.Low;
+  return SEVERITY_COLORS.Info;
+};
+
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const severityColor = getSeverityColorByRiskScore(data.x);
+
     return (
       <div
         className="rounded-lg border p-3 shadow-lg"
@@ -54,15 +65,12 @@ const CustomTooltip = ({ active, payload }: any) => {
         >
           {data.name}
         </p>
-        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-          Risk Score: {data.x}
+        <p className="mt-1 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+          <span style={{ color: severityColor }}>{data.x}</span> Risk Score
         </p>
-        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-          Failed Findings: {data.y}
-        </p>
-        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-          Provider: {data.provider}
-        </p>
+        <div className="mt-2">
+          <AlertPill value={data.y} />
+        </div>
       </div>
     );
   }

@@ -2,10 +2,6 @@
 @config "../tailwind.config.js";
 
 @theme {
-  /* ===========================
-     Typography
-     =========================== */
-
   /* Font Families are injected by Next.js from config/fonts.ts */
   /* --font-sans: Work Sans (from Next.js) */
   /* --font-mono: Fira Code (from Next.js) */
@@ -49,10 +45,6 @@
   --font-weight-extrabold: 800;
   --font-weight-black: 900;
 
-  /* ===========================
-     Semantic Colors
-     =========================== */
-
   /* Info & Primary Colors */
   --color-info: #2e51b2;
   --color-primary: #2e51b2;
@@ -84,17 +76,16 @@
   --color-card-border: #171d30;
   --color-text-accent: #fface2;
 
+  /* Alert Pill Colors */
+  --color-alert-pill-bg: #432232;
+  --color-alert-pill-text: #f54280;
+
   /* ===========================
      Border Radius
      =========================== */
 
   /* Widget Border Radius - From Figma */
   --radius-widget: 12px;
-
-  /* ===========================
-     Tailwind Color Scales
-     From Prowler Design System
-     =========================== */
 
   /* White & Black */
   --color-white: #ffffff;
@@ -308,4 +299,3 @@
     cursor: pointer;
   }
 }
-

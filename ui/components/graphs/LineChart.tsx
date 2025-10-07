@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "lucide-react";
 import { useState } from "react";
 import {
   CartesianGrid,
@@ -8,13 +9,14 @@ import {
   LineChart as RechartsLine,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
 
 import { LineConfig, LineDataPoint } from "./models/chart-types";
+import { AlertPill } from "./shared/AlertPill";
 import { CHART_COLORS } from "./shared/chart-constants";
-import { MultiSeriesChartTooltip } from "./shared/ChartTooltip";
 
 interface LineChartProps {
   data: LineDataPoint[];
@@ -23,6 +25,95 @@ interface LineChartProps {
   yLabel?: string;
   height?: number;
 }
+
+interface TooltipPayloadItem {
+  dataKey: string;
+  value: number;
+  stroke: string;
+  name: string;
+  payload: LineDataPoint;
+}
+
+const CustomLineTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<number, string>) => {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  const typedPayload = payload as unknown as TooltipPayloadItem[];
+  const totalValue = typedPayload.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <div
+      className="rounded-lg border p-3 shadow-lg"
+      style={{
+        borderColor: CHART_COLORS.tooltipBorder,
+        backgroundColor: CHART_COLORS.tooltipBackground,
+      }}
+    >
+      <p className="mb-3 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+        {label}
+      </p>
+
+      <div className="mb-3">
+        <AlertPill value={totalValue} textSize="sm" />
+      </div>
+
+      <div className="space-y-3">
+        {typedPayload.map((item) => {
+          const newFindings = item.payload[`${item.dataKey}_newFindings`];
+          const change = item.payload[`${item.dataKey}_change`];
+
+          return (
+            <div key={item.dataKey} className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: item.stroke }}
+                />
+                <span
+                  className="text-sm"
+                  style={{ color: CHART_COLORS.textPrimary }}
+                >
+                  {item.value}
+                </span>
+              </div>
+              {newFindings !== undefined && (
+                <div className="flex items-center gap-2">
+                  <Bell
+                    size={14}
+                    style={{ color: CHART_COLORS.textSecondary }}
+                  />
+                  <span
+                    className="text-xs"
+                    style={{ color: CHART_COLORS.textSecondary }}
+                  >
+                    {newFindings} New Findings
+                  </span>
+                </div>
+              )}
+              {change !== undefined && typeof change === "number" && (
+                <p
+                  className="text-xs"
+                  style={{ color: CHART_COLORS.textSecondary }}
+                >
+                  <span className="font-bold">
+                    {change > 0 ? "+" : ""}
+                    {change}%
+                  </span>{" "}
+                  Since Last Scan
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 export function LineChart({
   data,
@@ -66,7 +157,7 @@ export function LineChart({
           }
           tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
         />
-        <Tooltip content={<MultiSeriesChartTooltip />} />
+        <Tooltip content={<CustomLineTooltip />} />
         <Legend
           wrapperStyle={{ paddingTop: "20px" }}
           iconType="circle"

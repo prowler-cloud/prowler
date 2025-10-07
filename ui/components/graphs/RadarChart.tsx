@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/chart/Chart";
 
 import { RadarDataPoint } from "./models/chart-types";
+import { AlertPill } from "./shared/AlertPill";
 import { CHART_COLORS } from "./shared/chart-constants";
 
 interface RadarChartProps {
@@ -48,14 +49,19 @@ const CustomTooltip = ({ active, payload }: any) => {
         >
           {data.payload.category}
         </p>
-        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-          <span style={{ color: "var(--color-magenta)" }}>▲</span> {data.value}{" "}
-          Fail Findings
-        </p>
+        <div className="mt-1">
+          <AlertPill value={data.value} />
+        </div>
         {data.payload.change !== undefined && (
-          <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-            {data.payload.change > 0 ? "+" : ""}
-            {data.payload.change}% Since last scan
+          <p
+            className="mt-1 text-xs"
+            style={{ color: CHART_COLORS.textSecondary }}
+          >
+            <span className="font-bold">
+              {data.payload.change > 0 ? "+" : ""}
+              {data.payload.change}%
+            </span>{" "}
+            Since Last Scan
           </p>
         )}
       </div>

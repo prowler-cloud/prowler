@@ -1,3 +1,5 @@
+import { Bell, VolumeX } from "lucide-react";
+
 import { TooltipData } from "../models/chart-types";
 import { CHART_COLORS } from "./chart-constants";
 
@@ -61,42 +63,39 @@ export function ChartTooltip({
       </p>
 
       {data.newFindings !== undefined && data.newFindings > 0 && (
-        <p
-          className="mt-1 flex items-center gap-1 text-xs"
-          style={{ color: CHART_COLORS.textSecondary }}
-        >
-          <span style={{ color: "var(--color-success-emphasis)" }}>△</span>
-          <span>{data.newFindings} New Findings</span>
-        </p>
+        <div className="mt-1 flex items-center gap-2">
+          <Bell size={14} style={{ color: CHART_COLORS.textSecondary }} />
+          <span className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+            {data.newFindings} New Findings
+          </span>
+        </div>
       )}
 
       {data.new !== undefined && data.new > 0 && (
-        <p
-          className="mt-1 flex items-center gap-1 text-xs"
-          style={{ color: CHART_COLORS.textSecondary }}
-        >
-          <span style={{ color: "var(--color-success-emphasis)" }}>↑</span>
-          <span>{data.new} New</span>
-        </p>
+        <div className="mt-1 flex items-center gap-2">
+          <Bell size={14} style={{ color: CHART_COLORS.textSecondary }} />
+          <span className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+            {data.new} New
+          </span>
+        </div>
       )}
 
       {data.muted !== undefined && data.muted > 0 && (
-        <p
-          className="mt-1 flex items-center gap-1 text-xs"
-          style={{ color: CHART_COLORS.textSecondary }}
-        >
-          <span style={{ color: "var(--color-warning)" }}>○</span>
-          <span>{data.muted} Muted</span>
-        </p>
+        <div className="mt-1 flex items-center gap-2">
+          <VolumeX size={14} style={{ color: CHART_COLORS.textSecondary }} />
+          <span className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+            {data.muted} Muted
+          </span>
+        </div>
       )}
 
       {data.change !== undefined && (
-        <p
-          className="mt-1 text-xs"
-          style={{ color: CHART_COLORS.textSecondary }}
-        >
-          {data.change > 0 ? "+" : ""}
-          {data.change}% Since last scan
+        <p className="mt-1 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+          <span className="font-bold">
+            {data.change > 0 ? "+" : ""}
+            {data.change}%
+          </span>{" "}
+          Since Last Scan
         </p>
       )}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "lucide-react";
 import { useState } from "react";
 
 import { BarDataPoint, SortOption } from "./models/chart-types";
@@ -135,22 +136,30 @@ export function HorizontalBarChart({
                       </span>
                     </div>
                     {item.newFindings !== undefined && (
-                      <div
-                        className="mt-2 flex items-center gap-1 text-sm"
-                        style={{ color: CHART_COLORS.textSecondary }}
-                      >
-                        <span>△</span>
-                        <span>{item.newFindings} New Findings</span>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Bell
+                          size={14}
+                          style={{ color: CHART_COLORS.textSecondary }}
+                        />
+                        <span
+                          className="text-sm"
+                          style={{ color: CHART_COLORS.textSecondary }}
+                        >
+                          {item.newFindings} New Findings
+                        </span>
                       </div>
                     )}
                     {item.change !== undefined && (
-                      <div
+                      <p
                         className="mt-1 text-sm"
                         style={{ color: CHART_COLORS.textSecondary }}
                       >
-                        {item.change > 0 ? "+" : ""}
-                        {item.change}% Since last scan
-                      </div>
+                        <span className="font-bold">
+                          {item.change > 0 ? "+" : ""}
+                          {item.change}%
+                        </span>{" "}
+                        Since Last Scan
+                      </p>
                     )}
                   </div>
                 )}
