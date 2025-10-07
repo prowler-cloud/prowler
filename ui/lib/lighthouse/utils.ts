@@ -60,12 +60,8 @@ export const getModelParams = (config: any): ModelParams => {
 
   if (modelId.startsWith("gpt-5")) {
     params.temperature = undefined;
-<<<<<<< HEAD
-    params.reasoningEffort = "minimal";
-=======
     params.reasoningEffort = "minimal" as const;
     params.maxTokens = undefined;
->>>>>>> 76a55cdb5 (fix: remove maxTokens for gpt-5 (#8843))
   }
 
   return params;
