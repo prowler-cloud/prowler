@@ -1,29 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "cognito_user_pool_self_registration_disabled",
-  "CheckTitle": "Ensure self registration is disabled for Amazon Cognito User Pools",
-  "CheckType": [],
+  "CheckTitle": "Amazon Cognito user pool has self registration disabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access"
+  ],
   "ServiceName": "cognito",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCognitoUserPool",
-  "Description": "Checks whether self registration is disabled for the Amazon Cognito User Pool. Self registration allows users to sign up for an account in the user pool. If self registration is enabled, users can sign up for an account in the user pool without any intervention from the administrator. This can lead to unauthorized access to the application.",
-  "Risk": "If self registration is enabled, users can sign up for an account in the user pool without any intervention from the administrator. This can lead to unauthorized access to the application.",
-  "RelatedUrl": "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SignUp.html",
+  "Description": "**Amazon Cognito user pools** are evaluated for **self-service sign-up**. The expected configuration is `AllowAdminCreateUserOnly=true` so only administrators create accounts.\n\n*When self sign-up is allowed*, the check also highlights any linked identity pools and the authenticated role(s) that new users could assume.",
+  "Risk": "Open sign-up lets untrusted users gain **authenticated identities**, potentially assuming **identity pool roles**. This can expose data (**confidentiality**), enable unauthorized actions (**integrity**), and drive abuse or cost via resource use (**availability**). Mass registrations and token harvesting increase the chance of lateral access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/54782815/aws-cognito-remove-signup-in-login-page/76517044",
+    "https://runebook.dev/en/aws/cognito-user-identity-pools/AdminCreateUserConfigType",
+    "https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html",
+    "https://docs.amazonaws.cn/en_us/cognito/latest/developerguide/signing-up-users-in-your-app.html",
+    "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-admin-create-user-policy.html",
+    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_confirm_sign_up.html",
+    "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_SignUp.html",
+    "https://www.developerload.com/aws-cognitoremove-signup-in-login-page"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws cognito-idp update-user-pool --user-pool-id <USER_POOL_ID> --admin-create-user-config AllowAdminCreateUserOnly=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Disable self-registration in a Cognito User Pool\nResources:\n  <example_resource_name>:\n    Type: AWS::Cognito::UserPool\n    Properties:\n      AdminCreateUserConfig:\n        AllowAdminCreateUserOnly: true  # Critical: disables self sign-up; only admins can create users\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Cognito > User pools\n2. Select the user pool\n3. Go to the Sign-up tab\n4. In Self-service sign-up, click Edit and disable (uncheck) Enable self-registration\n5. Click Save changes",
+      "Terraform": "```hcl\n# Terraform: Disable self-registration in a Cognito User Pool\nresource \"aws_cognito_user_pool\" \"<example_resource_name>\" {\n  admin_create_user_config {\n    allow_admin_create_user_only = true  # Critical: disables self sign-up; only admins can create users\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "To disable self registration for the Amazon Cognito User Pool, perform the following actions:",
-      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html"
+      "Text": "Enforce **admin-only user creation**. If self sign-up is necessary, require **verification**, **MFA**, and bot protections; restrict app clients. Apply **least privilege** to any roles for authenticated users and minimize scopes. Use approval/invite flows, add **rate limits**, monitor sign-ups, and audit access for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cognito_user_pool_self_registration_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
