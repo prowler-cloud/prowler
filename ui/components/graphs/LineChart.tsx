@@ -123,6 +123,7 @@ export function LineChart({
   height = 400,
 }: LineChartProps) {
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsLine

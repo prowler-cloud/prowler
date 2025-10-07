@@ -3,6 +3,7 @@
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
+import { useSortableData } from "./hooks/useSortableData";
 import { BarDataPoint, SortOption } from "./models/chart-types";
 import {
   CHART_COLORS,
@@ -24,21 +25,8 @@ export function HorizontalBarChart({
   showSortDropdown = true,
   title,
 }: HorizontalBarChartProps) {
-  const [sortBy, setSortBy] = useState<SortOption>(SORT_OPTIONS["high-low"]);
+  const { sortBy, setSortBy, sortedData } = useSortableData(data);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
-  const sortedData = [...data].sort((a, b) => {
-    switch (sortBy) {
-      case SORT_OPTIONS["high-low"]:
-        return b.value - a.value;
-      case SORT_OPTIONS["low-high"]:
-        return a.value - b.value;
-      case SORT_OPTIONS.alphabetical:
-        return a.name.localeCompare(b.name);
-      default:
-        return 0;
-    }
-  });
 
   return (
     <div className="w-full">

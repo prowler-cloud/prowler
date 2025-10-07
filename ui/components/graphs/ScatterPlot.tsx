@@ -14,6 +14,7 @@ import {
 
 import { AlertPill } from "./shared/AlertPill";
 import { CHART_COLORS, SEVERITY_COLORS } from "./shared/chart-constants";
+import { getSeverityColorByRiskScore } from "./shared/severity-utils";
 
 interface ScatterDataPoint {
   x: number;
@@ -38,14 +39,6 @@ const PROVIDER_COLORS = {
   Google: "var(--color-red)",
 };
 
-const getSeverityColorByRiskScore = (riskScore: number): string => {
-  if (riskScore >= 7) return SEVERITY_COLORS.Critical;
-  if (riskScore >= 5) return SEVERITY_COLORS.High;
-  if (riskScore >= 3) return SEVERITY_COLORS.Medium;
-  if (riskScore >= 1) return SEVERITY_COLORS.Low;
-  return SEVERITY_COLORS.Info;
-};
-
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -65,7 +58,10 @@ const CustomTooltip = ({ active, payload }: any) => {
         >
           {data.name}
         </p>
-        <p className="mt-1 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+        <p
+          className="mt-1 text-xs"
+          style={{ color: CHART_COLORS.textSecondary }}
+        >
           <span style={{ color: severityColor }}>{data.x}</span> Risk Score
         </p>
         <div className="mt-2">

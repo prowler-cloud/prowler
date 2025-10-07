@@ -23,7 +23,10 @@ export function AlertPill({
         className="flex items-center gap-1 rounded-full px-2 py-1"
         style={{ backgroundColor: CHART_COLORS.alertPillBg }}
       >
-        <AlertTriangle size={iconSize} style={{ color: CHART_COLORS.alertPillText }} />
+        <AlertTriangle
+          size={iconSize}
+          style={{ color: CHART_COLORS.alertPillText }}
+        />
         <span
           className={`${textSizeClass} font-semibold`}
           style={{ color: CHART_COLORS.alertPillText }}
@@ -31,7 +34,10 @@ export function AlertPill({
           {value}
         </span>
       </div>
-      <span className={textSizeClass} style={{ color: CHART_COLORS.textSecondary }}>
+      <span
+        className={textSizeClass}
+        style={{ color: CHART_COLORS.textSecondary }}
+      >
         {label}
       </span>
     </div>
