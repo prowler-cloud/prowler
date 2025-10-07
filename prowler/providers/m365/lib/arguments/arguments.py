@@ -19,7 +19,7 @@ def init_parser(self):
     m365_auth_modes_group.add_argument(
         "--sp-env-auth",
         action="store_true",
-        help="Use Azure Service Principal environment variables authentication to log in against Microsoft 365",
+        help="Use Service Principal environment variables authentication to log in against Microsoft 365",
     )
     m365_auth_modes_group.add_argument(
         "--env-auth",
