@@ -1,8 +1,12 @@
+import csv
+import io
 import json
 import time
+import uuid
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
+from typing import Any
 
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
@@ -14,9 +18,11 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_router import READ_REPLICA_ALIAS
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import (
-    create_objects_in_batches,
+    POSTGRES_TENANT_VAR,
+    SET_CONFIG_QUERY,
+    psycopg_connection,
     rls_transaction,
     update_objects_in_batches,
 )
@@ -40,6 +46,26 @@ from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
 
 logger = get_task_logger(__name__)
+
+# Column order must match `ComplianceRequirementOverview` schema in
+# `api/models.py`. Keep this list minimal but sufficient to populate all
+# non-nullable fields plus the counters we care about.
+COMPLIANCE_REQUIREMENT_COPY_COLUMNS = (
+    "id",
+    "tenant_id",
+    "inserted_at",
+    "compliance_id",
+    "framework",
+    "version",
+    "description",
+    "region",
+    "requirement_id",
+    "requirement_status",
+    "passed_checks",
+    "failed_checks",
+    "total_checks",
+    "scan_id",
+)
 
 
 def _create_finding_delta(
@@ -106,6 +132,112 @@ def _store_resources(
         ]
         resource_instance.upsert_or_delete_tags(tags=tags)
     return resource_instance, (resource_instance.uid, resource_instance.region)
+
+
+def _copy_compliance_requirement_rows(
+    tenant_id: str, rows: list[dict[str, Any]]
+) -> None:
+    """Stream compliance requirement rows into Postgres using COPY.
+
+    We leverage the admin connection (when available) to bypass the COPY + RLS
+    restriction, writing only the fields required by
+    ``ComplianceRequirementOverview``.
+
+    Args:
+        tenant_id: Target tenant UUID.
+        rows: List of row dictionaries prepared by
+            :func:`create_compliance_requirements`.
+    """
+
+    csv_buffer = io.StringIO()
+    writer = csv.writer(csv_buffer)
+
+    datetime_now = datetime.now(tz=timezone.utc)
+    for row in rows:
+        writer.writerow(
+            [
+                str(row.get("id")),
+                str(row.get("tenant_id")),
+                (row.get("inserted_at") or datetime_now).isoformat(),
+                row.get("compliance_id") or "",
+                row.get("framework") or "",
+                row.get("version") or "",
+                row.get("description") or "",
+                row.get("region") or "",
+                row.get("requirement_id") or "",
+                row.get("requirement_status") or "",
+                row.get("passed_checks", 0),
+                row.get("failed_checks", 0),
+                row.get("total_checks", 0),
+                str(row.get("scan_id")),
+            ]
+        )
+
+    csv_buffer.seek(0)
+    copy_sql = (
+        "COPY compliance_requirements_overviews ("
+        + ", ".join(COMPLIANCE_REQUIREMENT_COPY_COLUMNS)
+        + ") FROM STDIN WITH (FORMAT CSV, DELIMITER ',', QUOTE '\"', ESCAPE '\"', NULL '\\N')"
+    )
+
+    try:
+        with psycopg_connection(MainRouter.admin_db) as connection:
+            connection.autocommit = False
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+                    cursor.copy_expert(copy_sql, csv_buffer)
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+    finally:
+        csv_buffer.close()
+
+
+def _persist_compliance_requirement_rows(
+    tenant_id: str, rows: list[dict[str, Any]]
+) -> None:
+    """Persist compliance requirement rows using COPY with ORM fallback.
+
+    Args:
+        tenant_id: Target tenant UUID.
+        rows: Precomputed row dictionaries that reflect the compliance
+            overview state for a scan.
+    """
+    if not rows:
+        return
+
+    try:
+        _copy_compliance_requirement_rows(tenant_id, rows)
+    except Exception as error:
+        logger.exception(
+            "COPY bulk insert for compliance requirements failed; falling back to ORM bulk_create",
+            exc_info=error,
+        )
+        fallback_objects = [
+            ComplianceRequirementOverview(
+                id=row["id"],
+                tenant_id=row["tenant_id"],
+                inserted_at=row["inserted_at"],
+                compliance_id=row["compliance_id"],
+                framework=row["framework"],
+                version=row["version"],
+                description=row["description"],
+                region=row["region"],
+                requirement_id=row["requirement_id"],
+                requirement_status=row["requirement_status"],
+                passed_checks=row["passed_checks"],
+                failed_checks=row["failed_checks"],
+                total_checks=row["total_checks"],
+                scan_id=row["scan_id"],
+            )
+            for row in rows
+        ]
+        with rls_transaction(tenant_id):
+            ComplianceRequirementOverview.objects.bulk_create(
+                fallback_objects, batch_size=500
+            )
 
 
 def perform_prowler_scan(
@@ -642,36 +774,44 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                     status,
                 )
 
-        # Prepare compliance requirement objects
-        compliance_requirement_objects = []
+        # Prepare compliance requirement rows
+        compliance_requirement_rows: list[dict[str, Any]] = []
+        utc_datetime_now = datetime.now(tz=timezone.utc)
         for region, compliance_data in compliance_overview_by_region.items():
             for compliance_id, compliance in compliance_data.items():
+                framework = compliance["framework"]
+                version = compliance["version"] or ""
+                compliance_description = compliance.get("description", "")
                 # Create an overview record for each requirement within each compliance framework
                 for requirement_id, requirement in compliance["requirements"].items():
-                    compliance_requirement_objects.append(
-                        ComplianceRequirementOverview(
-                            tenant_id=tenant_id,
-                            scan=scan_instance,
-                            region=region,
-                            compliance_id=compliance_id,
-                            framework=compliance["framework"],
-                            version=compliance["version"],
-                            requirement_id=requirement_id,
-                            description=requirement["description"],
-                            passed_checks=requirement["checks_status"]["pass"],
-                            failed_checks=requirement["checks_status"]["fail"],
-                            total_checks=requirement["checks_status"]["total"],
-                            requirement_status=requirement["status"],
-                        )
+                    checks_status = requirement["checks_status"]
+                    compliance_requirement_rows.append(
+                        {
+                            "id": uuid.uuid4(),
+                            "tenant_id": tenant_id,
+                            "inserted_at": utc_datetime_now,
+                            "compliance_id": compliance_id,
+                            "framework": framework,
+                            "version": version or "",
+                            "description": requirement.get(
+                                "description", compliance_description
+                            )
+                            or "",
+                            "region": region,
+                            "requirement_id": requirement_id,
+                            "requirement_status": requirement["status"],
+                            "passed_checks": checks_status["pass"],
+                            "failed_checks": checks_status["fail"],
+                            "total_checks": checks_status["total"],
+                            "scan_id": scan_instance.id,
+                        }
                     )
 
-        # Bulk create requirement records
-        create_objects_in_batches(
-            tenant_id, ComplianceRequirementOverview, compliance_requirement_objects
-        )
+        # Bulk create requirement records using PostgreSQL COPY
+        _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)
 
         return {
-            "requirements_created": len(compliance_requirement_objects),
+            "requirements_created": len(compliance_requirement_rows),
             "regions_processed": list(regions),
             "compliance_frameworks": (
                 list(compliance_overview_by_region.get(list(regions)[0], {}).keys())
