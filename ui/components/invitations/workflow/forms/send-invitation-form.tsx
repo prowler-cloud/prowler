@@ -14,8 +14,8 @@ import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
 const sendInvitationFormSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  roleId: z.string().nonempty("Role is required"),
+  email: z.email({ error: "Please enter a valid email" }),
+  roleId: z.string().min(1, "Role is required"),
 });
 
 export type FormValues = z.infer<typeof sendInvitationFormSchema>;
