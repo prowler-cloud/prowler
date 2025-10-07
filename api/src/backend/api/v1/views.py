@@ -4415,8 +4415,12 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
         return Response(serializer.data)
 
     def partial_update(self, request, *args, **kwargs):
-        """PATCH endpoint for singleton - no pk required."""
-        instance = self.get_object()
+        """PATCH endpoint for singleton - no pk required. Auto-creates if not exists."""
+        # Auto-create tenant config if it doesn't exist (upsert semantics)
+        instance, created = LighthouseTenantConfiguration.objects.get_or_create(
+            tenant_id=self.request.tenant_id,
+            defaults={},
+        )
 
         # Extract attributes from JSON:API payload
         try:
