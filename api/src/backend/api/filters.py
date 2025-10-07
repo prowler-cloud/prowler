@@ -240,7 +240,7 @@ class ProviderFilter(FilterSet):
         excluded from this filter."""
     )
     provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
-    provider__in = ChoiceInFilter(choices=Provider.ProviderChoices.choices)
+    provider__in = ChoiceInFilter(choices=Provider.ProviderChoices.choices, lookup_expr="in")
 
     class Meta:
         model = Provider
