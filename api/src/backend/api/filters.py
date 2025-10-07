@@ -223,16 +223,24 @@ class ProviderFilter(FilterSet):
     inserted_at = DateFilter(
         field_name="inserted_at",
         lookup_expr="date",
-        help_text="Filter by date when the provider was added (format: YYYY-MM-DD)",
+        help_text="""Filter by date when the provider was added
+        (format: YYYY-MM-DD)""",
     )
     updated_at = DateFilter(
         field_name="updated_at",
         lookup_expr="date",
-        help_text="Filter by date when the provider was updated (format: YYYY-MM-DD)",
+        help_text="""Filter by date when the provider was updated
+        (format: YYYY-MM-DD)""",
     )
     connected = BooleanFilter(
-        help_text="Filter by connection status. Set to True to return only connected providers, or False to return only providers with failed connections. If not specified, both connected and failed providers are included. Providers with no connection attempt (status is null) are excluded from this filter."
+        help_text="""Filter by connection status. Set to True to return only
+        connected providers, or False to return only providers with failed
+        connections. If not specified, both connected and failed providers are
+        included. Providers with no connection attempt (status is null) are
+        excluded from this filter."""
     )
+    provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
+    provider__in = ChoiceInFilter(choices=Provider.ProviderChoices.choices)
 
     class Meta:
         model = Provider
@@ -668,6 +676,7 @@ class ProviderSecretFilter(FilterSet):
         lookup_expr="date",
         help_text="Filter by date when the secret was updated (format: YYYY-MM-DD)",
     )
+    provider = UUIDFilter(field_name="provider__id", lookup_expr="exact")
 
     class Meta:
         model = ProviderSecret
