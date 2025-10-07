@@ -1,4 +1,4 @@
-from asyncio import gather, get_event_loop
+import asyncio
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel
@@ -20,13 +20,29 @@ class AdminCenter(M365Service):
                 self.sharing_policy = self._get_sharing_policy()
             self.powershell.close()
 
-        loop = get_event_loop()
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_running():
+            raise RuntimeError(
+                "Cannot initialize AdminCenter service while event loop is running"
+            )
 
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
 
         attributes = loop.run_until_complete(
-            gather(
+            asyncio.gather(
                 self._get_directory_roles(),
                 self._get_groups(),
                 self._get_domains(),
@@ -36,6 +52,10 @@ class AdminCenter(M365Service):
         self.directory_roles = attributes[0]
         self.groups = attributes[1]
         self.domains = attributes[2]
+
+        if created_loop:
+            asyncio.set_event_loop(None)
+            loop.close()
 
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
