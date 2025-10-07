@@ -4,8 +4,7 @@
   "CheckTitle": "CloudFormation stack has termination protection enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Effects/Data Destruction",
-    "Effects/Denial of Service"
+    "Effects/Data Destruction"
   ],
   "ServiceName": "cloudformation",
   "SubServiceName": "",
@@ -16,16 +15,8 @@
   "Risk": "Without **termination protection**, human error or automation can delete entire stacks, causing immediate **availability** loss and potential **data destruction** of managed resources.\n\nAttackers with delete rights can more easily trigger outages and hinder recovery.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://avd.aquasec.com/misconfig/aws/cloudformation/cloudformation-stack-termination-protection-enabled/",
     "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html",
-    "https://aws.amazon.com/blogs/mt/use-aws-cloudformation-stack-termination-protection-and-rollback-triggers-to-maintain-infrastructure-availability/",
-    "https://maxat-akbanov.com/termination-protection-in-aws-cloudformation",
-    "https://lightrun.com/answers/aws-aws-cdk-enable-termination-protection-of-a-stack",
-    "https://lumigo.io/blog/serverless-trenches-1-protect-stack-from-deletion/",
-    "https://stackzone.com/feature/enable-cloudformation-stack-termination-protection-remediation/",
-    "https://www.pulumi.com/registry/packages/aws-native/api-docs/cloudformation/stack/",
-    "https://cloudlytics.com/compliance-controls/aws_cloudformation_3/",
-    "https://seed.run/blog/how-to-prevent-accidentally-deleting-serverless-resources.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFormation/stack-termination-protection.html"
   ],
   "Remediation": {
     "Code": {

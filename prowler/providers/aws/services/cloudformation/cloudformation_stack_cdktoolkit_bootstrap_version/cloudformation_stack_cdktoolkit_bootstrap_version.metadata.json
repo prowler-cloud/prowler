@@ -16,14 +16,9 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://towardsthecloud.com/blog/aws-cdk-bootstrap",
-    "https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html",
     "https://support.icompaas.com/support/solutions/articles/62000233694-ensure-that-cdktoolkit-stacks-have-a-bootstrap-version-of-21-or-higher-to-mitigate-security-risks",
     "https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-bootstrap.html",
-    "https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html",
-    "https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping-customizing.html",
-    "https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping-env.html",
-    "https://repost.aws/knowledge-center/cdk-customize-bootstrap-cfntoolkit",
-    "https://bobbyhadz.com/blog/what-aws-cdk-bootstrap-do"
+    "https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping-customizing.html"
   ],
   "Remediation": {
     "Code": {
@@ -38,8 +33,7 @@
     }
   },
   "Categories": [
-    "ci-cd",
-    "identity-access"
+    "vulnerabilities"
   ],
   "DependsOn": [],
   "RelatedTo": [],
