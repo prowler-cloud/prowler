@@ -72,7 +72,7 @@ export const awsCredentialsTypeSchema = z.object({
 export const addProviderFormSchema = z
   .object({
     providerType: z.enum(PROVIDER_TYPES, {
-      required_error: "Please select a provider type",
+      error: "Please select a provider type",
     }),
   })
   .and(
@@ -125,53 +125,53 @@ export const addCredentialsFormSchema = (
         ? {
             [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z
               .string()
-              .nonempty("AWS Access Key ID is required"),
+              .min(1, "AWS Access Key ID is required"),
             [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
               .string()
-              .nonempty("AWS Secret Access Key is required"),
+              .min(1, "AWS Secret Access Key is required"),
             [ProviderCredentialFields.AWS_SESSION_TOKEN]: z.string().optional(),
           }
         : providerType === "azure"
           ? {
               [ProviderCredentialFields.CLIENT_ID]: z
                 .string()
-                .nonempty("Client ID is required"),
+                .min(1, "Client ID is required"),
               [ProviderCredentialFields.CLIENT_SECRET]: z
                 .string()
-                .nonempty("Client Secret is required"),
+                .min(1, "Client Secret is required"),
               [ProviderCredentialFields.TENANT_ID]: z
                 .string()
-                .nonempty("Tenant ID is required"),
+                .min(1, "Tenant ID is required"),
             }
           : providerType === "gcp"
             ? {
                 [ProviderCredentialFields.CLIENT_ID]: z
                   .string()
-                  .nonempty("Client ID is required"),
+                  .min(1, "Client ID is required"),
                 [ProviderCredentialFields.CLIENT_SECRET]: z
                   .string()
-                  .nonempty("Client Secret is required"),
+                  .min(1, "Client Secret is required"),
                 [ProviderCredentialFields.REFRESH_TOKEN]: z
                   .string()
-                  .nonempty("Refresh Token is required"),
+                  .min(1, "Refresh Token is required"),
               }
             : providerType === "kubernetes"
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .nonempty("Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required"),
                 }
               : providerType === "m365"
                 ? {
                     [ProviderCredentialFields.CLIENT_ID]: z
                       .string()
-                      .nonempty("Client ID is required"),
+                      .min(1, "Client ID is required"),
                     [ProviderCredentialFields.CLIENT_SECRET]: z
                       .string()
-                      .nonempty("Client Secret is required"),
+                      .min(1, "Client Secret is required"),
                     [ProviderCredentialFields.TENANT_ID]: z
                       .string()
-                      .nonempty("Tenant ID is required"),
+                      .min(1, "Tenant ID is required"),
                     [ProviderCredentialFields.USER]: z.string().optional(),
                     [ProviderCredentialFields.PASSWORD]: z.string().optional(),
                   }
@@ -259,7 +259,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
           [ProviderCredentialFields.ROLE_ARN]: z
             .string()
-            .nonempty("AWS Role ARN is required"),
+            .min(1, "AWS Role ARN is required"),
           [ProviderCredentialFields.EXTERNAL_ID]: z.string().optional(),
           [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z.string().optional(),
           [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
@@ -347,8 +347,8 @@ export const editProviderFormSchema = (currentAlias: string) =>
   });
 
 export const editInviteFormSchema = z.object({
-  invitationId: z.string().uuid(),
-  invitationEmail: z.string().email(),
+  invitationId: z.uuid(),
+  invitationEmail: z.email(),
   expires_at: z.string().optional(),
   role: z.string().optional(),
 });
@@ -360,10 +360,7 @@ export const editUserFormSchema = () =>
       .min(3, { message: "The name must have at least 3 characters." })
       .max(150, { message: "The name cannot exceed 150 characters." })
       .optional(),
-    email: z
-      .string()
-      .email({ message: "Please enter a valid email address." })
-      .optional(),
+    email: z.email({ error: "Please enter a valid email address." }).optional(),
     password: z
       .string()
       .min(1, { message: "The password cannot be empty." })

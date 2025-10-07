@@ -18,14 +18,31 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
 - Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
+- Update AWS Account service metadata to new format [(#8715)](https://github.com/prowler-cloud/prowler/pull/8715)
+- Update AWS AccessAnalyzer service metadata to new format [(#8688)](https://github.com/prowler-cloud/prowler/pull/8688)
 - Update AWS Api Gateway V2 service metadata to new format [(#8719)](https://github.com/prowler-cloud/prowler/pull/8719)
 - Update AWS AppSync service metadata to new format [(#8721)](https://github.com/prowler-cloud/prowler/pull/8721)
 - Update AWS ACM service metadata to new format [(#8716)](https://github.com/prowler-cloud/prowler/pull/8716)
 - HTML output now properly renders markdown syntax in Risk and Recommendation fields [(#8727)](https://github.com/prowler-cloud/prowler/pull/8727)
 - Update `moto` dependency from 5.0.28 to 5.1.11 [(#7100)](https://github.com/prowler-cloud/prowler/pull/7100)
+- Update AWS AppStream service metadata to new format [(#8789)](https://github.com/prowler-cloud/prowler/pull/8789)
+- Update AWS API Gateway service metadata to new format [(#8788)](https://github.com/prowler-cloud/prowler/pull/8788)
+- Update AWS Athena service metadata to new format [(#8790)](https://github.com/prowler-cloud/prowler/pull/8790)
+- Update AWS Lambda service metadata to new format [(#8825)](https://github.com/prowler-cloud/prowler/pull/8825)
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
+- Fix HTML Markdown output for long strings [(#8803)](https://github.com/prowler-cloud/prowler/pull/8803)
+
+---
+
+## [v5.12.4] (Prowler UNRELEASED)
+
+### Fixed
+- Fix KeyError in `elb_ssl_listeners_use_acm_certificate` check and handle None cluster version in `eks_cluster_uses_a_supported_version` check [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
+- Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
+
+---
 
 ## [v5.12.1] (Prowler v5.12.1)
 
@@ -33,6 +50,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
 - `firehose_stream_encrypted_at_rest` check false positives and new api call in kafka service [(#8599)](https://github.com/prowler-cloud/prowler/pull/8599)
 - Replace defender rules policies key to use old name [(#8702)](https://github.com/prowler-cloud/prowler/pull/8702)
+
+---
 
 ## [v5.12.0] (Prowler v5.12.0)
 
