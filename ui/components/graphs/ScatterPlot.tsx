@@ -2,7 +2,6 @@
 
 import {
   CartesianGrid,
-  Cell,
   Legend,
   ResponsiveContainer,
   Scatter,
@@ -30,30 +29,56 @@ interface ScatterPlotProps {
 }
 
 const PROVIDER_COLORS = {
-  AWS: "#FF9800", // Amber/Orange
-  Azure: "#06B6D4", // Cyan 500
-  Google: "#EF4444", // Red 500
+  AWS: "var(--color-orange)",
+  Azure: "var(--color-cyan)",
+  Google: "var(--color-red)",
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">{data.name}</p>
-        <p className="text-xs text-slate-400">Risk Score: {data.x}</p>
-        <p className="text-xs text-slate-400">Failed Findings: {data.y}</p>
-        <p className="text-xs text-slate-400">Provider: {data.provider}</p>
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: "var(--color-slate-700)",
+          backgroundColor: "var(--color-slate-800)",
+        }}
+      >
+        <p
+          className="text-sm font-semibold"
+          style={{ color: "var(--color-white)" }}
+        >
+          {data.name}
+        </p>
+        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+          Risk Score: {data.x}
+        </p>
+        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+          Failed Findings: {data.y}
+        </p>
+        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+          Provider: {data.provider}
+        </p>
       </div>
     );
   }
   return null;
 };
 
-const CustomScatterDot = ({ cx, cy, payload, selectedPoint, onSelectPoint }: any) => {
+const CustomScatterDot = ({
+  cx,
+  cy,
+  payload,
+  selectedPoint,
+  onSelectPoint,
+}: any) => {
   const isSelected = selectedPoint?.name === payload.name;
   const size = isSelected ? 18 : 8;
-  const fill = isSelected ? "#86DA26" : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] || "#6B7280";
+  const fill = isSelected
+    ? "var(--color-success)"
+    : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
+      "#6B7280";
 
   return (
     <circle
@@ -61,7 +86,7 @@ const CustomScatterDot = ({ cx, cy, payload, selectedPoint, onSelectPoint }: any
       cy={cy}
       r={size / 2}
       fill={fill}
-      stroke={isSelected ? "#86DA26" : "transparent"}
+      stroke={isSelected ? "var(--color-success)" : "transparent"}
       strokeWidth={2}
       style={{ cursor: "pointer" }}
       onClick={() => onSelectPoint?.(payload)}
@@ -103,7 +128,7 @@ export function ScatterPlot({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-slate-700)" />
         <XAxis
           type="number"
           dataKey="x"
@@ -112,9 +137,9 @@ export function ScatterPlot({
             value: xLabel,
             position: "insideBottom",
             offset: -10,
-            fill: "#94A3B8",
+            fill: "var(--color-slate-400)",
           }}
-          tick={{ fill: "#94A3B8" }}
+          tick={{ fill: "var(--color-slate-400)" }}
           domain={[0, 10]}
         />
         <YAxis
@@ -125,16 +150,18 @@ export function ScatterPlot({
             value: yLabel,
             angle: -90,
             position: "insideLeft",
-            fill: "#94A3B8",
+            fill: "var(--color-slate-400)",
           }}
-          tick={{ fill: "#94A3B8" }}
+          tick={{ fill: "var(--color-slate-400)" }}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend
           wrapperStyle={{ paddingTop: "20px" }}
           iconType="circle"
           formatter={(value) => (
-            <span className="text-sm text-slate-300">{value}</span>
+            <span className="text-sm" style={{ color: "var(--color-white)" }}>
+              {value}
+            </span>
           )}
         />
         {Object.entries(dataByProvider).map(([provider, points]) => (

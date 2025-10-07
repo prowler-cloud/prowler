@@ -1,15 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 interface BarDataPoint {
   name: string;
@@ -28,19 +19,18 @@ interface HorizontalBarChartProps {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  Info: "#2E51B2",
-  Informational: "#2E51B2",
-  Low: "#FDD34F",
-  Medium: "#FF7D19",
-  High: "#FF3077",
-  Critical: "#971348",
+  Info: "var(--color-info)",
+  Informational: "var(--color-info)",
+  Low: "var(--color-warning)",
+  Medium: "var(--color-warning-emphasis)",
+  High: "var(--color-danger)",
+  Critical: "var(--color-danger-emphasis)",
 };
 
 type SortOption = "high-low" | "low-high" | "alphabetical";
 
 export function HorizontalBarChart({
   data,
-  height = 400,
   showSortDropdown = true,
   title,
 }: HorizontalBarChartProps) {
@@ -63,12 +53,24 @@ export function HorizontalBarChart({
     <div className="w-full">
       {(title || showSortDropdown) && (
         <div className="mb-4 flex items-center justify-between">
-          {title && <h3 className="text-lg font-semibold text-white">{title}</h3>}
+          {title && (
+            <h3
+              className="text-lg font-semibold"
+              style={{ color: "var(--color-white)" }}
+            >
+              {title}
+            </h3>
+          )}
           {showSortDropdown && (
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 focus:border-slate-600 focus:outline-none"
+              className="rounded-lg border px-3 py-2 text-sm focus:outline-none"
+              style={{
+                borderColor: "var(--color-slate-700)",
+                backgroundColor: "var(--color-slate-800)",
+                color: "var(--color-white)",
+              }}
             >
               <option value="high-low">Risk high-low</option>
               <option value="low-high">Risk low-high</option>
@@ -83,26 +85,38 @@ export function HorizontalBarChart({
           <div key={index} className="flex items-center gap-4">
             {/* Category Label */}
             <div className="w-24 text-right">
-              <span className="text-sm text-slate-300">{item.name}</span>
+              <span className="text-sm" style={{ color: "var(--color-white)" }}>
+                {item.name}
+              </span>
             </div>
 
             {/* Bar */}
             <div className="flex-1">
-              <div className="relative h-8 w-full rounded-lg bg-slate-700/50">
+              <div
+                className="relative h-8 w-full rounded-lg"
+                style={{
+                  backgroundColor: "var(--color-slate-700)",
+                  opacity: 0.5,
+                }}
+              >
                 <div
                   className="h-full rounded-lg transition-all duration-300"
                   style={{
-                    width: `${item.percentage || (item.value / Math.max(...data.map(d => d.value)) * 100)}%`,
-                    backgroundColor: item.color || SEVERITY_COLORS[item.name] || "#6B7280",
+                    width: `${item.percentage || (item.value / Math.max(...data.map((d) => d.value))) * 100}%`,
+                    backgroundColor:
+                      item.color || SEVERITY_COLORS[item.name] || "#6B7280",
                   }}
                 />
               </div>
             </div>
 
             {/* Legend - Percentage and Value */}
-            <div className="flex w-40 items-center gap-2 text-sm text-slate-300">
+            <div
+              className="flex w-40 items-center gap-2 text-sm"
+              style={{ color: "var(--color-white)" }}
+            >
               <span className="font-semibold">{item.percentage}%</span>
-              <span className="text-slate-500">•</span>
+              <span style={{ color: "var(--color-slate-400)" }}>•</span>
               <span>{item.value.toLocaleString()}</span>
             </div>
           </div>

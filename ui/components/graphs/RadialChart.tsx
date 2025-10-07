@@ -22,8 +22,8 @@ interface RadialChartProps {
 export function RadialChart({
   percentage,
   label = "Score",
-  color = "#86DA26",
-  backgroundColor = "#1E293B",
+  color = "var(--color-success)",
+  backgroundColor = "var(--color-slate-800)",
   height = 250,
   innerRadius = 60,
   outerRadius = 100,
@@ -67,7 +67,8 @@ export function RadialChart({
           y="50%"
           textAnchor="middle"
           dominantBaseline="middle"
-          className="fill-white text-4xl font-bold"
+          style={{ fill: "var(--color-white)" }}
+          className="text-4xl font-bold"
         >
           {percentage}%
         </text>

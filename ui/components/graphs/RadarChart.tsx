@@ -30,7 +30,7 @@ interface RadarChartProps {
 const chartConfig = {
   value: {
     label: "Findings",
-    color: "#B51C80",
+    color: "var(--color-magenta)",
   },
 } satisfies ChartConfig;
 
@@ -38,15 +38,25 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: "var(--color-slate-700)",
+          backgroundColor: "var(--color-slate-800)",
+        }}
+      >
+        <p
+          className="text-sm font-semibold"
+          style={{ color: "var(--color-white)" }}
+        >
           {data.payload.category}
         </p>
-        <p className="text-xs text-slate-400">
-          <span className="text-red-400">▲</span> {data.value} Fail Findings
+        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+          <span style={{ color: "var(--color-magenta)" }}>▲</span> {data.value}{" "}
+          Fail Findings
         </p>
         {data.payload.change !== undefined && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
             {data.payload.change > 0 ? "+" : ""}
             {data.payload.change}% Since last scan
           </p>
@@ -83,7 +93,7 @@ const CustomDot = (props: any) => {
       cx={cx}
       cy={cy}
       r={isSelected ? 9 : 6}
-      fill={isSelected ? "#86DA26" : "#5F1551"}
+      fill={isSelected ? "var(--color-success)" : "var(--color-purple-dark)"}
       fillOpacity={1}
       style={{
         cursor: onSelectPoint ? "pointer" : "default",
@@ -109,11 +119,14 @@ export function RadarChart({
     >
       <RechartsRadar data={data}>
         <ChartTooltip cursor={false} content={<CustomTooltip />} />
-        <PolarAngleAxis dataKey="category" tick={{ fill: "#DBDEE4" }} />
+        <PolarAngleAxis
+          dataKey="category"
+          tick={{ fill: "var(--color-white)" }}
+        />
         <PolarGrid strokeOpacity={0.3} />
         <Radar
           dataKey={dataKey}
-          fill="#B51C80"
+          fill="var(--color-magenta)"
           fillOpacity={0.2}
           activeDot={false}
           dot={
@@ -131,7 +144,7 @@ export function RadarChart({
                 }
               : {
                   r: 6,
-                  fill: "#5F1551",
+                  fill: "var(--color-purple-dark)",
                   fillOpacity: 1,
                 }
           }

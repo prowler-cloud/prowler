@@ -34,26 +34,38 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="mb-1 text-sm font-semibold text-white">{data.name}</p>
-        <p className="text-xs text-slate-300">
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: "var(--color-slate-700)",
+          backgroundColor: "var(--color-slate-800)",
+        }}
+      >
+        <p
+          className="mb-1 text-sm font-semibold"
+          style={{ color: "var(--color-white)" }}
+        >
+          {data.name}
+        </p>
+        <p className="text-xs" style={{ color: "var(--color-white)" }}>
           {data.value.toLocaleString()}{" "}
           {data.payload.percentage !== undefined &&
             `(${data.payload.percentage}%)`}
         </p>
         {data.payload.new !== undefined && data.payload.new > 0 && (
-          <p className="text-xs text-slate-400">
-            <span style={{ color: "#20B853" }}>↑</span> {data.payload.new} New
+          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+            <span style={{ color: "var(--color-success-emphasis)" }}>↑</span>{" "}
+            {data.payload.new} New
           </p>
         )}
         {data.payload.muted !== undefined && data.payload.muted > 0 && (
-          <p className="text-xs text-slate-400">
-            <span style={{ color: "#FDD34F" }}>○</span> {data.payload.muted}{" "}
-            Muted
+          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+            <span style={{ color: "var(--color-warning)" }}>○</span>{" "}
+            {data.payload.muted} Muted
           </p>
         )}
         {data.payload.change !== undefined && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
             {data.payload.change > 0 ? "+" : ""}
             {data.payload.change}% Since last scan
           </p>
@@ -82,7 +94,8 @@ const CustomLabel = ({
         y={cy - 10}
         textAnchor="middle"
         dominantBaseline="middle"
-        className="fill-white text-3xl font-bold"
+        style={{ fill: "var(--color-white)" }}
+        className="text-3xl font-bold"
       >
         {value}
       </text>
@@ -91,7 +104,8 @@ const CustomLabel = ({
         y={cy + 15}
         textAnchor="middle"
         dominantBaseline="middle"
-        className="fill-slate-400 text-sm"
+        style={{ fill: "var(--color-slate-400)" }}
+        className="text-sm"
       >
         {label}
       </text>
@@ -145,7 +159,7 @@ export function DonutChart({
             height={36}
             iconType="circle"
             formatter={(value, entry: any) => (
-              <span className="text-sm text-slate-300">
+              <span className="text-sm" style={{ color: "var(--color-white)" }}>
                 {value} ({entry.payload.percentage}%)
               </span>
             )}

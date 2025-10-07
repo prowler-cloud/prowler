@@ -22,31 +22,44 @@ interface SankeyChartProps {
 
 const COLORS: Record<string, string> = {
   // Status colors
-  Success: "#86DA26", // Green
-  Fail: "#DB2B49", // Red
+  Success: "var(--color-success)",
+  Fail: "var(--color-destructive)",
 
   // Provider colors
-  AWS: "#FF9800", // Amber/Orange 500
-  Azure: "#06B6D4", // Cyan 500
-  Google: "#EF4444", // Red 500
+  AWS: "var(--color-orange)",
+  Azure: "var(--color-cyan)",
+  Google: "var(--color-red)",
 
   // Severity colors
-  Critical: "#971348", // Dark Red
-  High: "#FF3077", // Pink
-  Medium: "#FF7D19", // Orange
-  Low: "#FDD34F", // Yellow
-  Info: "#2E51B2", // Blue
-  Informational: "#2E51B2", // Blue
+  Critical: "var(--color-danger-emphasis)",
+  High: "var(--color-danger)",
+  Medium: "var(--color-warning-emphasis)",
+  Low: "var(--color-warning)",
+  Info: "var(--color-info)",
+  Informational: "var(--color-info)",
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">{data.name}</p>
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: "var(--color-slate-700)",
+          backgroundColor: "var(--color-slate-800)",
+        }}
+      >
+        <p
+          className="text-sm font-semibold"
+          style={{ color: "var(--color-white)" }}
+        >
+          {data.name}
+        </p>
         {data.value && (
-          <p className="text-xs text-slate-400">Value: {data.value}</p>
+          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+            Value: {data.value}
+          </p>
         )}
       </div>
     );
@@ -74,8 +87,8 @@ const CustomNode = ({ x, y, width, height, payload, containerWidth }: any) => {
         x={isOut ? x - 6 : x + width + 6}
         y={y + height / 2}
         fontSize="14"
-        stroke="#CBD5E1"
-        fill="#CBD5E1"
+        stroke="var(--color-white)"
+        fill="var(--color-white)"
       >
         {nodeName}
       </text>
@@ -84,8 +97,8 @@ const CustomNode = ({ x, y, width, height, payload, containerWidth }: any) => {
         x={isOut ? x - 6 : x + width + 6}
         y={y + height / 2 + 13}
         fontSize="12"
-        stroke="#64748B"
-        fill="#64748B"
+        stroke="var(--color-slate-400)"
+        fill="var(--color-slate-400)"
         strokeOpacity="0.5"
       >
         {payload.value}

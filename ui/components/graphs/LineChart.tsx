@@ -31,20 +31,39 @@ interface LineChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="mb-2 text-sm font-semibold text-white">{label}</p>
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: "var(--color-slate-700)",
+          backgroundColor: "var(--color-slate-800)",
+        }}
+      >
+        <p
+          className="mb-2 text-sm font-semibold"
+          style={{ color: "var(--color-white)" }}
+        >
+          {label}
+        </p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2">
             <div
               className="h-2 w-2 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-xs text-slate-300">{entry.name}:</span>
-            <span className="text-xs font-semibold text-white">
+            <span className="text-xs" style={{ color: "var(--color-white)" }}>
+              {entry.name}:
+            </span>
+            <span
+              className="text-xs font-semibold"
+              style={{ color: "var(--color-white)" }}
+            >
               {entry.value}
             </span>
             {entry.payload[`${entry.dataKey}_change`] && (
-              <span className="text-xs text-slate-400">
+              <span
+                className="text-xs"
+                style={{ color: "var(--color-slate-400)" }}
+              >
                 ({entry.payload[`${entry.dataKey}_change`] > 0 ? "+" : ""}
                 {entry.payload[`${entry.dataKey}_change`]}%)
               </span>
@@ -70,7 +89,7 @@ export function LineChart({
         data={data}
         margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-slate-700)" />
         <XAxis
           dataKey="date"
           label={
@@ -79,11 +98,11 @@ export function LineChart({
                   value: xLabel,
                   position: "insideBottom",
                   offset: -10,
-                  fill: "#94A3B8",
+                  fill: "var(--color-slate-400)",
                 }
               : undefined
           }
-          tick={{ fill: "#94A3B8", fontSize: 12 }}
+          tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
         />
         <YAxis
           label={
@@ -92,18 +111,20 @@ export function LineChart({
                   value: yLabel,
                   angle: -90,
                   position: "insideLeft",
-                  fill: "#94A3B8",
+                  fill: "var(--color-slate-400)",
                 }
               : undefined
           }
-          tick={{ fill: "#94A3B8", fontSize: 12 }}
+          tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend
           wrapperStyle={{ paddingTop: "20px" }}
           iconType="circle"
           formatter={(value) => (
-            <span className="text-sm text-slate-300">{value}</span>
+            <span className="text-sm" style={{ color: "var(--color-white)" }}>
+              {value}
+            </span>
           )}
         />
         {lines.map((line) => (

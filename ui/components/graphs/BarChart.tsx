@@ -30,32 +30,43 @@ interface BarChartProps {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  Info: "#2E51B2", // Blue (Informational)
-  Informational: "#2E51B2", // Blue
-  Low: "#FDD34F", // Yellow
-  Medium: "#FF7D19", // Orange
-  High: "#FF3077", // Pink
-  Critical: "#971348", // Dark Red
+  Info: "var(--color-info)",
+  Informational: "var(--color-info)",
+  Low: "var(--color-warning)",
+  Medium: "var(--color-warning-emphasis)",
+  High: "var(--color-danger)",
+  Critical: "var(--color-danger-emphasis)",
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="mb-1 text-sm font-semibold text-white">{data.name}</p>
-        <p className="text-xs text-slate-300">
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: "var(--color-slate-700)",
+          backgroundColor: "var(--color-slate-800)",
+        }}
+      >
+        <p
+          className="mb-1 text-sm font-semibold"
+          style={{ color: "var(--color-white)" }}
+        >
+          {data.name}
+        </p>
+        <p className="text-xs" style={{ color: "var(--color-white)" }}>
           {data.value.toLocaleString()}{" "}
           {data.percentage !== undefined && `(${data.percentage}%)`}
         </p>
         {data.newFindings !== undefined && (
-          <p className="text-xs text-slate-400">
-            <span className="text-red-400">△</span> {data.newFindings} New
-            Findings
+          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+            <span style={{ color: "var(--color-destructive)" }}>△</span>{" "}
+            {data.newFindings} New Findings
           </p>
         )}
         {data.change !== undefined && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
             {data.change > 0 ? "+" : ""}
             {data.change}% Since last scan
           </p>
@@ -72,7 +83,7 @@ const CustomLabel = ({ x, y, width, height, value, data }: any) => {
     <text
       x={x + width + 10}
       y={y + height / 2}
-      fill="#94A3B8"
+      fill="var(--color-slate-400)"
       fontSize={12}
       textAnchor="start"
       dominantBaseline="middle"
@@ -103,7 +114,7 @@ export function BarChart({
       >
         <CartesianGrid
           strokeDasharray="3 3"
-          stroke="#334155"
+          stroke="var(--color-slate-700)"
           horizontal={isHorizontal}
           vertical={!isHorizontal}
         />
@@ -111,14 +122,14 @@ export function BarChart({
           <>
             <XAxis
               type="number"
-              tick={{ fill: "#94A3B8", fontSize: 12 }}
+              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
               label={
                 xLabel
                   ? {
                       value: xLabel,
                       position: "insideBottom",
                       offset: -10,
-                      fill: "#94A3B8",
+                      fill: "var(--color-slate-400)",
                     }
                   : undefined
               }
@@ -127,14 +138,14 @@ export function BarChart({
               dataKey="name"
               type="category"
               width={100}
-              tick={{ fill: "#94A3B8", fontSize: 12 }}
+              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
               label={
                 yLabel
                   ? {
                       value: yLabel,
                       angle: -90,
                       position: "insideLeft",
-                      fill: "#94A3B8",
+                      fill: "var(--color-slate-400)",
                     }
                   : undefined
               }
@@ -144,28 +155,28 @@ export function BarChart({
           <>
             <XAxis
               dataKey="name"
-              tick={{ fill: "#94A3B8", fontSize: 12 }}
+              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
               label={
                 xLabel
                   ? {
                       value: xLabel,
                       position: "insideBottom",
                       offset: -10,
-                      fill: "#94A3B8",
+                      fill: "var(--color-slate-400)",
                     }
                   : undefined
               }
             />
             <YAxis
               type="number"
-              tick={{ fill: "#94A3B8", fontSize: 12 }}
+              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
               label={
                 yLabel
                   ? {
                       value: yLabel,
                       angle: -90,
                       position: "insideLeft",
-                      fill: "#94A3B8",
+                      fill: "var(--color-slate-400)",
                     }
                   : undefined
               }
