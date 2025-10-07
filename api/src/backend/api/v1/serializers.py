@@ -1079,6 +1079,14 @@ class ScanComplianceReportSerializer(serializers.Serializer):
         fields = ["id", "name"]
 
 
+class ScanThreatscoreReportSerializer(serializers.Serializer):
+    id = serializers.CharField(source="scan")
+
+    class Meta:
+        resource_name = "scan-reports"
+        fields = ["id"]
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model

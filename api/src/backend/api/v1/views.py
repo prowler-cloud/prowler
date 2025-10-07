@@ -189,6 +189,7 @@ from api.v1.serializers import (
     ScanCreateSerializer,
     ScanReportSerializer,
     ScanSerializer,
+    ScanThreatscoreReportSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
     TaskSerializer,
@@ -1581,6 +1582,25 @@ class ProviderViewSet(BaseRLSViewSet):
         },
         request=None,
     ),
+    threatscore=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve threatscore report",
+        description="Download a specific threatscore report (e.g., 'prowler_threatscore_aws') as a PDF file.",
+        request=ScanThreatscoreReportSerializer,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the threatscore report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no threatscore reports, or the threatscore report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1637,6 +1657,10 @@ class ScanViewSet(BaseRLSViewSet):
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
             return ScanComplianceReportSerializer
+        elif self.action == "threatscore":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ScanThreatscoreReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1867,6 +1891,45 @@ class ScanViewSet(BaseRLSViewSet):
 
         content, filename = loader
         return self._serve_file(content, filename, "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="threatscore",
+    )
+    def threatscore(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the threatscore report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "threatscore",
+                "*_threatscore_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)

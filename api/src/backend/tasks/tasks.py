@@ -26,6 +26,7 @@ from tasks.jobs.integrations import (
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -62,6 +63,9 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+        ),
+        generate_threatscore_report_task.si(
+            tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
         ),
         check_integrations_task.si(
             tenant_id=tenant_id,
@@ -303,7 +307,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir = _generate_output_directory(
+    out_dir, comp_dir, _ = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -612,4 +616,23 @@ def jira_integration_task(
 ):
     return send_findings_to_jira(
         tenant_id, integration_id, project_key, issue_type, finding_ids
+    )
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-threatscore-report",
+    queue="scan-reports",
+)
+@set_tenant(keep_tenant=True)
+def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate a threatscore report for a given scan.
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
     )
