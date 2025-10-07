@@ -1,29 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "directoryservice_directory_snapshots_limit",
-  "CheckTitle": "Directory Service Manual Snapshots limit reached.",
-  "CheckType": [],
+  "CheckTitle": "Directory Service directory has adequate remaining manual snapshot quota",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Resource Consumption"
+  ],
   "ServiceName": "directoryservice",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
-  "Description": "Directory Service Manual Snapshots limit reached.",
-  "Risk": "A limit reached can bring unwanted results. The maximum number of manual snapshots is a hard limit.",
-  "RelatedUrl": "https://docs.aws.amazon.com/general/latest/gr/ds_region.html",
+  "Description": "**AWS Directory Service** directories with **manual snapshot capacity** fully consumed or nearly exhausted, based on current snapshot count relative to the directory's maximum allowed.",
+  "Risk": "With no remaining snapshot capacity, you cannot create new recovery points:\n- Reduced availability during outages or ransomware\n- Higher RPO from failed scheduled backups\n- Greater change risk (schema/OS updates) without a safe rollback",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/general/latest/gr/ds_region.html",
+    "https://hackage.haskell.org/package/amazonka-ds-1.6.1/docs/Network-AWS-DirectoryService-GetSnapshotLimits.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233531--ensure-directory-service-manual-snapshots-limit-reached",
+    "https://docs.amazonaws.cn/en_us/directoryservice/latest/admin-guide/directoryservice-admin-guide.pdf",
+    "https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DirectoryService.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the AWS Console, go to Directory Service > Directories and open <example_resource_id>\n2. Click Snapshots\n3. Select older snapshots with Type = Manual and click Delete snapshot, confirm\n4. Repeat until the number of manual snapshots is less than (manual limit - 2). For the default limit of 5, keep at most 2 manual snapshots\n5. Verify Remaining manual snapshots > 2 on the Snapshots page",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Monitor manual snapshots limit to ensure capacity when you need it.",
-      "Url": "https://docs.aws.amazon.com/general/latest/gr/ds_region.html"
+      "Text": "Adopt a **snapshot lifecycle policy**: rotate/expire old manual snapshots after verifying restores, and alert on low headroom. Prefer **automated backups** for cadence and retention. Enforce **least privilege** for snapshot creation. Design operations within the *hard per-directory cap* to prevent capacity exhaustion.",
+      "Url": "https://hub.prowler.com/check/directoryservice_directory_snapshots_limit"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
