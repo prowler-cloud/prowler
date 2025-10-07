@@ -7,6 +7,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { CHART_COLORS } from "./shared/chart-constants";
+
 interface RadialChartProps {
   percentage: number;
   label?: string;
@@ -23,7 +25,7 @@ export function RadialChart({
   percentage,
   label = "Score",
   color = "var(--color-success)",
-  backgroundColor = "var(--color-slate-800)",
+  backgroundColor = CHART_COLORS.tooltipBackground,
   height = 250,
   innerRadius = 60,
   outerRadius = 100,
@@ -67,7 +69,7 @@ export function RadialChart({
           y="50%"
           textAnchor="middle"
           dominantBaseline="middle"
-          style={{ fill: "var(--color-white)" }}
+          style={{ fill: CHART_COLORS.textPrimary }}
           className="text-4xl font-bold"
         >
           {percentage}%

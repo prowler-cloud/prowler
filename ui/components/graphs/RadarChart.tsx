@@ -13,11 +13,8 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart/Chart";
 
-interface RadarDataPoint {
-  category: string;
-  value: number;
-  change?: number;
-}
+import { RadarDataPoint } from "./models/chart-types";
+import { CHART_COLORS } from "./shared/chart-constants";
 
 interface RadarChartProps {
   data: RadarDataPoint[];
@@ -41,22 +38,22 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div
         className="rounded-lg border p-3 shadow-lg"
         style={{
-          borderColor: "var(--color-slate-700)",
-          backgroundColor: "var(--color-slate-800)",
+          borderColor: CHART_COLORS.tooltipBorder,
+          backgroundColor: CHART_COLORS.tooltipBackground,
         }}
       >
         <p
           className="text-sm font-semibold"
-          style={{ color: "var(--color-white)" }}
+          style={{ color: CHART_COLORS.textPrimary }}
         >
           {data.payload.category}
         </p>
-        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
           <span style={{ color: "var(--color-magenta)" }}>▲</span> {data.value}{" "}
           Fail Findings
         </p>
         {data.payload.change !== undefined && (
-          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+          <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
             {data.payload.change > 0 ? "+" : ""}
             {data.payload.change}% Since last scan
           </p>
@@ -121,7 +118,7 @@ export function RadarChart({
         <ChartTooltip cursor={false} content={<CustomTooltip />} />
         <PolarAngleAxis
           dataKey="category"
-          tick={{ fill: "var(--color-white)" }}
+          tick={{ fill: CHART_COLORS.textPrimary }}
         />
         <PolarGrid strokeOpacity={0.3} />
         <Radar

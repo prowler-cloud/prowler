@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Cell,
   Legend,
@@ -9,14 +10,9 @@ import {
   Tooltip,
 } from "recharts";
 
-interface DonutDataPoint {
-  name: string;
-  value: number;
-  color: string;
-  percentage?: number;
-  new?: number;
-  muted?: number;
-}
+import { DonutDataPoint } from "./models/chart-types";
+import { CHART_COLORS } from "./shared/chart-constants";
+import { ChartTooltip } from "./shared/ChartTooltip";
 
 interface DonutChartProps {
   data: DonutDataPoint[];
@@ -29,52 +25,6 @@ interface DonutChartProps {
     label: string;
   };
 }
-
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0];
-    return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          borderColor: "var(--color-slate-700)",
-          backgroundColor: "var(--color-slate-800)",
-        }}
-      >
-        <p
-          className="mb-1 text-sm font-semibold"
-          style={{ color: "var(--color-white)" }}
-        >
-          {data.name}
-        </p>
-        <p className="text-xs" style={{ color: "var(--color-white)" }}>
-          {data.value.toLocaleString()}{" "}
-          {data.payload.percentage !== undefined &&
-            `(${data.payload.percentage}%)`}
-        </p>
-        {data.payload.new !== undefined && data.payload.new > 0 && (
-          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
-            <span style={{ color: "var(--color-success-emphasis)" }}>↑</span>{" "}
-            {data.payload.new} New
-          </p>
-        )}
-        {data.payload.muted !== undefined && data.payload.muted > 0 && (
-          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
-            <span style={{ color: "var(--color-warning)" }}>○</span>{" "}
-            {data.payload.muted} Muted
-          </p>
-        )}
-        {data.payload.change !== undefined && (
-          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
-            {data.payload.change > 0 ? "+" : ""}
-            {data.payload.change}% Since last scan
-          </p>
-        )}
-      </div>
-    );
-  }
-  return null;
-};
 
 const CustomLabel = ({
   cx,
@@ -94,7 +44,7 @@ const CustomLabel = ({
         y={cy - 10}
         textAnchor="middle"
         dominantBaseline="middle"
-        style={{ fill: "var(--color-white)" }}
+        style={{ fill: CHART_COLORS.textPrimary }}
         className="text-3xl font-bold"
       >
         {value}
@@ -104,7 +54,7 @@ const CustomLabel = ({
         y={cy + 15}
         textAnchor="middle"
         dominantBaseline="middle"
-        style={{ fill: "var(--color-slate-400)" }}
+        style={{ fill: CHART_COLORS.textSecondary }}
         className="text-sm"
       >
         {label}
@@ -121,6 +71,8 @@ export function DonutChart({
   showLegend = true,
   centerLabel,
 }: DonutChartProps) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <PieChart>
@@ -133,14 +85,21 @@ export function DonutChart({
           paddingAngle={2}
           dataKey="value"
           label={false}
+          onMouseEnter={(_, index) => setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
         >
-          {data.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={entry.color}
-              className="transition-opacity hover:opacity-80"
-            />
-          ))}
+          {data.map((entry, index) => {
+            const opacity =
+              hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.5;
+            return (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.color}
+                opacity={opacity}
+                style={{ transition: "opacity 0.2s" }}
+              />
+            );
+          })}
         </Pie>
         {centerLabel && (
           <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle">
@@ -152,14 +111,17 @@ export function DonutChart({
             />
           </text>
         )}
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<ChartTooltip colorIndicatorShape="circle" />} />
         {showLegend && (
           <Legend
             verticalAlign="bottom"
             height={36}
             iconType="circle"
             formatter={(value, entry: any) => (
-              <span className="text-sm" style={{ color: "var(--color-white)" }}>
+              <span
+                className="text-sm"
+                style={{ color: CHART_COLORS.textPrimary }}
+              >
                 {value} ({entry.payload.percentage}%)
               </span>
             )}

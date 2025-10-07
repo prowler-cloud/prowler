@@ -11,21 +11,13 @@ import {
   YAxis,
 } from "recharts";
 
-interface BarDataPoint {
-  name: string;
-  value: number;
-  percentage?: number;
-  color?: string;
-  change?: number;
-  newFindings?: number;
-}
-
-const LAYOUT_OPTIONS = {
-  horizontal: "horizontal",
-  vertical: "vertical",
-} as const;
-
-type LayoutOption = (typeof LAYOUT_OPTIONS)[keyof typeof LAYOUT_OPTIONS];
+import { BarDataPoint, LayoutOption } from "./models/chart-types";
+import {
+  CHART_COLORS,
+  LAYOUT_OPTIONS,
+  SEVERITY_COLORS,
+} from "./shared/chart-constants";
+import { ChartTooltip } from "./shared/ChartTooltip";
 
 interface BarChartProps {
   data: BarDataPoint[];
@@ -36,61 +28,13 @@ interface BarChartProps {
   showValues?: boolean;
 }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  Info: "var(--color-info)",
-  Informational: "var(--color-info)",
-  Low: "var(--color-warning)",
-  Medium: "var(--color-warning-emphasis)",
-  High: "var(--color-danger)",
-  Critical: "var(--color-danger-emphasis)",
-};
-
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          borderColor: "var(--color-slate-700)",
-          backgroundColor: "var(--color-slate-800)",
-        }}
-      >
-        <p
-          className="mb-1 text-sm font-semibold"
-          style={{ color: "var(--color-white)" }}
-        >
-          {data.name}
-        </p>
-        <p className="text-xs" style={{ color: "var(--color-white)" }}>
-          {data.value.toLocaleString()}{" "}
-          {data.percentage !== undefined && `(${data.percentage}%)`}
-        </p>
-        {data.newFindings !== undefined && (
-          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
-            <span style={{ color: "var(--color-destructive)" }}>△</span>{" "}
-            {data.newFindings} New Findings
-          </p>
-        )}
-        {data.change !== undefined && (
-          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
-            {data.change > 0 ? "+" : ""}
-            {data.change}% Since last scan
-          </p>
-        )}
-      </div>
-    );
-  }
-  return null;
-};
-
 const CustomLabel = ({ x, y, width, height, value, data }: any) => {
   const percentage = data.percentage;
   return (
     <text
       x={x + width + 10}
       y={y + height / 2}
-      fill="var(--color-slate-400)"
+      fill={CHART_COLORS.textSecondary}
       fontSize={12}
       textAnchor="start"
       dominantBaseline="middle"
@@ -104,13 +48,13 @@ const CustomLabel = ({ x, y, width, height, value, data }: any) => {
 
 export function BarChart({
   data,
-  layout = "horizontal",
+  layout = LAYOUT_OPTIONS.horizontal,
   xLabel,
   yLabel,
   height = 400,
   showValues = true,
 }: BarChartProps) {
-  const isHorizontal = layout === "horizontal";
+  const isHorizontal = layout === LAYOUT_OPTIONS.horizontal;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -121,7 +65,7 @@ export function BarChart({
       >
         <CartesianGrid
           strokeDasharray="3 3"
-          stroke="var(--color-slate-700)"
+          stroke={CHART_COLORS.gridLine}
           horizontal={isHorizontal}
           vertical={!isHorizontal}
         />
@@ -129,14 +73,14 @@ export function BarChart({
           <>
             <XAxis
               type="number"
-              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
+              tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
               label={
                 xLabel
                   ? {
                       value: xLabel,
                       position: "insideBottom",
                       offset: -10,
-                      fill: "var(--color-slate-400)",
+                      fill: CHART_COLORS.textSecondary,
                     }
                   : undefined
               }
@@ -145,14 +89,14 @@ export function BarChart({
               dataKey="name"
               type="category"
               width={100}
-              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
+              tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
               label={
                 yLabel
                   ? {
                       value: yLabel,
                       angle: -90,
                       position: "insideLeft",
-                      fill: "var(--color-slate-400)",
+                      fill: CHART_COLORS.textSecondary,
                     }
                   : undefined
               }
@@ -162,35 +106,35 @@ export function BarChart({
           <>
             <XAxis
               dataKey="name"
-              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
+              tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
               label={
                 xLabel
                   ? {
                       value: xLabel,
                       position: "insideBottom",
                       offset: -10,
-                      fill: "var(--color-slate-400)",
+                      fill: CHART_COLORS.textSecondary,
                     }
                   : undefined
               }
             />
             <YAxis
               type="number"
-              tick={{ fill: "var(--color-slate-400)", fontSize: 12 }}
+              tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
               label={
                 yLabel
                   ? {
                       value: yLabel,
                       angle: -90,
                       position: "insideLeft",
-                      fill: "var(--color-slate-400)",
+                      fill: CHART_COLORS.textSecondary,
                     }
                   : undefined
               }
             />
           </>
         )}
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<ChartTooltip />} />
         <Bar
           dataKey="value"
           radius={4}

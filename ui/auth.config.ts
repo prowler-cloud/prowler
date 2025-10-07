@@ -149,9 +149,10 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isSignUpPage = nextUrl.pathname === "/sign-up";
       const isSignInPage = nextUrl.pathname === "/sign-in";
+      const isChartsDemoPage = nextUrl.pathname === "/charts-demo";
 
-      // Allow access to sign-up and sign-in pages
-      if (isSignUpPage || isSignInPage) return true;
+      // Allow access to sign-up, sign-in, and charts-demo pages
+      if (isSignUpPage || isSignInPage || isChartsDemoPage) return true;
 
       // For all other routes, require authentication
       if (!isLoggedIn) {

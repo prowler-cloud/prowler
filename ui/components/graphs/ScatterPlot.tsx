@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -10,6 +11,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
+import { CHART_COLORS } from "./shared/chart-constants";
 
 interface ScatterDataPoint {
   x: number;
@@ -41,23 +44,23 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div
         className="rounded-lg border p-3 shadow-lg"
         style={{
-          borderColor: "var(--color-slate-700)",
-          backgroundColor: "var(--color-slate-800)",
+          borderColor: CHART_COLORS.tooltipBorder,
+          backgroundColor: CHART_COLORS.tooltipBackground,
         }}
       >
         <p
           className="text-sm font-semibold"
-          style={{ color: "var(--color-white)" }}
+          style={{ color: CHART_COLORS.textPrimary }}
         >
           {data.name}
         </p>
-        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
           Risk Score: {data.x}
         </p>
-        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
           Failed Findings: {data.y}
         </p>
-        <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+        <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
           Provider: {data.provider}
         </p>
       </div>
@@ -104,7 +107,6 @@ export function ScatterPlot({
 }: ScatterPlotProps) {
   const handlePointClick = (point: ScatterDataPoint) => {
     if (onSelectPoint) {
-      // Toggle selection: if clicking the same point, deselect it
       if (selectedPoint?.name === point.name) {
         onSelectPoint(null);
       } else {
@@ -112,7 +114,7 @@ export function ScatterPlot({
       }
     }
   };
-  // Group data by provider
+
   const dataByProvider = data.reduce(
     (acc, point) => {
       const provider = point.provider;
@@ -128,7 +130,7 @@ export function ScatterPlot({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-slate-700)" />
+        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
         <XAxis
           type="number"
           dataKey="x"
@@ -137,9 +139,9 @@ export function ScatterPlot({
             value: xLabel,
             position: "insideBottom",
             offset: -10,
-            fill: "var(--color-slate-400)",
+            fill: CHART_COLORS.textSecondary,
           }}
-          tick={{ fill: "var(--color-slate-400)" }}
+          tick={{ fill: CHART_COLORS.textSecondary }}
           domain={[0, 10]}
         />
         <YAxis
@@ -150,16 +152,19 @@ export function ScatterPlot({
             value: yLabel,
             angle: -90,
             position: "insideLeft",
-            fill: "var(--color-slate-400)",
+            fill: CHART_COLORS.textSecondary,
           }}
-          tick={{ fill: "var(--color-slate-400)" }}
+          tick={{ fill: CHART_COLORS.textSecondary }}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend
           wrapperStyle={{ paddingTop: "20px" }}
           iconType="circle"
           formatter={(value) => (
-            <span className="text-sm" style={{ color: "var(--color-white)" }}>
+            <span
+              className="text-sm"
+              style={{ color: CHART_COLORS.textPrimary }}
+            >
               {value}
             </span>
           )}

@@ -2,6 +2,8 @@
 
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
+import { CHART_COLORS, SEVERITY_COLORS } from "./shared/chart-constants";
+
 interface SankeyNode {
   name: string;
 }
@@ -21,22 +23,12 @@ interface SankeyChartProps {
 }
 
 const COLORS: Record<string, string> = {
-  // Status colors
   Success: "var(--color-success)",
   Fail: "var(--color-destructive)",
-
-  // Provider colors
   AWS: "var(--color-orange)",
   Azure: "var(--color-cyan)",
   Google: "var(--color-red)",
-
-  // Severity colors
-  Critical: "var(--color-danger-emphasis)",
-  High: "var(--color-danger)",
-  Medium: "var(--color-warning-emphasis)",
-  Low: "var(--color-warning)",
-  Info: "var(--color-info)",
-  Informational: "var(--color-info)",
+  ...SEVERITY_COLORS,
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -46,18 +38,18 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div
         className="rounded-lg border p-3 shadow-lg"
         style={{
-          borderColor: "var(--color-slate-700)",
-          backgroundColor: "var(--color-slate-800)",
+          borderColor: CHART_COLORS.tooltipBorder,
+          backgroundColor: CHART_COLORS.tooltipBackground,
         }}
       >
         <p
           className="text-sm font-semibold"
-          style={{ color: "var(--color-white)" }}
+          style={{ color: CHART_COLORS.textPrimary }}
         >
           {data.name}
         </p>
         {data.value && (
-          <p className="text-xs" style={{ color: "var(--color-slate-400)" }}>
+          <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
             Value: {data.value}
           </p>
         )}
@@ -87,8 +79,8 @@ const CustomNode = ({ x, y, width, height, payload, containerWidth }: any) => {
         x={isOut ? x - 6 : x + width + 6}
         y={y + height / 2}
         fontSize="14"
-        stroke="var(--color-white)"
-        fill="var(--color-white)"
+        stroke={CHART_COLORS.textPrimary}
+        fill={CHART_COLORS.textPrimary}
       >
         {nodeName}
       </text>
@@ -97,8 +89,8 @@ const CustomNode = ({ x, y, width, height, payload, containerWidth }: any) => {
         x={isOut ? x - 6 : x + width + 6}
         y={y + height / 2 + 13}
         fontSize="12"
-        stroke="var(--color-slate-400)"
-        fill="var(--color-slate-400)"
+        stroke={CHART_COLORS.textSecondary}
+        fill={CHART_COLORS.textSecondary}
         strokeOpacity="0.5"
       >
         {payload.value}
@@ -118,7 +110,6 @@ const CustomLink = (props: any) => {
     linkWidth,
   } = props;
 
-  // Determine color based on source node
   const sourceName = props.payload.source?.name || "";
   const color = COLORS[sourceName] || "#6B7280";
 

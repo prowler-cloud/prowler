@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 
-interface BarDataPoint {
-  name: string;
-  value: number;
-  percentage?: number;
-  color?: string;
-  change?: number;
-  newFindings?: number;
-}
+import { BarDataPoint, SortOption } from "./models/chart-types";
+import {
+  CHART_COLORS,
+  SEVERITY_COLORS,
+  SORT_OPTIONS,
+} from "./shared/chart-constants";
 
 interface HorizontalBarChartProps {
   data: BarDataPoint[];
@@ -18,38 +16,23 @@ interface HorizontalBarChartProps {
   title?: string;
 }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  Info: "var(--color-info)",
-  Informational: "var(--color-info)",
-  Low: "var(--color-warning)",
-  Medium: "var(--color-warning-emphasis)",
-  High: "var(--color-danger)",
-  Critical: "var(--color-danger-emphasis)",
-};
-
-const SORT_OPTIONS = {
-  "high-low": "high-low",
-  "low-high": "low-high",
-  alphabetical: "alphabetical",
-} as const;
-
-type SortOption = (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS];
+export type { SortOption };
 
 export function HorizontalBarChart({
   data,
   showSortDropdown = true,
   title,
 }: HorizontalBarChartProps) {
-  const [sortBy, setSortBy] = useState<SortOption>("high-low");
+  const [sortBy, setSortBy] = useState<SortOption>(SORT_OPTIONS["high-low"]);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const sortedData = [...data].sort((a, b) => {
     switch (sortBy) {
-      case "high-low":
+      case SORT_OPTIONS["high-low"]:
         return b.value - a.value;
-      case "low-high":
+      case SORT_OPTIONS["low-high"]:
         return a.value - b.value;
-      case "alphabetical":
+      case SORT_OPTIONS.alphabetical:
         return a.name.localeCompare(b.name);
       default:
         return 0;
@@ -63,7 +46,7 @@ export function HorizontalBarChart({
           {title && (
             <h3
               className="text-lg font-semibold"
-              style={{ color: "var(--color-white)" }}
+              style={{ color: CHART_COLORS.textPrimary }}
             >
               {title}
             </h3>
@@ -74,14 +57,14 @@ export function HorizontalBarChart({
               onChange={(e) => setSortBy(e.target.value as SortOption)}
               className="rounded-lg border px-3 py-2 text-sm focus:outline-none"
               style={{
-                borderColor: "var(--color-slate-700)",
-                backgroundColor: "var(--color-slate-800)",
-                color: "var(--color-white)",
+                borderColor: CHART_COLORS.tooltipBorder,
+                backgroundColor: CHART_COLORS.tooltipBackground,
+                color: CHART_COLORS.textPrimary,
               }}
             >
-              <option value="high-low">Risk high-low</option>
-              <option value="low-high">Risk low-high</option>
-              <option value="alphabetical">Alphabetical</option>
+              <option value={SORT_OPTIONS["high-low"]}>Risk high-low</option>
+              <option value={SORT_OPTIONS["low-high"]}>Risk low-high</option>
+              <option value={SORT_OPTIONS.alphabetical}>Alphabetical</option>
             </select>
           )}
         </div>
@@ -101,12 +84,11 @@ export function HorizontalBarChart({
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
-              {/* Category Label */}
               <div className="w-24 text-right">
                 <span
                   className="text-sm"
                   style={{
-                    color: "var(--color-white)",
+                    color: CHART_COLORS.textPrimary,
                     opacity: isFaded ? 0.5 : 1,
                     transition: "opacity 0.2s",
                   }}
@@ -115,16 +97,13 @@ export function HorizontalBarChart({
                 </span>
               </div>
 
-              {/* Bar */}
               <div className="relative flex-1">
-                {/* Background track */}
                 <div
                   className="absolute inset-0 h-8 w-full rounded-lg"
                   style={{
-                    backgroundColor: "rgba(51, 65, 85, 0.5)", // slate-700 with 50% opacity
+                    backgroundColor: CHART_COLORS.backgroundTrack,
                   }}
                 />
-                {/* Colored bar */}
                 <div
                   className="relative h-8 rounded-lg transition-all duration-300"
                   style={{
@@ -134,13 +113,12 @@ export function HorizontalBarChart({
                   }}
                 />
 
-                {/* Tooltip on Hover */}
                 {isHovered && (
                   <div
                     className="absolute top-10 left-0 z-10 rounded-lg border p-3 shadow-lg"
                     style={{
-                      backgroundColor: "var(--color-slate-800)",
-                      borderColor: "var(--color-slate-700)",
+                      backgroundColor: CHART_COLORS.tooltipBackground,
+                      borderColor: CHART_COLORS.tooltipBorder,
                       minWidth: "200px",
                     }}
                   >
@@ -151,7 +129,7 @@ export function HorizontalBarChart({
                       />
                       <span
                         className="font-semibold"
-                        style={{ color: "var(--color-white)" }}
+                        style={{ color: CHART_COLORS.textPrimary }}
                       >
                         {item.value.toLocaleString()} {item.name} Risk
                       </span>
@@ -159,7 +137,7 @@ export function HorizontalBarChart({
                     {item.newFindings !== undefined && (
                       <div
                         className="mt-2 flex items-center gap-1 text-sm"
-                        style={{ color: "var(--color-slate-400)" }}
+                        style={{ color: CHART_COLORS.textSecondary }}
                       >
                         <span>△</span>
                         <span>{item.newFindings} New Findings</span>
@@ -168,7 +146,7 @@ export function HorizontalBarChart({
                     {item.change !== undefined && (
                       <div
                         className="mt-1 text-sm"
-                        style={{ color: "var(--color-slate-400)" }}
+                        style={{ color: CHART_COLORS.textSecondary }}
                       >
                         {item.change > 0 ? "+" : ""}
                         {item.change}% Since last scan
@@ -178,17 +156,16 @@ export function HorizontalBarChart({
                 )}
               </div>
 
-              {/* Legend - Percentage and Value */}
               <div
                 className="flex w-40 items-center gap-2 text-sm"
                 style={{
-                  color: "var(--color-white)",
+                  color: CHART_COLORS.textPrimary,
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",
                 }}
               >
                 <span className="font-semibold">{item.percentage}%</span>
-                <span style={{ color: "var(--color-slate-400)" }}>•</span>
+                <span style={{ color: CHART_COLORS.textSecondary }}>•</span>
                 <span>{item.value.toLocaleString()}</span>
               </div>
             </div>
