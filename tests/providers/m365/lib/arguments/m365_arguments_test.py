@@ -168,7 +168,7 @@ class TestM365Arguments:
         # Check argument configuration
         kwargs = sp_env_call[1]
         assert kwargs["action"] == "store_true"
-        assert "Azure Service Principal environment variables" in kwargs["help"]
+        assert "Service Principal environment variables" in kwargs["help"]
 
     def test_browser_auth_argument_configuration(self):
         """Test that browser-auth argument is configured correctly"""
