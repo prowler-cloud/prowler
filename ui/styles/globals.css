@@ -7,7 +7,7 @@
      =========================== */
 
   /* Font Families are injected by Next.js from config/fonts.ts */
-  /* --font-sans: Inter (from Next.js) */
+  /* --font-sans: Work Sans (from Next.js) */
   /* --font-mono: Fira Code (from Next.js) */
 
   /* Text Sizes with Line Heights - Exact from Figma Design System */
@@ -78,6 +78,18 @@
   /* Accent Colors */
   --color-magenta: #b51c80;
   --color-purple-dark: #5f1551;
+
+  /* Chart Card Colors - From Figma */
+  --color-card-bg: #080f23;
+  --color-card-border: #171d30;
+  --color-text-accent: #fface2;
+
+  /* ===========================
+     Border Radius
+     =========================== */
+
+  /* Widget Border Radius - From Figma */
+  --radius-widget: 12px;
 
   /* ===========================
      Tailwind Color Scales

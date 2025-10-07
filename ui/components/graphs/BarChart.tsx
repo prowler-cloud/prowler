@@ -20,9 +20,16 @@ interface BarDataPoint {
   newFindings?: number;
 }
 
+const LAYOUT_OPTIONS = {
+  horizontal: "horizontal",
+  vertical: "vertical",
+} as const;
+
+type LayoutOption = (typeof LAYOUT_OPTIONS)[keyof typeof LAYOUT_OPTIONS];
+
 interface BarChartProps {
   data: BarDataPoint[];
-  layout?: "horizontal" | "vertical";
+  layout?: LayoutOption;
   xLabel?: string;
   yLabel?: string;
   height?: number;
