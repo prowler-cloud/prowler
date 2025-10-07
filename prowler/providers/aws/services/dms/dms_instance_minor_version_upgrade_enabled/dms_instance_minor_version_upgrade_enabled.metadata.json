@@ -1,29 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "dms_instance_minor_version_upgrade_enabled",
-  "CheckTitle": "Ensure DMS instances have auto minor version upgrade enabled.",
-  "CheckType": [],
+  "CheckTitle": "DMS replication instance has auto minor version upgrade enabled",
+  "CheckType": [
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "dms",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsReplicationInstance",
-  "Description": "Ensure DMS instances have auto minor version upgrade enabled.",
-  "Risk": "Ensure that your Amazon Database Migration Service (DMS) replication instances have the Auto Minor Version Upgrade feature enabled in order to receive automatically minor engine upgrades.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-6",
+  "Description": "**AWS DMS replication instances** are evaluated for the `auto_minor_version_upgrade` setting to confirm **automatic minor engine updates** are enabled during the maintenance window.",
+  "Risk": "Without **automatic minor upgrades**, DMS engines can miss security patches and fixes, enabling exploitation of known flaws and instability.\n- Confidentiality: exposure via unpatched components\n- Integrity: replication errors or data drift\n- Availability: outages during migration or CDC",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://avd.aquasec.com/misconfig/aws/dms/dms-auto-minor-version-upgrade/",
+    "https://github.com/sourcefuse/terraform-aws-arc-dms",
+    "https://www.typeerror.org/docs/terraform/providers/aws/r/dms_replication_instance",
+    "https://docs.datadoghq.com/security/default_rules/def-000-847/",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#",
+    "https://www.stream.security/rules/ensure-database-migration-service-dms-replication-instances-have-auto-minor-version-upgrade-feature-enabled",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-6",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/auto-minor-version-upgrade.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws dms modify-replication-instance --region <REGION> --replication-instance-arn arn:aws:dms:<REGION>:<ACCOUNT_ID>:rep:<REPLICATION_ID> --auto-minor-version-upgrade --apply-immediately",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#"
+      "NativeIaC": "```yaml\n# CloudFormation: Enable auto minor version upgrade on a DMS replication instance\nResources:\n  <example_resource_name>:\n    Type: AWS::DMS::ReplicationInstance\n    Properties:\n      ReplicationInstanceIdentifier: <example_resource_id>\n      ReplicationInstanceClass: dms.t3.micro\n      AutoMinorVersionUpgrade: true  # CRITICAL: turns on automatic minor version upgrades\n```",
+      "Other": "1. Open the AWS Console and go to Database Migration Service (DMS)\n2. Click Replication instances and select your instance\n3. Choose Actions > Modify\n4. Check Auto minor version upgrade\n5. Select Apply immediately\n6. Click Modify to save",
+      "Terraform": "```hcl\n# Terraform: Enable auto minor version upgrade on a DMS replication instance\nresource \"aws_dms_replication_instance\" \"<example_resource_name>\" {\n  replication_instance_id    = \"<example_resource_id>\"\n  replication_instance_class = \"dms.t3.micro\"\n  auto_minor_version_upgrade = true  # CRITICAL: turns on automatic minor version upgrades\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable auto minor version upgrade for all DMS replication instances.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-6"
+      "Text": "Enable `auto_minor_version_upgrade` on all replication instances to maintain **continuous patching**.\n- Set a maintenance window and validate in non-prod\n- Monitor release notes and health metrics\n- Enforce **least privilege** for change control\n- Keep **backups** for rollback",
+      "Url": "https://hub.prowler.com/check/dms_instance_minor_version_upgrade_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
