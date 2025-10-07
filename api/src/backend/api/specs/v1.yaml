@@ -4642,10 +4642,12 @@ paths:
         name: filter[connected]
         schema:
           type: boolean
-        description: Filter by connection status. Set to True to return only connected
-          providers, or False to return only providers with failed connections. If
-          not specified, both connected and failed providers are included. Providers
-          with no connection attempt (status is null) are excluded from this filter.
+        description: |-
+          Filter by connection status. Set to True to return only
+                  connected providers, or False to return only providers with failed
+                  connections. If not specified, both connected and failed providers are
+                  included. Providers with no connection attempt (status is null) are
+                  excluded from this filter.
       - in: query
         name: filter[id]
         schema:
@@ -4666,7 +4668,9 @@ paths:
         schema:
           type: string
           format: date
-        description: 'Filter by date when the provider was added (format: YYYY-MM-DD)'
+        description: |-
+          Filter by date when the provider was added
+                  (format: YYYY-MM-DD)
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -4702,7 +4706,22 @@ paths:
           type: array
           items:
             type: string
-        description: Multiple values may be separated by commas.
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - name: filter[search]
@@ -4733,7 +4752,9 @@ paths:
         schema:
           type: string
           format: date
-        description: 'Filter by date when the provider was updated (format: YYYY-MM-DD)'
+        description: |-
+          Filter by date when the provider was updated
+                  (format: YYYY-MM-DD)
       - in: query
         name: filter[updated_at__gte]
         schema:
@@ -5033,6 +5054,11 @@ paths:
         name: filter[name__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
       - name: filter[search]
         required: false
         in: query
