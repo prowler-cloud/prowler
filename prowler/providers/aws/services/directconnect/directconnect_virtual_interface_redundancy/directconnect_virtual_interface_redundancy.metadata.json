@@ -1,32 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "directconnect_virtual_interface_redundancy",
-  "CheckTitle": "Ensure Direct Connect virtual interface(s) are providing redundant connections",
+  "CheckTitle": "Direct Connect gateway or virtual private gateway has at least two virtual interfaces on different Direct Connect connections",
   "CheckType": [
-    "Resilience"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "directconnect",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:directconnect:region:account-id:directconnect/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Checks the resilience of the AWS Direct Connect used to connect your on-premises to each Direct Connect gateway or virtual private gateway.",
-  "Risk": "This check alerts you if any Direct Connect gateway or virtual private gateway isn't configured with virtual interfaces across at least two distinct Direct Connect locations. Lack of location resiliency can result in unexpected downtime during maintenance, a fiber cut, a device failure, or a complete location failure.",
-  "RelatedUrl": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-direct-connect-location-resiliency",
+  "Description": "**Direct Connect gateways** and **virtual private gateways** are assessed for **interface redundancy**: multiple virtual interfaces (`VIFs`) distributed across more than one **Direct Connect connection**.\n\n*Gateways with only one VIF or with all VIFs on a single connection are identified.*",
+  "Risk": "Missing connection diversity undermines **availability**. A single device, fiber, or location failure can cut on-prem to VPC connectivity, causing **outages**, **packet loss**, or routing blackholes. Fallback to internet VPN can add latency and throttle throughput, delaying recovery and impacting operations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://tutorialsdojo.com/aws-direct-connect/",
+    "https://repost.aws/knowledge-center/direct-connect-test-resiliency",
+    "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-direct-connect-location-resiliency",
+    "https://repost.aws/knowledge-center/direct-connect-physical-redundancy",
+    "https://www.megaport.com/blog/network-redundancy-aws-direct-connect/",
+    "https://trustedinstitute.com/concept/aws-solution-architect/aws-direct-connect/direct-connect-resiliency/",
+    "https://aws.amazon.com/directconnect/resiliency-recommendation/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws directconnect create-private-virtual-interface --connection-id <CONNECTION_ID_DIFFERENT_FROM_EXISTING_VIF> --new-private-virtual-interface '{\"virtualInterfaceName\":\"<NAME>\",\"vlan\":<VLAN>,\"asn\":<BGP_ASN>,\"addressFamily\":\"ipv4\",\"amazonAddress\":\"<AMAZON_IP/30>\",\"customerAddress\":\"<CUSTOMER_IP/30>\",\"directConnectGatewayId\":\"<DIRECT_CONNECT_GATEWAY_ID>\"}'",
+      "NativeIaC": "```yaml\n# Create a second Private VIF on a different DX connection and attach to the gateway\nResources:\n  PrivateVIF:\n    Type: AWS::DirectConnect::PrivateVirtualInterface\n    Properties:\n      ConnectionId: <example_resource_id>        # CRITICAL: use a DIFFERENT Direct Connect connection than existing VIFs\n      DirectConnectGatewayId: <example_resource_id>  # CRITICAL: attaches the VIF to the Direct Connect gateway (use VirtualGatewayId for VGW)\n      Vlan: 100\n      Asn: 65000\n      AddressFamily: ipv4\n      AmazonAddress: 169.254.100.1/30\n      CustomerAddress: 169.254.100.2/30\n```",
+      "Other": "1. In the AWS Console, open Direct Connect\n2. Go to Connections and select a different connection than the one used by your existing VIF\n3. Click Create virtual interface and choose Private\n4. For Gateway, select your Direct Connect gateway (or Virtual private gateway for VGW)\n5. Enter VLAN, BGP ASN, and IPv4 peer IPs (Amazon/Customer), then Create\n6. Verify the gateway now has at least two VIFs on different Direct Connect connections",
+      "Terraform": "```hcl\n# Create a second Private VIF on a different DX connection and attach to the gateway\nresource \"aws_dx_private_virtual_interface\" \"example\" {\n  connection_id   = \"<example_resource_id>\"      # CRITICAL: use a DIFFERENT Direct Connect connection than existing VIFs\n  dx_gateway_id   = \"<example_resource_id>\"      # CRITICAL: attaches the VIF to the Direct Connect gateway (use virtual_gateway_id for VGW)\n  name            = \"<NAME>\"\n  vlan            = 100\n  bgp_asn         = 65000\n  address_family  = \"ipv4\"\n  amazon_address  = \"169.254.100.1/30\"\n  customer_address = \"169.254.100.2/30\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "To build Direct Connect location resiliency, you can configure the Direct Connect gateway or virtual private gateway to connect to at least two distinct Direct Connect locations.",
-      "Url": "https://aws.amazon.com/directconnect/resiliency-recommendation/"
+      "Text": "Apply connectivity **defense in depth**:\n- Attach at least two `VIFs` per gateway on separate **Direct Connect connections** in distinct locations\n- Prefer active/active dynamic routing and size capacity to survive a link loss\n- *Optionally* add a **VPN/Transit Gateway** path to sustain operations during provider outages",
+      "Url": "https://hub.prowler.com/check/directconnect_virtual_interface_redundancy"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],
