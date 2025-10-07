@@ -1,29 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "documentdb_cluster_backup_enabled",
-  "CheckTitle": "Check if DocumentDB Clusters have backup enabled.",
-  "CheckType": [],
+  "CheckTitle": "DocumentDB cluster has automated backups enabled with retention period of at least 7 days",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Destruction"
+  ],
   "ServiceName": "documentdb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if DocumentDB Clusters have backup enabled.",
-  "Risk": "Ensure that your Amazon DocumentDB database clusters have set a minimum backup retention period in order to achieve compliance requirements in your organization.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-2",
+  "Description": "**Amazon DocumentDB clusters** are evaluated for **automated backups** and an adequate **backup retention period**. Clusters should have `backup_retention_period` set to at least the configured minimum (default `7` days). Values of `0` indicate backups are disabled; values below the threshold are considered insufficient.",
+  "Risk": "Without adequate backups, clusters can't be reliably restored. Accidental deletes, logical corruption, or ransomware may cause irreversible data loss once a short retention window expires, leading to prolonged outages, missed RPO/RTO, and limited ability to roll back malicious or erroneous changes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-2",
+    "https://docs.amazonaws.cn/en_us/documentdb/latest/developerguide/what-is.html",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
+    "https://docs.aws.amazon.com/systems-manager-automation-runbooks/latest/userguide/aws-enabledocdbclusterbackupretentionperiod.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws docdb modify-db-cluster --region <REGION> --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7 --apply-immediately",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#"
+      "CLI": "aws docdb modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7 --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: Set DocumentDB backup retention to at least 7 days\nResources:\n  <example_resource_name>:\n    Type: AWS::DocDB::DBCluster\n    Properties:\n      BackupRetentionPeriod: 7  # CRITICAL: enables automated backups and sets retention to >=7 days\n```",
+      "Other": "1. Open the Amazon DocumentDB console\n2. Go to Clusters and select <example_resource_id>\n3. Click Modify\n4. Set Backup retention period to 7 (or higher)\n5. Check Apply immediately\n6. Click Continue and then Modify cluster",
+      "Terraform": "```hcl\n# Terraform: Ensure DocumentDB backup retention is at least 7 days\nresource \"aws_docdb_cluster\" \"<example_resource_name>\" {\n  cluster_identifier      = \"<example_resource_id>\"\n  backup_retention_period = 7  # CRITICAL: enables automated backups and sets retention to >=7 days\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-2"
+      "Text": "Enable **automated backups** and set retention to meet RPO/RTO (typically `7-35` days).\n- Regularly test point-in-time restores\n- Apply **least privilege** to backup/snapshot management\n- Protect backup artifacts and define stable backup windows\n- Include restores in a tested **disaster recovery** plan",
+      "Url": "https://hub.prowler.com/check/documentdb_cluster_backup_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

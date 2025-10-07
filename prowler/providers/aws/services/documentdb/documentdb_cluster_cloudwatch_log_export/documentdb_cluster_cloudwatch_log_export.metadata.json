@@ -1,29 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "documentdb_cluster_cloudwatch_log_export",
-  "CheckTitle": "Check if DocumentDB clusters are using the log export feature.",
-  "CheckType": [],
+  "CheckTitle": "DocumentDB cluster exports audit and profiler logs to CloudWatch Logs",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "documentdb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if DocumentDB clusters are using the log export feature.",
-  "Risk": "Ensure that all your Amazon DocumentDB clusters are using the Log Exports feature in order to publish audit logs directly to CloudWatch Logs. The events recorded by Log Exports include events such as successful and failed authentication attempts, creating indexes, or dropping collections in DocumentDB databases.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4",
+  "Description": "Amazon DocumentDB clusters are evaluated for exporting `audit` and `profiler` logs to **CloudWatch Logs**.\nClusters missing one or both log types are identified as lacking complete log export configuration.",
+  "Risk": "Missing **audit** and/or **profiler** exports reduces observability of authentication, authorization, and data definition activity.\nAttacks like brute-force logins, privilege abuse, or destructive schema changes can go unnoticed, degrading **confidentiality** and **integrity** and delaying incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4",
+    "https://dataintegration.info/introducing-dml-auditing-for-amazon-documentdb-with-mongodb-compatibility",
+    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/logging-19",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DocumentDB/enable-profiler.html",
+    "https://docs.aws.amazon.com/cli/latest/reference/docdb/create-db-cluster.html",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_19/",
+    "https://github.com/carlosbustillordguez/terraform-aws-documentdb"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws docdb modify-db-cluster --region <REGION> --db-cluster-identifier <DB_CLUSTER_ID> --db-cluster-parameter-group-name <DB_CLUSTER_PARAMETER_GROUP_NAME> --cloudwatch-logs-export-configuration '{EnableLogTypes:[profiler]}' --apply-immediately",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html"
+      "CLI": "aws docdb modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --cloudwatch-logs-export-configuration '{\"EnableLogTypes\":[\"audit\",\"profiler\"]}' --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: enable DocumentDB log exports\nResources:\n  <example_resource_name>:\n    Type: AWS::DocDB::DBCluster\n    Properties:\n      EnableCloudwatchLogsExports:\n        - audit      # Critical: export audit logs to CloudWatch Logs\n        - profiler   # Critical: export profiler logs to CloudWatch Logs\n```",
+      "Other": "1. In AWS Console, go to Amazon DocumentDB > Clusters\n2. Select the cluster and choose Actions > Modify\n3. In Log exports, check Audit and Profiler\n4. Check Apply immediately and click Modify cluster",
+      "Terraform": "```hcl\n# Enable DocumentDB log exports\nresource \"aws_docdb_cluster\" \"<example_resource_name>\" {\n  enabled_cloudwatch_logs_exports = [\"audit\", \"profiler\"] # Critical: export both logs to CloudWatch Logs\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enabled DocumentDB Log export functionality to analyze, monitor, and archive auditing events for security and compliance requirements.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4"
+      "Text": "Enable export of both `audit` and `profiler` logs to **CloudWatch Logs** for all clusters and centralize analysis.\nApply **least privilege** to log access, define retention and immutability, integrate with alerting, and use **separation of duties** to protect and regularly review logs for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/documentdb_cluster_cloudwatch_log_export"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
