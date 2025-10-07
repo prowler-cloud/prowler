@@ -116,8 +116,9 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="tenantapikey",
-            constraint=api.rls.BaseSecurityConstraint(
-                name="statements_on_tenantapikey",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_tenantapikey",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
