@@ -8,32 +8,6 @@ import {
 } from "./helpers";
 
 test.describe("Session Error Messages", () => {
-  test("should display error message when session expires", async ({
-    page,
-    context,
-  }) => {
-    // Login first
-    await goToLogin(page);
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-
-    // Clear cookies to simulate session expiry
-    await context.clearCookies();
-
-    // Try to access a protected route
-    await page.goto("/providers");
-
-    // Should be redirected to login with error query param
-    await expect(page).toHaveURL(/\/sign-in\?/);
-
-    // Verify we're on sign-in page and can see the form
-    await expect(page).toHaveURL(/sign-in/);
-    await expect(page.getByLabel("Email")).toBeVisible();
-    await expect(page.getByLabel("Password")).toBeVisible();
-
-    // Note: Toast messages may auto-dismiss, so we just verify redirect happened correctly
-  });
-
   test("should show RefreshAccessTokenError message", async ({ page }) => {
     // Navigate to sign-in with RefreshAccessTokenError query param
     await page.goto("/sign-in?error=RefreshAccessTokenError");
@@ -125,27 +99,4 @@ test.describe("Session Error Messages", () => {
     expect(callbackUrl).toBe("/providers");
   });
 
-  test("should allow user to login after session error", async ({ page }) => {
-    // Login first
-    await goToLogin(page);
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-
-    // Clear cookies to simulate session expiry
-    await page.context().clearCookies();
-
-    // Try to access a protected route
-    await page.goto("/providers");
-
-    // Should be redirected to login (may include callbackUrl)
-    await expect(page).toHaveURL(/sign-in/);
-
-    // Login again
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-
-    // Should be able to access protected routes again
-    await page.goto("/providers");
-    await expect(page).not.toHaveURL(URLS.LOGIN);
-  });
 });

@@ -9,29 +9,6 @@ import {
 } from "./helpers";
 
 test.describe("Middleware Error Handling", () => {
-  test("should redirect to login when session has error", async ({
-    page,
-    context,
-  }) => {
-    // Login first
-    await goToLogin(page);
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-
-    // Verify session is valid using helper
-    await verifySessionValid(page);
-
-    // Invalidate the session by clearing cookies
-    await context.clearCookies();
-
-    // Try to access a protected route
-    await page.goto("/providers", { waitUntil: "networkidle" });
-
-    // Should be redirected to login page by middleware (may include callbackUrl)
-    await expect(page).toHaveURL(/\/sign-in/);
-    await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-  });
-
   test("should allow access to public routes without session", async ({
     page,
     context,

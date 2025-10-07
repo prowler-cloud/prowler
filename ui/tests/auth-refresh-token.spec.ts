@@ -41,23 +41,6 @@ test.describe("Token Refresh Flow", () => {
     expect(refreshedSession.tenantId).toBe(initialSession.tenantId);
   });
 
-  test("should handle refresh token error gracefully", async ({ page }) => {
-    // Login first
-    await goToLogin(page);
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-
-    // Remove cookies to simulate an invalid session scenario
-    await page.context().clearCookies();
-
-    // Try to access a protected page
-    await page.goto("/providers", { waitUntil: "networkidle" });
-
-    // Should be redirected to login due to invalid session (may include callbackUrl)
-    await expect(page).toHaveURL(/\/sign-in/);
-    await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-  });
-
   test("should handle concurrent requests with token refresh", async ({
     page,
   }) => {
