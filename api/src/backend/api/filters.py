@@ -247,7 +247,6 @@ class ProviderFilter(FilterSet):
     class Meta:
         model = Provider
         fields = {
-            "provider": ["exact", "in"],
             "id": ["exact", "in"],
             "uid": ["exact", "icontains", "in"],
             "alias": ["exact", "icontains", "in"],
