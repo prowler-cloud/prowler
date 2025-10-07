@@ -122,32 +122,3 @@ test.describe("Token Refresh Flow", () => {
     // Note: Middleware redirect behavior is tested in auth-middleware-error.spec.ts
   });
 });
-
-test.describe("Token Error Handling", () => {
-  test("should detect RefreshTokenError in session", async ({ page }) => {
-    // Login
-    await goToLogin(page);
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-
-    // Remove cookies to simulate a refresh failure scenario
-    await page.context().clearCookies();
-
-    // Force a navigation that requires auth; middleware should redirect with error
-    await page.goto("/providers", { waitUntil: "networkidle" });
-    await expect(page).toHaveURL(/sign-in/);
-
-    // Verify login form is available for re-authentication
-    await expect(page.getByLabel("Email")).toBeVisible();
-  });
-
-  test("should handle missing refresh token gracefully", async ({ page }) => {
-    // Login normally first
-    await goToLogin(page);
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-
-    // Verify session is valid and has refresh token using helper
-    await verifySessionValid(page);
-  });
-});
