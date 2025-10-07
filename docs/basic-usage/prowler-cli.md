@@ -183,7 +183,7 @@ Microsoft 365 requires specifying the auth method:
 prowler m365 --sp-env-auth
 
 # To use both service principal (for MSGraph) and user credentials (for PowerShell modules)
-prowler m365 --env-auth
+prowler m365 --sp-env-auth
 
 # To use az cli authentication
 prowler m365 --az-cli-auth

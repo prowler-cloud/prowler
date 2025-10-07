@@ -194,10 +194,10 @@ If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these
 For M365, you must enter your Domain ID and choose the authentication method you want to use:
 
 - Service Principal Authentication (Recommended)
-- User Authentication (only works if the user does not have MFA enabled)
+- User Authentication (Deprecated)
 
-???+ note
-    User authentication with M365_USER and M365_PASSWORD is optional and will only work if the account does not enforce MFA.
+???+ warning
+    User authentication with M365_USER and M365_PASSWORD is deprecated and will be removed.
 
 For full setup instructions and requirements, check the [Microsoft 365 provider requirements](./microsoft365/getting-started-m365.md).
 
