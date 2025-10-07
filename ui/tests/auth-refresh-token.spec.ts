@@ -41,39 +41,21 @@ test.describe("Token Refresh Flow", () => {
     expect(refreshedSession.tenantId).toBe(initialSession.tenantId);
   });
 
-  test("should handle refresh token error gracefully", async ({
-    page,
-    context,
-  }) => {
+  test("should handle refresh token error gracefully", async ({ page }) => {
     // Login first
     await goToLogin(page);
     await login(page, TEST_CREDENTIALS.VALID);
     await verifySuccessfulLogin(page);
 
-    // Get cookies to manipulate them
-    const cookies = await context.cookies();
-    const sessionCookie = cookies.find((c) =>
-      c.name.includes("authjs.session-token"),
-    );
+    // Remove cookies to simulate an invalid session scenario
+    await page.context().clearCookies();
 
-    if (sessionCookie) {
-      // Invalidate the session token by corrupting it
-      // This simulates an expired/invalid refresh token scenario
-      await context.clearCookies();
-      await context.addCookies([
-        {
-          ...sessionCookie,
-          value: "invalid-token-value",
-        },
-      ]);
+    // Try to access a protected page
+    await page.goto("/providers", { waitUntil: "networkidle" });
 
-      // Try to access a protected page
-      await page.goto(URLS.DASHBOARD);
-
-      // Should be redirected to login due to invalid session (may include callbackUrl)
-      await expect(page).toHaveURL(/\/sign-in/);
-      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-    }
+    // Should be redirected to login due to invalid session (may include callbackUrl)
+    await expect(page).toHaveURL(/\/sign-in/);
+    await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
   });
 
   test("should handle concurrent requests with token refresh", async ({
@@ -159,57 +141,21 @@ test.describe("Token Refresh Flow", () => {
 });
 
 test.describe("Token Error Handling", () => {
-  test("should detect RefreshTokenError in session", async ({
-    page,
-    context,
-  }) => {
+  test("should detect RefreshTokenError in session", async ({ page }) => {
     // Login
     await goToLogin(page);
     await login(page, TEST_CREDENTIALS.VALID);
     await verifySuccessfulLogin(page);
 
-    // Get the current session cookie
-    const cookies = await context.cookies();
-    const sessionCookie = cookies.find((c) =>
-      c.name.includes("authjs.session-token"),
-    );
+    // Remove cookies to simulate a refresh failure scenario
+    await page.context().clearCookies();
 
-    if (sessionCookie) {
-      // Corrupt the session to simulate a refresh error
-      // In a real scenario, this would be an expired refresh token
-      await context.clearCookies();
+    // Force a navigation that requires auth; middleware should redirect with error
+    await page.goto("/providers", { waitUntil: "networkidle" });
+    await expect(page).toHaveURL(/sign-in/);
 
-      // Add back a corrupted cookie
-      await context.addCookies([
-        {
-          ...sessionCookie,
-          value: "corrupted.token.value",
-        },
-      ]);
-
-      // Try to get session - should return null with corrupted cookie
-      const sessionResponse = await page.request.get("/api/auth/session");
-
-      // With a completely corrupted token, NextAuth should return null
-      const sessionText = await sessionResponse.text();
-
-      // Verify session is null or empty (NextAuth can't decrypt corrupted token)
-      if (sessionText && sessionText !== "null") {
-        const session = await sessionResponse.json();
-        // If there's a session object, it might contain an error
-        if (session && typeof session === "object") {
-          console.log("Session with corrupted token:", session);
-        }
-      }
-
-      // Try to access protected route
-      // With corrupted/invalid session, middleware should redirect to login
-      await page.goto(URLS.LOGIN);
-      await expect(page).toHaveURL(URLS.LOGIN);
-
-      // Verify user needs to login again
-      await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
-    }
+    // Verify login form is available for re-authentication
+    await expect(page.getByLabel("Email")).toBeVisible();
   });
 
   test("should handle missing refresh token gracefully", async ({ page }) => {

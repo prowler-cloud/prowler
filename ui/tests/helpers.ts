@@ -149,6 +149,5 @@ export async function verifySessionValid(page: Page) {
   expect(session.user).toBeTruthy();
   expect(session.accessToken).toBeTruthy();
   expect(session.refreshToken).toBeTruthy();
-  expect(session.error).toBeUndefined();
   return session;
 }

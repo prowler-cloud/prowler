@@ -125,22 +125,19 @@ test.describe("Session Error Messages", () => {
     expect(callbackUrl).toBe("/providers");
   });
 
-  test("should allow user to login after session error", async ({
-    page,
-    context,
-  }) => {
+  test("should allow user to login after session error", async ({ page }) => {
     // Login first
     await goToLogin(page);
     await login(page, TEST_CREDENTIALS.VALID);
     await verifySuccessfulLogin(page);
 
     // Clear cookies to simulate session expiry
-    await context.clearCookies();
+    await page.context().clearCookies();
 
-    // Try to access protected route
+    // Try to access a protected route
     await page.goto("/providers");
 
-    // Should be redirected to login
+    // Should be redirected to login (may include callbackUrl)
     await expect(page).toHaveURL(/sign-in/);
 
     // Login again
