@@ -603,9 +603,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
 
         findings_count_by_compliance = {}
         check_status_by_region = {}
-        modeled_threatscore_compliance_id = (
-            f"prowler_threatscore_{provider_instance.provider}"
-        )
+        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
         with rls_transaction(tenant_id):
             for finding in findings:
                 for resource in finding.small_resources:
@@ -613,14 +611,18 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                     current_status = check_status_by_region.setdefault(region, {})
                     if current_status.get(finding.check_id) != "FAIL":
                         current_status[finding.check_id] = finding.status
-
                     if modeled_threatscore_compliance_id in finding.compliance:
                         for requirement_id in finding.compliance[
                             modeled_threatscore_compliance_id
                         ]:
                             compliance_key = findings_count_by_compliance.setdefault(
                                 region, {}
-                            ).setdefault(modeled_threatscore_compliance_id, {})
+                            ).setdefault(
+                                modeled_threatscore_compliance_id.lower().replace(
+                                    "-", ""
+                                ),
+                                {},
+                            )
                             if requirement_id not in compliance_key:
                                 compliance_key[requirement_id] = {
                                     "total": 0,
