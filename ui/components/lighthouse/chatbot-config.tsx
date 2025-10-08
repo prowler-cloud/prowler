@@ -1,8 +1,9 @@
 "use client";
 
+import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem, Spacer } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -20,8 +21,8 @@ import {
 import { Form } from "@/components/ui/form";
 
 const chatbotConfigSchema = z.object({
-  model: z.string().nonempty("Model selection is required"),
-  apiKey: z.string().nonempty("API Key is required").optional(),
+  model: z.string().min(1, "Model selection is required"),
+  apiKey: z.string().min(1, "API Key is required"),
   businessContext: z
     .string()
     .max(1000, "Business context cannot exceed 1000 characters")
@@ -39,6 +40,7 @@ export const ChatbotConfig = ({
   initialValues,
   configExists: initialConfigExists,
 }: ChatbotConfigClientProps) => {
+  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [configExists, setConfigExists] = useState(initialConfigExists);
@@ -51,6 +53,16 @@ export const ChatbotConfig = ({
 
   const onSubmit = async (data: FormValues) => {
     if (isLoading) return;
+
+    // Validate API key: required for new config, or if changing an existing masked key
+    if (!configExists && (!data.apiKey || data.apiKey.trim().length === 0)) {
+      form.setError("apiKey", {
+        type: "manual",
+        message: "API Key is required",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const configData: any = {
@@ -73,6 +85,8 @@ export const ChatbotConfig = ({
             configExists ? "updated" : "created"
           } successfully`,
         });
+        // Navigate to lighthouse chat page after successful save
+        router.push("/lighthouse");
       } else {
         throw new Error("Failed to save configuration");
       }
@@ -98,60 +112,54 @@ export const ChatbotConfig = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col space-y-6"
+          className="flex flex-col gap-6"
         >
-          <Controller
-            name="model"
-            control={form.control}
-            render={({ field }) => (
-              <Select
-                label="Model"
-                placeholder="Select a model"
+          <div className="flex flex-col gap-6 md:flex-row">
+            <div className="md:w-1/3">
+              <Controller
+                name="model"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    label="Model"
+                    placeholder="Select a model"
+                    labelPlacement="inside"
+                    value={field.value}
+                    defaultSelectedKeys={[field.value]}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    variant="bordered"
+                    size="md"
+                    isRequired
+                  >
+                    <SelectItem key="gpt-4o-2024-08-06">
+                      GPT-4o (Recommended)
+                    </SelectItem>
+                    <SelectItem key="gpt-4o-mini-2024-07-18">
+                      GPT-4o Mini
+                    </SelectItem>
+                    <SelectItem key="gpt-5-2025-08-07">GPT-5</SelectItem>
+                    <SelectItem key="gpt-5-mini-2025-08-07">
+                      GPT-5 Mini
+                    </SelectItem>
+                  </Select>
+                )}
+              />
+            </div>
+
+            <div className="md:flex-1">
+              <CustomInput
+                control={form.control}
+                name="apiKey"
+                type="password"
+                label="API Key"
                 labelPlacement="inside"
-                value={field.value}
-                defaultSelectedKeys={[field.value]}
-                onChange={(e) => field.onChange(e.target.value)}
+                placeholder="Enter your API key"
                 variant="bordered"
-                size="md"
                 isRequired
-              >
-                <SelectItem key="gpt-4o-2024-08-06" value="gpt-4o-2024-08-06">
-                  GPT-4o (Recommended)
-                </SelectItem>
-                <SelectItem
-                  key="gpt-4o-mini-2024-07-18"
-                  value="gpt-4o-mini-2024-07-18"
-                >
-                  GPT-4o Mini
-                </SelectItem>
-                <SelectItem key="gpt-5-2025-08-07" value="gpt-5-2025-08-07">
-                  GPT-5
-                </SelectItem>
-                <SelectItem
-                  key="gpt-5-mini-2025-08-07"
-                  value="gpt-5-mini-2025-08-07"
-                >
-                  GPT-5 Mini
-                </SelectItem>
-              </Select>
-            )}
-          />
-
-          <Spacer y={2} />
-
-          <CustomInput
-            control={form.control}
-            name="apiKey"
-            type="password"
-            label="API Key"
-            labelPlacement="inside"
-            placeholder="Enter your API key"
-            variant="bordered"
-            isRequired
-            isInvalid={!!form.formState.errors.apiKey}
-          />
-
-          <Spacer y={2} />
+                isInvalid={!!form.formState.errors.apiKey}
+              />
+            </div>
+          </div>
 
           <CustomTextarea
             control={form.control}
@@ -165,8 +173,6 @@ export const ChatbotConfig = ({
             description={`${form.watch("businessContext")?.length || 0}/1000 characters`}
             isInvalid={!!form.formState.errors.businessContext}
           />
-
-          <Spacer y={4} />
 
           <div className="flex w-full justify-end">
             <CustomButton

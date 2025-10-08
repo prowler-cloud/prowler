@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/react";
+import { Card, CardBody } from "@heroui/card";
 import { Bar, BarChart, LabelList, XAxis, YAxis } from "recharts";
 
 import {
@@ -70,7 +70,7 @@ export const FindingsBySeverityChart = ({
   }));
 
   return (
-    <Card className="h-full dark:bg-prowler-blue-400">
+    <Card className="dark:bg-prowler-blue-400 h-full">
       <CardBody>
         <div className="my-auto">
           <ChartContainer

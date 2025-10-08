@@ -1,38 +1,49 @@
 {
   "Provider": "aws",
   "CheckID": "apigateway_restapi_logging_enabled",
-  "CheckTitle": "Check if API Gateway Stage has logging enabled.",
-  "CheckAliases": [
-    "apigateway_logging_enabled"
-  ],
+  "CheckTitle": "API Gateway REST API stage has logging enabled",
   "CheckType": [
-    "Logging and Monitoring"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Defense Evasion"
   ],
   "ServiceName": "apigateway",
-  "SubServiceName": "rest_api",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayRestApi",
-  "Description": "Check if API Gateway Stage has logging enabled.",
-  "Risk": "If not enabled, monitoring of service use is not possible. Real-time monitoring of API calls can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms.",
+  "ResourceType": "AwsApiGatewayStage",
+  "Description": "**API Gateway REST API stages** with **stage logging** enabled to emit execution or access logs to CloudWatch",
+  "Risk": "Without stage logging, API activity lacks visibility, hindering detection of abuse and incident response.\nAttackers can probe endpoints, exfiltrate data, or tamper integrations without traces, impacting confidentiality, integrity, and availability and blocking forensic investigation.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html",
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/cloudwatch-logs.html",
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html",
+    "https://repost.aws/knowledge-center/api-gateway-cloudwatch-logs",
+    "https://repost.aws/knowledge-center/api-gateway-missing-cloudwatch-logs",
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/view-cloudwatch-log-events-in-cloudwatch-console.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/ensure-api-gateway-stage-have-logging-level-defined-as-appropiate#terraform"
+      "CLI": "aws apigateway update-stage --rest-api-id <REST_API_ID> --stage-name <STAGE_NAME> --patch-operations op=replace,path='/*/*/logging/loglevel',value=ERROR",
+      "NativeIaC": "```yaml\n# CloudFormation: enable execution logging on a REST API stage\nResources:\n  <example_resource_name>:\n    Type: AWS::ApiGateway::Stage\n    Properties:\n      StageName: <example_resource_name>\n      RestApiId: <example_resource_id>\n      DeploymentId: <example_resource_id>\n      MethodSettings:\n        - ResourcePath: \"/*\"\n          HttpMethod: \"*\"\n          LoggingLevel: ERROR  # CRITICAL: turns on execution logging for all methods\n```",
+      "Other": "1. In the API Gateway console, open Settings and set CloudWatch log role ARN if prompted\n2. Go to APIs > select your REST API > Stages > select the stage\n3. Click Logs and tracing > CloudWatch Logs > choose Errors only (or Errors and info)\n4. Save changes",
+      "Terraform": "```hcl\n# Enable execution logging for all methods in a REST API stage\nresource \"aws_api_gateway_method_settings\" \"<example_resource_name>\" {\n  rest_api_id = \"<example_resource_id>\"\n  stage_name  = \"<example_resource_name>\"\n  method_path = \"*/*\"\n  settings {\n    logging_level = \"ERROR\"  # CRITICAL: enables stage execution logging\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Monitoring is an important part of maintaining the reliability, availability and performance of API Gateway and your AWS solutions. You should collect monitoring data from all of the parts of your AWS solution. CloudTrail provides a record of actions taken by a user, role, or an AWS service in API Gateway. Using the information collected by CloudTrail, you can determine the request that was made to API Gateway, the IP address from which the request was made, who made the request, etc.",
-      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html"
+      "Text": "Enable **CloudWatch Logs** for all API Gateway stages, using `ERROR` or `INFO` as appropriate. Include request IDs (e.g., `$context.requestId`). Enforce **least privilege** on logs, set **retention** and **alerts** for anomalies. Avoid sensitive data in logs and use **defense in depth** with tracing.",
+      "Url": "https://hub.prowler.com/check/apigateway_restapi_logging_enabled"
     }
   },
   "Categories": [
-    "forensics-ready",
-    "logging"
+    "logging",
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "",
+  "CheckAliases": [
+    "apigateway_logging_enabled"
+  ]
 }

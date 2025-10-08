@@ -76,7 +76,7 @@ export const CredentialsRoleHelper = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="block text-xs font-medium text-default-500">
+          <span className="text-default-500 block text-xs font-medium">
             External ID:
           </span>
           <SnippetChip value={externalId} icon={<IdIcon size={16} />} />
