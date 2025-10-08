@@ -50,7 +50,7 @@ export default function ChartsDemoPage() {
       change: -8,
     },
     {
-      name: "Info",
+      name: "Informational",
       value: 10,
       percentage: 3,
       color: "#2E51B2",
@@ -176,7 +176,7 @@ export default function ChartsDemoPage() {
     { dataKey: "high", color: "#FF3077", label: "High" },
     { dataKey: "medium", color: "#FF7D19", label: "Medium" },
     { dataKey: "low", color: "#FDD34F", label: "Low" },
-    { dataKey: "info", color: "#2E51B2", label: "Info" },
+    { dataKey: "info", color: "#2E51B2", label: "Informational" },
   ];
 
   const radarChartData = [
@@ -202,7 +202,7 @@ export default function ChartsDemoPage() {
       { name: "High" },
       { name: "Medium" },
       { name: "Low" },
-      { name: "Info" },
+      { name: "Informational" },
     ],
     links: [
       { source: 0, target: 1, value: 883 },
@@ -305,11 +305,7 @@ export default function ChartsDemoPage() {
             </p>
           </div>
           <div className="rounded-lg bg-slate-800 p-6">
-            <HorizontalBarChart
-              data={barChartData}
-              title="Risk Severity"
-              showSortDropdown={true}
-            />
+            <HorizontalBarChart data={barChartData} title="Risk Severity" />
           </div>
         </section>
 

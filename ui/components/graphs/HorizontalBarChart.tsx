@@ -3,59 +3,35 @@
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
-import { useSortableData } from "./hooks/useSortableData";
-import { BarDataPoint, SortOption } from "./models/chart-types";
-import {
-  CHART_COLORS,
-  SORT_OPTIONS,
-} from "./shared/chart-constants";
+import { BarDataPoint } from "./models/chart-types";
+import { CHART_COLORS, SEVERITY_ORDER } from "./shared/chart-constants";
 import { getSeverityColorByName } from "./shared/severity-utils";
 
 interface HorizontalBarChartProps {
   data: BarDataPoint[];
   height?: number;
-  showSortDropdown?: boolean;
   title?: string;
 }
 
-export type { SortOption };
-
-export function HorizontalBarChart({
-  data,
-  showSortDropdown = true,
-  title,
-}: HorizontalBarChartProps) {
-  const { sortBy, setSortBy, sortedData } = useSortableData(data);
+export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const sortedData = [...data].sort((a, b) => {
+    const orderA = SEVERITY_ORDER[a.name as keyof typeof SEVERITY_ORDER] ?? 999;
+    const orderB = SEVERITY_ORDER[b.name as keyof typeof SEVERITY_ORDER] ?? 999;
+    return orderA - orderB;
+  });
 
   return (
     <div className="w-full">
-      {(title || showSortDropdown) && (
-        <div className="mb-4 flex items-center justify-between">
-          {title && (
-            <h3
-              className="text-lg font-semibold"
-              style={{ color: CHART_COLORS.textPrimary }}
-            >
-              {title}
-            </h3>
-          )}
-          {showSortDropdown && (
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="rounded-lg border px-3 py-2 text-sm focus:outline-none"
-              style={{
-                borderColor: CHART_COLORS.tooltipBorder,
-                backgroundColor: CHART_COLORS.tooltipBackground,
-                color: CHART_COLORS.textPrimary,
-              }}
-            >
-              <option value={SORT_OPTIONS.highLow}>Risk high-low</option>
-              <option value={SORT_OPTIONS.lowHigh}>Risk low-high</option>
-              <option value={SORT_OPTIONS.alphabetical}>Alphabetical</option>
-            </select>
-          )}
+      {title && (
+        <div className="mb-4">
+          <h3
+            className="text-lg font-semibold"
+            style={{ color: CHART_COLORS.textPrimary }}
+          >
+            {title}
+          </h3>
         </div>
       )}
 

@@ -1,5 +1,4 @@
 export const SEVERITY_COLORS = {
-  Info: "var(--color-info)",
   Informational: "var(--color-info)",
   Low: "var(--color-warning)",
   Medium: "var(--color-warning-emphasis)",
@@ -31,6 +30,14 @@ export const SORT_OPTIONS = {
 } as const;
 
 export const DEFAULT_SORT_OPTION = SORT_OPTIONS.highLow;
+
+export const SEVERITY_ORDER = {
+  Critical: 0,
+  High: 1,
+  Medium: 2,
+  Low: 3,
+  Informational: 4,
+} as const;
 
 export const LAYOUT_OPTIONS = {
   horizontal: "horizontal",
