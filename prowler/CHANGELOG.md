@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
 - Equality validation for CheckID, filename and classname [(#8690)](https://github.com/prowler-cloud/prowler/pull/8690)
 - Improve logging for Security Hub integration [(#8608)](https://github.com/prowler-cloud/prowler/pull/8608)
+- Support for ADF in Jira integration [(#8878)](https://github.com/prowler-cloud/prowler/pull/8878)
 
 ### Changed
 
