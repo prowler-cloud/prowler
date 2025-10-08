@@ -25,8 +25,6 @@ export interface Requirement {
   fail: number;
   manual: number;
   check_ids: string[];
-  passedFindings?: number;
-  totalFindings?: number;
   // This is to allow any key to be added to the requirement object
   // because each compliance has different keys
   [key: string]: string | string[] | number | object[] | undefined;
@@ -191,6 +189,7 @@ export interface RequirementItemData {
     version: string;
     description: string;
     status: RequirementStatus;
+    // For Threat compliance:
     passed_findings?: number;
     total_findings?: number;
   };
