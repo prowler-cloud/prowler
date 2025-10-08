@@ -1,32 +1,46 @@
 {
   "Provider": "aws",
   "CheckID": "dynamodb_table_cross_account_access",
-  "CheckTitle": "DynamoDB tables should not be accessible from other AWS accounts",
+  "CheckTitle": "DynamoDB table resource-based policy does not allow cross-account access",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDbTable",
-  "Description": "This check determines if the DynamoDB table is accessible from other AWS accounts.",
-  "Risk": "If the DynamoDB table is accessible from other AWS accounts, it may lead to unauthorized access to the data stored in the table.",
-  "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html",
+  "Description": "**DynamoDB tables** are evaluated for **resource-based policies** that permit cross-account or public principals.\n\nTables without a resource policy, or with policies restricted to the same account, are identified as isolated configurations.",
+  "Risk": "Allowing other accounts to access a table affects:\n- **Confidentiality**: unauthorized reads/data exfiltration\n- **Integrity**: writes or deletes by external principals\n- **Availability**: capacity exhaustion and throttling\n- **Cost**: owner pays for external requests\n\nIf public principals are allowed, exposure can be unrestricted.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.icompaas.com/support/solutions/articles/62000233614-ensure-dynamodb-tables-should-not-be-accessible-from-other-aws-accounts",
+    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html",
+    "https://medium.com/theburningmonk-com/dynamodb-now-supports-resource-based-policies-but-is-that-a-good-idea-9e8b708e91eb",
+    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-bpa-rbp.html",
+    "https://learnthecontent.com/exam/aws/tutorial-aws-certified-security-specialty-scs-c02/s/designing-resource-policies-to-restrict-access-to-authorized-users-for-example-s3-bucket-policies-dynamodb-policies",
+    "https://stackoverflow.com/questions/75489403/grant-cross-account-access-to-dynamodb-table-without-using-stsassumerole",
+    "https://runebook.dev/en/aws/dynamodb/PutResourcePolicy",
+    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-cross-account-access.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws dynamodb delete-resource-policy --resource-arn <resource-arn>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Open the AWS Console and go to DynamoDB > Tables\n2. Select <example_resource_name> and open the Permissions tab\n3. In Resource-based policy, click Delete policy and confirm\n4. Save changes to remove any cross-account access",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that the DynamoDB table is not accessible from other AWS accounts.",
-      "Url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-bpa-rbp.html"
+      "Text": "Apply **least privilege**:\n- Avoid cross-account data access; *if required*, allow only named principals\n- Constrain with `aws:PrincipalOrgID`, `aws:SourceVpc`, `aws:PrincipalArn`; add `Deny` guardrails\n- Enable **Block Public Access** and monitor with **IAM Access Analyzer**",
+      "Url": "https://hub.prowler.com/check/dynamodb_table_cross_account_access"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries",
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "dynamodb_tables_kms_cmk_encryption_enabled",
-  "CheckTitle": "Check if DynamoDB table has encryption at rest enabled using CMK KMS.",
+  "CheckTitle": "DynamoDB table is encrypted at rest with AWS KMS",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "dynamodb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:dynamodb:region:account-id:table/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDbTable",
-  "Description": "Check if DynamoDB table has encryption at rest enabled using CMK KMS.",
-  "Risk": "All user data stored in Amazon DynamoDB is fully encrypted at rest. This functionality helps reduce the operational burden and complexity involved in protecting sensitive data.",
-  "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html",
+  "Description": "**DynamoDB tables** use **AWS KMS keys** (`KMS`) for encryption at rest instead of the default service-owned key",
+  "Risk": "Relying on the default service-owned key reduces control over **confidentiality**: no custom key policies, limited auditability, and no independent rotation or disablement. This weakens least-privilege enforcement and incident response, and can impede meeting mandates that require customer-controlled keys.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-dynamodb-tables-are-encrypted#terraform",
+    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-dynamodb-tables-are-encrypted#terraform"
+      "CLI": "aws dynamodb update-table --table-name <example_resource_name> --sse-specification Enabled=true,SSEType=KMS",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable KMS encryption on a DynamoDB table\nResources:\n  <example_resource_name>:\n    Type: AWS::DynamoDB::Table\n    Properties:\n      AttributeDefinitions:\n        - AttributeName: id\n          AttributeType: S\n      KeySchema:\n        - AttributeName: id\n          KeyType: HASH\n      BillingMode: PAY_PER_REQUEST\n      SSESpecification:\n        SSEEnabled: true  # Critical: enables KMS-based encryption\n        SSEType: KMS      # Critical: switches from DEFAULT to AWS KMS\n```",
+      "Other": "1. Open the AWS Management Console and go to DynamoDB\n2. Select your table\n3. In Table details, find Encryption at rest and click Edit\n4. Select AWS KMS: choose AWS managed key (alias/aws/dynamodb) or a customer managed key\n5. Click Save",
+      "Terraform": "```hcl\nresource \"aws_dynamodb_table\" \"<example_resource_name>\" {\n  name         = \"<example_resource_name>\"\n  billing_mode = \"PAY_PER_REQUEST\"\n  hash_key     = \"id\"\n\n  attribute {\n    name = \"id\"\n    type = \"S\"\n  }\n\n  server_side_encryption {\n    enabled = true  # Critical: enables AWS KMS encryption (uses AWS managed key if no key ARN provided)\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Specify an encryption key when you create a new table or switch the encryption keys on an existing table by using the AWS Management Console.",
-      "Url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html"
+      "Text": "Encrypt tables with **KMS keys** in your account-prefer **customer-managed keys** for sensitive data.\n\n- Enforce least-privilege key policies and scope grants\n- Enable rotation and monitor key usage\n- Separate duties for key admins vs data users\n- Restrict which principals can use the key for DynamoDB",
+      "Url": "https://hub.prowler.com/check/dynamodb_tables_kms_cmk_encryption_enabled"
     }
   },
   "Categories": [

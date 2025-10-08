@@ -30,6 +30,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Athena service metadata to new format [(#8790)](https://github.com/prowler-cloud/prowler/pull/8790)
 - Update AWS CloudFormation service metadata to new format [(#8828)](https://github.com/prowler-cloud/prowler/pull/8828)
 - Update AWS Lambda service metadata to new format [(#8825)](https://github.com/prowler-cloud/prowler/pull/8825)
+- Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
+
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
