@@ -39,7 +39,7 @@ export const ThreatScoreDownloadButton = ({
       isLoading={isDownloading}
       size="sm"
     >
-      ThreatScore Report
+      PDF ThreatScore Report
     </Button>
   );
 };

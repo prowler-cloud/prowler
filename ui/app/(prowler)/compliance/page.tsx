@@ -1,13 +1,17 @@
 export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 
-import { getCompliancesOverview } from "@/actions/compliances";
-import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
+import {
+  getComplianceOverviewMetadataInfo,
+  getCompliancesOverview,
+  getThreatScore,
+} from "@/actions/compliances";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
   NoScansAvailable,
+  ThreatScoreBadge,
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
@@ -105,14 +109,39 @@ export default async function Compliance({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  const threatScoreData =
+    selectedScanId &&
+    typeof selectedScanId === "string" &&
+    selectedScan?.providerInfo?.provider
+      ? await getThreatScore(selectedScanId, selectedScan.providerInfo.provider)
+      : null;
+
   return (
     <ContentLayout title="Compliance" icon="lucide:shield-check">
       {selectedScanId ? (
         <>
-          <ComplianceHeader
-            scans={expandedScansData}
-            uniqueRegions={uniqueRegions}
-          />
+          <div className="mb-6 flex flex-col gap-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1">
+                <ComplianceHeader
+                  scans={expandedScansData}
+                  uniqueRegions={uniqueRegions}
+                />
+              </div>
+              {threatScoreData &&
+                typeof selectedScanId === "string" &&
+                selectedScan && (
+                  <div className="w-[360px] flex-shrink-0">
+                    <ThreatScoreBadge
+                      score={threatScoreData.score}
+                      scanId={selectedScanId}
+                      provider={selectedScan.providerInfo.provider}
+                      selectedScan={selectedScanData}
+                    />
+                  </div>
+                )}
+            </div>
+          </div>
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid
               searchParams={resolvedSearchParams}
@@ -184,27 +213,36 @@ const SSRComplianceGrid = async ({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-      {compliancesData.data.map((compliance: ComplianceOverviewData) => {
-        const { attributes, id } = compliance;
-        const { framework, version, requirements_passed, total_requirements } =
-          attributes;
+      {compliancesData.data
+        .filter((compliance: ComplianceOverviewData) => {
+          // Filter out ProwlerThreatScore from the grid
+          return compliance.attributes.framework !== "ProwlerThreatScore";
+        })
+        .map((compliance: ComplianceOverviewData) => {
+          const { attributes, id } = compliance;
+          const {
+            framework,
+            version,
+            requirements_passed,
+            total_requirements,
+          } = attributes;
 
-        return (
-          <ComplianceCard
-            key={id}
-            title={framework}
-            version={version}
-            passingRequirements={requirements_passed}
-            totalRequirements={total_requirements}
-            prevPassingRequirements={requirements_passed}
-            prevTotalRequirements={total_requirements}
-            scanId={scanId}
-            complianceId={id}
-            id={id}
-            selectedScan={selectedScan}
-          />
-        );
-      })}
+          return (
+            <ComplianceCard
+              key={id}
+              title={framework}
+              version={version}
+              passingRequirements={requirements_passed}
+              totalRequirements={total_requirements}
+              prevPassingRequirements={requirements_passed}
+              prevTotalRequirements={total_requirements}
+              scanId={scanId}
+              complianceId={id}
+              id={id}
+              selectedScan={selectedScan}
+            />
+          );
+        })}
     </div>
   );
 };

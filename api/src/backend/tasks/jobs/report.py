@@ -153,8 +153,9 @@ def generate_threatscore_report(
 
         frameworks_bulk = Compliance.get_bulk(provider_type)
         compliance_obj = frameworks_bulk[compliance_id]
-        compliance_name = getattr(compliance_obj, "Framework", "N/A")
+        compliance_framework = getattr(compliance_obj, "Framework", "N/A")
         compliance_version = getattr(compliance_obj, "Version", "N/A")
+        compliance_name = getattr(compliance_obj, "Name", "N/A")
         compliance_description = getattr(compliance_obj, "Description", "")
 
         logger.info(f"Getting findings for scan {scan_id}")
@@ -212,7 +213,7 @@ def generate_threatscore_report(
                 {
                     "id": req_id,
                     "attributes": {
-                        "framework": compliance_name,
+                        "framework": compliance_framework,
                         "version": compliance_version,
                         "status": status,
                         "description": description,
@@ -333,9 +334,25 @@ def generate_threatscore_report(
 
         def create_section_score_chart(resp_reqs, attrs_map):
             """Create a bar chart showing compliance score by section using ThreatScore formula"""
-            sections_data = {}
+            # Define expected sections
+            expected_sections = [
+                "1. IAM",
+                "2. Attack Surface",
+                "3. Logging and Monitoring",
+                "4. Encryption",
+            ]
 
-            # First pass: Initialize all sections and collect data
+            # Initialize all expected sections with default values
+            sections_data = {
+                section: {
+                    "numerator": 0,
+                    "denominator": 0,
+                    "has_findings": False,
+                }
+                for section in expected_sections
+            }
+
+            # Collect data from requirements
             for req in resp_reqs:
                 req_id = req["id"]
                 attr = attrs_map.get(req_id, {})
@@ -345,7 +362,7 @@ def generate_threatscore_report(
                     m = metadata[0]
                     section = getattr(m, "Section", "Unknown")
 
-                    # Initialize section if not exists
+                    # Add section if not in expected list (for flexibility)
                     if section not in sections_data:
                         sections_data[section] = {
                             "numerator": 0,
@@ -448,11 +465,11 @@ def generate_threatscore_report(
         doc = SimpleDocTemplate(
             output_path,
             pagesize=letter,
-            title=f"Prowler ThreatScore Report - {compliance_name}",
+            title=f"Prowler ThreatScore Report - {compliance_framework}",
             author="Prowler",
-            subject=f"Compliance Report for {compliance_name}",
-            creator="Prowler Compliance Generator",
-            keywords=f"compliance,{compliance_name},security,framework,prowler",
+            subject=f"Compliance Report for {compliance_framework}",
+            creator="Prowler Engineering Team",
+            keywords=f"compliance,{compliance_framework},security,framework,prowler",
         )
 
         elements = []
@@ -472,8 +489,9 @@ def generate_threatscore_report(
         elements.append(Spacer(1, 0.5 * inch))
 
         info_data = [
-            ["Compliance Framework:", compliance_name],
-            ["Compliance ID:", compliance_id],
+            ["Framework:", compliance_framework],
+            ["ID:", compliance_id],
+            ["Name:", Paragraph(compliance_name, normal_center)],
             ["Version:", compliance_version],
             ["Scan ID:", scan_id],
             ["Description:", Paragraph(compliance_description, normal_center)],
@@ -482,12 +500,12 @@ def generate_threatscore_report(
         info_table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (0, 4), colors.Color(0.2, 0.4, 0.6)),
-                    ("TEXTCOLOR", (0, 0), (0, 4), colors.white),
-                    ("FONTNAME", (0, 0), (0, 4), "FiraCode"),
-                    ("BACKGROUND", (1, 0), (1, 4), colors.Color(0.95, 0.97, 1.0)),
-                    ("TEXTCOLOR", (1, 0), (1, 4), colors.Color(0.2, 0.2, 0.2)),
-                    ("FONTNAME", (1, 0), (1, 4), "PlusJakartaSans"),
+                    ("BACKGROUND", (0, 0), (0, 5), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (0, 5), colors.white),
+                    ("FONTNAME", (0, 0), (0, 5), "FiraCode"),
+                    ("BACKGROUND", (1, 0), (1, 5), colors.Color(0.95, 0.97, 1.0)),
+                    ("TEXTCOLOR", (1, 0), (1, 5), colors.Color(0.2, 0.2, 0.2)),
+                    ("FONTNAME", (1, 0), (1, 5), "PlusJakartaSans"),
                     ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("FONTSIZE", (0, 0), (-1, -1), 11),
@@ -695,7 +713,7 @@ def generate_threatscore_report(
 
             critical_table = Table(
                 table_data,
-                colWidths=[0.6 * inch, 0.8 * inch, 1.2 * inch, 3 * inch, 1.4 * inch],
+                colWidths=[0.7 * inch, 0.9 * inch, 1.3 * inch, 3.1 * inch, 1.5 * inch],
             )
 
             critical_table.setStyle(
