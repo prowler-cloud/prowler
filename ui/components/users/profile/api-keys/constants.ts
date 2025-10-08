@@ -8,7 +8,15 @@ export const API_KEY_COLUMN_KEYS = {
   ACTIONS: "actions",
 } as const;
 
-export const API_KEY_COLUMNS = [
+export type ApiKeyColumnKey =
+  (typeof API_KEY_COLUMN_KEYS)[keyof typeof API_KEY_COLUMN_KEYS];
+
+export interface ApiKeyColumn {
+  key: string;
+  label: string;
+}
+
+export const API_KEY_COLUMNS: ApiKeyColumn[] = [
   { key: API_KEY_COLUMN_KEYS.NAME, label: "NAME" },
   { key: API_KEY_COLUMN_KEYS.PREFIX, label: "PREFIX" },
   { key: API_KEY_COLUMN_KEYS.CREATED, label: "CREATED" },
@@ -16,7 +24,7 @@ export const API_KEY_COLUMNS = [
   { key: API_KEY_COLUMN_KEYS.EXPIRES, label: "EXPIRES" },
   { key: API_KEY_COLUMN_KEYS.STATUS, label: "STATUS" },
   { key: API_KEY_COLUMN_KEYS.ACTIONS, label: "" },
-] as const;
+] satisfies ApiKeyColumn[];
 
 export const DEFAULT_EXPIRY_DAYS = "365";
 export const ICON_SIZE = 16;

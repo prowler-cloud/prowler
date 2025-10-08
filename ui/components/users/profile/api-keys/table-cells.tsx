@@ -5,19 +5,19 @@ import { ApiKeyData, getApiKeyStatus } from "./types";
 import { formatRelativeTime, getStatusColor, getStatusLabel } from "./utils";
 
 export const NameCell = ({ apiKey }: { apiKey: ApiKeyData }) => (
-  <p className="text-sm font-medium text-white">
+  <p className="text-sm font-medium">
     {apiKey.attributes.name || FALLBACK_VALUES.UNNAMED}
   </p>
 );
 
 export const PrefixCell = ({ apiKey }: { apiKey: ApiKeyData }) => (
-  <code className="rounded bg-slate-700 px-2 py-1 font-mono text-xs text-slate-300">
+  <code className="rounded px-2 py-1 font-mono text-xs">
     {apiKey.attributes.prefix}
   </code>
 );
 
 export const DateCell = ({ date }: { date: string | null }) => (
-  <p className="text-sm text-slate-400">{formatRelativeTime(date)}</p>
+  <p className="text-sm">{formatRelativeTime(date)}</p>
 );
 
 export const LastUsedCell = ({ apiKey }: { apiKey: ApiKeyData }) => (

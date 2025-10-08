@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { ModalFooter } from "@heroui/modal";
 import { useState } from "react";
@@ -8,6 +7,7 @@ import { useState } from "react";
 import { createApiKey } from "@/actions/api-keys/api-keys";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
 import { calculateExpiryDate } from "./api-keys/utils";
@@ -52,6 +52,11 @@ export const CreateApiKeyModal = ({
 
     if (result.error) {
       setError(result.error);
+      return;
+    }
+
+    if (!result.data) {
+      setError("Failed to create API key");
       return;
     }
 
@@ -118,17 +123,23 @@ export const CreateApiKeyModal = ({
       </div>
 
       <ModalFooter>
-        <Button color="default" variant="light" onPress={handleClose}>
+        <CustomButton
+          ariaLabel="Cancel"
+          color="transparent"
+          variant="light"
+          onPress={handleClose}
+        >
           Cancel
-        </Button>
-        <Button
-          color="success"
+        </CustomButton>
+        <CustomButton
+          ariaLabel="Create API Key"
+          color="action"
           onPress={handleSubmit}
           isLoading={isLoading}
           isDisabled={!name.trim()}
         >
           Create API Key
-        </Button>
+        </CustomButton>
       </ModalFooter>
     </CustomAlertModal>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { ModalFooter } from "@heroui/modal";
 import { useCallback, useEffect, useState } from "react";
@@ -8,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { updateApiKey } from "@/actions/api-keys/api-keys";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { ApiKeyData } from "./api-keys/types";
 
@@ -102,17 +102,23 @@ export const EditApiKeyNameModal = ({
       </div>
 
       <ModalFooter>
-        <Button color="default" variant="light" onPress={handleClose}>
+        <CustomButton
+          ariaLabel="Cancel"
+          color="transparent"
+          variant="light"
+          onPress={handleClose}
+        >
           Cancel
-        </Button>
-        <Button
-          color="success"
+        </CustomButton>
+        <CustomButton
+          ariaLabel="Save changes"
+          color="action"
           onPress={handleSubmit}
           isLoading={isLoading}
           isDisabled={!name.trim()}
         >
           Save Changes
-        </Button>
+        </CustomButton>
       </ModalFooter>
     </CustomAlertModal>
   );

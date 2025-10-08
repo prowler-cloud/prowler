@@ -66,7 +66,7 @@ export const createApiKey = async (
       return handleApiError(response);
     }
 
-    const data = await handleApiResponse<CreateApiKeyResponse>(response);
+    const data = (await handleApiResponse(response)) as CreateApiKeyResponse;
 
     // Revalidate the api-keys list
     revalidateTag("api-keys");
@@ -115,7 +115,7 @@ export const updateApiKey = async (
       return handleApiError(response);
     }
 
-    const data = await handleApiResponse<SingleApiKeyResponse>(response);
+    const data = (await handleApiResponse(response)) as SingleApiKeyResponse;
 
     // Revalidate the api-keys list
     revalidateTag("api-keys");

@@ -96,13 +96,13 @@ const SSRDataUser = async () => {
     <div className="flex w-full flex-col gap-6">
       <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
       <div className="flex flex-col gap-6 xl:flex-row">
-        <div className="flex w-full flex-col gap-6">
+        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
           <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
           {hasManageIntegrations && (
             <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
           )}
         </div>
-        <div className="flex w-full flex-col gap-6">
+        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
           <MembershipsCard
             memberships={membershipsIncluded}
             tenantsMap={tenantsMap}

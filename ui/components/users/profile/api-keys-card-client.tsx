@@ -1,39 +1,17 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/dropdown";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@heroui/table";
 import { useDisclosure } from "@heroui/use-disclosure";
-import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { CustomButton } from "@/components/ui/custom/custom-button";
+import { DataTable } from "@/components/ui/table";
+
 import { ApiKeySuccessModal } from "./api-key-success-modal";
-import {
-  API_KEY_COLUMN_KEYS,
-  API_KEY_COLUMNS,
-  ICON_SIZE,
-} from "./api-keys/constants";
-import {
-  DateCell,
-  LastUsedCell,
-  NameCell,
-  PrefixCell,
-  StatusCell,
-} from "./api-keys/table-cells";
+import { createApiKeyColumns } from "./api-keys/column-api-keys";
+import { ICON_SIZE } from "./api-keys/constants";
 import { ApiKeyData } from "./api-keys/types";
 import { CreateApiKeyModal } from "./create-api-key-modal";
 import { DeleteApiKeyModal } from "./delete-api-key-modal";
@@ -79,128 +57,33 @@ export const ApiKeysCardClient = ({
     editModal.onOpen();
   };
 
-  const renderCell = (apiKey: ApiKeyData, columnKey: React.Key) => {
-    switch (columnKey) {
-      case API_KEY_COLUMN_KEYS.NAME:
-        return <NameCell apiKey={apiKey} />;
-
-      case API_KEY_COLUMN_KEYS.PREFIX:
-        return <PrefixCell apiKey={apiKey} />;
-
-      case API_KEY_COLUMN_KEYS.CREATED:
-        return <DateCell date={apiKey.attributes.inserted_at} />;
-
-      case API_KEY_COLUMN_KEYS.LAST_USED:
-        return <LastUsedCell apiKey={apiKey} />;
-
-      case API_KEY_COLUMN_KEYS.EXPIRES:
-        return <DateCell date={apiKey.attributes.expires_at} />;
-
-      case API_KEY_COLUMN_KEYS.STATUS:
-        return <StatusCell apiKey={apiKey} />;
-
-      case API_KEY_COLUMN_KEYS.ACTIONS:
-        return (
-          <div className="flex justify-end">
-            <Dropdown>
-              <DropdownTrigger>
-                <Button isIconOnly size="sm" variant="light">
-                  <MoreVertical size={ICON_SIZE} />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu aria-label="API Key actions">
-                <DropdownItem
-                  key="edit"
-                  startContent={<Pencil size={ICON_SIZE} />}
-                  onPress={() => handleEditClick(apiKey)}
-                >
-                  Edit name
-                </DropdownItem>
-                <DropdownItem
-                  key="delete"
-                  className="text-danger"
-                  color="danger"
-                  startContent={<Trash2 size={ICON_SIZE} />}
-                  onPress={() => handleDeleteClick(apiKey)}
-                >
-                  Delete
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
+  const columns = createApiKeyColumns(handleEditClick, handleDeleteClick);
 
   return (
     <>
-      <Card className="bg-card-bg">
+      <Card className="dark:bg-prowler-blue-400">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div className="flex flex-col gap-1">
-            <h4 className="text-lg font-bold text-white">API Keys</h4>
-            <p className="text-xs text-slate-400">
-              Manage API keys for programmatic access
-            </p>
+            <h4 className="text-lg font-bold">API Keys</h4>
+            <p className="text-xs">Manage API keys for programmatic access</p>
           </div>
-          <Button
-            color="success"
+          <CustomButton
+            ariaLabel="Create new API key"
+            color="action"
             size="sm"
             startContent={<Plus size={ICON_SIZE} />}
             onPress={createModal.onOpen}
           >
             Create API Key
-          </Button>
+          </CustomButton>
         </CardHeader>
         <CardBody>
           {initialApiKeys.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12">
-              <p className="text-sm text-slate-400">No API keys created yet.</p>
-              <Button
-                color="success"
-                variant="flat"
-                size="sm"
-                startContent={<Plus size={ICON_SIZE} />}
-                onPress={createModal.onOpen}
-              >
-                Create your first API key
-              </Button>
+              <p className="text-sm">No API keys created yet.</p>
             </div>
           ) : (
-            <Table
-              aria-label="API Keys table"
-              classNames={{
-                wrapper: "bg-transparent shadow-none",
-                th: "bg-slate-800 text-slate-300",
-                td: "border-b border-slate-700",
-              }}
-            >
-              <TableHeader columns={API_KEY_COLUMNS}>
-                {(column) => (
-                  <TableColumn
-                    key={column.key}
-                    align={
-                      column.key === API_KEY_COLUMN_KEYS.ACTIONS
-                        ? "end"
-                        : "start"
-                    }
-                  >
-                    {column.label}
-                  </TableColumn>
-                )}
-              </TableHeader>
-              <TableBody items={initialApiKeys}>
-                {(item) => (
-                  <TableRow key={item.id}>
-                    {(columnKey) => (
-                      <TableCell>{renderCell(item, columnKey)}</TableCell>
-                    )}
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+            <DataTable columns={columns} data={initialApiKeys} />
           )}
         </CardBody>
       </Card>

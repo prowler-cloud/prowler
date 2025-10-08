@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { ModalFooter } from "@heroui/modal";
 import { useState } from "react";
 
@@ -11,6 +10,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
 import { ApiKeyData } from "./api-keys/types";
@@ -68,7 +68,7 @@ export const DeleteApiKeyModal = ({
       size="lg"
     >
       <div className="flex flex-col gap-4">
-        <Alert variant="destructive" className="bg-danger-50 border-danger-200">
+        <Alert variant="destructive">
           <AlertTitle className="text-danger-700">⚠️ Warning</AlertTitle>
           <AlertDescription className="text-danger-600">
             This action cannot be undone. This API key will be revoked and will
@@ -96,12 +96,23 @@ export const DeleteApiKeyModal = ({
       </div>
 
       <ModalFooter>
-        <Button color="default" variant="light" onPress={handleClose}>
+        <CustomButton
+          ariaLabel="Cancel"
+          color="transparent"
+          variant="light"
+          onPress={handleClose}
+        >
           Cancel
-        </Button>
-        <Button color="danger" onPress={handleDelete} isLoading={isLoading}>
-          Delete
-        </Button>
+        </CustomButton>
+        <CustomButton
+          ariaLabel="Revoke API Key"
+          color="danger"
+          onPress={handleDelete}
+          isLoading={isLoading}
+          isDisabled={!apiKey}
+        >
+          Revoke API Key
+        </CustomButton>
       </ModalFooter>
     </CustomAlertModal>
   );
