@@ -11,6 +11,7 @@ import {
 } from "recharts";
 
 import { DonutDataPoint } from "./models/chart-types";
+import { ChartLegend } from "./shared/ChartLegend";
 import { ChartTooltip } from "./shared/ChartTooltip";
 
 interface DonutChartProps {
@@ -58,6 +59,15 @@ const CustomLabel = ({
       </text>
     </>
   );
+};
+
+const CustomLegend = ({ payload }: any) => {
+  const items = payload.map((entry: any) => ({
+    label: `${entry.value} (${entry.payload.percentage}%)`,
+    color: entry.color,
+  }));
+
+  return <ChartLegend items={items} />;
 };
 
 export function DonutChart({
@@ -109,18 +119,7 @@ export function DonutChart({
           </text>
         )}
         <Tooltip content={<ChartTooltip colorIndicatorShape="circle" />} />
-        {showLegend && (
-          <Legend
-            verticalAlign="bottom"
-            height={36}
-            iconType="circle"
-            formatter={(value, entry: any) => (
-              <span className="text-sm text-white">
-                {value} ({entry.payload.percentage}%)
-              </span>
-            )}
-          />
-        )}
+        {showLegend && <Legend content={<CustomLegend />} />}
       </PieChart>
     </ResponsiveContainer>
   );

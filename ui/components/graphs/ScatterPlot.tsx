@@ -13,6 +13,7 @@ import {
 
 import { AlertPill } from "./shared/AlertPill";
 import { CHART_COLORS } from "./shared/chart-constants";
+import { ChartLegend } from "./shared/ChartLegend";
 import { getSeverityColorByRiskScore } from "./shared/severity-utils";
 
 interface ScatterDataPoint {
@@ -88,6 +89,15 @@ const CustomScatterDot = ({
   );
 };
 
+const CustomLegend = ({ payload }: any) => {
+  const items = payload.map((entry: any) => ({
+    label: entry.value,
+    color: entry.color,
+  }));
+
+  return <ChartLegend items={items} />;
+};
+
 export function ScatterPlot({
   data,
   xLabel = "Risk Score",
@@ -148,15 +158,7 @@ export function ScatterPlot({
           tick={{ fill: CHART_COLORS.textSecondary }}
         />
         <Tooltip content={<CustomTooltip />} />
-        <Legend
-          wrapperStyle={{ paddingTop: "20px" }}
-          iconType="circle"
-          formatter={(value) => (
-            <span className="text-sm text-white">
-              {value}
-            </span>
-          )}
-        />
+        <Legend content={<CustomLegend />} />
         {Object.entries(dataByProvider).map(([provider, points]) => (
           <Scatter
             key={provider}

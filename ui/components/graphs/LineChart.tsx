@@ -17,6 +17,7 @@ import {
 import { LineConfig, LineDataPoint } from "./models/chart-types";
 import { AlertPill } from "./shared/AlertPill";
 import { CHART_COLORS } from "./shared/chart-constants";
+import { ChartLegend } from "./shared/ChartLegend";
 
 interface LineChartProps {
   data: LineDataPoint[];
@@ -109,19 +110,12 @@ const CustomLegend = ({ payload }: any) => {
     return indexA - indexB;
   });
 
-  return (
-    <div className="bg-card-border mt-4 inline-flex gap-[46px] rounded-full border-2 px-[19px] py-[9px]">
-      {sortedPayload.map((entry: any, index: number) => (
-        <div key={`legend-${index}`} className="flex items-center gap-1">
-          <div
-            className="h-3 w-3 rounded"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="text-xs text-gray-300">{entry.value}</span>
-        </div>
-      ))}
-    </div>
-  );
+  const items = sortedPayload.map((entry: any) => ({
+    label: entry.value,
+    color: entry.color,
+  }));
+
+  return <ChartLegend items={items} />;
 };
 
 export function LineChart({
