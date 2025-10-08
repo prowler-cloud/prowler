@@ -36,27 +36,15 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          borderColor: CHART_COLORS.tooltipBorder,
-          backgroundColor: CHART_COLORS.tooltipBackground,
-        }}
-      >
-        <p
-          className="text-sm font-semibold"
-          style={{ color: CHART_COLORS.textPrimary }}
-        >
+      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
+        <p className="text-sm font-semibold text-white">
           {data.payload.category}
         </p>
         <div className="mt-1">
           <AlertPill value={data.value} />
         </div>
         {data.payload.change !== undefined && (
-          <p
-            className="mt-1 text-xs"
-            style={{ color: CHART_COLORS.textSecondary }}
-          >
+          <p className="mt-1 text-xs text-slate-400">
             <span className="font-bold">
               {data.payload.change > 0 ? "+" : ""}
               {data.payload.change}%

@@ -47,16 +47,8 @@ const CustomLineTooltip = ({
   const totalValue = typedPayload.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div
-      className="rounded-lg border p-3 shadow-lg"
-      style={{
-        borderColor: CHART_COLORS.tooltipBorder,
-        backgroundColor: CHART_COLORS.tooltipBackground,
-      }}
-    >
-      <p className="mb-3 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-        {label}
-      </p>
+    <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
+      <p className="mb-3 text-xs text-slate-400">{label}</p>
 
       <div className="mb-3">
         <AlertPill value={totalValue} textSize="sm" />
@@ -74,32 +66,18 @@ const CustomLineTooltip = ({
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: item.stroke }}
                 />
-                <span
-                  className="text-sm"
-                  style={{ color: CHART_COLORS.textPrimary }}
-                >
-                  {item.value}
-                </span>
+                <span className="text-sm text-white">{item.value}</span>
               </div>
               {newFindings !== undefined && (
                 <div className="flex items-center gap-2">
-                  <Bell
-                    size={14}
-                    style={{ color: CHART_COLORS.textSecondary }}
-                  />
-                  <span
-                    className="text-xs"
-                    style={{ color: CHART_COLORS.textSecondary }}
-                  >
+                  <Bell size={14} className="text-slate-400" />
+                  <span className="text-xs text-slate-400">
                     {newFindings} New Findings
                   </span>
                 </div>
               )}
               {change !== undefined && typeof change === "number" && (
-                <p
-                  className="text-xs"
-                  style={{ color: CHART_COLORS.textSecondary }}
-                >
+                <p className="text-xs text-slate-400">
                   <span className="font-bold">
                     {change > 0 ? "+" : ""}
                     {change}%
@@ -116,7 +94,14 @@ const CustomLineTooltip = ({
 };
 
 const CustomLegend = ({ payload }: any) => {
-  const severityOrder = ["Informational", "Low", "Medium", "High", "Critical", "Muted"];
+  const severityOrder = [
+    "Informational",
+    "Low",
+    "Medium",
+    "High",
+    "Critical",
+    "Muted",
+  ];
 
   const sortedPayload = [...payload].sort((a, b) => {
     const indexA = severityOrder.indexOf(a.value);
@@ -125,21 +110,14 @@ const CustomLegend = ({ payload }: any) => {
   });
 
   return (
-    <div
-      className="mt-4 inline-flex gap-[46px] rounded-full border-2 px-[19px] py-[9px]"
-      style={{
-        backgroundColor: "#1C2533",
-      }}
-    >
+    <div className="bg-card-border mt-4 inline-flex gap-[46px] rounded-full border-2 px-[19px] py-[9px]">
       {sortedPayload.map((entry: any, index: number) => (
         <div key={`legend-${index}`} className="flex items-center gap-1">
           <div
             className="h-3 w-3 rounded"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-xs" style={{ color: "#DBDEE4" }}>
-            {entry.value}
-          </span>
+          <span className="text-xs text-gray-300">{entry.value}</span>
         </div>
       ))}
     </div>

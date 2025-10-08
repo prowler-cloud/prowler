@@ -11,7 +11,6 @@ import {
 } from "recharts";
 
 import { DonutDataPoint } from "./models/chart-types";
-import { CHART_COLORS } from "./shared/chart-constants";
 import { ChartTooltip } from "./shared/ChartTooltip";
 
 interface DonutChartProps {
@@ -44,8 +43,7 @@ const CustomLabel = ({
         y={cy - 10}
         textAnchor="middle"
         dominantBaseline="middle"
-        style={{ fill: CHART_COLORS.textPrimary }}
-        className="text-3xl font-bold"
+        className="fill-white text-3xl font-bold"
       >
         {value}
       </text>
@@ -54,8 +52,7 @@ const CustomLabel = ({
         y={cy + 15}
         textAnchor="middle"
         dominantBaseline="middle"
-        style={{ fill: CHART_COLORS.textSecondary }}
-        className="text-sm"
+        className="fill-slate-400 text-sm"
       >
         {label}
       </text>
@@ -118,10 +115,7 @@ export function DonutChart({
             height={36}
             iconType="circle"
             formatter={(value, entry: any) => (
-              <span
-                className="text-sm"
-                style={{ color: CHART_COLORS.textPrimary }}
-              >
+              <span className="text-sm text-white">
                 {value} ({entry.payload.percentage}%)
               </span>
             )}

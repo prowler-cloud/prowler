@@ -44,23 +44,11 @@ const CustomTooltip = ({ active, payload }: any) => {
     const severityColor = getSeverityColorByRiskScore(data.x);
 
     return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          borderColor: CHART_COLORS.tooltipBorder,
-          backgroundColor: CHART_COLORS.tooltipBackground,
-        }}
-      >
-        <p
-          className="text-sm font-semibold"
-          style={{ color: CHART_COLORS.textPrimary }}
-        >
+      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
+        <p className="text-sm font-semibold text-white">
           {data.name}
         </p>
-        <p
-          className="mt-1 text-xs"
-          style={{ color: CHART_COLORS.textSecondary }}
-        >
+        <p className="mt-1 text-xs text-slate-400">
           <span style={{ color: severityColor }}>{data.x}</span> Risk Score
         </p>
         <div className="mt-2">
@@ -164,10 +152,7 @@ export function ScatterPlot({
           wrapperStyle={{ paddingTop: "20px" }}
           iconType="circle"
           formatter={(value) => (
-            <span
-              className="text-sm"
-              style={{ color: CHART_COLORS.textPrimary }}
-            >
+            <span className="text-sm text-white">
               {value}
             </span>
           )}

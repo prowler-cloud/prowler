@@ -246,7 +246,7 @@ export default function ChartsDemoPage() {
   ];
 
   return (
-    <div className="min-h-screen p-8" style={{ backgroundColor: "var(--color-page-bg)" }}>
+    <div className="min-h-screen bg-page-bg p-8">
       <div className="mx-auto max-w-7xl space-y-12">
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-white">
@@ -265,7 +265,7 @@ export default function ChartsDemoPage() {
               Used for: Threat Score (Story 1)
             </p>
           </div>
-          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
+          <div className="rounded-lg bg-card-bg p-6">
             <div className="mx-auto max-w-sm">
               <RadialChart
                 percentage={52}
@@ -285,7 +285,7 @@ export default function ChartsDemoPage() {
               Used for: Check Findings (Story 2), Resource Inventory (Story 5)
             </p>
           </div>
-          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
+          <div className="rounded-lg bg-card-bg p-6">
             <DonutChart
               data={donutChartData}
               centerLabel={{ value: "1,883", label: "Total Findings" }}
@@ -304,7 +304,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Severity (Story 3)
             </p>
           </div>
-          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
+          <div className="rounded-lg bg-card-bg p-6">
             <HorizontalBarChart data={barChartData} title="Risk Severity" />
           </div>
         </section>
@@ -317,7 +317,7 @@ export default function ChartsDemoPage() {
               Used for: Finding Severity Over Time (Story 7)
             </p>
           </div>
-          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
+          <div className="rounded-lg bg-card-bg p-6">
             <LineChart
               data={lineChartData}
               lines={lineChartLines}
@@ -334,7 +334,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Radar (Story 8)
             </p>
           </div>
-          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
+          <div className="rounded-lg bg-card-bg p-6">
             <RadarChart
               data={radarChartData}
               height={450}
@@ -360,7 +360,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Pipeline (Story 9)
             </p>
           </div>
-          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
+          <div className="rounded-lg bg-card-bg p-6">
             <SankeyChart data={sankeyData} height={450} />
           </div>
         </section>
@@ -373,7 +373,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Plot (Story 10)
             </p>
           </div>
-          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
+          <div className="rounded-lg bg-card-bg p-6">
             <ScatterPlot
               data={scatterPlotData}
               xLabel="Risk Score"

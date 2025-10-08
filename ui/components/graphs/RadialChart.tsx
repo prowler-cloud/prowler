@@ -69,8 +69,7 @@ export function RadialChart({
           y="50%"
           textAnchor="middle"
           dominantBaseline="middle"
-          style={{ fill: CHART_COLORS.textPrimary }}
-          className="text-4xl font-bold"
+          className="fill-white text-4xl font-bold"
         >
           {percentage}%
         </text>
