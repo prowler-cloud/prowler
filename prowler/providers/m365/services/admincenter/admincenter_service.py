@@ -62,14 +62,32 @@ class AdminCenter(M365Service):
         organization_config = None
         try:
             organization_configuration = self.powershell.get_organization_config()
-            if organization_configuration:
-                organization_config = Organization(
-                    name=organization_configuration.get("Name", ""),
-                    guid=organization_configuration.get("Guid", ""),
-                    customer_lockbox_enabled=organization_configuration.get(
-                        "CustomerLockboxEnabled", False
-                    ),
+            if organization_configuration and isinstance(
+                organization_configuration, dict
+            ):
+                organization_configuration = [organization_configuration]
+            elif organization_configuration and not isinstance(
+                organization_configuration, (list, dict)
+            ):
+                logger.warning(
+                    f"Skipping invalid organization config data type: {type(organization_configuration)} - {organization_configuration}"
                 )
+                return organization_config
+
+            for config in organization_configuration:
+                if config and isinstance(config, dict):
+                    organization_config = Organization(
+                        name=config.get("Name", ""),
+                        guid=config.get("Guid", ""),
+                        customer_lockbox_enabled=config.get(
+                            "CustomerLockboxEnabled", False
+                        ),
+                    )
+                    break  # Take the first valid config
+                elif config and not isinstance(config, dict):
+                    logger.warning(
+                        f"Skipping invalid organization config data type: {type(config)} - {config}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -81,12 +99,28 @@ class AdminCenter(M365Service):
         sharing_policy = None
         try:
             sharing_policy_data = self.powershell.get_sharing_policy()
-            if sharing_policy_data:
-                sharing_policy = SharingPolicy(
-                    name=sharing_policy_data.get("Name", ""),
-                    guid=sharing_policy_data.get("Guid", ""),
-                    enabled=sharing_policy_data.get("Enabled", False),
+            if sharing_policy_data and isinstance(sharing_policy_data, dict):
+                sharing_policy_data = [sharing_policy_data]
+            elif sharing_policy_data and not isinstance(
+                sharing_policy_data, (list, dict)
+            ):
+                logger.warning(
+                    f"Skipping invalid sharing policy data type: {type(sharing_policy_data)} - {sharing_policy_data}"
                 )
+                return sharing_policy
+
+            for policy in sharing_policy_data:
+                if policy and isinstance(policy, dict):
+                    sharing_policy = SharingPolicy(
+                        name=policy.get("Name", ""),
+                        guid=policy.get("Guid", ""),
+                        enabled=policy.get("Enabled", False),
+                    )
+                    break  # Take the first valid policy
+                elif policy and not isinstance(policy, dict):
+                    logger.warning(
+                        f"Skipping invalid sharing policy data type: {type(policy)} - {policy}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

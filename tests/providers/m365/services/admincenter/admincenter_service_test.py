@@ -214,3 +214,293 @@ def test_admincenter__get_users_handles_pagination():
     with_url_mock.assert_called_once_with("next-link")
     assert users["user-1"].license == "SKU-user-1"
     assert users["user-3"].license == "SKU-user-3"
+
+
+class Test_AdminCenter_Service_Type_Validation:
+    def test_get_organization_config_with_string_data(self):
+        """Test that _get_organization_config handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+                return_value="InvalidStringConfig",  # Return string instead of dict
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid config was processed
+            organization_config = admincenter_client.organization_config
+            assert organization_config is None
+
+            # Should log warning for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid organization config data type: <class 'str'> - InvalidStringConfig"
+            )
+
+            admincenter_client.powershell.close()
+
+    def test_get_organization_config_with_mixed_data(self):
+        """Test that _get_organization_config handles mixed data (dict + string) gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+                return_value=[
+                    {
+                        "Name": "Org1",
+                        "Guid": "guid1",
+                        "CustomerLockboxEnabled": True,
+                    },  # Valid dict
+                    "InvalidStringConfig",  # Invalid string
+                ],
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return valid config from first item
+            organization_config = admincenter_client.organization_config
+            assert organization_config is not None
+            assert organization_config.name == "Org1"
+            assert organization_config.guid == "guid1"
+            assert organization_config.customer_lockbox_enabled is True
+
+            admincenter_client.powershell.close()
+
+    def test_get_organization_config_with_empty_data(self):
+        """Test that _get_organization_config handles empty data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+                return_value=[],  # Empty list
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid config was processed
+            organization_config = admincenter_client.organization_config
+            assert organization_config is None
+
+            admincenter_client.powershell.close()
+
+    def test_get_organization_config_with_none_data(self):
+        """Test that _get_organization_config handles None data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+                return_value=None,  # None data
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid config was processed
+            organization_config = admincenter_client.organization_config
+            assert organization_config is None
+
+            admincenter_client.powershell.close()
+
+    def test_get_sharing_policy_with_string_data(self):
+        """Test that _get_sharing_policy handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_sharing_policy",
+                return_value="InvalidStringPolicy",  # Return string instead of dict
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            sharing_policy = admincenter_client.sharing_policy
+            assert sharing_policy is None
+
+            # Should log warning for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid sharing policy data type: <class 'str'> - InvalidStringPolicy"
+            )
+
+            admincenter_client.powershell.close()
+
+    def test_get_sharing_policy_with_mixed_data(self):
+        """Test that _get_sharing_policy handles mixed data (dict + string) gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_sharing_policy",
+                return_value=[
+                    {"Name": "Policy1", "Guid": "guid1", "Enabled": True},  # Valid dict
+                    "InvalidStringPolicy",  # Invalid string
+                ],
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return valid policy from first item
+            sharing_policy = admincenter_client.sharing_policy
+            assert sharing_policy is not None
+            assert sharing_policy.name == "Policy1"
+            assert sharing_policy.guid == "guid1"
+            assert sharing_policy.enabled is True
+
+            admincenter_client.powershell.close()
+
+    def test_get_sharing_policy_with_empty_data(self):
+        """Test that _get_sharing_policy handles empty data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_sharing_policy",
+                return_value=[],  # Empty list
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            sharing_policy = admincenter_client.sharing_policy
+            assert sharing_policy is None
+
+            admincenter_client.powershell.close()
+
+    def test_get_sharing_policy_with_none_data(self):
+        """Test that _get_sharing_policy handles None data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_sharing_policy",
+                return_value=None,  # None data
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            sharing_policy = admincenter_client.sharing_policy
+            assert sharing_policy is None
+
+            admincenter_client.powershell.close()
+
+    def test_get_organization_config_with_multiple_valid_configs(self):
+        """Test that _get_organization_config takes first valid config when multiple are available"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+                return_value=[
+                    {
+                        "Name": "Org1",
+                        "Guid": "guid1",
+                        "CustomerLockboxEnabled": True,
+                    },  # First valid config
+                    {
+                        "Name": "Org2",
+                        "Guid": "guid2",
+                        "CustomerLockboxEnabled": False,
+                    },  # Second valid config (should be ignored)
+                ],
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return first valid config
+            organization_config = admincenter_client.organization_config
+            assert organization_config is not None
+            assert organization_config.name == "Org1"  # First config
+            assert organization_config.guid == "guid1"  # First config
+            assert (
+                organization_config.customer_lockbox_enabled is True
+            )  # First config value
+
+            admincenter_client.powershell.close()
+
+    def test_get_sharing_policy_with_multiple_valid_policies(self):
+        """Test that _get_sharing_policy takes first valid policy when multiple are available"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_sharing_policy",
+                return_value=[
+                    {
+                        "Name": "Policy1",
+                        "Guid": "guid1",
+                        "Enabled": True,
+                    },  # First valid policy
+                    {
+                        "Name": "Policy2",
+                        "Guid": "guid2",
+                        "Enabled": False,
+                    },  # Second valid policy (should be ignored)
+                ],
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return first valid policy
+            sharing_policy = admincenter_client.sharing_policy
+            assert sharing_policy is not None
+            assert sharing_policy.name == "Policy1"  # First policy
+            assert sharing_policy.guid == "guid1"  # First policy
+            assert sharing_policy.enabled is True  # First policy value
+
+            admincenter_client.powershell.close()

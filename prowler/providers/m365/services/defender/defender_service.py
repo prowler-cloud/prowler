@@ -43,7 +43,7 @@ class Defender(M365Service):
             if isinstance(malware_policy, dict):
                 malware_policy = [malware_policy]
             for policy in malware_policy:
-                if policy:
+                if policy and isinstance(policy, dict):
                     file_types_raw = policy.get("FileTypes", [])
                     file_types = []
                     if file_types_raw is not None:
@@ -76,6 +76,11 @@ class Defender(M365Service):
                         )
                     )
                     malware_policies.sort(key=lambda x: x.is_default, reverse=True)
+
+                elif policy and not isinstance(policy, dict):
+                    logger.warning(
+                        f"Skipping invalid malware policy data type: {type(policy)} - {policy}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -90,13 +95,17 @@ class Defender(M365Service):
             if isinstance(malware_rule, dict):
                 malware_rule = [malware_rule]
             for rule in malware_rule:
-                if rule:
+                if rule and isinstance(rule, dict):
                     malware_rules[rule.get("MalwareFilterPolicy", "")] = MalwareRule(
                         state=rule.get("State", ""),
                         priority=rule.get("Priority", 0),
                         users=rule.get("SentTo", None),
                         groups=rule.get("SentToMemberOf", None),
                         domains=rule.get("RecipientDomainIs", None),
+                    )
+                elif rule and not isinstance(rule, dict):
+                    logger.warning(
+                        f"Skipping invalid malware rule data type: {type(rule)} - {rule}"
                     )
         except Exception as error:
             logger.error(
@@ -112,7 +121,7 @@ class Defender(M365Service):
             if isinstance(antiphishing_policy, dict):
                 antiphishing_policy = [antiphishing_policy]
             for policy in antiphishing_policy:
-                if policy:
+                if policy and isinstance(policy, dict):
                     antiphishing_policies[policy.get("Name", "")] = AntiphishingPolicy(
                         name=policy.get("Name", ""),
                         spoof_intelligence=policy.get("EnableSpoofIntelligence", True),
@@ -137,6 +146,10 @@ class Defender(M365Service):
                             reverse=True,
                         )
                     )
+                elif policy and not isinstance(policy, dict):
+                    logger.warning(
+                        f"Skipping invalid antiphishing policy data type: {type(policy)} - {policy}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -151,7 +164,7 @@ class Defender(M365Service):
             if isinstance(antiphishing_rule, dict):
                 antiphishing_rule = [antiphishing_rule]
             for rule in antiphishing_rule:
-                if rule:
+                if rule and isinstance(rule, dict):
                     antiphishing_rules[rule.get("AntiPhishPolicy", "")] = (
                         AntiphishingRule(
                             state=rule.get("State", ""),
@@ -160,6 +173,10 @@ class Defender(M365Service):
                             groups=rule.get("SentToMemberOf", None),
                             domains=rule.get("RecipientDomainIs", None),
                         )
+                    )
+                elif rule and not isinstance(rule, dict):
+                    logger.warning(
+                        f"Skipping invalid antiphishing rule data type: {type(rule)} - {rule}"
                     )
         except Exception as error:
             logger.error(
@@ -172,11 +189,15 @@ class Defender(M365Service):
         connection_filter_policy = None
         try:
             policy = self.powershell.get_connection_filter_policy()
-            if policy:
+            if policy and isinstance(policy, dict):
                 connection_filter_policy = ConnectionFilterPolicy(
                     ip_allow_list=policy.get("IPAllowList", []),
                     identity=policy.get("Identity", ""),
                     enable_safe_list=policy.get("EnableSafeList", False),
+                )
+            elif policy and not isinstance(policy, dict):
+                logger.warning(
+                    f"Skipping invalid connection filter policy data type: {type(policy)} - {policy}"
                 )
         except Exception as error:
             logger.error(
@@ -192,12 +213,16 @@ class Defender(M365Service):
             if isinstance(dkim_config, dict):
                 dkim_config = [dkim_config]
             for config in dkim_config:
-                if config:
+                if config and isinstance(config, dict):
                     dkim_configs.append(
                         DkimConfig(
                             dkim_signing_enabled=config.get("Enabled", False),
                             id=config.get("Id", ""),
                         )
+                    )
+                elif config and not isinstance(config, dict):
+                    logger.warning(
+                        f"Skipping invalid DKIM config data type: {type(config)} - {config}"
                     )
         except Exception as error:
             logger.error(
@@ -213,7 +238,7 @@ class Defender(M365Service):
             if isinstance(outbound_spam_policy, dict):
                 outbound_spam_policy = [outbound_spam_policy]
             for policy in outbound_spam_policy:
-                if policy:
+                if policy and isinstance(policy, dict):
                     outbound_spam_policies[policy.get("Name", "")] = OutboundSpamPolicy(
                         name=policy.get("Name", ""),
                         notify_sender_blocked=policy.get("NotifyOutboundSpam", True),
@@ -237,6 +262,10 @@ class Defender(M365Service):
                             reverse=True,
                         )
                     )
+                elif policy and not isinstance(policy, dict):
+                    logger.warning(
+                        f"Skipping invalid outbound spam policy data type: {type(policy)} - {policy}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -251,7 +280,7 @@ class Defender(M365Service):
             if isinstance(outbound_spam_rule, dict):
                 outbound_spam_rule = [outbound_spam_rule]
             for rule in outbound_spam_rule:
-                if rule:
+                if rule and isinstance(rule, dict):
                     outbound_spam_rules[
                         rule.get("HostedOutboundSpamFilterPolicy", "")
                     ] = OutboundSpamRule(
@@ -260,6 +289,10 @@ class Defender(M365Service):
                         users=rule.get("From", None),
                         groups=rule.get("FromMemberOf", None),
                         domains=rule.get("SenderDomainIs", None),
+                    )
+                elif rule and not isinstance(rule, dict):
+                    logger.warning(
+                        f"Skipping invalid outbound spam rule data type: {type(rule)} - {rule}"
                     )
         except Exception as error:
             logger.error(
@@ -277,7 +310,7 @@ class Defender(M365Service):
             if isinstance(inbound_spam_policy, dict):
                 inbound_spam_policy = [inbound_spam_policy]
             for policy in inbound_spam_policy:
-                if policy:
+                if policy and isinstance(policy, dict):
                     allowed_domains_raw = policy.get("AllowedSenderDomains", [])
                     allowed_domains = []
 
@@ -319,6 +352,10 @@ class Defender(M365Service):
                         )
                     )
                     inbound_spam_policies.sort(key=lambda x: x.default, reverse=True)
+                elif policy and not isinstance(policy, dict):
+                    logger.warning(
+                        f"Skipping invalid inbound spam policy data type: {type(policy)} - {policy}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -333,7 +370,7 @@ class Defender(M365Service):
             if isinstance(inbound_spam_rule, dict):
                 inbound_spam_rule = [inbound_spam_rule]
             for rule in inbound_spam_rule:
-                if rule:
+                if rule and isinstance(rule, dict):
                     inbound_spam_rules[rule.get("HostedContentFilterPolicy", "")] = (
                         InboundSpamRule(
                             state=rule.get("State", "Disabled"),
@@ -342,6 +379,10 @@ class Defender(M365Service):
                             groups=rule.get("SentToMemberOf", None),
                             domains=rule.get("RecipientDomainIs", None),
                         )
+                    )
+                elif rule and not isinstance(rule, dict):
+                    logger.warning(
+                        f"Skipping invalid inbound spam rule data type: {type(rule)} - {rule}"
                     )
         except Exception as error:
             logger.error(
@@ -354,7 +395,7 @@ class Defender(M365Service):
         report_submission_policy = None
         try:
             report_submission_policy = self.powershell.get_report_submission_policy()
-            if report_submission_policy:
+            if report_submission_policy and isinstance(report_submission_policy, dict):
                 report_submission_policy = ReportSubmissionPolicy(
                     report_junk_to_customized_address=report_submission_policy.get(
                         "ReportJunkToCustomizedAddress", True
@@ -381,6 +422,13 @@ class Defender(M365Service):
                         "ReportChatMessageToCustomizedAddressEnabled", True
                     ),
                 )
+            elif report_submission_policy and not isinstance(
+                report_submission_policy, dict
+            ):
+                logger.warning(
+                    f"Skipping invalid report submission policy data type: {type(report_submission_policy)} - {report_submission_policy}"
+                )
+                report_submission_policy = None
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

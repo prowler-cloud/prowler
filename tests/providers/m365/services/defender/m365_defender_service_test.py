@@ -554,3 +554,355 @@ class Test_Defender_Service:
             assert report_submission_policy.report_not_junk_addresses == []
             assert report_submission_policy.report_phish_addresses == []
             assert report_submission_policy.report_chat_message_enabled is True
+            assert (
+                report_submission_policy.report_chat_message_to_customized_address_enabled
+                is True
+            )
+            defender_client.powershell.close()
+
+    def test_get_antiphishing_policy_with_string_data(self):
+        """Test that _get_antiphishing_policy handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_antiphishing_policy",
+                return_value=[
+                    "Policy1",
+                    "Policy2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty dict since no valid policies were processed
+            antiphishing_policies = defender_client.antiphishing_policies
+            assert antiphishing_policies == {}
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid antiphishing policy data type: <class 'str'> - Policy1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid antiphishing policy data type: <class 'str'> - Policy2"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_antiphishing_policy_with_mixed_data(self):
+        """Test that _get_antiphishing_policy handles mixed dict and string data"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_antiphishing_policy",
+                return_value=[
+                    {
+                        "Name": "ValidPolicy",
+                        "EnableSpoofIntelligence": True,
+                        "IsDefault": False,
+                    },
+                    "InvalidStringPolicy",
+                ],
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should process valid dict and skip string
+            antiphishing_policies = defender_client.antiphishing_policies
+            assert len(antiphishing_policies) == 1
+            assert "ValidPolicy" in antiphishing_policies
+
+            # Should log warning only for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid antiphishing policy data type: <class 'str'> - InvalidStringPolicy"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_antiphishing_rules_with_string_data(self):
+        """Test that _get_antiphishing_rules handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_antiphishing_rules",
+                return_value=[
+                    "Rule1",
+                    "Rule2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty dict since no valid rules were processed
+            antiphishing_rules = defender_client.antiphishing_rules
+            assert antiphishing_rules == {}
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid antiphishing rule data type: <class 'str'> - Rule1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid antiphishing rule data type: <class 'str'> - Rule2"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_malware_filter_rule_with_string_data(self):
+        """Test that _get_malware_filter_rule handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_malware_filter_rule",
+                return_value=[
+                    "MalwareRule1",
+                    "MalwareRule2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty dict since no valid rules were processed
+            malware_rules = defender_client.malware_rules
+            assert malware_rules == {}
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid malware rule data type: <class 'str'> - MalwareRule1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid malware rule data type: <class 'str'> - MalwareRule2"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_outbound_spam_filter_rule_with_string_data(self):
+        """Test that _get_outbound_spam_filter_rule handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_outbound_spam_filter_rule",
+                return_value=[
+                    "OutboundRule1",
+                    "OutboundRule2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty dict since no valid rules were processed
+            outbound_spam_rules = defender_client.outbound_spam_rules
+            assert outbound_spam_rules == {}
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid outbound spam rule data type: <class 'str'> - OutboundRule1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid outbound spam rule data type: <class 'str'> - OutboundRule2"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_inbound_spam_filter_rule_with_string_data(self):
+        """Test that _get_inbound_spam_filter_rule handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_inbound_spam_filter_rule",
+                return_value=[
+                    "InboundRule1",
+                    "InboundRule2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty dict since no valid rules were processed
+            inbound_spam_rules = defender_client.inbound_spam_rules
+            assert inbound_spam_rules == {}
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid inbound spam rule data type: <class 'str'> - InboundRule1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid inbound spam rule data type: <class 'str'> - InboundRule2"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_connection_filter_policy_with_string_data(self):
+        """Test that _get_connection_filter_policy handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_connection_filter_policy",
+                return_value="InvalidStringPolicy",  # Return string instead of dict
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            connection_filter_policy = defender_client.connection_filter_policy
+            assert connection_filter_policy is None
+
+            # Should log warning for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid connection filter policy data type: <class 'str'> - InvalidStringPolicy"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_dkim_config_with_string_data(self):
+        """Test that _get_dkim_config handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_dkim_config",
+                return_value=[
+                    "DKIMConfig1",
+                    "DKIMConfig2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty list since no valid configs were processed
+            dkim_configs = defender_client.dkim_configurations
+            assert dkim_configs == []
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid DKIM config data type: <class 'str'> - DKIMConfig1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid DKIM config data type: <class 'str'> - DKIMConfig2"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_inbound_spam_filter_policy_with_string_data(self):
+        """Test that _get_inbound_spam_filter_policy handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_inbound_spam_filter_policy",
+                return_value=[
+                    "InboundPolicy1",
+                    "InboundPolicy2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty list since no valid policies were processed
+            inbound_spam_policies = defender_client.inbound_spam_policies
+            assert inbound_spam_policies == []
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid inbound spam policy data type: <class 'str'> - InboundPolicy1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid inbound spam policy data type: <class 'str'> - InboundPolicy2"
+            )
+
+            defender_client.powershell.close()
+
+    def test_get_report_submission_policy_with_string_data(self):
+        """Test that _get_report_submission_policy handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_report_submission_policy",
+                return_value="InvalidStringPolicy",  # Return string instead of dict
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            report_submission_policy = defender_client.report_submission_policy
+            assert report_submission_policy is None
+
+            # Should log warning for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid report submission policy data type: <class 'str'> - InvalidStringPolicy"
+            )
+
+            defender_client.powershell.close()

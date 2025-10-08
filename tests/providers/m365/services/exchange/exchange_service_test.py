@@ -405,3 +405,493 @@ class Test_Exchange_Service:
             assert role_assignment_policies[1].assigned_roles == []
 
             exchange_client.powershell.close()
+
+    def test_get_organization_config_with_string_data(self):
+        """Test that _get_organization_config handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+                return_value="InvalidStringConfig",  # Return string instead of dict
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid config was processed
+            organization_config = exchange_client.organization_config
+            assert organization_config is None
+
+            # Should log warning for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid organization config data type: <class 'str'> - InvalidStringConfig"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_mailbox_audit_config_with_string_data(self):
+        """Test that _get_mailbox_audit_config handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_audit_config",
+                return_value=[
+                    "MailboxConfig1",
+                    "MailboxConfig2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty list since no valid configs were processed
+            mailboxes_config = exchange_client.mailboxes_config
+            assert mailboxes_config == []
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid mailbox audit config data type: <class 'str'> - MailboxConfig1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid mailbox audit config data type: <class 'str'> - MailboxConfig2"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_external_mail_config_with_string_data(self):
+        """Test that _get_external_mail_config handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_external_mail_config",
+                return_value=[
+                    "ExternalMail1",
+                    "ExternalMail2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty list since no valid configs were processed
+            external_mail_config = exchange_client.external_mail_config
+            assert external_mail_config == []
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid external mail config data type: <class 'str'> - ExternalMail1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid external mail config data type: <class 'str'> - ExternalMail2"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_transport_rules_with_string_data(self):
+        """Test that _get_transport_rules handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_transport_rules",
+                return_value=[
+                    "TransportRule1",
+                    "TransportRule2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty list since no valid rules were processed
+            transport_rules = exchange_client.transport_rules
+            assert transport_rules == []
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid transport rule data type: <class 'str'> - TransportRule1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid transport rule data type: <class 'str'> - TransportRule2"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_transport_config_with_string_data(self):
+        """Test that _get_transport_config handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_transport_config",
+                return_value="InvalidStringConfig",  # Return string instead of dict
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid config was processed
+            transport_config = exchange_client.transport_config
+            assert transport_config is None
+
+            # Should log warning for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid transport config data type: <class 'str'> - InvalidStringConfig"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_mailbox_policy_with_string_data(self):
+        """Test that _get_mailbox_policy handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+                return_value="InvalidStringPolicy",  # Return string instead of dict
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            mailbox_policy = exchange_client.mailbox_policy
+            assert mailbox_policy is None
+
+            # Should log warning for the string item
+            mock_warning.assert_called_once_with(
+                "Skipping invalid mailbox policy data type: <class 'str'> - InvalidStringPolicy"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_role_assignment_policies_with_string_data(self):
+        """Test that _get_role_assignment_policies handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_role_assignment_policies",
+                return_value=[
+                    "RolePolicy1",
+                    "RolePolicy2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty list since no valid policies were processed
+            role_assignment_policies = exchange_client.role_assignment_policies
+            assert role_assignment_policies == []
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid role assignment policy data type: <class 'str'> - RolePolicy1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid role assignment policy data type: <class 'str'> - RolePolicy2"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_mailbox_audit_properties_with_string_data(self):
+        """Test that _get_mailbox_audit_properties handles string data gracefully and logs warning"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_audit_properties",
+                return_value=[
+                    "AuditProperty1",
+                    "AuditProperty2",
+                ],  # Return list of strings instead of dicts
+            ),
+            mock.patch("prowler.lib.logger.logger.warning") as mock_warning,
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return empty list since no valid properties were processed
+            mailbox_audit_properties = exchange_client.mailbox_audit_properties
+            assert mailbox_audit_properties == []
+
+            # Should log warning for each string item
+            assert mock_warning.call_count == 2
+            mock_warning.assert_any_call(
+                "Skipping invalid mailbox audit property data type: <class 'str'> - AuditProperty1"
+            )
+            mock_warning.assert_any_call(
+                "Skipping invalid mailbox audit property data type: <class 'str'> - AuditProperty2"
+            )
+
+            exchange_client.powershell.close()
+
+    def test_get_transport_config_with_mixed_data(self):
+        """Test that _get_transport_config handles mixed data (dict + string) gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_transport_config",
+                return_value=[
+                    {"SmtpClientAuthenticationDisabled": True},  # Valid dict
+                    "InvalidStringConfig",  # Invalid string
+                ],
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return valid config from first item
+            transport_config = exchange_client.transport_config
+            assert transport_config is not None
+            assert transport_config.smtp_auth_disabled is True
+
+            # Should log warning for the string item (but only if it's processed after the first valid item)
+            # Since we break after first valid item, the warning might not be called
+            # This test verifies the behavior is correct regardless
+
+            exchange_client.powershell.close()
+
+    def test_get_transport_config_with_empty_data(self):
+        """Test that _get_transport_config handles empty data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_transport_config",
+                return_value=[],  # Empty list
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid config was processed
+            transport_config = exchange_client.transport_config
+            assert transport_config is None
+
+            exchange_client.powershell.close()
+
+    def test_get_transport_config_with_none_data(self):
+        """Test that _get_transport_config handles None data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_transport_config",
+                return_value=None,  # None data
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid config was processed
+            transport_config = exchange_client.transport_config
+            assert transport_config is None
+
+            exchange_client.powershell.close()
+
+    def test_get_mailbox_policy_with_mixed_data(self):
+        """Test that _get_mailbox_policy handles mixed data (dict + string) gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+                return_value=[
+                    {
+                        "Id": "Policy1",
+                        "AdditionalStorageProvidersAvailable": False,
+                    },  # Valid dict
+                    "InvalidStringPolicy",  # Invalid string
+                ],
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return valid policy from first item
+            mailbox_policy = exchange_client.mailbox_policy
+            assert mailbox_policy is not None
+            assert mailbox_policy.id == "Policy1"
+            assert mailbox_policy.additional_storage_enabled is False
+
+            # Should log warning for the string item (but only if it's processed after the first valid item)
+            # Since we break after first valid item, the warning might not be called
+            # This test verifies the behavior is correct regardless
+
+            exchange_client.powershell.close()
+
+    def test_get_mailbox_policy_with_empty_data(self):
+        """Test that _get_mailbox_policy handles empty data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+                return_value=[],  # Empty list
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            mailbox_policy = exchange_client.mailbox_policy
+            assert mailbox_policy is None
+
+            exchange_client.powershell.close()
+
+    def test_get_mailbox_policy_with_none_data(self):
+        """Test that _get_mailbox_policy handles None data gracefully"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+                return_value=None,  # None data
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return None since no valid policy was processed
+            mailbox_policy = exchange_client.mailbox_policy
+            assert mailbox_policy is None
+
+            exchange_client.powershell.close()
+
+    def test_get_transport_config_with_multiple_valid_configs(self):
+        """Test that _get_transport_config takes first valid config when multiple are available"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_transport_config",
+                return_value=[
+                    {"SmtpClientAuthenticationDisabled": True},  # First valid config
+                    {
+                        "SmtpClientAuthenticationDisabled": False
+                    },  # Second valid config (should be ignored)
+                ],
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return first valid config
+            transport_config = exchange_client.transport_config
+            assert transport_config is not None
+            assert transport_config.smtp_auth_disabled is True  # First config value
+
+            exchange_client.powershell.close()
+
+    def test_get_mailbox_policy_with_multiple_valid_policies(self):
+        """Test that _get_mailbox_policy takes first valid policy when multiple are available"""
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+                return_value=[
+                    {
+                        "Id": "Policy1",
+                        "AdditionalStorageProvidersAvailable": True,
+                    },  # First valid policy
+                    {
+                        "Id": "Policy2",
+                        "AdditionalStorageProvidersAvailable": False,
+                    },  # Second valid policy (should be ignored)
+                ],
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+
+            # Should return first valid policy
+            mailbox_policy = exchange_client.mailbox_policy
+            assert mailbox_policy is not None
+            assert mailbox_policy.id == "Policy1"  # First policy
+            assert (
+                mailbox_policy.additional_storage_enabled is True
+            )  # First policy value
+
+            exchange_client.powershell.close()

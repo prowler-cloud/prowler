@@ -37,7 +37,9 @@ class Exchange(M365Service):
         organization_config = None
         try:
             organization_configuration = self.powershell.get_organization_config()
-            if organization_configuration:
+            if organization_configuration and isinstance(
+                organization_configuration, dict
+            ):
                 organization_config = Organization(
                     name=organization_configuration.get("Name", ""),
                     guid=organization_configuration.get("Guid", ""),
@@ -60,6 +62,12 @@ class Exchange(M365Service):
                         "MailTipsLargeAudienceThreshold", 25
                     ),
                 )
+            elif organization_configuration and not isinstance(
+                organization_configuration, dict
+            ):
+                logger.warning(
+                    f"Skipping invalid organization config data type: {type(organization_configuration)} - {organization_configuration}"
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -71,16 +79,25 @@ class Exchange(M365Service):
         mailboxes_config = []
         try:
             mailbox_audit_data = self.powershell.get_mailbox_audit_config()
+            if isinstance(mailbox_audit_data, dict):
+                mailbox_audit_data = [mailbox_audit_data]
             for mailbox_audit_config in mailbox_audit_data:
-                mailboxes_config.append(
-                    MailboxAuditConfig(
-                        name=mailbox_audit_config.get("Name", ""),
-                        id=mailbox_audit_config.get("Id", ""),
-                        audit_bypass_enabled=mailbox_audit_config.get(
-                            "AuditBypassEnabled", True
-                        ),
+                if mailbox_audit_config and isinstance(mailbox_audit_config, dict):
+                    mailboxes_config.append(
+                        MailboxAuditConfig(
+                            name=mailbox_audit_config.get("Name", ""),
+                            id=mailbox_audit_config.get("Id", ""),
+                            audit_bypass_enabled=mailbox_audit_config.get(
+                                "AuditBypassEnabled", True
+                            ),
+                        )
                     )
-                )
+                elif mailbox_audit_config and not isinstance(
+                    mailbox_audit_config, dict
+                ):
+                    logger.warning(
+                        f"Skipping invalid mailbox audit config data type: {type(mailbox_audit_config)} - {mailbox_audit_config}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -97,7 +114,7 @@ class Exchange(M365Service):
             if isinstance(external_mail_configuration, dict):
                 external_mail_configuration = [external_mail_configuration]
             for external_mail in external_mail_configuration:
-                if external_mail:
+                if external_mail and isinstance(external_mail, dict):
                     external_mail_config.append(
                         ExternalMailConfig(
                             identity=external_mail.get("Identity", ""),
@@ -105,6 +122,10 @@ class Exchange(M365Service):
                                 "Enabled", False
                             ),
                         )
+                    )
+                elif external_mail and not isinstance(external_mail, dict):
+                    logger.warning(
+                        f"Skipping invalid external mail config data type: {type(external_mail)} - {external_mail}"
                     )
         except Exception as error:
             logger.error(
@@ -122,7 +143,7 @@ class Exchange(M365Service):
             if isinstance(rules_data, dict):
                 rules_data = [rules_data]
             for rule in rules_data:
-                if rule:
+                if rule and isinstance(rule, dict):
                     sender_domain_is = rule.get("SenderDomainIs", [])
                     if sender_domain_is is None:
                         sender_domain_is = []
@@ -139,6 +160,10 @@ class Exchange(M365Service):
                             redirect_message_to=redirect_message_to,
                         )
                     )
+                elif rule and not isinstance(rule, dict):
+                    logger.warning(
+                        f"Skipping invalid transport rule data type: {type(rule)} - {rule}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -147,15 +172,31 @@ class Exchange(M365Service):
 
     def _get_transport_config(self):
         logger.info("Microsoft365 - Getting transport configuration...")
-        transport_config = []
+        transport_config = None
         try:
             transport_configuration = self.powershell.get_transport_config()
-            if transport_configuration:
-                transport_config = TransportConfig(
-                    smtp_auth_disabled=transport_configuration.get(
-                        "SmtpClientAuthenticationDisabled", False
-                    ),
+            if transport_configuration and isinstance(transport_configuration, dict):
+                transport_configuration = [transport_configuration]
+            elif transport_configuration and not isinstance(
+                transport_configuration, (list, dict)
+            ):
+                logger.warning(
+                    f"Skipping invalid transport config data type: {type(transport_configuration)} - {transport_configuration}"
                 )
+                return transport_config
+
+            for config in transport_configuration:
+                if config and isinstance(config, dict):
+                    transport_config = TransportConfig(
+                        smtp_auth_disabled=config.get(
+                            "SmtpClientAuthenticationDisabled", False
+                        ),
+                    )
+                    break  # Take the first valid config
+                elif config and not isinstance(config, dict):
+                    logger.warning(
+                        f"Skipping invalid transport config data type: {type(config)} - {config}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -166,14 +207,30 @@ class Exchange(M365Service):
         logger.info("Microsoft365 - Getting mailbox policy configuration...")
         mailboxes_policy = None
         try:
-            mailbox_policy = self.powershell.get_mailbox_policy()
-            if mailbox_policy:
-                mailboxes_policy = MailboxPolicy(
-                    id=mailbox_policy.get("Id", ""),
-                    additional_storage_enabled=mailbox_policy.get(
-                        "AdditionalStorageProvidersAvailable", True
-                    ),
+            mailbox_policy_data = self.powershell.get_mailbox_policy()
+            if mailbox_policy_data and isinstance(mailbox_policy_data, dict):
+                mailbox_policy_data = [mailbox_policy_data]
+            elif mailbox_policy_data and not isinstance(
+                mailbox_policy_data, (list, dict)
+            ):
+                logger.warning(
+                    f"Skipping invalid mailbox policy data type: {type(mailbox_policy_data)} - {mailbox_policy_data}"
                 )
+                return mailboxes_policy
+
+            for mailbox_policy in mailbox_policy_data:
+                if mailbox_policy and isinstance(mailbox_policy, dict):
+                    mailboxes_policy = MailboxPolicy(
+                        id=mailbox_policy.get("Id", ""),
+                        additional_storage_enabled=mailbox_policy.get(
+                            "AdditionalStorageProvidersAvailable", True
+                        ),
+                    )
+                    break  # Take the first valid policy
+                elif mailbox_policy and not isinstance(mailbox_policy, dict):
+                    logger.warning(
+                        f"Skipping invalid mailbox policy data type: {type(mailbox_policy)} - {mailbox_policy}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -190,13 +247,17 @@ class Exchange(M365Service):
             if isinstance(policies_data, dict):
                 policies_data = [policies_data]
             for policy in policies_data:
-                if policy:
+                if policy and isinstance(policy, dict):
                     role_assignment_policies.append(
                         RoleAssignmentPolicy(
                             name=policy.get("Name", ""),
                             id=policy.get("Guid", ""),
                             assigned_roles=policy.get("AssignedRoles", []),
                         )
+                    )
+                elif policy and not isinstance(policy, dict):
+                    logger.warning(
+                        f"Skipping invalid role assignment policy data type: {type(policy)} - {policy}"
                     )
         except Exception as error:
             logger.error(
@@ -216,7 +277,7 @@ class Exchange(M365Service):
             if isinstance(mailbox_audit_properties_info, dict):
                 mailbox_audit_properties_info = [mailbox_audit_properties_info]
             for mailbox_audit_property in mailbox_audit_properties_info:
-                if mailbox_audit_property:
+                if mailbox_audit_property and isinstance(mailbox_audit_property, dict):
                     mailbox_audit_properties.append(
                         MailboxAuditProperties(
                             name=mailbox_audit_property.get("UserPrincipalName", ""),
@@ -235,6 +296,12 @@ class Exchange(M365Service):
                             ),
                             identity=mailbox_audit_property.get("Identity", ""),
                         )
+                    )
+                elif mailbox_audit_property and not isinstance(
+                    mailbox_audit_property, dict
+                ):
+                    logger.warning(
+                        f"Skipping invalid mailbox audit property data type: {type(mailbox_audit_property)} - {mailbox_audit_property}"
                     )
         except Exception as error:
             logger.error(
