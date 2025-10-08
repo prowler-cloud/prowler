@@ -66,8 +66,15 @@ export const ApiKeySuccessModal = ({
             <div className="flex flex-col gap-2">
               <p className="text-sm font-medium">Your API Key</p>
               <div className="flex items-center gap-2">
-                <div className="flex-1 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 p-3">
-                  <code className="font-mono text-sm break-all text-white">
+                <div
+                  className="flex-1 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 p-3"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <code
+                    className="font-mono text-sm break-all text-white"
+                    aria-label="API key value"
+                  >
                     {apiKey}
                   </code>
                 </div>
