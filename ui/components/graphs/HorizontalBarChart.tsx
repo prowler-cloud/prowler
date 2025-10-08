@@ -7,9 +7,9 @@ import { useSortableData } from "./hooks/useSortableData";
 import { BarDataPoint, SortOption } from "./models/chart-types";
 import {
   CHART_COLORS,
-  SEVERITY_COLORS,
   SORT_OPTIONS,
 } from "./shared/chart-constants";
+import { getSeverityColorByName } from "./shared/severity-utils";
 
 interface HorizontalBarChartProps {
   data: BarDataPoint[];
@@ -64,7 +64,7 @@ export function HorizontalBarChart({
           const isHovered = hoveredIndex === index;
           const isFaded = hoveredIndex !== null && !isHovered;
           const barColor =
-            item.color || SEVERITY_COLORS[item.name] || "#6B7280";
+            item.color || getSeverityColorByName(item.name) || "#6B7280";
 
           return (
             <div

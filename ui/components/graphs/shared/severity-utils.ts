@@ -7,3 +7,7 @@ export function getSeverityColorByRiskScore(riskScore: number): string {
   if (riskScore >= 1) return SEVERITY_COLORS.Low;
   return SEVERITY_COLORS.Info;
 }
+
+export function getSeverityColorByName(name: string): string | undefined {
+  return SEVERITY_COLORS[name as keyof typeof SEVERITY_COLORS];
+}

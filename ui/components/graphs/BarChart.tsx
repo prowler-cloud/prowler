@@ -12,12 +12,9 @@ import {
 } from "recharts";
 
 import { BarDataPoint, LayoutOption } from "./models/chart-types";
-import {
-  CHART_COLORS,
-  LAYOUT_OPTIONS,
-  SEVERITY_COLORS,
-} from "./shared/chart-constants";
+import { CHART_COLORS, LAYOUT_OPTIONS } from "./shared/chart-constants";
 import { ChartTooltip } from "./shared/ChartTooltip";
+import { getSeverityColorByName } from "./shared/severity-utils";
 
 interface BarChartProps {
   data: BarDataPoint[];
@@ -149,7 +146,9 @@ export function BarChart({
           {data.map((entry, index) => (
             <Cell
               key={`cell-${index}`}
-              fill={entry.color || SEVERITY_COLORS[entry.name] || "#6B7280"}
+              fill={
+                entry.color || getSeverityColorByName(entry.name) || "#6B7280"
+              }
               opacity={1}
               className="transition-opacity hover:opacity-80"
             />
