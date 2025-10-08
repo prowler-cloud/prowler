@@ -17,15 +17,13 @@ export function AlertPill({
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 rounded-full bg-alert-pill-bg px-2 py-1">
+      <div className="bg-alert-pill-bg flex items-center gap-1 rounded-full px-2 py-1">
         <AlertTriangle size={iconSize} className="text-alert-pill-text" />
-        <span className={`${textSizeClass} font-semibold text-alert-pill-text`}>
+        <span className={`${textSizeClass} text-alert-pill-text font-semibold`}>
           {value}
         </span>
       </div>
-      <span className={`${textSizeClass} text-slate-400`}>
-        {label}
-      </span>
+      <span className={`${textSizeClass} text-slate-400`}>{label}</span>
     </div>
   );
 }

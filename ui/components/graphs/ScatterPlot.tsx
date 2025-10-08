@@ -46,9 +46,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
     return (
       <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">
-          {data.name}
-        </p>
+        <p className="text-sm font-semibold text-white">{data.name}</p>
         <p className="mt-1 text-xs text-slate-400">
           <span style={{ color: severityColor }}>{data.x}</span> Risk Score
         </p>

@@ -26,9 +26,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
     <div className="w-full">
       {title && (
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-white">
-            {title}
-          </h3>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
         </div>
       )}
 
@@ -70,9 +68,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 />
 
                 {isHovered && (
-                  <div
-                    className="absolute top-10 left-0 z-10 min-w-[200px] rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg"
-                  >
+                  <div className="absolute top-10 left-0 z-10 min-w-[200px] rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
                     <div className="flex items-center gap-2">
                       <div
                         className="h-3 w-3 rounded-sm"

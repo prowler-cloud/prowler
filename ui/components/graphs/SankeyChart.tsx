@@ -36,13 +36,9 @@ const CustomTooltip = ({ active, payload }: any) => {
     const data = payload[0].payload;
     return (
       <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">
-          {data.name}
-        </p>
+        <p className="text-sm font-semibold text-white">{data.name}</p>
         {data.value && (
-          <p className="text-xs text-slate-400">
-            Value: {data.value}
-          </p>
+          <p className="text-xs text-slate-400">Value: {data.value}</p>
         )}
       </div>
     );

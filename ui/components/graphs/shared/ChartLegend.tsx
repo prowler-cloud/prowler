@@ -9,7 +9,7 @@ interface ChartLegendProps {
 
 export function ChartLegend({ items }: ChartLegendProps) {
   return (
-    <div className="mt-4 inline-flex gap-[46px] rounded-full border-2 bg-card-border px-[19px] py-[9px]">
+    <div className="bg-card-border mt-4 inline-flex gap-[46px] rounded-full border-2 px-[19px] py-[9px]">
       {items.map((item, index) => (
         <div key={`legend-${index}`} className="flex items-center gap-1">
           <div

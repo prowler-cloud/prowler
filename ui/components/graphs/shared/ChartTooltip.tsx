@@ -33,9 +33,7 @@ export function ChartTooltip({
             style={{ backgroundColor: color }}
           />
         )}
-        <p className="text-sm font-semibold text-white">
-          {label || data.name}
-        </p>
+        <p className="text-sm font-semibold text-white">{label || data.name}</p>
       </div>
 
       <p className="mt-1 text-xs text-white">
@@ -57,18 +55,14 @@ export function ChartTooltip({
       {data.new !== undefined && data.new > 0 && (
         <div className="mt-1 flex items-center gap-2">
           <Bell size={14} className="text-slate-400" />
-          <span className="text-xs text-slate-400">
-            {data.new} New
-          </span>
+          <span className="text-xs text-slate-400">{data.new} New</span>
         </div>
       )}
 
       {data.muted !== undefined && data.muted > 0 && (
         <div className="mt-1 flex items-center gap-2">
           <VolumeX size={14} className="text-slate-400" />
-          <span className="text-xs text-slate-400">
-            {data.muted} Muted
-          </span>
+          <span className="text-xs text-slate-400">{data.muted} Muted</span>
         </div>
       )}
 
@@ -99,9 +93,7 @@ export function MultiSeriesChartTooltip({
 
   return (
     <div className="min-w-[200px] rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-      <p className="mb-2 text-sm font-semibold text-white">
-        {label}
-      </p>
+      <p className="mb-2 text-sm font-semibold text-white">{label}</p>
 
       {payload.map((entry: any, index: number) => (
         <div key={index} className="flex items-center gap-2">
@@ -109,9 +101,7 @@ export function MultiSeriesChartTooltip({
             className="h-2 w-2 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-xs text-white">
-            {entry.name}:
-          </span>
+          <span className="text-xs text-white">{entry.name}:</span>
           <span className="text-xs font-semibold text-white">
             {entry.value}
           </span>

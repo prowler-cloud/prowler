@@ -22,6 +22,7 @@ export interface DonutDataPoint {
   percentage?: number;
   new?: number;
   muted?: number;
+  change?: number;
 }
 
 export interface LineDataPoint {
