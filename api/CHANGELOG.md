@@ -9,6 +9,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `compliance_name` for each compliance [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
 - API Key support [(#8805)](https://github.com/prowler-cloud/prowler/pull/8805)
 - Support for `passed_findings` and `total_findings` fields in compliance requirement overview for accurate Prowler ThreatScore calculation [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- PDF reporting for Prowler ThreatScore [(#8867)](https://github.com/prowler-cloud/prowler/pull/8867)
 
 ### Changed
 - Now the MANAGE_ACCOUNT permission is required to modify or read user permissions instead of MANAGE_USERS [(#8281)](https://github.com/prowler-cloud/prowler/pull/8281)
