@@ -17,7 +17,6 @@ version = "0.1.0"
 [project.scripts]
 generate-prowler-app-mcp-server = "prowler_mcp_server.prowler_app.utils.server_generator:generate_server_file"
 prowler-mcp = "prowler_mcp_server.main:main"
-setup-prowler-docs = "prowler_mcp_server.prowler_documentation.utils.setup_prowler_docs:main"
 
 [tool.uv]
 package = true
