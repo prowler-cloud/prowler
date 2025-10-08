@@ -12,9 +12,8 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
+import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { ApiKeyData } from "@/types/api-keys";
-
-import { ErrorAlert } from "./api-keys/error-alert";
 
 interface EditApiKeyNameModalProps {
   isOpen: boolean;
@@ -93,7 +92,11 @@ export const EditApiKeyNameModal = ({
               isRequired
             />
 
-            <ErrorAlert error={error} />
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
         </ModalBody>
         <ModalFooter>

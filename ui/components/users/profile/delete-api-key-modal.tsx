@@ -11,11 +11,10 @@ import {
 import { useState } from "react";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert/Alert";
 import { ApiKeyData } from "@/types/api-keys";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
-import { ErrorAlert } from "./api-keys/error-alert";
-import { WarningAlert } from "./api-keys/warning-alert";
 
 interface DeleteApiKeyModalProps {
   isOpen: boolean;
@@ -70,10 +69,13 @@ export const DeleteApiKeyModal = ({
         </ModalHeader>
         <ModalBody>
           <div className="flex flex-col gap-4">
-            <WarningAlert
-              variant="danger"
-              message="This action cannot be undone. This API key will be revoked and will no longer work."
-            />
+            <Alert variant="destructive" className="bg-danger-50 border-danger-200">
+              <AlertTitle className="text-danger-700">⚠️ Warning</AlertTitle>
+              <AlertDescription className="text-danger-600">
+                This action cannot be undone. This API key will be revoked and
+                will no longer work.
+              </AlertDescription>
+            </Alert>
 
             <div className="text-sm">
               <p>Are you sure you want to delete this API key?</p>
@@ -87,7 +89,11 @@ export const DeleteApiKeyModal = ({
               </div>
             </div>
 
-            <ErrorAlert error={error} />
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
         </ModalBody>
         <ModalFooter>

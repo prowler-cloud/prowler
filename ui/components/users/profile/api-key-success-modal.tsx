@@ -8,10 +8,9 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/modal";
-import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { Snippet } from "@heroui/snippet";
 
-import { WarningAlert } from "./api-keys/warning-alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert/Alert";
 
 interface ApiKeySuccessModalProps {
   isOpen: boolean;
@@ -24,71 +23,40 @@ export const ApiKeySuccessModal = ({
   onClose,
   apiKey,
 }: ApiKeySuccessModalProps) => {
-  const [copied, setCopied] = useState(false);
-
-  const resetForm = () => {
-    setCopied(false);
-  };
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(apiKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy:", error);
-    }
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      size="2xl"
-      isDismissable={false}
-    >
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" isDismissable={false}>
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
           API Key Created Successfully
         </ModalHeader>
         <ModalBody>
           <div className="flex flex-col gap-4">
-            <WarningAlert
-              title="Important"
-              message="This is the only time you will see this API key. Please copy it now and store it securely. Once you close this dialog, the key cannot be retrieved again."
-            />
+            <Alert className="bg-warning-50 text-warning-700 border-warning-200">
+              <AlertTitle>⚠️ Important</AlertTitle>
+              <AlertDescription>
+                This is the only time you will see this API key. Please copy it
+                now and store it securely. Once you close this dialog, the key
+                cannot be retrieved again.
+              </AlertDescription>
+            </Alert>
 
             <div className="flex flex-col gap-2">
               <p className="text-sm font-medium">Your API Key</p>
-              <div className="flex items-center gap-2">
-                <div
-                  className="flex-1 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 p-3"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <code
-                    className="font-mono text-sm break-all text-white"
-                    aria-label="API key value"
-                  >
-                    {apiKey}
-                  </code>
-                </div>
-                <Button
-                  isIconOnly
-                  color={copied ? "success" : "default"}
-                  variant="flat"
-                  onPress={handleCopy}
-                  className="shrink-0"
-                  aria-label={copied ? "API key copied" : "Copy API key"}
-                >
-                  {copied ? <Check size={18} /> : <Copy size={18} />}
-                </Button>
-              </div>
+              <Snippet
+                symbol=""
+                classNames={{
+                  base: "bg-slate-800 border border-slate-700",
+                  pre: "font-mono text-sm text-white break-all whitespace-pre-wrap",
+                  copyButton: "text-slate-400",
+                }}
+                tooltipProps={{
+                  content: "Copy API key",
+                  color: "default",
+                }}
+              >
+                {apiKey}
+              </Snippet>
             </div>
 
             <div className="rounded-lg bg-slate-800 p-4 text-sm text-slate-300">
@@ -100,7 +68,7 @@ export const ApiKeySuccessModal = ({
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button color="success" onPress={handleClose}>
+          <Button color="success" onPress={onClose}>
             I have saved my API key
           </Button>
         </ModalFooter>

@@ -12,9 +12,9 @@ import {
 import { useState } from "react";
 
 import { createApiKey } from "@/actions/api-keys/api-keys";
+import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
-import { ErrorAlert } from "./api-keys/error-alert";
 import { calculateExpiryDate } from "./api-keys/utils";
 
 interface CreateApiKeyModalProps {
@@ -103,7 +103,11 @@ export const CreateApiKeyModal = ({
               description="Number of days until this key expires (default: 365)"
             />
 
-            <ErrorAlert error={error} />
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
         </ModalBody>
         <ModalFooter>
