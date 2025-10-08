@@ -172,11 +172,11 @@ export default function ChartsDemoPage() {
   ];
 
   const lineChartLines = [
-    { dataKey: "critical", color: "#971348", label: "Critical" },
-    { dataKey: "high", color: "#FF3077", label: "High" },
-    { dataKey: "medium", color: "#FF7D19", label: "Medium" },
-    { dataKey: "low", color: "#FDD34F", label: "Low" },
     { dataKey: "info", color: "#2E51B2", label: "Informational" },
+    { dataKey: "low", color: "#FDD34F", label: "Low" },
+    { dataKey: "medium", color: "#FF7D19", label: "Medium" },
+    { dataKey: "high", color: "#FF3077", label: "High" },
+    { dataKey: "critical", color: "#971348", label: "Critical" },
   ];
 
   const radarChartData = [
@@ -246,7 +246,7 @@ export default function ChartsDemoPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 p-8">
+    <div className="min-h-screen p-8" style={{ backgroundColor: "var(--color-page-bg)" }}>
       <div className="mx-auto max-w-7xl space-y-12">
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-white">
@@ -265,7 +265,7 @@ export default function ChartsDemoPage() {
               Used for: Threat Score (Story 1)
             </p>
           </div>
-          <div className="rounded-lg bg-slate-800 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
             <div className="mx-auto max-w-sm">
               <RadialChart
                 percentage={52}
@@ -285,7 +285,7 @@ export default function ChartsDemoPage() {
               Used for: Check Findings (Story 2), Resource Inventory (Story 5)
             </p>
           </div>
-          <div className="rounded-lg bg-slate-800 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
             <DonutChart
               data={donutChartData}
               centerLabel={{ value: "1,883", label: "Total Findings" }}
@@ -304,7 +304,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Severity (Story 3)
             </p>
           </div>
-          <div className="rounded-lg bg-slate-800 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
             <HorizontalBarChart data={barChartData} title="Risk Severity" />
           </div>
         </section>
@@ -317,7 +317,7 @@ export default function ChartsDemoPage() {
               Used for: Finding Severity Over Time (Story 7)
             </p>
           </div>
-          <div className="rounded-lg bg-slate-800 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
             <LineChart
               data={lineChartData}
               lines={lineChartLines}
@@ -334,7 +334,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Radar (Story 8)
             </p>
           </div>
-          <div className="rounded-lg bg-slate-800 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
             <RadarChart
               data={radarChartData}
               height={450}
@@ -360,7 +360,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Pipeline (Story 9)
             </p>
           </div>
-          <div className="rounded-lg bg-slate-800 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
             <SankeyChart data={sankeyData} height={450} />
           </div>
         </section>
@@ -373,7 +373,7 @@ export default function ChartsDemoPage() {
               Used for: Risk Plot (Story 10)
             </p>
           </div>
-          <div className="rounded-lg bg-slate-800 p-6">
+          <div className="rounded-lg p-6" style={{ backgroundColor: "var(--color-card-bg)" }}>
             <ScatterPlot
               data={scatterPlotData}
               xLabel="Risk Score"

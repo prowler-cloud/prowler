@@ -115,6 +115,37 @@ const CustomLineTooltip = ({
   );
 };
 
+const CustomLegend = ({ payload }: any) => {
+  const severityOrder = ["Informational", "Low", "Medium", "High", "Critical", "Muted"];
+
+  const sortedPayload = [...payload].sort((a, b) => {
+    const indexA = severityOrder.indexOf(a.value);
+    const indexB = severityOrder.indexOf(b.value);
+    return indexA - indexB;
+  });
+
+  return (
+    <div
+      className="mt-4 inline-flex gap-[46px] rounded-full border-2 px-[19px] py-[9px]"
+      style={{
+        backgroundColor: "#1C2533",
+      }}
+    >
+      {sortedPayload.map((entry: any, index: number) => (
+        <div key={`legend-${index}`} className="flex items-center gap-1">
+          <div
+            className="h-3 w-3 rounded"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-xs" style={{ color: "#DBDEE4" }}>
+            {entry.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export function LineChart({
   data,
   lines,
@@ -159,18 +190,7 @@ export function LineChart({
           tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
         />
         <Tooltip content={<CustomLineTooltip />} />
-        <Legend
-          wrapperStyle={{ paddingTop: "20px" }}
-          iconType="circle"
-          formatter={(value) => (
-            <span
-              className="text-sm"
-              style={{ color: CHART_COLORS.textPrimary }}
-            >
-              {value}
-            </span>
-          )}
-        />
+        <Legend content={<CustomLegend />} />
         {lines.map((line) => {
           const isHovered = hoveredLine === line.dataKey;
           const isFaded = hoveredLine !== null && !isHovered;
