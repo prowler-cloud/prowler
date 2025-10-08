@@ -1,8 +1,7 @@
 import { Chip } from "@heroui/chip";
 
-import { ApiKeyData, getApiKeyStatus } from "@/types/api-keys";
-
 import { FALLBACK_VALUES } from "./constants";
+import { ApiKeyData, getApiKeyStatus } from "./types";
 import { formatRelativeTime, getStatusColor, getStatusLabel } from "./utils";
 
 export const NameCell = ({ apiKey }: { apiKey: ApiKeyData }) => (

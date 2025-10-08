@@ -2,15 +2,15 @@
 
 import { revalidateTag } from "next/cache";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
   ApiKeyResponse,
   CreateApiKeyPayload,
   CreateApiKeyResponse,
   SingleApiKeyResponse,
   UpdateApiKeyPayload,
-} from "@/types/api-keys";
+} from "@/components/users/profile/api-keys/types";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 /**
  * Fetches all API keys for the current tenant

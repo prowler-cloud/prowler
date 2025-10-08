@@ -1,8 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 
-import { API_KEY_STATUS, ApiKeyStatus } from "@/types/api-keys";
-
 import { FALLBACK_VALUES } from "./constants";
+import { API_KEY_STATUS, ApiKeyStatus } from "./types";
 
 export const getStatusColor = (
   status: ApiKeyStatus,

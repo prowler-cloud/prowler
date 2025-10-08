@@ -2,18 +2,14 @@
 
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from "@heroui/modal";
+import { ModalFooter } from "@heroui/modal";
 import { useCallback, useEffect, useState } from "react";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
-import { ApiKeyData } from "@/types/api-keys";
+import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+
+import { ApiKeyData } from "./api-keys/types";
 
 interface EditApiKeyNameModalProps {
   isOpen: boolean;
@@ -73,46 +69,51 @@ export const EditApiKeyNameModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
-      <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
-          Edit API Key Name
-        </ModalHeader>
-        <ModalBody>
-          <div className="flex flex-col gap-4">
-            <div className="text-sm text-slate-400">
-              Prefix: {apiKey?.attributes.prefix}
-            </div>
+    <CustomAlertModal
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && handleClose()}
+      title="Edit API Key Name"
+      size="lg"
+    >
+      <div className="flex flex-col gap-4">
+        <div className="text-sm text-slate-400">
+          Prefix: {apiKey?.attributes.prefix}
+        </div>
 
-            <Input
-              label="Name"
-              placeholder="My API Key"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              isRequired
-            />
+        <Input
+          label="Name"
+          labelPlacement="inside"
+          variant="bordered"
+          placeholder="My API Key"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          isRequired
+          classNames={{
+            label: "tracking-tight font-light !text-default-500 text-xs z-0!",
+            input: "text-default-500 text-small",
+          }}
+        />
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button color="default" variant="light" onPress={handleClose}>
-            Cancel
-          </Button>
-          <Button
-            color="success"
-            onPress={handleSubmit}
-            isLoading={isLoading}
-            isDisabled={!name.trim()}
-          >
-            Save Changes
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      <ModalFooter>
+        <Button color="default" variant="light" onPress={handleClose}>
+          Cancel
+        </Button>
+        <Button
+          color="success"
+          onPress={handleSubmit}
+          isLoading={isLoading}
+          isDisabled={!name.trim()}
+        >
+          Save Changes
+        </Button>
+      </ModalFooter>
+    </CustomAlertModal>
   );
 };
