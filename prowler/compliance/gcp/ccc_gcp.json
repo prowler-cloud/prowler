@@ -1,0 +1,3676 @@
+{
+  "Framework": "CCC",
+  "Version": "",
+  "Provider": "GCP",
+  "Description": "Common Cloud Controls Catalog (CCC) for GCP",
+  "Requirements": [
+    {
+      "Id": "CCC.AuditLog.C01.TR01",
+      "Description": "When the signature validation process is performed, then it MUST detect any modification of data.",
+      "Attributes": [
+        {
+          "FamilyName": "Integrity",
+          "FamilyDescription": "Controls designed to protected the integrity of Audit Log data.",
+          "Section": "CCC.AuditLog.C01 Implement Digital Signatures With Hash Chaining",
+          "SubSection": "",
+          "SubSectionObjective": "Digital signatures allows for external verification of log data tampering and\nhash chaining allows for deleted log files to be detected.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "Ensure hash of data is included in digital signature.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06",
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-01"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C01.TR02",
+      "Description": "When the signature validation process is performed, then it MUST detect any missing (deleted) log file.",
+      "Attributes": [
+        {
+          "FamilyName": "Integrity",
+          "FamilyDescription": "Controls designed to protected the integrity of Audit Log data.",
+          "Section": "CCC.AuditLog.C01 Implement Digital Signatures With Hash Chaining",
+          "SubSection": "",
+          "SubSectionObjective": "Digital signatures allows for external verification of log data tampering and\nhash chaining allows for deleted log files to be detected.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "Ensure verification process includes a chained hash function.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06",
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-01"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C02.TR01",
+      "Description": "When a manual action is performed to generate each audit log type,\nthen the corresponding audit log type MUST be generated and recorded.",
+      "Attributes": [
+        {
+          "FamilyName": "Integrity",
+          "FamilyDescription": "Controls designed to protected the integrity of Audit Log data.",
+          "Section": "CCC.AuditLog.C02 Enable And Validate All Audit Log Types",
+          "SubSection": "",
+          "SubSectionObjective": "Review audit log configuration and ensure that all audit log types\nare being generated and replicated to configured sinks",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Review audit log configuration",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2",
+                "AU-3",
+                "AU-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C03.TR01",
+      "Description": "When an attempt is made to disable a log source, then an alert MUST be generated.",
+      "Attributes": [
+        {
+          "FamilyName": "Integrity",
+          "FamilyDescription": "Controls designed to protected the integrity of Audit Log data.",
+          "Section": "CCC.AuditLog.C03 Alert On Audit Log Changes And Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that specific alerts have been configured to detect changes in\naudit log configuration such as disabling exporting of logs.\nAlerts MUST also be created to detect changes in retention/object lock policies\nfor exported data log sources/buckets.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Ensure alerting is correctly configured\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-5",
+                "AU-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C03.TR02",
+      "Description": "When an attempt is made to alter the retention or object lock status\nof an external data log source or bucket, then an alert MUST be generated.",
+      "Attributes": [
+        {
+          "FamilyName": "Integrity",
+          "FamilyDescription": "Controls designed to protected the integrity of Audit Log data.",
+          "Section": "CCC.AuditLog.C03 Alert On Audit Log Changes And Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that specific alerts have been configured to detect changes in\naudit log configuration such as disabling exporting of logs.\nAlerts MUST also be created to detect changes in retention/object lock policies\nfor exported data log sources/buckets.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Ensure alerting is correctly configured\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-5",
+                "AU-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C04.TR01",
+      "Description": "When audit log buckets are created then verify that server access\nlogging MUST be enabled for the audit log bucket,\nwith logs delivered to a separate, secure logging bucket.",
+      "Attributes": [
+        {
+          "FamilyName": "Integrity",
+          "FamilyDescription": "Controls designed to protected the integrity of Audit Log data.",
+          "Section": "CCC.AuditLog.C04 Ensure Access Logging Is Enabled on the Audit Log Bucket",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access logging is enabled for the audit log storage bucket to\ncapture all requests made to the bucket, providing an audit trail of data access.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Configure the audit log bucket to enable server access logging.\nEnsure the target logging bucket is configured for appropriate security,\nincluding restricted access and immutability.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2",
+                "AU-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C05.TR01",
+      "Description": "When audit logs are exported, then audit logs MUST be present in the configured data location.",
+      "Attributes": [
+        {
+          "FamilyName": "Availability",
+          "FamilyDescription": "Controls designed to protected the availability of Audit Log data.",
+          "Section": "CCC.AuditLog.C05 Export Audit Logs To Bucket",
+          "SubSection": "",
+          "SubSectionObjective": "Configure audit logs to be sent to a external bucket where they can be globally replicated\nand can be subject to greater access control and data retention polices.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Configure audit log exporting.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9",
+                "AU-11",
+                "AU-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_sink_created",
+        "iam_audit_logs_enabled",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "cloudstorage_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C06.TR01",
+      "Description": "When the retention policy is applied, then data MUST\nbe automatically deleted after the configured number of days.",
+      "Attributes": [
+        {
+          "FamilyName": "Availability",
+          "FamilyDescription": "Controls designed to protected the availability of Audit Log data.",
+          "Section": "CCC.AuditLog.C06 Enforce Retention Policy on Audit Log Bucket",
+          "SubSection": "",
+          "SubSectionObjective": "Configure a custom retention policy on the designated audit log bucket to ensure that logs are\nretained for the correct number of days as defined by your organization's policy.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green"
+          ],
+          "Recommendation": "Configure the audit log bucket's lifecycle rules or object retention settings to enforce\nthe required data retention period.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06",
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9",
+                "AU-11"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C07.TR01",
+      "Description": "When a standard file deletion is attempted on an object within\nthe audit log bucket, then it MUST be prevented unless MFA is provided.",
+      "Attributes": [
+        {
+          "FamilyName": "Availability",
+          "FamilyDescription": "Controls designed to protected the availability of Audit Log data.",
+          "Section": "CCC.AuditLog.C07 Enforce MFA Delete on Audit Log Bucket",
+          "SubSection": "",
+          "SubSectionObjective": "Enable Multi-Factor Authentication (MFA) delete on the audit log bucket to\nprovide greater protection against accidental or malicious deletion of audit data.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green"
+          ],
+          "Recommendation": "Enable MFA Delete (or equivalent multi-factor authentication for delete operations)\non the audit log bucket.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06",
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9",
+                "AU-11"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "iam_audit_logs_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C08.TR01",
+      "Description": "When an attempt is made to delete data before the object\nlock period expires, then the deletion MUST be denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Availability",
+          "FamilyDescription": "Controls designed to protected the availability of Audit Log data.",
+          "Section": "CCC.AuditLog.C08 Enable Object Lock On Audit Log Bucket",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that object log is enabled globally on all objects with the bucket.\nThe lock time MUST be configured to meet your organization, legal and compliance goals.\nDeletion attempts before the lock period MUST be denied.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Configure object lock policy.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9",
+                "AU-11"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C09.TR01",
+      "Description": "When restricted fields are accessed by unauthorized users, then those fields MUST remain masked.",
+      "Attributes": [
+        {
+          "FamilyName": "Confidentiality",
+          "FamilyDescription": "Controls designed to protected the confidentiality of Audit Log data.",
+          "Section": "CCC.AuditLog.C09 Restrict Field And Log Type Access",
+          "SubSection": "",
+          "SubSectionObjective": "Configure access to audit logs to follow the principle of least privilege in particular where technically\npossible limit the log fields users have access to to prevent accidental exposure to sensitive\ninformation such as PII.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Review field level access controls on audit data.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6",
+                "AU-9",
+                "AC-3",
+                "PT-2",
+                "PT-3",
+                "PT-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.AuditLog.C10.TR01",
+      "Description": "When audit log storage bucket's are created then, bucket's access control settings MUST explicitly deny\npublic read and write access.",
+      "Attributes": [
+        {
+          "FamilyName": "Confidentiality",
+          "FamilyDescription": "Controls designed to protected the confidentiality of Audit Log data.",
+          "Section": "CCC.AuditLog.C10 Ensure Audit Bucket is Not Publicly Accessible",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that audit log storage buckets are not publicly accessible to prevent\nunauthorized exposure of sensitive log data.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green"
+          ],
+          "Recommendation": "Configure bucket policies and access control lists (ACLs) to restrict public access.\nRegularly review bucket permissions to ensure no public access has been inadvertently granted.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AA-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C10.TR02",
+      "Description": "When the URL of a audit log storage bucket's object is accessed publicly then,\nit should be denied by bucket policy.",
+      "Attributes": [
+        {
+          "FamilyName": "Confidentiality",
+          "FamilyDescription": "Controls designed to protected the confidentiality of Audit Log data.",
+          "Section": "CCC.AuditLog.C10 Ensure Audit Bucket is Not Publicly Accessible",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that audit log storage buckets are not publicly accessible to prevent\nunauthorized exposure of sensitive log data.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green"
+          ],
+          "Recommendation": "Configure bucket policies and access control lists (ACLs) to restrict public access.\nRegularly review bucket permissions to ensure no public access has been inadvertently granted.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AA-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access"
+      ]
+    },
+    {
+      "Id": "CCC.Build.C01.TR01",
+      "Description": "Attempt to initiate a build using an unauthorized build agent and verify that the build is rejected.",
+      "Attributes": [
+        {
+          "FamilyName": "Access Control",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.Build.C01 Restrict Allowed Build Agents",
+          "SubSectionObjective": "Ensure that builds are executed only on authorized build agents to maintain\ncontrol over the build environment and prevent unauthorized code execution.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Build.C02.TR01",
+      "Description": "Attempt to trigger a build from an unauthorized external service or\nrepository and verify that the build does not start.",
+      "Attributes": [
+        {
+          "FamilyName": "Access Control",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.Build.C02 Restrict Allowed External Services for Build Triggers",
+          "SubSectionObjective": "Ensure that builds can only be triggered by authorized external services or\nrepositories to prevent unauthorized code execution or tampering.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Build.C03.TR01",
+      "Description": "Attempt to access the build environment from an external network and verify that access is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.Build.C03 Deny External Network Access for Build Environments",
+          "SubSectionObjective": "Ensure that build environments do not have external network access to\nprevent unauthorized external access and data exfiltration.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH02",
+                "CCC.TH05"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7",
+                "SC-5"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudstorage_bucket_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.CntrReg.C01.TR01",
+      "Description": "Attempt to push an artifact with known vulnerabilities to the registry\nand observe if it is flagged or rejected by the vulnerability scanning process.",
+      "Attributes": [
+        {
+          "FamilyName": "Risk Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.CntrReg.C01 Implement Vulnerability Scanning for Artifacts",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that container images and artifacts stored in the container registry are scanned for\nvulnerabilities to identify and remediate security issues before deployment.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.CntrReg.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "ID.RA-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "RA-5",
+                "SI-5"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.CntrReg.C02.TR01",
+      "Description": "Confirm that artifacts older than the specified retention period are automatically\ndeleted from the registry.",
+      "Attributes": [
+        {
+          "FamilyName": "Data Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.CntrReg.C02 Implement Cleanup Policies for Artifacts",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that unused or outdated artifacts are cleaned up according to defined policies to\nmanage storage effectively and reduce security risks associated with outdated versions.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH14"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.IP-6"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.DataWar.C01.TR01",
+      "Description": "Attempt to access underlying database tables directly without\nusing managed views and verify that access is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.DataWar.C01 Enforce Use of Managed Views for Data Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that data access is provided through managed views, restricting users\nfrom accessing underlying tables directly and enforcing consistent security policies.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.DataWar.C02.TR01",
+      "Description": "Attempt to query sensitive columns without the necessary permissions and\nverify that access is denied or data is masked.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.DataWar.C02 Enforce Column-Level Security Policies",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access to sensitive data columns is restricted based on user roles,\npreventing unauthorized access to sensitive information.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.DataWar.C03.TR01",
+      "Description": "Attempt to query data rows that the user should not have access to and verify\nthat access is denied or data is not returned.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.DataWar.C03 Enforce Row-Level Security Policies",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access to data rows is restricted based on user roles or attributes,\npreventing unauthorized access to specific subsets of data.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "cloudsql_instance_postgres_enable_pgaudit_flag",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_private_ip_assignment",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_instance_public_ip"
+      ]
+    },
+    {
+      "Id": "CCC.GenAI.C01.TR01",
+      "Description": "Untrusted input such as user queries, RAG data or tool output\nMUST be validated before it is passed to a GenAI model.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C01 Model Input Filtering and Sanitisation",
+          "SubSection": "",
+          "SubSectionObjective": "Inspect and validate input before it is passed to a GenAI\nmodel in order to filter or sanitise adversarial queries\nand prevent sensitive data leakage.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH01",
+                "CCC.GenAI.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-003",
+                "AIR-PREV-017",
+                "AIR-PREV-002",
+                "AIR-DET-001"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Input Validation and Sanitization"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0020",
+                "AML.M0021",
+                "AML.M0015"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.GenAI.C01.TR02",
+      "Description": "If malicious patterns such as prompt injection or sensitive\ndata are detected during input validation, the input MUST\nbe blocked or sanitised.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C01 Model Input Filtering and Sanitisation",
+          "SubSection": "",
+          "SubSectionObjective": "Inspect and validate input before it is passed to a GenAI\nmodel in order to filter or sanitise adversarial queries\nand prevent sensitive data leakage.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH01",
+                "CCC.GenAI.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-003",
+                "AIR-PREV-017",
+                "AIR-PREV-002",
+                "AIR-DET-001"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Input Validation and Sanitization"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0020",
+                "AML.M0021",
+                "AML.M0015"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.GenAI.C02.TR01",
+      "Description": "GenAI model output MUST be validated for format conformance,\nmalicious patterns, sensitive data and inapropriate content\nbefore being passed to users, application or plugins.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C02 Model Output Filtering and Sanitisation",
+          "SubSection": "",
+          "SubSectionObjective": "Inspect and validate GenAI model output before passing it to\nusers, applications or plugins in order to filter or sanitise\ninsecure or unreliable output and prevent sensitive data leakage.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH01",
+                "CCC.GenAI.TH03",
+                "CCC.GenAI.TH04",
+                "CCC.GenAI.TH05",
+                "CCC.GenAI.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-003",
+                "AIR-PREV-017",
+                "AIR-PREV-002",
+                "AIR-DET-001"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Output Validation and Sanitization"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0020",
+                "AML.M0002"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.GenAI.C02.TR02",
+      "Description": "In the event of policy violations, the AI-generated content MUST\nbe redacted, encoded or rejected.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C02 Model Output Filtering and Sanitisation",
+          "SubSection": "",
+          "SubSectionObjective": "Inspect and validate GenAI model output before passing it to\nusers, applications or plugins in order to filter or sanitise\ninsecure or unreliable output and prevent sensitive data leakage.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH01",
+                "CCC.GenAI.TH03",
+                "CCC.GenAI.TH04",
+                "CCC.GenAI.TH05",
+                "CCC.GenAI.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-003",
+                "AIR-PREV-017",
+                "AIR-PREV-002",
+                "AIR-DET-001"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Output Validation and Sanitization"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0020",
+                "AML.M0002"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.GenAI.C03.TR01",
+      "Description": "When data is designated for model training or RAG ingestion, then its\nsource MUST be explicitly approved and its provenance documented.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C03 Data Provenance and Source Vetting",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all data for training, fine-tuning or RAG comes\nfrom trusted, approved sources and is authorised for the\nintended purposes in order to prevent the initial introduction\nof malicious content or leaked sensitive data.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH02",
+                "CCC.GenAI.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-006"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Training Data Management"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0025"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_dataset_public_access",
+        "bigquery_table_cmk_encryption",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "kms_key_not_publicly_accessible",
+        "logging_sink_created",
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.GenAI.C03.TR02",
+      "Description": "Data from unvetted sources MUST NOT be used in production systems.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C03 Data Provenance and Source Vetting",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all data for training, fine-tuning or RAG comes\nfrom trusted, approved sources and is authorised for the\nintended purposes in order to prevent the initial introduction\nof malicious content or leaked sensitive data.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH02",
+                "CCC.GenAI.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-006"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Training Data Management"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0025"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.GenAI.C04.TR01",
+      "Description": "When data is ingested for training, fine-tuning or conversion\nto vector embeddings, it MUST be validated for sensitive\ninformation or malicious content.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C04 Sanitisation of Ingested Data",
+          "SubSection": "",
+          "SubSectionObjective": "Validate and sanitise all data ingested by GenAI systems\nfrom extenal sources or internal knowledge bases, whether\nfor training, conversion to vector embeddings, or real-time\nretireval, in order to remove or redact poisoned or sensitive\ndata before further processing.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH02",
+                "CCC.GenAI.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-002"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Training Data Sanitization"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0007"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "gcr_container_scanning_enabled",
+        "compute_instance_public_ip",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_public_access",
+        "bigquery_table_cmk_encryption",
+        "cloudsql_instance_public_access",
+        "kms_key_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "CCC.GenAI.C04.TR02",
+      "Description": "If sensitive data or malicious content is detected, it must\nbe rejected, redacted or flagged for manual review.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C04 Sanitisation of Ingested Data",
+          "SubSection": "",
+          "SubSectionObjective": "Validate and sanitise all data ingested by GenAI systems\nfrom extenal sources or internal knowledge bases, whether\nfor training, conversion to vector embeddings, or real-time\nretireval, in order to remove or redact poisoned or sensitive\ndata before further processing.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH02",
+                "CCC.GenAI.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-002"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Training Data Sanitization"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0007"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.GenAI.C05.TR01",
+      "Description": "When a RAG-enabled system generates a response containing information\nretrieved from its knowledge base, then the response MUST include a\nverifiable citation that links back to the specific source document.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.GenAI.C05 Citations and Source Traceability",
+          "SubSection": "",
+          "SubSectionObjective": "Require the GenAI system to provide citations or direct links\nback to the source documents used to generate a response, in\nto enhance the transparency, trustworthiness, and verifiability\nof AI-generated content.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH09",
+                "CCC.GenAI.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-DET-013"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.GenAI.C06.TR01",
+      "Description": "When an LLM invokes an external tool (e.g., an API, a plugin),\nthen the tool MUST operate with the least privileges required\nfor performing its intended functionality.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.GenAI.C06 Least Privilege for Plugins",
+          "SubSection": "",
+          "SubSectionObjective": "Restricts the permissions of any external tools the GenAI system\ncan call to limit the potential damage if an agent is coerced\nto perform unintended actions or vulnerabilities in the tools\nare exploited.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH07",
+                "CCC.GenAI.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Agent Permissions"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_instance_default_service_account_in_use",
+        "gke_cluster_no_default_service_account",
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused"
+      ]
+    },
+    {
+      "Id": "CCC.GenAI.C07.TR01",
+      "Description": "When an application makes an API call to a foundational model in a\nproduction environment, then it MUST specify an explicit version\nidentifier.",
+      "Attributes": [
+        {
+          "FamilyName": "Configuration Management",
+          "FamilyDescription": "The Configuration Management control family involves establishing,\nmaintaining and monitoring the configuration of the service and\nrelated applications and infrastructure to ensure consistency,\nsecure defaults and compliance.\n",
+          "Section": "CCC.GenAI.C07 Model Version Pinning",
+          "SubSection": "",
+          "SubSectionObjective": "Mandate that applications are locked (\"pinned\") to a specific,\ntested version of a foundational model to prevent unexpected\nbehaviour changes introduced by provider-side updates.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH10"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-010"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.GenAI.C08.TR01",
+      "Description": "When a new AI model is considered for production deployment, it\nMUST undergo a formal red teaming and quality assurance review.",
+      "Attributes": [
+        {
+          "FamilyName": "Model Assurance and Evaluation",
+          "FamilyDescription": "The Model Assurance and Evaluation control family encompasses\nthe proactiveand continuous processes of testing and validating\nthe AI model's behavior to ensure it aligns with safety, ethical,\nand quality standards.\n",
+          "Section": "CCC.GenAI.C08 Quality Control and Red Teaming",
+          "SubSection": "",
+          "SubSectionObjective": "Establish a formal program for quality evaluation and adversarial\ntesting (red teaming) to ensure GenAI system meet all business,\nquality, security and compliance requirements before getting deployed\ninto production environments.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH01",
+                "CCC.GenAI.TH02",
+                "CCC.GenAI.TH04",
+                "CCC.GenAI.TH08",
+                "CCC.GenAI.TH10"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-005"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Adversarial Training and Testing",
+                "Red Teaming",
+                "Product Governance"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0008"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "logging_sink_created",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "dataproc_encrypted_with_cmks_disabled"
+      ]
+    },
+    {
+      "Id": "CCC.GenAI.C08.TR02",
+      "Description": "If model quality review or red teaming identifies an issue that exceeds\nthe organization's risk tolerance, the model MUST NOT be deployed until\nthe issue is remediated.",
+      "Attributes": [
+        {
+          "FamilyName": "Model Assurance and Evaluation",
+          "FamilyDescription": "The Model Assurance and Evaluation control family encompasses\nthe proactiveand continuous processes of testing and validating\nthe AI model's behavior to ensure it aligns with safety, ethical,\nand quality standards.\n",
+          "Section": "CCC.GenAI.C08 Quality Control and Red Teaming",
+          "SubSection": "",
+          "SubSectionObjective": "Establish a formal program for quality evaluation and adversarial\ntesting (red teaming) to ensure GenAI system meet all business,\nquality, security and compliance requirements before getting deployed\ninto production environments.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.GenAI.TH01",
+                "CCC.GenAI.TH02",
+                "CCC.GenAI.TH04",
+                "CCC.GenAI.TH08",
+                "CCC.GenAI.TH10"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-005"
+              ]
+            },
+            {
+              "ReferenceId": "SAIF",
+              "Identifiers": [
+                "Adversarial Training and Testing",
+                "Red Teaming",
+                "Product Governance"
+              ]
+            },
+            {
+              "ReferenceId": "MITRE-ATLAS",
+              "Identifiers": [
+                "AML.M0008"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "dataproc_encrypted_with_cmks_disabled",
+        "gcr_container_scanning_enabled",
+        "artifacts_container_analysis_enabled",
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "logging_sink_created",
+        "kms_key_not_publicly_accessible",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_dataset_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.KeyMgmt.C01.TR01",
+      "Description": "When a key version is scheduled for deletion or disabled, an\nalert MUST be generated within five minutes.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging and Metrics Publication",
+          "FamilyDescription": "Controls that collect, alert, and retain key-management events.",
+          "Section": "CCC.KeyMgmt.C01 Alert on Key-version Changes",
+          "SubSection": "",
+          "SubSectionObjective": "Generate near-real-time alerts when a KMS key version is disabled or scheduled for deletion, enabling rapid investigation and recovery.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Use native event services (e.g., CloudWatch Events, Azure Monitor, Cloud Audit Logs) to route notifications to an incident-response channel.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "RS.AN-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "IR-5"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.KeyMgmt.C02.TR01",
+      "Description": "When IAM roles and key policies are reviewed, Decrypt permission\nMUST be granted exclusively to documented authorised principals.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that enforce least-privilege use of KMS operations.",
+          "Section": "CCC.KeyMgmt.C02 Limit Decrypt Permissions",
+          "SubSection": "",
+          "SubSectionObjective": "Restrict the Decrypt operation to authorised principals only, applying the principle of least privilege to protect sensitive data.",
+          "Applicability": [
+            "tlp-green"
+          ],
+          "Recommendation": "Periodically audit policy documents via automated tooling and report any deviations.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "iam_role_kms_enforce_separation_of_duties"
+      ]
+    },
+    {
+      "Id": "CCC.KeyMgmt.C03.TR01",
+      "Description": "When rotation settings are examined, rotation MUST be enabled with\nan interval not exceeding 365 days.",
+      "Attributes": [
+        {
+          "FamilyName": "Key Lifecycle Management",
+          "FamilyDescription": "Controls that govern creation, rotation, import, and retirement of cryptographic keys.",
+          "Section": "CCC.KeyMgmt.C03 Enforce Automatic Rotation",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure symmetric keys rotate automatically within policy intervals to reduce exposure of key material.",
+          "Applicability": [
+            "tlp-green"
+          ],
+          "Recommendation": "Use cloud-provider rotation features and verify via configuration scanning.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.KeyMgmt.C04.TR01",
+      "Description": "When a key import request is processed, the key MUST use an\napproved algorithm (RSA-2048+, EC-P256+) and originate from a\ncertified HSM.",
+      "Attributes": [
+        {
+          "FamilyName": "Key Lifecycle Management",
+          "FamilyDescription": "Controls that govern creation, rotation, import, and retirement of cryptographic keys.",
+          "Section": "CCC.KeyMgmt.C04 Validate Imported Keys",
+          "SubSection": "",
+          "SubSectionObjective": "Accept only externally generated keys that meet approved cryptographic strength and provenance requirements.",
+          "Applicability": [
+            "tlp-green"
+          ],
+          "Recommendation": "Implement an approval workflow that validates attestation data before import.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.KeyMgmt.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C01.TR01",
+      "Description": "When a single client sends more than 2000 requests within any\n5-minute sliding window, the load balancer MUST throttle all\nsubsequent requests from that client for at least 60 seconds.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that detect anomalous traffic and record load-balancer activity.\n",
+          "Section": "CCC.LB.C01 Enforce and Detect Rate Limiting",
+          "SubSection": "",
+          "SubSectionObjective": "Detect and throttle malicious or excessive requests to prevent downstream resource exhaustion and brute-force activity.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Implement per-IP token-bucket limits with and verify via\nsynthetic traffic tests.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH01",
+                "CCC.LB.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-1",
+                "PR.AC-7",
+                "PR.PT-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-6",
+                "SC-5",
+                "AC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C01.TR02",
+      "Description": "When throttling is invoked, the load balancer MUST\nrecord the event in the access log within 5 minutes\nfor alerting and trend analysis.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that detect anomalous traffic and record load-balancer activity.\n",
+          "Section": "CCC.LB.C01 Enforce and Detect Rate Limiting",
+          "SubSection": "",
+          "SubSectionObjective": "Detect and throttle malicious or excessive requests to prevent downstream resource exhaustion and brute-force activity.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Enable access logging and configure metric filters\non HTTP 429 counts to trigger alerts.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH01",
+                "CCC.LB.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-1",
+                "PR.AC-7",
+                "PR.PT-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-6",
+                "SC-5",
+                "AC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C06.TR01",
+      "Description": "When more than 10 percent of targets change from healthy to\nunhealthy within five minutes, an alert MUST be issued.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that detect anomalous traffic and record load-balancer activity.\n",
+          "Section": "CCC.LB.C06 Secure Health-Check Telemetry",
+          "SubSection": "",
+          "SubSectionObjective": "Monitor health-check endpoints for tampering and alert on\nabnormal status changes.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Instrument metrics for health check results and target\nremoval events. Configure monitoring alarms to alert\non abnormal spikes in unhealthy targets.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH05"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.AE-2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "logging_sink_created",
+        "compute_subnet_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C04.TR01",
+      "Description": "When routing weights change, the request MUST originate\nfrom an explicitly defined and trusted identity and MUST\nbe logged.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can change or query load-balancer resources.\n",
+          "Section": "CCC.LB.C04 Enforce Distribution Policies",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure traffic-splitting weights and algorithms are modified\nonly by trusted identities.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Define a list of trusted principals allowed to modify\nrouting configurations. Enforce via conditional access\npolicies, and log changes using audit logging.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "compute_loadbalancer_logging_enabled",
+        "logging_sink_created",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C05.TR01",
+      "Description": "When stickiness is enabled, session cookies MUST expire\nwithin 30 minutes of inactivity.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can change or query load-balancer resources.\n",
+          "Section": "CCC.LB.C05 Validate Session Affinity",
+          "SubSection": "",
+          "SubSectionObjective": "Configure session persistence to minimise fixation and hijacking\nrisks.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Audit CCC.LB.F15 parameters via configuration scans.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-7"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-23"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C09.TR01",
+      "Description": "When an API call originates outside the approved CIDR\nset, the request MUST be denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can change or query load-balancer resources.\n",
+          "Section": "CCC.LB.C09 Restrict Management API Access",
+          "SubSection": "",
+          "SubSectionObjective": "Limit load-balancer API calls to authorised identities and\ntrusted networks.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Combine VPC endpoints with IAM condition-key filters for protected APIs.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH08"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.LB.C02.TR01",
+      "Description": "When concurrent connections reach 80 percent of capacity, the\nautoscaling group MUST add at least one instance within five\nminutes.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls that preserve availability and confidentiality of\ntraffic processed by the load balancer.\n",
+          "Section": "CCC.LB.C02 Auto-Scale Load Balancer Capacity",
+          "SubSection": "",
+          "SubSectionObjective": "Expand load-balancer capacity to maintain availability during traffic\nspikes.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Enable autoscaling policies.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "ID.BE-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.LB.C07.TR01",
+      "Description": "When responses pass through the load balancer, the\n\"Server\" header MUST be replaced with \"lb\".",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls that preserve availability and confidentiality of\ntraffic processed by the load balancer.\n",
+          "Section": "CCC.LB.C07 Scrub Sensitive Headers",
+          "SubSection": "",
+          "SubSectionObjective": "Remove headers that disclose internal details or software\nversions from HTTP responses.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Configure header-transformation rules.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.TH15"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.LB.C08.TR01",
+      "Description": "When a certificate is within 30 days of expiry, automated renewal\nMUST complete and deploy a new certificate within 24 hours.",
+      "Attributes": [
+        {
+          "FamilyName": "Encryption",
+          "FamilyDescription": "Controls that ensure trustworthy TLS certificates and ciphers.",
+          "Section": "CCC.LB.C08 Automate Certificate Renewal",
+          "SubSection": "",
+          "SubSectionObjective": "Maintain valid TLS certificates by automating renewal and\ndeployment before expiry.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Use certificate-manager auto-renewal workflows.",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "LB",
+              "Identifiers": [
+                "CCC.LB.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Logging.C01.TR01",
+      "Description": "When a new cloud account is created, provider-level audit and network flow logging MUST be\nenabled by default and directed to the central sink.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls related to the confidentiality, integrity and availability of log data.\n",
+          "Section": "CCC.Logging.C01 Centralized and Comprehensive Log Aggregation",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure all operational and security logs from across the cloud environment, including\napplications, operating systems, network traffic, and cloud service activity, are captured\nautomatically and streamed to a central, secure log management service.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Logging.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2",
+                "AU-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.Logging.C01.TR02",
+      "Description": "When a new cloud compute resource is deployed, it MUST be configured to forward all relevant\nlogs (e.g., OS, application, service logs) to the central log sink.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls related to the confidentiality, integrity and availability of log data.\n",
+          "Section": "CCC.Logging.C01 Centralized and Comprehensive Log Aggregation",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure all operational and security logs from across the cloud environment, including\napplications, operating systems, network traffic, and cloud service activity, are captured\nautomatically and streamed to a central, secure log management service.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Logging.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2",
+                "AU-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_sink_created",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "iam_audit_logs_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_loadbalancer_logging_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Logging.C02.TR01",
+      "Description": "When a new log bucket or stream is created, its retention policy MUST be configured\nin accordance with organisation's data retention policy.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls related to the confidentiality, integrity and availability of log data.\n",
+          "Section": "CCC.Logging.C02 Enforce Data Retention Policy for Logs",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that the retention period configured for logs aligns with the organization's\ndata retention policy.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Logging.TH05"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "GV.PO-01"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-11"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.Logging.C02.TR02",
+      "Description": "When a query is performed to retrieve log events older than the number of days defined\nin the organisation's data retention policy, it MUST return an empty result.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls related to the confidentiality, integrity and availability of log data.\n",
+          "Section": "CCC.Logging.C02 Enforce Data Retention Policy for Logs",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that the retention period configured for logs aligns with the organization's\ndata retention policy.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Logging.TH05"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "GV.PO-01"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-11"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C08.TR01",
+      "Description": "When an attempt is made to modify or delete data before the object\nlock period expires, then the action MUST be denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "Controls related to the confidentiality, integrity and availability of log data.\n",
+          "Section": "CCC.Logging.C03 Enable Object Lock On Log Bucket",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure log immutability by enabling Write Once, Read Many (WORM) protection\nusing object lock on log storage buckets. This prevents logs from being modified\nor deleted during the defined retention period, supporting compliance and forensic\nintegrity.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Configure object lock policy.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9",
+                "AU-11"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.AuditLog.C04.TR01",
+      "Description": "When restricted fields are accessed by unauthorized users, then those fields MUST remain masked.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can access and modify logs.\n",
+          "Section": "CCC.Logging.C04 Restrict Field And Log Type Access",
+          "SubSection": "",
+          "SubSectionObjective": "Configure access to logs to follow the principle of least privilege in particular where technically\npossible limit the log fields users have access to to prevent accidental exposure to sensitive\ninformation such as PII.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "Review field level access controls on log data.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Logging.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PS-04"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6",
+                "AU-9",
+                "AC-3",
+                "PT-2",
+                "PT-3",
+                "PT-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Logging.C05.TR01",
+      "Description": "When a log storage bucket is created, the bucket's access control settings MUST\nexplicitly deny public read and write access.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can access and modify logs.\n",
+          "Section": "CCC.Logging.C05 Ensure Log Bucket is Not Publicly Accessible",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that log storage buckets are not publicly accessible to prevent unauthorized\naccess to sensitive log data. In addition, logs should be replicated to another cloud\nregion to enhance availability, durability, and support disaster recovery requirements.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green"
+          ],
+          "Recommendation": "Configure bucket policies and access control lists (ACLs) to restrict public access.\nRegularly review bucket permissions to ensure no public access has been inadvertently granted.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AA-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.Logging.C05.TR02",
+      "Description": "When the URL of a log storage bucket's object is accessed publicly, the action MUST be denied\nby bucket policy.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls that restrict who can access and modify logs.\n",
+          "Section": "CCC.Logging.C05 Ensure Log Bucket is Not Publicly Accessible",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that log storage buckets are not publicly accessible to prevent unauthorized\naccess to sensitive log data. In addition, logs should be replicated to another cloud\nregion to enhance availability, durability, and support disaster recovery requirements.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green"
+          ],
+          "Recommendation": "Configure bucket policies and access control lists (ACLs) to restrict public access.\nRegularly review bucket permissions to ensure no public access has been inadvertently granted.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AA-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access"
+      ]
+    },
+    {
+      "Id": "CCC.Logging.C06.TR01",
+      "Description": "When a single principal executes an anomalously high number of log queries,\nan alert MUST be generated.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging and Monitoring",
+          "FamilyDescription": "Controls that collect, alert, and retain logging-related events.\n",
+          "Section": "CCC.Logging.C06 Detect and Alert on Potential Log Exfiltration",
+          "SubSection": "",
+          "SubSectionObjective": "Identify and alert on anomalous data access patterns that may indicate an attempt\nto exfiltrate log data.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Logging.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-03",
+                "DE.CM-09"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-4",
+                "CA-7",
+                "AU-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.Logging.C07.TR01",
+      "Description": "When an audit log event is recorded that corresponds to a modification of the logging service\nconfiguration such as disabling a log trail, deleting a log sink, or altering a log forwarding rule,\nan alert MUST be generated.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging and Monitoring",
+          "FamilyDescription": "Controls that collect, alert, and retain logging-related events.\n",
+          "Section": "CCC.Logging.C07 Detect and Alert on Log Service Tampering",
+          "SubSection": "",
+          "SubSectionObjective": "Alert when any component of the critical logging infrastructure is disabled, modified,\nor deleted, indicating a defense evasion attempt.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH16"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-03",
+                "DE.CM-09"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-4",
+                "CA-7",
+                "AU-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C01.TR01",
+      "Description": "When a request is made to read a protected bucket, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C01.TR02",
+      "Description": "When a request is made to read a protected object, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.ObjStor.C01.TR03",
+      "Description": "When a request is made to write to a bucket, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "dataproc_encrypted_with_cmks_disabled"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C01.TR04",
+      "Description": "When a request is made to write to an object, the service MUST prevent any request using KMS keys not listed as trusted by the organization.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C01 Prevent Unencrypted Requests",
+          "SubSection": "CCC.ObjStor.C01 Prevent Requests to Buckets or Objects with Untrusted KMS Keys",
+          "SubSectionObjective": "Prevent any requests to object storage buckets or objects using untrusted KMS keys to protect against unauthorized data encryption that can impact data availability and integrity.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-04",
+                "DCS-06"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "dataproc_encrypted_with_cmks_disabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C03.TR01",
+      "Description": "When an object storage bucket deletion is attempted, the bucket MUST be fully recoverable for a set time-frame after deletion is requested.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "CCC.ObjStor.C03 Prevent Bucket Deletion Through Irrevocable Bucket Retention Policy",
+          "SubSectionObjective": "Ensure that object storage bucket is not deleted after creation, and that the preventative measure cannot be unset.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C03.TR02",
+      "Description": "When an attempt is made to modify the retention policy for an object storage bucket, the service MUST prevent the policy from being modified.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "CCC.ObjStor.C03 Prevent Bucket Deletion Through Irrevocable Bucket Retention Policy",
+          "SubSectionObjective": "Ensure that object storage bucket is not deleted after creation, and that the preventative measure cannot be unset.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C04.TR01",
+      "Description": "When an object is uploaded to the object storage system, the object MUST automatically receive a default retention policy that prevents premature deletion or modification.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C04 Log All Access and Changes",
+          "SubSection": "CCC.ObjStor.C04 Objects have an Effective Retention Policy by Default",
+          "SubSectionObjective": "Ensure that all objects stored in the object storage system have a retention policy applied by default, preventing premature deletion or modification of objects and ensuring compliance with data retention regulations.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C04.TR02",
+      "Description": "When an attempt is made to delete or modify an object that is subject to an active retention policy, the service MUST prevent the action from being completed.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C04 Log All Access and Changes",
+          "SubSection": "CCC.ObjStor.C04 Objects have an Effective Retention Policy by Default",
+          "SubSectionObjective": "Ensure that all objects stored in the object storage system have a retention policy applied by default, preventing premature deletion or modification of objects and ensuring compliance with data retention regulations.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR01",
+      "Description": "When an object is uploaded to the object storage bucket, the object MUST be stored with a unique identifier.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR02",
+      "Description": "When an object is modified, the service MUST assign a new unique identifier to the modified object to differentiate it from the previous version.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR03",
+      "Description": "When an object is modified, the service MUST allow for recovery of previous versions of the object.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.ObjStor.C05.TR04",
+      "Description": "When an object is deleted, the service MUST retain other versions of the object to allow for recovery of previous versions.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C05 Prevent Access from Untrusted Entities",
+          "SubSection": "CCC.ObjStor.C05 Versioning is Enabled for All Objects in the Bucket",
+          "SubSectionObjective": "Ensure that versioning is enabled for all objects stored in the object storage bucket to enable recovery of previous versions of objects in case of loss or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.1.4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-28",
+                "CP-10"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-16"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.ObjStor.C06.TR01",
+      "Description": "When an object storage bucket is accessed, the service MUST store access logs in a separate data store.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C06 Prevent Deployment in Restricted Regions",
+          "SubSection": "CCC.ObjStor.C06 Access Logs are Stored in a Separate Data Store",
+          "SubSectionObjective": "Ensure that access logs for object storage buckets are stored in a separate data store to protect against unauthorized access, tampering, or deletion of logs (Logbuckets are exempt from this requirement, but must be tlp-red).",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07",
+                "CCC.TH09"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-07",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2022 A.8.15.0"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9",
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C02.TR01",
+      "Description": "When a permission set is allowed for an object in a bucket, the service MUST allow the same permission set to access all objects in the same bucket.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C02 Ensure Data Encryption at Rest for All Stored Data",
+          "SubSection": "CCC.ObjStor.C02 Enforce Uniform Bucket-level Access to Prevent Inconsistent Permissions",
+          "SubSectionObjective": "Ensure that uniform bucket-level access is enforced across all object storage buckets. This prevents the use of ad-hoc or inconsistent object-level permissions, ensuring centralized, consistent, and secure access management in accordance with the principle of least privilege.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-09"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_uniform_bucket_level_access"
+      ]
+    },
+    {
+      "Id": "CCC.ObjStor.C02.TR02",
+      "Description": "When a permission set is denied for an object in a bucket, the service MUST deny the same permission set to access all objects in the same bucket.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.C02 Ensure Data Encryption at Rest for All Stored Data",
+          "SubSection": "CCC.ObjStor.C02 Enforce Uniform Bucket-level Access to Prevent Inconsistent Permissions",
+          "SubSectionObjective": "Ensure that uniform bucket-level access is enforced across all object storage buckets. This prevents the use of ad-hoc or inconsistent object-level permissions, ensuring centralized, consistent, and secure access management in accordance with the principle of least privilege.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DCS-09"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_uniform_bucket_level_access"
+      ]
+    }
+  ]
+}
