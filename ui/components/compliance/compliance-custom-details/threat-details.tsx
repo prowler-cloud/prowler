@@ -57,22 +57,21 @@ export const ThreatCustomDetails = ({
 
         {typeof requirement.passedFindings === "number" &&
           typeof requirement.totalFindings === "number" && (
-            <ComplianceBadge
-              label="Findings"
-              value={`${requirement.passedFindings}/${requirement.totalFindings}`}
-              color="blue"
-            />
-          )}
-
-        {typeof requirement.passedFindings === "number" &&
-          typeof requirement.totalFindings === "number" &&
-          requirement.totalFindings > 0 && (
-            <ComplianceBadge
-              label="Pass Rate"
-              value={`${Math.round((requirement.passedFindings / requirement.totalFindings) * 100)}%`}
-              color="green"
-              conditional={true}
-            />
+            <>
+              <ComplianceBadge
+                label="Findings"
+                value={`${requirement.passedFindings}/${requirement.totalFindings}`}
+                color="blue"
+              />
+              {requirement.totalFindings > 0 && (
+                <ComplianceBadge
+                  label="Pass Rate"
+                  value={`${Math.round((requirement.passedFindings / requirement.totalFindings) * 100)}%`}
+                  color="green"
+                  conditional={true}
+                />
+              )}
+            </>
           )}
       </ComplianceBadgeContainer>
 
