@@ -1327,6 +1327,24 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "scan_id", "compliance_id"],
                 name="cro_scan_comp_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "compliance_id", "region"],
+                name="cro_scan_comp_reg_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "compliance_id", "requirement_id"],
+                name="cro_scan_comp_req_idx",
+            ),
+            models.Index(
+                fields=[
+                    "tenant_id",
+                    "scan_id",
+                    "compliance_id",
+                    "requirement_id",
+                    "region",
+                ],
+                name="cro_scan_comp_req_reg_idx",
+            ),
         ]
 
     class JSONAPIMeta:
