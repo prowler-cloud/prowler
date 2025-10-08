@@ -1,10 +1,15 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { Copy, Play, Plus, RotateCcw, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { Action, Actions } from "@/components/lighthouse/actions";
+import { Loader } from "@/components/lighthouse/loader";
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
+import { useToast } from "@/components/ui";
 import { CustomButton, CustomTextarea } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
@@ -26,53 +31,58 @@ interface ChatFormData {
 
 export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const {
-    messages,
-    handleSubmit,
-    handleInputChange,
-    append,
-    status,
-    error,
-    setMessages,
-  } = useChat({
-    api: "/api/lighthouse/analyst",
-    credentials: "same-origin",
-    experimental_throttle: 100,
-    sendExtraMessageFields: true,
-    onFinish: (message) => {
-      // There is no specific way to output the error message from langgraph supervisor
-      // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
-      // Detect error messages sent from backend using specific prefix and display the error
-      if (message.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")) {
-        const errorText = message.content
-          .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
-          .trim();
-        setErrorMessage(errorText);
-        // Remove error message from chat history
-        setMessages((prev) =>
-          prev.filter(
-            (m) => !m.content?.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:"),
-          ),
+  const { messages, sendMessage, status, error, setMessages, regenerate } =
+    useChat({
+      transport: new DefaultChatTransport({
+        api: "/api/lighthouse/analyst",
+        credentials: "same-origin",
+      }),
+      experimental_throttle: 100,
+      onFinish: ({ message }) => {
+        // There is no specific way to output the error message from langgraph supervisor
+        // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
+        // Detect error messages sent from backend using specific prefix and display the error
+        const firstTextPart = message.parts.find((p) => p.type === "text");
+        if (
+          firstTextPart &&
+          "text" in firstTextPart &&
+          firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+        ) {
+          const errorText = firstTextPart.text
+            .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
+            .trim();
+          setErrorMessage(errorText);
+          // Remove error message from chat history
+          setMessages((prev) =>
+            prev.filter((m) => {
+              const textPart = m.parts.find((p) => p.type === "text");
+              return !(
+                textPart &&
+                "text" in textPart &&
+                textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+              );
+            }),
+          );
+        }
+      },
+      onError: (error) => {
+        console.error("Chat error:", error);
+
+        if (
+          error?.message?.includes("<html>") &&
+          error?.message?.includes("<title>403 Forbidden</title>")
+        ) {
+          setErrorMessage("403 Forbidden");
+          return;
+        }
+
+        setErrorMessage(
+          error?.message || "An error occurred. Please retry your message.",
         );
-      }
-    },
-    onError: (error) => {
-      console.error("Chat error:", error);
-
-      if (
-        error?.message?.includes("<html>") &&
-        error?.message?.includes("<title>403 Forbidden</title>")
-      ) {
-        setErrorMessage("403 Forbidden");
-        return;
-      }
-
-      setErrorMessage(
-        error?.message || "An error occurred. Please retry your message.",
-      );
-    },
-  });
+      },
+    });
 
   const form = useForm<ChatFormData>({
     defaultValues: {
@@ -98,7 +108,10 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           .pop();
 
         if (lastUserMessage) {
-          form.setValue("message", lastUserMessage.content);
+          const textPart = lastUserMessage.parts.find((p) => p.type === "text");
+          if (textPart && "text" in textPart) {
+            form.setValue("message", textPart.text);
+          }
           // Remove the last user message from history since it's now in the input
           return currentMessages.slice(0, -1);
         }
@@ -108,14 +121,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     }
   }, [errorMessage, form, setMessages]);
 
-  // Sync form value with chat input
-  useEffect(() => {
-    const syntheticEvent = {
-      target: { value: messageValue },
-    } as React.ChangeEvent<HTMLInputElement>;
-    handleInputChange(syntheticEvent);
-  }, [messageValue, handleInputChange]);
-
   // Reset form when message is sent
   useEffect(() => {
     if (status === "submitted") {
@@ -123,11 +128,25 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     }
   }, [status, form]);
 
+  // Auto-scroll to bottom when new messages arrive or when streaming
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages, status]);
+
   const onFormSubmit = form.handleSubmit((data) => {
+    // Block submission while streaming or submitted
+    if (status === "streaming" || status === "submitted") {
+      return;
+    }
+
     if (data.message.trim()) {
       // Clear error on new submission
       setErrorMessage(null);
-      handleSubmit();
+      sendMessage({ text: data.message });
+      form.reset();
     }
   });
 
@@ -136,7 +155,12 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (messageValue?.trim()) {
+        // Block enter key while streaming or submitted
+        if (
+          messageValue?.trim() &&
+          status !== "streaming" &&
+          status !== "submitted"
+        ) {
           onFormSubmit();
         }
       }
@@ -144,7 +168,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [messageValue, onFormSubmit]);
+  }, [messageValue, onFormSubmit, status]);
 
   const suggestedActions: SuggestedAction[] = [
     {
@@ -173,10 +197,34 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
   // Determine if chat should be disabled
   const shouldDisableChat = !hasConfig || !isActive;
 
+  const handleNewChat = () => {
+    setMessages([]);
+    setErrorMessage(null);
+    form.reset({ message: "" });
+  };
+
   return (
-    <div className="relative flex h-[calc(100vh-theme(spacing.16))] min-w-0 flex-col bg-background">
+    <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">
+      {/* Header with New Chat button */}
+      {messages.length > 0 && (
+        <div className="border-default-200 dark:border-default-100 border-b px-4 py-3">
+          <div className="flex items-center justify-end">
+            <CustomButton
+              ariaLabel="Start new chat"
+              variant="bordered"
+              size="sm"
+              startContent={<Plus className="h-4 w-4" />}
+              onPress={handleNewChat}
+              className="gap-1"
+            >
+              New Chat
+            </CustomButton>
+          </div>
+        </div>
+      )}
+
       {shouldDisableChat && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
               {!hasConfig
@@ -190,7 +238,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             </p>
             <CustomLink
               href="/lighthouse/config"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2"
               target="_self"
               size="sm"
             >
@@ -204,7 +252,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
       {(error || errorMessage) && (
         <div className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <div className="flex items-start">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg
                 className="h-5 w-5 text-red-400"
                 viewBox="0 0 20 20"
@@ -257,9 +305,8 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                   key={`suggested-action-${index}`}
                   ariaLabel={`Send message: ${action.action}`}
                   onPress={() => {
-                    append({
-                      role: "user",
-                      content: action.action,
+                    sendMessage({
+                      text: action.action,
                     });
                   }}
                   className="hover:bg-muted flex h-auto w-full flex-col items-start justify-start rounded-xl border bg-gray-50 px-4 py-3.5 text-left font-sans text-sm dark:bg-gray-900"
@@ -273,7 +320,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       ) : (
         <div
-          className="flex-1 space-y-4 overflow-y-auto p-4"
+          className="no-scrollbar flex flex-1 flex-col gap-4 overflow-y-auto p-4"
           ref={messagesContainerRef}
         >
           {messages.map((message, idx) => {
@@ -283,47 +330,98 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               .pop();
             const isLatestUserMsg =
               message.role === "user" && lastUserIdx === idx;
+            const isLastMessage = idx === messages.length - 1;
+            const messageText = message.parts
+              .filter((p) => p.type === "text")
+              .map((p) => ("text" in p ? p.text : ""))
+              .join("");
+
+            // Check if this is the streaming assistant message (last message, assistant role, while streaming)
+            const isStreamingAssistant =
+              isLastMessage &&
+              message.role === "assistant" &&
+              status === "streaming";
+
+            // Use a composite key to ensure uniqueness even if IDs are duplicated temporarily
+            const uniqueKey = `${message.id}-${idx}-${message.role}`;
+
             return (
-              <div
-                key={message.id}
-                ref={isLatestUserMsg ? latestUserMsgRef : undefined}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
+              <div key={uniqueKey}>
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground dark:!text-black"
-                      : "bg-muted"
+                  ref={isLatestUserMsg ? latestUserMsgRef : undefined}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
-                    className={`prose dark:prose-invert ${message.role === "user" ? "dark:!text-black" : ""}`}
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground dark:text-black!"
+                        : "bg-muted"
+                    }`}
                   >
-                    <MemoizedMarkdown
-                      id={message.id}
-                      content={message.content}
-                    />
+                    {/* Show loader before text appears or while streaming empty content */}
+                    {isStreamingAssistant && !messageText ? (
+                      <Loader size="default" text="Thinking..." />
+                    ) : (
+                      <div
+                        className={`prose dark:prose-invert ${message.role === "user" ? "dark:text-black!" : ""}`}
+                      >
+                        <MemoizedMarkdown
+                          id={message.id}
+                          content={messageText}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Actions for assistant messages */}
+                {message.role === "assistant" &&
+                  isLastMessage &&
+                  messageText &&
+                  status !== "streaming" && (
+                    <div className="mt-2 flex justify-start">
+                      <Actions className="max-w-[80%]">
+                        <Action
+                          label="Copy"
+                          icon={<Copy className="h-3 w-3" />}
+                          onClick={() => {
+                            navigator.clipboard.writeText(messageText);
+                            toast({
+                              title: "Copied",
+                              description: "Message copied to clipboard",
+                            });
+                          }}
+                        />
+                        <Action
+                          label="Retry"
+                          icon={<RotateCcw className="h-3 w-3" />}
+                          onClick={() => regenerate()}
+                        />
+                      </Actions>
+                    </div>
+                  )}
               </div>
             );
           })}
-          {status === "submitted" && (
-            <div className="flex justify-start">
-              <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
-                <div className="animate-pulse">Thinking...</div>
+          {/* Show loader only if no assistant message exists yet */}
+          {(status === "submitted" || status === "streaming") &&
+            messages.length > 0 &&
+            messages[messages.length - 1].role === "user" && (
+              <div className="flex justify-start">
+                <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
+                  <Loader size="default" text="Thinking..." />
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       )}
 
       <Form {...form}>
         <form
           onSubmit={onFormSubmit}
-          className="mx-auto flex w-full gap-2 px-4 pb-4 md:max-w-3xl md:pb-6"
+          className="mx-auto flex w-full gap-2 px-4 pb-16 md:max-w-3xl md:pb-16"
         >
           <div className="flex w-full items-end gap-2">
             <div className="w-full flex-1">
@@ -346,12 +444,22 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             <CustomButton
               type="submit"
               ariaLabel={
-                status === "submitted" ? "Stop generation" : "Send message"
+                status === "streaming" || status === "submitted"
+                  ? "Generating response..."
+                  : "Send message"
               }
-              isDisabled={status === "submitted" || !messageValue?.trim()}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 dark:bg-primary/90"
+              isDisabled={
+                status === "streaming" ||
+                status === "submitted" ||
+                !messageValue?.trim()
+              }
+              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 disabled:opacity-50"
             >
-              {status === "submitted" ? <span>■</span> : <span>➤</span>}
+              {status === "streaming" || status === "submitted" ? (
+                <Square className="h-5 w-5" />
+              ) : (
+                <Play className="h-5 w-5" />
+              )}
             </CustomButton>
           </div>
         </form>

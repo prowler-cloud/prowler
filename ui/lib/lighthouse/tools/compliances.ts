@@ -1,4 +1,5 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import { getLighthouseComplianceFrameworks } from "@/actions/lighthouse/complianceframeworks";
 import {
@@ -12,14 +13,15 @@ import {
 } from "@/types/lighthouse";
 
 export const getCompliancesOverviewTool = tool(
-  async ({ scanId, fields, filters, page, pageSize, sort }) => {
+  async (input) => {
+    const typedInput = input as z.infer<typeof getCompliancesOverviewSchema>;
     return await getLighthouseCompliancesOverview({
-      scanId,
-      fields,
-      filters,
-      page,
-      pageSize,
-      sort,
+      scanId: typedInput.scanId,
+      fields: typedInput.fields,
+      filters: typedInput.filters,
+      page: typedInput.page,
+      pageSize: typedInput.pageSize,
+      sort: typedInput.sort,
     });
   },
   {
@@ -31,8 +33,9 @@ export const getCompliancesOverviewTool = tool(
 );
 
 export const getComplianceFrameworksTool = tool(
-  async ({ providerType }) => {
-    return await getLighthouseComplianceFrameworks(providerType);
+  async (input) => {
+    const typedInput = input as z.infer<typeof getComplianceFrameworksSchema>;
+    return await getLighthouseComplianceFrameworks(typedInput.providerType);
   },
   {
     name: "getComplianceFrameworks",
@@ -43,8 +46,12 @@ export const getComplianceFrameworksTool = tool(
 );
 
 export const getComplianceOverviewTool = tool(
-  async ({ complianceId, fields }) => {
-    return await getLighthouseComplianceOverview({ complianceId, fields });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getComplianceOverviewSchema>;
+    return await getLighthouseComplianceOverview({
+      complianceId: typedInput.complianceId,
+      fields: typedInput.fields,
+    });
   },
   {
     name: "getComplianceOverview",

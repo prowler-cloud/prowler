@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox } from "@nextui-org/react";
+import { Checkbox } from "@heroui/checkbox";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 

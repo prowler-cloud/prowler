@@ -222,11 +222,11 @@ export const JiraIntegrationForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="flex items-center gap-2 text-sm text-default-500">
+            <p className="text-default-500 flex items-center gap-2 text-sm">
               Need help configuring your Jira integration?
             </p>
             <CustomLink

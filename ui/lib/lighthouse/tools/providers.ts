@@ -1,15 +1,17 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import { getProvider, getProviders } from "@/actions/providers";
 import { getProviderSchema, getProvidersSchema } from "@/types/lighthouse";
 
 export const getProvidersTool = tool(
-  async ({ page, query, sort, filters }) => {
+  async (input) => {
+    const typedInput = input as z.infer<typeof getProvidersSchema>;
     return await getProviders({
-      page: page,
-      query: query,
-      sort: sort,
-      filters: filters,
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
     });
   },
   {
@@ -21,9 +23,10 @@ export const getProvidersTool = tool(
 );
 
 export const getProviderTool = tool(
-  async ({ id }) => {
+  async (input) => {
+    const typedInput = input as z.infer<typeof getProviderSchema>;
     const formData = new FormData();
-    formData.append("id", id);
+    formData.append("id", typedInput.id);
     return await getProvider(formData);
   },
   {

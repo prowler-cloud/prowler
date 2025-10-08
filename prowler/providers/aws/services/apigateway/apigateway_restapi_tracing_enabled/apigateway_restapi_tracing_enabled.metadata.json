@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "apigateway_restapi_tracing_enabled",
-  "CheckTitle": "Check if AWS X-Ray tracing is enabled for API Gateway REST API stages.",
+  "CheckTitle": "API Gateway REST API stage has X-Ray tracing enabled",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "apigateway",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:apigateway:region:account-id:/restapis/restapi-id/stages/stage-name",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsApiGatewayStage",
-  "Description": "This control checks whether AWS X-Ray active tracing is enabled for your Amazon API Gateway REST API stages.",
-  "Risk": "Without X-Ray active tracing, it may be difficult to quickly identify and respond to performance issues that could lead to decreased availability or degradation of the API's performance.",
-  "RelatedUrl": "https://docs.aws.amazon.com/xray/latest/devguide/xray-services-apigateway.html",
+  "Description": "**API Gateway REST API stages** have **AWS X-Ray active tracing** enabled to sample incoming requests and produce distributed traces across connected services.",
+  "Risk": "Without X-Ray tracing, you lose end-to-end visibility, hindering detection of timeouts, errors, and anomalous latency.\n\nThis delays incident response and root-cause analysis, increasing MTTR and risking partial outages (availability) and undetected integration failures (integrity).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-3",
+    "https://docs.aws.amazon.com/xray/latest/devguide/xray-services-apigateway.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/tracing.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws apigateway update-stage --rest-api-id <restapi-id> --stage-name <stage-name> --patch-operations op=replace,path=/tracingEnabled,value=true",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-3",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Enable X-Ray tracing on an API Gateway REST API stage\nResources:\n  <example_resource_name>:\n    Type: AWS::ApiGateway::Stage\n    Properties:\n      RestApiId: <example_resource_id>\n      DeploymentId: <example_resource_id>\n      StageName: <example_resource_name>\n      TracingEnabled: true  # Critical: enables AWS X-Ray tracing for this stage\n```",
+      "Other": "1. Open the AWS Console and go to API Gateway\n2. Select your REST API and choose Stages\n3. Select the target stage\n4. Open the Logs/Tracing tab, check Enable X-Ray Tracing\n5. Click Save",
+      "Terraform": "```hcl\n# Enable X-Ray tracing on an API Gateway REST API stage\nresource \"aws_api_gateway_stage\" \"example\" {\n  rest_api_id = \"<example_resource_id>\"\n  deployment_id = \"<example_resource_id>\"\n  stage_name  = \"<example_resource_name>\"\n  xray_tracing_enabled = true  # Critical: enables AWS X-Ray tracing for this stage\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable AWS X-Ray tracing for API Gateway REST API stages to monitor and analyze performance in real time.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/tracing.html"
+      "Text": "Enable **X-Ray active tracing** on all API Gateway stages and propagate trace context through downstream services.\n\nUse prudent sampling, correlate traces with logs/metrics, and alert on errors/latency. Apply **least privilege** to X-Ray access and use **defense in depth** for observability.",
+      "Url": "https://hub.prowler.com/check/apigateway_restapi_tracing_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

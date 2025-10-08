@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "acm_certificates_expiration_check",
-  "CheckTitle": "Check if ACM Certificates are about to expire in specific days or less",
+  "CheckTitle": "ACM certificate expires in more than the configured threshold of days",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "acm",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:acm:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCertificateManagerCertificate",
-  "Description": "Check if ACM Certificates are about to expire in specific days or less",
-  "Risk": "Expired certificates can impact service availability.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html",
+  "Description": "**ACM certificates** are assessed for **time to expiration** against a configurable threshold. Certificates close to end of validity or already expired are surfaced, covering those attached to services and, *if in scope*, unused ones.",
+  "Risk": "Expired or near-expiry **TLS certificates** can break handshakes, causing **service outages** and failed API calls (**availability**). Emergency fixes raise misconfiguration risk, enabling disabled verification or weak ciphers, which allows **MITM** and data exposure (**confidentiality**/**integrity**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ACM/certificate-expires-in-45-days.html",
+    "https://repost.aws/es/knowledge-center/acm-notification-certificate-renewal",
+    "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html",
+    "https://repost.aws/questions/QU3sMaeZPMRo2kLcsfJsfuVA/acm-notifications-for-expiring-certificates"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the AWS Console, open Certificate Manager (ACM)\n2. If the expiring certificate is ACM-issued: select it and complete/restore validation (Create records in Route 53 or add the shown CNAME) so renewal can proceed\n3. If the expiring certificate is imported: click Import a certificate, upload the new certificate and private key, then save\n4. Update the service to use the new/renewed certificate:\n   - ALB/NLB: EC2 > Load Balancers > Listeners > Edit > Change certificate to the new ACM certificate\n   - CloudFront: Distributions > Edit > Viewer certificate > Select the new ACM certificate\n   - API Gateway: Custom domain names > Edit > Choose the new ACM certificate\n5. Verify the old certificate is no longer in use; delete it if not needed",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Monitor certificate expiration and take automated action to renew, replace or remove. Having shorter TTL for any security artifact is a general recommendation, but requires additional automation in place. If not longer required delete certificate. Use AWS config using the managed rule: acm-certificate-expiration-check.",
-      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html"
+      "Text": "Adopt **automated certificate lifecycle management**: prefer **ACM-issued certs with auto-renewal**, or integrate imports with an automated renewal/rotation pipeline. Track expirations with alerts, enforce **least privilege** for cert operations, remove unused certs, and test rollovers to avoid downtime.",
+      "Url": "https://hub.prowler.com/check/acm_certificates_expiration_check"
     }
   },
   "Categories": [],
