@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { Button } from "@heroui/button";
 import {
   Modal,
@@ -10,9 +8,14 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/modal";
+import { useState } from "react";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
 import { ApiKeyData } from "@/types/api-keys";
+
+import { FALLBACK_VALUES } from "./api-keys/constants";
+import { ErrorAlert } from "./api-keys/error-alert";
+import { WarningAlert } from "./api-keys/warning-alert";
 
 interface DeleteApiKeyModalProps {
   isOpen: boolean;
@@ -30,6 +33,10 @@ export const DeleteApiKeyModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setError(null);
+  };
+
   const handleDelete = async () => {
     if (!apiKey) return;
 
@@ -45,49 +52,42 @@ export const DeleteApiKeyModal = ({
       return;
     }
 
-    setError(null);
+    resetForm();
     onSuccess();
     onClose();
   };
 
   const handleClose = () => {
-    setError(null);
+    resetForm();
     onClose();
   };
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="lg">
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">Delete API Key</ModalHeader>
+        <ModalHeader className="flex flex-col gap-1">
+          Delete API Key
+        </ModalHeader>
         <ModalBody>
           <div className="flex flex-col gap-4">
-            <div className="rounded-lg bg-danger-50 p-4 text-sm text-danger-700">
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5">⚠️</div>
-                <div>
-                  <strong>Warning:</strong> This action cannot be undone. This
-                  API key will be revoked and will no longer work.
-                </div>
-              </div>
-            </div>
+            <WarningAlert
+              variant="danger"
+              message="This action cannot be undone. This API key will be revoked and will no longer work."
+            />
 
             <div className="text-sm">
               <p>Are you sure you want to delete this API key?</p>
               <div className="mt-2 rounded-lg bg-slate-800 p-3">
                 <p className="font-medium text-white">
-                  {apiKey?.attributes.name || "Unnamed Key"}
+                  {apiKey?.attributes.name || FALLBACK_VALUES.UNNAMED_KEY}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="mt-1 text-xs text-slate-400">
                   Prefix: {apiKey?.attributes.prefix}
                 </p>
               </div>
             </div>
 
-            {error && (
-              <div className="rounded-lg bg-danger-50 p-3 text-sm text-danger-600">
-                {error}
-              </div>
-            )}
+            <ErrorAlert error={error} />
           </div>
         </ModalBody>
         <ModalFooter>

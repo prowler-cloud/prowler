@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import {
@@ -11,8 +9,13 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/modal";
+import { useState } from "react";
 
 import { createApiKey } from "@/actions/api-keys/api-keys";
+
+import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
+import { ErrorAlert } from "./api-keys/error-alert";
+import { calculateExpiryDate } from "./api-keys/utils";
 
 interface CreateApiKeyModalProps {
   isOpen: boolean;
@@ -26,9 +29,15 @@ export const CreateApiKeyModal = ({
   onSuccess,
 }: CreateApiKeyModalProps) => {
   const [name, setName] = useState("");
-  const [expiresInDays, setExpiresInDays] = useState("365");
+  const [expiresInDays, setExpiresInDays] = useState(DEFAULT_EXPIRY_DAYS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setName("");
+    setExpiresInDays(DEFAULT_EXPIRY_DAYS);
+    setError(null);
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -39,13 +48,9 @@ export const CreateApiKeyModal = ({
     setIsLoading(true);
     setError(null);
 
-    // Calculate expiration date
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + parseInt(expiresInDays));
-
     const result = await createApiKey({
       name: name.trim(),
-      expires_at: expiresAt.toISOString(),
+      expires_at: calculateExpiryDate(parseInt(expiresInDays)),
     });
 
     setIsLoading(false);
@@ -55,27 +60,19 @@ export const CreateApiKeyModal = ({
       return;
     }
 
-    // Extract the full API key from the response
     const apiKey = result.data.data.attributes.api_key;
     if (!apiKey) {
       setError("Failed to retrieve API key");
       return;
     }
 
-    // Reset form
-    setName("");
-    setExpiresInDays("365");
-    setError(null);
-
-    // Show success modal with the API key
+    resetForm();
     onSuccess(apiKey);
     onClose();
   };
 
   const handleClose = () => {
-    setName("");
-    setExpiresInDays("365");
-    setError(null);
+    resetForm();
     onClose();
   };
 
@@ -94,7 +91,6 @@ export const CreateApiKeyModal = ({
               onChange={(e) => setName(e.target.value)}
               isRequired
               description="A descriptive name to identify this API key"
-              autoFocus
             />
 
             <Input
@@ -107,11 +103,7 @@ export const CreateApiKeyModal = ({
               description="Number of days until this key expires (default: 365)"
             />
 
-            {error && (
-              <div className="rounded-lg bg-danger-50 p-3 text-sm text-danger-600">
-                {error}
-              </div>
-            )}
+            <ErrorAlert error={error} />
           </div>
         </ModalBody>
         <ModalFooter>

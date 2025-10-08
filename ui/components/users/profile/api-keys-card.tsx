@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Chip } from "@heroui/chip";
 import {
   Dropdown,
   DropdownItem,
@@ -20,53 +17,31 @@ import {
   TableRow,
 } from "@heroui/table";
 import { useDisclosure } from "@heroui/use-disclosure";
-import { formatDistanceToNow } from "date-fns";
 import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 
-import { getApiKeys } from "@/actions/api-keys/api-keys";
-import {
-  API_KEY_STATUS,
-  ApiKeyData,
-  ApiKeyStatus,
-  getApiKeyStatus,
-} from "@/types/api-keys";
+import { ApiKeyData } from "@/types/api-keys";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";
+import {
+  API_KEY_COLUMN_KEYS,
+  API_KEY_COLUMNS,
+  ICON_SIZE,
+} from "./api-keys/constants";
+import {
+  DateCell,
+  LastUsedCell,
+  NameCell,
+  PrefixCell,
+  StatusCell,
+} from "./api-keys/table-cells";
 import { CreateApiKeyModal } from "./create-api-key-modal";
 import { DeleteApiKeyModal } from "./delete-api-key-modal";
 import { EditApiKeyNameModal } from "./edit-api-key-name-modal";
-
-const getStatusColor = (
-  status: ApiKeyStatus,
-): "success" | "danger" | "warning" => {
-  switch (status) {
-    case API_KEY_STATUS.ACTIVE:
-      return "success";
-    case API_KEY_STATUS.REVOKED:
-      return "danger";
-    case API_KEY_STATUS.EXPIRED:
-      return "warning";
-    default:
-      return "success";
-  }
-};
-
-const getStatusLabel = (status: ApiKeyStatus): string => {
-  switch (status) {
-    case API_KEY_STATUS.ACTIVE:
-      return "Active";
-    case API_KEY_STATUS.REVOKED:
-      return "Revoked";
-    case API_KEY_STATUS.EXPIRED:
-      return "Expired";
-    default:
-      return "Unknown";
-  }
-};
+import { useApiKeys } from "./hooks/use-api-keys";
 
 export const ApiKeysCard = () => {
-  const [apiKeys, setApiKeys] = useState<ApiKeyData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { apiKeys, isLoading, refetch } = useApiKeys();
   const [selectedApiKey, setSelectedApiKey] = useState<ApiKeyData | null>(null);
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
 
@@ -75,27 +50,10 @@ export const ApiKeysCard = () => {
   const deleteModal = useDisclosure();
   const editModal = useDisclosure();
 
-  const loadApiKeys = async () => {
-    setIsLoading(true);
-    const response = await getApiKeys();
-    if (response?.data) {
-      // Filter out revoked keys (they are effectively deleted)
-      const activeKeys = response.data.filter(
-        (key) => !key.attributes.revoked,
-      );
-      setApiKeys(activeKeys);
-    }
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    loadApiKeys();
-  }, []);
-
   const handleCreateSuccess = (apiKey: string) => {
     setCreatedApiKey(apiKey);
     successModal.onOpen();
-    loadApiKeys();
+    refetch();
   };
 
   const handleDeleteClick = (apiKey: ApiKeyData) => {
@@ -108,89 +66,39 @@ export const ApiKeysCard = () => {
     editModal.onOpen();
   };
 
-  const handleOperationSuccess = () => {
-    loadApiKeys();
-  };
-
-  const columns = [
-    { key: "name", label: "NAME" },
-    { key: "prefix", label: "PREFIX" },
-    { key: "created", label: "CREATED" },
-    { key: "last_used", label: "LAST USED" },
-    { key: "expires", label: "EXPIRES" },
-    { key: "status", label: "STATUS" },
-    { key: "actions", label: "" },
-  ];
-
   const renderCell = (apiKey: ApiKeyData, columnKey: React.Key) => {
-    const status = getApiKeyStatus(apiKey);
-
     switch (columnKey) {
-      case "name":
-        return (
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-white">
-              {apiKey.attributes.name || "Unnamed"}
-            </p>
-          </div>
-        );
+      case API_KEY_COLUMN_KEYS.NAME:
+        return <NameCell apiKey={apiKey} />;
 
-      case "prefix":
-        return (
-          <code className="rounded bg-slate-700 px-2 py-1 text-xs font-mono text-slate-300">
-            {apiKey.attributes.prefix}
-          </code>
-        );
+      case API_KEY_COLUMN_KEYS.PREFIX:
+        return <PrefixCell apiKey={apiKey} />;
 
-      case "created":
-        return (
-          <p className="text-sm text-slate-400">
-            {formatDistanceToNow(new Date(apiKey.attributes.inserted_at), {
-              addSuffix: true,
-            })}
-          </p>
-        );
+      case API_KEY_COLUMN_KEYS.CREATED:
+        return <DateCell date={apiKey.attributes.inserted_at} />;
 
-      case "last_used":
-        return (
-          <p className="text-sm text-slate-400">
-            {apiKey.attributes.last_used_at
-              ? formatDistanceToNow(new Date(apiKey.attributes.last_used_at), {
-                  addSuffix: true,
-                })
-              : "Never"}
-          </p>
-        );
+      case API_KEY_COLUMN_KEYS.LAST_USED:
+        return <LastUsedCell apiKey={apiKey} />;
 
-      case "expires":
-        return (
-          <p className="text-sm text-slate-400">
-            {formatDistanceToNow(new Date(apiKey.attributes.expires_at), {
-              addSuffix: true,
-            })}
-          </p>
-        );
+      case API_KEY_COLUMN_KEYS.EXPIRES:
+        return <DateCell date={apiKey.attributes.expires_at} />;
 
-      case "status":
-        return (
-          <Chip color={getStatusColor(status)} size="sm" variant="flat">
-            {getStatusLabel(status)}
-          </Chip>
-        );
+      case API_KEY_COLUMN_KEYS.STATUS:
+        return <StatusCell apiKey={apiKey} />;
 
-      case "actions":
+      case API_KEY_COLUMN_KEYS.ACTIONS:
         return (
           <div className="flex justify-end">
             <Dropdown>
               <DropdownTrigger>
                 <Button isIconOnly size="sm" variant="light">
-                  <MoreVertical size={16} />
+                  <MoreVertical size={ICON_SIZE} />
                 </Button>
               </DropdownTrigger>
               <DropdownMenu aria-label="API Key actions">
                 <DropdownItem
                   key="edit"
-                  startContent={<Pencil size={16} />}
+                  startContent={<Pencil size={ICON_SIZE} />}
                   onPress={() => handleEditClick(apiKey)}
                 >
                   Edit name
@@ -199,7 +107,7 @@ export const ApiKeysCard = () => {
                   key="delete"
                   className="text-danger"
                   color="danger"
-                  startContent={<Trash2 size={16} />}
+                  startContent={<Trash2 size={ICON_SIZE} />}
                   onPress={() => handleDeleteClick(apiKey)}
                 >
                   Delete
@@ -227,7 +135,7 @@ export const ApiKeysCard = () => {
           <Button
             color="success"
             size="sm"
-            startContent={<Plus size={16} />}
+            startContent={<Plus size={ICON_SIZE} />}
             onPress={createModal.onOpen}
           >
             Create API Key
@@ -245,7 +153,7 @@ export const ApiKeysCard = () => {
                 color="success"
                 variant="flat"
                 size="sm"
-                startContent={<Plus size={16} />}
+                startContent={<Plus size={ICON_SIZE} />}
                 onPress={createModal.onOpen}
               >
                 Create your first API key
@@ -260,11 +168,15 @@ export const ApiKeysCard = () => {
                 td: "border-b border-slate-700",
               }}
             >
-              <TableHeader columns={columns}>
+              <TableHeader columns={API_KEY_COLUMNS}>
                 {(column) => (
                   <TableColumn
                     key={column.key}
-                    align={column.key === "actions" ? "end" : "start"}
+                    align={
+                      column.key === API_KEY_COLUMN_KEYS.ACTIONS
+                        ? "end"
+                        : "start"
+                    }
                   >
                     {column.label}
                   </TableColumn>
@@ -303,14 +215,14 @@ export const ApiKeysCard = () => {
         isOpen={deleteModal.isOpen}
         onClose={deleteModal.onClose}
         apiKey={selectedApiKey}
-        onSuccess={handleOperationSuccess}
+        onSuccess={refetch}
       />
 
       <EditApiKeyNameModal
         isOpen={editModal.isOpen}
         onClose={editModal.onClose}
         apiKey={selectedApiKey}
-        onSuccess={handleOperationSuccess}
+        onSuccess={refetch}
       />
     </>
   );

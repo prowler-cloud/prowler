@@ -75,7 +75,8 @@ export const createApiKey = async (
   } catch (error) {
     console.error("Error creating API key:", error);
     return {
-      error: error instanceof Error ? error.message : "Failed to create API key",
+      error:
+        error instanceof Error ? error.message : "Failed to create API key",
     };
   }
 };
@@ -123,7 +124,8 @@ export const updateApiKey = async (
   } catch (error) {
     console.error("Error updating API key:", error);
     return {
-      error: error instanceof Error ? error.message : "Failed to update API key",
+      error:
+        error instanceof Error ? error.message : "Failed to update API key",
     };
   }
 };
@@ -155,39 +157,8 @@ export const revokeApiKey = async (
   } catch (error) {
     console.error("Error revoking API key:", error);
     return {
-      error: error instanceof Error ? error.message : "Failed to revoke API key",
-    };
-  }
-};
-
-/**
- * Deletes an API key permanently (cannot be undone)
- */
-export const deleteApiKey = async (
-  id: string,
-): Promise<{ error?: string; success?: boolean }> => {
-  const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/api-keys/${id}`);
-
-  try {
-    const response = await fetch(url.toString(), {
-      method: "DELETE",
-      headers,
-    });
-
-    if (!response.ok) {
-      const errorData = await handleApiError(response);
-      return { error: errorData.error };
-    }
-
-    // Revalidate the api-keys list
-    revalidateTag("api-keys");
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting API key:", error);
-    return {
-      error: error instanceof Error ? error.message : "Failed to delete API key",
+      error:
+        error instanceof Error ? error.message : "Failed to revoke API key",
     };
   }
 };

@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import {
@@ -11,9 +9,12 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@heroui/modal";
+import { useCallback, useEffect, useState } from "react";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
 import { ApiKeyData } from "@/types/api-keys";
+
+import { ErrorAlert } from "./api-keys/error-alert";
 
 interface EditApiKeyNameModalProps {
   isOpen: boolean;
@@ -32,12 +33,17 @@ export const EditApiKeyNameModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const resetForm = useCallback(() => {
+    setName(apiKey?.attributes.name || "");
+    setError(null);
+  }, [apiKey?.attributes.name]);
+
   // Sync the name state when apiKey changes or modal opens
   useEffect(() => {
     if (isOpen && apiKey) {
-      setName(apiKey.attributes.name || "");
+      resetForm();
     }
-  }, [isOpen, apiKey]);
+  }, [isOpen, apiKey, resetForm]);
 
   const handleSubmit = async () => {
     if (!apiKey || !name.trim()) {
@@ -57,14 +63,13 @@ export const EditApiKeyNameModal = ({
       return;
     }
 
-    setError(null);
+    resetForm();
     onSuccess();
     onClose();
   };
 
   const handleClose = () => {
-    setName(apiKey?.attributes.name || "");
-    setError(null);
+    resetForm();
     onClose();
   };
 
@@ -86,14 +91,9 @@ export const EditApiKeyNameModal = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               isRequired
-              autoFocus
             />
 
-            {error && (
-              <div className="rounded-lg bg-danger-50 p-3 text-sm text-danger-600">
-                {error}
-              </div>
-            )}
+            <ErrorAlert error={error} />
           </div>
         </ModalBody>
         <ModalFooter>

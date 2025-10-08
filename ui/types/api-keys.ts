@@ -64,8 +64,7 @@ export const API_KEY_STATUS = {
   EXPIRED: "expired",
 } as const;
 
-export type ApiKeyStatus =
-  (typeof API_KEY_STATUS)[keyof typeof API_KEY_STATUS];
+export type ApiKeyStatus = (typeof API_KEY_STATUS)[keyof typeof API_KEY_STATUS];
 
 // Helper to determine API key status
 export const getApiKeyStatus = (apiKey: ApiKeyData): ApiKeyStatus => {
