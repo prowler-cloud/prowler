@@ -5,7 +5,6 @@ export * from "./delete-api-key-modal";
 export * from "./edit-api-key-name-modal";
 export * from "./membership-item";
 export * from "./memberships-card";
-export * from "./revoke-api-key-modal";
 export * from "./role-item";
 export * from "./roles-card";
 export * from "./user-basic-info-card";
