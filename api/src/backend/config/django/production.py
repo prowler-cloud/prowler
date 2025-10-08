@@ -14,7 +14,7 @@ default_db_port = env("POSTGRES_PORT")
 
 DATABASES = {
     "prowler_user": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "psqlextra.backend",
         "NAME": default_db_name,
         "USER": default_db_user,
         "PASSWORD": default_db_password,
@@ -29,15 +29,14 @@ DATABASES = {
         "HOST": default_db_host,
         "PORT": default_db_port,
     },
-}
-
-DATABASES["replica"] = {
-    "ENGINE": DATABASES["prowler_user"]["ENGINE"],
-    "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
-    "USER": env("POSTGRES_REPLICA_USER", default=default_db_user),
-    "PASSWORD": env("POSTGRES_REPLICA_PASSWORD", default=default_db_password),
-    "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
-    "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
+    "replica": {
+        "ENGINE": "psqlextra.backend",
+        "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
+        "USER": env("POSTGRES_REPLICA_USER", default=default_db_user),
+        "PASSWORD": env("POSTGRES_REPLICA_PASSWORD", default=default_db_password),
+        "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
+        "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
+    },
 }
 
 DATABASES["default"] = DATABASES["prowler_user"]
