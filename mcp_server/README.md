@@ -224,15 +224,11 @@ The Prowler MCP server supports different authentication in Prowler Cloud and Pr
 
 #### STDIO Mode Authentication
 
-For STDIO mode, authentication is handled via environment variables:
+For STDIO mode, authentication is handled via environment variables using an API key:
 
 ```bash
 # Required for Prowler Cloud and Prowler App (Self-Managed) authentication
-export PROWLER_APP_EMAIL="your-email@example.com"
-export PROWLER_APP_PASSWORD="your-password"
-
-# Optional - in case not provided the first membership that was added to the user will be used. This can be found as `Organization ID` in your User Profile in Prowler App
-export PROWLER_APP_TENANT_ID="your-tenant-id"
+export PROWLER_APP_API_KEY="pk_your_api_key_here"
 
 # Optional - for custom API endpoint, in case not provided Prowler Cloud API will be used
 export PROWLER_API_BASE_URL="https://api.prowler.com"
@@ -240,7 +236,16 @@ export PROWLER_API_BASE_URL="https://api.prowler.com"
 
 #### HTTP Mode Authentication
 
-For HTTP mode (remote server), authentication is handled via Bearer tokens. You need to obtain a JWT token from Prowler Cloud/App and include the generated token in the MCP client configuration. To get a valid token, you can use the following command (replace the email and password with your own credentials):
+For HTTP mode (remote server), authentication is handled via Bearer tokens. The MCP server supports both JWT tokens and API keys:
+
+**Option 1: Using API Keys (Recommended)**
+Use your Prowler API key directly in the MCP client configuration with Bearer token format:
+```
+Authorization: Bearer pk_your_api_key_here
+```
+
+**Option 2: Using JWT Tokens**
+You need to obtain a JWT token from Prowler Cloud/App and include the generated token in the MCP client configuration. To get a valid token, you can use the following command (replace the email and password with your own credentials):
 
 ```bash
 curl -X POST https://api.prowler.com/api/v1/tokens \
@@ -276,9 +281,7 @@ For local execution, configure your MCP client to launch the server directly. Be
       "command": "uvx",
       "args": ["/path/to/prowler/mcp_server/"],
       "env": {
-        "PROWLER_APP_EMAIL": "your-email@example.com",
-        "PROWLER_APP_PASSWORD": "your-password",
-        "PROWLER_APP_TENANT_ID": "your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App,
+        "PROWLER_APP_API_KEY": "pk_your_api_key_here",
         "PROWLER_API_BASE_URL": "https://api.prowler.com"  // Optional, in case not provided Prowler Cloud API will be used
       }
     }
@@ -295,9 +298,7 @@ For local execution, configure your MCP client to launch the server directly. Be
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "--env", "PROWLER_APP_EMAIL=your-email@example.com",
-        "--env", "PROWLER_APP_PASSWORD=your-password",
-        "--env", "PROWLER_APP_TENANT_ID=your-tenant-id",  // Optional, this can be found as `Organization ID` in your User Profile in Prowler App
+        "--env", "PROWLER_APP_API_KEY=pk_your_api_key_here",
         "--env", "PROWLER_API_BASE_URL=https://api.prowler.com",  // Optional, in case not provided Prowler Cloud API will be used
         "prowler-mcp"
       ]
@@ -316,6 +317,21 @@ For HTTP mode, you can configure your MCP client to connect to a remote Prowler 
 
 Example configuration for clients that support HTTP transport:
 
+**Using API Key (Recommended):**
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "url": "http://mcp.prowler.com/mcp",  // Replace with your own MCP server URL, by default when server is run in local it is http://localhost:8000/mcp
+      "headers": {
+        "Authorization": "Bearer pk_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+**Using JWT Token:**
 ```json
 {
   "mcpServers": {
