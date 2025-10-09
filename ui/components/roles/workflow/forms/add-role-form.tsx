@@ -22,7 +22,7 @@ import { Form } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { addRoleFormSchema, ApiError } from "@/types";
 
-type FormValues = z.infer<typeof addRoleFormSchema>;
+type FormValues = z.input<typeof addRoleFormSchema>;
 
 export const AddRoleForm = ({
   groups,

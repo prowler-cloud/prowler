@@ -39,6 +39,7 @@ from api.models import (
     StateChoices,
     StatusChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
 )
@@ -314,6 +315,23 @@ class UserSerializer(BaseSerializerV1):
             if self._can_view_relationships(instance)
             else Membership.objects.none()
         )
+
+
+class UserIncludeSerializer(UserSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "name",
+            "email",
+            "company_name",
+            "date_joined",
+            "roles",
+        ]
+
+    included_serializers = {
+        "roles": "api.v1.serializers.RoleIncludeSerializer",
+    }
 
 
 class UserCreateSerializer(BaseWriteSerializer):
@@ -908,6 +926,17 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "uid",
             # "scanner_args"
         ]
+        extra_kwargs = {
+            "alias": {
+                "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
+            },
+            "provider": {
+                "help_text": "Type of provider to create.",
+            },
+            "uid": {
+                "help_text": "Unique identifier for the provider, set by the provider, e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.",
+            },
+        }
 
 
 class ProviderUpdateSerializer(BaseWriteSerializer):
@@ -922,6 +951,11 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
             "alias",
             # "scanner_args"
         ]
+        extra_kwargs = {
+            "alias": {
+                "help_text": "Human readable name to identify the provider, e.g. 'Production AWS Account', 'Dev Environment'",
+            }
+        }
 
 
 # Scans
@@ -1957,6 +1991,17 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
         resource_name = "compliance-requirements-details"
 
 
+class ComplianceOverviewDetailThreatscoreSerializer(ComplianceOverviewDetailSerializer):
+    """
+    Serializer for detailed compliance requirement information for Threatscore.
+
+    Includes additional fields specific to the Threatscore framework.
+    """
+
+    passed_findings = serializers.IntegerField()
+    total_findings = serializers.IntegerField()
+
+
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):
     id = serializers.CharField()
     compliance_name = serializers.CharField()
@@ -2735,3 +2780,107 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
             instance.api_key_decoded = api_key
             instance.save()
         return instance
+
+
+# API Keys
+
+
+class TenantApiKeySerializer(RLSSerializer):
+    """
+    Serializer for the TenantApiKey model.
+    """
+
+    # Map database field names to API field names for consistency
+    expires_at = serializers.DateTimeField(source="expiry_date", read_only=True)
+    inserted_at = serializers.DateTimeField(source="created", read_only=True)
+
+    class Meta:
+        model = TenantAPIKey
+        fields = [
+            "id",
+            "name",
+            "prefix",
+            "expires_at",
+            "revoked",
+            "inserted_at",
+            "last_used_at",
+            "entity",
+        ]
+
+    included_serializers = {
+        "entity": "api.v1.serializers.UserIncludeSerializer",
+    }
+
+
+class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """Serializer for creating new API keys."""
+
+    # Map database field names to API field names for consistency
+    expires_at = serializers.DateTimeField(source="expiry_date", required=False)
+    inserted_at = serializers.DateTimeField(source="created", read_only=True)
+    api_key = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TenantAPIKey
+        fields = [
+            "id",
+            "name",
+            "prefix",
+            "expires_at",
+            "revoked",
+            "entity",
+            "inserted_at",
+            "last_used_at",
+            "api_key",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "prefix": {"read_only": True},
+            "revoked": {"read_only": True},
+            "entity": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "last_used_at": {"read_only": True},
+            "api_key": {"read_only": True},
+        }
+
+    def get_api_key(self, obj):
+        """Return the raw API key if it was stored during creation."""
+        return getattr(obj, "_raw_api_key", None)
+
+    def create(self, validated_data):
+        instance, raw_api_key = TenantAPIKey.objects.create_api_key(
+            **validated_data,
+            tenant_id=self.context.get("tenant_id"),
+            entity=self.context.get("request").user,
+        )
+        # Store the raw API key temporarily on the instance for the serializer
+        instance._raw_api_key = raw_api_key
+        return instance
+
+
+class TenantApiKeyUpdateSerializer(RLSSerializer, BaseWriteSerializer):
+    """Serializer for updating API keys - only allows changing the name."""
+
+    # Map database field names to API field names for consistency
+    expires_at = serializers.DateTimeField(source="expiry_date", read_only=True)
+    inserted_at = serializers.DateTimeField(source="created", read_only=True)
+
+    class Meta:
+        model = TenantAPIKey
+        fields = [
+            "id",
+            "name",
+            "prefix",
+            "expires_at",
+            "entity",
+            "inserted_at",
+            "last_used_at",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "prefix": {"read_only": True},
+            "entity": {"read_only": True},
+            "expires_at": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "last_used_at": {"read_only": True},
+        }
