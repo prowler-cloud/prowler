@@ -8206,6 +8206,49 @@ class TestTenantApiKeyViewSet:
         assert data["relationships"]["entity"]["data"]["type"] == "users"
         assert data["relationships"]["entity"]["data"]["id"] == str(api_key.entity.id)
 
+    def test_api_keys_retrieve_with_entity_include(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test retrieving API key with ?include=entity returns user data without memberships."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client.get(
+            reverse("api-key-detail", kwargs={"pk": api_key.id}),
+            {"include": "entity"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+
+        # Verify the main data contains the entity relationship
+        data = response_data["data"]
+        assert "entity" in data["relationships"]
+        assert data["relationships"]["entity"]["data"]["type"] == "users"
+        assert data["relationships"]["entity"]["data"]["id"] == str(api_key.entity.id)
+
+        # Verify included section exists
+        assert "included" in response_data
+        assert len(response_data["included"]) == 1
+
+        # Verify included user data
+        included_user = response_data["included"][0]
+        assert included_user["type"] == "users"
+        assert included_user["id"] == str(api_key.entity.id)
+
+        # Verify UserIncludeSerializer fields are present
+        user_attrs = included_user["attributes"]
+        assert "name" in user_attrs
+        assert "email" in user_attrs
+        assert "company_name" in user_attrs
+        assert "date_joined" in user_attrs
+        assert user_attrs["name"] == api_key.entity.name
+        assert user_attrs["email"] == api_key.entity.email
+
+        # Verify memberships field is NOT included (excluded by UserIncludeSerializer)
+        assert "memberships" not in user_attrs
+
+        # Verify roles relationship is present
+        assert "relationships" in included_user
+        assert "roles" in included_user["relationships"]
+
     def test_api_keys_entity_auto_assigned_on_create(
         self, authenticated_client, create_test_user
     ):

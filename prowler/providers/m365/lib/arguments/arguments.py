@@ -1,3 +1,6 @@
+import argparse
+
+
 def init_parser(self):
     """Init the M365 Provider CLI parser"""
     m365_parser = self.subparsers.add_parser(
@@ -14,14 +17,15 @@ def init_parser(self):
         help="Use Azure CLI authentication to log in against Microsoft 365",
     )
     m365_auth_modes_group.add_argument(
-        "--env-auth",
-        action="store_true",
-        help="Use User and Password environment variables authentication to log in against Microsoft 365",
-    )
-    m365_auth_modes_group.add_argument(
         "--sp-env-auth",
         action="store_true",
-        help="Use Azure Service Principal environment variables authentication to log in against Microsoft 365",
+        help="Use Service Principal environment variables authentication to log in against Microsoft 365",
+    )
+    m365_auth_modes_group.add_argument(
+        "--env-auth",
+        dest="sp_env_auth",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
     m365_auth_modes_group.add_argument(
         "--browser-auth",
