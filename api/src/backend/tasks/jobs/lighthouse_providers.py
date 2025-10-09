@@ -11,7 +11,16 @@ logger = get_task_logger(__name__)
 def _extract_openai_api_key(
     provider_cfg: LighthouseProviderConfiguration,
 ) -> str | None:
-    """Safely extract the OpenAI API key from provider credentials JSON."""
+    """
+    Safely extract the OpenAI API key from a provider configuration.
+
+    Args:
+        provider_cfg (LighthouseProviderConfiguration): The provider configuration instance
+            containing the credentials.
+
+    Returns:
+        str | None: The API key string if present and valid, otherwise None.
+    """
     creds = provider_cfg.credentials_decoded
     if not isinstance(creds, dict):
         return None
@@ -23,9 +32,26 @@ def _extract_openai_api_key(
 
 def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
     """
-    Validate provider credentials by calling OpenAI models.list and toggle is_active.
+    Validate a Lighthouse provider configuration by calling the provider API and
+    toggle its active state accordingly.
 
-    Returns a dict like: {"connected": bool, "error": str | None}
+    Currently supports the OpenAI provider by invoking `models.list` to verify that
+    the provided credentials are valid.
+
+    Args:
+        provider_config_id (str): The primary key of the `LighthouseProviderConfiguration`
+            to validate.
+
+    Returns:
+        dict: A result dictionary with the following keys:
+            - "connected" (bool): Whether the provider credentials are valid.
+            - "error" (str | None): The error message when not connected, otherwise None.
+
+    Side Effects:
+        - Updates and persists `is_active` on the `LighthouseProviderConfiguration`.
+
+    Raises:
+        LighthouseProviderConfiguration.DoesNotExist: If no configuration exists with the given ID.
     """
     provider_cfg = LighthouseProviderConfiguration.objects.get(pk=provider_config_id)
 
@@ -57,14 +83,28 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
 
 def refresh_lighthouse_provider_models(provider_config_id: str) -> Dict:
     """
-    Fetch provider models from OpenAI and upsert LighthouseProviderModels rows for the
-    given provider configuration. Remove stale entries not present in the latest fetch.
+    Refresh the catalog of models for a Lighthouse provider configuration.
 
-    Returns a dict like: {"created": int, "updated": int, "deleted": int} or with "error".
+    For the OpenAI provider, this fetches the current list of models, upserts entries
+    into `LighthouseProviderModels`, and deletes stale entries no longer returned by
+    the provider.
+
+    Args:
+        provider_config_id (str): The primary key of the `LighthouseProviderConfiguration`
+            whose models should be refreshed.
+
+    Returns:
+        dict: A result dictionary with the following keys on success:
+            - "created" (int): Number of new model rows created.
+            - "updated" (int): Number of existing model rows updated.
+            - "deleted" (int): Number of stale model rows removed.
+        If an error occurs, the dictionary will contain an "error" (str) field instead.
+
+    Raises:
+        LighthouseProviderConfiguration.DoesNotExist: If no configuration exists with the given ID.
     """
     provider_cfg = LighthouseProviderConfiguration.objects.get(pk=provider_config_id)
 
-    # MVP scope: Only OpenAI provider is supported
     if (
         provider_cfg.provider_type
         != LighthouseProviderConfiguration.ProviderChoices.OPENAI
