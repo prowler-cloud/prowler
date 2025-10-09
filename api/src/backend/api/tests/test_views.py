@@ -1870,17 +1870,7 @@ class TestProviderSecretViewSet:
                     "kubeconfig_content": "kubeconfig-content",
                 },
             ),
-            # M365 with STATIC secret - no user or password
-            (
-                Provider.ProviderChoices.M365.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "client_id": "client-id",
-                    "client_secret": "client-secret",
-                    "tenant_id": "tenant-id",
-                },
-            ),
-            # M365 with user only
+            # M365 client secret credentials
             (
                 Provider.ProviderChoices.M365.value,
                 ProviderSecret.TypeChoices.STATIC,
@@ -1889,27 +1879,17 @@ class TestProviderSecretViewSet:
                     "client_secret": "client-secret",
                     "tenant_id": "tenant-id",
                     "user": "test@domain.com",
-                },
-            ),
-            # M365 with password only
-            (
-                Provider.ProviderChoices.M365.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "client_id": "client-id",
-                    "client_secret": "client-secret",
-                    "tenant_id": "tenant-id",
                     "password": "supersecret",
                 },
             ),
-            # M365 with user and password
+            # M365 certificate credentials (valid base64)
             (
                 Provider.ProviderChoices.M365.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
-                    "client_secret": "client-secret",
                     "tenant_id": "tenant-id",
+                    "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",
                     "user": "test@domain.com",
                     "password": "supersecret",
                 },
@@ -2278,6 +2258,50 @@ class TestProviderSecretViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_m365_provider_secrets_invalid_certificate_base64(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test M365 provider secret creation with invalid base64 certificate content"""
+        # Find M365 provider from fixture
+        m365_provider = None
+        for provider in providers_fixture:
+            if provider.provider == Provider.ProviderChoices.M365.value:
+                m365_provider = provider
+                break
+
+        assert m365_provider is not None, "M365 provider not found in fixture"
+
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "M365 Certificate Invalid Base64",
+                    "secret_type": "static",
+                    "secret": {
+                        "client_id": "client-id",
+                        "tenant_id": "tenant-id",
+                        "certificate_content": "invalid-base64-content!@#$%",
+                        "user": "test@domain.com",
+                        "password": "supersecret",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(m365_provider.id)}
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "certificate content is not valid base64 encoded data" in str(
+            response.json()
+        )
 
 
 @pytest.mark.django_db
@@ -5781,10 +5805,12 @@ class TestScheduleViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("tasks.beat.perform_scheduled_scan_task.apply_async")
     @patch("api.v1.views.Task.objects.get")
     def test_schedule_daily_already_scheduled(
         self,
         mock_task_get,
+        mock_apply_async,
         authenticated_client,
         providers_fixture,
         tasks_fixture,
@@ -5792,6 +5818,7 @@ class TestScheduleViewSet:
         provider, *_ = providers_fixture
         prowler_task = tasks_fixture[0]
         mock_task_get.return_value = prowler_task
+        mock_apply_async.return_value.id = prowler_task.id
         json_payload = {
             "provider_id": str(provider.id),
         }
