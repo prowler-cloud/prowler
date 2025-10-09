@@ -724,7 +724,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         # Get check status data by region from findings
         findings = (
             Finding.all_objects.filter(scan_id=scan_id, muted=False)
-            .only("id", "check_id", "status")
+            .only("id", "check_id", "status", "compliance")
             .prefetch_related(
                 Prefetch(
                     "resources",
@@ -735,7 +735,9 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             .iterator(chunk_size=1000)
         )
 
+        findings_count_by_compliance = {}
         check_status_by_region = {}
+        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
         with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             for finding in findings:
                 for resource in finding.small_resources:
@@ -743,6 +745,27 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                     current_status = check_status_by_region.setdefault(region, {})
                     if current_status.get(finding.check_id) != "FAIL":
                         current_status[finding.check_id] = finding.status
+                    if modeled_threatscore_compliance_id in finding.compliance:
+                        for requirement_id in finding.compliance[
+                            modeled_threatscore_compliance_id
+                        ]:
+                            compliance_key = findings_count_by_compliance.setdefault(
+                                region, {}
+                            ).setdefault(
+                                modeled_threatscore_compliance_id.lower().replace(
+                                    "-", ""
+                                ),
+                                {},
+                            )
+                            if requirement_id not in compliance_key:
+                                compliance_key[requirement_id] = {
+                                    "total": 0,
+                                    "pass": 0,
+                                }
+
+                            compliance_key[requirement_id]["total"] += 1
+                            if finding.status == "PASS":
+                                compliance_key[requirement_id]["pass"] += 1
 
         try:
             # Try to get regions from provider
@@ -777,11 +800,16 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         # Prepare compliance requirement rows
         compliance_requirement_rows: list[dict[str, Any]] = []
         utc_datetime_now = datetime.now(tz=timezone.utc)
+        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
         for region, compliance_data in compliance_overview_by_region.items():
             for compliance_id, compliance in compliance_data.items():
-                framework = compliance["framework"]
-                version = compliance["version"] or ""
-                compliance_description = compliance.get("description", "")
+                modeled_framework = (
+                    compliance["framework"].lower().replace("-", "").replace("_", "")
+                )
+                modeled_version = (
+                    compliance["version"].lower().replace("-", "").replace("_", "")
+                ) or ""
+                modeled_compliance_id = f"{modeled_framework}{modeled_version}"
                 # Create an overview record for each requirement within each compliance framework
                 for requirement_id, requirement in compliance["requirements"].items():
                     checks_status = requirement["checks_status"]
@@ -791,10 +819,10 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             "tenant_id": tenant_id,
                             "inserted_at": utc_datetime_now,
                             "compliance_id": compliance_id,
-                            "framework": framework,
-                            "version": version or "",
+                            "framework": compliance["framework"],
+                            "version": compliance["version"] or "",
                             "description": requirement.get(
-                                "description", compliance_description
+                                "description", requirement["description"]
                             )
                             or "",
                             "region": region,
@@ -804,6 +832,18 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             "failed_checks": checks_status["fail"],
                             "total_checks": checks_status["total"],
                             "scan_id": scan_instance.id,
+                            "passed_findings": findings_count_by_compliance.get(
+                                region, {}
+                            )
+                            .get(modeled_compliance_id, {})
+                            .get(requirement_id, {})
+                            .get("pass", 0),
+                            "total_findings": findings_count_by_compliance.get(
+                                region, {}
+                            )
+                            .get(modeled_compliance_id, {})
+                            .get(requirement_id, {})
+                            .get("total", 0),
                         }
                     )
 

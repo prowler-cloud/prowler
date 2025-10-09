@@ -6892,6 +6892,188 @@ class TestTenantFinishACSView:
             assert response.status_code == 302
             assert "sso_saml_failed=true" in response.url
 
+    def test_dispatch_skips_role_mapping_when_single_manage_account_user(
+        self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
+    ):
+        """Test that role mapping is skipped when tenant has only one user with MANAGE_ACCOUNT role"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        # Create a single role with manage_account=True for the user
+        admin_role = Role.objects.using(MainRouter.admin_db).create(
+            name="admin",
+            tenant=tenant,
+            manage_account=True,
+            manage_users=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=user, role=admin_role, tenant_id=tenant.id
+        )
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+                "userType": ["no_permissions"],  # This should be ignored
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 302
+
+        # Verify the admin role is still assigned (not changed to no_permissions)
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=admin_role, tenant_id=tenant.id)
+            .exists()
+        )
+
+        # Verify no_permissions role was NOT created in the database
+        assert (
+            not Role.objects.using(MainRouter.admin_db)
+            .filter(name="no_permissions", tenant=tenant)
+            .exists()
+        )
+
+        # Verify no_permissions role was NOT assigned to the user
+        assert not (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role__name="no_permissions", tenant_id=tenant.id)
+            .exists()
+        )
+
+    def test_dispatch_applies_role_mapping_when_multiple_manage_account_users(
+        self, create_test_user, tenants_fixture, saml_setup, settings, monkeypatch
+    ):
+        """Test that role mapping is applied when tenant has multiple users with MANAGE_ACCOUNT role"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        # Create a second user with manage_account=True
+        second_admin = User.objects.using(MainRouter.admin_db).create(
+            email="admin2@prowler.com", name="Second Admin"
+        )
+        admin_role = Role.objects.using(MainRouter.admin_db).create(
+            name="admin",
+            tenant=tenant,
+            manage_account=True,
+            manage_users=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=user, role=admin_role, tenant_id=tenant.id
+        )
+        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+            user=second_admin, role=admin_role, tenant_id=tenant.id
+        )
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+                "userType": ["viewer"],  # This SHOULD be applied
+            },
+        )
+
+        request = RequestFactory().get(
+            reverse("saml_finish_acs", kwargs={"organization_slug": "testtenant"})
+        )
+        request.user = user
+        request.session = {}
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml", client_id="testtenant", name="Test App", settings={}
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = MagicMock()
+            mock_user_get.return_value = user
+
+            view = TenantFinishACSView.as_view()
+            response = view(request, organization_slug="testtenant")
+
+        assert response.status_code == 302
+
+        # Verify the viewer role was created and assigned (role mapping was applied)
+        viewer_role = Role.objects.using(MainRouter.admin_db).get(
+            name="viewer", tenant=tenant
+        )
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=viewer_role, tenant_id=tenant.id)
+            .exists()
+        )
+
+        # Verify the admin role was removed (replaced by viewer)
+        assert not (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=admin_role, tenant_id=tenant.id)
+            .exists()
+        )
+
 
 @pytest.mark.django_db
 class TestLighthouseConfigViewSet:
@@ -8023,6 +8205,49 @@ class TestTenantApiKeyViewSet:
         assert "entity" in data["relationships"]
         assert data["relationships"]["entity"]["data"]["type"] == "users"
         assert data["relationships"]["entity"]["data"]["id"] == str(api_key.entity.id)
+
+    def test_api_keys_retrieve_with_entity_include(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test retrieving API key with ?include=entity returns user data without memberships."""
+        api_key = api_keys_fixture[0]
+        response = authenticated_client.get(
+            reverse("api-key-detail", kwargs={"pk": api_key.id}),
+            {"include": "entity"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+
+        # Verify the main data contains the entity relationship
+        data = response_data["data"]
+        assert "entity" in data["relationships"]
+        assert data["relationships"]["entity"]["data"]["type"] == "users"
+        assert data["relationships"]["entity"]["data"]["id"] == str(api_key.entity.id)
+
+        # Verify included section exists
+        assert "included" in response_data
+        assert len(response_data["included"]) == 1
+
+        # Verify included user data
+        included_user = response_data["included"][0]
+        assert included_user["type"] == "users"
+        assert included_user["id"] == str(api_key.entity.id)
+
+        # Verify UserIncludeSerializer fields are present
+        user_attrs = included_user["attributes"]
+        assert "name" in user_attrs
+        assert "email" in user_attrs
+        assert "company_name" in user_attrs
+        assert "date_joined" in user_attrs
+        assert user_attrs["name"] == api_key.entity.name
+        assert user_attrs["email"] == api_key.entity.email
+
+        # Verify memberships field is NOT included (excluded by UserIncludeSerializer)
+        assert "memberships" not in user_attrs
+
+        # Verify roles relationship is present
+        assert "relationships" in included_user
+        assert "roles" in included_user["relationships"]
 
     def test_api_keys_entity_auto_assigned_on_create(
         self, authenticated_client, create_test_user
