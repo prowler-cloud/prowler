@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from "@playwright/test";
-import { HomePage } from "./home-page";
+import { BasePage } from "../base-page";
+import { HomePage } from "../home/home-page";
 
 export interface SignInCredentials {
   email: string;
@@ -11,8 +12,7 @@ export interface SocialAuthConfig {
   githubEnabled: boolean;
 }
 
-export class SignInPage {
-  readonly page: Page;
+export class SignInPage extends BasePage {
   readonly homePage: HomePage;
   
   // Form elements
@@ -31,20 +31,17 @@ export class SignInPage {
   readonly backButton: Locator;
   
   // UI elements
-  readonly title: Locator;
   readonly logo: Locator;
-  readonly themeToggle: Locator;
   
   // Error messages
   readonly errorMessages: Locator;
-  readonly loadingIndicator: Locator;
   
   // SAML specific elements
   readonly samlModeTitle: Locator;
   readonly samlEmailInput: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
     this.homePage = new HomePage(page);
     
     // Form elements
@@ -63,13 +60,10 @@ export class SignInPage {
     this.backButton = page.getByText("Back");
     
     // UI elements
-    this.title = page.getByText("Sign in", { exact: true });
     this.logo = page.locator('svg[width="300"]');
-    this.themeToggle = page.getByLabel("Toggle theme");
     
     // Error messages
     this.errorMessages = page.locator('[role="alert"], .error-message, [data-testid="error"]');
-    this.loadingIndicator = page.getByText("Loading");
     
     // SAML specific elements
     this.samlModeTitle = page.getByText("Sign in with SAML SSO");
@@ -78,12 +72,7 @@ export class SignInPage {
 
   // Navigation methods
   async goto(): Promise<void> {
-    await this.page.goto("/sign-in");
-    await this.waitForPageLoad();
-  }
-
-  async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState("networkidle");
+    await super.goto("/sign-in");
   }
 
   // Form interaction methods
@@ -148,7 +137,7 @@ export class SignInPage {
   async verifyPageLoaded(): Promise<void> {
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.logo).toBeVisible();
-    await expect(this.title).toBeVisible();
+    await expect(this.page.getByText("Sign in", { exact: true })).toBeVisible();
   }
 
   async verifyFormElements(): Promise<void> {
@@ -188,13 +177,13 @@ export class SignInPage {
   }
 
   async verifyNormalModeActive(): Promise<void> {
-    await expect(this.title).toBeVisible();
+    await expect(this.page.getByText("Sign in", { exact: true })).toBeVisible();
     await expect(this.passwordInput).toBeVisible();
   }
 
   async verifyLoadingState(): Promise<void> {
     await expect(this.loginButton).toHaveAttribute("aria-disabled", "true");
-    await expect(this.loadingIndicator).toBeVisible();
+    await super.verifyLoadingState();
   }
 
   async verifyFormValidation(): Promise<void> {
@@ -239,30 +228,7 @@ export class SignInPage {
     return emailValue.length > 0 && passwordValue.length > 0;
   }
 
-  async getFormErrors(): Promise<string[]> {
-    const errorElements = await this.errorMessages.all();
-    const errors: string[] = [];
-    
-    for (const element of errorElements) {
-      const text = await element.textContent();
-      if (text) {
-        errors.push(text.trim());
-      }
-    }
-    
-    return errors;
-  }
-
   // Browser interaction methods
-  async refresh(): Promise<void> {
-    await this.page.reload();
-    await this.waitForPageLoad();
-  }
-
-  async goBack(): Promise<void> {
-    await this.page.goBack();
-    await this.waitForPageLoad();
-  }
 
   // Session management methods
   async logout(): Promise<void> {
@@ -271,7 +237,7 @@ export class SignInPage {
 
   async verifyLogoutSuccess(): Promise<void> {
     await expect(this.page).toHaveURL("/sign-in");
-    await expect(this.title).toBeVisible();
+    await expect(this.page.getByText("Sign in", { exact: true })).toBeVisible();
   }
 
   // Advanced interaction methods

@@ -74,14 +74,6 @@ export default defineConfig({
       name: "invite-and-manage-users.auth.setup",
       testMatch: "invite-and-manage-users.auth.setup.ts",
     },
-
-    // All authentication setups combined
-    // Runs all authentication setup files to create all user states
-    {
-      name: "all.auth.setup",
-      testMatch: "**/*.auth.setup.ts",
-    },
-
     // ===========================================
     // Test Suite Projects
     // ===========================================
@@ -89,6 +81,12 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testMatch: "auth-login.spec.ts",
+    },
+    // This project runs the sign-up test suite
+    {
+      name: "sign-up",
+      testMatch: "sign-up.spec.ts",
     },
   ],
 
