@@ -289,9 +289,9 @@
         ]
       },
       {
-        "tab": "Prowler Pro SaaS (Legacy)",
+        "tab": "Prowler Cloud API Docs",
         "icon": "link",
-        "href": "https://docs.prowler.com/projects/prowler-saas/en/latest/"
+        "href": "https://api.prowler.com/api/v1/docs"
       },
       {
         "tab": "About Us",
@@ -351,5 +351,15 @@
       "slack": "https://goto.prowler.com/slack",
       "website": "https://prowler.com"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-lighthouse/",
+      "destination": "/user-guide/tutorials/prowler-app-lighthouse"
+    },
+    {
+      "source": "/patata",
+      "destination": "/user-guide/tutorials/prowler-app-lighthouse"
+    }
+  ]
 }
