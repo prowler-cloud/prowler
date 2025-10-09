@@ -19,7 +19,7 @@ The IaC provider leverages [Trivy](https://trivy.dev/latest/docs/scanner/vulnera
 - No cloud credentials or authentication are required for local scans.
 - For remote repository scans, authentication can be provided via [git URL](https://git-scm.com/docs/git-clone#_git_urls), CLI flags or environment variables.
   - Check the [IaC Authentication](/user-guide/providers/iac/authentication) page for more details.
-- Mutelist logic is handled by Trivy, not Prowler.
+- Mutelist logic ([filtering](https://trivy.dev/latest/docs/configuration/filtering/)) is handled by Trivy, not Prowler.
 - Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
 
 ## Prowler CLI
