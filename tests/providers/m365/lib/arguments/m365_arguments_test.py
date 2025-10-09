@@ -147,29 +147,6 @@ class TestM365Arguments:
         assert kwargs["action"] == "store_true"
         assert "Azure CLI authentication" in kwargs["help"]
 
-    def test_env_auth_argument_configuration(self):
-        """Test that env-auth argument is configured correctly"""
-        mock_m365_args = MagicMock()
-        mock_m365_args.subparsers = self.mock_subparsers
-        mock_m365_args.common_providers_parser = MagicMock()
-
-        arguments.init_parser(mock_m365_args)
-
-        # Find the env-auth argument call
-        calls = self.mock_auth_modes_group.add_argument.call_args_list
-        env_auth_call = None
-        for call in calls:
-            if call[0][0] == "--env-auth":
-                env_auth_call = call
-                break
-
-        assert env_auth_call is not None
-
-        # Check argument configuration
-        kwargs = env_auth_call[1]
-        assert kwargs["action"] == "store_true"
-        assert "User and Password environment variables" in kwargs["help"]
-
     def test_sp_env_auth_argument_configuration(self):
         """Test that sp-env-auth argument is configured correctly"""
         mock_m365_args = MagicMock()
@@ -191,7 +168,7 @@ class TestM365Arguments:
         # Check argument configuration
         kwargs = sp_env_call[1]
         assert kwargs["action"] == "store_true"
-        assert "Azure Service Principal environment variables" in kwargs["help"]
+        assert "Service Principal environment variables" in kwargs["help"]
 
     def test_browser_auth_argument_configuration(self):
         """Test that browser-auth argument is configured correctly"""
@@ -336,28 +313,7 @@ class TestM365ArgumentsIntegration:
         args = parser.parse_args(["m365", "--az-cli-auth"])
 
         assert args.az_cli_auth is True
-        assert args.env_auth is False
-        assert args.sp_env_auth is False
-        assert args.browser_auth is False
-        assert args.certificate_auth is False
-
-    def test_real_argument_parsing_env_auth(self):
-        """Test parsing arguments with environment authentication"""
-        parser = argparse.ArgumentParser()
-        subparsers = parser.add_subparsers()
-        common_parser = argparse.ArgumentParser(add_help=False)
-
-        mock_m365_args = MagicMock()
-        mock_m365_args.subparsers = subparsers
-        mock_m365_args.common_providers_parser = common_parser
-
-        arguments.init_parser(mock_m365_args)
-
-        # Parse arguments with environment auth
-        args = parser.parse_args(["m365", "--env-auth"])
-
-        assert args.az_cli_auth is False
-        assert args.env_auth is True
+        assert not hasattr(args, "env_auth")
         assert args.sp_env_auth is False
         assert args.browser_auth is False
         assert args.certificate_auth is False
@@ -378,7 +334,7 @@ class TestM365ArgumentsIntegration:
         args = parser.parse_args(["m365", "--sp-env-auth"])
 
         assert args.az_cli_auth is False
-        assert args.env_auth is False
+        assert not hasattr(args, "env_auth")
         assert args.sp_env_auth is True
         assert args.browser_auth is False
         assert args.certificate_auth is False
@@ -406,7 +362,7 @@ class TestM365ArgumentsIntegration:
         )
 
         assert args.az_cli_auth is False
-        assert args.env_auth is False
+        assert not hasattr(args, "env_auth")
         assert args.sp_env_auth is False
         assert args.browser_auth is True
         assert args.certificate_auth is False
@@ -428,7 +384,7 @@ class TestM365ArgumentsIntegration:
         args = parser.parse_args(["m365", "--certificate-auth"])
 
         assert args.az_cli_auth is False
-        assert args.env_auth is False
+        assert not hasattr(args, "env_auth")
         assert args.sp_env_auth is False
         assert args.browser_auth is False
         assert args.certificate_auth is True
@@ -495,7 +451,7 @@ class TestM365ArgumentsIntegration:
         args = parser.parse_args(["m365"])
 
         assert args.az_cli_auth is False
-        assert args.env_auth is False
+        assert not hasattr(args, "env_auth")
         assert args.sp_env_auth is False
         assert args.browser_auth is False
         assert args.certificate_auth is False
@@ -547,7 +503,7 @@ class TestM365ArgumentsIntegration:
 
         # This should raise SystemExit due to mutually exclusive group
         try:
-            parser.parse_args(["m365", "--az-cli-auth", "--env-auth"])
+            parser.parse_args(["m365", "--az-cli-auth", "--sp-env-auth"])
             assert False, "Expected SystemExit due to mutually exclusive arguments"
         except SystemExit:
             # This is expected
@@ -636,6 +592,6 @@ class TestM365ArgumentsIntegration:
         assert args.certificate_path == "/home/user/cert.pem"
         assert args.tenant_id == "12345678-1234-1234-1234-123456789012"
         assert args.az_cli_auth is False
-        assert args.env_auth is False
+        assert not hasattr(args, "env_auth")
         assert args.sp_env_auth is False
         assert args.browser_auth is False
