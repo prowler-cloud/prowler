@@ -59,6 +59,7 @@ from api.v1.serializer_utils.integrations import (
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
 )
+from api.v1.serializer_utils.lighthouse import OpenAICredentialsSerializer
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
@@ -2755,6 +2756,16 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "updated_at": {"read_only": True},
         }
 
+    def validate_temperature(self, value):
+        if not 0 <= value <= 1:
+            raise ValidationError("Temperature must be between 0 and 1.")
+        return value
+
+    def validate_max_tokens(self, value):
+        if not 500 <= value <= 5000:
+            raise ValidationError("Max tokens must be between 500 and 5000.")
+        return value
+
     def validate(self, attrs):
         tenant_id = self.context.get("request").tenant_id
         if LighthouseConfiguration.objects.filter(tenant_id=tenant_id).exists():
@@ -2762,6 +2773,11 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
                 {
                     "tenant_id": "Lighthouse configuration already exists for this tenant."
                 }
+            )
+        api_key = attrs.get("api_key")
+        if api_key is not None:
+            OpenAICredentialsSerializer(data={"api_key": api_key}).is_valid(
+                raise_exception=True
             )
         return super().validate(attrs)
 
@@ -2806,6 +2822,24 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
             "temperature": {"required": False},
             "max_tokens": {"required": False},
         }
+
+    def validate_temperature(self, value):
+        if not 0 <= value <= 1:
+            raise ValidationError("Temperature must be between 0 and 1.")
+        return value
+
+    def validate_max_tokens(self, value):
+        if not 500 <= value <= 5000:
+            raise ValidationError("Max tokens must be between 500 and 5000.")
+        return value
+
+    def validate(self, attrs):
+        api_key = attrs.get("api_key", None)
+        if api_key is not None:
+            OpenAICredentialsSerializer(data={"api_key": api_key}).is_valid(
+                raise_exception=True
+            )
+        return super().validate(attrs)
 
     def update(self, instance, validated_data):
         api_key = validated_data.pop("api_key", None)
@@ -3042,6 +3076,24 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                 }
             )
 
+    def validate(self, attrs):
+        provider_type = attrs.get("provider_type")
+        credentials = attrs.get("credentials") or {}
+
+        if provider_type == LighthouseProviderConfiguration.ProviderChoices.OPENAI:
+            try:
+                OpenAICredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+
+        return super().validate(attrs)
+
 
 class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
     """
@@ -3077,6 +3129,27 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
 
         instance.save()
         return instance
+
+    def validate(self, attrs):
+        provider_type = getattr(self.instance, "provider_type", None)
+        credentials = attrs.get("credentials", None)
+
+        if (
+            credentials is not None
+            and provider_type == LighthouseProviderConfiguration.ProviderChoices.OPENAI
+        ):
+            try:
+                OpenAICredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+
+        return super().validate(attrs)
 
 
 # Lighthouse: Tenant configuration
@@ -3128,6 +3201,58 @@ class LighthouseTenantConfigCreateSerializer(RLSSerializer, BaseWriteSerializer)
             "default_models",
         ]
 
+    def validate(self, attrs):
+        request = self.context.get("request")
+        tenant_id = self.context.get("tenant_id") or (
+            getattr(request, "tenant_id", None) if request else None
+        )
+
+        default_provider = attrs.get("default_provider", "")
+        default_models = attrs.get("default_models", {})
+
+        if default_provider:
+            supported = set(LighthouseProviderConfiguration.ProviderChoices.values)
+            if default_provider not in supported:
+                raise ValidationError(
+                    {"default_provider": f"Unsupported provider '{default_provider}'."}
+                )
+            if not LighthouseProviderConfiguration.objects.filter(
+                tenant_id=tenant_id, provider_type=default_provider, is_active=True
+            ).exists():
+                raise ValidationError(
+                    {
+                        "default_provider": f"No active configuration found for '{default_provider}'."
+                    }
+                )
+
+        if default_models is not None and not isinstance(default_models, dict):
+            raise ValidationError(
+                {"default_models": "Must be an object mapping provider -> model_id."}
+            )
+
+        for provider_type, model_id in (default_models or {}).items():
+            provider_cfg = LighthouseProviderConfiguration.objects.filter(
+                tenant_id=tenant_id, provider_type=provider_type, is_active=True
+            ).first()
+            if not provider_cfg:
+                raise ValidationError(
+                    {
+                        "default_models": f"No active configuration for provider '{provider_type}'."
+                    }
+                )
+            if not LighthouseProviderModels.objects.filter(
+                tenant_id=tenant_id,
+                provider_configuration=provider_cfg,
+                model_id=model_id,
+            ).exists():
+                raise ValidationError(
+                    {
+                        "default_models": f"Invalid model '{model_id}' for provider '{provider_type}'."
+                    }
+                )
+
+        return super().validate(attrs)
+
     def create(self, validated_data):
         try:
             return super().create(validated_data)
@@ -3149,6 +3274,62 @@ class LighthouseTenantConfigUpdateSerializer(BaseWriteSerializer):
         extra_kwargs = {
             "id": {"read_only": True},
         }
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        tenant_id = self.context.get("tenant_id") or (
+            getattr(request, "tenant_id", None) if request else None
+        )
+
+        default_provider = attrs.get(
+            "default_provider", getattr(self.instance, "default_provider", "")
+        )
+        default_models = attrs.get(
+            "default_models", getattr(self.instance, "default_models", {})
+        )
+
+        if default_provider:
+            supported = set(LighthouseProviderConfiguration.ProviderChoices.values)
+            if default_provider not in supported:
+                raise ValidationError(
+                    {"default_provider": f"Unsupported provider '{default_provider}'."}
+                )
+            if not LighthouseProviderConfiguration.objects.filter(
+                tenant_id=tenant_id, provider_type=default_provider, is_active=True
+            ).exists():
+                raise ValidationError(
+                    {
+                        "default_provider": f"No active configuration found for '{default_provider}'."
+                    }
+                )
+
+        if default_models is not None and not isinstance(default_models, dict):
+            raise ValidationError(
+                {"default_models": "Must be an object mapping provider -> model_id."}
+            )
+
+        for provider_type, model_id in (default_models or {}).items():
+            provider_cfg = LighthouseProviderConfiguration.objects.filter(
+                tenant_id=tenant_id, provider_type=provider_type, is_active=True
+            ).first()
+            if not provider_cfg:
+                raise ValidationError(
+                    {
+                        "default_models": f"No active configuration for provider '{provider_type}'."
+                    }
+                )
+            if not LighthouseProviderModels.objects.filter(
+                tenant_id=tenant_id,
+                provider_configuration=provider_cfg,
+                model_id=model_id,
+            ).exists():
+                raise ValidationError(
+                    {
+                        "default_models": f"Invalid model '{model_id}' for provider '{provider_type}'."
+                    }
+                )
+
+        return super().validate(attrs)
 
 
 # Lighthouse: Provider models

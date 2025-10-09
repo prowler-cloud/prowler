@@ -1872,22 +1872,6 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
     def clean(self):
         super().clean()
 
-        # Validate temperature
-        if not 0 <= self.temperature <= 1:
-            raise ModelValidationError(
-                detail="Temperature must be between 0 and 1",
-                code="invalid_temperature",
-                pointer="/data/attributes/temperature",
-            )
-
-        # Validate max_tokens
-        if not 500 <= self.max_tokens <= 5000:
-            raise ModelValidationError(
-                detail="Max tokens must be between 500 and 5000",
-                code="invalid_max_tokens",
-                pointer="/data/attributes/max_tokens",
-            )
-
     @property
     def api_key_decoded(self):
         """Return the decrypted API key, or None if unavailable or invalid."""
@@ -1909,15 +1893,6 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         if not value:
             raise ModelValidationError(
                 detail="API key is required",
-                code="invalid_api_key",
-                pointer="/data/attributes/api_key",
-            )
-
-        # Validate OpenAI API key format
-        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
-        if not re.match(openai_key_pattern, value):
-            raise ModelValidationError(
-                detail="Invalid OpenAI API key format.",
                 code="invalid_api_key",
                 pointer="/data/attributes/api_key",
             )
@@ -1995,35 +1970,6 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
     class ProviderChoices(models.TextChoices):
         OPENAI = "openai", _("OpenAI")
 
-    @staticmethod
-    def validate_openai_credentials(credentials: dict):
-        """
-        Validate OpenAI provider credentials.
-
-        Checks:
-        - api_key is present and is a string
-        - api_key matches expected OpenAI format
-
-        Raises:
-            ModelValidationError: If credentials are invalid
-        """
-        api_key = credentials.get("api_key")
-        if not isinstance(api_key, str) or not api_key:
-            raise ModelValidationError(
-                detail="OpenAI credentials must include 'api_key'",
-                code="invalid_openai_credentials",
-                pointer="/data/attributes/credentials/api_key",
-            )
-
-        # Validate OpenAI API key format
-        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
-        if not re.match(openai_key_pattern, api_key):
-            raise ModelValidationError(
-                detail="Invalid OpenAI API key format.",
-                code="invalid_openai_api_key_format",
-                pointer="/data/attributes/credentials/api_key",
-            )
-
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -2069,16 +2015,7 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
     @credentials_decoded.setter
     def credentials_decoded(self, value):
         """
-        Set and encrypt credentials.
-
-        This is the single source of truth for credential validation.
-        Validates based on provider_type and encrypts before storage.
-
-        Args:
-            value: Dict containing provider-specific credentials
-
-        Raises:
-            ModelValidationError: If credentials are invalid or missing
+        Set and encrypt credentials (assumes serializer performed validation).
         """
         if not value:
             raise ModelValidationError(
@@ -2086,11 +2023,6 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
                 code="invalid_credentials",
                 pointer="/data/attributes/credentials",
             )
-
-        # Validate credentials based on provider type
-        if self.provider_type == self.ProviderChoices.OPENAI:
-            self.validate_openai_credentials(value)
-
         self.credentials = fernet.encrypt(json.dumps(value).encode())
 
     def delete(self, *args, **kwargs):
@@ -2172,68 +2104,6 @@ class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
-
-        # Validate default_provider is supported, configured and active (if provided)
-        if self.default_provider:
-            # Check if provider type is supported
-            supported_providers = set(
-                LighthouseProviderConfiguration.ProviderChoices.values
-            )
-            if self.default_provider not in supported_providers:
-                raise ModelValidationError(
-                    detail=f"Unsupported provider: '{self.default_provider}'. Supported providers: {', '.join(supported_providers)}",
-                    code="unsupported_provider",
-                    pointer="/data/attributes/default_provider",
-                )
-
-            # Check if provider is configured and active
-            if not LighthouseProviderConfiguration.objects.filter(
-                tenant_id=self.tenant_id,
-                provider_type=self.default_provider,
-                is_active=True,
-            ).exists():
-                raise ModelValidationError(
-                    detail=f"No active configuration found for provider '{self.default_provider}'",
-                    code="invalid_default_provider",
-                    pointer="/data/attributes/default_provider",
-                )
-
-        # Validate default_models mapping
-        if self.default_models is not None and not isinstance(
-            self.default_models, dict
-        ):
-            raise ModelValidationError(
-                detail="default_models must be an object mapping provider->model",
-                code="invalid_default_models",
-                pointer="/data/attributes/default_models",
-            )
-
-        for provider_type, model_id in (self.default_models or {}).items():
-            # Provider must exist and be active
-            provider_cfg = LighthouseProviderConfiguration.objects.filter(
-                tenant_id=self.tenant_id,
-                provider_type=provider_type,
-                is_active=True,
-            ).first()
-
-            if not provider_cfg:
-                raise ModelValidationError(
-                    detail=f"No active configuration found for provider '{provider_type}'",
-                    code="invalid_default_models_provider",
-                    pointer="/data/attributes/default_models",
-                )
-
-            # Model must exist under that provider configuration
-            if not LighthouseProviderModels.objects.filter(
-                tenant_id=self.tenant_id,
-                provider_configuration=provider_cfg,
-                model_id=model_id,
-            ).exists():
-                raise ModelValidationError(
-                    detail=f"Invalid model '{model_id}' for provider '{provider_type}'",
-                    code="invalid_default_models_model",
-                    pointer="/data/attributes/default_models",
-                )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "lighthouse_tenant_config"
