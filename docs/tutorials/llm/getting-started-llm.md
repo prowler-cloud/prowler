@@ -139,4 +139,3 @@ redteam:
     - id: mitre:atlas
       numTests: 5
 ```
-
