@@ -6,28 +6,28 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { DataTable } from "@/components/ui/table";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";
 import { createApiKeyColumns } from "./api-keys/column-api-keys";
 import { ICON_SIZE } from "./api-keys/constants";
-import { ApiKeyData, IncludedResource } from "./api-keys/types";
 import { CreateApiKeyModal } from "./create-api-key-modal";
 import { DeleteApiKeyModal } from "./delete-api-key-modal";
 import { EditApiKeyNameModal } from "./edit-api-key-name-modal";
 
 interface ApiKeysCardClientProps {
-  initialApiKeys: ApiKeyData[];
-  included: IncludedResource[];
+  initialApiKeys: EnrichedApiKey[];
 }
 
 export const ApiKeysCardClient = ({
   initialApiKeys,
-  included,
 }: ApiKeysCardClientProps) => {
   const router = useRouter();
-  const [selectedApiKey, setSelectedApiKey] = useState<ApiKeyData | null>(null);
+  const [selectedApiKey, setSelectedApiKey] = useState<EnrichedApiKey | null>(
+    null,
+  );
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
 
   const createModal = useDisclosure();
@@ -49,21 +49,17 @@ export const ApiKeysCardClient = ({
     router.refresh();
   };
 
-  const handleDeleteClick = (apiKey: ApiKeyData) => {
+  const handleDeleteClick = (apiKey: EnrichedApiKey) => {
     setSelectedApiKey(apiKey);
     deleteModal.onOpen();
   };
 
-  const handleEditClick = (apiKey: ApiKeyData) => {
+  const handleEditClick = (apiKey: EnrichedApiKey) => {
     setSelectedApiKey(apiKey);
     editModal.onOpen();
   };
 
-  const columns = createApiKeyColumns(
-    handleEditClick,
-    handleDeleteClick,
-    included,
-  );
+  const columns = createApiKeyColumns(handleEditClick, handleDeleteClick);
 
   return (
     <>
@@ -99,6 +95,7 @@ export const ApiKeysCardClient = ({
         isOpen={createModal.isOpen}
         onClose={createModal.onClose}
         onSuccess={handleCreateSuccess}
+        existingApiKeys={initialApiKeys}
       />
 
       {createdApiKey && (
@@ -121,6 +118,7 @@ export const ApiKeysCardClient = ({
         onClose={editModal.onClose}
         apiKey={selectedApiKey}
         onSuccess={handleEditSuccess}
+        existingApiKeys={initialApiKeys}
       />
     </>
   );

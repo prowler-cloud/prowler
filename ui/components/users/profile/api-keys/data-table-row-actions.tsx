@@ -9,15 +9,15 @@ import {
 import { Row } from "@tanstack/react-table";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 
+import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { ICON_SIZE } from "./constants";
-import { ApiKeyData } from "./types";
 
 interface DataTableRowActionsProps {
-  row: Row<ApiKeyData>;
-  onEdit: (apiKey: ApiKeyData) => void;
-  onDelete: (apiKey: ApiKeyData) => void;
+  row: Row<EnrichedApiKey>;
+  onEdit: (apiKey: EnrichedApiKey) => void;
+  onDelete: (apiKey: EnrichedApiKey) => void;
 }
 
 export function DataTableRowActions({

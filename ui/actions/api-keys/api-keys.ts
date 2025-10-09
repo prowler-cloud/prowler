@@ -12,10 +12,13 @@ import {
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
+import { adaptApiKeysResponse, type EnrichedApiKey } from "./api-keys.adapter";
+
 /**
  * Fetches all API keys for the current tenant
+ * Returns enriched API keys with user data already resolved
  */
-export const getApiKeys = async (): Promise<ApiKeyResponse | undefined> => {
+export const getApiKeys = async (): Promise<EnrichedApiKey[]> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/api-keys`);
   url.searchParams.set("include", "entity.roles");
@@ -26,10 +29,12 @@ export const getApiKeys = async (): Promise<ApiKeyResponse | undefined> => {
       next: { tags: ["api-keys"] },
     });
 
-    return handleApiResponse(response);
+    const apiResponse = (await handleApiResponse(response)) as ApiKeyResponse;
+
+    return adaptApiKeysResponse(apiResponse);
   } catch (error) {
     console.error("Error fetching API keys:", error);
-    return undefined;
+    return [];
   }
 };
 

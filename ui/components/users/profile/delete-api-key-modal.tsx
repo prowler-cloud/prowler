@@ -3,6 +3,7 @@
 import { ModalFooter } from "@heroui/modal";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
+import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
 import {
   Alert,
   AlertDescription,
@@ -12,13 +13,12 @@ import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
-import { ApiKeyData } from "./api-keys/types";
 import { useModalForm } from "./api-keys/use-modal-form";
 
 interface DeleteApiKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  apiKey: ApiKeyData | null;
+  apiKey: EnrichedApiKey | null;
   onSuccess: () => void;
 }
 

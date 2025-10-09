@@ -72,3 +72,24 @@ export const getApiKeyUserEmail = (
 
   return user?.attributes.email || FALLBACK_VALUES.UNKNOWN;
 };
+
+/**
+ * Checks if an API key name already exists in the list
+ * @param name - The name to check
+ * @param existingApiKeys - List of existing API keys
+ * @param excludeId - Optional ID to exclude from the check (for edit scenarios)
+ * @returns true if the name already exists, false otherwise
+ */
+export const isApiKeyNameDuplicate = (
+  name: string,
+  existingApiKeys: ApiKeyData[],
+  excludeId?: string,
+): boolean => {
+  const trimmedName = name.trim().toLowerCase();
+
+  return existingApiKeys.some(
+    (key) =>
+      key.id !== excludeId &&
+      key.attributes.name?.toLowerCase() === trimmedName,
+  );
+};

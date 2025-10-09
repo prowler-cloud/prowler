@@ -4,18 +4,20 @@ import { Input } from "@heroui/input";
 import { ModalFooter } from "@heroui/modal";
 
 import { createApiKey } from "@/actions/api-keys/api-keys";
+import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
 import { useModalForm } from "./api-keys/use-modal-form";
-import { calculateExpiryDate } from "./api-keys/utils";
+import { calculateExpiryDate, isApiKeyNameDuplicate } from "./api-keys/utils";
 
 interface CreateApiKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (apiKey: string) => void;
+  existingApiKeys: EnrichedApiKey[];
 }
 
 interface CreateApiKeyFormData {
@@ -27,6 +29,7 @@ export const CreateApiKeyModal = ({
   isOpen,
   onClose,
   onSuccess,
+  existingApiKeys,
 }: CreateApiKeyModalProps) => {
   const { formData, setFormData, isLoading, error, handleSubmit, handleClose } =
     useModalForm<CreateApiKeyFormData>({
@@ -37,6 +40,12 @@ export const CreateApiKeyModal = ({
       onSubmit: async (data) => {
         if (!data.name.trim()) {
           throw new Error("Name is required");
+        }
+
+        if (isApiKeyNameDuplicate(data.name, existingApiKeys)) {
+          throw new Error(
+            "An API key with this name already exists. Please choose a different name.",
+          );
         }
 
         const result = await createApiKey({

@@ -5,18 +5,20 @@ import { ModalFooter } from "@heroui/modal";
 import { useEffect } from "react";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
+import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
-import { ApiKeyData } from "./api-keys/types";
 import { useModalForm } from "./api-keys/use-modal-form";
+import { isApiKeyNameDuplicate } from "./api-keys/utils";
 
 interface EditApiKeyNameModalProps {
   isOpen: boolean;
   onClose: () => void;
-  apiKey: ApiKeyData | null;
+  apiKey: EnrichedApiKey | null;
   onSuccess: () => void;
+  existingApiKeys: EnrichedApiKey[];
 }
 
 interface EditApiKeyFormData {
@@ -28,6 +30,7 @@ export const EditApiKeyNameModal = ({
   onClose,
   apiKey,
   onSuccess,
+  existingApiKeys,
 }: EditApiKeyNameModalProps) => {
   const { formData, setFormData, isLoading, error, handleSubmit, handleClose } =
     useModalForm<EditApiKeyFormData>({
@@ -37,6 +40,12 @@ export const EditApiKeyNameModal = ({
       onSubmit: async (data) => {
         if (!apiKey || !data.name.trim()) {
           throw new Error("Name is required");
+        }
+
+        if (isApiKeyNameDuplicate(data.name, existingApiKeys, apiKey.id)) {
+          throw new Error(
+            "An API key with this name already exists. Please choose a different name.",
+          );
         }
 
         const result = await updateApiKey(apiKey.id, {

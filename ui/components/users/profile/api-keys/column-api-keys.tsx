@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
+import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
 import { DataTableColumnHeader } from "@/components/ui/table";
 
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -13,13 +14,11 @@ import {
   PrefixCell,
   StatusCell,
 } from "./table-cells";
-import { ApiKeyData, IncludedResource } from "./types";
 
 export const createApiKeyColumns = (
-  onEdit: (apiKey: ApiKeyData) => void,
-  onDelete: (apiKey: ApiKeyData) => void,
-  included?: IncludedResource[],
-): ColumnDef<ApiKeyData>[] => [
+  onEdit: (apiKey: EnrichedApiKey) => void,
+  onDelete: (apiKey: EnrichedApiKey) => void,
+): ColumnDef<EnrichedApiKey>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -39,7 +38,7 @@ export const createApiKeyColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="EMAIL" />
     ),
-    cell: ({ row }) => <EmailCell apiKey={row.original} included={included} />,
+    cell: ({ row }) => <EmailCell apiKey={row.original} />,
   },
   {
     accessorKey: "inserted_at",

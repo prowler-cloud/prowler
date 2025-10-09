@@ -1,21 +1,18 @@
 import { Chip } from "@heroui/chip";
 
-import { FALLBACK_VALUES } from "./constants";
-import { ApiKeyData, getApiKeyStatus, IncludedResource } from "./types";
-import {
-  formatRelativeTime,
-  getApiKeyUserEmail,
-  getStatusColor,
-  getStatusLabel,
-} from "./utils";
+import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
 
-export const NameCell = ({ apiKey }: { apiKey: ApiKeyData }) => (
+import { FALLBACK_VALUES } from "./constants";
+import { getApiKeyStatus } from "./types";
+import { formatRelativeTime, getStatusColor, getStatusLabel } from "./utils";
+
+export const NameCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
   <p className="text-sm font-medium">
     {apiKey.attributes.name || FALLBACK_VALUES.UNNAMED}
   </p>
 );
 
-export const PrefixCell = ({ apiKey }: { apiKey: ApiKeyData }) => (
+export const PrefixCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
   <code className="rounded px-2 py-1 font-mono text-xs">
     {apiKey.attributes.prefix}
   </code>
@@ -25,11 +22,11 @@ export const DateCell = ({ date }: { date: string | null }) => (
   <p className="text-sm">{formatRelativeTime(date)}</p>
 );
 
-export const LastUsedCell = ({ apiKey }: { apiKey: ApiKeyData }) => (
+export const LastUsedCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
   <DateCell date={apiKey.attributes.last_used_at} />
 );
 
-export const StatusCell = ({ apiKey }: { apiKey: ApiKeyData }) => {
+export const StatusCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => {
   const status = getApiKeyStatus(apiKey);
   return (
     <Chip color={getStatusColor(status)} size="sm" variant="flat">
@@ -38,13 +35,6 @@ export const StatusCell = ({ apiKey }: { apiKey: ApiKeyData }) => {
   );
 };
 
-export const EmailCell = ({
-  apiKey,
-  included,
-}: {
-  apiKey: ApiKeyData;
-  included?: IncludedResource[];
-}) => {
-  const email = getApiKeyUserEmail(apiKey, included);
-  return <p className="text-sm">{email}</p>;
-};
+export const EmailCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
+  <p className="text-sm">{apiKey.userEmail}</p>
+);
