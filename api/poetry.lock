@@ -1563,14 +1563,14 @@ with-social = ["django-allauth[socialaccount] (>=64.0.0)"]
 
 [[package]]
 name = "django"
-version = "5.1.12"
+version = "5.1.13"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "dev"]
 files = [
-    {file = "django-5.1.12-py3-none-any.whl", hash = "sha256:9eb695636cea3601b65690f1596993c042206729afb320ca0960b55f8ed4477b"},
-    {file = "django-5.1.12.tar.gz", hash = "sha256:8a8991b1ec052ef6a44fefd1ef336ab8daa221287bcb91a4a17d5e1abec5bbcc"},
+    {file = "django-5.1.13-py3-none-any.whl", hash = "sha256:06f257f79dc4c17f3f9e23b106a4c5ed1335abecbe731e83c598c941d14fbeed"},
+    {file = "django-5.1.13.tar.gz", hash = "sha256:543ff21679f15e80edfc01fe7ea35f8291b6d4ea589433882913626a7c1cf929"},
 ]
 
 [package.dependencies]
@@ -1923,6 +1923,27 @@ files = [
 [package.dependencies]
 Django = ">=4.2"
 djangorestframework = ">=3.15.0"
+
+[[package]]
+name = "drf-simple-apikey"
+version = "2.2.1"
+description = "API Key authentication and permissions for Django REST."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "drf_simple_apikey-2.2.1-py2.py3-none-any.whl", hash = "sha256:2a60b35676d14f907c47dee179dd0fa7425a84c34d6ff5b48d08d3b87ff32809"},
+    {file = "drf_simple_apikey-2.2.1.tar.gz", hash = "sha256:e5a52804bbac12c8db80c10a3d51a8514fc59fc8385b5e751099a2bc944ad25d"},
+]
+
+[package.dependencies]
+cryptography = ">=38.0.4"
+django = ">=4.2"
+djangorestframework = ">=3.14.0"
+
+[package.extras]
+test = ["coverage", "pytest", "pytest-django"]
+tooling = ["black (==22.3.0)", "bump2version", "pylint"]
 
 [[package]]
 name = "drf-spectacular"
@@ -6238,4 +6259,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "91058a14382b76136a82f45624a30aece7a6d77c8b36c290bb4c40ea60c8850b"
+content-hash = "03442fd4673006c5a74374f90f53621fd1c9d117279fe6cc0355ef833eb7f9bb"

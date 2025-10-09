@@ -3,12 +3,12 @@ import os
 from fastmcp import FastMCP
 from prowler_mcp_server.lib.logger import logger
 
-# Initialize main Prowler MCP server
-prowler_mcp_server = FastMCP("prowler-mcp-server")
 
-
-async def setup_main_server():
+async def setup_main_server(transport: str) -> FastMCP:
     """Set up the main Prowler MCP server with all available integrations."""
+
+    # Initialize main Prowler MCP server
+    prowler_mcp_server = FastMCP("prowler-mcp-server")
 
     # Import Prowler Hub tools with prowler_hub_ prefix
     try:
@@ -22,6 +22,9 @@ async def setup_main_server():
 
     try:
         logger.info("Importing Prowler App server...")
+
+        if os.getenv("PROWLER_MCP_MODE", None) is None:
+            os.environ["PROWLER_MCP_MODE"] = transport
 
         if not os.path.exists(
             os.path.join(os.path.dirname(__file__), "prowler_app", "server.py")
@@ -39,3 +42,14 @@ async def setup_main_server():
         logger.info("Successfully imported Prowler App server")
     except Exception as e:
         logger.error(f"Failed to import Prowler App server: {e}")
+
+    try:
+        logger.info("Importing Prowler Documentation server...")
+        from prowler_mcp_server.prowler_documentation.server import docs_mcp_server
+
+        await prowler_mcp_server.import_server(docs_mcp_server, prefix="prowler_docs")
+        logger.info("Successfully imported Prowler Documentation server")
+    except Exception as e:
+        logger.error(f"Failed to import Prowler Documentation server: {e}")
+
+    return prowler_mcp_server
