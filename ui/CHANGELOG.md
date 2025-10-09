@@ -12,9 +12,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 - React Compiler support for automatic optimization [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Turbopack support for faster development builds [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
+- Dashboard graph components with interactive visualizations [(#8873)](https://github.com/prowler-cloud/prowler/pull/8873)
 
 ### 🔄 Changed
-
 - Upgraded Zod to version 4.1.11 with comprehensive migration of deprecated syntax [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
 - Upgraded Zustand to version 5.0.8 (no code changes required) [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
 - Upgraded AI SDK to version 5.0.59 with new transport and message structure [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
