@@ -24,11 +24,10 @@
             ]
           },
           {
-            "group": "Prowler App",
+            "group": "Prowler Cloud",
             "pages": [
-              "getting-started/products/prowler-app",
-              "getting-started/installation/prowler-app",
-              "getting-started/basic-usage/prowler-app"
+              "getting-started/products/prowler-cloud",
+              "getting-started/goto/prowler-cloud"
             ]
           },
           {
@@ -40,17 +39,18 @@
             ]
           },
           {
+            "group": "Prowler App",
+            "pages": [
+              "getting-started/products/prowler-app",
+              "getting-started/installation/prowler-app",
+              "getting-started/basic-usage/prowler-app"
+            ]
+          },
+          {
             "group": "Prowler Hub",
             "pages": [
               "getting-started/products/prowler-hub",
               "getting-started/goto/prowler-hub"
-            ]
-          },
-          {
-            "group": "Prowler Cloud",
-            "pages": [
-              "getting-started/products/prowler-cloud",
-              "getting-started/goto/prowler-cloud"
             ]
           },
           {
@@ -66,7 +66,7 @@
         ]
       },
       {
-        "tab": "User Guide",
+        "tab": "Guides",
         "groups": [
           {
             "group": "Prowler App",
@@ -299,7 +299,7 @@
         "href": "https://prowler.com/about#team"
       },
       {
-        "tab": "Release Notes",
+        "tab": "Changelog",
         "icon": "github",
         "href": "https://github.com/prowler-cloud/prowler/releases"
       }
