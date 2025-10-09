@@ -150,15 +150,17 @@ class TestOutputs:
         provider = "aws"
         expected_timestamp = "20230615103045"
 
-        path, compliance = _generate_output_directory(
+        path, compliance, threatscore = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
 
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
+        assert os.path.isdir(os.path.dirname(threatscore))
 
         assert path.endswith(f"{provider}-{expected_timestamp}")
         assert compliance.endswith(f"{provider}-{expected_timestamp}")
+        assert threatscore.endswith(f"{provider}-{expected_timestamp}")
 
     @patch("tasks.jobs.export.rls_transaction")
     @patch("tasks.jobs.export.Scan")
@@ -181,12 +183,14 @@ class TestOutputs:
         provider = "aws/test@check"
         expected_timestamp = "20230615103045"
 
-        path, compliance = _generate_output_directory(
+        path, compliance, threatscore = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
 
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
+        assert os.path.isdir(os.path.dirname(threatscore))
 
         assert path.endswith(f"aws-test-check-{expected_timestamp}")
         assert compliance.endswith(f"aws-test-check-{expected_timestamp}")
+        assert threatscore.endswith(f"aws-test-check-{expected_timestamp}")
