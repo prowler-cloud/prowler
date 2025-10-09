@@ -315,6 +315,11 @@
           "anchor": "Slack",
           "href": "https://goto.prowler.com/slack",
           "icon": "slack"
+        },
+        {
+          "anchor": "YouTube",
+          "href": "https://www.youtube.com/@prowlercloud",
+          "icon": "youtube"
         }
       ]
     }
