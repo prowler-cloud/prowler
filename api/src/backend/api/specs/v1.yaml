@@ -86,6 +86,17 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - entity
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -186,6 +197,17 @@ paths:
           format: uuid
         description: A UUID string identifying this tenant api key.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - entity
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - API Keys
       security:
@@ -4642,6 +4664,12 @@ paths:
         name: filter[connected]
         schema:
           type: boolean
+        description: |-
+          Filter by connection status. Set to True to return only
+                  connected providers, or False to return only providers with failed
+                  connections. If not specified, both connected and failed providers are
+                  included. Providers with no connection attempt (status is null) are
+                  excluded from this filter.
       - in: query
         name: filter[id]
         schema:
@@ -4662,6 +4690,9 @@ paths:
         schema:
           type: string
           format: date
+        description: |-
+          Filter by date when the provider was added
+                  (format: YYYY-MM-DD)
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -4697,7 +4728,23 @@ paths:
           type: array
           items:
             type: string
-        description: Multiple values may be separated by commas.
+            x-spec-enum-id: 4c1e219dad1cc0e7
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - name: filter[search]
@@ -4728,6 +4775,9 @@ paths:
         schema:
           type: string
           format: date
+        description: |-
+          Filter by date when the provider was updated
+                  (format: YYYY-MM-DD)
       - in: query
         name: filter[updated_at__gte]
         schema:
@@ -5018,6 +5068,7 @@ paths:
         schema:
           type: string
           format: date
+        description: 'Filter by date when the secret was added (format: YYYY-MM-DD)'
       - in: query
         name: filter[name]
         schema:
@@ -5042,6 +5093,7 @@ paths:
         schema:
           type: string
           format: date
+        description: 'Filter by date when the secret was updated (format: YYYY-MM-DD)'
       - name: page[number]
         required: false
         in: query
@@ -12099,6 +12151,8 @@ components:
                 alias:
                   type: string
                   nullable: true
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
                   maxLength: 100
                   minLength: 3
       required:
@@ -13140,6 +13194,8 @@ components:
             alias:
               type: string
               nullable: true
+              description: Human readable name to identify the provider, e.g. 'Production
+                AWS Account', 'Dev Environment'
               maxLength: 100
               minLength: 3
             provider:
@@ -13151,17 +13207,21 @@ components:
               - m365
               - github
               type: string
+              x-spec-enum-id: 4c1e219dad1cc0e7
               description: |-
+                Type of provider to create.
+
                 * `aws` - AWS
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
-              x-spec-enum-id: 4c1e219dad1cc0e7
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
+              description: Unique identifier for the provider, set by the provider,
+                e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
               maxLength: 250
               minLength: 3
           required:
@@ -13188,6 +13248,8 @@ components:
                 alias:
                   type: string
                   nullable: true
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
                   maxLength: 100
                   minLength: 3
                 provider:
@@ -13199,18 +13261,22 @@ components:
                   - m365
                   - github
                   type: string
+                  x-spec-enum-id: 4c1e219dad1cc0e7
                   description: |-
+                    Type of provider to create.
+
                     * `aws` - AWS
                     * `azure` - Azure
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
-                  x-spec-enum-id: 4c1e219dad1cc0e7
                 uid:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
+                  description: Unique identifier for the provider, set by the provider,
+                    e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
                   maxLength: 250
               required:
               - uid
