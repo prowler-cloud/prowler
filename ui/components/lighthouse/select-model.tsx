@@ -11,16 +11,22 @@ import { CustomButton } from "@/components/ui/custom";
 
 interface SelectModelProps {
   provider: string;
+  mode?: string;
   onSelect: () => void;
 }
 
-export const SelectModel = ({ provider, onSelect }: SelectModelProps) => {
+export const SelectModel = ({
+  provider,
+  mode = "create",
+  onSelect,
+}: SelectModelProps) => {
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [models, setModels] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const isEditMode = mode === "edit";
 
   const fetchModels = async () => {
     setIsLoading(true);
@@ -84,9 +90,13 @@ export const SelectModel = ({ provider, onSelect }: SelectModelProps) => {
     <div className="flex w-full flex-col gap-6">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="mb-2 text-xl font-semibold">Select Default Model</h2>
+          <h2 className="mb-2 text-xl font-semibold">
+            {isEditMode ? "Update Default Model" : "Select Default Model"}
+          </h2>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Choose the default model to use with this provider.
+            {isEditMode
+              ? "Update the default model to use with this provider."
+              : "Choose the default model to use with this provider."}
           </p>
         </div>
         <button

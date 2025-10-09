@@ -2,12 +2,14 @@
 
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   createLighthouseProvider,
+  getLighthouseProviderByType,
   refreshProviderModels,
   testProviderConnection,
+  updateLighthouseProviderByType,
 } from "@/actions/lighthouse/lighthouse";
 import { getTask } from "@/actions/task/tasks";
 import {
@@ -20,6 +22,7 @@ import { checkTaskStatus } from "@/lib/helper";
 
 interface ConnectLLMProviderProps {
   provider: string;
+  mode?: string;
 }
 
 type AsyncResult<T = any> = {
@@ -27,14 +30,62 @@ type AsyncResult<T = any> = {
   errors?: Array<{ detail: string }>;
 };
 
-export const ConnectLLMProvider = ({ provider }: ConnectLLMProviderProps) => {
+export const ConnectLLMProvider = ({
+  provider,
+  mode = "create",
+}: ConnectLLMProviderProps) => {
   const router = useRouter();
   const [formData, setFormData] = useState({ apiKey: "", baseUrl: "" });
   const [isAdditionalOpen, setIsAdditionalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingProviderId, setExistingProviderId] = useState<string | null>(
+    null,
+  );
 
   const providerName = "OpenAI";
+  const isEditMode = mode === "edit";
+
+  // Fetch existing provider data if in edit mode
+  useEffect(() => {
+    const fetchProviderData = async () => {
+      if (!isEditMode) return;
+
+      setIsFetching(true);
+      setError(null);
+
+      try {
+        // Lookup by provider type
+        const result = await getLighthouseProviderByType(provider);
+
+        if (result.errors) {
+          throw new Error(
+            result.errors[0]?.detail || "Failed to fetch provider",
+          );
+        }
+
+        const providerData = result.data.attributes;
+        // Pre-populate base URL if it exists
+        if (providerData.base_url) {
+          setFormData((prev) => ({
+            ...prev,
+            baseUrl: providerData.base_url,
+          }));
+          setIsAdditionalOpen(true);
+        }
+
+        // Store ID internally only
+        setExistingProviderId(result.data.id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchProviderData();
+  }, [isEditMode, provider]);
 
   // Helper to handle API results and extract data or throw error
   const unwrapResult = <T,>(result: AsyncResult<T>, fallbackMsg: string): T => {
@@ -52,56 +103,80 @@ export const ConnectLLMProvider = ({ provider }: ConnectLLMProviderProps) => {
     setError(null);
 
     try {
-      // Create provider
-      const createResult = await createLighthouseProvider({
-        provider_type: provider,
-        credentials: { api_key: formData.apiKey },
-        base_url: formData.baseUrl || undefined,
-      });
-      const providerData = unwrapResult<{ id: string }>(
-        createResult,
-        "Failed to create provider",
+      let providerId = existingProviderId;
+
+      if (isEditMode) {
+        // Update existing provider by type
+        if (formData.apiKey) {
+          const updateResult = await updateLighthouseProviderByType(provider, {
+            credentials: { api_key: formData.apiKey },
+            base_url: formData.baseUrl || undefined,
+          });
+          unwrapResult(updateResult, "Failed to update provider");
+        } else if (formData.baseUrl) {
+          // Update only base URL if no API key provided
+          const updateResult = await updateLighthouseProviderByType(provider, {
+            base_url: formData.baseUrl || undefined,
+          });
+          unwrapResult(updateResult, "Failed to update provider");
+        }
+        // providerId already set from useEffect
+      } else {
+        // Create new provider
+        const createResult = await createLighthouseProvider({
+          provider_type: provider,
+          credentials: { api_key: formData.apiKey },
+          base_url: formData.baseUrl || undefined,
+        });
+        const providerData = unwrapResult<{ id: string }>(
+          createResult,
+          "Failed to create provider",
+        );
+        providerId = providerData.id;
+      }
+
+      // Test connection (only if credentials were updated or it's a new provider)
+      if (!isEditMode || formData.apiKey) {
+        const connectionResult = await testProviderConnection(providerId!);
+        const connectionTaskData = unwrapResult<{ id: string }>(
+          connectionResult,
+          "Failed to start connection test",
+        );
+
+        const connectionStatus = await checkTaskStatus(connectionTaskData.id);
+        if (!connectionStatus.completed) {
+          throw new Error(connectionStatus.error || "Connection test failed");
+        }
+
+        const connectionTask = await getTask(connectionTaskData.id);
+        const { connected, error: connectionError } =
+          connectionTask.data.attributes.result;
+        if (!connected) {
+          throw new Error(connectionError || "Connection test failed");
+        }
+
+        // Refresh models (only if connection was tested)
+        const modelsResult = await refreshProviderModels(providerId!);
+        const modelsTaskData = unwrapResult<{ id: string }>(
+          modelsResult,
+          "Failed to start model refresh",
+        );
+
+        const modelsStatus = await checkTaskStatus(modelsTaskData.id);
+        if (!modelsStatus.completed) {
+          throw new Error(modelsStatus.error || "Model refresh failed");
+        }
+
+        const modelsTask = await getTask(modelsTaskData.id);
+        if (modelsTask.data.attributes.result.error) {
+          throw new Error(modelsTask.data.attributes.result.error);
+        }
+      }
+
+      // Success - navigate to model selection
+      router.push(
+        `/lighthouse/config/select-model?provider=${provider}${isEditMode ? "&mode=edit" : ""}`,
       );
-      const providerId = providerData.id;
-
-      // Test connection
-      const connectionResult = await testProviderConnection(providerId);
-      const connectionTaskData = unwrapResult<{ id: string }>(
-        connectionResult,
-        "Failed to start connection test",
-      );
-
-      const connectionStatus = await checkTaskStatus(connectionTaskData.id);
-      if (!connectionStatus.completed) {
-        throw new Error(connectionStatus.error || "Connection test failed");
-      }
-
-      const connectionTask = await getTask(connectionTaskData.id);
-      const { connected, error: connectionError } =
-        connectionTask.data.attributes.result;
-      if (!connected) {
-        throw new Error(connectionError || "Connection test failed");
-      }
-
-      // Refresh models
-      const modelsResult = await refreshProviderModels(providerId);
-      const modelsTaskData = unwrapResult<{ id: string }>(
-        modelsResult,
-        "Failed to start model refresh",
-      );
-
-      const modelsStatus = await checkTaskStatus(modelsTaskData.id);
-      if (!modelsStatus.completed) {
-        throw new Error(modelsStatus.error || "Model refresh failed");
-      }
-
-      const modelsTask = await getTask(modelsTaskData.id);
-      if (modelsTask.data.attributes.result.error) {
-        throw new Error(modelsTask.data.attributes.result.error);
-      }
-
-      // Success
-      router.push(`/lighthouse/config/select-model?provider=${provider}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -109,16 +184,28 @@ export const ConnectLLMProvider = ({ provider }: ConnectLLMProviderProps) => {
     }
   };
 
-  const isFormValid = formData.apiKey.trim() !== "";
+  const isFormValid = isEditMode || formData.apiKey.trim() !== "";
+
+  if (isFetching) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Loading provider configuration...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col gap-6">
       <div>
         <h2 className="mb-2 text-xl font-semibold">
-          Connect to {providerName}
+          {isEditMode ? `Update ${providerName}` : `Connect to ${providerName}`}
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Enter your API credentials to connect to {providerName}.
+          {isEditMode
+            ? `Update your API credentials or settings for ${providerName}.`
+            : `Enter your API credentials to connect to ${providerName}.`}
         </p>
       </div>
 
@@ -131,7 +218,12 @@ export const ConnectLLMProvider = ({ provider }: ConnectLLMProviderProps) => {
       <div className="flex flex-col gap-4">
         <div>
           <label htmlFor="apiKey" className="mb-2 block text-sm font-medium">
-            API Key <span className="text-red-500">*</span>
+            API Key {!isEditMode && <span className="text-red-500">*</span>}
+            {isEditMode && (
+              <span className="text-xs text-gray-500">
+                (leave empty to keep existing)
+              </span>
+            )}
           </label>
           <input
             id="apiKey"
@@ -140,7 +232,11 @@ export const ConnectLLMProvider = ({ provider }: ConnectLLMProviderProps) => {
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, apiKey: e.target.value }))
             }
-            placeholder="Enter your API key"
+            placeholder={
+              isEditMode
+                ? "Enter new API key or leave empty"
+                : "Enter your API key"
+            }
             className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
           />
         </div>
@@ -187,7 +283,7 @@ export const ConnectLLMProvider = ({ provider }: ConnectLLMProviderProps) => {
             Cancel
           </CustomButton>
           <CustomButton
-            ariaLabel="Connect"
+            ariaLabel={isEditMode ? "Update" : "Connect"}
             variant="solid"
             color="action"
             size="md"
@@ -195,7 +291,13 @@ export const ConnectLLMProvider = ({ provider }: ConnectLLMProviderProps) => {
             isDisabled={!isFormValid}
             onPress={handleConnect}
           >
-            {isLoading ? "Connecting..." : "Connect"}
+            {isLoading
+              ? isEditMode
+                ? "Updating..."
+                : "Connecting..."
+              : isEditMode
+                ? "Continue"
+                : "Connect"}
           </CustomButton>
         </div>
       </div>

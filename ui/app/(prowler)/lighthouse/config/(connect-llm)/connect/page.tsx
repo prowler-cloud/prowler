@@ -8,8 +8,9 @@ import { ConnectLLMProvider } from "@/components/lighthouse/connect-llm-provider
 function ConnectContent() {
   const searchParams = useSearchParams();
   const provider = searchParams.get("provider") || "";
+  const mode = searchParams.get("mode") || "create";
 
-  return <ConnectLLMProvider provider={provider} />;
+  return <ConnectLLMProvider provider={provider} mode={mode} />;
 }
 
 export default function ConnectLLMProviderPage() {

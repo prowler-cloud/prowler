@@ -272,6 +272,125 @@ const getProviderDisplayName = (providerType: string): string => {
 };
 
 /**
+ * Get a single lighthouse provider by provider type
+ * Server-side only - never exposes internal IDs to client
+ */
+export const getLighthouseProviderByType = async (providerType: string) => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/lighthouse/providers`);
+  url.searchParams.set("filter[provider_type]", providerType);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (data.errors) {
+      return data;
+    }
+
+    // Should only be one config per provider type per tenant
+    if (data.data && data.data.length > 0) {
+      return { data: data.data[0] };
+    }
+
+    return { errors: [{ detail: "Provider configuration not found" }] };
+  } catch (error) {
+    console.error("[Server] Error in getLighthouseProviderByType:", error);
+    return { errors: [{ detail: String(error) }] };
+  }
+};
+
+/**
+ * Update a lighthouse provider configuration by provider type
+ * Looks up the provider server-side, never exposes ID to client
+ */
+export const updateLighthouseProviderByType = async (
+  providerType: string,
+  config: {
+    credentials?: Record<string, any>;
+    base_url?: string;
+    is_active?: boolean;
+  },
+) => {
+  try {
+    // First, get the provider by type
+    const providerResult = await getLighthouseProviderByType(providerType);
+
+    if (providerResult.errors || !providerResult.data) {
+      return providerResult;
+    }
+
+    const providerId = providerResult.data.id;
+
+    // Now update it
+    const headers = await getAuthHeaders({ contentType: true });
+    const url = new URL(`${apiBaseUrl}/lighthouse/providers/${providerId}`);
+
+    const payload = {
+      data: {
+        type: "lighthouse-providers",
+        id: providerId,
+        attributes: config,
+      },
+    };
+
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    revalidatePath("/lighthouse/config");
+    return data;
+  } catch (error) {
+    console.error("[Server] Error in updateLighthouseProviderByType:", error);
+    return { errors: [{ detail: String(error) }] };
+  }
+};
+
+/**
+ * Delete a lighthouse provider configuration by provider type
+ * Looks up the provider server-side, never exposes ID to client
+ */
+export const deleteLighthouseProviderByType = async (providerType: string) => {
+  try {
+    // First, get the provider by type
+    const providerResult = await getLighthouseProviderByType(providerType);
+
+    if (providerResult.errors || !providerResult.data) {
+      return providerResult;
+    }
+
+    const providerId = providerResult.data.id;
+
+    // Now delete it
+    const headers = await getAuthHeaders({ contentType: false });
+    const url = new URL(`${apiBaseUrl}/lighthouse/providers/${providerId}`);
+
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    if (response.status === 204 || response.status === 200) {
+      revalidatePath("/lighthouse/config");
+      return { success: true };
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("[Server] Error in deleteLighthouseProviderByType:", error);
+    return { errors: [{ detail: String(error) }] };
+  }
+};
+
+/**
  * Get lighthouse providers configuration with default models
  * Returns only the default model for each provider to avoid loading hundreds of models
  */

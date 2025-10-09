@@ -40,6 +40,9 @@ export const WorkflowConnectLLM = () => {
   const currentStep = config.stepIndex;
 
   const providerParam = searchParams.get("provider");
+  const mode = searchParams.get("mode");
+  const isEditMode = mode === "edit";
+
   const providerName =
     providerParam === "openai"
       ? "OpenAI"
@@ -52,11 +55,12 @@ export const WorkflowConnectLLM = () => {
   return (
     <section className="max-w-sm">
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
-        Connect {providerName}
+        {isEditMode ? `Configure ${providerName}` : `Connect ${providerName}`}
       </h1>
       <p className="text-small text-default-500 mb-5">
-        Follow these steps to configure your LLM provider and enable AI-powered
-        features.
+        {isEditMode
+          ? "Update your LLM provider configuration and settings."
+          : "Follow these steps to configure your LLM provider and enable AI-powered features."}
       </p>
       <Progress
         classNames={{

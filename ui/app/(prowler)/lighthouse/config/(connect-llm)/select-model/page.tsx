@@ -9,10 +9,12 @@ function SelectModelContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const provider = searchParams.get("provider") || "";
+  const mode = searchParams.get("mode") || "create";
 
   return (
     <SelectModel
       provider={provider}
+      mode={mode}
       onSelect={() => router.push("/lighthouse/config")}
     />
   );
