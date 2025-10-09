@@ -52,6 +52,16 @@
               "getting-started/products/prowler-cloud",
               "getting-started/goto/prowler-cloud"
             ]
+          },
+          {
+            "group": "Prowler vs. Others",
+            "pages": [
+              "getting-started/comparison/index",
+              "getting-started/comparison/awssecurityhub",
+              "getting-started/comparison/gcp",
+              "getting-started/comparison/microsoftdefender",
+              "getting-started/comparison/microsoftsentinel"
+            ]
           }
         ]
       },
