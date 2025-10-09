@@ -39,12 +39,12 @@ Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permiss
   <Tab title="Azure Portal">
     1. Go to your App Registration > "API permissions"
 
-        ![API Permission Page](.//images/providers/api-permissions-page.png)
+        ![API Permission Page](/images/providers/api-permissions-page.png)
 
     2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
 
-        ![Add API Permission](.//images/providers/add-api-permission.png)
-        ![Microsoft Graph Detail](.//images/providers/microsoft-graph-detail.png)
+        ![Add API Permission](/images/providers/add-api-permission.png)
+        ![Microsoft Graph Detail](/images/providers/microsoft-graph-detail.png)
 
     3. Search and select:
 
@@ -52,11 +52,11 @@ Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permiss
         - `Policy.Read.All`
         - `UserAuthenticationMethod.Read.All`
 
-        ![Permission Screenshots](.//images/providers/domain-permission.png)
+        ![Permission Screenshots](/images/providers/domain-permission.png)
 
     4. Click "Add permissions", then grant admin consent
 
-        ![Grant Admin Consent](.//images/providers/grant-admin-consent.png)
+        ![Grant Admin Consent](/images/providers/grant-admin-consent.png)
   </Tab>
   <Tab title="Azure CLI">
     1. To grant permissions to a Service Principal, execute the following command in a terminal:
@@ -112,28 +112,28 @@ The checks requiring this `ProwlerRole` can be found in this [section](/user-gui
   <Tab title="Azure Portal">
     1. Download the [Prowler Azure Custom Role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json)
 
-        ![Azure Custom Role](.//images/providers/download-prowler-role.png)
+        ![Azure Custom Role](/images/providers/download-prowler-role.png)
 
     2. Modify `assignableScopes` to match your Subscription ID (e.g. `/subscriptions/xxxx-xxxx-xxxx-xxxx`)
 
     3. Go to your Azure Subscription > "Access control (IAM)"
 
-        ![IAM Page](.//images/providers/iam-azure-page.png)
+        ![IAM Page](/images/providers/iam-azure-page.png)
 
     4. Click "+ Add" > "Add custom role", choose "Start from JSON" and upload the modified file
 
-        ![Add custom role via JSON](.//images/providers/add-custom-role-json.png)
+        ![Add custom role via JSON](/images/providers/add-custom-role-json.png)
 
     5. Click "Review + Create" to finish
 
-        ![Select review and create](.//images/providers/review-and-create.png)
+        ![Select review and create](/images/providers/review-and-create.png)
 
     6. Return to "Access control (IAM)" > "+ Add" > "Add role assignment"
 
         - Assign the `Reader` role to the Application created in the previous step
         - Then repeat the same process assigning the custom `ProwlerRole`
 
-        ![Role Assignment](.//images/providers/add-role-assigment.png)
+        ![Role Assignment](/images/providers/add-role-assigment.png)
 
     <Note>
         The `assignableScopes` field in the JSON custom role file must be updated to reflect the correct subscription or management group. Use one of the following formats: `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.

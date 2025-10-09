@@ -135,7 +135,7 @@ For Google Cloud, first enter your `GCP Project ID` and then select the authenti
 
 **Service Account Authentication** is the recommended authentication method for automated systems and machine-to-machine interactions, like Prowler. For detailed information about this, refer to the [Google Cloud documentation](https://cloud.google.com/iam/docs/service-account-overview).
 
-<img src="/images/gcp-auth-methods.png" alt="GCP Authentication Methods" width="700" />
+<img src="/images/prowler-app/gcp-auth-methods.png" alt="GCP Authentication Methods" width="700" />
 
 #### **Step 4.3.1: Service Account Authentication**
 
@@ -144,7 +144,7 @@ First of all, in the same project that you selected in the previous step, you ne
 - [Create a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
 - [Generate a key for a service account](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
 
-<img src="/images/gcp-service-account-creds.png" alt="GCP Service Account Credentials" width="700" />
+<img src="/images/prowler-app/gcp-service-account-creds.png" alt="GCP Service Account Credentials" width="700" />
 
 #### **Step 4.3.2: Application Default Credentials**
 
@@ -225,7 +225,7 @@ For GitHub, you must enter your Provider ID (username or organization name) and 
 For full setup instructions and requirements, check the [GitHub provider requirements](/user-guide/providers/github/getting-started-github).
 
 </Note>
-<img src="/images/github-auth-methods.png" alt="GitHub Authentication Methods" width="700" />
+<img src="/images/prowler-app/github-auth-methods.png" alt="GitHub Authentication Methods" width="700" />
 
 #### **Step 4.6.1: Personal Access Token**
 
@@ -233,7 +233,7 @@ Personal Access Tokens provide the simplest GitHub authentication method and sup
 
 - Select `Personal Access Token` and enter your `Personal Access Token`:
 
-<img src="/images/github-pat-credentials.png" alt="GitHub Personal Access Token Credentials" width="700" />
+<img src="/images/prowler-app/github-pat-credentials.png" alt="GitHub Personal Access Token Credentials" width="700" />
 
 <Note>
 For detailed instructions on creating a Personal Access Token and the exact permissions required, check the [GitHub Personal Access Token tutorial](/user-guide/providers/github/getting-started-github#1-personal-access-token-pat).
@@ -245,7 +245,7 @@ OAuth Apps enable applications to act on behalf of users with explicit consent.
 
 - Select `OAuth App Token` and enter your `OAuth App Token`:
 
-<img src="/images/github-oauth-credentials.png" alt="GitHub OAuth App Credentials" width="700" />
+<img src="/images/prowler-app/github-oauth-credentials.png" alt="GitHub OAuth App Credentials" width="700" />
 
 <Note>
 To create an OAuth App, go to GitHub Settings → Developer settings → OAuth Apps → New OAuth App. You'll need to exchange an authorization code for an access token using the OAuth flow.
@@ -257,7 +257,7 @@ GitHub Apps provide the recommended integration method for accessing multiple re
 
 - Select `GitHub App` and enter your `GitHub App ID` and `GitHub App Private Key`:
 
-    <img src="/images/github-app-credentials.png" alt="GitHub App Credentials" width="700" />
+    <img src="/images/prowler-app/github-app-credentials.png" alt="GitHub App Credentials" width="700" />
 
 <Note>
 To create a GitHub App, go to GitHub Settings → Developer settings → GitHub Apps → New GitHub App. Configure the necessary permissions and generate a private key. Install the app to your account or organization and provide the App ID and private key content.
@@ -292,7 +292,7 @@ While the scan is running, start exploring the findings in these sections:
 
 - **Overview**: High-level summary of the scans.
 
-    <img src="/images/overview.png" alt="Overview" width="700" />
+    <img src="/images/products/overview.png" alt="Overview" width="700" />
 
 - **Compliance**: Insights into compliance status.
 

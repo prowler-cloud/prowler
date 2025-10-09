@@ -76,33 +76,33 @@ With browser authentication, you will only be able to run checks that work throu
 
 1. Access **Microsoft Entra ID**
 
-    ![Overview of Microsoft Entra ID](../microsoft365//images/providers/microsoft-entra-id.png)
+    ![Overview of Microsoft Entra ID](/images/providers/microsoft-entra-id.png)
 
 2. Navigate to "Applications" > "App registrations"
 
-    ![App Registration nav](../microsoft365//images/providers/app-registration-menu.png)
+    ![App Registration nav](/images/providers/app-registration-menu.png)
 
 3. Click "+ New registration", complete the form, and click "Register"
 
-    ![New Registration](../microsoft365//images/providers/new-registration.png)
+    ![New Registration](/images/providers/new-registration.png)
 
 4. Go to "Certificates & secrets" > "Client secrets" > "+ New client secret"
 
-    ![Certificate & Secrets nav](../microsoft365//images/providers/certificates-and-secrets.png)
+    ![Certificate & Secrets nav](/images/providers/certificates-and-secrets.png)
 
 5. Fill in the required fields and click "Add", then copy the generated value (this will be `AZURE_CLIENT_SECRET`)
 
-    ![New Client Secret](../microsoft365//images/providers/new-client-secret.png)
+    ![New Client Secret](/images/providers/new-client-secret.png)
 
 #### Grant Microsoft Graph API Permissions
 
 1. Go to App Registration > Select your Prowler App > click on "API permissions"
 
-    ![API Permission Page](../microsoft365//images/providers/api-permissions-page.png)
+    ![API Permission Page](/images/providers/api-permissions-page.png)
 
 2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
 
-    ![Add API Permission](../microsoft365//images/providers/add-app-api-permission.png)
+    ![Add API Permission](/images/providers/add-app-api-permission.png)
 
 3. Search and select the required permissions:
     - `AuditLog.Read.All`: Required for Entra service
@@ -110,9 +110,9 @@ With browser authentication, you will only be able to run checks that work throu
     - `Policy.Read.All`: Required for all services
     - `SharePointTenantSettings.Read.All`: Required for SharePoint service
 
-    ![Permission Screenshots](../microsoft365//images/providers/directory-permission.png)
+    ![Permission Screenshots](/images/providers/directory-permission.png)
 
-    ![Application Permissions](../microsoft365//images/providers/app-permissions.png)
+    ![Application Permissions](/images/providers/app-permissions.png)
 
 4. Click "Add permissions", then click "Grant admin consent for ``<your-tenant-name>``"
 
@@ -122,33 +122,33 @@ With browser authentication, you will only be able to run checks that work throu
 
     - Search and select "Office 365 Exchange Online" API in **APIs my organization uses**
 
-    ![Office 365 Exchange Online API](../microsoft365//images/providers/search-exchange-api.png)
+    ![Office 365 Exchange Online API](/images/providers/search-exchange-api.png)
 
     - Select "Exchange.ManageAsApp" permission and click "Add permissions"
 
-    ![Exchange.ManageAsApp Permission](../microsoft365//images/providers/exchange-permission.png)
+    ![Exchange.ManageAsApp Permission](/images/providers/exchange-permission.png)
 
     - Assign `Global Reader` role to the app: Go to `Roles and administrators` > click `here` for directory level assignment
 
-    ![Roles and administrators](../microsoft365//images/providers/here.png)
+    ![Roles and administrators](/images/providers/here.png)
 
     - Search for `Global Reader` and assign it to your application
 
-    ![Global Reader Role](../microsoft365//images/providers/global-reader-role.png)
+    ![Global Reader Role](/images/providers/global-reader-role.png)
 
 2. **Add Teams API:**
 
     - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**
 
-    ![Skype and Teams Tenant Admin API](../microsoft365//images/providers/search-skype-teams-tenant-admin-api.png)
+    ![Skype and Teams Tenant Admin API](/images/providers/search-skype-teams-tenant-admin-api.png)
 
     - Select "application_access" permission and click "Add permissions"
 
-    ![application_access Permission](../microsoft365//images/providers/teams-permission.png)
+    ![application_access Permission](/images/providers/teams-permission.png)
 
 3. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent
 
-    ![Grant Admin Consent](../microsoft365//images/providers/grant-external-api-permissions.png)
+    ![Grant Admin Consent](/images/providers/grant-external-api-permissions.png)
 
 #### Assign User Roles (For User Authentication)
 
@@ -156,22 +156,22 @@ When using Service Principal with User Credentials authentication, assign the fo
 
 1. Go to Users > All Users > Click on the email for the user
 
-    ![User Overview](../microsoft365//images/providers/user-info-page.png)
+    ![User Overview](/images/providers/user-info-page.png)
 
 2. Click "Assigned Roles"
 
-    ![User Roles](../microsoft365//images/providers/user-role-page.png)
+    ![User Roles](/images/providers/user-role-page.png)
 
 3. Click "Add assignments", then search and select:
 
     - `Global Reader` (recommended)
     - OR `Exchange Administrator` and `Teams Administrator` (both required)
 
-    ![Global Reader Screenshots](../microsoft365//images/providers/global-reader.png)
+    ![Global Reader Screenshots](/images/providers/global-reader.png)
 
 4. Click next, assign the role as "Active", and click "Assign"
 
-    ![Grant Admin Consent for Role](../microsoft365//images/providers/grant-admin-consent-for-role.png)
+    ![Grant Admin Consent for Role](/images/providers/grant-admin-consent-for-role.png)
 
 ---
 
