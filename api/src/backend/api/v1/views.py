@@ -171,7 +171,6 @@ from api.v1.serializers import (
     LighthouseProviderConfigSerializer,
     LighthouseProviderConfigUpdateSerializer,
     LighthouseProviderModelsSerializer,
-    LighthouseTenantConfigCreateSerializer,
     LighthouseTenantConfigSerializer,
     LighthouseTenantConfigUpdateSerializer,
     MembershipSerializer,
@@ -4355,34 +4354,28 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Lighthouse AI"],
-        summary="List tenant config",
-        description="List Lighthouse AI tenant-level settings for the current tenant.",
-    ),
-    retrieve=extend_schema(
-        tags=["Lighthouse AI"],
         summary="Get tenant config",
-        description="Retrieve tenant Lighthouse AI settings by ID.",
-    ),
-    create=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Create tenant config",
-        description="Create Lighthouse AI tenant-level settings. Only one configuration is allowed per tenant.",
+        description="Retrieve current tenant-level Lighthouse AI settings. Returns a single configuration object.",
     ),
     partial_update=extend_schema(
         tags=["Lighthouse AI"],
         summary="Update tenant config",
-        description="Update tenant-level settings. Validates that the default provider is configured and active and that default model IDs exist for the chosen providers.",
-    ),
-    destroy=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Delete tenant config",
-        description="Delete tenant Lighthouse AI settings for the current tenant.",
+        description="Update tenant-level settings. Validates that the default provider is configured and active and that default model IDs exist for the chosen providers. Auto-creates configuration if it doesn't exist.",
     ),
 )
 class LighthouseTenantConfigViewSet(BaseRLSViewSet):
+    """
+    Singleton endpoint for tenant-level Lighthouse AI configuration.
+
+    This viewset implements a true singleton pattern:
+    - GET returns the single configuration object (or 404 if not found)
+    - PATCH updates/creates the configuration (upsert semantics)
+    - No ID is required in the URL
+    """
+
     queryset = LighthouseTenantConfiguration.objects.all()
     serializer_class = LighthouseTenantConfigSerializer
-    http_method_names = ["get", "post", "patch", "delete"]
+    http_method_names = ["get", "patch"]
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
@@ -4392,9 +4385,7 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
         )
 
     def get_serializer_class(self):
-        if self.action == "create":
-            return LighthouseTenantConfigCreateSerializer
-        elif self.action == "partial_update":
+        if self.action == "partial_update":
             return LighthouseTenantConfigUpdateSerializer
         return super().get_serializer_class()
 
@@ -4408,8 +4399,8 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
         self.check_object_permissions(self.request, obj)
         return obj
 
-    def retrieve(self, request, *args, **kwargs):
-        """GET endpoint for singleton - no pk required."""
+    def list(self, request, *args, **kwargs):
+        """GET endpoint for singleton - returns single object, not an array."""
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
