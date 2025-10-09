@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Prowler Open Source Documentation",
+  "name": "Prowler Documentation",
   "colors": {
     "primary": "#000000",
     "light": "#10B981",
@@ -27,6 +27,8 @@
             "group": "Prowler Cloud",
             "pages": [
               "getting-started/products/prowler-cloud",
+              "getting-started/products/prowler-cloud-pricing",
+              "getting-started/products/prowler-cloud-aws-marketplace",
               "getting-started/goto/prowler-cloud"
             ]
           },
