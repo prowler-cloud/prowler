@@ -17,22 +17,12 @@
   "AdditionalURLs": [
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-7",
-    "https://tutorialsdojo.com/aws-certificate-manager/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html",
-    "https://repost.aws/knowledge-center/custom-ssl-certificate-cloudfront",
-    "https://repost.aws/knowledge-center/install-ssl-cloudfront",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CNAMEs.html#CreatingCNAME",
-    "https://stackoverflow.com/questions/69101432/cannot-see-certificate-under-settings-in-cloudfront-distribution-despite-adding",
     "https://support.icompaas.com/support/solutions/articles/62000233491-ensure-cloudfront-distributions-use-custom-ssl-tls-certificates",
-    "https://medium.com/@U_N_R_3_A_L/part-4-acm-aws-certificate-manager-set-up-with-cloudfront-and-route-53-9c750dcc0906",
-    "https://reintech.io/blog/configure-https-ssl-certificates-cloudfront-distributions",
-    "https://www.clouddefense.ai/compliance-rules/aws-fs-practices/cloudfront/foundational-security-cloudfront-7",
-    "https://aws.amazon.com/what-is/ssl-certificate/",
-    "https://developers.didomi.io/api-and-platform/domains/reverse-proxy/implementation-guides/aws-cloudfront"
+    "https://reintech.io/blog/configure-https-ssl-certificates-cloudfront-distributions"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add Aliases and ViewerCertificate fields, then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
       "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          - Id: origin1\n            DomainName: <example_origin_domain>\n            S3OriginConfig: {}\n        DefaultCacheBehavior:\n          TargetOriginId: origin1\n          ViewerProtocolPolicy: redirect-to-https\n          ForwardedValues:\n            QueryString: false\n        Aliases:\n          - <example_domain>  # CRITICAL: add an alternate domain name (CNAME) covered by the certificate\n        ViewerCertificate:\n          AcmCertificateArn: <example_certificate_arn>  # CRITICAL: attach custom ACM cert (must be in us-east-1)\n          SslSupportMethod: sni-only  # CRITICAL: required when using ACM cert\n```",
       "Other": "1. Open the CloudFront console and select your distribution\n2. Go to the Settings/General tab and click Edit\n3. In Alternate domain name (CNAME), add <example_domain>\n4. In SSL certificate, choose Custom SSL certificate and select your ACM certificate (issued in us-east-1 and covering <example_domain>)\n5. Click Save/Yes, Edit and wait for the distribution to deploy",
       "Terraform": "```hcl\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled = true\n\n  origin {\n    domain_name = \"<example_origin_domain>\"\n    origin_id   = \"origin1\"\n    s3_origin_config {}\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"origin1\"\n    viewer_protocol_policy = \"redirect-to-https\"\n    forwarded_values { query_string = false }\n  }\n\n  aliases = [\"<example_domain>\"]  # CRITICAL: add CNAME covered by the cert\n\n  viewer_certificate {\n    acm_certificate_arn = \"<example_certificate_arn>\"  # CRITICAL: custom ACM cert (in us-east-1)\n    ssl_support_method  = \"sni-only\"                    # CRITICAL: required with ACM cert\n  }\n}\n```"

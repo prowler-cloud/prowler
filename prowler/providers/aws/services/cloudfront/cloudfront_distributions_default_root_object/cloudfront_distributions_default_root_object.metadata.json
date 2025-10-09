@@ -15,13 +15,12 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-1",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHow",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-default-object.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHowToDefine"
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add DefaultRootObject: \"index.html\", then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
       "NativeIaC": "```yaml\n# CloudFormation: Set a default root object on a CloudFront distribution\nResources:\n  CloudFrontDistribution:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        DefaultRootObject: index.html  # CRITICAL: ensures a default root object is configured\n        Origins:\n          - Id: <example_origin_id>\n            DomainName: <example_origin_domain>\n            S3OriginConfig: {}\n        DefaultCacheBehavior:\n          TargetOriginId: <example_origin_id>\n          ViewerProtocolPolicy: allow-all\n          ForwardedValues:\n            QueryString: false\n```",
       "Other": "1. Open the AWS Console and go to CloudFront\n2. Select the target distribution and choose Settings > General > Edit\n3. In Default root object, enter index.html (do not start with a /)\n4. Save changes and wait for deployment to complete",
       "Terraform": "```hcl\n# Terraform: Set a default root object on a CloudFront distribution\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled             = true\n  default_root_object = \"index.html\" # CRITICAL: ensures a default root object is configured\n\n  origin {\n    domain_name = \"<example_origin_domain>\"\n    origin_id   = \"<example_origin_id>\"\n\n    s3_origin_config {}\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"<example_origin_id>\"\n    viewer_protocol_policy = \"allow-all\"\n    forwarded_values {\n      query_string = false\n    }\n  }\n}\n```"
