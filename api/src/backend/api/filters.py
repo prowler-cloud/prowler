@@ -933,10 +933,10 @@ class TenantApiKeyFilter(FilterSet):
 
 class LighthouseProviderConfigFilter(FilterSet):
     provider_type = ChoiceFilter(
-        choices=LighthouseProviderConfiguration.ProviderChoices.choices
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices
     )
     provider_type__in = ChoiceInFilter(
-        choices=LighthouseProviderConfiguration.ProviderChoices.choices,
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
         field_name="provider_type",
         lookup_expr="in",
     )
@@ -952,11 +952,11 @@ class LighthouseProviderConfigFilter(FilterSet):
 
 class LighthouseProviderModelsFilter(FilterSet):
     provider_type = ChoiceFilter(
-        choices=LighthouseProviderConfiguration.ProviderChoices.choices,
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
         field_name="provider_configuration__provider_type",
     )
     provider_type__in = ChoiceInFilter(
-        choices=LighthouseProviderConfiguration.ProviderChoices.choices,
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
         field_name="provider_configuration__provider_type",
         lookup_expr="in",
     )

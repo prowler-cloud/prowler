@@ -58,7 +58,7 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
     # TODO: Add support for other providers
     if (
         provider_cfg.provider_type
-        != LighthouseProviderConfiguration.ProviderChoices.OPENAI
+        != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
     ):
         return {"connected": False, "error": "Unsupported provider type"}
 
@@ -107,7 +107,7 @@ def refresh_lighthouse_provider_models(provider_config_id: str) -> Dict:
 
     if (
         provider_cfg.provider_type
-        != LighthouseProviderConfiguration.ProviderChoices.OPENAI
+        != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
     ):
         return {
             "created": 0,

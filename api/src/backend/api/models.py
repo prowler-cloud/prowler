@@ -1967,7 +1967,7 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
     One configuration per provider type per tenant.
     """
 
-    class ProviderChoices(models.TextChoices):
+    class LLMProviderChoices(models.TextChoices):
         OPENAI = "openai", _("OpenAI")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -1976,7 +1976,7 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
 
     provider_type = models.CharField(
         max_length=50,
-        choices=ProviderChoices.choices,
+        choices=LLMProviderChoices.choices,
         help_text="LLM provider name",
     )
 
