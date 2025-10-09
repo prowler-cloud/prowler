@@ -39,6 +39,13 @@
             ]
           },
           {
+            "group": "Prowler Lighthouse AI",
+            "pages": [
+              "user-guide/tutorials/prowler-app-lighthouse",
+              "getting-started/goto/prowler-mcp"
+            ]
+          },
+          {
             "group": "Prowler App",
             "pages": [
               "getting-started/products/prowler-app",
