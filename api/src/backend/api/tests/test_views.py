@@ -8721,7 +8721,7 @@ class TestLighthouseProviderConfigViewSet:
         [
             {},  # empty credentials
             {"token": "sk-testT3BlbkFJkey"},  # wrong key name
-            {"api_key": "sk-invalid-format"},  # wrong format
+            {"api_key": "ks-invalid-format"},  # wrong format
         ],
     )
     def test_openai_invalid_credentials(self, authenticated_client, credentials):
@@ -8862,7 +8862,7 @@ class TestLighthouseProviderConfigViewSet:
                 "type": "lighthouse-providers",
                 "id": provider_id,
                 "attributes": {
-                    "credentials": {"api_key": "sk-invalid"},
+                    "credentials": {"api_key": "ks-invalid-format"},
                 },
             }
         }
