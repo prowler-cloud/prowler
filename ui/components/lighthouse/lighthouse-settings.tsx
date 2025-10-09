@@ -1,6 +1,5 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { SaveIcon } from "lucide-react";
@@ -131,8 +130,6 @@ export const LighthouseSettings = () => {
             description={`${form.watch("businessContext")?.length || 0}/1000 characters`}
             isInvalid={!!form.formState.errors.businessContext}
           />
-
-          <Spacer y={4} />
 
           <div className="flex w-full justify-end">
             <CustomButton
