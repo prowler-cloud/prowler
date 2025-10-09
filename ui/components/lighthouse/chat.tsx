@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { ChevronDown, Copy, Plus, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Streamdown } from "streamdown";
 
 import { getLighthouseModels } from "@/actions/lighthouse/lighthouse";
 import { Action, Actions } from "@/components/lighthouse/actions";
@@ -21,7 +22,6 @@ import {
   PromptInputTools,
 } from "@/components/lighthouse/ai-elements/prompt-input";
 import { Loader } from "@/components/lighthouse/loader";
-import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
@@ -473,12 +473,23 @@ export const Chat = ({
                       <Loader size="default" text="Thinking..." />
                     ) : (
                       <div
-                        className={`prose dark:prose-invert ${message.role === "user" ? "dark:text-black!" : ""}`}
+                        className={
+                          message.role === "user" ? "dark:text-black!" : ""
+                        }
                       >
-                        <MemoizedMarkdown
-                          id={message.id}
-                          content={messageText}
-                        />
+                        <Streamdown
+                          parseIncompleteMarkdown={true}
+                          shikiTheme={["github-light", "github-dark"]}
+                          controls={{
+                            code: true,
+                            table: true,
+                            mermaid: true,
+                          }}
+                          allowedLinkPrefixes={["*"]}
+                          allowedImagePrefixes={["*"]}
+                        >
+                          {messageText}
+                        </Streamdown>
                       </div>
                     )}
                   </div>
