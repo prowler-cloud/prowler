@@ -1991,6 +1991,17 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
         resource_name = "compliance-requirements-details"
 
 
+class ComplianceOverviewDetailThreatscoreSerializer(ComplianceOverviewDetailSerializer):
+    """
+    Serializer for detailed compliance requirement information for Threatscore.
+
+    Includes additional fields specific to the Threatscore framework.
+    """
+
+    passed_findings = serializers.IntegerField()
+    total_findings = serializers.IntegerField()
+
+
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):
     id = serializers.CharField()
     compliance_name = serializers.CharField()
