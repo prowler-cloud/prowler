@@ -8473,8 +8473,8 @@ class TestTenantApiKeyViewSet:
 class TestLighthouseTenantConfigViewSet:
     """Test Lighthouse tenant configuration endpoint (singleton pattern)"""
 
-    def test_lighthouse_tenant_config_create(self, authenticated_client):
-        """Test creating a tenant config successfully"""
+    def test_lighthouse_tenant_config_create_via_patch(self, authenticated_client):
+        """Test creating a tenant config successfully via PATCH (upsert)"""
         payload = {
             "data": {
                 "type": "lighthouse-config",
@@ -8485,12 +8485,12 @@ class TestLighthouseTenantConfigViewSet:
                 },
             }
         }
-        response = authenticated_client.post(
+        response = authenticated_client.patch(
             reverse("lighthouse-config"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert (
             data["attributes"]["business_context"]
@@ -8499,8 +8499,8 @@ class TestLighthouseTenantConfigViewSet:
         assert data["attributes"]["default_provider"] == ""
         assert data["attributes"]["default_models"] == {}
 
-    def test_lighthouse_tenant_config_create_duplicate(self, authenticated_client):
-        """Test that only one config is allowed per tenant (singleton enforcement)"""
+    def test_lighthouse_tenant_config_upsert_behavior(self, authenticated_client):
+        """Test that PATCH creates config if not exists and updates if exists (upsert)"""
         payload = {
             "data": {
                 "type": "lighthouse-config",
@@ -8510,23 +8510,28 @@ class TestLighthouseTenantConfigViewSet:
             }
         }
 
-        # Create first config (should succeed)
-        response = authenticated_client.post(
+        # First PATCH creates the config
+        response = authenticated_client.patch(
             reverse("lighthouse-config"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_200_OK
+        first_data = response.json()["data"]
+        assert first_data["attributes"]["business_context"] == "First config"
 
-        # Try to create duplicate
-        payload["data"]["attributes"]["business_context"] = "Second config"
-        response = authenticated_client.post(
+        # Second PATCH updates the same config (not creating a duplicate)
+        payload["data"]["attributes"]["business_context"] = "Updated config"
+        response = authenticated_client.patch(
             reverse("lighthouse-config"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "already exists" in str(response.json()).lower()
+        assert response.status_code == status.HTTP_200_OK
+        second_data = response.json()["data"]
+        assert second_data["attributes"]["business_context"] == "Updated config"
+        # Verify it's the same config (same ID)
+        assert first_data["id"] == second_data["id"]
 
     @patch("openai.OpenAI")
     def test_lighthouse_tenant_config_retrieve(
