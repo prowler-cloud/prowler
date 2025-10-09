@@ -2091,10 +2091,6 @@ class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
     def __str__(self):
         return f"Lighthouse Tenant Config for {self.tenant_id}"
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def clean(self):
         super().clean()
 
@@ -2159,6 +2155,3 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
                 name="lh_prov_models_cfg_idx",
             ),
         ]
-
-    class JSONAPIMeta:
-        resource_name = "lighthouse-models"
