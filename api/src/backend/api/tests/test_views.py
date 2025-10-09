@@ -6968,7 +6968,14 @@ class TestTenantFinishACSView:
             .exists()
         )
 
-        # Verify no_permissions role was NOT created or assigned
+        # Verify no_permissions role was NOT created in the database
+        assert (
+            not Role.objects.using(MainRouter.admin_db)
+            .filter(name="no_permissions", tenant=tenant)
+            .exists()
+        )
+
+        # Verify no_permissions role was NOT assigned to the user
         assert not (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, role__name="no_permissions", tenant_id=tenant.id)
