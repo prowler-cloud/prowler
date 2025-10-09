@@ -4432,7 +4432,10 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
         serializer = self.get_serializer(instance, data=attributes, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        read_serializer = LighthouseTenantConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -4440,26 +4443,6 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
         tags=["Lighthouse AI"],
         summary="List provider models",
         description="List available LLM models per configured provider for the current tenant.",
-    ),
-    retrieve=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Get provider model",
-        description="Retrieve details for a specific provider model.",
-    ),
-    create=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Create provider model",
-        description="Create a provider model entry for a given provider configuration.",
-    ),
-    partial_update=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Update provider model",
-        description="Partially update a provider model entry (e.g., default parameters).",
-    ),
-    destroy=extend_schema(
-        tags=["Lighthouse AI"],
-        summary="Delete provider model",
-        description="Delete a provider model entry.",
     ),
 )
 class LighthouseProviderModelsViewSet(BaseRLSViewSet):
@@ -4476,22 +4459,6 @@ class LighthouseProviderModelsViewSet(BaseRLSViewSet):
 
     def get_serializer_class(self):
         return super().get_serializer_class()
-
-    @extend_schema(exclude=True)
-    def retrieve(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="GET")
-
-    @extend_schema(exclude=True)
-    def create(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="POST")
-
-    @extend_schema(exclude=True)
-    def partial_update(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="PATCH")
-
-    @extend_schema(exclude=True)
-    def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="DELETE")
 
 
 @extend_schema_view(
