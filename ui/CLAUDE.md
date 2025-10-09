@@ -15,7 +15,7 @@ The Prowler UI is a Next.js 15 application providing a modern web interface for 
 - **Framework**: Next.js 15.5.3 with App Router
 - **Runtime**: React 19.1.1
 - **Language**: TypeScript 5.5.4
-- **Styling**: Tailwind CSS 4.1.13 + HeroUI 2.8.4 (migrated from NextUI)
+- **Styling**: Tailwind CSS 4.1.13 + **shadcn/ui** (new components) / HeroUI 2.8.4 (legacy)
 - **State Management**: Zustand 5.0.8
 - **Authentication**: NextAuth.js 5.0.0-beta.29
 - **Forms/Validation**: React Hook Form 7.62.0 + Zod 4.1.11
@@ -129,7 +129,7 @@ ui/
 - **Types**: Keep strict types; avoid \`any\`. Narrow and localize unavoidable exceptions
 - **Forms**: React Hook Form + Zod resolvers
 - **State**: Centralize cross-component client state in \`store/\` (Zustand). Keep local UI state local
-- **Styling**: Use HeroUI components first; Tailwind utility classes for layout and customizations
+- **Styling**: **New UI features/pages should use shadcn/ui with the new Tailwind theme**. Existing features/pages should continue using HeroUI for consistency; Tailwind utility classes for layout and customizations
 - **Accessibility**: Ensure labels, focus management, and keyboard interactions. Prefer Radix primitives where needed
 - **Data Fetching**: Use \`fetch\` with Next.js caching/revalidation semantics; avoid client fetching when server boundary is possible
 - **Error/Loading**: Explicit, resilient states. Avoid silent failures
@@ -195,8 +195,9 @@ import type { ComponentProps } from "@/types";
 
 ## Styling Guidelines
 
-### Tailwind + HeroUI
-- Use HeroUI components for consistency (migrated from NextUI)
+### Tailwind + shadcn/ui (New) / HeroUI (Existing)
+- **Use shadcn/ui components for new UI features/pages** with the new Tailwind theme
+- Existing features/pages should continue using HeroUI (migrated from NextUI) for consistency
 - Custom Prowler color palette defined in tailwind.config.js
 - Dark/light theme support via next-themes
 - Custom shadows and animations for Prowler brand
@@ -381,10 +382,11 @@ const text = message.parts
 4. Add proper TypeScript types
 
 ### Creating Components
-1. Follow established patterns in \`components/ui/\`
-2. Use HeroUI base components when possible
-3. Implement proper TypeScript interfaces
-4. Add to component index files
+1. **Use shadcn/ui for new UI components that belong to new features/pages**
+2. Existing features/pages should continue using HeroUI for consistency
+3. Follow established patterns in \`components/ui/\`
+4. Implement proper TypeScript interfaces
+5. Add to component index files
 
 ### Integrating with Backend
 1. Create server actions in \`actions/\`
@@ -393,8 +395,10 @@ const text = message.parts
 4. Implement proper caching strategy
 
 ### When Implementing New UI
+- **Use shadcn/ui components with the new Tailwind theme for new UI features/pages**
+- **For existing features/pages, continue using HeroUI components for consistency**
 - Start from existing patterns in the closest domain folder
-- Reuse primitives from \`components/ui\` and existing composables
+- Reuse primitives from \`components/ui\` (shadcn/ui for new features, HeroUI for existing) and existing composables
 - Add types to \`types/\` if they're shared; otherwise colocate types near usage
 - Update feature docs and \`ui/CHANGELOG.md\` when behavior changes
 
