@@ -317,6 +317,23 @@ class UserSerializer(BaseSerializerV1):
         )
 
 
+class UserIncludeSerializer(UserSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "name",
+            "email",
+            "company_name",
+            "date_joined",
+            "roles",
+        ]
+
+    included_serializers = {
+        "roles": "api.v1.serializers.RoleIncludeSerializer",
+    }
+
+
 class UserCreateSerializer(BaseWriteSerializer):
     password = serializers.CharField(write_only=True)
     company_name = serializers.CharField(required=False)
@@ -2778,6 +2795,10 @@ class TenantApiKeySerializer(RLSSerializer):
             "last_used_at",
             "entity",
         ]
+
+    included_serializers = {
+        "entity": "api.v1.serializers.UserIncludeSerializer",
+    }
 
 
 class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
