@@ -476,7 +476,9 @@
     {
       "Id": "1.2.2",
       "Description": "Limit the ability to create repositories to trusted users and teams.",
-      "Checks": [],
+      "Checks": [
+        "organization_repository_creation_limited"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",
