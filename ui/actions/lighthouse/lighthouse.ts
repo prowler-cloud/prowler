@@ -210,9 +210,9 @@ export const getProviderApiKey = async (providerType?: string) => {
   let url: string;
 
   if (providerType) {
-    url = `${apiBaseUrl}/lighthouse/providers?filter[provider_type]=${providerType}&filter[is_active]=true`;
+    url = `${apiBaseUrl}/lighthouse/providers?filter[provider_type]=${providerType}&filter[is_active]=true&fields[lighthouse-providers]=credentials`;
   } else {
-    url = `${apiBaseUrl}/lighthouse/providers?filter[is_active]=true`;
+    url = `${apiBaseUrl}/lighthouse/providers?filter[is_active]=true&fields[lighthouse-providers]=credentials`;
   }
 
   try {
@@ -255,5 +255,96 @@ export const isLighthouseConfigured = async () => {
   } catch (error) {
     console.error("[Server] Error in isLighthouseConfigured:", error);
     return false;
+  }
+};
+
+/**
+ * Map provider type to display name
+ */
+const getProviderDisplayName = (providerType: string): string => {
+  const displayNames: Record<string, string> = {
+    openai: "OpenAI",
+    anthropic: "Anthropic",
+    google: "Google",
+    azure: "Azure OpenAI",
+  };
+  return displayNames[providerType] || providerType;
+};
+
+/**
+ * Get lighthouse providers configuration with default models
+ * Returns only the default model for each provider to avoid loading hundreds of models
+ */
+export const getLighthouseProvidersConfig = async () => {
+  try {
+    const [tenantConfig, providers] = await Promise.all([
+      getTenantConfig(),
+      getLighthouseProviders(),
+    ]);
+
+    if (tenantConfig.errors || providers.errors) {
+      return {
+        errors: tenantConfig.errors || providers.errors,
+      };
+    }
+
+    const tenantData = tenantConfig?.data?.attributes;
+    const defaultProvider = tenantData?.default_provider || "";
+    const defaultModels = tenantData?.default_models || {};
+
+    // Filter only active providers
+    const activeProviders =
+      providers?.data?.filter((p: any) => p.attributes?.is_active) || [];
+
+    // Build provider configuration with only default models
+    const providersConfig = await Promise.all(
+      activeProviders.map(async (provider: any) => {
+        const providerType = provider.attributes.provider_type;
+        const defaultModelId = defaultModels[providerType];
+
+        // Fetch only the default model for this provider if it exists
+        let defaultModel = null;
+        if (defaultModelId) {
+          const headers = await getAuthHeaders({ contentType: false });
+          const url = `${apiBaseUrl}/lighthouse/models?filter[provider_type]=${providerType}&filter[model_id]=${defaultModelId}`;
+
+          try {
+            const response = await fetch(url, { method: "GET", headers });
+            const data = await response.json();
+            if (data.data && data.data.length > 0) {
+              defaultModel = {
+                id: data.data[0].attributes.model_id,
+                name: data.data[0].attributes.model_id, // Use model_id as display name for now
+              };
+            }
+          } catch (error) {
+            console.error(
+              `[Server] Error fetching default model for ${providerType}:`,
+              error,
+            );
+          }
+        }
+
+        return {
+          id: providerType,
+          name: getProviderDisplayName(providerType),
+          models: defaultModel ? [defaultModel] : [],
+        };
+      }),
+    );
+
+    // Filter out providers with no models
+    const validProviders = providersConfig.filter((p) => p.models.length > 0);
+
+    return {
+      providers: validProviders,
+      defaultProviderId: defaultProvider,
+      defaultModelId: defaultModels[defaultProvider],
+    };
+  } catch (error) {
+    console.error("[Server] Error in getLighthouseProvidersConfig:", error);
+    return {
+      errors: [{ detail: String(error) }],
+    };
   }
 };

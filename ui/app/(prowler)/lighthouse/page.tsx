@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { isLighthouseConfigured } from "@/actions/lighthouse/lighthouse";
+import {
+  getLighthouseProvidersConfig,
+  isLighthouseConfigured,
+} from "@/actions/lighthouse/lighthouse";
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse";
 import { ContentLayout } from "@/components/ui";
@@ -12,12 +15,22 @@ export default async function AIChatbot() {
     return redirect("/lighthouse/config");
   }
 
-  // If properly configured, we can assume it's active
-  const isActive = true;
+  // Fetch provider configuration with default models
+  const providersConfig = await getLighthouseProvidersConfig();
+
+  // Handle errors or missing configuration
+  if (providersConfig.errors || !providersConfig.providers) {
+    return redirect("/lighthouse/config");
+  }
 
   return (
     <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
-      <Chat hasConfig={hasConfig} isActive={isActive} />
+      <Chat
+        hasConfig={hasConfig}
+        providers={providersConfig.providers}
+        defaultProviderId={providersConfig.defaultProviderId}
+        defaultModelId={providersConfig.defaultModelId}
+      />
     </ContentLayout>
   );
 }

@@ -2,17 +2,41 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Copy, Play, Plus, RotateCcw, Square } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { ChevronDown, Copy, Plus, RotateCcw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { getLighthouseModels } from "@/actions/lighthouse/lighthouse";
 import { Action, Actions } from "@/components/lighthouse/actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/lighthouse/ai-elements/dropdown-menu";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputToolbar,
+  PromptInputTools,
+} from "@/components/lighthouse/ai-elements/prompt-input";
 import { Loader } from "@/components/lighthouse/loader";
 import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+
+interface Model {
+  id: string;
+  name: string;
+}
+
+interface Provider {
+  id: string;
+  name: string;
+  models: Model[];
+}
 
 interface SuggestedAction {
   title: string;
@@ -22,22 +46,149 @@ interface SuggestedAction {
 
 interface ChatProps {
   hasConfig: boolean;
-  isActive: boolean;
+  providers: Provider[];
+  defaultProviderId?: string;
+  defaultModelId?: string;
 }
 
-interface ChatFormData {
-  message: string;
-}
+const SUGGESTED_ACTIONS: SuggestedAction[] = [
+  {
+    title: "Are there any exposed S3",
+    label: "buckets in my AWS accounts?",
+    action: "List exposed S3 buckets in my AWS accounts",
+  },
+  {
+    title: "What is the risk of having",
+    label: "RDS databases unencrypted?",
+    action: "What is the risk of having RDS databases unencrypted?",
+  },
+  {
+    title: "What is the CIS 1.10 compliance status",
+    label: "of my Kubernetes cluster?",
+    action: "What is the CIS 1.10 compliance status of my Kubernetes cluster?",
+  },
+  {
+    title: "List my highest privileged",
+    label: "AWS IAM users with full admin access?",
+    action: "List my highest privileged AWS IAM users with full admin access",
+  },
+];
 
-export const Chat = ({ hasConfig, isActive }: ChatProps) => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+export const Chat = ({
+  hasConfig,
+  providers: initialProviders,
+  defaultProviderId,
+  defaultModelId,
+}: ChatProps) => {
   const { toast } = useToast();
+
+  // Consolidated UI state
+  const [uiState, setUiState] = useState({
+    inputValue: "",
+    isDropdownOpen: false,
+    modelSearchTerm: "",
+    hoveredProvider: defaultProviderId || initialProviders[0]?.id || "",
+  });
+
+  // Error handling
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Provider and model management
+  const [providers, setProviders] = useState<Provider[]>(initialProviders);
+  const [providerLoadState, setProviderLoadState] = useState<{
+    loaded: Set<string>;
+    loading: Set<string>;
+  }>({
+    loaded: new Set(),
+    loading: new Set(),
+  });
+
+  // Initialize selectedModel with defaults from props
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const defaultProvider =
+      initialProviders.find((p) => p.id === defaultProviderId) ||
+      initialProviders[0];
+    const defaultModel =
+      defaultProvider?.models.find((m) => m.id === defaultModelId) ||
+      defaultProvider?.models[0];
+
+    return {
+      providerId: defaultProvider?.id || "",
+      modelId: defaultModel?.id || "",
+      modelName: defaultModel?.name || "",
+    };
+  });
+
+  // Keep ref in sync with selectedModel for stable access in callbacks
+  const selectedModelRef = useRef(selectedModel);
+  selectedModelRef.current = selectedModel;
+
+  // Load all models for a specific provider
+  const loadModelsForProvider = useCallback(async (providerId: string) => {
+    setProviderLoadState((prev) => {
+      // Skip if already loaded or currently loading
+      if (prev.loaded.has(providerId) || prev.loading.has(providerId)) {
+        return prev;
+      }
+
+      // Mark as loading
+      return {
+        ...prev,
+        loading: new Set([...Array.from(prev.loading), providerId]),
+      };
+    });
+
+    try {
+      const response = await getLighthouseModels(providerId);
+
+      if (response.errors) {
+        console.error(
+          `Error loading models for ${providerId}:`,
+          response.errors,
+        );
+        return;
+      }
+
+      if (response.data && Array.isArray(response.data)) {
+        // Transform the API response to our model format
+        const models: Model[] = response.data.map((item: any) => ({
+          id: item.attributes.model_id,
+          name: item.attributes.model_id,
+        }));
+
+        // Update the provider's models
+        setProviders((prev) =>
+          prev.map((p) => (p.id === providerId ? { ...p, models } : p)),
+        );
+
+        // Mark as loaded and remove from loading
+        setProviderLoadState((prev) => ({
+          loaded: new Set([...Array.from(prev.loaded), providerId]),
+          loading: new Set(
+            Array.from(prev.loading).filter((id) => id !== providerId),
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error(`Error loading models for ${providerId}:`, error);
+      // Remove from loading state on error
+      setProviderLoadState((prev) => ({
+        ...prev,
+        loading: new Set(
+          Array.from(prev.loading).filter((id) => id !== providerId),
+        ),
+      }));
+    }
+  }, []);
 
   const { messages, sendMessage, status, error, setMessages, regenerate } =
     useChat({
       transport: new DefaultChatTransport({
         api: "/api/lighthouse/analyst",
         credentials: "same-origin",
+        body: () => ({
+          model: selectedModelRef.current.modelId,
+        }),
       }),
       experimental_throttle: 100,
       onFinish: ({ message }) => {
@@ -65,6 +216,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               );
             }),
           );
+          restoreLastUserMessage();
         }
       },
       onError: (error) => {
@@ -74,59 +226,53 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           error?.message?.includes("<html>") &&
           error?.message?.includes("<title>403 Forbidden</title>")
         ) {
+          restoreLastUserMessage();
           setErrorMessage("403 Forbidden");
           return;
         }
 
+        restoreLastUserMessage();
         setErrorMessage(
           error?.message || "An error occurred. Please retry your message.",
         );
       },
     });
 
-  const form = useForm<ChatFormData>({
-    defaultValues: {
-      message: "",
-    },
-  });
-
-  const messageValue = form.watch("message");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
-  const messageValueRef = useRef<string>("");
 
-  // Keep ref in sync with current value
-  messageValueRef.current = messageValue;
+  const restoreLastUserMessage = useCallback(() => {
+    let restoredText = "";
 
-  // Restore last user message to input when any error occurs
-  useEffect(() => {
-    if (errorMessage) {
-      // Capture current messages to avoid dependency issues
-      setMessages((currentMessages) => {
-        const lastUserMessage = currentMessages
-          .filter((m) => m.role === "user")
-          .pop();
+    setMessages((currentMessages) => {
+      const nextMessages = [...currentMessages];
 
-        if (lastUserMessage) {
-          const textPart = lastUserMessage.parts.find((p) => p.type === "text");
-          if (textPart && "text" in textPart) {
-            form.setValue("message", textPart.text);
-          }
-          // Remove the last user message from history since it's now in the input
-          return currentMessages.slice(0, -1);
+      for (let index = nextMessages.length - 1; index >= 0; index -= 1) {
+        const current = nextMessages[index];
+
+        if (current.role !== "user") {
+          continue;
         }
 
-        return currentMessages;
-      });
-    }
-  }, [errorMessage, form, setMessages]);
+        const textPart = current.parts.find(
+          (part): part is { type: "text"; text: string } =>
+            part.type === "text" && "text" in part,
+        );
 
-  // Reset form when message is sent
-  useEffect(() => {
-    if (status === "submitted") {
-      form.reset({ message: "" });
+        if (textPart) {
+          restoredText = textPart.text;
+        }
+
+        nextMessages.splice(index, 1);
+        break;
+      }
+
+      return nextMessages;
+    });
+
+    if (restoredText) {
+      setUiState((prev) => ({ ...prev, inputValue: restoredText }));
     }
-  }, [status, form]);
+  }, [setMessages]);
 
   // Auto-scroll to bottom when new messages arrive or when streaming
   useEffect(() => {
@@ -136,72 +282,45 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     }
   }, [messages, status]);
 
-  const onFormSubmit = form.handleSubmit((data) => {
-    // Block submission while streaming or submitted
-    if (status === "streaming" || status === "submitted") {
-      return;
-    }
-
-    if (data.message.trim()) {
-      // Clear error on new submission
-      setErrorMessage(null);
-      sendMessage({ text: data.message });
-      form.reset();
-    }
-  });
-
-  // Global keyboard shortcut handler
+  // Handle dropdown state changes
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        // Block enter key while streaming or submitted
-        if (
-          messageValue?.trim() &&
-          status !== "streaming" &&
-          status !== "submitted"
-        ) {
-          onFormSubmit();
-        }
-      }
-    };
+    if (uiState.isDropdownOpen && uiState.hoveredProvider) {
+      loadModelsForProvider(uiState.hoveredProvider);
+    }
+  }, [uiState.isDropdownOpen, uiState.hoveredProvider, loadModelsForProvider]);
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [messageValue, onFormSubmit, status]);
+  // Memoize filtered models to avoid recalculation on every render
+  const filteredModels = useMemo(() => {
+    const currentProvider = providers.find(
+      (p) => p.id === uiState.hoveredProvider,
+    );
+    return (
+      currentProvider?.models.filter((model) =>
+        model.name
+          .toLowerCase()
+          .includes(uiState.modelSearchTerm.toLowerCase()),
+      ) || []
+    );
+  }, [providers, uiState.hoveredProvider, uiState.modelSearchTerm]);
 
-  const suggestedActions: SuggestedAction[] = [
-    {
-      title: "Are there any exposed S3",
-      label: "buckets in my AWS accounts?",
-      action: "List exposed S3 buckets in my AWS accounts",
-    },
-    {
-      title: "What is the risk of having",
-      label: "RDS databases unencrypted?",
-      action: "What is the risk of having RDS databases unencrypted?",
-    },
-    {
-      title: "What is the CIS 1.10 compliance status",
-      label: "of my Kubernetes cluster?",
-      action:
-        "What is the CIS 1.10 compliance status of my Kubernetes cluster?",
-    },
-    {
-      title: "List my highest privileged",
-      label: "AWS IAM users with full admin access?",
-      action: "List my highest privileged AWS IAM users with full admin access",
-    },
-  ];
-
-  // Determine if chat should be disabled
-  const shouldDisableChat = !hasConfig || !isActive;
-
-  const handleNewChat = () => {
+  // Handlers
+  const handleNewChat = useCallback(() => {
     setMessages([]);
     setErrorMessage(null);
-    form.reset({ message: "" });
-  };
+    setUiState((prev) => ({ ...prev, inputValue: "" }));
+  }, [setMessages]);
+
+  const handleModelSelect = useCallback(
+    (providerId: string, modelId: string, modelName: string) => {
+      setSelectedModel({ providerId, modelId, modelName });
+      setUiState((prev) => ({
+        ...prev,
+        isDropdownOpen: false,
+        modelSearchTerm: "", // Reset search when selecting
+      }));
+    },
+    [],
+  );
 
   return (
     <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">
@@ -223,18 +342,14 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       )}
 
-      {shouldDisableChat && (
+      {!hasConfig && (
         <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
-              {!hasConfig
-                ? "OpenAI API Key Required"
-                : "OpenAI API Key Invalid"}
+              LLM Provider Configuration Required
             </h3>
             <p className="text-muted-foreground mb-4">
-              {!hasConfig
-                ? "Please configure your OpenAI API key to use Lighthouse AI."
-                : "OpenAI API key is invalid. Please update your key to use Lighthouse AI."}
+              Please configure an LLM provider to use Lighthouse AI.
             </p>
             <CustomLink
               href="/lighthouse/config"
@@ -242,7 +357,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               target="_self"
               size="sm"
             >
-              Configure API Key
+              Configure Provider
             </CustomLink>
           </div>
         </div>
@@ -300,7 +415,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           <div className="w-full max-w-2xl">
             <h2 className="mb-4 text-center font-sans text-xl">Suggestions</h2>
             <div className="grid gap-2 sm:grid-cols-2">
-              {suggestedActions.map((action, index) => (
+              {SUGGESTED_ACTIONS.map((action, index) => (
                 <CustomButton
                   key={`suggested-action-${index}`}
                   ariaLabel={`Send message: ${action.action}`}
@@ -324,12 +439,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           ref={messagesContainerRef}
         >
           {messages.map((message, idx) => {
-            const lastUserIdx = messages
-              .map((m, i) => (m.role === "user" ? i : -1))
-              .filter((i) => i !== -1)
-              .pop();
-            const isLatestUserMsg =
-              message.role === "user" && lastUserIdx === idx;
             const isLastMessage = idx === messages.length - 1;
             const messageText = message.parts
               .filter((p) => p.type === "text")
@@ -348,7 +457,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             return (
               <div key={uniqueKey}>
                 <div
-                  ref={isLatestUserMsg ? latestUserMsgRef : undefined}
                   className={`flex ${
                     message.role === "user" ? "justify-end" : "justify-start"
                   }`}
@@ -418,52 +526,160 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       )}
 
-      <Form {...form}>
-        <form
-          onSubmit={onFormSubmit}
-          className="mx-auto flex w-full gap-2 px-4 pb-16 md:max-w-3xl md:pb-16"
+      <div className="mx-auto w-full px-4 pb-16 md:max-w-3xl md:pb-16">
+        <PromptInput
+          onSubmit={(message) => {
+            if (status === "streaming" || status === "submitted") {
+              return;
+            }
+            if (message.text?.trim()) {
+              setErrorMessage(null);
+              sendMessage({
+                text: message.text,
+              });
+              setUiState((prev) => ({ ...prev, inputValue: "" }));
+            }
+          }}
         >
-          <div className="flex w-full items-end gap-2">
-            <div className="w-full flex-1">
-              <CustomTextarea
-                control={form.control}
-                name="message"
-                label=""
-                placeholder={
-                  error || errorMessage
-                    ? "Edit your message and try again..."
-                    : "Type your message..."
-                }
-                variant="bordered"
-                minRows={1}
-                maxRows={6}
-                fullWidth={true}
-                disableAutosize={false}
-              />
-            </div>
-            <CustomButton
-              type="submit"
-              ariaLabel={
-                status === "streaming" || status === "submitted"
-                  ? "Generating response..."
-                  : "Send message"
+          <PromptInputBody>
+            <PromptInputTextarea
+              placeholder={
+                error || errorMessage
+                  ? "Edit your message and try again..."
+                  : "Type your message..."
               }
-              isDisabled={
+              value={uiState.inputValue}
+              onChange={(e) =>
+                setUiState((prev) => ({ ...prev, inputValue: e.target.value }))
+              }
+            />
+          </PromptInputBody>
+
+          <PromptInputToolbar>
+            <PromptInputTools>
+              {/* Model Selector */}
+              <DropdownMenu
+                open={uiState.isDropdownOpen}
+                onOpenChange={(open) =>
+                  setUiState((prev) => ({ ...prev, isDropdownOpen: open }))
+                }
+              >
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="hover:bg-accent text-muted-foreground hover:text-foreground flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors"
+                  >
+                    <span>{selectedModel.modelName}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="bg-background w-[400px] border p-0 shadow-lg"
+                >
+                  <div className="flex h-[300px]">
+                    {/* Left column - Providers */}
+                    <div className="border-default-200 dark:border-default-100 bg-muted/30 w-[180px] overflow-y-auto border-r p-1">
+                      {providers.map((provider) => (
+                        <div
+                          key={provider.id}
+                          onMouseEnter={() => {
+                            setUiState((prev) => ({
+                              ...prev,
+                              hoveredProvider: provider.id,
+                              modelSearchTerm: "", // Reset search when changing provider
+                            }));
+                            loadModelsForProvider(provider.id);
+                          }}
+                          className={cn(
+                            "flex cursor-default items-center justify-between rounded-sm px-3 py-2 text-sm transition-colors",
+                            uiState.hoveredProvider === provider.id
+                              ? "bg-gray-100 dark:bg-gray-800"
+                              : "hover:ring-default-200 dark:hover:ring-default-700 hover:bg-gray-100 hover:ring-1 dark:hover:bg-gray-800",
+                          )}
+                        >
+                          <span className="font-medium">{provider.name}</span>
+                          <ChevronDown className="h-4 w-4 -rotate-90" />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Right column - Models */}
+                    <div className="flex flex-1 flex-col">
+                      {/* Search bar */}
+                      <div className="border-default-200 dark:border-default-100 border-b p-2">
+                        <input
+                          type="text"
+                          placeholder="Search models..."
+                          value={uiState.modelSearchTerm}
+                          onChange={(e) =>
+                            setUiState((prev) => ({
+                              ...prev,
+                              modelSearchTerm: e.target.value,
+                            }))
+                          }
+                          className="placeholder:text-muted-foreground w-full rounded-md border border-gray-200 bg-transparent px-3 py-1.5 text-sm outline-hidden focus:border-gray-400 dark:border-gray-700 dark:focus:border-gray-500"
+                        />
+                      </div>
+
+                      {/* Models list */}
+                      <div className="flex-1 overflow-y-auto p-1">
+                        {providerLoadState.loading.has(
+                          uiState.hoveredProvider,
+                        ) ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader size="sm" text="Loading models..." />
+                          </div>
+                        ) : filteredModels.length === 0 ? (
+                          <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
+                            {uiState.modelSearchTerm
+                              ? "No models found"
+                              : "No models available"}
+                          </div>
+                        ) : (
+                          filteredModels.map((model) => (
+                            <button
+                              key={model.id}
+                              type="button"
+                              onClick={() =>
+                                handleModelSelect(
+                                  uiState.hoveredProvider,
+                                  model.id,
+                                  model.name,
+                                )
+                              }
+                              className={cn(
+                                "focus:bg-accent focus:text-accent-foreground hover:ring-default-200 dark:hover:ring-default-700 relative flex w-full cursor-default items-center rounded-sm px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-gray-100 hover:ring-1 dark:hover:bg-gray-800",
+                                selectedModel.modelId === model.id &&
+                                  selectedModel.providerId ===
+                                    uiState.hoveredProvider
+                                  ? "bg-accent text-accent-foreground"
+                                  : "",
+                              )}
+                            >
+                              {model.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </PromptInputTools>
+
+            {/* Submit Button */}
+            <PromptInputSubmit
+              status={status}
+              disabled={
                 status === "streaming" ||
                 status === "submitted" ||
-                !messageValue?.trim()
+                !uiState.inputValue?.trim()
               }
-              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 disabled:opacity-50"
-            >
-              {status === "streaming" || status === "submitted" ? (
-                <Square className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5" />
-              )}
-            </CustomButton>
-          </div>
-        </form>
-      </Form>
+            />
+          </PromptInputToolbar>
+        </PromptInput>
+      </div>
     </div>
   );
 };
