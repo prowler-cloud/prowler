@@ -43,14 +43,21 @@ export const ThreatScoreLogo = () => {
       <g transform="translate(680, 0) scale(2)">
         {/* Gauge arcs - drawing from left to right (orange, red, green) */}
         <path
-          d="M 20 80 A 60 60 0 0 1 80 20"
+          d="M 20 80 A 60 60 0 0 1 50 29.6"
           stroke="#fb923c"
           strokeWidth="16"
           fill="none"
           strokeLinecap="round"
         />
         <path
-          d="M 80 20 A 60 60 0 0 1 140 80"
+          d="M 50 29.6 A 60 60 0 0 1 110 29.6"
+          stroke="#ef4444"
+          strokeWidth="16"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 110 29.6 A 60 60 0 0 1 140 80"
           stroke="#22c55e"
           strokeWidth="16"
           fill="none"
