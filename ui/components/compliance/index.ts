@@ -20,3 +20,4 @@ export * from "./skeletons/compliance-grid-skeleton";
 export * from "./skeletons/heatmap-chart-skeleton";
 export * from "./skeletons/pie-chart-skeleton";
 export * from "./threatscore-badge";
+export * from "./threatscore-logo";

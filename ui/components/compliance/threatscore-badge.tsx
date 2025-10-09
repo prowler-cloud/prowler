@@ -4,12 +4,10 @@ import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import { DownloadIcon, FileTextIcon } from "lucide-react";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import ThreatScoreLogoLight from "@/components/icons/compliance/prowlerThreatScoreLogo.svg";
-import ThreatScoreLogoDark from "@/components/icons/compliance/prowlerThreatScoreLogoDark.svg";
+import { ThreatScoreLogo } from "@/components/compliance/threatscore-logo";
 import { toast } from "@/components/ui";
 import { downloadComplianceCsv, downloadThreatScorePdf } from "@/lib/helper";
 import type { ScanEntity } from "@/types/scans";
@@ -105,20 +103,10 @@ export const ThreatScoreBadge = ({
           onClick={handleCardClick}
           type="button"
         >
-          <div className="flex-1">
-            <Image
-              src={ThreatScoreLogoLight}
-              alt="Prowler ThreatScore"
-              className="h-14 w-auto dark:hidden"
-            />
-            <Image
-              src={ThreatScoreLogoDark}
-              alt="Prowler ThreatScore"
-              className="hidden h-14 w-auto dark:block"
-            />
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <span className={`text-3xl font-bold ${getTextColor()}`}>
+          <ThreatScoreLogo />
+
+          <div className="flex flex-col items-end gap-1">
+            <span className={`text-2xl font-bold ${getTextColor()}`}>
               {score.toFixed(1)}%
             </span>
             <Progress

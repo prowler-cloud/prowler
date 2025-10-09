@@ -2,9 +2,10 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 
 import {
+  getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
+  getComplianceRequirements,
   getCompliancesOverview,
-  getThreatScore,
 } from "@/actions/compliances";
 import { getScans } from "@/actions/scans";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
+import { calculateThreatScore } from "@/lib/compliance/threatscore-calculator";
 import {
   ExpandedScanData,
   ScanEntity,
@@ -78,6 +80,7 @@ export default async function Compliance({
     })
     .filter(Boolean) as ExpandedScanData[];
 
+  // Use scanId from URL, or select the first scan if not provided
   const selectedScanId =
     resolvedSearchParams.scanId || expandedScansData[0]?.id || null;
   const query = (filters["filter[search]"] as string) || "";
@@ -98,6 +101,7 @@ export default async function Compliance({
       }
     : undefined;
 
+  // Fetch metadata if we have a selected scan
   const metadataInfoData = selectedScanId
     ? await getComplianceOverviewMetadataInfo({
         query,
@@ -109,12 +113,25 @@ export default async function Compliance({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
-  const threatScoreData =
+  // Fetch ThreatScore data if we have a selected scan
+  let threatScoreData = null;
+  if (
     selectedScanId &&
     typeof selectedScanId === "string" &&
     selectedScan?.providerInfo?.provider
-      ? await getThreatScore(selectedScanId, selectedScan.providerInfo.provider)
-      : null;
+  ) {
+    const complianceId = `prowler_threatscore_${selectedScan.providerInfo.provider.toLowerCase()}`;
+
+    const [attributesData, requirementsData] = await Promise.all([
+      getComplianceAttributes(complianceId),
+      getComplianceRequirements({
+        complianceId,
+        scanId: selectedScanId,
+      }),
+    ]);
+
+    threatScoreData = calculateThreatScore(attributesData, requirementsData);
+  }
 
   return (
     <ContentLayout title="Compliance" icon="lucide:shield-check">
