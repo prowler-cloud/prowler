@@ -85,7 +85,7 @@ Once chosen, enter the Provider UID for authentication:
 
 Optionally, provide a **Provider Alias** for easier identification. Follow the instructions provided to add your credentials:
 
-### **Step 4.1: AWS Credentials**
+### **Step 4.1: AWS Credentials**
 
 For AWS, enter your `AWS Account ID` and choose one of the following methods to connect:
 
@@ -119,14 +119,14 @@ If that is the case your STS configuration may look like this:
 To solve this issue, please activate the EU (Ireland) STS endpoint.
 
 </Note>
-### **Step 4.2: Azure Credentials**:
+### **Step 4.2: Azure Credentials**:
 
 For Azure, Prowler App uses a service principal application to authenticate. For more information about the process of creating and adding permissions to a service principal refer to this [section](/user-guide/providers/azure/authentication). When you finish creating and adding the [Entra](/user-guide/providers/azure/create-prowler-service-principal#assigning-proper-permissions) and [Subscription](/user-guide/providers/azure/subscriptions) scope permissions to the service principal, enter the `Tenant ID`, `Client ID` and `Client Secret` of the service principal application.
 
 <img src="/images/azure-credentials.png" alt="Azure Credentials" width="700" />
 
 ---
-### **Step 4.3: GCP Credentials**
+### **Step 4.3: GCP Credentials**
 
 For Google Cloud, first enter your `GCP Project ID` and then select the authentication method you want to use:
 
@@ -160,7 +160,7 @@ First of all, in the same project that you selected in the previous step, you ne
 
 <img src="/images/gcp-credentials.png" alt="GCP Credentials" width="700" />
 
-### **Step 4.4: Kubernetes Credentials**:
+### **Step 4.4: Kubernetes Credentials**:
 
 For Kubernetes, Prowler App uses a `kubeconfig` file to authenticate, paste the contents of your `kubeconfig` file into the `Kubeconfig content` field.
 
@@ -200,7 +200,7 @@ If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these
 
 4. Now you can add the modified `kubeconfig` in Prowler Cloud. Then test the connection.
 
-### **Step 4.5: M365 Credentials**
+### **Step 4.5: M365 Credentials**
 For M365, you must enter your Domain ID and choose the authentication method you want to use:
 
 - Service Principal Authentication (Recommended)
