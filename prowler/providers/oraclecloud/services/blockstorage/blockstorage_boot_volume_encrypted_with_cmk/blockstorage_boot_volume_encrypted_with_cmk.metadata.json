@@ -1,0 +1,36 @@
+{
+  "Provider": "oci",
+  "CheckID": "blockstorage_boot_volume_encrypted_with_cmk",
+  "CheckTitle": "Ensure Boot Volumes are encrypted with Customer Managed Key",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:blockstorage:resource",
+  "Severity": "medium",
+  "ResourceType": "OciBlockstorageResource",
+  "Description": "Boot volumes should be encrypted with Customer Managed Keys (CMK) for enhanced security and control over encryption keys.",
+  "Risk": "Not meeting this requirement increases security risk.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-BlockVolume/block-volumes-encrypted-with-cmks.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure Boot Volumes are encrypted with Customer Managed Key",
+      "Url": "https://hub.prowler.com/check/oci/blockstorage_boot_volume_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "security-configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
