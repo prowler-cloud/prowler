@@ -29,7 +29,7 @@ export const handleApiResponse = async (
       response.statusText ||
       "Oops! Something went wrong.";
 
-    //5XX errors
+    // Throw error for ALL non-ok responses
     if (response.status >= 500) {
       throw new Error(
         errorDetail ||
@@ -37,9 +37,7 @@ export const handleApiResponse = async (
       );
     }
 
-    return errorsArray
-      ? { error: errorDetail, errors: errorsArray, status: response.status }
-      : ({ error: errorDetail, status: response.status } as any);
+    throw new Error(errorDetail || `Request error (${response.status})`);
   }
 
   // Handle empty or no-content responses gracefully (e.g., 204, empty body)
