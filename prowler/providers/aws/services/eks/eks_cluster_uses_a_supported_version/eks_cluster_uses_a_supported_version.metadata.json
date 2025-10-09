@@ -1,29 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "eks_cluster_uses_a_supported_version",
-  "CheckTitle": "Ensure Kubernetes cluster runs on a supported Kubernetes version",
-  "CheckType": [],
+  "CheckTitle": "EKS cluster uses a supported Kubernetes version",
+  "CheckType": [
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "eks",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEksCluster",
-  "Description": "Ensure Kubernetes cluster runs on a supported Kubernetes version",
-  "Risk": "Running an Amazon EKS cluster on an unsupported Kubernetes version exposes it to common security vulnerabilities",
-  "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html",
+  "Description": "Amazon EKS clusters use a **supported Kubernetes version** at or above the defined baseline (e.g., `1.28+`). The evaluation compares each cluster's Kubernetes minor version to the minimum supported level and highlights clusters running below that baseline.",
+  "Risk": "Running an **unsupported Kubernetes version** removes upstream and EKS security fixes, exposing clusters to known CVEs and privilege escalation bugs (**confidentiality/integrity**). Deprecated or removed APIs can break controllers and add-ons, causing outages (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/kubernetes-version.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-2",
+    "https://docs.aws.amazon.com/eks/latest/userguide/platform-versions.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws eks update-cluster-version --region <region> --name <cluster_name> --kubernetes-version <latest_supported_version>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/kubernetes-version.html",
-      "Terraform": ""
+      "CLI": "aws eks update-cluster-version --name <cluster_name> --kubernetes-version <supported_version>",
+      "NativeIaC": "```yaml\n# CloudFormation: update EKS cluster to a supported Kubernetes version\nResources:\n  <example_resource_name>:\n    Type: AWS::EKS::Cluster\n    Properties:\n      Name: <example_resource_name>\n      RoleArn: <example_role_arn>\n      ResourcesVpcConfig:\n        SubnetIds: [\"<example_subnet_id>\"]\n      Version: \"<supported_version>\"  # Critical: set a supported Kubernetes version to pass the check\n```",
+      "Other": "1. Open the AWS Management Console and go to Amazon EKS\n2. Select your cluster (<cluster_name>)\n3. Click Update (or Edit) next to Kubernetes version\n4. Choose a supported version (>= required) and confirm the update\n5. Wait for the control plane update to complete",
+      "Terraform": "```hcl\n# Terraform: update EKS cluster to a supported Kubernetes version\nresource \"aws_eks_cluster\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_role_arn>\"\n\n  version = \"<supported_version>\" # Critical: set a supported Kubernetes version to pass the check\n\n  vpc_config {\n    subnet_ids = [\"<example_subnet_id>\"]\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "If your application doesn't require a specific version of Kubernetes, we recommend that you use the latest available Kubernetes version that is supported by EKS for your clusters.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-2"
+      "Text": "Adopt a **version management policy**: keep clusters on a supported minor version, schedule regular upgrades, and test workloads for API deprecations. Upgrade nodes and add-ons with the control plane. Track EKS releases, automate drift alerts, and favor **defense in depth** over deprecated features.",
+      "Url": "https://hub.prowler.com/check/eks_cluster_uses_a_supported_version"
     }
   },
   "Categories": [
+    "cluster-security",
     "vulnerabilities"
   ],
   "DependsOn": [],

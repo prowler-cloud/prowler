@@ -1,33 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "eks_cluster_network_policy_enabled",
-  "CheckTitle": "Ensure Network Policy is Enabled and Set as Appropriate",
+  "CheckTitle": "EKS cluster has network policy enabled",
   "CheckType": [
-    "Security",
-    "Configuration"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Lateral Movement"
   ],
   "ServiceName": "eks",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEksCluster",
-  "Description": "Ensure that Network Policy is enabled and set as appropriate in Amazon EKS clusters. Network Policy provides pod-level firewalling to restrict traffic between sources, enhancing network security within the cluster.",
-  "Risk": "Without proper Network Policy settings, pods within the cluster may be vulnerable to unauthorized access and communication.",
-  "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html",
+  "Description": "**Amazon EKS clusters** are evaluated for **pod-level network isolation** via Kubernetes `NetworkPolicy`, indicating whether traffic between pods and namespaces is restricted according to defined rules.",
+  "Risk": "Without **NetworkPolicy**, pods can communicate freely, enabling **lateral movement**, **data exfiltration**, and abuse of internal services. Unrestricted east-west traffic undermines confidentiality and integrity and enlarges the blast radius of a single compromised pod.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_1#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/security-groups.html",
+    "https://medium.com/@priyanka28/restricting-k8s-services-access-on-amazon-eks-part-ix-7d75c97c9f3e",
+    "https://readmedium.com/aws-workshops-diy-eks-workshop-12-kubernetes-networking-w-amazon-vpc-cni-network-policies-0a0d51dc55cd",
+    "https://www.linkedin.com/pulse/advanced-networking-kubernetes-calico-network-policies-heidi-ni-37bic",
+    "https://kommunity.com/cloud-turkiye/events/using-network-policies-with-vpc-cni-on-amazon-eks-d8f14272",
+    "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/security-groups.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_1#terraform"
+      "CLI": "aws eks update-cluster-config --name <example_cluster_name> --resources-vpc-config securityGroupIds=<example_security_group_id>",
+      "NativeIaC": "```yaml\n# CloudFormation: attach a security group to the EKS cluster\nResources:\n  <example_resource_name>:\n    Type: AWS::EKS::Cluster\n    Properties:\n      RoleArn: <example_role_arn>\n      ResourcesVpcConfig:\n        SubnetIds:\n          - <example_subnet_id>\n        SecurityGroupIds:\n          - <example_security_group_id>  # Critical: sets a security group for the cluster, satisfying the check\n```",
+      "Other": "1. Open the AWS Console and go to EKS > Clusters\n2. Select <your cluster> and open the Networking tab\n3. Click Edit (or Update) in the Networking section\n4. Under Security groups, add/select <example_security_group_id>\n5. Click Save to apply",
+      "Terraform": "```hcl\n# Minimal EKS cluster config with a security group attached\nresource \"aws_eks_cluster\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_role_arn>\"\n\n  vpc_config {\n    subnet_ids         = [\"<example_subnet_id>\"]\n    security_group_ids = [\"<example_security_group_id>\"]  # Critical: attaches a security group to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable and configure Network Policy to enhance network security within the EKS cluster.",
-      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html"
+      "Text": "Enforce **least privilege** `NetworkPolicy` with a `default-deny` for ingress and egress, then explicitly allow required flows by labels and namespaces. Apply **defense in depth** with security groups for pods and private access, and continuously test and monitor policy effectiveness.",
+      "Url": "https://hub.prowler.com/check/eks_cluster_network_policy_enabled"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "trust-boundaries",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
