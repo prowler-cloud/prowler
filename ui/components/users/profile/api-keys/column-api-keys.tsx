@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
+import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import { DataTableColumnHeader } from "@/components/ui/table";
 
 import { DataTableRowActions } from "./data-table-row-actions";

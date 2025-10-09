@@ -1,6 +1,6 @@
 import { Chip } from "@heroui/chip";
 
-import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
+import { type EnrichedApiKey } from "@/actions/api-keys/models";
 
 import { FALLBACK_VALUES } from "./constants";
 import { getApiKeyStatus } from "./types";

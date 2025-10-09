@@ -12,7 +12,8 @@ import {
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
-import { adaptApiKeysResponse, type EnrichedApiKey } from "./api-keys.adapter";
+import { adaptApiKeysResponse } from "./api-keys.adapter";
+import { type EnrichedApiKey } from "./models";
 
 /**
  * Fetches all API keys for the current tenant

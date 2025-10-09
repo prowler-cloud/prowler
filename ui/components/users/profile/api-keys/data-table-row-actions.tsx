@@ -9,7 +9,7 @@ import {
 import { Row } from "@tanstack/react-table";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 
-import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
+import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { ICON_SIZE } from "./constants";

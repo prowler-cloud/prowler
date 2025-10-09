@@ -3,7 +3,7 @@
 import { ModalFooter } from "@heroui/modal";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
-import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
+import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import {
   Alert,
   AlertDescription,

@@ -1,16 +1,7 @@
-import {
-  ApiKeyData,
-  ApiKeyResponse,
-} from "@/components/users/profile/api-keys/types";
+import { ApiKeyResponse } from "@/components/users/profile/api-keys/types";
 import { getApiKeyUserEmail } from "@/components/users/profile/api-keys/utils";
 
-/**
- * Enriched API Key with included data already resolved
- * This eliminates the need for runtime lookups in components
- */
-export interface EnrichedApiKey extends ApiKeyData {
-  userEmail: string;
-}
+import { type EnrichedApiKey } from "./models";
 
 /**
  * Adapts the raw API response to enriched API keys

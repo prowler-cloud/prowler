@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
+import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { DataTable } from "@/components/ui/table";
 

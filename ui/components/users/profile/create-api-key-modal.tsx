@@ -4,7 +4,7 @@ import { Input } from "@heroui/input";
 import { ModalFooter } from "@heroui/modal";
 
 import { createApiKey } from "@/actions/api-keys/api-keys";
-import { type EnrichedApiKey } from "@/actions/api-keys/api-keys.adapter";
+import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { CustomButton } from "@/components/ui/custom/custom-button";
