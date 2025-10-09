@@ -1,38 +1,51 @@
 {
   "Provider": "aws",
   "CheckID": "eks_cluster_not_publicly_accessible",
-  "CheckTitle": "Ensure EKS Clusters are not publicly accessible",
-  "CheckAliases": [
-    "eks_endpoints_not_publicly_accessible",
-    "eks_control_plane_endpoint_access_restricted"
-  ],
+  "CheckTitle": "EKS cluster endpoint is not publicly accessible from 0.0.0.0/0",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "eks",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEksCluster",
-  "Description": "Ensure that your Amazon EKS cluster's Kubernetes API server endpoint is not publicly accessible from the Internet in order to avoid exposing private data and minimizing security risks.",
-  "Risk": "By default, this API server endpoint is publicly accessible, meaning any machine on the internet can potentially connect to your EKS cluster using its public endpoint. This exposes your cluster to a higher risk of malicious activities and attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-1",
+  "Description": "**Amazon EKS** cluster API server endpoint is evaluated for **unrestricted Internet access**, specifically when the public endpoint permits connections from `0.0.0.0/0` instead of private access or limited CIDR ranges.",
+  "Risk": "An openly reachable API endpoint enables Internet-wide probing, brute force, and enumeration, increasing exposure to RBAC misconfigurations or API flaws. Successful access can drive secret exfiltration (confidentiality), workload tampering (integrity), and control-plane disruption or scaling abuse (availability, cost).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+    "https://docs.aws.amazon.com/eks/latest/eksctl/vpc-cluster-access.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-eks-cluster-resourcesvpcconfig.html",
+    "https://repost.aws/knowledge-center/eks-lock-api-access-ip-addresses",
+    "https://docs.aws.amazon.com/eks/latest/userguide/config-cluster-endpoint.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-1",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/endpoint-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true,publicAccessCidrs=[\"123.123.123.123/32\"]",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/endpoint-access.html",
-      "Terraform": ""
+      "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Disable public endpoint and enable private endpoint\nResources:\n  <example_resource_name>:\n    Type: AWS::EKS::Cluster\n    Properties:\n      RoleArn: <example_role_arn>\n      ResourcesVpcConfig:\n        SubnetIds:\n          - <example_subnet_id_1>\n          - <example_subnet_id_2>\n        EndpointPublicAccess: false  # critical: disables public API endpoint\n        EndpointPrivateAccess: true  # critical: enables private API endpoint\n```",
+      "Other": "1. Open the Amazon EKS console\n2. Select your cluster\n3. Go to the Networking tab and click Manage endpoint access\n4. Enable Private access and Disable Public access\n5. Click Update/Save",
+      "Terraform": "```hcl\n# Terraform: Disable public endpoint and enable private endpoint\nresource \"aws_eks_cluster\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_role_arn>\"\n\n  vpc_config {\n    subnet_ids              = [\"<example_subnet_id_1>\", \"<example_subnet_id_2>\"]\n    endpoint_public_access  = false  # critical: disables public API endpoint\n    endpoint_private_access = true   # critical: enables private API endpoint\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restricting public access to the Kubernetes API endpoint managed by the EKS cluster is a security best practice that helps protect your cluster from unauthorized access and potential security threats. By not allowing public access to the cluster's Kubernetes API endpoint, you ensure that only authorized entities can interact with your Amazon EKS cluster.",
-      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html"
+      "Text": "Prefer **private endpoint access** and avoid broad exposure. *If public access is required*, restrict to trusted admin CIDRs (not `0.0.0.0/0`), reach the API via **VPN/Direct Connect or bastions**, and enforce **least privilege** with IAM/RBAC. Apply **defense in depth** through network segmentation and continuous monitoring.",
+      "Url": "https://hub.prowler.com/check/eks_cluster_not_publicly_accessible"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "",
+  "CheckAliases": [
+    "eks_endpoints_not_publicly_accessible",
+    "eks_control_plane_endpoint_access_restricted"
+  ]
 }
