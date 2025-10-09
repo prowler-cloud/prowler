@@ -34,7 +34,7 @@ def init_parser(self):
         nargs="?",
         help="GitHub App Key content (PEM format) to log in against GitHub",
         default=None,
-        metavar="GITHUB_APP_KEY_CONTENT",
+        metavar="GITHUB_APP_KEY",
     )
     github_auth_subparser.add_argument(
         "--github-app-key-path",

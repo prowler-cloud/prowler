@@ -852,7 +852,7 @@ class TestGitHubProvider:
             assert session.token == ""
 
     def test_setup_session_with_github_app_key_env_var_file_path(self):
-        """Test setup_session with GITHUB_APP_KEY environment variable containing file path."""
+        """Test setup_session with GITHUB_APP_KEY environment variable containing file path should raise error."""
         import os
         import tempfile
 
@@ -877,11 +877,13 @@ class TestGitHubProvider:
                     if key in os.environ:
                         del os.environ[key]
 
-                session = GithubProvider.setup_session()
+                with pytest.raises(GithubSetUpSessionError) as exc_info:
+                    GithubProvider.setup_session()
 
-                assert session.id == str(APP_ID)
-                assert session.key == key_content
-                assert session.token == ""
+                assert "GITHUB_APP_KEY must contain RSA key content" in str(
+                    exc_info.value
+                )
+                assert "Use GITHUB_APP_KEY_PATH for file paths" in str(exc_info.value)
         finally:
             os.unlink(temp_path)
 

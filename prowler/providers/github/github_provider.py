@@ -162,12 +162,14 @@ class GithubProvider(Provider):
         elif github_app_id and (
             github_app_key or github_app_key_path or github_app_key_content
         ):
-            self._auth_method = "GitHub App Token"
+            self._auth_method = "GitHub App Key and ID"
         elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
             self._auth_method = "Environment Variable for Personal Access Token"
         elif environ.get("GITHUB_OAUTH_APP_TOKEN", ""):
             self._auth_method = "Environment Variable for OAuth App Token"
-        elif environ.get("GITHUB_APP_ID", "") and environ.get("GITHUB_APP_KEY", ""):
+        elif environ.get("GITHUB_APP_ID", "") and (
+            environ.get("GITHUB_APP_KEY", "") or environ.get("GITHUB_APP_KEY_PATH", "")
+        ):
             self._auth_method = "Environment Variables for GitHub App Key and ID"
 
         self._identity = GithubProvider.setup_identity(self._session)
@@ -347,13 +349,10 @@ class GithubProvider(Provider):
                             if env_key:
                                 if env_key.startswith("-----BEGIN"):
                                     app_key = format_rsa_key(env_key)
-                                elif os.path.isfile(env_key):
-                                    with open(env_key, "r") as rsa_key:
-                                        app_key = rsa_key.read()
                                 else:
                                     raise GithubEnvironmentVariableError(
                                         file=os.path.basename(__file__),
-                                        message="GITHUB_APP_KEY must contain either RSA key content (starting with -----BEGIN) or a valid file path.",
+                                        message="GITHUB_APP_KEY must contain RSA key content (starting with -----BEGIN). Use GITHUB_APP_KEY_PATH for file paths.",
                                     )
 
             if not session_token and not (app_id and app_key):
