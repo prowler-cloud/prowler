@@ -12,17 +12,19 @@ import { DataTable } from "@/components/ui/table";
 import { ApiKeySuccessModal } from "./api-key-success-modal";
 import { createApiKeyColumns } from "./api-keys/column-api-keys";
 import { ICON_SIZE } from "./api-keys/constants";
-import { ApiKeyData } from "./api-keys/types";
+import { ApiKeyData, IncludedResource } from "./api-keys/types";
 import { CreateApiKeyModal } from "./create-api-key-modal";
 import { DeleteApiKeyModal } from "./delete-api-key-modal";
 import { EditApiKeyNameModal } from "./edit-api-key-name-modal";
 
 interface ApiKeysCardClientProps {
   initialApiKeys: ApiKeyData[];
+  included: IncludedResource[];
 }
 
 export const ApiKeysCardClient = ({
   initialApiKeys,
+  included,
 }: ApiKeysCardClientProps) => {
   const router = useRouter();
   const [selectedApiKey, setSelectedApiKey] = useState<ApiKeyData | null>(null);
@@ -57,7 +59,11 @@ export const ApiKeysCardClient = ({
     editModal.onOpen();
   };
 
-  const columns = createApiKeyColumns(handleEditClick, handleDeleteClick);
+  const columns = createApiKeyColumns(
+    handleEditClick,
+    handleDeleteClick,
+    included,
+  );
 
   return (
     <>

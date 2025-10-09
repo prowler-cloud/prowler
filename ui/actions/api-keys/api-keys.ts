@@ -18,6 +18,7 @@ import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 export const getApiKeys = async (): Promise<ApiKeyResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/api-keys`);
+  url.searchParams.set("include", "entity.roles");
 
   try {
     const response = await fetch(url.toString(), {

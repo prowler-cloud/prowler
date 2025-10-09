@@ -1,8 +1,13 @@
 import { Chip } from "@heroui/chip";
 
 import { FALLBACK_VALUES } from "./constants";
-import { ApiKeyData, getApiKeyStatus } from "./types";
-import { formatRelativeTime, getStatusColor, getStatusLabel } from "./utils";
+import { ApiKeyData, getApiKeyStatus, IncludedResource } from "./types";
+import {
+  formatRelativeTime,
+  getApiKeyUserEmail,
+  getStatusColor,
+  getStatusLabel,
+} from "./utils";
 
 export const NameCell = ({ apiKey }: { apiKey: ApiKeyData }) => (
   <p className="text-sm font-medium">
@@ -31,4 +36,15 @@ export const StatusCell = ({ apiKey }: { apiKey: ApiKeyData }) => {
       {getStatusLabel(status)}
     </Chip>
   );
+};
+
+export const EmailCell = ({
+  apiKey,
+  included,
+}: {
+  apiKey: ApiKeyData;
+  included?: IncludedResource[];
+}) => {
+  const email = getApiKeyUserEmail(apiKey, included);
+  return <p className="text-sm">{email}</p>;
 };

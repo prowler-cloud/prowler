@@ -61,7 +61,7 @@ export const ApiKeySuccessModal = ({
           color="action"
           onPress={onClose}
         >
-          I've Saved My API Key
+          I&apos;ve Saved My API Key
         </CustomButton>
       </ModalFooter>
     </CustomAlertModal>

@@ -2,7 +2,7 @@
 
 import { Input } from "@heroui/input";
 import { ModalFooter } from "@heroui/modal";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
@@ -10,6 +10,7 @@ import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { ApiKeyData } from "./api-keys/types";
+import { useModalForm } from "./api-keys/use-modal-form";
 
 interface EditApiKeyNameModalProps {
   isOpen: boolean;
@@ -18,55 +19,46 @@ interface EditApiKeyNameModalProps {
   onSuccess: () => void;
 }
 
+interface EditApiKeyFormData {
+  name: string;
+}
+
 export const EditApiKeyNameModal = ({
   isOpen,
   onClose,
   apiKey,
   onSuccess,
 }: EditApiKeyNameModalProps) => {
-  const [name, setName] = useState(apiKey?.attributes.name || "");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { formData, setFormData, isLoading, error, handleSubmit, handleClose } =
+    useModalForm<EditApiKeyFormData>({
+      initialData: {
+        name: apiKey?.attributes.name || "",
+      },
+      onSubmit: async (data) => {
+        if (!apiKey || !data.name.trim()) {
+          throw new Error("Name is required");
+        }
 
-  const resetForm = useCallback(() => {
-    setName(apiKey?.attributes.name || "");
-    setError(null);
-  }, [apiKey?.attributes.name]);
+        const result = await updateApiKey(apiKey.id, {
+          name: data.name.trim(),
+        });
 
-  // Sync the name state when apiKey changes or modal opens
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        onSuccess();
+      },
+      onSuccess,
+      onClose,
+    });
+
+  // Sync form data when apiKey changes or modal opens
   useEffect(() => {
     if (isOpen && apiKey) {
-      resetForm();
+      setFormData({ name: apiKey.attributes.name || "" });
     }
-  }, [isOpen, apiKey, resetForm]);
-
-  const handleSubmit = async () => {
-    if (!apiKey || !name.trim()) {
-      setError("Name is required");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const result = await updateApiKey(apiKey.id, { name: name.trim() });
-
-    setIsLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    resetForm();
-    onSuccess();
-    onClose();
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
+  }, [isOpen, apiKey, setFormData]);
 
   return (
     <CustomAlertModal
@@ -85,8 +77,10 @@ export const EditApiKeyNameModal = ({
           labelPlacement="inside"
           variant="bordered"
           placeholder="My API Key"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={formData.name}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, name: e.target.value }))
+          }
           isRequired
           classNames={{
             label: "tracking-tight font-light !text-default-500 text-xs z-0!",
@@ -115,7 +109,7 @@ export const EditApiKeyNameModal = ({
           color="action"
           onPress={handleSubmit}
           isLoading={isLoading}
-          isDisabled={!name.trim()}
+          isDisabled={!formData.name.trim()}
         >
           Save Changes
         </CustomButton>

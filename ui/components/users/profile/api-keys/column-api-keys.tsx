@@ -7,16 +7,18 @@ import { DataTableColumnHeader } from "@/components/ui/table";
 import { DataTableRowActions } from "./data-table-row-actions";
 import {
   DateCell,
+  EmailCell,
   LastUsedCell,
   NameCell,
   PrefixCell,
   StatusCell,
 } from "./table-cells";
-import { ApiKeyData } from "./types";
+import { ApiKeyData, IncludedResource } from "./types";
 
 export const createApiKeyColumns = (
   onEdit: (apiKey: ApiKeyData) => void,
   onDelete: (apiKey: ApiKeyData) => void,
+  included?: IncludedResource[],
 ): ColumnDef<ApiKeyData>[] => [
   {
     accessorKey: "name",
@@ -31,6 +33,13 @@ export const createApiKeyColumns = (
       <DataTableColumnHeader column={column} title="PREFIX" />
     ),
     cell: ({ row }) => <PrefixCell apiKey={row.original} />,
+  },
+  {
+    id: "email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="EMAIL" />
+    ),
+    cell: ({ row }) => <EmailCell apiKey={row.original} included={included} />,
   },
   {
     accessorKey: "inserted_at",

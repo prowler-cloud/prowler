@@ -7,6 +7,7 @@ export const ApiKeysCard = async () => {
   const apiKeys = response?.data
     ? response.data.filter((key) => !key.attributes.revoked)
     : [];
+  const included = response?.included || [];
 
-  return <ApiKeysCardClient initialApiKeys={apiKeys} />;
+  return <ApiKeysCardClient initialApiKeys={apiKeys} included={included} />;
 };

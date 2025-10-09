@@ -25,8 +25,48 @@ export interface ApiKeyData {
   relationships?: ApiKeyRelationships;
 }
 
+// Included resource types
+export interface UserAttributes {
+  name: string;
+  email: string;
+  company_name: string;
+  date_joined: string;
+}
+
+export interface RoleAttributes {
+  name: string;
+  manage_users: boolean;
+  manage_account: boolean;
+}
+
+export interface UserData {
+  type: "users";
+  id: string;
+  attributes: UserAttributes;
+  relationships?: {
+    roles: {
+      data: Array<{
+        type: "roles";
+        id: string;
+      }>;
+      meta?: {
+        count: number;
+      };
+    };
+  };
+}
+
+export interface RoleData {
+  type: "roles";
+  id: string;
+  attributes: RoleAttributes;
+}
+
+export type IncludedResource = UserData | RoleData;
+
 export interface ApiKeyResponse {
   data: ApiKeyData[];
+  included?: IncludedResource[];
   meta?: {
     pagination?: {
       page: number;

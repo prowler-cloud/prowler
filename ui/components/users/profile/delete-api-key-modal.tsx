@@ -1,7 +1,6 @@
 "use client";
 
 import { ModalFooter } from "@heroui/modal";
-import { useState } from "react";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
 import {
@@ -14,6 +13,7 @@ import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
 import { ApiKeyData } from "./api-keys/types";
+import { useModalForm } from "./api-keys/use-modal-form";
 
 interface DeleteApiKeyModalProps {
   isOpen: boolean;
@@ -28,37 +28,24 @@ export const DeleteApiKeyModal = ({
   apiKey,
   onSuccess,
 }: DeleteApiKeyModalProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { isLoading, error, handleSubmit, handleClose } = useModalForm({
+    initialData: {},
+    onSubmit: async () => {
+      if (!apiKey) {
+        throw new Error("No API key selected");
+      }
 
-  const resetForm = () => {
-    setError(null);
-  };
+      const result = await revokeApiKey(apiKey.id);
 
-  const handleDelete = async () => {
-    if (!apiKey) return;
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
-    setIsLoading(true);
-    setError(null);
-
-    const result = await revokeApiKey(apiKey.id);
-
-    setIsLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    resetForm();
-    onSuccess();
-    onClose();
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
+      onSuccess();
+    },
+    onSuccess,
+    onClose,
+  });
 
   return (
     <CustomAlertModal
@@ -107,7 +94,7 @@ export const DeleteApiKeyModal = ({
         <CustomButton
           ariaLabel="Revoke API Key"
           color="danger"
-          onPress={handleDelete}
+          onPress={handleSubmit}
           isLoading={isLoading}
           isDisabled={!apiKey}
         >

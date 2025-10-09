@@ -2,7 +2,6 @@
 
 import { Input } from "@heroui/input";
 import { ModalFooter } from "@heroui/modal";
-import { useState } from "react";
 
 import { createApiKey } from "@/actions/api-keys/api-keys";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
@@ -10,6 +9,7 @@ import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
+import { useModalForm } from "./api-keys/use-modal-form";
 import { calculateExpiryDate } from "./api-keys/utils";
 
 interface CreateApiKeyModalProps {
@@ -18,63 +18,49 @@ interface CreateApiKeyModalProps {
   onSuccess: (apiKey: string) => void;
 }
 
+interface CreateApiKeyFormData {
+  name: string;
+  expiresInDays: string;
+}
+
 export const CreateApiKeyModal = ({
   isOpen,
   onClose,
   onSuccess,
 }: CreateApiKeyModalProps) => {
-  const [name, setName] = useState("");
-  const [expiresInDays, setExpiresInDays] = useState(DEFAULT_EXPIRY_DAYS);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { formData, setFormData, isLoading, error, handleSubmit, handleClose } =
+    useModalForm<CreateApiKeyFormData>({
+      initialData: {
+        name: "",
+        expiresInDays: DEFAULT_EXPIRY_DAYS,
+      },
+      onSubmit: async (data) => {
+        if (!data.name.trim()) {
+          throw new Error("Name is required");
+        }
 
-  const resetForm = () => {
-    setName("");
-    setExpiresInDays(DEFAULT_EXPIRY_DAYS);
-    setError(null);
-  };
+        const result = await createApiKey({
+          name: data.name.trim(),
+          expires_at: calculateExpiryDate(parseInt(data.expiresInDays)),
+        });
 
-  const handleSubmit = async () => {
-    if (!name.trim()) {
-      setError("Name is required");
-      return;
-    }
+        if (result.error) {
+          throw new Error(result.error);
+        }
 
-    setIsLoading(true);
-    setError(null);
+        if (!result.data) {
+          throw new Error("Failed to create API key");
+        }
 
-    const result = await createApiKey({
-      name: name.trim(),
-      expires_at: calculateExpiryDate(parseInt(expiresInDays)),
+        const apiKey = result.data.data.attributes.api_key;
+        if (!apiKey) {
+          throw new Error("Failed to retrieve API key");
+        }
+
+        onSuccess(apiKey);
+      },
+      onClose,
     });
-
-    setIsLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    if (!result.data) {
-      setError("Failed to create API key");
-      return;
-    }
-
-    const apiKey = result.data.data.attributes.api_key;
-    if (!apiKey) {
-      setError("Failed to retrieve API key");
-      return;
-    }
-
-    resetForm();
-    onSuccess(apiKey);
-    onClose();
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
 
   return (
     <CustomAlertModal
@@ -89,8 +75,10 @@ export const CreateApiKeyModal = ({
           labelPlacement="inside"
           variant="bordered"
           placeholder="My API Key"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={formData.name}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, name: e.target.value }))
+          }
           isRequired
           description="A descriptive name to identify this API key"
           classNames={{
@@ -104,8 +92,10 @@ export const CreateApiKeyModal = ({
           labelPlacement="inside"
           variant="bordered"
           type="number"
-          value={expiresInDays}
-          onChange={(e) => setExpiresInDays(e.target.value)}
+          value={formData.expiresInDays}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, expiresInDays: e.target.value }))
+          }
           min="1"
           max="3650"
           description="Number of days until this key expires (default: 365)"
@@ -136,7 +126,7 @@ export const CreateApiKeyModal = ({
           color="action"
           onPress={handleSubmit}
           isLoading={isLoading}
-          isDisabled={!name.trim()}
+          isDisabled={!formData.name.trim()}
         >
           Create API Key
         </CustomButton>
