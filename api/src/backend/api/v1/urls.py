@@ -37,12 +37,12 @@ from api.v1.views import (
     ScheduleViewSet,
     SchemaView,
     TaskViewSet,
+    TenantApiKeyViewSet,
     TenantFinishACSView,
     TenantMembersViewSet,
     TenantViewSet,
     UserRoleRelationshipView,
     UserViewSet,
-    TenantApiKeyViewSet,
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
@@ -154,7 +154,7 @@ urlpatterns = [
     path(
         "lighthouse/config",
         LighthouseTenantConfigViewSet.as_view(
-            {"get": "retrieve", "post": "create", "patch": "partial_update"}
+            {"get": "list", "patch": "partial_update"}
         ),
         name="lighthouse-config",
     ),
