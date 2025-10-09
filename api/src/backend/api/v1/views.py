@@ -4193,27 +4193,27 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Lighthouse AI"],
-        summary="List provider configs",
+        summary="List all LLM provider configs",
         description="Retrieve all LLM provider configurations for the current tenant",
     ),
     retrieve=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Get provider config",
+        summary="Retrieve LLM provider config",
         description="Get details for a specific provider configuration in the current tenant.",
     ),
     create=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Create provider config",
+        summary="Create LLM provider config",
         description="Create a per-tenant configuration for an LLM provider. Only one configuration per provider type is allowed per tenant.",
     ),
     partial_update=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Update provider config",
+        summary="Update LLM provider config",
         description="Partially update a provider configuration (e.g., base_url, is_active).",
     ),
     destroy=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Delete provider config",
+        summary="Delete LLM provider config",
         description="Delete a provider configuration. Any tenant defaults that reference this provider are cleared during deletion.",
     ),
 )
@@ -4271,7 +4271,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
 
     @extend_schema(
         tags=["Lighthouse AI"],
-        summary="Check provider connection",
+        summary="Check LLM provider connection",
         description="Validate provider credentials asynchronously and toggle is_active.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
@@ -4309,7 +4309,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
 
     @extend_schema(
         tags=["Lighthouse AI"],
-        summary="Refresh provider models",
+        summary="Refresh LLM models catalog",
         description="Fetch available models for this provider configuration and upsert into catalog.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
@@ -4354,12 +4354,12 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Get tenant config",
+        summary="Get Lighthouse AI Tenant config",
         description="Retrieve current tenant-level Lighthouse AI settings. Returns a single configuration object.",
     ),
     partial_update=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Update tenant config",
+        summary="Update Lighthouse AI Tenant config",
         description="Update tenant-level settings. Validates that the default provider is configured and active and that default model IDs exist for the chosen providers. Auto-creates configuration if it doesn't exist.",
     ),
 )
@@ -4432,8 +4432,13 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Lighthouse AI"],
-        summary="List provider models",
+        summary="List all LLM models",
         description="List available LLM models per configured provider for the current tenant.",
+    ),
+    retrieve=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Retrieve LLM model details",
+        description="Get details for a specific LLM model.",
     ),
 )
 class LighthouseProviderModelsViewSet(BaseRLSViewSet):
