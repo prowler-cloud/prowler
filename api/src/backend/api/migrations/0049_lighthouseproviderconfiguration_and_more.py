@@ -95,16 +95,6 @@ class Migration(migrations.Migration):
                 "abstract": False,
             },
         ),
-        migrations.RemoveConstraint(
-            model_name="tenantapikey",
-            name="statements_on_tenantapikey",
-        ),
-        migrations.AddConstraint(
-            model_name="tenantapikey",
-            constraint=api.rls.RowLevelSecurityConstraint(
-                "tenant_id", name="rls_on_tenantapikey"
-            ),
-        ),
         migrations.AddField(
             model_name="lighthouseproviderconfiguration",
             name="tenant",
@@ -144,7 +134,9 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="lighthouseproviderconfiguration",
             constraint=api.rls.RowLevelSecurityConstraint(
-                "tenant_id", name="rls_on_lighthouseproviderconfiguration"
+                "tenant_id",
+                name="rls_on_lighthouseproviderconfiguration",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         migrations.AddConstraint(
@@ -164,7 +156,9 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="lighthouseprovidermodels",
             constraint=api.rls.RowLevelSecurityConstraint(
-                "tenant_id", name="rls_on_lighthouseprovidermodels"
+                "tenant_id",
+                name="rls_on_lighthouseprovidermodels",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         migrations.AddConstraint(
@@ -177,7 +171,9 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="lighthousetenantconfiguration",
             constraint=api.rls.RowLevelSecurityConstraint(
-                "tenant_id", name="rls_on_lighthousetenantconfiguration"
+                "tenant_id",
+                name="rls_on_lighthousetenantconfiguration",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
         migrations.AddConstraint(
