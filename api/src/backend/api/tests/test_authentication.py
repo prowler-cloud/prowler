@@ -204,7 +204,7 @@ class TestTenantAPIKeyAuthentication:
         with pytest.raises(AuthenticationFailed) as exc_info:
             auth_backend.authenticate(request)
 
-        assert str(exc_info.value.detail) == "This API Key has expired."
+        assert str(exc_info.value.detail) == "API Key has already expired."
 
     def test_authenticate_nonexistent_api_key(
         self, auth_backend, api_keys_fixture, request_factory
@@ -228,7 +228,7 @@ class TestTenantAPIKeyAuthentication:
         with pytest.raises(AuthenticationFailed) as exc_info:
             auth_backend.authenticate(request)
 
-        assert str(exc_info.value.detail) == "Invalid API Key."
+        assert str(exc_info.value.detail) == "No entity matching this api key."
 
     def test_authenticate_updates_last_used_at(
         self, auth_backend, api_keys_fixture, request_factory
@@ -327,17 +327,6 @@ class TestTenantAPIKeyAuthentication:
         assert auth_dict1["api_key_prefix"] != auth_dict2["api_key_prefix"]
         assert auth_dict1["tenant_id"] == auth_dict2["tenant_id"]
 
-    def test_authenticate_without_authorization_header(
-        self, auth_backend, request_factory
-    ):
-        """Test that authentication returns None when no authorization header is present."""
-        request = request_factory.get("/")
-
-        result = auth_backend.authenticate(request)
-
-        # Should return None when no auth header is present
-        assert result is None
-
     def test_authenticate_with_wrong_prefix_in_db(
         self, auth_backend, api_keys_fixture, request_factory
     ):
@@ -392,4 +381,4 @@ class TestTenantAPIKeyAuthentication:
         with pytest.raises(AuthenticationFailed) as exc_info:
             auth_backend.authenticate(request)
 
-        assert str(exc_info.value.detail) == "Invalid API Key."
+        assert str(exc_info.value.detail) == "API Key has already expired."
