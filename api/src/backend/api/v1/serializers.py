@@ -317,6 +317,23 @@ class UserSerializer(BaseSerializerV1):
         )
 
 
+class UserIncludeSerializer(UserSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "name",
+            "email",
+            "company_name",
+            "date_joined",
+            "roles",
+        ]
+
+    included_serializers = {
+        "roles": "api.v1.serializers.RoleIncludeSerializer",
+    }
+
+
 class UserCreateSerializer(BaseWriteSerializer):
     password = serializers.CharField(write_only=True)
     company_name = serializers.CharField(required=False)
@@ -1974,6 +1991,17 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
         resource_name = "compliance-requirements-details"
 
 
+class ComplianceOverviewDetailThreatscoreSerializer(ComplianceOverviewDetailSerializer):
+    """
+    Serializer for detailed compliance requirement information for Threatscore.
+
+    Includes additional fields specific to the Threatscore framework.
+    """
+
+    passed_findings = serializers.IntegerField()
+    total_findings = serializers.IntegerField()
+
+
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):
     id = serializers.CharField()
     compliance_name = serializers.CharField()
@@ -2778,6 +2806,10 @@ class TenantApiKeySerializer(RLSSerializer):
             "last_used_at",
             "entity",
         ]
+
+    included_serializers = {
+        "entity": "api.v1.serializers.UserIncludeSerializer",
+    }
 
 
 class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
