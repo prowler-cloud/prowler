@@ -11,7 +11,7 @@ import * as z from "zod";
 import {
   getTenantConfig,
   updateTenantConfig,
-} from "@/actions/lighthouse/llm-providers";
+} from "@/actions/lighthouse/lighthouse";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomTextarea } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";

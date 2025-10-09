@@ -2,7 +2,10 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { createSupervisor } from "@langchain/langgraph-supervisor";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { getAIKey, getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import {
+  getProviderApiKey,
+  getTenantConfig,
+} from "@/actions/lighthouse/lighthouse";
 import {
   complianceAgentPrompt,
   findingsAgentPrompt,
@@ -49,22 +52,39 @@ import {
 } from "@/lib/lighthouse/tools/users";
 import { getModelParams } from "@/lib/lighthouse/utils";
 
-export async function initLighthouseWorkflow() {
-  const apiKey = await getAIKey();
-  const lighthouseConfig = await getLighthouseConfig();
+export interface RuntimeConfig {
+  model?: string;
+}
 
-  const modelParams = getModelParams(lighthouseConfig);
+export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
+  const tenantConfigResult = await getTenantConfig();
+  const tenantConfig = tenantConfigResult?.data?.attributes;
 
-  // Initialize models without API keys
+  // Get the default provider and model
+  const defaultProvider = tenantConfig?.default_provider || "openai";
+  const defaultModels = tenantConfig?.default_models || {};
+  const defaultModel = defaultModels[defaultProvider] || "gpt-4o";
+
+  // Get API key from the provider
+  const apiKey = await getProviderApiKey(defaultProvider);
+
+  // Merge runtime config with database config (runtime model takes priority)
+  const finalConfig = {
+    model: runtimeConfig?.model || defaultModel,
+  };
+
+  const modelParams = getModelParams(finalConfig);
+
+  // Initialize models with runtime config
   const llm = new ChatOpenAI({
-    model: lighthouseConfig.model,
+    model: finalConfig.model,
     apiKey: apiKey,
     tags: ["agent"],
     ...modelParams,
   });
 
   const supervisorllm = new ChatOpenAI({
-    model: lighthouseConfig.model,
+    model: finalConfig.model,
     apiKey: apiKey,
     streaming: true,
     tags: ["supervisor"],

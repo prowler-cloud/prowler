@@ -1,20 +1,19 @@
 import { redirect } from "next/navigation";
 
-import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import { isLighthouseConfigured } from "@/actions/lighthouse/lighthouse";
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse";
 import { ContentLayout } from "@/components/ui";
 
 export default async function AIChatbot() {
-  const lighthouseConfig = await getLighthouseConfig();
-
-  const hasConfig = !!lighthouseConfig;
+  const hasConfig = await isLighthouseConfigured();
 
   if (!hasConfig) {
     return redirect("/lighthouse/config");
   }
 
-  const isActive = lighthouseConfig.is_active ?? false;
+  // If properly configured, we can assume it's active
+  const isActive = true;
 
   return (
     <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>

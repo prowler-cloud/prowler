@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import {
   getLighthouseModels,
   updateTenantConfig,
-} from "@/actions/lighthouse/llm-providers";
+} from "@/actions/lighthouse/lighthouse";
 import { CustomButton } from "@/components/ui/custom";
 
 interface SelectModelProps {

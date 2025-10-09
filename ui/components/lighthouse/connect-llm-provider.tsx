@@ -8,7 +8,7 @@ import {
   createLighthouseProvider,
   refreshProviderModels,
   testProviderConnection,
-} from "@/actions/lighthouse/llm-providers";
+} from "@/actions/lighthouse/lighthouse";
 import { getTask } from "@/actions/task/tasks";
 import {
   Collapsible,

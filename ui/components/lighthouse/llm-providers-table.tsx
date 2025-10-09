@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import {
   getLighthouseProviders,
   getTenantConfig,
-} from "@/actions/lighthouse/llm-providers";
+} from "@/actions/lighthouse/lighthouse";
 import { CustomButton } from "@/components/ui/custom";
 
 type LLMProvider = {
