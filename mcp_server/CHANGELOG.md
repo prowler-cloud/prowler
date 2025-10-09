@@ -12,6 +12,3 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 - HTTP transport support [(#8784)](https://github.com/prowler-cloud/prowler/pull/8784)
 - Add new MCP Server for Prowler Documentation [(#8795)](https://github.com/prowler-cloud/prowler/pull/8795)
 - API key support for STDIO mode and enhanced HTTP mode authentication [(#8823)](https://github.com/prowler-cloud/prowler/pull/8823)
-
-### Fixed
-- Accept string type for all parameter types in MCP server [(#8866)](https://github.com/prowler-cloud/prowler/pull/8866)
