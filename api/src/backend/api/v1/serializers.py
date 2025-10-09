@@ -3023,7 +3023,7 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
         provider_type = attrs.get("provider_type")
         credentials = attrs.get("credentials") or {}
 
-        if provider_type == LighthouseProviderConfiguration.ProviderChoices.OPENAI:
+        if provider_type == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI:
             try:
                 OpenAICredentialsSerializer(data=credentials).is_valid(
                     raise_exception=True
@@ -3079,7 +3079,8 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
 
         if (
             credentials is not None
-            and provider_type == LighthouseProviderConfiguration.ProviderChoices.OPENAI
+            and provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
         ):
             try:
                 OpenAICredentialsSerializer(data=credentials).is_valid(
@@ -3154,7 +3155,7 @@ class LighthouseTenantConfigCreateSerializer(RLSSerializer, BaseWriteSerializer)
         default_models = attrs.get("default_models", {})
 
         if default_provider:
-            supported = set(LighthouseProviderConfiguration.ProviderChoices.values)
+            supported = set(LighthouseProviderConfiguration.LLMProviderChoices.values)
             if default_provider not in supported:
                 raise ValidationError(
                     {"default_provider": f"Unsupported provider '{default_provider}'."}
@@ -3232,7 +3233,7 @@ class LighthouseTenantConfigUpdateSerializer(BaseWriteSerializer):
         )
 
         if default_provider:
-            supported = set(LighthouseProviderConfiguration.ProviderChoices.values)
+            supported = set(LighthouseProviderConfiguration.LLMProviderChoices.values)
             if default_provider not in supported:
                 raise ValidationError(
                     {"default_provider": f"Unsupported provider '{default_provider}'."}

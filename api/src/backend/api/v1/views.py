@@ -4257,7 +4257,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
         instance = self.get_object()
         if (
             instance.provider_type
-            != LighthouseProviderConfiguration.ProviderChoices.OPENAI
+            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
         ):
             return Response(
                 data={
@@ -4300,7 +4300,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
         instance = self.get_object()
         if (
             instance.provider_type
-            != LighthouseProviderConfiguration.ProviderChoices.OPENAI
+            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
         ):
             return Response(
                 data={
