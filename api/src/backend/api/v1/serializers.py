@@ -2843,6 +2843,13 @@ class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "api_key": {"read_only": True},
         }
 
+    def validate_name(self, value):
+        """Validate that the name is unique within the tenant."""
+        tenant_id = self.context.get("tenant_id")
+        if TenantAPIKey.objects.filter(tenant_id=tenant_id, name=value).exists():
+            raise ValidationError("An API key with this name already exists.")
+        return value
+
     def get_api_key(self, obj):
         """Return the raw API key if it was stored during creation."""
         return getattr(obj, "_raw_api_key", None)
@@ -2884,3 +2891,14 @@ class TenantApiKeyUpdateSerializer(RLSSerializer, BaseWriteSerializer):
             "inserted_at": {"read_only": True},
             "last_used_at": {"read_only": True},
         }
+
+    def validate_name(self, value):
+        """Validate that the name is unique within the tenant, excluding current instance."""
+        tenant_id = self.context.get("tenant_id")
+        if (
+            TenantAPIKey.objects.filter(tenant_id=tenant_id, name=value)
+            .exclude(id=self.instance.id)
+            .exists()
+        ):
+            raise ValidationError("An API key with this name already exists.")
+        return value
