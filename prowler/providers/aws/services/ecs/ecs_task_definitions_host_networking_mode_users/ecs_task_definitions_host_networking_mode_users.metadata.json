@@ -1,32 +1,46 @@
 {
   "Provider": "aws",
   "CheckID": "ecs_task_definitions_host_networking_mode_users",
-  "CheckTitle": "Amazon ECS task definitions should have secure networking modes and user definitions",
+  "CheckTitle": "Amazon ECS task definition does not use host network mode, or non-privileged containers specify a non-root user",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS Host Hardening Benchmarks",
+    "TTPs/Privilege Escalation",
+    "TTPs/Lateral Movement"
   ],
   "ServiceName": "ecs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:ecs:region:account-id:task-definition/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEcsTaskDefinition",
-  "Description": "This control checks whether an active Amazon ECS task definition with host networking mode has privileged or user container definitions. The control fails for task definitions that have host network mode and container definitions of privileged=false or empty, and user=root or empty.",
-  "Risk": "If ECS tasks are configured with host networking and either lack a defined user or run with elevated privileges, this can lead to privilege escalation, unauthorized access to resources, and increased exposure to vulnerabilities.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-task-definition-user-for-host-mode-check.html",
+  "Description": "**Amazon ECS task definitions** in `host` network mode are assessed for containers where `privileged=false` and the container `user` is `root` or unset.",
+  "Risk": "Sharing the host network lets containers reach host interfaces directly. Running as **root** (or with no user set) increases the chance to bind low ports, sniff traffic, or impersonate services, and makes kernel flaws more exploitable-enabling data exfiltration, tampering, and outages, impacting **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-networking.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-6",
+    "https://docs.aws.amazon.com/config/latest/developerguide/ecs-task-definition-user-for-host-mode-check.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233979-ensure-amazon-ecs-task-definitions-using-host-network-mode-do-not-allow-privileged-or-root-user-acc",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html",
+    "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition-console-v2.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ecs update-task-definition --task-definition <task-definition-name> --network-mode awsvpc --requires-compatibilities FARGATE --user <user-name>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-6",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: ECS task definition not using host network mode\nResources:\n  <example_resource_name>:\n    Type: AWS::ECS::TaskDefinition\n    Properties:\n      NetworkMode: awsvpc  # CRITICAL: avoids host mode to pass the check\n      ContainerDefinitions:\n        - Name: <example_resource_name>\n          Image: <image>\n```",
+      "Other": "1. Open the Amazon ECS console and go to Task definitions\n2. Select the task definition and choose the latest revision\n3. Click Create new revision\n4. Set Network mode to awsvpc (not host)\n5. Save the revision and, if used by a service, update the service to this new revision\n6. If you must keep host mode: edit each non-privileged container and set User to a non-root value (e.g., 1000) and save a new revision",
+      "Terraform": "```hcl\n# ECS task definition not using host network mode\nresource \"aws_ecs_task_definition\" \"<example_resource_name>\" {\n  family                = \"<example_resource_name>\"\n  network_mode          = \"awsvpc\"  # CRITICAL: avoids host mode to pass the check\n  container_definitions = jsonencode([\n    {\n      name  = \"<example_resource_name>\"\n      image = \"nginx\"\n    }\n  ])\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure your ECS task definitions use the awsvpc networking mode and have secure user configurations when using host networking mode.",
-      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition-console-v2.html"
+      "Text": "Prefer **`awsvpc`** for isolation. If `host` is required, enforce **least privilege**:\n- Run as a non-root `user`\n- Avoid `privileged` unless strictly justified\n- Limit capabilities and exposed ports\n\nApply **defense in depth** with network segmentation and minimal IAM permissions.",
+      "Url": "https://hub.prowler.com/check/ecs_task_definitions_host_networking_mode_users"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "container-security",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
