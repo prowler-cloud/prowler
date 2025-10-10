@@ -76,6 +76,15 @@ export interface ApiKeyResponse {
   };
 }
 
+/**
+ * Enriched API Key with user data already resolved
+ * This type extends the base ApiKeyData with additional fields
+ * populated from the included resources in the API response
+ */
+export interface EnrichedApiKey extends ApiKeyData {
+  userEmail: string;
+}
+
 export interface SingleApiKeyResponse {
   data: ApiKeyData;
 }

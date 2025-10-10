@@ -1,6 +1,5 @@
 "use client";
 
-import { ModalFooter } from "@heroui/modal";
 import { Snippet } from "@heroui/snippet";
 
 import {
@@ -55,15 +54,13 @@ export const ApiKeySuccessModal = ({
         </div>
       </div>
 
-      <ModalFooter>
-        <CustomButton
-          ariaLabel="Close and confirm API key saved"
-          color="action"
-          onPress={onClose}
-        >
-          I&apos;ve Saved My API Key
-        </CustomButton>
-      </ModalFooter>
+      <CustomButton
+        ariaLabel="Close and confirm API key saved"
+        color="action"
+        onPress={onClose}
+      >
+        I&apos;ve Saved My API Key
+      </CustomButton>
     </CustomAlertModal>
   );
 };

@@ -1,33 +1,31 @@
 "use client";
 
-import { ModalFooter } from "@heroui/modal";
-
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
-import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
-import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
+import { ModalButtons } from "./api-keys/modal-buttons";
+import { EnrichedApiKey } from "./api-keys/types";
 import { useModalForm } from "./api-keys/use-modal-form";
 
-interface DeleteApiKeyModalProps {
+interface RevokeApiKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
   apiKey: EnrichedApiKey | null;
   onSuccess: () => void;
 }
 
-export const DeleteApiKeyModal = ({
+export const RevokeApiKeyModal = ({
   isOpen,
   onClose,
   apiKey,
   onSuccess,
-}: DeleteApiKeyModalProps) => {
+}: RevokeApiKeyModalProps) => {
   const { isLoading, error, handleSubmit, handleClose } = useModalForm({
     initialData: {},
     onSubmit: async () => {
@@ -51,7 +49,7 @@ export const DeleteApiKeyModal = ({
     <CustomAlertModal
       isOpen={isOpen}
       onOpenChange={(open) => !open && handleClose()}
-      title="Delete API Key"
+      title="Revoke API Key"
       size="lg"
     >
       <div className="flex flex-col gap-4">
@@ -64,7 +62,7 @@ export const DeleteApiKeyModal = ({
         </Alert>
 
         <div className="text-sm">
-          <p>Are you sure you want to delete this API key?</p>
+          <p>Are you sure you want to revoke this API key?</p>
           <div className="mt-2 rounded-lg bg-slate-800 p-3">
             <p className="font-medium text-white">
               {apiKey?.attributes.name || FALLBACK_VALUES.UNNAMED_KEY}
@@ -82,25 +80,14 @@ export const DeleteApiKeyModal = ({
         )}
       </div>
 
-      <ModalFooter>
-        <CustomButton
-          ariaLabel="Cancel"
-          color="transparent"
-          variant="light"
-          onPress={handleClose}
-        >
-          Cancel
-        </CustomButton>
-        <CustomButton
-          ariaLabel="Revoke API Key"
-          color="danger"
-          onPress={handleSubmit}
-          isLoading={isLoading}
-          isDisabled={!apiKey}
-        >
-          Revoke API Key
-        </CustomButton>
-      </ModalFooter>
+      <ModalButtons
+        onCancel={handleClose}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+        isDisabled={!apiKey}
+        submitText="Revoke API Key"
+        submitColor="danger"
+      />
     </CustomAlertModal>
   );
 };

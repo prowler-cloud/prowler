@@ -13,16 +13,29 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 import { adaptApiKeysResponse } from "./api-keys.adapter";
-import { type EnrichedApiKey } from "./models";
+
+interface GetApiKeysParams {
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+}
 
 /**
- * Fetches all API keys for the current tenant
- * Returns enriched API keys with user data already resolved
+ * Fetches API keys for the current tenant with pagination support
+ * Returns enriched API keys with user data already resolved and pagination metadata
  */
-export const getApiKeys = async (): Promise<EnrichedApiKey[]> => {
+export const getApiKeys = async (params?: GetApiKeysParams) => {
+  const { page = 1, pageSize = 10, sort } = params || {};
+
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/api-keys`);
   url.searchParams.set("include", "entity.roles");
+  url.searchParams.set("page[number]", page.toString());
+  url.searchParams.set("page[size]", pageSize.toString());
+
+  if (sort) {
+    url.searchParams.set("sort", sort);
+  }
 
   try {
     const response = await fetch(url.toString(), {
@@ -35,7 +48,7 @@ export const getApiKeys = async (): Promise<EnrichedApiKey[]> => {
     return adaptApiKeysResponse(apiResponse);
   } catch (error) {
     console.error("Error fetching API keys:", error);
-    return [];
+    return { data: [], metadata: undefined };
   }
 };
 
@@ -153,7 +166,7 @@ export const revokeApiKey = async (
     });
 
     if (!response.ok) {
-      const errorData = await handleApiError(response);
+      const errorData = handleApiError(response);
       return { error: errorData.error };
     }
 

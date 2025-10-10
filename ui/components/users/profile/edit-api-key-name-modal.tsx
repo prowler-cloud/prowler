@@ -1,15 +1,13 @@
 "use client";
 
-import { Input } from "@heroui/input";
-import { ModalFooter } from "@heroui/modal";
 import { useEffect } from "react";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
-import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
-import { CustomButton } from "@/components/ui/custom/custom-button";
 
+import { ModalButtons } from "./api-keys/modal-buttons";
+import { EnrichedApiKey } from "./api-keys/types";
 import { useModalForm } from "./api-keys/use-modal-form";
 import { isApiKeyNameDuplicate } from "./api-keys/utils";
 
@@ -81,21 +79,25 @@ export const EditApiKeyNameModal = ({
           Prefix: {apiKey?.attributes.prefix}
         </div>
 
-        <Input
-          label="Name"
-          labelPlacement="inside"
-          variant="bordered"
-          placeholder="My API Key"
-          value={formData.name}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, name: e.target.value }))
-          }
-          isRequired
-          classNames={{
-            label: "tracking-tight font-light !text-default-500 text-xs z-0!",
-            input: "text-default-500 text-small",
-          }}
-        />
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="edit-api-key-name"
+            className="text-sm font-medium text-slate-300"
+          >
+            Name <span className="text-danger">*</span>
+          </label>
+          <input
+            id="edit-api-key-name"
+            type="text"
+            placeholder="My API Key"
+            value={formData.name}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, name: e.target.value }))
+            }
+            className="focus:border-prowler-theme-green focus:ring-prowler-theme-green rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:ring-1 focus:outline-none"
+            required
+          />
+        </div>
 
         {error && (
           <Alert variant="destructive">
@@ -104,25 +106,13 @@ export const EditApiKeyNameModal = ({
         )}
       </div>
 
-      <ModalFooter>
-        <CustomButton
-          ariaLabel="Cancel"
-          color="transparent"
-          variant="light"
-          onPress={handleClose}
-        >
-          Cancel
-        </CustomButton>
-        <CustomButton
-          ariaLabel="Save changes"
-          color="action"
-          onPress={handleSubmit}
-          isLoading={isLoading}
-          isDisabled={!formData.name.trim()}
-        >
-          Save Changes
-        </CustomButton>
-      </ModalFooter>
+      <ModalButtons
+        onCancel={handleClose}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+        isDisabled={!formData.name.trim()}
+        submitText="Save Changes"
+      />
     </CustomAlertModal>
   );
 };

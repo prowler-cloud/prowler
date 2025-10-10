@@ -2,7 +2,6 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import { DataTableColumnHeader } from "@/components/ui/table";
 
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -14,57 +13,64 @@ import {
   PrefixCell,
   StatusCell,
 } from "./table-cells";
+import { EnrichedApiKey } from "./types";
 
 export const createApiKeyColumns = (
   onEdit: (apiKey: EnrichedApiKey) => void,
-  onDelete: (apiKey: EnrichedApiKey) => void,
+  onRevoke: (apiKey: EnrichedApiKey) => void,
 ): ColumnDef<EnrichedApiKey>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="NAME" />
+      <DataTableColumnHeader column={column} title="NAME" param="name" />
     ),
     cell: ({ row }) => <NameCell apiKey={row.original} />,
   },
   {
     accessorKey: "prefix",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="PREFIX" />
+      <DataTableColumnHeader column={column} title="PREFIX" param="prefix" />
     ),
     cell: ({ row }) => <PrefixCell apiKey={row.original} />,
   },
   {
     id: "email",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="EMAIL" />
-    ),
+    header: "EMAIL",
     cell: ({ row }) => <EmailCell apiKey={row.original} />,
+    enableSorting: false,
   },
   {
     accessorKey: "inserted_at",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="CREATED" />
+      <DataTableColumnHeader
+        column={column}
+        title="CREATED"
+        param="inserted_at"
+      />
     ),
     cell: ({ row }) => <DateCell date={row.original.attributes.inserted_at} />,
   },
   {
     accessorKey: "last_used_at",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="LAST USED" />
-    ),
+    header: "LAST USED",
     cell: ({ row }) => <LastUsedCell apiKey={row.original} />,
+    enableSorting: false,
   },
   {
     accessorKey: "expires_at",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="EXPIRES" />
+      <DataTableColumnHeader
+        column={column}
+        title="EXPIRES"
+        param="expires_at"
+      />
     ),
     cell: ({ row }) => <DateCell date={row.original.attributes.expires_at} />,
   },
   {
-    accessorKey: "status",
+    accessorKey: "revoked",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="STATUS" />
+      <DataTableColumnHeader column={column} title="STATUS" param="revoked" />
     ),
     cell: ({ row }) => <StatusCell apiKey={row.original} />,
   },
@@ -73,7 +79,7 @@ export const createApiKeyColumns = (
     header: "Actions",
     cell: ({ row }) => {
       return (
-        <DataTableRowActions row={row} onEdit={onEdit} onDelete={onDelete} />
+        <DataTableRowActions row={row} onEdit={onEdit} onRevoke={onRevoke} />
       );
     },
   },

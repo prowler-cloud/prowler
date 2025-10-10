@@ -7,23 +7,23 @@ import {
   DropdownTrigger,
 } from "@heroui/dropdown";
 import { Row } from "@tanstack/react-table";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Ban, MoreVertical, Pencil } from "lucide-react";
 
-import { type EnrichedApiKey } from "@/actions/api-keys/models";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 import { ICON_SIZE } from "./constants";
+import { EnrichedApiKey } from "./types";
 
 interface DataTableRowActionsProps {
   row: Row<EnrichedApiKey>;
   onEdit: (apiKey: EnrichedApiKey) => void;
-  onDelete: (apiKey: EnrichedApiKey) => void;
+  onRevoke: (apiKey: EnrichedApiKey) => void;
 }
 
 export function DataTableRowActions({
   row,
   onEdit,
-  onDelete,
+  onRevoke,
 }: DataTableRowActionsProps) {
   const apiKey = row.original;
 
@@ -49,13 +49,13 @@ export function DataTableRowActions({
             Edit name
           </DropdownItem>
           <DropdownItem
-            key="delete"
+            key="revoke"
             className="text-danger"
             color="danger"
-            startContent={<Trash2 size={ICON_SIZE} />}
-            onPress={() => onDelete(apiKey)}
+            startContent={<Ban size={ICON_SIZE} />}
+            onPress={() => onRevoke(apiKey)}
           >
-            Delete
+            Revoke
           </DropdownItem>
         </DropdownMenu>
       </Dropdown>

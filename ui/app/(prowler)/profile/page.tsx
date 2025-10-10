@@ -8,6 +8,7 @@ import { ApiKeysCard, UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
+import { SearchParamsProps } from "@/types";
 import {
   MembershipDetailData,
   RoleDetail,
@@ -15,17 +16,27 @@ import {
   UserProfileResponse,
 } from "@/types/users";
 
-export default async function Profile() {
+export default async function Profile({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParamsProps>;
+}) {
+  const resolvedSearchParams = await searchParams;
+
   return (
     <ContentLayout title="User Profile" icon="lucide:users">
       <Suspense fallback={<SkeletonUserInfo />}>
-        <SSRDataUser />
+        <SSRDataUser searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
 }
 
-const SSRDataUser = async () => {
+const SSRDataUser = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) => {
   const userProfile = (await getUserInfo()) as UserProfileResponse | undefined;
   if (!userProfile?.data) {
     return null;
@@ -108,7 +119,7 @@ const SSRDataUser = async () => {
             tenantsMap={tenantsMap}
             isOwner={isOwner && hasManageAccount}
           />
-          {hasManageAccount && <ApiKeysCard />}
+          {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
         </div>
       </div>
     </div>
