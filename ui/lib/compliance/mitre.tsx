@@ -25,15 +25,14 @@ export const mapComplianceData = (
 ): Framework[] => {
   const attributes = attributesData?.data || [];
   const requirementsMap = createRequirementsMap(requirementsData);
+
   const frameworks: Framework[] = [];
 
-  // Process attributes and merge with requirements data
+  // Process ALL attributes to ensure consistent counters for charts
   for (const attributeItem of attributes) {
     const id = attributeItem.id;
     const metadataArray = attributeItem.attributes?.attributes
       ?.metadata as unknown as MITREAttributesMetadata[];
-
-    if (!metadataArray || metadataArray.length === 0) continue;
 
     // Get corresponding requirement data
     const requirementData = requirementsMap.get(id);
@@ -56,6 +55,7 @@ export const mapComplianceData = (
     const framework = findOrCreateFramework(frameworks, frameworkName);
 
     // Create requirement directly (flat structure - no categories)
+    // Include ALL requirements, even those without metadata (for accurate chart counts)
     const finalStatus: RequirementStatus = status as RequirementStatus;
     const requirement: Requirement = {
       name: requirementName,
@@ -72,20 +72,23 @@ export const mapComplianceData = (
       subtechniques: subtechniques,
       platforms: platforms,
       technique_url: techniqueUrl,
-      cloud_services: metadataArray.map((m) => {
-        // Dynamically find the service field (AWSService, GCPService, AzureService, etc.)
-        const serviceKey = Object.keys(m).find((key) =>
-          key.toLowerCase().includes("service"),
-        );
-        const serviceName = serviceKey ? m[serviceKey] : "Unknown Service";
+      // Mark items without metadata so accordion can filter them out
+      hasMetadata: !!(metadataArray && metadataArray.length > 0),
+      cloud_services:
+        metadataArray?.map((m) => {
+          // Dynamically find the service field (AWSService, GCPService, AzureService, etc.)
+          const serviceKey = Object.keys(m).find((key) =>
+            key.toLowerCase().includes("service"),
+          );
+          const serviceName = serviceKey ? m[serviceKey] : "Unknown Service";
 
-        return {
-          service: serviceName,
-          category: m.Category,
-          value: m.Value,
-          comment: m.Comment,
-        };
-      }),
+          return {
+            service: serviceName,
+            category: m.Category,
+            value: m.Value,
+            comment: m.Comment,
+          };
+        }) || [],
     };
 
     // Add requirement directly to framework (store in a special property)
@@ -106,31 +109,38 @@ export const toAccordionItems = (
   return data.flatMap((framework) => {
     const requirements = (framework as any).requirements || [];
 
-    return requirements.map((requirement: Requirement, i: number) => {
-      const itemKey = `${framework.name}-req-${i}`;
+    // Filter out requirements without metadata (can't be displayed in accordion)
+    const displayableRequirements = requirements.filter(
+      (requirement: Requirement) => requirement.hasMetadata !== false,
+    );
 
-      return {
-        key: itemKey,
-        title: (
-          <ComplianceAccordionRequirementTitle
-            type=""
-            name={requirement.name}
-            status={requirement.status as FindingStatus}
-          />
-        ),
-        content: (
-          <ClientAccordionContent
-            requirement={requirement}
-            scanId={scanId || ""}
-            framework={framework.name}
-            disableFindings={
-              requirement.check_ids.length === 0 && requirement.manual === 0
-            }
-          />
-        ),
-        items: [],
-      };
-    });
+    return displayableRequirements.map(
+      (requirement: Requirement, i: number) => {
+        const itemKey = `${framework.name}-req-${i}`;
+
+        return {
+          key: itemKey,
+          title: (
+            <ComplianceAccordionRequirementTitle
+              type=""
+              name={requirement.name}
+              status={requirement.status as FindingStatus}
+            />
+          ),
+          content: (
+            <ClientAccordionContent
+              requirement={requirement}
+              scanId={scanId || ""}
+              framework={framework.name}
+              disableFindings={
+                requirement.check_ids.length === 0 && requirement.manual === 0
+              }
+            />
+          ),
+          items: [],
+        };
+      },
+    );
   });
 };
 
