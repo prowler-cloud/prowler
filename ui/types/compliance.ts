@@ -189,6 +189,9 @@ export interface RequirementItemData {
     version: string;
     description: string;
     status: RequirementStatus;
+    // For Threat compliance:
+    passed_findings?: number;
+    total_findings?: number;
   };
 }
 
