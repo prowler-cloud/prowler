@@ -311,6 +311,10 @@
         "tab": "Changelog",
         "icon": "github",
         "href": "https://github.com/prowler-cloud/prowler/releases"
+      },
+      {
+        "tab": "Public Roadmap",
+        "href": "https://roadmap.prowler.com/"
       }
     ],
     "global": {
@@ -370,6 +374,42 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-lighthouse",
       "destination": "/user-guide/tutorials/prowler-app-lighthouse"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/developer-guide/introduction",
+      "destination": "/developer-guide/introduction"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/aws/getting-started-aws",
+      "destination": "/user-guide/providers/aws/getting-started-aws"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/azure/getting-started-azure",
+      "destination": "/user-guide/providers/azure/getting-started-azure"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/gcp/getting-started-gcp",
+      "destination": "/user-guide/providers/gcp/getting-started-gcp"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-44-kubernetes-credentials",
+      "destination": "/user-guide/tutorials/prowler-app#step-4-4%3A-kubernetes-credentials%3A"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-3-add-a-provider",
+      "destination": "/user-guide/tutorials/prowler-app#step-3-add-a-provider"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365",
+      "destination": "/user-guide/providers/microsoft365/getting-started-m365"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/github/getting-started-github",
+      "destination": "/user-guide/providers/github/getting-started-github"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso/#configuration-steps",
+      "destination": "/user-guide/tutorials/prowler-app-sso"
     }
   ]
 }
