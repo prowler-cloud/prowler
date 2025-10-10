@@ -2,31 +2,41 @@
 title: 'Contributing to Documentation'
 ---
 
-## Contributing to Documentation
+Prowler documentation is built using [Mintlify](https://www.mintlify.com/docs), allowing contributors to easily add or enhance documentation.
 
-Prowler documentation is built using `mkdocs`, allowing contributors to easily add or enhance documentation.
+## Installation and Setup
 
-### Installation and Setup
+<Steps>
+  <Step title="Install Mintlify CLI">
+    ```bash
+    npm i -g mint
+    ```
+    For detailed instructions, check the [Mintlify documentation](https://www.mintlify.com/docs/installation).
+  </Step>
 
-Install all necessary dependencies using: `poetry install --with docs`.
+  <Step title="Preview Documentation Locally">
+    Start the local development server to preview changes in real-time.
 
-1. Install `mkdocs` using your preferred package manager.
+    ```bash
+    mint dev
+    ```
 
-2. Running the Documentation Locally
-Navigate to the `prowler` repository folder.
-Start the local documentation server by running: `mkdocs serve`.
-Open `http://localhost:8000` in your browser to view live updates.
+    A local preview of your documentation will be available at http://localhost:3000
+  </Step>
 
-3. Making Documentation Changes
-Make all needed changes to docs or add new documents. Edit existing Markdown (.md) files inside `prowler/docs`.
-To add new sections or files, update the `mkdocs.yaml` file located in the root directory of Prowler’s repository.
+  <Step title="Make Documentation Changes">
+    Edit existing Markdown (.mdx) files inside the `docs` directory or add new documents.
 
-4. Submitting Changes
+    For reference about formatting, check the [Mintlify documentation](https://www.mintlify.com/docs/create/text).
 
-Once documentation updates are complete:
+    To add new sections or files, update the [`docs/docs.json`](https://github.com/prowler-cloud/prowler/blob/master/docs/docs.json) file to include them in the navigation.
+  </Step>
 
-Submit a pull request for review.
+  <Step title="Submit Changes">
+    Once documentation updates are complete, submit a pull request for review.
 
-The Prowler team will assess and merge contributions.
+    The Prowler team will assess and merge contributions.
+  </Step>
+</Steps>
 
 Your efforts help improve Prowler documentation—thank you for contributing!
