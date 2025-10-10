@@ -1,0 +1,36 @@
+{
+  "Provider": "oci",
+  "CheckID": "analytics_instance_access_restricted",
+  "CheckTitle": "Ensure Oracle Analytics Cloud (OAC) access is restricted to allowed sources or deployed within a Virtual Cloud Network",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "analytics",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:analytics:instance",
+  "Severity": "high",
+  "ResourceType": "AnalyticsInstance",
+  "Description": "Oracle Analytics Cloud access should be restricted or deployed in VCN.",
+  "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure Oracle Analytics Cloud (OAC) access is restricted to allowed sources or deployed within a Virtual Cloud Network",
+      "Url": "https://hub.prowler.com/check/oci/analytics_instance_access_restricted"
+    }
+  },
+  "Categories": [
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

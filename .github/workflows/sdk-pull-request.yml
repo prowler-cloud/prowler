@@ -249,6 +249,21 @@ jobs:
         run: |
           poetry run pytest -n auto --cov=./prowler/providers/mongodbatlas --cov-report=xml:mongodb_atlas_coverage.xml tests/providers/mongodbatlas
 
+      # Test OCI
+      - name: OCI - Check if any file has changed
+        id: oci-changed-files
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ./prowler/providers/oraclecloud/**
+            ./tests/providers/oraclecloud/**
+            ./poetry.lock
+
+      - name: OCI - Test
+        if: steps.oci-changed-files.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler/providers/oraclecloud --cov-report=xml:oci_coverage.xml tests/providers/oraclecloud
+
       # Common Tests
       - name: Lib - Test
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -268,4 +283,4 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: prowler
-          files: ./aws_coverage.xml,./azure_coverage.xml,./gcp_coverage.xml,./kubernetes_coverage.xml,./github_coverage.xml,./nhn_coverage.xml,./m365_coverage.xml,./lib_coverage.xml,./config_coverage.xml
+          files: ./aws_coverage.xml,./azure_coverage.xml,./gcp_coverage.xml,./kubernetes_coverage.xml,./github_coverage.xml,./nhn_coverage.xml,./m365_coverage.xml,./oci_coverage.xml,./lib_coverage.xml,./config_coverage.xml

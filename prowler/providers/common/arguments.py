@@ -16,9 +16,15 @@ def init_providers_parser(self):
     providers = Provider.get_available_providers()
     for provider in providers:
         try:
+            # Map CLI provider names to directory names (for cases where they differ)
+            provider_directory_map = {
+                "oci": "oraclecloud",  # OCI SDK conflict avoidance
+            }
+            provider_directory = provider_directory_map.get(provider, provider)
+
             getattr(
                 import_module(
-                    f"{providers_path}.{provider}.{provider_arguments_lib_path}"
+                    f"{providers_path}.{provider_directory}.{provider_arguments_lib_path}"
                 ),
                 init_provider_arguments_function,
             )(self)
@@ -32,10 +38,18 @@ def init_providers_parser(self):
 def validate_provider_arguments(arguments: Namespace) -> tuple[bool, str]:
     """validate_provider_arguments returns {True, "} if the provider arguments passed are valid and can be used together"""
     try:
+        # Map CLI provider names to directory names (for cases where they differ)
+        provider_directory_map = {
+            "oci": "oraclecloud",  # OCI SDK conflict avoidance
+        }
+        provider_directory = provider_directory_map.get(
+            arguments.provider, arguments.provider
+        )
+
         # Provider function must be located at prowler.providers.<provider>.lib.arguments.arguments.validate_arguments
         return getattr(
             import_module(
-                f"{providers_path}.{arguments.provider}.{provider_arguments_lib_path}"
+                f"{providers_path}.{provider_directory}.{provider_arguments_lib_path}"
             ),
             validate_provider_arguments_function,
         )(arguments)
