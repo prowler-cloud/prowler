@@ -31,15 +31,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - SAML configuration errors are now properly caught and displayed [(#8880)](https://github.com/prowler-cloud/prowler/pull/8880)
 - ThreatScore for each pillar in Prowler ThreatScore specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
-
----
-
-## [1.12.4] (Prowler v5.12.4)
-
-### 🐞 Fixed
-
 - Remove maxTokens model param for GPT-5 models [(#8843)](https://github.com/prowler-cloud/prowler/pull/8843)
 - MITRE ATTACK compliance view now shows all requirements in charts [(#8886)](https://github.com/prowler-cloud/prowler/pull/8886)
+
+---
 
 ## [1.12.3] (Prowler v5.12.3)
 
