@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic.v1 import BaseModel
 
-from prowler.config.config import output_file_timestamp
+from prowler.config.config import get_output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
 
 
@@ -39,6 +39,7 @@ class AzureOutputOptions(ProviderOutputOptions):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
+            output_file_timestamp = get_output_file_timestamp()
             if (
                 identity.tenant_domain
                 != "Unknown tenant domain (missing AAD permissions)"

@@ -5,7 +5,7 @@ from unittest import mock
 
 from freezegun import freeze_time
 
-from prowler.config.config import output_file_timestamp
+from prowler.config.config import get_output_file_timestamp
 from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.gcp.models import GCPOutputOptions
@@ -31,6 +31,8 @@ class Test_Output_Options:
 
         output_options = AWSOutputOptions(arguments, {}, identity)
 
+        expected_suffix = get_output_file_timestamp()
+
         assert output_options.status == ["FAIL"]
         assert output_options.output_modes == ["csv", "json-asff"]
         assert output_options.output_directory == "output_test_directory"
@@ -42,7 +44,7 @@ class Test_Output_Options:
         assert output_options.send_sh_only_fails
         assert (
             output_options.output_filename
-            == f"prowler-output-{identity.account}-{output_file_timestamp}"
+            == f"prowler-output-{identity.account}-{expected_suffix}"
         )
         assert output_options.bulk_checks_metadata == {}
 
@@ -103,6 +105,8 @@ class Test_Output_Options:
             identity,
         )
 
+        expected_suffix = get_output_file_timestamp()
+
         assert isinstance(output_options, AzureOutputOptions)
         assert output_options.status == []
         assert output_options.output_modes == [
@@ -113,7 +117,7 @@ class Test_Output_Options:
         assert output_options.verbose
         assert (
             output_options.output_filename
-            == f"prowler-output-{identity.tenant_domain}-{output_file_timestamp}"
+            == f"prowler-output-{identity.tenant_domain}-{expected_suffix}"
         )
 
         rmdir(f"{arguments.output_directory}/compliance")
