@@ -392,7 +392,7 @@
       "destination": "/user-guide/providers/gcp/getting-started-gcp"
     },
     {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-44-kubernetes-credentials",
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app",
       "destination": "/user-guide/tutorials/prowler-app#step-4-4%3A-kubernetes-credentials%3A"
     },
     {
@@ -408,7 +408,7 @@
       "destination": "/user-guide/providers/github/getting-started-github"
     },
     {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso/#configuration-steps",
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso",
       "destination": "/user-guide/tutorials/prowler-app-sso"
     }
   ]
