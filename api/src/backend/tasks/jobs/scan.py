@@ -64,6 +64,8 @@ COMPLIANCE_REQUIREMENT_COPY_COLUMNS = (
     "passed_checks",
     "failed_checks",
     "total_checks",
+    "passed_findings",
+    "total_findings",
     "scan_id",
 )
 
@@ -169,6 +171,8 @@ def _copy_compliance_requirement_rows(
                 row.get("passed_checks", 0),
                 row.get("failed_checks", 0),
                 row.get("total_checks", 0),
+                row.get("passed_findings", 0),
+                row.get("total_findings", 0),
                 str(row.get("scan_id")),
             ]
         )
@@ -230,6 +234,8 @@ def _persist_compliance_requirement_rows(
                 passed_checks=row["passed_checks"],
                 failed_checks=row["failed_checks"],
                 total_checks=row["total_checks"],
+                passed_findings=row.get("passed_findings", 0),
+                total_findings=row.get("total_findings", 0),
                 scan_id=row["scan_id"],
             )
             for row in rows
@@ -238,6 +244,14 @@ def _persist_compliance_requirement_rows(
             ComplianceRequirementOverview.objects.bulk_create(
                 fallback_objects, batch_size=500
             )
+
+
+def _normalized_compliance_key(framework: str | None, version: str | None) -> str:
+    """Return normalized identifier used to group compliance totals."""
+
+    normalized_framework = (framework or "").lower().replace("-", "").replace("_", "")
+    normalized_version = (version or "").lower().replace("-", "").replace("_", "")
+    return f"{normalized_framework}{normalized_version}"
 
 
 def perform_prowler_scan(
@@ -721,6 +735,23 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             provider_instance = scan_instance.provider
             prowler_provider = return_prowler_provider(provider_instance)
 
+        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
+            provider_instance.provider
+        ]
+        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        threatscore_requirements_by_check: dict[str, set[str]] = {}
+        threatscore_framework = compliance_template.get(
+            modeled_threatscore_compliance_id
+        )
+        if threatscore_framework:
+            for requirement_id, requirement in threatscore_framework[
+                "requirements"
+            ].items():
+                for check_id in requirement["checks"]:
+                    threatscore_requirements_by_check.setdefault(check_id, set()).add(
+                        requirement_id
+                    )
+
         # Get check status data by region from findings
         findings = (
             Finding.all_objects.filter(scan_id=scan_id, muted=False)
@@ -737,7 +768,6 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
 
         findings_count_by_compliance = {}
         check_status_by_region = {}
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
         with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             for finding in findings:
                 for resource in finding.small_resources:
@@ -774,11 +804,6 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             # If not available, use regions from findings
             regions = set(check_status_by_region.keys())
 
-        # Get compliance template for the provider
-        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
-            provider_instance.provider
-        ]
-
         # Create compliance data by region
         compliance_overview_by_region = {
             region: deepcopy(compliance_template) for region in regions
@@ -800,16 +825,11 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         # Prepare compliance requirement rows
         compliance_requirement_rows: list[dict[str, Any]] = []
         utc_datetime_now = datetime.now(tz=timezone.utc)
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
         for region, compliance_data in compliance_overview_by_region.items():
             for compliance_id, compliance in compliance_data.items():
-                modeled_framework = (
-                    compliance["framework"].lower().replace("-", "").replace("_", "")
+                modeled_compliance_id = _normalized_compliance_key(
+                    compliance["framework"], compliance["version"]
                 )
-                modeled_version = (
-                    compliance["version"].lower().replace("-", "").replace("_", "")
-                ) or ""
-                modeled_compliance_id = f"{modeled_framework}{modeled_version}"
                 # Create an overview record for each requirement within each compliance framework
                 for requirement_id, requirement in compliance["requirements"].items():
                     checks_status = requirement["checks_status"]
@@ -821,10 +841,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             "compliance_id": compliance_id,
                             "framework": compliance["framework"],
                             "version": compliance["version"] or "",
-                            "description": requirement.get(
-                                "description", requirement["description"]
-                            )
-                            or "",
+                            "description": requirement.get("description") or "",
                             "region": region,
                             "requirement_id": requirement_id,
                             "requirement_status": requirement["status"],
