@@ -11,6 +11,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - API Key support [(#8805)](https://github.com/prowler-cloud/prowler/pull/8805)
 - SAML role mapping protection for single-admin tenants to prevent accidental lockout [(#8882)](https://github.com/prowler-cloud/prowler/pull/8882)
 - Support for `passed_findings` and `total_findings` fields in compliance requirement overview for accurate Prowler ThreatScore calculation [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- Database read replica support [(#8869)](https://github.com/prowler-cloud/prowler/pull/8869)
 
 ### Changed
 - Now the MANAGE_ACCOUNT permission is required to modify or read user permissions instead of MANAGE_USERS [(#8281)](https://github.com/prowler-cloud/prowler/pull/8281)
