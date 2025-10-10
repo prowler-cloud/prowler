@@ -104,11 +104,6 @@ export class SignUpPage extends BasePage {
     await this.submit();
   }
 
-  async verifyLoadingState(): Promise<void> {
-    await expect(this.submitButton).toHaveAttribute("aria-disabled", "true");
-    await super.verifyLoadingState();
-  }
-
   async verifyRedirectToLogin(): Promise<void> {
     await expect(this.page).toHaveURL("/sign-in");
   }

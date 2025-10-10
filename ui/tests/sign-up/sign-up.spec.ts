@@ -5,19 +5,16 @@ import { makeSuffix } from "../helpers";
 
 test.describe("Sign Up Flow", () => {
   test("should register a new user successfully", { tag: ['@critical', '@e2e', '@signup', '@SIGNUP-E2E-001'] }, async ({ page }) => {
-    // Initialize page objects for sign-up and sign-in flows
     const signUpPage = new SignUpPage(page);
     await signUpPage.goto();
 
-    // Generate unique test data to avoid conflicts with existing users
-    // Create a base36 random suffix of exactly 10 characters for uniqueness
+    // Generate unique test data
     const suffix = makeSuffix(10);
     const uniqueEmail = `e2e+${suffix}@prowler.com`;
 
-    // Fill and submit the sign-up form with valid test data
-    // Name is exactly 19 characters to meet the max length requirement (20 chars)
+    // Fill and submit the sign-up form
     await signUpPage.signup({
-      name: `E2E User ${suffix}`, // 9 chars + 10 chars = 19 chars
+      name: `E2E User ${suffix}`,
       company: `Test E2E Co ${suffix}`,
       email: uniqueEmail,
       password: "Thisisapassword123@",
@@ -25,11 +22,13 @@ test.describe("Sign Up Flow", () => {
       acceptTerms: true,
     });
     
-    // Verify successful sign-up redirects to login page (OSS environment)
+    // Verify no errors occurred during sign-up
+    await signUpPage.verifyNoErrors();
+    
+    // Verify redirect to login page (OSS environment)
     await signUpPage.verifyRedirectToLogin();
     
-    // Verify the newly created user can successfully log in
-    // This ensures the user account was properly created and is functional
+    // Verify the newly created user can log in successfully
     const signInPage = new SignInPage(page);
     await signInPage.login({
       email: uniqueEmail,
