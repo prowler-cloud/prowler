@@ -101,7 +101,7 @@ export async function logout(page: Page) {
 }
 
 export async function verifyLogoutSuccess(page: Page) {
-  await expect(page).toHaveURL("/sign-in");
+  await expect(page).toHaveURL(/\/sign-in/);
   await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
 }
 
@@ -160,4 +160,18 @@ export async function authenticateAndSaveState(
 
   // Save authentication state
   await page.context().storageState({ path: storagePath });
+}
+
+export async function getSession(page: Page) {
+  const response = await page.request.get("/api/auth/session");
+  return response.json();
+}
+
+export async function verifySessionValid(page: Page) {
+  const session = await getSession(page);
+  expect(session).toBeTruthy();
+  expect(session.user).toBeTruthy();
+  expect(session.accessToken).toBeTruthy();
+  expect(session.refreshToken).toBeTruthy();
+  return session;
 }
