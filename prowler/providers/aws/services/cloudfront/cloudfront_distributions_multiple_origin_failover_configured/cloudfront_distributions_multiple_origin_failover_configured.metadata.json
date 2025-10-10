@@ -1,34 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_multiple_origin_failover_configured",
-  "CheckTitle": "Check if CloudFront distributions have origin failover enabled.",
+  "CheckTitle": "CloudFront distribution has origin failover configured with at least two origins",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "NIST 800-53 Controls"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
-  "ResourceType": "AWSCloudFrontDistribution",
-  "Description": "Check if CloudFront distributions have origin failover enabled.",
-  "Risk": "Without origin failover, if the primary origin becomes unavailable, your CloudFront distribution may experience downtime, leading to potential service interruptions and a poor user experience.",
-  "RelatedUrl": "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_OriginGroup.html",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "**CloudFront distributions** are evaluated for an **origin group** configured with at least `2` origins to support automatic origin failover.",
+  "Risk": "Without **origin failover**, the origin becomes a **single point of failure**. Origin outages, regional incidents, or targeted **DoS** can cause **downtime**, elevated error rates, and latency, degrading **availability** and impacting user experience and SLAs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/high_availability_origin_failover.html#concept_origin_groups.creating",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-4",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/origin-failover-enabled.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-4",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/origin-failover-enabled.html"
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add OriginGroups with two origins and FailoverCriteria, then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
+      "NativeIaC": "```yaml\n# CloudFormation: Add an origin group with two origins and use it in the default cache behavior\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          Quantity: 2\n          Items:\n            - Id: primary\n              DomainName: <primary_origin_domain>\n              S3OriginConfig: {}\n            - Id: secondary\n              DomainName: <secondary_origin_domain>\n              S3OriginConfig: {}\n        OriginGroups:\n          Quantity: 1\n          Items:\n            - Id: <example_origin_group_id>  # Critical: define origin group with 2 origins\n              FailoverCriteria:\n                StatusCodes:\n                  Quantity: 1\n                  Items: [500]  # Critical: fail over on 500 to enable origin failover\n              Members:\n                Quantity: 2\n                Items:\n                  - OriginId: primary\n                  - OriginId: secondary\n        DefaultCacheBehavior:\n          TargetOriginId: <example_origin_group_id>  # Critical: use the origin group for requests\n          ViewerProtocolPolicy: allow-all\n          ForwardedValues:\n            QueryString: false\n            Cookies:\n              Forward: none\n```",
+      "Other": "1. In the AWS Console, go to CloudFront and open your distribution\n2. Select the Origins tab and ensure two origins exist; add a second origin if needed\n3. In the Origin groups pane, click Create origin group\n4. Select the two origins; set one as primary and the other as secondary\n5. Choose at least one failover status code (e.g., 500) and create the group\n6. Go to Behaviors, edit the relevant cache behavior (or Default behavior)\n7. Set Origin to the new origin group and save changes\n8. Deploy/confirm the distribution update",
+      "Terraform": "```hcl\n# Configure an origin group with two origins and use it in the default cache behavior\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled = true\n\n  origin {\n    domain_name = \"<primary_origin_domain>\"\n    origin_id   = \"primary\"\n    s3_origin_config {}\n  }\n\n  origin {\n    domain_name = \"<secondary_origin_domain>\"\n    origin_id   = \"secondary\"\n    s3_origin_config {}\n  }\n\n  origin_group {\n    origin_id = \"<example_origin_group_id>\"  # Critical: define origin group with 2 origins\n    failover_criteria {\n      status_codes = [500]  # Critical: fail over on 500 to enable origin failover\n    }\n    member { origin_id = \"primary\" }\n    member { origin_id = \"secondary\" }\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"<example_origin_group_id>\"  # Critical: use the origin group for requests\n    viewer_protocol_policy = \"allow-all\"\n    forwarded_values {\n      query_string = false\n      cookies { forward = \"none\" }\n    }\n  }\n\n  restrictions {\n    geo_restriction { restriction_type = \"none\" }\n  }\n\n  viewer_certificate { cloudfront_default_certificate = true }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure origin failover in your CloudFront distribution by setting up an origin group with at least two origins to enhance availability and ensure traffic is redirected if the primary origin fails.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/high_availability_origin_failover.html#concept_origin_groups.creating"
+      "Text": "Enable **origin failover** by defining an origin group with primary and secondary origins. Distribute origins across independent zones or providers, set clear failover criteria (e.g., HTTP codes/timeouts), monitor health, and routinely test failover. Align with **resilience** and **defense-in-depth** to protect availability.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_multiple_origin_failover_configured"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],
