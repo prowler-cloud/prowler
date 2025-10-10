@@ -12460,8 +12460,8 @@ components:
               properties:
                 name:
                   type: string
-                  nullable: true
-                  maxLength: 255
+                  minLength: 3
+                  maxLength: 100
                 prefix:
                   type: string
                   readOnly: true
@@ -12481,6 +12481,8 @@ components:
                   readOnly: true
                   nullable: true
                   description: Last time this API key was used for authentication
+              required:
+              - name
             relationships:
               type: object
               properties:
@@ -15767,8 +15769,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15790,6 +15792,8 @@ components:
               format: date-time
               nullable: true
               description: Last time this API key was used for authentication
+          required:
+          - name
         relationships:
           type: object
           properties:
@@ -15836,8 +15840,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15863,6 +15867,8 @@ components:
             api_key:
               type: string
               readOnly: true
+          required:
+          - name
         relationships:
           type: object
           properties:
@@ -15913,8 +15919,8 @@ components:
               properties:
                 name:
                   type: string
-                  nullable: true
-                  maxLength: 255
+                  minLength: 3
+                  maxLength: 100
                 prefix:
                   type: string
                   readOnly: true
@@ -15941,6 +15947,8 @@ components:
                 api_key:
                   type: string
                   readOnly: true
+              required:
+              - name
             relationships:
               type: object
               properties:
@@ -16008,8 +16016,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -16028,6 +16036,8 @@ components:
               readOnly: true
               nullable: true
               description: Last time this API key was used for authentication
+          required:
+          - name
         relationships:
           type: object
           properties:

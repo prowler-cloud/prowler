@@ -7739,8 +7739,6 @@ class TestTenantApiKeyViewSet:
         (
             [
                 {"name": "New API Key"},
-                {"name": ""},
-                {},
             ]
         ),
     )
@@ -7781,6 +7779,18 @@ class TestTenantApiKeyViewSet:
                     {"name": "Invalid Expiry", "expires_at": "not-a-date"},
                     "expires_at",
                 ),
+                (
+                    {"name": ""},
+                    "name",
+                ),
+                (
+                    {},
+                    "name",
+                ),
+                (
+                    {"name": "AB"},  # Too short (min length is 3)
+                    "name",
+                ),
             ]
         ),
     )
@@ -7808,6 +7818,58 @@ class TestTenantApiKeyViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
         )
+
+    def test_api_keys_create_duplicate_name(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test creating an API key with a duplicate name fails."""
+        # Use the name of an existing API key
+        existing_name = api_keys_fixture[0].name
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": existing_name,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        error_detail = response.json()["errors"][0]["detail"]
+        assert "already exists" in error_detail.lower()
+
+    def test_api_keys_update_duplicate_name(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test updating an API key with a duplicate name fails."""
+        # Get two different API keys
+        first_api_key = api_keys_fixture[0]
+        second_api_key = api_keys_fixture[1]
+
+        # Try to update the second API key to have the same name as the first one
+        data = {
+            "data": {
+                "type": "api-keys",
+                "id": str(second_api_key.id),
+                "attributes": {
+                    "name": first_api_key.name,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("api-key-detail", kwargs={"pk": second_api_key.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        error_detail = response.json()["errors"][0]["detail"]
+        assert "already exists" in error_detail.lower()
 
     def test_api_keys_create_multiple_unique_prefixes(
         self, authenticated_client, api_keys_fixture
@@ -8259,6 +8321,10 @@ class TestTenantApiKeyViewSet:
         included_user = response_data["included"][0]
         assert included_user["type"] == "users"
         assert included_user["id"] == str(api_key.entity.id)
+
+        # Refresh entity from database to get current state
+        # (in case other tests modified the shared session-scoped user fixture)
+        api_key.entity.refresh_from_db()
 
         # Verify UserIncludeSerializer fields are present
         user_attrs = included_user["attributes"]
