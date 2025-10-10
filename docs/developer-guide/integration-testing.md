@@ -1,3 +1,0 @@
-# Integration Tests
-
-Coming soon ...
