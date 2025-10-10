@@ -8295,6 +8295,10 @@ class TestTenantApiKeyViewSet:
         assert included_user["type"] == "users"
         assert included_user["id"] == str(api_key.entity.id)
 
+        # Refresh entity from database to get current state
+        # (in case other tests modified the shared session-scoped user fixture)
+        api_key.entity.refresh_from_db()
+
         # Verify UserIncludeSerializer fields are present
         user_attrs = included_user["attributes"]
         assert "name" in user_attrs
