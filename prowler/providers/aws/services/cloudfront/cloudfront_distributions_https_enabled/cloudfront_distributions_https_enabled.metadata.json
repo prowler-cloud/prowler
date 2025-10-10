@@ -18,12 +18,11 @@
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/security-policy.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html",
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_32#terraform"
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to change DefaultCacheBehavior.ViewerProtocolPolicy to \"redirect-to-https\" or \"https-only\", then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
       "NativeIaC": "```yaml\n# CloudFormation: set ViewerProtocolPolicy to require HTTPS\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        DefaultCacheBehavior:\n          ViewerProtocolPolicy: https-only  # Critical: requires HTTPS for viewers\n```",
       "Other": "1. In the AWS Console, go to CloudFront > Distributions\n2. Select the target distribution and open the Behaviors tab\n3. Select the Default (*) behavior and click Edit\n4. Set Viewer protocol policy to Redirect HTTP to HTTPS (or HTTPS Only)\n5. Save changes and deploy",
       "Terraform": "```hcl\n# Terraform: set viewer_protocol_policy to force HTTPS\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  default_cache_behavior {\n    target_origin_id       = \"<example_origin_id>\"\n    viewer_protocol_policy = \"redirect-to-https\" # Critical: forces HTTP to HTTPS\n  }\n}\n```"
@@ -34,7 +33,6 @@
     }
   },
   "Categories": [
-    "encryption",
     "internet-exposed"
   ],
   "DependsOn": [],
