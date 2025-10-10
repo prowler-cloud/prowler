@@ -80,7 +80,6 @@ export const signInSchema = baseAuthSchema
   .refine(
     (data) => {
       // If SAML mode, password is not required
-      console.log(data.isSamlMode);
       if (data.isSamlMode) return true;
       // Otherwise, password must be filled
       return data.password.length > 0;
