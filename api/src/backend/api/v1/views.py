@@ -1,10 +1,12 @@
 import glob
 import logging
 import os
+
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
 
 import sentry_sdk
+
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -205,6 +207,7 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from tasks.jobs.cartography import sync_scan_to_cartography
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -1527,6 +1530,29 @@ class ProviderViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+    @extend_schema(
+        tags=["Provider"],
+        summary="Sync resources to Cartography",
+        description=(
+            "Synchronous endpoint to trigger Cartography sync without full validation. "
+            "Intended for development/testing; a Celery-driven integration may replace this later."
+        ),
+        request=None,
+        responses={200: OpenApiResponse(description="Sync completed successfully")},
+    )
+    @action(detail=True, methods=["post"], url_name="cartography_sync")
+    def cartography_sync(self, request, pk=None):
+        get_object_or_404(Provider, pk=pk)
+        # Always run synchronously
+        payload = request.data if isinstance(request.data, dict) else {}
+
+        result = sync_scan_to_cartography(
+            tenant_id=self.request.tenant_id,
+            provider_id=pk,
+            scan_id=payload.get("scan_id"),
+        )
+        return Response(data={"result": result}, status=status.HTTP_201_CREATED)
 
 
 @extend_schema_view(

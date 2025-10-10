@@ -58,6 +58,8 @@ ENV PATH="/home/prowler/.local/bin:$PATH"
 RUN poetry install --no-root && \
     rm -rf ~/.cache/pip
 
+RUN poetry run python -m pip install cartography==0.117.0
+
 RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
 
 COPY src/backend/ ./backend/
