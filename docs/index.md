@@ -12,6 +12,7 @@ The official supported providers right now are:
 | **Kubernetes** | Official | Stable | UI, API, CLI |
 | **M365** | Official | Stable | UI, API, CLI |
 | **Github** | Official | Stable | UI, API, CLI |
+| **Oracle Cloud** | Official | Stable | CLI |
 | **IaC** | Official | Beta | CLI |
 | **MongoDB Atlas** | Official | Beta | CLI |
 | **LLM** | Official | Beta | CLI |
