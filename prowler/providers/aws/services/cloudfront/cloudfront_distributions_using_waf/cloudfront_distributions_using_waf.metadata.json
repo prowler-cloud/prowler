@@ -16,17 +16,9 @@
   "Risk": "Absent **WAF** on Internet-facing distributions exposes apps to layer-7 threats: SQLi/XSS and bot abuse can cause data exfiltration (**confidentiality**), unauthorized actions (**integrity**), and request floods that overload origins (**availability**). It may also raise egress and compute costs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://avmconsulting.net/how-to-protect-cloudfront-distribution-with-aws-waf/",
-    "https://boto3.amazonaws.com/v1/documentation/api/1.12.38/reference/services/wafv2.html",
     "https://repost.aws/questions/QUTY5hPVxgS6Caa3eZHX7-nQ/waf-on-alb-or-cloudfront",
-    "https://cloud-kb.sentinelone.com/cloudfront-waf-disabled",
-    "https://medium.com/@TwennyTwenny/simple-waf-for-cloudfront-using-ip-sets-and-terraform-4cd4efb6c55d",
     "https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html",
-    "https://www.linkedin.com/pulse/exploring-aws-waf-web-application-firewall-protecting-adamson",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#terraform",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-integrated-with-waf.html",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27",
-    "https://dev.to/kingkonsole/building-high-performance-secure-static-websites-on-a-budget-with-aws-and-terraform-1eed"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-integrated-with-waf.html"
   ],
   "Remediation": {
     "Code": {
@@ -41,7 +33,7 @@
     }
   },
   "Categories": [
-    "threat-detection"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],
