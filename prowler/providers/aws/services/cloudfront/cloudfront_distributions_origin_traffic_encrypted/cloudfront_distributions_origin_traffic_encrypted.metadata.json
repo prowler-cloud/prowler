@@ -18,18 +18,13 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-traffic-to-origin-unencrypted.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-customoriginconfig.html",
-    "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_CustomOriginConfig.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-9",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html",
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https-cloudfront-to-custom-origin.html",
-    "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/custom-origin-with-cloudfront.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorCustomOrigin.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesOrigin.html"
+    "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/custom-origin-with-cloudfront.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to change Origins[].CustomOriginConfig.OriginProtocolPolicy to https-only', then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
       "NativeIaC": "```yaml\n# CloudFormation: set CloudFront origin to use HTTPS only\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          - Id: <example_origin_id>\n            DomainName: <example_origin_domain>\n            CustomOriginConfig:\n              OriginProtocolPolicy: https-only  # FIX: Force CloudFront-to-origin over HTTPS only\n        DefaultCacheBehavior:\n          TargetOriginId: <example_origin_id>\n          ViewerProtocolPolicy: allow-all\n          ForwardedValues:\n            QueryString: false\n```",
       "Other": "1. In the AWS Console, open CloudFront and select your distribution\n2. Go to the Origins tab, select the custom origin, and click Edit\n3. Set Protocol to HTTPS only (Origin protocol policy = HTTPS Only)\n4. Click Save changes and wait for the distribution to deploy",
       "Terraform": "```hcl\n# Terraform: set CloudFront origin to use HTTPS only\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled = true\n\n  origin {\n    domain_name = \"<example_origin_domain>\"\n    origin_id   = \"<example_origin_id>\"\n\n    custom_origin_config {\n      http_port              = 80\n      https_port             = 443\n      origin_protocol_policy = \"https-only\"   # FIX: Force CloudFront-to-origin over HTTPS only\n      origin_ssl_protocols   = [\"TLSv1.2\"]\n    }\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"<example_origin_id>\"\n    viewer_protocol_policy = \"allow-all\"\n    forwarded_values {\n      query_string = false\n      cookies { forward = \"none\" }\n    }\n  }\n\n  restrictions { geo_restriction { restriction_type = \"none\" } }\n  viewer_certificate { cloudfront_default_certificate = true }\n}\n```"
