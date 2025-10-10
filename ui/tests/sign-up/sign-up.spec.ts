@@ -4,7 +4,7 @@ import { SignInPage } from "../sign-in/sign-in-page";
 import { makeSuffix } from "../helpers";
 
 test.describe("Sign Up Flow", () => {
-  test("should register a new user successfully", { tag: ['@critical'] }, async ({ page }) => {
+  test("should register a new user successfully", { tag: ['@critical', '@e2e', '@signup', '@SIGNUP-E2E-001'] }, async ({ page }) => {
     // Initialize page objects for sign-up and sign-in flows
     const signUpPage = new SignUpPage(page);
     await signUpPage.goto();
