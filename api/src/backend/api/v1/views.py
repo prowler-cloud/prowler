@@ -666,36 +666,48 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+
+        # Check if tenant has only one user with MANAGE_ACCOUNT role
+        users_with_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id)
+            .values("user")
+            .distinct()
+            .count()
         )
-        try:
-            role = Role.objects.using(MainRouter.admin_db).get(
-                name=role_name, tenant=tenant
+
+        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
+        if users_with_manage_account != 1:
+            role_name = (
+                extra.get("userType", ["no_permissions"])[0].strip()
+                if extra.get("userType")
+                else "no_permissions"
             )
-        except Role.DoesNotExist:
-            role = Role.objects.using(MainRouter.admin_db).create(
-                name=role_name,
-                tenant=tenant,
-                manage_users=False,
-                manage_account=False,
-                manage_billing=False,
-                manage_providers=False,
-                manage_integrations=False,
-                manage_scans=False,
-                unlimited_visibility=False,
+            try:
+                role = Role.objects.using(MainRouter.admin_db).get(
+                    name=role_name, tenant=tenant
+                )
+            except Role.DoesNotExist:
+                role = Role.objects.using(MainRouter.admin_db).create(
+                    name=role_name,
+                    tenant=tenant,
+                    manage_users=False,
+                    manage_account=False,
+                    manage_billing=False,
+                    manage_providers=False,
+                    manage_integrations=False,
+                    manage_scans=False,
+                    unlimited_visibility=False,
+                )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                user=user,
+                tenant_id=tenant.id,
+            ).delete()
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
             )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-            user=user,
-            tenant_id=tenant.id,
-        ).delete()
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=user,
-            role=role,
-            tenant_id=tenant.id,
-        )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,

@@ -204,12 +204,11 @@ If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these
 For M365, you must enter your Domain ID and choose the authentication method you want to use:
 
 - Service Principal Authentication (Recommended)
-- User Authentication (only works if the user does not have MFA enabled)
 
-<Note>
-User authentication with M365_USER and M365_PASSWORD is optional and will only work if the account does not enforce MFA.
+<Warning>
+User authentication with M365_USER and M365_PASSWORD is deprecated and will be removed.
 
-</Note>
+</Warning>
 For full setup instructions and requirements, check the [Microsoft 365 provider requirements](/user-guide/providers/microsoft365/getting-started-m365).
 
 <img src="/images/m365-credentials.png" alt="Prowler Cloud M365 Credentials" width="700" />
