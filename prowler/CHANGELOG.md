@@ -36,6 +36,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
 - Fix HTML Markdown output for long strings [(#8803)](https://github.com/prowler-cloud/prowler/pull/8803)
+- GitHub App authentication inconsistency where `--github-app-key` and `--github-app-key-path` were incorrectly aliased to the same parameter, causing confusion between file paths and key content [(#8422)](https://github.com/prowler-cloud/prowler/pull/8422)
 - Prowler ThreatScore scoring calculation CLI [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 
 ---
