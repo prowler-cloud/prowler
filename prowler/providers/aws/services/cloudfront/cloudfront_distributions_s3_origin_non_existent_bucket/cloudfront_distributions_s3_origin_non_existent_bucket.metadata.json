@@ -16,13 +16,9 @@
   "Risk": "**Dangling S3 origins** allow potential **bucket takeover**: an attacker could create the missing bucket and have CloudFront retrieve attacker-controlled objects *if access isn't restricted*.\n\nThis threatens **integrity** (content spoofing, cache poisoning) and **availability** (errors/timeouts), undermining user trust.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://asecure.cloud/a/p_configrule_cloudfront_s3_origin_non_existent_bucket/",
     "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/s3-origin-with-cloudfront.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-12",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-existing-s3-bucket.html",
-    "https://docs.cloudyali.io/docs/rules/cloudfront_distribution_no_non_existent_s3_origin/",
-    "https://docs.aws.amazon.com/config/latest/developerguide/cloudfront-s3-origin-non-existent-bucket.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowToUpdateDistribution.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-existing-s3-bucket.html"
   ],
   "Remediation": {
     "Code": {
