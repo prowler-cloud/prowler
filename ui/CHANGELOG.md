@@ -39,6 +39,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Remove maxTokens model param for GPT-5 models [(#8843)](https://github.com/prowler-cloud/prowler/pull/8843)
+- MITRE ATTACK compliance view now shows all requirements in charts [(#8886)](https://github.com/prowler-cloud/prowler/pull/8886)
 
 ## [1.12.3] (Prowler v5.12.3)
 
