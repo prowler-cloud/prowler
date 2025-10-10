@@ -86,6 +86,17 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - entity
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -186,6 +197,17 @@ paths:
           format: uuid
         description: A UUID string identifying this tenant api key.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - entity
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - API Keys
       security:
@@ -4706,6 +4728,7 @@ paths:
           type: array
           items:
             type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -11997,14 +12020,41 @@ components:
                           where the application is registered.
                       user:
                         type: email
+                        description: 'Deprecated: User microsoft email address.'
+                      password:
+                        type: string
+                        description: 'Deprecated: User password.'
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                      user:
+                        type: email
                         description: User microsoft email address.
                       password:
                         type: string
                         description: User password.
                     required:
                     - client_id
-                    - client_secret
                     - tenant_id
+                    - certificate_content
                     - user
                     - password
                   - type: object
@@ -13861,14 +13911,41 @@ components:
                       the application is registered.
                   user:
                     type: email
+                    description: 'Deprecated: User microsoft email address.'
+                  password:
+                    type: string
+                    description: 'Deprecated: User password.'
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                  user:
+                    type: email
                     description: User microsoft email address.
                   password:
                     type: string
                     description: User password.
                 required:
                 - client_id
-                - client_secret
                 - tenant_id
+                - certificate_content
                 - user
                 - password
               - type: object
@@ -14109,14 +14186,41 @@ components:
                           where the application is registered.
                       user:
                         type: email
+                        description: 'Deprecated: User microsoft email address.'
+                      password:
+                        type: string
+                        description: 'Deprecated: User password.'
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                      user:
+                        type: email
                         description: User microsoft email address.
                       password:
                         type: string
                         description: User password.
                     required:
                     - client_id
-                    - client_secret
                     - tenant_id
+                    - certificate_content
                     - user
                     - password
                   - type: object
@@ -14373,14 +14477,41 @@ components:
                       the application is registered.
                   user:
                     type: email
+                    description: 'Deprecated: User microsoft email address.'
+                  password:
+                    type: string
+                    description: 'Deprecated: User password.'
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                  user:
+                    type: email
                     description: User microsoft email address.
                   password:
                     type: string
                     description: User password.
                 required:
                 - client_id
-                - client_secret
                 - tenant_id
+                - certificate_content
                 - user
                 - password
               - type: object
