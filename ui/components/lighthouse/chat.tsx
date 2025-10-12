@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 
 import { getLighthouseModels } from "@/actions/lighthouse/lighthouse";
-import { Action, Actions } from "@/components/lighthouse/actions";
+import { Action, Actions } from "@/components/lighthouse/ai-elements/actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -503,8 +503,8 @@ export const Chat = ({
                     <div className="mt-2 flex justify-start">
                       <Actions className="max-w-[80%]">
                         <Action
+                          tooltip="Copy message"
                           label="Copy"
-                          icon={<Copy className="h-3 w-3" />}
                           onClick={() => {
                             navigator.clipboard.writeText(messageText);
                             toast({
@@ -512,12 +512,16 @@ export const Chat = ({
                               description: "Message copied to clipboard",
                             });
                           }}
-                        />
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Action>
                         <Action
+                          tooltip="Regenerate response"
                           label="Retry"
-                          icon={<RotateCcw className="h-3 w-3" />}
                           onClick={() => regenerate()}
-                        />
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </Action>
                       </Actions>
                     </div>
                   )}
