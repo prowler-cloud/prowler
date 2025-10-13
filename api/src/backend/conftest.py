@@ -38,6 +38,7 @@ from api.models import (
     StateChoices,
     StatusChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
 )
@@ -1366,6 +1367,56 @@ def saml_sociallogin(users_fixture):
     sociallogin.user = user
 
     return sociallogin
+
+
+@pytest.fixture
+def api_keys_fixture(tenants_fixture, create_test_user):
+    """Create test API keys for testing."""
+    tenant = tenants_fixture[0]
+    user = create_test_user
+
+    # Create and assign role to user for API key authentication
+    role = Role.objects.create(
+        tenant_id=tenant.id,
+        name="Test API Key Role",
+        unlimited_visibility=True,
+        manage_account=True,
+    )
+    UserRoleRelationship.objects.create(
+        user=user,
+        role=role,
+        tenant_id=tenant.id,
+    )
+
+    # Create API keys with different states
+    api_key1, raw_key1 = TenantAPIKey.objects.create_api_key(
+        name="Test API Key 1",
+        tenant_id=tenant.id,
+        entity=user,
+    )
+
+    api_key2, raw_key2 = TenantAPIKey.objects.create_api_key(
+        name="Test API Key 2",
+        tenant_id=tenant.id,
+        entity=user,
+        expiry_date=datetime.now(timezone.utc) + timedelta(days=60),
+    )
+
+    # Revoked API key
+    api_key3, raw_key3 = TenantAPIKey.objects.create_api_key(
+        name="Revoked API Key",
+        tenant_id=tenant.id,
+        entity=user,
+    )
+    api_key3.revoked = True
+    api_key3.save()
+
+    # Store raw keys on instances for testing
+    api_key1._raw_key = raw_key1
+    api_key2._raw_key = raw_key2
+    api_key3._raw_key = raw_key3
+
+    return [api_key1, api_key2, api_key3]
 
 
 def get_authorization_header(access_token: str) -> dict:

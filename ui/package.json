@@ -23,8 +23,10 @@
     "test:e2e:install": "playwright install"
   },
   "dependencies": {
+    "@ai-sdk/langchain": "1.0.59",
+    "@ai-sdk/react": "2.0.59",
     "@heroui/react": "2.8.4",
-    "@hookform/resolvers": "3.10.0",
+    "@hookform/resolvers": "5.2.2",
     "@langchain/core": "0.3.77",
     "@langchain/langgraph": "0.4.9",
     "@langchain/langgraph-supervisor": "0.0.20",
@@ -44,7 +46,7 @@
     "@tailwindcss/typography": "0.5.16",
     "@tanstack/react-table": "8.21.3",
     "@types/js-yaml": "4.0.9",
-    "ai": "4.3.16",
+    "ai": "5.0.59",
     "alert": "6.0.2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
@@ -72,8 +74,8 @@
     "tailwind-merge": "3.3.1",
     "tailwindcss-animate": "1.0.7",
     "uuid": "11.1.0",
-    "zod": "3.25.73",
-    "zustand": "4.5.7"
+    "zod": "4.1.11",
+    "zustand": "5.0.8"
   },
   "devDependencies": {
     "@iconify/react": "5.2.1",
