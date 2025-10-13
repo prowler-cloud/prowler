@@ -4,6 +4,9 @@ Prowler App supports multiple installation methods based on your environment.
 
 Refer to the [Prowler App Tutorial](../tutorials/prowler-app.md) for detailed usage instructions.
 
+???+ warning
+    Prowler configuration is based in `.env` files. Every version of Prowler can have differences on that file, so, please, use the file that corresponds with that version or repository branch or tag.
+
 === "Docker Compose"
 
     _Requirements_:
