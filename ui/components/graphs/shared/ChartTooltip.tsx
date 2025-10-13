@@ -2,7 +2,7 @@ import { Bell, VolumeX } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { TooltipData } from "../models/chart-types";
+import { TooltipData } from "../types";
 
 interface ChartTooltipProps {
   active?: boolean;

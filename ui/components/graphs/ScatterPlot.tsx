@@ -12,8 +12,8 @@ import {
 } from "recharts";
 
 import { AlertPill } from "./shared/AlertPill";
-import { CHART_COLORS } from "./shared/constants";
 import { ChartLegend } from "./shared/ChartLegend";
+import { CHART_COLORS } from "./shared/constants";
 import { getSeverityColorByRiskScore } from "./shared/utils";
 
 interface ScatterDataPoint {

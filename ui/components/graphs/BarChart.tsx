@@ -11,10 +11,10 @@ import {
   YAxis,
 } from "recharts";
 
-import { BarDataPoint, LayoutOption } from "./models/chart-types";
-import { CHART_COLORS, LAYOUT_OPTIONS } from "./shared/constants";
 import { ChartTooltip } from "./shared/ChartTooltip";
+import { CHART_COLORS, LAYOUT_OPTIONS } from "./shared/constants";
 import { getSeverityColorByName } from "./shared/utils";
+import { BarDataPoint, LayoutOption } from "./types";
 
 interface BarChartProps {
   data: BarDataPoint[];

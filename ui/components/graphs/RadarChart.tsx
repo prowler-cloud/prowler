@@ -13,9 +13,9 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart/Chart";
 
-import { RadarDataPoint } from "./models/chart-types";
 import { AlertPill } from "./shared/AlertPill";
 import { CHART_COLORS } from "./shared/constants";
+import { RadarDataPoint } from "./types";
 
 interface RadarChartProps {
   data: RadarDataPoint[];

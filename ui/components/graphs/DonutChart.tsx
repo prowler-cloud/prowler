@@ -5,8 +5,8 @@ import { Cell, Label, Pie, PieChart, Tooltip } from "recharts";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 
-import { DonutDataPoint } from "./models/chart-types";
 import { ChartLegend } from "./shared/ChartLegend";
+import { DonutDataPoint } from "./types";
 
 interface DonutChartProps {
   data: DonutDataPoint[];

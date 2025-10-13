@@ -14,10 +14,10 @@ import {
   YAxis,
 } from "recharts";
 
-import { LineConfig, LineDataPoint } from "./models/chart-types";
 import { AlertPill } from "./shared/AlertPill";
 import { ChartLegend } from "./shared/ChartLegend";
 import { CHART_COLORS } from "./shared/constants";
+import { LineConfig, LineDataPoint } from "./types";
 
 interface LineChartProps {
   data: LineDataPoint[];

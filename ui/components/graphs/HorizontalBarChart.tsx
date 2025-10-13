@@ -3,9 +3,9 @@
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
-import { BarDataPoint } from "./models/chart-types";
 import { CHART_COLORS, SEVERITY_ORDER } from "./shared/constants";
 import { getSeverityColorByName } from "./shared/utils";
+import { BarDataPoint } from "./types";
 
 interface HorizontalBarChartProps {
   data: BarDataPoint[];
