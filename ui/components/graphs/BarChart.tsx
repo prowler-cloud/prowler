@@ -14,7 +14,7 @@ import {
 import { BarDataPoint, LayoutOption } from "./models/chart-types";
 import { CHART_COLORS, LAYOUT_OPTIONS } from "./shared/constants";
 import { ChartTooltip } from "./shared/ChartTooltip";
-import { getSeverityColorByName } from "./shared/severity-utils";
+import { getSeverityColorByName } from "./shared/utils";
 
 interface BarChartProps {
   data: BarDataPoint[];

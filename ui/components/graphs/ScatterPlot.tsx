@@ -14,7 +14,7 @@ import {
 import { AlertPill } from "./shared/AlertPill";
 import { CHART_COLORS } from "./shared/constants";
 import { ChartLegend } from "./shared/ChartLegend";
-import { getSeverityColorByRiskScore } from "./shared/severity-utils";
+import { getSeverityColorByRiskScore } from "./shared/utils";
 
 interface ScatterDataPoint {
   x: number;

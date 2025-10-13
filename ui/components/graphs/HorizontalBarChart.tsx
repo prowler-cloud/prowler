@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { BarDataPoint } from "./models/chart-types";
 import { SEVERITY_ORDER } from "./shared/constants";
-import { getSeverityColorByName } from "./shared/severity-utils";
+import { getSeverityColorByName } from "./shared/utils";
 
 interface HorizontalBarChartProps {
   data: BarDataPoint[];
