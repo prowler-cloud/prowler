@@ -35,9 +35,7 @@
       "Url": "https://hub.prowler.com/check/autoscaling_group_launch_configuration_requires_imdsv2"
     }
   },
-  "Categories": [
-    "secrets"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
