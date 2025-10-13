@@ -16,18 +16,10 @@
   "Risk": "Without validation, adversaries can alter, forge, or delete audit entries without detection, compromising log **integrity** and non-repudiation.\n\nThis impairs investigations, enables alert evasion, and obscures unauthorized changes across regions or accounts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.stream.security/rules/ensure-cloudtrail-log-file-integrity-validation-is-enabled",
-    "https://www.linkedin.com/pulse/validating-cloudtrail-log-file-integrity-neeraj-pandey-jkkkc",
-    "https://medium.com/@uzomae59/aws-cloudtrail-with-log-file-integrity-74b4e6f31f09",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_2#terraform",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-log-file-integrity-validation.html",
-    "https://www.plerion.com/cloud-knowledge-base/ensure-cloudtrail-log-file-validation-is-enabled",
-    "https://support.icompaas.com/support/solutions/articles/62000233133-3-2-ensure-cloudtrail-log-file-validation-is-enabled-automated-",
-    "https://deepwiki.com/acantril/learn-cantrill-io-labs/7.1-cloudtrail-log-file-integrity",
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html",
-    "http://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-filevalidation-enabling.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_2/",
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-enabling.html"
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-enabling.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-log-file-integrity-validation.html",
+    "https://deepwiki.com/acantril/learn-cantrill-io-labs/7.1-cloudtrail-log-file-integrity"
   ],
   "Remediation": {
     "Code": {
