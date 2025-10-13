@@ -15,14 +15,8 @@
   "Risk": "Without a backup plan, resources lack scheduled recovery points, undermining RPO/RTO.\n- Irrecoverable data after deletion or corruption (integrity)\n- Prolonged outages due to unavailable restores (availability)\n- Inconsistent backups that hinder investigations and controlled recovery",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://fig.io/manual/aws/backup",
     "https://awscli.amazonaws.com/v2/documentation/api/2.0.33/reference/backup/create-backup-plan.html",
-    "https://aws.plainenglish.io/configuring-ec2-instance-backups-with-aws-backup-a-complete-guide-35731c9a0d1f",
-    "https://docs.ansible.com/ansible/latest/collections/amazon/aws/backup_plan_module.html",
-    "https://awscli.amazonaws.com/v2/documentation/api/2.8.7/reference/backup/create-backup-plan.html",
-    "https://docs.localstack.cloud/aws/services/backup/",
     "https://docs.aws.amazon.com/aws-backup/latest/devguide/about-backup-plans.html",
-    "https://notes.kodekloud.com/docs/AWS-Solutions-Architect-Associate-Certification/Services-Storage/AWS-Backup",
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan",
     "https://medium.com/@christopheradamson253/backup-strategies-using-aws-backup-1b17b94a7957"
   ],
