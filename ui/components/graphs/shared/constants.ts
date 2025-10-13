@@ -15,6 +15,7 @@ export const CHART_COLORS = {
   backgroundTrack: "rgba(51, 65, 85, 0.5)", // slate-700 with 50% opacity
   alertPillBg: "var(--color-alert-pill-bg)",
   alertPillText: "var(--color-alert-pill-text)",
+  defaultColor: "var(--color-slate-500)", // Default fallback color for charts
 } as const;
 
 export const CHART_DIMENSIONS = {

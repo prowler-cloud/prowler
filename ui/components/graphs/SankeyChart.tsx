@@ -2,7 +2,7 @@
 
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
-import { SEVERITY_COLORS } from "./shared/constants";
+import { CHART_COLORS, SEVERITY_COLORS } from "./shared/constants";
 
 interface SankeyNode {
   name: string;
@@ -49,7 +49,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 const CustomNode = ({ x, y, width, height, payload, containerWidth }: any) => {
   const isOut = x + width + 6 > containerWidth;
   const nodeName = payload.name;
-  const color = COLORS[nodeName] || "#6B7280";
+  const color = COLORS[nodeName] || CHART_COLORS.defaultColor;
 
   return (
     <g>
@@ -96,7 +96,7 @@ const CustomLink = (props: any) => {
   } = props;
 
   const sourceName = props.payload.source?.name || "";
-  const color = COLORS[sourceName] || "#6B7280";
+  const color = COLORS[sourceName] || CHART_COLORS.defaultColor;
 
   return (
     <g>

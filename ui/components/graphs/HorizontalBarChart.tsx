@@ -4,7 +4,7 @@ import { Bell } from "lucide-react";
 import { useState } from "react";
 
 import { BarDataPoint } from "./models/chart-types";
-import { SEVERITY_ORDER } from "./shared/constants";
+import { CHART_COLORS, SEVERITY_ORDER } from "./shared/constants";
 import { getSeverityColorByName } from "./shared/utils";
 
 interface HorizontalBarChartProps {
@@ -35,7 +35,9 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
           const isHovered = hoveredIndex === index;
           const isFaded = hoveredIndex !== null && !isHovered;
           const barColor =
-            item.color || getSeverityColorByName(item.name) || "#6B7280";
+            item.color ||
+            getSeverityColorByName(item.name) ||
+            CHART_COLORS.defaultColor;
 
           return (
             <div

@@ -147,7 +147,9 @@ export function BarChart({
             <Cell
               key={`cell-${index}`}
               fill={
-                entry.color || getSeverityColorByName(entry.name) || "#6B7280"
+                entry.color ||
+                getSeverityColorByName(entry.name) ||
+                CHART_COLORS.defaultColor
               }
               opacity={1}
               className="transition-opacity hover:opacity-80"

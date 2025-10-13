@@ -71,7 +71,7 @@ const CustomScatterDot = ({
   const fill = isSelected
     ? "var(--color-success)"
     : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
-      "#6B7280";
+      CHART_COLORS.defaultColor;
 
   return (
     <circle
@@ -164,7 +164,7 @@ export function ScatterPlot({
             data={points}
             fill={
               PROVIDER_COLORS[provider as keyof typeof PROVIDER_COLORS] ||
-              "#6B7280"
+              CHART_COLORS.defaultColor
             }
             shape={(props: any) => (
               <CustomScatterDot
