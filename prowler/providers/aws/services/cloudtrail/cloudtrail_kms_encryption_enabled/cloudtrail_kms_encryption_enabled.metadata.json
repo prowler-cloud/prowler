@@ -16,15 +16,10 @@
   "Risk": "Absent a **customer-managed KMS key**, log protection relies only on storage permissions. Bucket misconfigurations or stolen credentials can expose audit data, aiding evasion and lateral movement. Missing key-level controls, rotation, and usage audit weaken **confidentiality** and **forensic integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.clouddefense.ai/compliance-rules/cis-v130/logging/cis-v130-3-7",
-    "https://repost.aws/questions/QU07uQ69r2Sg2SSeyYZD0okg/encrypt-cloudtrail-logs-via-control-tower",
-    "https://www.linkedin.com/pulse/aws-cloudtrail-update-sse-kms-encryption-log-file-integrity-selvan?trk=articles_directory",
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-logs-encrypted.html",
-    "https://cloudchipr.com/blog/aws-kms-explained-features-functionality-and-best-practices",
-    "https://www.plerion.com/cloud-knowledge-base/ensure-cloudtrail-logs-are-encrypted-at-rest-using-kms-cmks",
-    "https://jennas-lee.github.io/aws-resources-example/Security,+Identity+&+Compliance/KMS/01-cloudtrail-kms-policies/",
-    "https://www.stream.security/rules/ensure-cloudtrail-logs-are-encrypted-at-rest"
+    "https://www.stream.security/rules/ensure-cloudtrail-logs-are-encrypted-at-rest",
+    "https://www.clouddefense.ai/compliance-rules/cis-v130/logging/cis-v130-3-7"
   ],
   "Remediation": {
     "Code": {
