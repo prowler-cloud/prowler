@@ -12,6 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - React Compiler support for automatic optimization [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Turbopack support for faster development builds [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
+- API key management in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 - Refresh access token error handling [(#8864)](https://github.com/prowler-cloud/prowler/pull/8864)
 
 ### 🔄 Changed
