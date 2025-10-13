@@ -17,10 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-5",
-    "https://docs.aws.amazon.com/controltower/latest/controlreference/ec2-auto-scaling-rules.html",
-    "https://docs.amazonaws.cn/en_us/autoscaling/ec2/userguide/as-dg.pdf",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-auto-scaling-groups-launch-configuration.html",
-    "https://github.com/deepgorthi/cfn-aws-ecs-elk",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/change-launch-config.html"
   ],
   "Remediation": {
