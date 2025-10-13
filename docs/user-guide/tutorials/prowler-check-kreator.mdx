@@ -1,10 +1,16 @@
-# Prowler Check Kreator
+---
+title: 'Prowler Check Kreator'
+---
 
-???+ note
-    Currently, this tool is only available for creating checks for the AWS provider.
+<Note>
+Currently, this tool is only available for creating checks for the AWS provider.
 
-???+ note
-    If you are looking for a way to create new checks for all the supported providers, you can use [Prowler Studio](https://github.com/prowler-cloud/prowler-studio), it is an AI-powered toolkit for generating and managing security checks for Prowler (better version of the Check Kreator).
+</Note>
+
+<Note>
+If you are looking for a way to create new checks for all the supported providers, you can use [Prowler Studio](https://github.com/prowler-cloud/prowler-studio), it is an AI-powered toolkit for generating and managing security checks for Prowler (better version of the Check Kreator).
+
+</Note>
 
 ## Introduction
 
@@ -32,10 +38,14 @@ Parameters:
 
 This tool optionally integrates AI to assist in generating the check code and metadata file content. When AI assistance is chosen, the tool uses [Gemini](https://gemini.google.com/) to produce preliminary code and metadata.
 
-???+ note
-    For this feature to work, you must have the library `google-generativeai` installed in your Python environment.
+<Note>
+For this feature to work, you must have the library `google-generativeai` installed in your Python environment.
 
-???+ warning
-    AI-generated code and metadata might contain errors or require adjustments to align with specific Prowler requirements. Carefully review all AI-generated content before committing.
+</Note>
+
+<Warning>
+AI-generated code and metadata might contain errors or require adjustments to align with specific Prowler requirements. Carefully review all AI-generated content before committing.
+
+</Warning>
 
 To enable AI assistance, simply confirm when prompted by the tool. Additionally, ensure that the `GEMINI_API_KEY` environment variable is set with a valid Gemini API key. For instructions on obtaining your API key, refer to the [Gemini documentation](https://ai.google.dev/gemini-api/docs/api-key).

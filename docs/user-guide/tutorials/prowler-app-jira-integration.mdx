@@ -32,9 +32,12 @@ To configure Jira integration in Prowler App:
     * **API Token:** API token with the following scopes: `read:jira-user`, `read:jira-work`, `write:jira-work`
         ![Connection settings](/images/prowler-app/jira/connection-settings.png)
 
-!!! note "Generate Jira API Token"
-    To generate a Jira API token, visit: https://id.atlassian.com/manage-profile/security/api-tokens
+<Note>
+**Generate Jira API Token**
 
+To generate a Jira API token, visit: https://id.atlassian.com/manage-profile/security/api-tokens
+
+</Note>
 
 Once configured successfully, the integration is ready to send findings to Jira.
 
@@ -85,8 +88,10 @@ Each Jira integration provides management actions through dedicated buttons:
 
 If the Jira issue does not appear in your Jira project, follow these steps to verify the export task status via the API.
 
-!!! note
-    Replace `http://localhost:8080` with the base URL where your Prowler API is accessible (for example, `https://api.yourdomain.com`).
+<Note>
+Replace `http://localhost:8080` with the base URL where your Prowler API is accessible (for example, `https://api.yourdomain.com`).
+
+</Note>
 
 1) Get an access token (replace email and password):
 
@@ -113,8 +118,10 @@ curl --location --globoff 'http://localhost:8080/api/v1/tasks?filter[name]=integ
   --header 'Authorization: Bearer ACCESS_TOKEN' | jq
 ```
 
-!!! note
-    If you don’t have `jq` installed, run the command without `| jq`.
+<Note>
+If you don't have `jq` installed, run the command without `| jq`.
+
+</Note>
 
 3) Share the output so we can help. A typical result will look like:
 

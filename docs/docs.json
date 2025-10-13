@@ -93,6 +93,7 @@
               "user-guide/tutorials/prowler-app-mute-findings",
               {
                 "group": "Integrations",
+                "expanded": true,
                 "pages": [
                   "user-guide/tutorials/prowler-app-s3-integration",
                   "user-guide/tutorials/prowler-app-security-hub-integration",

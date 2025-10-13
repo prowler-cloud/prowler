@@ -33,7 +33,7 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 def fixer(region):
     """
-    Enable EBS encryption by default in a region. ???+ note Custom KMS keys for EBS Default Encryption may be overwritten. Requires the ec2:EnableEbsEncryptionByDefault permission.
+    Enable EBS encryption by default in a region. Note: Custom KMS keys for EBS Default Encryption may be overwritten. Requires the ec2:EnableEbsEncryptionByDefault permission.
     It can be set as follows:
     {
         "Version": "2012-10-17",
@@ -71,7 +71,7 @@ from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
 def fixer(resource_id: str) -> bool:
     """
-    Enable S3 Block Public Access for the account. ???+ note Custom KMS keys for EBS Default Encryption may be overwritten. By blocking all S3 public access you may break public S3 buckets.
+    Enable S3 Block Public Access for the account. Note: Custom KMS keys for EBS Default Encryption may be overwritten. By blocking all S3 public access you may break public S3 buckets.
     Requires the s3:PutAccountPublicAccessBlock permission:
     {
         "Version": "2012-10-17",
