@@ -16,17 +16,9 @@
   "Risk": "Without **Insights**, abnormal API call or error rates can go unnoticed, delaying detection of credential abuse, privilege escalation, or runaway automation. Attackers may rapidly alter policies, delete resources, or exfiltrate data before response, impacting confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://tutorialsdojo.com/aws-cloudtrail/",
-    "https://constructs.dev/packages/aws-cdk-lib/v/2.178.1?lang=typescript&submodule=aws_cloudtrail",
-    "https://support.icompaas.com/support/solutions/articles/62000233456-ensure-cloudtrail-insight-is-enabled-",
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-insights-events-with-cloudtrail.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudtrail/client/put_insight_selectors.html",
-    "https://cloudchipr.com/blog/aws-cloudtrail",
-    "https://medium.com/panther-labs/aws-security-logging-fundamentals-cloudtrail-c7733789a5dd",
-    "https://fig.io/manual/aws/cloudtrail/put-insight-selectors",
     "https://awscli.amazonaws.com/v2/documentation/api/2.18.18/reference/cloudtrail/put-insight-selectors.html",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudtrail",
-    "https://www.fig.io/manual/aws/cloudtrail/get-insight-selectors"
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudtrail"
   ],
   "Remediation": {
     "Code": {
