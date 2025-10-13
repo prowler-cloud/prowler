@@ -16,18 +16,9 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-auto-scaling-group-capacity-rebalance-enabled",
-    "https://repost.aws/questions/QUEdTZtdPLSMWOiP8nb_SKhw/aws-autoscaling-rebalance-starts-to-foten",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-capacity-rebalancing.html",
-    "https://stackzonecom.tawk.help/article/aws-config-rule-autoscaling-capacity-rebalancing",
-    "https://trustedinstitute.com/concept/aws-solution-architect/auto-scaling/capacity-rebalancing/",
-    "https://zesty.co/finops-glossary/what-is-capacity-rebalancing-in-aws/",
-    "https://spot.io/resources/aws-autoscaling/understanding-ec2-auto-scaling-groups/",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/enable-capacity-rebalancing.html",
-    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/enable-capacity-rebalancing-console-cli.html",
-    "https://asecure.cloud/a/cfgrule_autoscaling-capacity-rebalancing/",
-    "https://github.com/aws/aws-cdk/issues/22625",
-    "https://repost.aws/knowledge-center/ec2-auto-scaling-launch-error-capacity",
-    "https://support.icompaas.com/support/solutions/articles/62000233467-ensure-capacity-rebalancing-is-enabled-for-ec2-auto-scaling-groups"
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/enable-capacity-rebalancing-console-cli.html"
   ],
   "Remediation": {
     "Code": {
