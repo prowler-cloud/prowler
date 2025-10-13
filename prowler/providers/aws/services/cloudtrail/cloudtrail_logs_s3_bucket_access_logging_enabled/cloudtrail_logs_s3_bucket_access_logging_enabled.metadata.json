@@ -16,15 +16,7 @@
   "Risk": "Without access logging on the CloudTrail logs bucket, access and changes to log files lack an independent audit trail. Attackers could read, delete, or replace logs without attribution, undermining **log confidentiality** and **integrity**, and slowing **incident response**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/teerth04/ticket/issues/1458",
-    "https://docs.panther.com/alerts/alert-runbooks/built-in-policies/aws-cloudtrail-s3-bucket-has-access-logging-enabled",
-    "https://cloudmaterials.com/en/blog-entry/cis-benchmark-controls-available-within-aws-security-hub",
-    "https://cybr.com/cloud-security/aws-cloudtrail-best-practices-checklist-and-cheat-sheet/",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudtrail-controls.html",
-    "https://githubhelp.com/jchua06/aws-security-hub-response-and-remediation",
-    "https://help.drata.com/en/articles/9828721-test-221-aws-s3-bucket-access-logging",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_6#aws-console",
-    "https://support.icompaas.com/support/solutions/articles/62000086112-ensure-s3-bucket-access-logging-is-enabled-on-the-cloudtrail-s3-bucket",
     "https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html"
   ],
   "Remediation": {
