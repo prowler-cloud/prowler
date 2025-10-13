@@ -16,13 +16,9 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-az-console.html",
-    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-availability-zone.html",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-availability-zone-balanced.html",
-    "https://docs.aws.amazon.com/es_es/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/multiple-availability-zones.html",
-    "https://www.geeksforgeeks.org/devops/amazon-web-services-scaling-amazon-ec2/",
-    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/disaster-recovery-resiliency.html",
-    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-benefits.html"
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/disaster-recovery-resiliency.html"
   ],
   "Remediation": {
     "Code": {
