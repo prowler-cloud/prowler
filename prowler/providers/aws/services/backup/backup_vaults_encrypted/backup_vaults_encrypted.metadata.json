@@ -19,15 +19,8 @@
   "Risk": "Unencrypted vaults allow recovery points to be read if storage or credentials are compromised, undermining **confidentiality** and enabling data exfiltration. Missing KMS controls also weaken **integrity** guarantees and impede forensic **auditability** during investigations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/es/questions/QUySKXzqgnTRuuTf7BRqTZkw/immutability-of-aws-backup",
-    "https://readmedium.com/aws-backup-plan-for-ebs-volumes-with-terraform-226bdb52160a",
-    "https://dev.to/sepiyush/creating-secure-backups-for-dynamodb-tables-with-terraform-4002",
-    "https://stackoverflow.com/questions/68652103/how-do-i-use-aws-backup-in-terraform-to-create-a-vault-in-a-different-region",
-    "https://medium.com/@nevincansel/cross-account-backup-on-aws-with-terraform-83fbd5310f03",
     "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encrypted-with-cmk.html",
-    "https://futransolutions.com/case-studies/ebs-storage-optimization-with-aws/",
-    "https://safezone.im/category/information-technology/aws/"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encrypted-with-cmk.html"
   ],
   "Remediation": {
     "Code": {
