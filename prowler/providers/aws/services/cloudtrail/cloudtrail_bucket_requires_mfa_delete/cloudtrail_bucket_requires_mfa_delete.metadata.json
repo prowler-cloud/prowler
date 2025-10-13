@@ -16,15 +16,7 @@
   "Risk": "Without **MFA Delete**, stolen or over-privileged credentials can permanently delete log versions or change versioning, compromising log **integrity** and **availability**. This enables attacker cover-ups, hinders **forensics**, and weakens evidence for investigations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.icompaas.com/support/solutions/articles/62000233454-ensure-the-s3-bucket-cloudtrail-bucket-requires-mfa-delete-",
-    "https://cloudviz.io/blog/12-best-practices-for-using-aws-cloudtrail",
-    "https://repost.aws/articles/AR4r2AsLjCTYCepft438cVjA/anomaly-detection-for-s3-bucket-deletions",
-    "https://docs.cgn.portal.checkpoint.com/docs/d9_aws_log_16",
-    "https://cloud-kb.sentinelone.com/cloudtrail-bucket-delete-policy-disabled",
-    "https://gist.github.com/guitmz/6312cf734039d0bcbe2966924585fe12",
-    "https://awsforengineers.com/blog/aws-s3-cloudtrail-integration-guide-2024/",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiFactorAuthenticationDelete.html",
-    "https://docs.k6scope.com/users-guide/analyzers/aws-storage/buckets-used-for-cloudtrail-logging",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-bucket-mfa-delete-enabled.html"
   ],
   "Remediation": {
