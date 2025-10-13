@@ -76,7 +76,7 @@ export const createApiKeyColumns = (
   },
   {
     id: "actions",
-    header: "Actions",
+    header: "",
     cell: ({ row }) => {
       return (
         <DataTableRowActions row={row} onEdit={onEdit} onRevoke={onRevoke} />

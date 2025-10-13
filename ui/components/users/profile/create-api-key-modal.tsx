@@ -1,12 +1,17 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
 import { createApiKey } from "@/actions/api-keys/api-keys";
-import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
+import { useToast } from "@/components/ui";
+import { CustomInput } from "@/components/ui/custom";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { Form } from "@/components/ui/form";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
 import { ModalButtons } from "./api-keys/modal-buttons";
-import { useModalForm } from "./api-keys/use-modal-form";
 import { calculateExpiryDate } from "./api-keys/utils";
 
 interface CreateApiKeyModalProps {
@@ -15,49 +20,72 @@ interface CreateApiKeyModalProps {
   onSuccess: (apiKey: string) => void;
 }
 
-interface CreateApiKeyFormData {
-  name: string;
-  expiresInDays: string;
-}
+const createApiKeySchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  expiresInDays: z.string().refine((val) => {
+    const num = parseInt(val);
+    return num >= 1 && num <= 3650;
+  }, "Must be between 1 and 3650 days"),
+});
+
+type FormValues = z.infer<typeof createApiKeySchema>;
 
 export const CreateApiKeyModal = ({
   isOpen,
   onClose,
   onSuccess,
 }: CreateApiKeyModalProps) => {
-  const { formData, setFormData, isLoading, error, handleSubmit, handleClose } =
-    useModalForm<CreateApiKeyFormData>({
-      initialData: {
-        name: "",
-        expiresInDays: DEFAULT_EXPIRY_DAYS,
-      },
-      onSubmit: async (data) => {
-        if (!data.name.trim()) {
-          throw new Error("Name is required");
-        }
+  const { toast } = useToast();
 
-        const result = await createApiKey({
-          name: data.name.trim(),
-          expires_at: calculateExpiryDate(parseInt(data.expiresInDays)),
-        });
+  const form = useForm<FormValues>({
+    resolver: zodResolver(createApiKeySchema),
+    defaultValues: {
+      name: "",
+      expiresInDays: DEFAULT_EXPIRY_DAYS,
+    },
+  });
 
-        if (result.error) {
-          throw new Error(result.error);
-        }
+  const isLoading = form.formState.isSubmitting;
 
-        if (!result.data) {
-          throw new Error("Failed to create API key");
-        }
+  const onSubmitClient = async (values: FormValues) => {
+    try {
+      const result = await createApiKey({
+        name: values.name.trim(),
+        expires_at: calculateExpiryDate(parseInt(values.expiresInDays)),
+      });
 
-        const apiKey = result.data.data.attributes.api_key;
-        if (!apiKey) {
-          throw new Error("Failed to retrieve API key");
-        }
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
-        onSuccess(apiKey);
-      },
-      onClose,
-    });
+      if (!result.data) {
+        throw new Error("Failed to create API key");
+      }
+
+      const apiKey = result.data.data.attributes.api_key;
+      if (!apiKey) {
+        throw new Error("Failed to retrieve API key");
+      }
+
+      form.reset();
+      onSuccess(apiKey);
+      onClose();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    }
+  };
+
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
 
   return (
     <CustomAlertModal
@@ -66,70 +94,48 @@ export const CreateApiKeyModal = ({
       title="Create API Key"
       size="lg"
     >
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="api-key-name"
-            className="text-sm font-medium text-slate-300"
-          >
-            Name <span className="text-danger">*</span>
-          </label>
-          <input
-            id="api-key-name"
-            type="text"
-            placeholder="My API Key"
-            value={formData.name}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
-            }
-            className="focus:border-prowler-theme-green focus:ring-prowler-theme-green rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:ring-1 focus:outline-none"
-            required
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmitClient)}
+          className="flex flex-col gap-4"
+        >
+          <div className="flex flex-col gap-2">
+            <CustomInput
+              control={form.control}
+              name="name"
+              type="text"
+              label="Name"
+              labelPlacement="outside"
+              placeholder="My API Key"
+              variant="bordered"
+              isRequired
+              isInvalid={!!form.formState.errors.name}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <CustomInput
+              control={form.control}
+              name="expiresInDays"
+              type="number"
+              label="Expires in (days)"
+              labelPlacement="outside"
+              placeholder="365"
+              variant="bordered"
+              isRequired
+              isInvalid={!!form.formState.errors.expiresInDays}
+            />
+          </div>
+
+          <ModalButtons
+            onCancel={handleClose}
+            onSubmit={form.handleSubmit(onSubmitClient)}
+            isLoading={isLoading}
+            isDisabled={!form.formState.isValid}
+            submitText="Create API Key"
           />
-          <p className="text-xs text-slate-400">
-            A descriptive name to identify this API key
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="api-key-expires"
-            className="text-sm font-medium text-slate-300"
-          >
-            Expires in (days)
-          </label>
-          <input
-            id="api-key-expires"
-            type="number"
-            value={formData.expiresInDays}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                expiresInDays: e.target.value,
-              }))
-            }
-            min="1"
-            max="3650"
-            className="focus:border-prowler-theme-green focus:ring-prowler-theme-green rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:ring-1 focus:outline-none"
-          />
-          <p className="text-xs text-slate-400">
-            Number of days until this key expires (default: 1 year)
-          </p>
-        </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      <ModalButtons
-        onCancel={handleClose}
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        isDisabled={!formData.name.trim()}
-        submitText="Create API Key"
-      />
+        </form>
+      </Form>
     </CustomAlertModal>
   );
 };

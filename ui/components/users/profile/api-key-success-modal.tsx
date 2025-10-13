@@ -41,6 +41,7 @@ export const ApiKeySuccessModal = ({
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">Your API Key</p>
           <Snippet
+            hideSymbol
             classNames={{
               pre: "font-mono text-sm break-all whitespace-pre-wrap",
             }}
@@ -59,7 +60,7 @@ export const ApiKeySuccessModal = ({
         color="action"
         onPress={onClose}
       >
-        I&apos;ve Saved My API Key
+        Acknowledged
       </CustomButton>
     </CustomAlertModal>
   );

@@ -1,14 +1,18 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
-import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
+import { useToast } from "@/components/ui";
+import { CustomInput } from "@/components/ui/custom";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { Form } from "@/components/ui/form";
 
 import { ModalButtons } from "./api-keys/modal-buttons";
 import { EnrichedApiKey } from "./api-keys/types";
-import { useModalForm } from "./api-keys/use-modal-form";
 import { isApiKeyNameDuplicate } from "./api-keys/utils";
 
 interface EditApiKeyNameModalProps {
@@ -19,9 +23,11 @@ interface EditApiKeyNameModalProps {
   existingApiKeys: EnrichedApiKey[];
 }
 
-interface EditApiKeyFormData {
-  name: string;
-}
+const editApiKeyNameSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+});
+
+type FormValues = z.infer<typeof editApiKeyNameSchema>;
 
 export const EditApiKeyNameModal = ({
   isOpen,
@@ -30,42 +36,63 @@ export const EditApiKeyNameModal = ({
   onSuccess,
   existingApiKeys,
 }: EditApiKeyNameModalProps) => {
-  const { formData, setFormData, isLoading, error, handleSubmit, handleClose } =
-    useModalForm<EditApiKeyFormData>({
-      initialData: {
-        name: apiKey?.attributes.name || "",
-      },
-      onSubmit: async (data) => {
-        if (!apiKey || !data.name.trim()) {
-          throw new Error("Name is required");
-        }
+  const { toast } = useToast();
 
-        if (isApiKeyNameDuplicate(data.name, existingApiKeys, apiKey.id)) {
-          throw new Error(
-            "An API key with this name already exists. Please choose a different name.",
-          );
-        }
+  const form = useForm<FormValues>({
+    resolver: zodResolver(editApiKeyNameSchema),
+    defaultValues: {
+      name: apiKey?.attributes.name || "",
+    },
+  });
 
-        const result = await updateApiKey(apiKey.id, {
-          name: data.name.trim(),
-        });
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        onSuccess();
-      },
-      onSuccess,
-      onClose,
-    });
+  const isLoading = form.formState.isSubmitting;
 
   // Sync form data when apiKey changes or modal opens
   useEffect(() => {
     if (isOpen && apiKey) {
-      setFormData({ name: apiKey.attributes.name || "" });
+      form.reset({ name: apiKey.attributes.name || "" });
     }
-  }, [isOpen, apiKey, setFormData]);
+  }, [isOpen, apiKey, form]);
+
+  const onSubmitClient = async (values: FormValues) => {
+    try {
+      if (!apiKey) {
+        throw new Error("API key not found");
+      }
+
+      if (isApiKeyNameDuplicate(values.name, existingApiKeys, apiKey.id)) {
+        throw new Error(
+          "An API key with this name already exists. Please choose a different name.",
+        );
+      }
+
+      const result = await updateApiKey(apiKey.id, {
+        name: values.name.trim(),
+      });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      form.reset();
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      });
+    }
+  };
+
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
 
   return (
     <CustomAlertModal
@@ -74,45 +101,38 @@ export const EditApiKeyNameModal = ({
       title="Edit API Key Name"
       size="lg"
     >
-      <div className="flex flex-col gap-4">
-        <div className="text-sm text-slate-400">
-          Prefix: {apiKey?.attributes.prefix}
-        </div>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmitClient)}
+          className="flex flex-col gap-4"
+        >
+          <div className="text-sm text-slate-400">
+            Prefix: {apiKey?.attributes.prefix}
+          </div>
 
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="edit-api-key-name"
-            className="text-sm font-medium text-slate-300"
-          >
-            Name <span className="text-danger">*</span>
-          </label>
-          <input
-            id="edit-api-key-name"
-            type="text"
-            placeholder="My API Key"
-            value={formData.name}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
-            }
-            className="focus:border-prowler-theme-green focus:ring-prowler-theme-green rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:ring-1 focus:outline-none"
-            required
+          <div className="flex flex-col gap-2">
+            <CustomInput
+              control={form.control}
+              name="name"
+              type="text"
+              label="Name"
+              labelPlacement="outside"
+              placeholder="My API Key"
+              variant="bordered"
+              isRequired
+              isInvalid={!!form.formState.errors.name}
+            />
+          </div>
+
+          <ModalButtons
+            onCancel={handleClose}
+            onSubmit={form.handleSubmit(onSubmitClient)}
+            isLoading={isLoading}
+            isDisabled={!form.formState.isValid}
+            submitText="Save Changes"
           />
-        </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      <ModalButtons
-        onCancel={handleClose}
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        isDisabled={!formData.name.trim()}
-        submitText="Save Changes"
-      />
+        </form>
+      </Form>
     </CustomAlertModal>
   );
 };

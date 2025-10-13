@@ -1,17 +1,22 @@
 "use client";
 
+import { Button } from "@heroui/button";
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
+  DropdownSection,
   DropdownTrigger,
 } from "@heroui/dropdown";
+import {
+  DeleteDocumentBulkIcon,
+  EditDocumentBulkIcon,
+} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
-import { Ban, MoreVertical, Pencil } from "lucide-react";
+import clsx from "clsx";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { VerticalDotsIcon } from "@/components/icons";
 
-import { ICON_SIZE } from "./constants";
 import { EnrichedApiKey } from "./types";
 
 interface DataTableRowActionsProps {
@@ -19,6 +24,8 @@ interface DataTableRowActionsProps {
   onEdit: (apiKey: EnrichedApiKey) => void;
   onRevoke: (apiKey: EnrichedApiKey) => void;
 }
+
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions({
   row,
@@ -28,35 +35,50 @@ export function DataTableRowActions({
   const apiKey = row.original;
 
   return (
-    <div className="flex justify-end">
-      <Dropdown>
+    <div className="relative flex items-center justify-end gap-2">
+      <Dropdown
+        className="dark:bg-prowler-blue-800 shadow-xl"
+        placement="bottom"
+      >
         <DropdownTrigger>
-          <CustomButton
-            ariaLabel="API key actions menu"
-            color="transparent"
-            size="sm"
-            variant="light"
-          >
-            <MoreVertical size={ICON_SIZE} />
-          </CustomButton>
+          <Button isIconOnly radius="full" size="sm" variant="light">
+            <VerticalDotsIcon className="text-default-400" />
+          </Button>
         </DropdownTrigger>
-        <DropdownMenu aria-label="API Key actions">
-          <DropdownItem
-            key="edit"
-            startContent={<Pencil size={ICON_SIZE} />}
-            onPress={() => onEdit(apiKey)}
-          >
-            Edit name
-          </DropdownItem>
-          <DropdownItem
-            key="revoke"
-            className="text-danger"
-            color="danger"
-            startContent={<Ban size={ICON_SIZE} />}
-            onPress={() => onRevoke(apiKey)}
-          >
-            Revoke
-          </DropdownItem>
+        <DropdownMenu
+          closeOnSelect
+          aria-label="API Key actions"
+          color="default"
+          variant="flat"
+        >
+          <DropdownSection title="Actions">
+            <DropdownItem
+              key="edit"
+              description="Edit the API key name"
+              textValue="Edit name"
+              startContent={<EditDocumentBulkIcon className={iconClasses} />}
+              onPress={() => onEdit(apiKey)}
+            >
+              Edit name
+            </DropdownItem>
+          </DropdownSection>
+          <DropdownSection title="Danger zone">
+            <DropdownItem
+              key="revoke"
+              className="text-danger"
+              color="danger"
+              description="Revoke this API key permanently"
+              textValue="Revoke"
+              startContent={
+                <DeleteDocumentBulkIcon
+                  className={clsx(iconClasses, "!text-danger")}
+                />
+              }
+              onPress={() => onRevoke(apiKey)}
+            >
+              Revoke
+            </DropdownItem>
+          </DropdownSection>
         </DropdownMenu>
       </Dropdown>
     </div>
