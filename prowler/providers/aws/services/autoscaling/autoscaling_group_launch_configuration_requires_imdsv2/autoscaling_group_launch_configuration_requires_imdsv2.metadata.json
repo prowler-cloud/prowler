@@ -18,14 +18,9 @@
   "Risk": "Without enforced **IMDSv2**, **SSRF** and local escape paths can access **IAM role credentials**, enabling unauthorized API calls.\n\nAttackers could:\n- Exfiltrate data with stolen tokens\n- Move laterally and modify resources, degrading confidentiality and integrity",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31",
-    "https://medium.com/@nagendren.rajmohan/accessing-aws-instance-metadata-for-an-ec2-instance-a-comprehensive-guide-baab77ef5fc1",
-    "https://github.com/aws/aws-cdk/issues/5137",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/require-imds-v2.html",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-3",
-    "https://kb.cynergy.app/space/MD/991855102",
-    "https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/autoscaling_launch_configuration",
     "https://aws.plainenglish.io/dont-let-metadata-leak-why-imdsv2-is-a-must-and-how-to-migrate-a88e1e285394"
   ],
   "Remediation": {
