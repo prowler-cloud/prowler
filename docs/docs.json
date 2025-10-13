@@ -29,7 +29,8 @@
               "getting-started/products/prowler-cloud",
               "getting-started/products/prowler-cloud-pricing",
               "getting-started/products/prowler-cloud-aws-marketplace",
-              "getting-started/goto/prowler-cloud"
+              "getting-started/goto/prowler-cloud",
+              "getting-started/goto/prowler-api-reference"
             ]
           },
           {
@@ -296,11 +297,6 @@
         "pages": [
           "troubleshooting"
         ]
-      },
-      {
-        "tab": "Prowler Cloud API Docs",
-        "icon": "link",
-        "href": "https://api.prowler.com/api/v1/docs"
       },
       {
         "tab": "About Us",
