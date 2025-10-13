@@ -18,7 +18,7 @@ import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
 const editGroupSchema = z.object({
-  name: z.string().nonempty("Provider group name is required"),
+  name: z.string().min(1, "Provider group name is required"),
   providers: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
   roles: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
 });

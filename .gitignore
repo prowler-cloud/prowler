@@ -80,9 +80,6 @@ _data/
 # Claude
 CLAUDE.md
 
-# LLM's (Until we have a standard one)
-AGENTS.md
-
 # MCP Server
 mcp_server/prowler_mcp_server/prowler_app/server.py
 mcp_server/prowler_mcp_server/prowler_app/utils/schema.yaml
