@@ -1,5 +1,7 @@
 import { Bell, VolumeX } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 import { TooltipData } from "../models/chart-types";
 
 interface ChartTooltipProps {
@@ -29,7 +31,10 @@ export function ChartTooltip({
       <div className="flex items-center gap-2">
         {showColorIndicator && color && (
           <div
-            className={`h-3 w-3 ${colorIndicatorShape === "circle" ? "rounded-full" : "rounded-sm"}`}
+            className={cn(
+              "h-3 w-3",
+              colorIndicatorShape === "circle" ? "rounded-full" : "rounded-sm",
+            )}
             style={{ backgroundColor: color }}
           />
         )}

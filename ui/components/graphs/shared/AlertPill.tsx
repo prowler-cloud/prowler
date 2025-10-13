@@ -1,5 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 interface AlertPillProps {
   value: number;
   label?: string;
@@ -13,17 +15,20 @@ export function AlertPill({
   iconSize = 12,
   textSize = "xs",
 }: AlertPillProps) {
-  const textSizeClass = `text-${textSize}`;
-
   return (
     <div className="flex items-center gap-2">
       <div className="bg-alert-pill-bg flex items-center gap-1 rounded-full px-2 py-1">
         <AlertTriangle size={iconSize} className="text-alert-pill-text" />
-        <span className={`${textSizeClass} text-alert-pill-text font-semibold`}>
+        <span
+          className={cn(
+            `text-${textSize}`,
+            "text-alert-pill-text font-semibold",
+          )}
+        >
           {value}
         </span>
       </div>
-      <span className={`${textSizeClass} text-slate-400`}>{label}</span>
+      <span className={cn(`text-${textSize}`, "text-slate-400")}>{label}</span>
     </div>
   );
 }
