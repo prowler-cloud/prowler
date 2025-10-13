@@ -1,4 +1,4 @@
-import { SEVERITY_COLORS } from "./chart-constants";
+import { SEVERITY_COLORS } from "./constants";
 
 export function getSeverityColorByRiskScore(riskScore: number): string {
   if (riskScore >= 7) return SEVERITY_COLORS.Critical;

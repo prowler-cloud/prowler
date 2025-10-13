@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { DEFAULT_SORT_OPTION, SORT_OPTIONS } from "../shared/chart-constants";
+import { DEFAULT_SORT_OPTION, SORT_OPTIONS } from "../shared/constants";
 
 type SortOption = (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS];
 

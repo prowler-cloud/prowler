@@ -7,8 +7,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import { CHART_COLORS } from "./shared/chart-constants";
-
+import { CHART_COLORS } from "./shared/constants";
 interface RadialChartProps {
   percentage: number;
   label?: string;

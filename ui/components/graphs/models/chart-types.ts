@@ -1,4 +1,4 @@
-import { LAYOUT_OPTIONS, SORT_OPTIONS } from "../shared/chart-constants";
+import { LAYOUT_OPTIONS, SORT_OPTIONS } from "../shared/constants";
 
 export type SortOption = (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS];
 

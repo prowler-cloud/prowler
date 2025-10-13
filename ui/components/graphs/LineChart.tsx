@@ -16,8 +16,8 @@ import {
 
 import { LineConfig, LineDataPoint } from "./models/chart-types";
 import { AlertPill } from "./shared/AlertPill";
-import { CHART_COLORS } from "./shared/chart-constants";
 import { ChartLegend } from "./shared/ChartLegend";
+import { CHART_COLORS } from "./shared/constants";
 
 interface LineChartProps {
   data: LineDataPoint[];

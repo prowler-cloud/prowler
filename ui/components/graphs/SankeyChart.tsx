@@ -2,7 +2,7 @@
 
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
-import { SEVERITY_COLORS } from "./shared/chart-constants";
+import { SEVERITY_COLORS } from "./shared/constants";
 
 interface SankeyNode {
   name: string;

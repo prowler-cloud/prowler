@@ -15,7 +15,7 @@ import {
 
 import { RadarDataPoint } from "./models/chart-types";
 import { AlertPill } from "./shared/AlertPill";
-import { CHART_COLORS } from "./shared/chart-constants";
+import { CHART_COLORS } from "./shared/constants";
 
 interface RadarChartProps {
   data: RadarDataPoint[];

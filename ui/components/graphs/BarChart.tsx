@@ -12,7 +12,7 @@ import {
 } from "recharts";
 
 import { BarDataPoint, LayoutOption } from "./models/chart-types";
-import { CHART_COLORS, LAYOUT_OPTIONS } from "./shared/chart-constants";
+import { CHART_COLORS, LAYOUT_OPTIONS } from "./shared/constants";
 import { ChartTooltip } from "./shared/ChartTooltip";
 import { getSeverityColorByName } from "./shared/severity-utils";
 
