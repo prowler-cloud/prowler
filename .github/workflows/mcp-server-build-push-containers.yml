@@ -27,7 +27,7 @@ env:
 
   # Container Registries
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
-  PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-mcp-server
+  PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-mcp
 
 jobs:
   repository-check:
