@@ -2971,6 +2971,7 @@ class TenantApiKeyUpdateSerializer(RLSSerializer, BaseWriteSerializer):
             raise ValidationError("An API key with this name already exists.")
         return value
 
+
 # Lighthouse: Provider configurations
 
 
