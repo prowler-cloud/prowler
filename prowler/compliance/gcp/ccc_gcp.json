@@ -2,6 +2,7 @@
   "Framework": "CCC",
   "Version": "",
   "Provider": "GCP",
+  "Name": "Common Cloud Controls Catalog (CCC)",
   "Description": "Common Cloud Controls Catalog (CCC) for GCP",
   "Requirements": [
     {
@@ -3670,6 +3671,4388 @@
       ],
       "Checks": [
         "cloudstorage_bucket_uniform_bucket_level_access"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN01.AR01",
+      "Description": "Verify that only authorized users can access MLDE resources,\nand that access modes are properly defined and enforced.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN01 Define Access Mode for ML Development Environments",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access to Machine Learning Development Environment (MLDE)\nresources is strictly defined and controlled.\nOnly authorized users with appropriate permissions can access these environments,\nmitigating the risk of unauthorized access, data leakage, or service disruption.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green",
+            "tlp-clear"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH01",
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.1.1",
+                "2013 A.9.2.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-2",
+                "AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-01",
+                "IAM-02"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "gke_cluster_no_default_service_account",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN03.AR01",
+      "Description": "Verify that root access is disabled on MLDE instances containing sensitive data.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN03 Disable Root Access on MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent users from obtaining root access on MLDE instances to reduce the\nrisk of unauthorized system modifications and potential security breaches.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-08",
+                "IAM-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.2.3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_project_os_login_enabled",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN03.AR02",
+      "Description": "For MLDE instances without sensitive data, ensure that root access is only\nenabled when necessary and properly authorized.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN03 Disable Root Access on MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent users from obtaining root access on MLDE instances to reduce the\nrisk of unauthorized system modifications and potential security breaches.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green",
+            "tlp-clear"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-08",
+                "IAM-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.2.3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_project_os_login_enabled",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "gke_cluster_no_default_service_account",
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN04.AR01",
+      "Description": "Verify that terminal access is disabled on MLDE instances containing sensitive data.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN04 Disable Terminal Access on MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent users from accessing the terminal on MLDE instances to limit the risk of\nunauthorized commands and potential system compromise.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-08"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.2.3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_instance_serial_ports_in_use"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN04.AR02",
+      "Description": "For MLDE instances without sensitive data, ensure that terminal access is only\nenabled when necessary and properly authorized.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN04 Disable Terminal Access on MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent users from accessing the terminal on MLDE instances to limit the risk of\nunauthorized commands and potential system compromise.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green",
+            "tlp-clear"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-08"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.2.3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_serial_ports_in_use",
+        "compute_instance_public_ip"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN02.AR01",
+      "Description": "Confirm that file download functionality is disabled on MLDE instances containing sensitive data.",
+      "Attributes": [
+        {
+          "FamilyName": "Data Protection",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN02 Disable File Downloads on MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent unauthorized file downloads from MLDE instances to protect sensitive data from being exfiltrated.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH02",
+                "CCC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-5"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSI-05",
+                "DSI-07"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.2.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7",
+                "SC-8"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.MLDE.CN02.AR02",
+      "Description": "For MLDE instances without sensitive data, ensure that file downloads are monitored and logged.",
+      "Attributes": [
+        {
+          "FamilyName": "Data Protection",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.MLDE.CN02 Disable File Downloads on MLDE Instances",
+          "SubSectionObjective": "Prevent unauthorized file downloads from MLDE instances to protect sensitive data from being exfiltrated.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green",
+            "tlp-clear"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH02",
+                "CCC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-5"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSI-05",
+                "DSI-07"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.2.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7",
+                "SC-8"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN05.AR01",
+      "Description": "Verify that only approved VM and container images can be selected when creating MLDE instances.",
+      "Attributes": [
+        {
+          "FamilyName": "Configuration Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.MLDE.CN05 Restrict Environment Options on MLDE Instances",
+          "SubSectionObjective": "Limit the virtual machine and container image options available when creating\nnew MLDE instances to approved and secure configurations.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.IP-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "TVM-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.12.5.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "CM-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN05.AR02",
+      "Description": "Attempt to create an MLDE instance with an unapproved image and confirm that it is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Configuration Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.MLDE.CN05 Restrict Environment Options on MLDE Instances",
+          "SubSectionObjective": "Limit the virtual machine and container image options available when creating\nnew MLDE instances to approved and secure configurations.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.IP-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "TVM-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.12.5.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "CM-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled",
+        "compute_instance_shielded_vm_enabled",
+        "compute_instance_confidential_computing_enabled",
+        "compute_instance_public_ip",
+        "compute_instance_ip_forwarding_is_enabled",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_serial_ports_in_use",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN06.AR01",
+      "Description": "Verify that automatic scheduled upgrades are enabled on user-managed\nMLDE instances containing sensitive data.",
+      "Attributes": [
+        {
+          "FamilyName": "Vulnerability Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.MLDE.CN06 Require Automatic Scheduled Upgrades on User-Managed MLDE Instances",
+          "SubSectionObjective": "Ensure that MLDE instances are kept up-to-date with the\nlatest security patches by enforcing automatic scheduled upgrades.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH04",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.IP-12"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "TVM-01",
+                "TVM-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.12.6.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "artifacts_container_analysis_enabled",
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN06.AR02",
+      "Description": "Ensure that the upgrade schedule is appropriately configured and\ndoes not interfere with critical operations.",
+      "Attributes": [
+        {
+          "FamilyName": "Vulnerability Management",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.MLDE.CN06 Require Automatic Scheduled Upgrades on User-Managed MLDE Instances",
+          "SubSectionObjective": "Ensure that MLDE instances are kept up-to-date with the\nlatest security patches by enforcing automatic scheduled upgrades.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green",
+            "tlp-clear"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH04",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.IP-12"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "TVM-01",
+                "TVM-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.12.6.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.MLDE.CN07.AR01",
+      "Description": "Verify that MLDE instances containing sensitive data cannot be accessed via public IP addresses.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "",
+          "SubSection": "CCC.MLDE.CN07 Restrict Public IP Access on MLDE Instances",
+          "SubSectionObjective": "Prevent public IP access to MLDE instances to reduce exposure to the internet and enhance security.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH02",
+                "CCC.VPC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "SEF-05"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_instance_public_ip",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN07.AR02",
+      "Description": "For MLDE instances without sensitive data requiring public access,\nensure that appropriate security controls are in place and access is approved.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN07 Restrict Public IP Access on MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent public IP access to MLDE instances to reduce exposure to the internet and enhance security.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green",
+            "tlp-clear"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH02",
+                "CCC.VPC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "SEF-05"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_instance_public_ip",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_private_ip_assignment",
+        "cloudsql_instance_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN08.AR01",
+      "Description": "Verify that MLDE instances containing sensitive data can only be deployed in\napproved virtual networks with appropriate security controls.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN08 Restrict Virtual Networks for MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Limit the virtual networks that can be used when creating new MLDE instances to\nensure they are deployed within approved and secure network environments.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH01",
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_network_default_in_use",
+        "compute_network_not_legacy",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_private_ip_assignment",
+        "cloudsql_instance_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.MLDE.CN08.AR02",
+      "Description": "Ensure that MLDE instances without sensitive data are deployed in\nnetworks that meet organizational security standards.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.MLDE.CN08 Restrict Virtual Networks for MLDE Instances",
+          "SubSection": "",
+          "SubSectionObjective": "Limit the virtual networks that can be used when creating new MLDE instances to\nensure they are deployed within approved and secure network environments.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber",
+            "tlp-green",
+            "tlp-clear"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.MLDE.TH01",
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-4"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_not_legacy",
+        "compute_network_default_in_use",
+        "compute_instance_public_ip",
+        "compute_instance_ip_forwarding_is_enabled",
+        "compute_instance_shielded_vm_enabled",
+        "compute_instance_serial_ports_in_use",
+        "cloudsql_instance_private_ip_assignment",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_public_access",
+        "cloudstorage_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.Message.CN01.AR01",
+      "Description": "Attempt to publish a message without using a customer-managed encryption key\nand verify that the message is rejected or not stored.",
+      "Attributes": [
+        {
+          "FamilyName": "Encryption",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.Message.CN01 Use Customer-Managed Encryption Keys (CMEK) for Messages",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that messages are encrypted using customer-managed encryption keys (CMEK)\nto provide enhanced control over encryption processes and keys, meeting compliance and security requirements.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "dataproc_encrypted_with_cmks_disabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Monitor.CN01.AR01",
+      "Description": "When an External Monitoring system exceeds the anticipated rate of monitoring checks then\nRate Limiting MUST be applied and an Audit Alert MUST be generated.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that collect, alert, and retain events from other monitoring services.",
+          "Section": "CCC.Monitor.CN01 Rate Limiting on External Monitoring",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent DoS attacks using External Monitoring tools.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Monitor.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.IR-01",
+                "DE.CM-01"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-5",
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Monitor.CN02.AR01",
+      "Description": "When an Custom or User-Defined Metric starts to flood a collector, then a rate limit MUST be applied\nto reduce the network impact of traffic and an alert must triggered.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "Controls that collect, alert, and retain events from other monitoring services.",
+          "Section": "CCC.Monitor.CN02 Rate Limiting on Metric Generation",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent Malicious Actor or misconfiguration from flooding services with metric data.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Monitor.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-01"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-5(2)",
+                "CA-7",
+                "SI-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "iam_audit_logs_enabled",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled",
+        "compute_subnet_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Monitor.CN03.AR01",
+      "Description": "When external systems have approved access to internal systems not normally available for public access\nthen they MUST be secured to prevent unauthorised access jumping through to the internal systems and\nonly allow access to specific internal services.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls designed to prevent unauthorised access to monitoring features.",
+          "Section": "CCC.Monitor.CN03 Access External Monitoring",
+          "SubSection": "",
+          "SubSectionObjective": "Control access to Synthetic monitoring solutions using API keys or Certificate based authentication to\nensure they don't become an attack path, preventing monitoring systems from forging network requests to\ngain access to internal systems.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Monitor.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-06",
+                "PR.IR-01",
+                "PR.AA-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days"
+      ]
+    },
+    {
+      "Id": "CCC.Monitor.CN04.AR01",
+      "Description": "When monitoring dashboards display degraded services which may become potential targets then the\ndashboard MUST be protected from unauthorised access.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls designed to prevent unauthorised access to monitoring features.",
+          "Section": "CCC.Monitor.CN04 Restrict access to Monitoring Dashboards",
+          "SubSection": "",
+          "SubSectionObjective": "Control access to Monitoring Dashboards and reports to ensure they don't highlight an attack path.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Monitor.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.CM-09",
+                "DE.AE-03"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SI-4",
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Monitor.CN05.AR01",
+      "Description": "When monitoring services have generated an alert, the service MUST ensure only authorised\nresponders silence or acknowledge the alert.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls designed to prevent unauthorised access to monitoring features.",
+          "Section": "CCC.Monitor.CN05 Restrict access to silence or acknowledge an alert",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure only a subset of users can silence or acknowledge alerts to prevent attackers hiding their activity.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH10"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.IR-01",
+                "PR.AA-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_sink_created",
+        "iam_organization_essential_contacts_configured"
+      ]
+    },
+    {
+      "Id": "CCC.Monitor.CN06.AR01",
+      "Description": "When systems push metrics or traces they MUST be authenticated for that particular type of metric or trace",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "Controls designed to prevent unauthorised access to monitoring features.",
+          "Section": "CCC.Monitor.CN06 Metrics pushed for authorised services only",
+          "SubSection": "",
+          "SubSectionObjective": "Use IAM to control which types of metrics or traces can be pushed by different system to avoid a compromised\nsystem pushing fabricated metrics about a different service",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Monitor.TH05"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AA-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-5"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "gke_cluster_no_default_service_account",
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused"
+      ]
+    },
+    {
+      "Id": "CCC.SecMgmt.CN01.AR01",
+      "Description": "Attempt to use an outdated version of a secret after its rotation period\nhas passed and verify that access is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Data Protection",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.SecMgmt.CN01 Enforce Automatic Secret Rotation",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that secrets are automatically rotated on a defined schedule to\nreduce the risk of secret compromise and unauthorized access.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01",
+                "CCC.TH14"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.SecMgmt.CN02.AR01",
+      "Description": "Attempt to retrieve a secret from an unauthorized region and verify that access is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Data Protection",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.SecMgmt.CN02 Enforce Secret Replication Policies",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that secrets are replicated only to authorized locations as per\norganizational data residency and compliance requirements.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH03",
+                "CCC.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3",
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.SvlsComp.CN01.AR01",
+      "Description": "Attempt to access the serverless function over the public internet and verify that access is denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.SvlsComp.CN01 Enforce Use of Private Endpoints for Serverless Function",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that the serverless function is accessible only through a private endpoint,\nallowing it to communicate securely within a virtual private network and preventing\nunauthorized external access.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-5"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7",
+                "SC-8"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_private_ip_assignment",
+        "cloudstorage_bucket_public_access",
+        "bigquery_dataset_public_access",
+        "compute_public_address_shodan"
+      ]
+    },
+    {
+      "Id": "CCC.SvlsComp.CN02.AR01",
+      "Description": "Send requests to invoke the function up to the allowed threshold and confirm they\nare successful; then send additional requests exceeding the threshold from the same\nentity and verify that they are denied.",
+      "Attributes": [
+        {
+          "FamilyName": "Availability",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.SvlsComp.CN02 Implement Function Invocation Rate Limits",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that function invocation is limited to a specified threshold from any single entity,\npreventing resource exhaustion and denial of service attacks.",
+          "Applicability": [
+            "tlp-red",
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH12"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-4"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-5"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.VPC.CN01.AR01",
+      "Description": "When a subscription is created, the subscription MUST NOT\ncontain default network resources.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.VPC.CN01 Restrict Default Network Creation",
+          "SubSection": "",
+          "SubSectionObjective": "Restrict the automatic creation of default virtual networks and related\nresources during subscription initialization to avoid insecure default\nconfigurations and enforce custom network policies.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.VPC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-5"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "TVM-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.12.3.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-7"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_network_default_in_use"
+      ]
+    },
+    {
+      "Id": "CCC.VPC.CN02.AR01",
+      "Description": "When a resource is created in a public subnet, that resource\nMUST NOT be assigned an external IP address by default.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.VPC.CN02 Limit Resource Creation in Public Subnet",
+          "SubSection": "",
+          "SubSectionObjective": "Restrict the creation of resources in the public subnet with\ndirect access to the internet to minimize attack surfaces.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.VPC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "SEF-05"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.VPC.CN03.AR01",
+      "Description": "When a VPC peering connection is requested, the service MUST\nprevent connections from VPCs that are not explicitly\nallowed.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.VPC.CN03 Restrict VPC Peering to Authorized Accounts",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure VPC peering connections are only established with explicitly\nauthorized destinations to limit network exposure and enforce boundary\ncontrols.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.VPC.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IVS-01"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.3"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.VPC.CN04.AR01",
+      "Description": "When any network traffic goes to or from an interface in the VPC,\nthe service MUST capture and log all relevant information.",
+      "Attributes": [
+        {
+          "FamilyName": "Network Security",
+          "FamilyDescription": "TODO: Describe this control family",
+          "Section": "CCC.VPC.CN04 Enforce VPC Flow Logs on VPCs",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure VPCs are configured with flow logs enabled to capture traffic\ninformation.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.VPC.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PT-1"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.12.4.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IVS-06"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_subnet_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Vector.CN01.AR01",
+      "Description": "When a vector embedding is submitted for indexing, the system MUST validate that it\nmatches expected schema, dimension, and format profiles.",
+      "Attributes": [
+        {
+          "FamilyName": "Vector Indexing",
+          "FamilyDescription": "Controls specific to the management and protection of vector embedding and index operations.",
+          "Section": "CCC.Vector.CN01 Validate Embeddings Before Indexing",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure all incoming embeddings are structurally and statistically validated\nbefore indexing to prevent poisoning or corruption.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Vector.TH02",
+                "CCC.Vector.TH05",
+                "CCC.TH12"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-002"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Vector.CN02.AR01",
+      "Description": "When an index lifecycle event is triggered, the service MUST\nverify that the actor has explicit permissions for the operation type.",
+      "Attributes": [
+        {
+          "FamilyName": "Vector Indexing",
+          "FamilyDescription": "Controls specific to the management and protection of vector embedding and index operations.",
+          "Section": "CCC.Vector.CN02 Enforce Role-Based Index Lifecycle Management",
+          "SubSection": "",
+          "SubSectionObjective": "Restrict index lifecycle operations (create, delete, rollback) to privileged\nidentities using fine-grained access controls.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Vector.TH02",
+                "CCC.Vector.TH04",
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-012"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_no_service_roles_at_project_level",
+        "kms_key_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "CCC.Vector.CN03.AR01",
+      "Description": "When a metadata filter is applied to a query, the service MUST\nverify the requester is authorized to access that field.",
+      "Attributes": [
+        {
+          "FamilyName": "Vector Indexing",
+          "FamilyDescription": "Controls specific to the management and protection of vector embedding and index operations.",
+          "Section": "CCC.Vector.CN03 Enforce Metadata-Level Access Controls",
+          "SubSection": "",
+          "SubSectionObjective": "Apply access control policies to metadata fields used in filtering to\nprevent unauthorized exposure or inference.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Vector.TH03",
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-DET-001",
+                "AIR-PREV-012",
+                "AIR-DET-016"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_account_access_approval_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "iam_cloud_asset_inventory_enabled",
+        "compute_instance_default_service_account_in_use"
+      ]
+    },
+    {
+      "Id": "CCC.Vector.CN04.AR01",
+      "Description": "When ingestion exceeds pre-defined thresholds, the service MUST\nthrottle or reject excess vector write operations.",
+      "Attributes": [
+        {
+          "FamilyName": "Vector Indexing",
+          "FamilyDescription": "Controls specific to the management and protection of vector embedding and index operations.",
+          "Section": "CCC.Vector.CN04 Enforce Ingestion Quotas and Throttling",
+          "SubSection": "",
+          "SubSectionObjective": "Prevent ingestion-based DoS or index pollution by\nrate-limiting vector submissions and enforcing quotas.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Vector.TH02",
+                "CCC.TH12"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-008"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Vector.CN05.AR01",
+      "Description": "When a rollback is attempted, the system MUST log\nthe action and verify rollback authorization.",
+      "Attributes": [
+        {
+          "FamilyName": "Vector Indexing",
+          "FamilyDescription": "Controls specific to the management and protection of vector embedding and index operations.",
+          "Section": "CCC.Vector.CN05 Enforce Index Versioning with Rollback Protection",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure vector indexes are versioned and that rollback\noperations are authorized and auditable.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Vector.TH04",
+                "CCC.TH09",
+                "CCC.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "AIR-DET-004",
+              "Identifiers": [
+                "AIR-PREV-008"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Vector.CN06.AR01",
+      "Description": "When an embedding is submitted, the service MUST validate\nthat its format and dimensionality match allowed profiles.",
+      "Attributes": [
+        {
+          "FamilyName": "Vector Indexing",
+          "FamilyDescription": "Controls specific to the management and protection of vector embedding and index operations.",
+          "Section": "CCC.Vector.CN06 Enforce Dimensional and Format Constraints",
+          "SubSection": "",
+          "SubSectionObjective": "Reject embeddings that do not conform to expected model\nspecifications (dimensions, format, etc).",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Vector.TH05",
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "FINOS-AIGF",
+              "Identifiers": [
+                "AIR-PREV-002"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Vector.CN07.AR01",
+      "Description": "When a search request is issued, clients MUST be allowed\nto declare their requirement for exact vs approximate results.",
+      "Attributes": [
+        {
+          "FamilyName": "Vector Indexing",
+          "FamilyDescription": "Controls specific to the management and protection of vector embedding and index operations.",
+          "Section": "CCC.Vector.CN07 Support Explicit ANN vs. Exact Search Configuration",
+          "SubSection": "",
+          "SubSectionObjective": "Provide clients with the option to enforce exact-match\n(non-ANN) search where search fidelity is critical.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.Vector.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN01.AR01",
+      "Description": "When a port is exposed for non-SSH network traffic, all traffic\nMUST include a TLS handshake AND be encrypted using TLS 1.3 or\nhigher.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN01 Encrypt Data for Transmission",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all communications are encrypted in transit to protect\ndata integrity and confidentiality.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Most cloud services enable TLS 1.3 by default. Where it is not\nalready set, ensure that your services are configured or updated\naccordingly.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-03",
+                "CEK-04",
+                "IVS-03",
+                "IVS-07"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-8",
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_ssl_connections"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN01.AR02",
+      "Description": "When a port is exposed for SSH network traffic, all traffic MUST\ninclude a SSH handshake AND be encrypted using SSHv2 or higher.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN01 Encrypt Data for Transmission",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all communications are encrypted in transit to protect\ndata integrity and confidentiality.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Any time port 22 is exposed, ensure that it has a properly\nimplemented SSH server with SSHv2 enabled and configured with\nstrong ciphers.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-03",
+                "CEK-04",
+                "IVS-03",
+                "IVS-07"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-8",
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN01.AR03",
+      "Description": "When the service receives unencrypted traffic, \nthen it MUST either block the request or automatically\nredirect it to the secure equivalent.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN01 Encrypt Data for Transmission",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all communications are encrypted in transit to protect\ndata integrity and confidentiality.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Review firewall, load balancer, and application configurations to\nensure insecure protocols such as HTTP, FTP, and Telnet are not\nexposed. Where possible, implement automatic redirection to secure\nprotocols such as HTTPS, SFTP, SSH, and regularly scan for\nprotocol drift.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-03",
+                "CEK-04",
+                "IVS-03",
+                "IVS-07"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-8",
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_ssl_connections",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudstorage_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN01.AR07",
+      "Description": "When a port is exposed, the service MUST ensure that the protocol\nand service officially assigned to that port number by the IANA\nService Name and Transport Protocol Port Number Registry, and no\nother, is run on that port.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN01 Encrypt Data for Transmission",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all communications are encrypted in transit to protect\ndata integrity and confidentiality.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Reference the IANA Service Name and Transport Protocol Port Number\nRegistry for more information about correct protocol-to-port\nassignments. Avoid running non-standard services on well-known\nports.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-03",
+                "CEK-04",
+                "IVS-03",
+                "IVS-07"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-8",
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN01.AR08",
+      "Description": "When a service transmits data using TLS, mutual TLS (mTLS) MUST be\nimplemented to require both client and server certificate\nauthentication for all connections.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN01 Encrypt Data for Transmission",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all communications are encrypted in transit to protect\ndata integrity and confidentiality.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Configure mTLS for all endpoints that process or transmit\nsensitive data. Ensure both client and server certificates are\nvalidated and managed securely. Regularly review certificate\nauthorities and automate certificate rotation where possible.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH02"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-03",
+                "CEK-04",
+                "IVS-03",
+                "IVS-07"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-02"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-8",
+                "SC-13"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_ssl_connections"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN13.AR01",
+      "Description": "When a port is exposed that uses certificate-based encryption,\nthe service MUST only use valid, unexpired certificates issued by\na trusted certificate authority.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN13 Minimize Lifetime of Encryption and Authentication Certificates",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption and authentication certificates have a limited\nlifetime to reduce the risk of compromise and ensure the use of\nup-to-date security practices.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Track certificate expiration dates and automate certificate\nrenewal where possible. Use certificate management tools to ensure\nonly certificates from trusted authorities are deployed.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH18"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN13.AR02",
+      "Description": "When a port is exposed that uses certificate-based encryption,\nthe service MUST rotate active certificates within 180 days of\nissuance.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN13 Minimize Lifetime of Encryption and Authentication Certificates",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption and authentication certificates have a limited\nlifetime to reduce the risk of compromise and ensure the use of\nup-to-date security practices.",
+          "Applicability": [
+            "tlp-amber"
+          ],
+          "Recommendation": "Track certificate expiration dates and automate certificate\nrenewal where possible. Use certificate management tools to ensure\nonly certificates from trusted authorities are deployed.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH18"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN13.AR03",
+      "Description": "When a port is exposed that uses certificate-based encryption,\nthe service MUST rotate active certificates within 90 days of\nissuance.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN13 Minimize Lifetime of Encryption and Authentication Certificates",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption and authentication certificates have a limited\nlifetime to reduce the risk of compromise and ensure the use of\nup-to-date security practices.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "Track certificate expiration dates and automate certificate\nrenewal where possible. Use certificate management tools to ensure\nonly certificates from trusted authorities are deployed.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH18"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": []
+        }
+      ],
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN06.AR01",
+      "Description": "When the service is running, its region and availability zone MUST\nbe included in a list of explicitly trusted or approved locations\nwithin the trust perimeter.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN06 Restrict Deployments to Trust Perimeter",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that the service and its child resources are only deployed on\ninfrastructure in locations that are explicitly included within a\ndefined trust perimeter.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Maintain an up-to-date list of trusted and approved regions based\non organizational policies. Validate the service's deployment\nlocation is included in this list.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-19"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.11.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN06.AR02",
+      "Description": "When a child resource is deployed, its region and availability\nzone MUST be included in a list of explicitly trusted or approved\nlocations within the trust perimeter.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN06 Restrict Deployments to Trust Perimeter",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that the service and its child resources are only deployed on\ninfrastructure in locations that are explicitly included within a\ndefined trust perimeter.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Maintain an up-to-date list of trusted and approved regions based\non organizational policies. Validate that child resources can only\nbe deployed to locations included in this list.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH03"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-19"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.11.1.1"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN08.AR01",
+      "Description": "When data is created or modified, the data MUST have a complete\nand recoverable duplicate that is stored in a physically separate\ndata center.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN08 Replicate Data to Multiple Locations",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that data is replicated across multiple physical locations to\nprotect against data loss due to hardware failures, natural disasters,\nor other catastrophic events.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Implement automated data replication processes to ensure that\ndata is consistently duplicated in another region or availability\nzone. Regularly test data recovery from the replicated location to\nensure integrity and availability.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PT-5"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "BCR-08",
+                "BCR-10",
+                "BCR-11"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "CP-2",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN08.AR02",
+      "Description": "When data is replicated into a second location, the service MUST\nbe able to accurately represent the replication locations,\nreplication status, and data synchronization status.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN08 Replicate Data to Multiple Locations",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that data is replicated across multiple physical locations to\nprotect against data loss due to hardware failures, natural disasters,\nor other catastrophic events.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.PT-5"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "BCR-08",
+                "BCR-10",
+                "BCR-11"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "CP-2",
+                "CP-10"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN09.AR01",
+      "Description": "When the service is operational, its logs and any child resource\nlogs MUST NOT be accessible from the resource they record access\nto.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN09 Ensure Integrity of Access Logs",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access logs are always recorded to an external location\nthat cannot be manipulated from the context of the service(s) it\ncontains logs for.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07",
+                "CCC.TH09",
+                "CCC.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-02",
+                "LOG-04",
+                "LOG-09"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_sink_created",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN09.AR02",
+      "Description": "When the service is operational, disabling the logs for the service\nor its child resources MUST NOT be possible without also disabling\nthe corresponding resource.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN09 Ensure Integrity of Access Logs",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access logs are always recorded to an external location\nthat cannot be manipulated from the context of the service(s) it\ncontains logs for.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "No normal business operations should disable\nlogs, as this could indicate an attempt to cover up unauthorized\naccess. Ensure that logging mechanisms are tightly integrated with\nservice operations, so that logging cannot be disabled without\nstopping the service itself.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07",
+                "CCC.TH09",
+                "CCC.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-02",
+                "LOG-04",
+                "LOG-09"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "compute_subnet_flow_logs_enabled",
+        "compute_loadbalancer_logging_enabled",
+        "compute_network_dns_logging_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN09.AR03",
+      "Description": "When the service is operational, any attempt to redirect logs for\nthe service or its child resources MUST NOT be possible without\nhalting operation of the corresponding resource and publishing\ncorresponding events to monitored channels.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN09 Ensure Integrity of Access Logs",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that access logs are always recorded to an external location\nthat cannot be manipulated from the context of the service(s) it\ncontains logs for.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "No normal business operations should result in the redirection of\nlogs, as this could indicate an attempt to cover up unauthorized\naccess. Ensure that logging configurations are immutable during\nservice operation so that any changes require stopping the service\nand publishing corresponding events to monitored channels.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH07",
+                "CCC.TH09",
+                "CCC.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-6"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-9"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-02",
+                "LOG-04",
+                "LOG-09"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_sink_created",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN10.AR01",
+      "Description": "When data is replicated, the service MUST ensure that replication\nonly occurs to destinations that are explicitly included within\nthe defined trust perimeter.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN10 Restrict Data Replication to Trust Perimeter",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that data is only replicated on infrastructure in locations\nthat are explicitly included within a defined trust perimeter.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH04"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-5"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-10",
+                "DSP-19"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-4"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN02.AR01",
+      "Description": "When data is stored, it MUST be encrypted using the latest\nindustry-standard encryption methods.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN02 Encrypt Data for Storage",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all data stored is encrypted at rest using strong\nencryption algorithms.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-03",
+                "CEK-04",
+                "UEM-08",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-13",
+                "SC-28"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_instance_encryption_with_csek_enabled",
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN11.AR01",
+      "Description": "When encryption keys are used, the service MUST verify that\nall encryption keys use the latest industry-standard cryptographic\nalgorithms.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN11 Protect Encryption Keys",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption keys are managed securely by enforcing\nthe use of approved algorithms, regular key rotation, and\ncustomer-managed encryption keys (CMEKs).",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH16"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-08",
+                "CEK-10",
+                "CEK-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_rotation_enabled",
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "kms_key_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN11.AR02",
+      "Description": "When encryption keys are used, the service MUST rotate active keys\nwithin 180 days of issuance.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN11 Protect Encryption Keys",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption keys are managed securely by enforcing\nthe use of approved algorithms, regular key rotation, and\ncustomer-managed encryption keys (CMEKs).",
+          "Applicability": [
+            "tlp-amber"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH16"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-08",
+                "CEK-10",
+                "CEK-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_rotation_enabled",
+        "kms_key_not_publicly_accessible",
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN11.AR03",
+      "Description": "When encrypting data, the service MUST verify that\ncustomer-managed encryption keys (CMEKs) are used.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "",
+          "SubSection": "CCC.Core.CN11 Protect Encryption Keys",
+          "SubSectionObjective": "Ensure that encryption keys are managed securely by enforcing\nthe use of approved algorithms, regular key rotation, and\ncustomer-managed encryption keys (CMEKs).",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH16"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-08",
+                "CEK-10",
+                "CEK-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "dataproc_encrypted_with_cmks_disabled",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN11.AR04",
+      "Description": "When encryption keys are accessed, the service MUST verify that\naccess to encryption keys is restricted to authorized personnel\nand services, following the principle of least privilege.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN11 Protect Encryption Keys",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption keys are managed securely by enforcing\nthe use of approved algorithms, regular key rotation, and\ncustomer-managed encryption keys (CMEKs).",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH16"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-08",
+                "CEK-10",
+                "CEK-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "dataproc_encrypted_with_cmks_disabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN11.AR05",
+      "Description": "When encryption keys are used, the service MUST rotate active keys\nwithin 365 days of issuance.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN11 Protect Encryption Keys",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption keys are managed securely by enforcing\nthe use of approved algorithms, regular key rotation, and\ncustomer-managed encryption keys (CMEKs).",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH16"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-08",
+                "CEK-10",
+                "CEK-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_rotation_enabled",
+        "kms_key_not_publicly_accessible",
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN11.AR06",
+      "Description": "When encryption keys are used, the service MUST rotate active keys\nwithin 90 days of issuance.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN11 Protect Encryption Keys",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that encryption keys are managed securely by enforcing\nthe use of approved algorithms, regular key rotation, and\ncustomer-managed encryption keys (CMEKs).",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH16"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.DS-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "CEK-08",
+                "CEK-10",
+                "CEK-12"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.10.1.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "SC-12",
+                "SC-17"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "kms_key_rotation_enabled",
+        "kms_key_not_publicly_accessible",
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN14.AR01",
+      "Description": "When backups are created for disaster recovery purposes, the\nstorage mechanism MUST NOT allow modification or deletion\nwithin 30 days of creation.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN14 Maintain Recent Backups",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all backups used for disaster recovery are recent and\nsubject to a retention policy that limits deletion.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Use immutable storage solutions where possible. Implement backup\nretention policies that enforce a minimum retention period of 30\ndays.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": []
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN14.AR02",
+      "Description": "When backups are created for disaster recovery purposes, the\nmost recent backup MUST have a creation date within the past\n30 days.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN14 Maintain Recent Backups",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all backups used for disaster recovery are recent and\nsubject to a retention policy that limits deletion.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber"
+          ],
+          "Recommendation": "Implement automated backup processes to ensure that backups are\ncreated regularly. Monitor backup schedules and verify that the\nmost recent backup creation date is within the last 30 days.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": []
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN14.AR02",
+      "Description": "When backups are created for disaster recovery purposes, the\nmost recent backup MUST have a creation date within the past\n14 days.",
+      "Attributes": [
+        {
+          "FamilyName": "Data",
+          "FamilyDescription": "The Data control family ensures the confidentiality, integrity,\navailability, and sovereignty of data across its lifecycle.\nThese controls govern how data is transmitted, stored,\nreplicated, and protected from unauthorized access, tampering,\nor exposure beyond defined trust perimeters.\n",
+          "Section": "CCC.Core.CN14 Maintain Recent Backups",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all backups used for disaster recovery are recent and\nsubject to a retention policy that limits deletion.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "Implement automated backup processes to ensure that backups are\ncreated regularly. Monitor backup schedules and verify that the\nmost recent backup creation date is within the last 14 days.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH06"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": []
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN03.AR01",
+      "Description": "When an entity attempts to modify the service through a user\ninterface, the authentication process MUST require multiple\nidentifying factors for authentication.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all sensitive activities require two or more identity\nfactors during authentication to prevent unauthorized access.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-14"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-7"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-03",
+                "IAM-08"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "IA-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN03.AR02",
+      "Description": "When an entity attempts to modify the service through an API\nendpoint, the authentication process MUST require a credential\nsuch as an API key or token AND originate from within the trust\nperimeter.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all sensitive activities require two or more identity\nfactors during authentication to prevent unauthorized access.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-14"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-7"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-03",
+                "IAM-08"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "IA-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_ip",
+        "cloudstorage_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN03.AR03",
+      "Description": "When an entity attempts to view information on the service through\na user interface, the authentication process MUST require multiple\nidentifying factors from the user.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all sensitive activities require two or more identity\nfactors during authentication to prevent unauthorized access.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-14"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-7"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-03",
+                "IAM-08"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "IA-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "CCC.Core.CN03.AR04",
+      "Description": "When an entity attempts to view information on the service through\nan API endpoint, the authentication process MUST require a\ncredential such as an API key or token AND originate from within\nthe trust perimeter.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN03 Implement Multi-factor Authentication (MFA) for Access",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all sensitive activities require two or more identity\nfactors during authentication to prevent unauthorized access.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-14"
+              ]
+            },
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-7"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "IAM-03",
+                "IAM-08"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.9.4.2"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "IA-2"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_public_access",
+        "cloudstorage_bucket_public_access",
+        "apikeys_api_restrictions_configured",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "compute_project_os_login_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN05.AR01",
+      "Description": "When an attempt is made to modify data on the service or a child\nresource, the service MUST block requests from unauthorized\nentities.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN05 Prevent Access from Untrusted Entities",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that secure access controls enforce the principle of least\nprivilege to restrict access to authorized entities from explicitly\ntrusted sources only.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-01",
+                "DSP-07",
+                "DSP-08",
+                "DSP-10",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.3"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudstorage_bucket_public_access",
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_ip",
+        "compute_instance_ip_forwarding_is_enabled",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "gke_cluster_no_default_service_account",
+        "iam_no_service_roles_at_project_level",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "iam_audit_logs_enabled",
+        "iam_account_access_approval_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN05.AR02",
+      "Description": "When administrative access or configuration change is attempted on\nthe service or a child resource, the service MUST refuse requests\nfrom unauthorized entities.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN05 Prevent Access from Untrusted Entities",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that secure access controls enforce the principle of least\nprivilege to restrict access to authorized entities from explicitly\ntrusted sources only.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-01",
+                "DSP-07",
+                "DSP-08",
+                "DSP-10",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.3"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_sa_no_administrative_privileges",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "compute_project_os_login_enabled",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_instance_public_ip",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudsql_instance_public_ip",
+        "cloudstorage_bucket_public_access",
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN05.AR03",
+      "Description": "When administrative access or configuration change is attempted on\nthe service or a child resource in a multi-tenant environment, the\nservice MUST refuse requests across tenant boundaries unless the\norigin is explicitly included in a pre-approved allowlist.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN05 Prevent Access from Untrusted Entities",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that secure access controls enforce the principle of least\nprivilege to restrict access to authorized entities from explicitly\ntrusted sources only.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-01",
+                "DSP-07",
+                "DSP-08",
+                "DSP-10",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.3"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_public_access",
+        "cloudstorage_bucket_public_access",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "gke_cluster_no_default_service_account"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN05.AR04",
+      "Description": "When data is requested from outside the trust perimeter, the\nservice MUST refuse requests from unauthorized entities.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "",
+          "SubSection": "CCC.Core.CN05 Prevent Access from Untrusted Entities",
+          "SubSectionObjective": "Ensure that secure access controls enforce the principle of least\nprivilege to restrict access to authorized entities from explicitly\ntrusted sources only.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-01",
+                "DSP-07",
+                "DSP-08",
+                "DSP-10",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.3"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "gke_cluster_no_default_service_account",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_instance_public_ip",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_public_access",
+        "cloudstorage_bucket_public_access",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN05.AR05",
+      "Description": "When any request is made from outside the trust perimeter,\nthe service MUST NOT provide any response that may indicate the\nservice exists.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN05 Prevent Access from Untrusted Entities",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that secure access controls enforce the principle of least\nprivilege to restrict access to authorized entities from explicitly\ntrusted sources only.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-01",
+                "DSP-07",
+                "DSP-08",
+                "DSP-10",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.3"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_access",
+        "cloudstorage_bucket_public_access",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "gke_cluster_no_default_service_account",
+        "iam_no_service_roles_at_project_level",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "apikeys_api_restrictions_configured",
+        "kms_key_not_publicly_accessible",
+        "compute_instance_ip_forwarding_is_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN05.AR06",
+      "Description": "When any request is made to the service or a child resource, the\nservice MUST refuse requests from unauthorized entities.",
+      "Attributes": [
+        {
+          "FamilyName": "Identity and Access Management",
+          "FamilyDescription": "The Identity and Access Management control family ensures\nthat only trusted and authenticated entities can access\nresources. These controls establish strong authentication,\nenforce multi-factor verification, and restrict access to\napproved sources to prevent unauthorized use or data exfiltration.\n",
+          "Section": "CCC.Core.CN05 Prevent Access from Untrusted Entities",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that secure access controls enforce the principle of least\nprivilege to restrict access to authorized entities from explicitly\ntrusted sources only.",
+          "Applicability": [
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "PR.AC-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "DSP-01",
+                "DSP-07",
+                "DSP-08",
+                "DSP-10",
+                "DSP-17"
+              ]
+            },
+            {
+              "ReferenceId": "ISO_27001",
+              "Identifiers": [
+                "2013 A.13.1.3"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AC-3"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "compute_instance_default_service_account_in_use",
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "gke_cluster_no_default_service_account",
+        "cloudstorage_bucket_public_access",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_private_ip_assignment",
+        "apikeys_api_restrictions_configured",
+        "apikeys_key_exists",
+        "apikeys_key_rotated_in_90_days",
+        "kms_key_not_publicly_accessible",
+        "kms_key_rotation_enabled",
+        "iam_no_service_roles_at_project_level",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_administrative_privileges",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN04.AR01",
+      "Description": "When administrative access or configuration change is attempted on\nthe service or a child resource, the service MUST log the client\nidentity, time, and result of the attempt.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "The Logging & Monitoring control family ensures that access,\nchanges, and security-relevant events are captured, monitored,\nand alerted on in order to provide visibility, support\nincident response, and meet compliance requirements.\n",
+          "Section": "CCC.Core.CN04 Log All Access and Changes",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all access attempts are logged to maintain a detailed\naudit trail for security and compliance purposes.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.AE-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-08"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2",
+                "AU-3",
+                "AU-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN04.AR02",
+      "Description": "When any attempt is made to modify data on the service or a child\nresource, the service MUST log the client identity, time, and\nresult of the attempt.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "The Logging & Monitoring control family ensures that access,\nchanges, and security-relevant events are captured, monitored,\nand alerted on in order to provide visibility, support\nincident response, and meet compliance requirements.\n",
+          "Section": "CCC.Core.CN04 Log All Access and Changes",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all access attempts are logged to maintain a detailed\naudit trail for security and compliance purposes.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.AE-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-08"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2",
+                "AU-3",
+                "AU-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN04.AR03",
+      "Description": "When any attempt is made to read data on the service or a child\nresource, the service MUST log the client identity, time, and\nresult of the attempt.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "The Logging & Monitoring control family ensures that access,\nchanges, and security-relevant events are captured, monitored,\nand alerted on in order to provide visibility, support\nincident response, and meet compliance requirements.\n",
+          "Section": "CCC.Core.CN04 Log All Access and Changes",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that all access attempts are logged to maintain a detailed\naudit trail for security and compliance purposes.",
+          "Applicability": [
+            "tlp-red"
+          ],
+          "Recommendation": "",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH01"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.AE-3"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-08"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-2",
+                "AU-3",
+                "AU-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN07.AR01",
+      "Description": "When enumeration activities are detected, the service MUST publish\nan event to a monitored channel which includes the client\nidentity, time, and nature of the activity.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "The Logging & Monitoring control family ensures that access,\nchanges, and security-relevant events are captured, monitored,\nand alerted on in order to provide visibility, support\nincident response, and meet compliance requirements.\n",
+          "Section": "CCC.Core.CN07 Alert on Unusual Enumeration Activity",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that logs and associated alerts are generated when\nunusual enumeration activity is detected that may indicate\nreconnaissance activities.",
+          "Applicability": [
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Implement event publication mechanisms and alerts for patterns\nindicative of enumeration activities, such as repeated access\nattempts, requests, or liveness probes. Configure alerts to notify\nsecurity teams of any activities that merit further investigation.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH15"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.AE-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-05",
+                "SEF-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "CCC.Core.CN07.AR02",
+      "Description": "When enumeration activities are detected, the service MUST log the\nclient identity, time, and nature of the activity.",
+      "Attributes": [
+        {
+          "FamilyName": "Logging & Monitoring",
+          "FamilyDescription": "The Logging & Monitoring control family ensures that access,\nchanges, and security-relevant events are captured, monitored,\nand alerted on in order to provide visibility, support\nincident response, and meet compliance requirements.\n",
+          "Section": "CCC.Core.CN07 Alert on Unusual Enumeration Activity",
+          "SubSection": "",
+          "SubSectionObjective": "Ensure that logs and associated alerts are generated when\nunusual enumeration activity is detected that may indicate\nreconnaissance activities.",
+          "Applicability": [
+            "tlp-clear",
+            "tlp-green",
+            "tlp-amber",
+            "tlp-red"
+          ],
+          "Recommendation": "Implement logging mechanisms to capture details of enumeration\nactivities, including client identity, timestamps, and activity\nnature. Retain logs according to organizational policies, and\noccasionally review them for patterns that may indicate\nreconnaissance activities.\n",
+          "SectionThreatMappings": [
+            {
+              "ReferenceId": "CCC",
+              "Identifiers": [
+                "CCC.TH15"
+              ]
+            }
+          ],
+          "SectionGuidelineMappings": [
+            {
+              "ReferenceId": "NIST-CSF",
+              "Identifiers": [
+                "DE.AE-1"
+              ]
+            },
+            {
+              "ReferenceId": "CCM",
+              "Identifiers": [
+                "LOG-05",
+                "SEF-05"
+              ]
+            },
+            {
+              "ReferenceId": "NIST_800_53",
+              "Identifiers": [
+                "AU-6"
+              ]
+            }
+          ]
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled"
       ]
     }
   ]
