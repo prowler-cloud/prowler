@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "account_security_contact_information_is_registered",
-  "CheckTitle": "Ensure security contact information is registered.",
+  "CheckTitle": "AWS account has security alternate contact registered",
   "CheckType": [
-    "IAM"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "account",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsAccount",
-  "Description": "Ensure security contact information is registered.",
-  "Risk": "AWS provides customers with the option of specifying the contact information for accounts security team. It is recommended that this information be provided. Specifying security-specific contact information will help ensure that security advisories sent by AWS reach the team in your organization that is best equipped to respond to them.",
+  "ResourceType": "Other",
+  "Description": "Account settings contain a **Security alternate contact** in Alternate Contacts (name, `EmailAddress`, `PhoneNumber`) for targeted AWS security notifications.",
+  "Risk": "Missing or outdated **security contact** can delay or prevent AWS advisories from reaching responders, increasing risk to:\n- Confidentiality: data exfiltration from undetected compromise\n- Integrity: unauthorized changes persist longer\n- Availability: resource abuse (e.g., cryptomining) and outages",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_alternate_contact",
+    "https://docs.prowler.com/checks/aws/iam-policies/iam_19/",
+    "https://support.icompaas.com/support/solutions/articles/62000234161-1-2-ensure-security-contact-information-is-registered-manual-",
+    "https://www.plerion.com/cloud-knowledge-base/ensure-security-contact-information-is-registered",
+    "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "No command available.",
+      "CLI": "aws account put-alternate-contact --alternate-contact-type SECURITY --email-address <EMAIL_ADDRESS> --name <CONTACT_NAME> --phone-number <PHONE_NUMBER>",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/iam-policies/iam_19#aws-console",
-      "Terraform": ""
+      "Other": "1. Sign in to the AWS Management Console as the root user or an admin with account:PutAlternateContact\n2. Click your account name (top-right) and select My Account (or Account)\n3. Scroll to Alternate Contacts and click Edit in the Security section\n4. Enter Security Email, Name, and Phone Number\n5. Click Update (or Save changes)",
+      "Terraform": "```hcl\n# Set the SECURITY alternate contact for the current AWS account\nresource \"aws_account_alternate_contact\" \"<example_resource_name>\" {\n  alternate_contact_type = \"SECURITY\"  # Critical: sets Security contact type\n  email_address          = \"security@example.com\"  # Contact email\n  name                   = \"Security Team\"         # Contact name\n  phone_number           = \"+1-555-0100\"          # Contact phone\n}\n```"
     },
     "Recommendation": {
-      "Text": "Go to the My Account section and complete alternate contacts.",
-      "Url": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html"
+      "Text": "Define and maintain a **Security alternate contact**:\n- Use a monitored alias (e.g., `security@domain`) and team phone\n- Apply to every account (prefer Org-wide automation)\n- Review after org/personnel changes and test delivery\n- Document ownership and escalation paths\nAlign with **incident response** and **least privilege** principles.",
+      "Url": "https://hub.prowler.com/check/account_security_contact_information_is_registered"
     }
   },
   "Categories": [],
