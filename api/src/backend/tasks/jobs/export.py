@@ -20,6 +20,9 @@ from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
+from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
+from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
@@ -73,12 +76,14 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AWSISO27001),
         (lambda name: name.startswith("kisa"), AWSKISAISMSP),
         (lambda name: name == "prowler_threatscore_aws", ProwlerThreatScoreAWS),
+        (lambda name: name == "ccc_aws", CCC_AWS),
     ],
     "azure": [
         (lambda name: name.startswith("cis_"), AzureCIS),
         (lambda name: name == "mitre_attack_azure", AzureMitreAttack),
         (lambda name: name.startswith("ens_"), AzureENS),
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
+        (lambda name: name == "ccc_azure", CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
     ],
     "gcp": [
@@ -87,6 +92,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("ens_"), GCPENS),
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
+        (lambda name: name == "ccc_gcp", CCC_GCP),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
