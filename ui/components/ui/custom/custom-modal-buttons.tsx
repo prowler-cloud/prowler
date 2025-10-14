@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 import { CustomButton } from "@/components/ui/custom/custom-button";
 
 interface ModalButtonsProps {
@@ -7,6 +9,7 @@ interface ModalButtonsProps {
   isDisabled?: boolean;
   submitText?: string;
   submitColor?: "action" | "danger";
+  submitIcon?: ReactNode;
 }
 
 export const ModalButtons = ({
@@ -16,24 +19,32 @@ export const ModalButtons = ({
   isDisabled = false,
   submitText = "Save",
   submitColor = "action",
+  submitIcon,
 }: ModalButtonsProps) => {
   return (
-    <div className="flex w-full justify-end gap-3 pt-4">
+    <div className="flex w-full justify-center gap-6">
       <CustomButton
+        size="lg"
+        radius="lg"
+        variant="faded"
+        type="button"
         ariaLabel="Cancel"
-        color="transparent"
-        variant="light"
+        className="w-full bg-transparent"
         onPress={onCancel}
         isDisabled={isLoading}
       >
         Cancel
       </CustomButton>
       <CustomButton
+        size="lg"
+        radius="lg"
+        className="w-full"
         ariaLabel={submitText}
         color={submitColor}
         onPress={onSubmit}
         isLoading={isLoading}
         isDisabled={isDisabled || isLoading}
+        startContent={submitIcon}
       >
         {submitText}
       </CustomButton>

@@ -30,7 +30,7 @@ export const ApiKeySuccessModal = ({
     >
       <div className="flex flex-col gap-4">
         <Alert variant="destructive">
-          <AlertTitle>⚠️ Important</AlertTitle>
+          <AlertTitle>⚠️ Warning</AlertTitle>
           <AlertDescription>
             This is the only time you will see this API key. Please copy it now
             and store it securely. Once you close this dialog, the key cannot be

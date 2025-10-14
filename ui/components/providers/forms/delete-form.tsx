@@ -80,6 +80,7 @@ export const DeleteForm = ({
             variant="solid"
             color="danger"
             size="lg"
+            radius="lg"
             isLoading={isLoading}
             startContent={!isLoading && <DeleteIcon size={24} />}
           >
