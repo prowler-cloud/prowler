@@ -4,11 +4,13 @@ import json
 import uuid
 
 import django.db.models.deletion
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet
 from django.conf import settings
-from django.db import connections, migrations, models, transaction
+from django.db import migrations, models
 
 import api.rls
+from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 
 
 def migrate_lighthouse_configs_forward(apps, schema_editor):
@@ -16,6 +18,7 @@ def migrate_lighthouse_configs_forward(apps, schema_editor):
     Migrate data from old LighthouseConfiguration to new multi-provider models.
     Old system: one LighthouseConfiguration per tenant (always OpenAI).
     """
+    Tenant = apps.get_model("api", "Tenant")
     LighthouseConfiguration = apps.get_model("api", "LighthouseConfiguration")
     LighthouseProviderConfiguration = apps.get_model(
         "api", "LighthouseProviderConfiguration"
@@ -27,62 +30,60 @@ def migrate_lighthouse_configs_forward(apps, schema_editor):
 
     fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
-    alias = schema_editor.connection.alias
-    conn = connections[alias]
+    # Migrate lighthouse configuration for each tenant
+    for tenant in Tenant.objects.using(MainRouter.admin_db).all():
+        tenant_id = str(tenant.id)
 
-    # Determine tenants that actually have old lighthouse configurations
-    with conn.cursor() as cur:
-        cur.execute("SELECT DISTINCT tenant_id FROM lighthouse_configurations")
-        tenant_ids = [row[0] for row in cur.fetchall()]
+        try:
+            # Use rls_transaction to set tenant context for RLS-protected tables
+            with rls_transaction(tenant_id, using=MainRouter.admin_db):
+                # Query old config for this specific tenant
+                old_config = (
+                    LighthouseConfiguration.objects.using(MainRouter.admin_db)
+                    .filter(tenant=tenant)
+                    .first()
+                )
 
-    for tenant_id in tenant_ids:
-        # Run per-tenant work in one atomic transaction and set RLS context
-        with transaction.atomic(using=alias):
-            with conn.cursor() as cur:
-                cur.execute("SET LOCAL api.tenant_id = %s", [str(tenant_id)])
+                if not old_config:
+                    # Skip tenants without lighthouse configuration
+                    continue
 
-            old_config = (
-                LighthouseConfiguration.objects.using(alias)
-                .filter(tenant_id=tenant_id)
-                .first()
-            )
-            if not old_config:
-                continue
-
-            try:
                 # Create OpenAI provider configuration for this tenant
                 api_key_decrypted = fernet.decrypt(bytes(old_config.api_key)).decode()
                 credentials_encrypted = fernet.encrypt(
                     json.dumps({"api_key": api_key_decrypted}).encode()
                 )
                 provider_config = LighthouseProviderConfiguration.objects.using(
-                    alias
+                    MainRouter.admin_db
                 ).create(
-                    tenant_id=tenant_id,
+                    tenant=tenant,
                     provider_type="openai",
                     credentials=credentials_encrypted,
                     is_active=old_config.is_active,
                 )
 
                 # Create tenant configuration from old values
-                LighthouseTenantConfiguration.objects.using(alias).create(
-                    tenant_id=tenant_id,
+                LighthouseTenantConfiguration.objects.using(MainRouter.admin_db).create(
+                    tenant=tenant,
                     business_context=old_config.business_context or "",
                     default_provider="openai",
                     default_models={"openai": old_config.model},
                 )
 
                 # Create initial provider model record
-                LighthouseProviderModels.objects.using(alias).create(
-                    tenant_id=tenant_id,
+                LighthouseProviderModels.objects.using(MainRouter.admin_db).create(
+                    tenant=tenant,
                     provider_configuration=provider_config,
                     model_id=old_config.model,
                     default_parameters={},
                 )
 
-            except (InvalidToken, Exception):
-                # Skip failed migrations for this tenant/config
-                continue
+        except Exception as e:
+            print(
+                f"Failed to migrate lighthouse config for tenant {tenant_id}: {e}",
+                exc_info=True,
+            )
+            continue
 
 
 class Migration(migrations.Migration):
@@ -202,11 +203,6 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
             ),
         ),
-        # Migrate data from old LighthouseConfiguration to new multi-provider models
-        migrations.RunPython(
-            migrate_lighthouse_configs_forward,
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.AddIndex(
             model_name="lighthouseproviderconfiguration",
             index=models.Index(
@@ -263,5 +259,13 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 fields=("tenant_id",), name="unique_tenant_lighthouse_config"
             ),
+        ),
+        # Migrate data from old LighthouseConfiguration to new tables
+        # This runs after all tables, indexes, and constraints are created
+        # The old Lighthouse configuration table is not removed, so reverse_code is noop
+        # During rollbacks, the old Lighthouse configuration remains intact while the new tables are removed
+        migrations.RunPython(
+            migrate_lighthouse_configs_forward,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]
