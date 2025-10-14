@@ -87,7 +87,7 @@ def migrate_lighthouse_configs_forward(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0048_api_key"),
+        ("api", "0049_compliancerequirementoverview_passed_failed_findings"),
     ]
 
     operations = [
