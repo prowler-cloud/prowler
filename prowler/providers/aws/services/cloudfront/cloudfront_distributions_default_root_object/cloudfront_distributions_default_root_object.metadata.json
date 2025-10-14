@@ -1,26 +1,33 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_default_root_object",
-  "CheckTitle": "Check if CloudFront distributions have a default root object.",
-  "CheckType": [],
+  "CheckTitle": "CloudFront distribution has a default root object configured",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudFrontDistribution",
-  "Description": "Check if CloudFront distributions have a default root object.",
-  "Risk": "Without a default root object, requests to the root URL may result in an error or expose unintended content, leading to potential security risks and a poor user experience.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHow",
+  "Description": "CloudFront distributions are evaluated for a configured **default root object** that maps `/` requests to a specific file such as `index.html`, rather than forwarding root requests directly to the origin.",
+  "Risk": "Without a **default root object**, root requests can reveal **origin listings** or unintended files, exposing data (**confidentiality**) and aiding reconnaissance. They may also return errors, lowering uptime (**availability**), or route unpredictably, risking wrong content delivery (**integrity**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-1",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-default-object.html",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudfront update-distribution --id <distribution-id> --default-root-object <new-root-object>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-1",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-default-object.html"
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add DefaultRootObject: \"index.html\", then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
+      "NativeIaC": "```yaml\n# CloudFormation: Set a default root object on a CloudFront distribution\nResources:\n  CloudFrontDistribution:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        DefaultRootObject: index.html  # CRITICAL: ensures a default root object is configured\n        Origins:\n          - Id: <example_origin_id>\n            DomainName: <example_origin_domain>\n            S3OriginConfig: {}\n        DefaultCacheBehavior:\n          TargetOriginId: <example_origin_id>\n          ViewerProtocolPolicy: allow-all\n          ForwardedValues:\n            QueryString: false\n```",
+      "Other": "1. Open the AWS Console and go to CloudFront\n2. Select the target distribution and choose Settings > General > Edit\n3. In Default root object, enter index.html (do not start with a /)\n4. Save changes and wait for deployment to complete",
+      "Terraform": "```hcl\n# Terraform: Set a default root object on a CloudFront distribution\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled             = true\n  default_root_object = \"index.html\" # CRITICAL: ensures a default root object is configured\n\n  origin {\n    domain_name = \"<example_origin_domain>\"\n    origin_id   = \"<example_origin_id>\"\n\n    s3_origin_config {}\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"<example_origin_id>\"\n    viewer_protocol_policy = \"allow-all\"\n    forwarded_values {\n      query_string = false\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure a default root object for your CloudFront distribution to ensure that a specific file (such as index.html) is returned when users access the root URL. This improves user experience and ensures that sensitive content isn't accidentally exposed.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html#DefaultRootObjectHowToDefine"
+      "Text": "Set a **default root object** that returns a safe landing page (e.g., `index.html`). Apply **defense in depth**: restrict direct origin access, define explicit error pages, and standardize redirects. Test root and subdirectory requests for predictable responses. Align origin permissions with **least privilege**.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_default_root_object"
     }
   },
   "Categories": [],
