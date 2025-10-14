@@ -1,17 +1,22 @@
+import csv
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
 from tasks.jobs.scan import (
+    _copy_compliance_requirement_rows,
     _create_finding_delta,
+    _persist_compliance_requirement_rows,
     _store_resources,
     create_compliance_requirements,
     perform_prowler_scan,
 )
 from tasks.utils import CustomEncoder
 
+from api.db_router import MainRouter
 from api.exceptions import ProviderConnectionError
 from api.models import Finding, Provider, Resource, Scan, StateChoices, StatusChoices
 from prowler.lib.check.models import Severity
@@ -1045,3 +1050,773 @@ class TestCreateComplianceRequirements:
 
             assert "requirements_created" in result
             assert result["requirements_created"] >= 0
+
+
+class TestComplianceRequirementCopy:
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_streams_csv(
+        self, mock_psycopg_connection, settings
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "cisa_aws",
+            "framework": "CISA",
+            "version": None,
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        mock_psycopg_connection.assert_called_once_with("admin")
+        connection.cursor.assert_called_once()
+        cursor.execute.assert_called_once()
+        cursor.copy_expert.assert_called_once()
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert csv_rows[0][0] == str(row["id"])
+        assert csv_rows[0][5] == ""
+        assert csv_rows[0][-1] == str(row["scan_id"])
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("copy failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        inserted_at = datetime.now(timezone.utc)
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "inserted_at": inserted_at,
+            "compliance_id": "cisa_aws",
+            "framework": "CISA",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        tenant_id = row["tenant_id"]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, [row])
+
+        mock_copy.assert_called_once_with(tenant_id, [row])
+        mock_rls_transaction.assert_called_once_with(tenant_id)
+        mock_bulk_create.assert_called_once()
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+        assert len(objects) == 1
+        fallback = objects[0]
+        assert fallback.version == row["version"]
+        assert fallback.compliance_id == row["compliance_id"]
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
+    def test_persist_compliance_requirement_rows_no_rows(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        _persist_compliance_requirement_rows(str(uuid.uuid4()), [])
+
+        mock_copy.assert_not_called()
+        mock_rls_transaction.assert_not_called()
+        mock_bulk_create.assert_not_called()
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_multiple_rows(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY with multiple rows to ensure batch processing works correctly."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = uuid.uuid4()
+        inserted_at = datetime.now(timezone.utc)
+
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "First requirement",
+                "region": "us-east-1",
+                "requirement_id": "req-1",
+                "requirement_status": "PASS",
+                "passed_checks": 5,
+                "failed_checks": 0,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "Second requirement",
+                "region": "us-west-2",
+                "requirement_id": "req-2",
+                "requirement_status": "FAIL",
+                "passed_checks": 3,
+                "failed_checks": 2,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "aws_foundational_security_aws",
+                "framework": "AWS-Foundational-Security-Best-Practices",
+                "version": "2.0",
+                "description": "Third requirement",
+                "region": "eu-west-1",
+                "requirement_id": "req-3",
+                "requirement_status": "MANUAL",
+                "passed_checks": 0,
+                "failed_checks": 0,
+                "total_checks": 3,
+                "scan_id": scan_id,
+            },
+        ]
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(tenant_id, rows)
+
+        mock_psycopg_connection.assert_called_once_with("admin")
+        connection.cursor.assert_called_once()
+        cursor.execute.assert_called_once()
+        cursor.copy_expert.assert_called_once()
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 3
+
+        # Validate first row
+        assert csv_rows[0][0] == str(rows[0]["id"])
+        assert csv_rows[0][1] == tenant_id
+        assert csv_rows[0][3] == "cisa_aws"
+        assert csv_rows[0][4] == "CISA"
+        assert csv_rows[0][6] == "First requirement"
+        assert csv_rows[0][7] == "us-east-1"
+        assert csv_rows[0][10] == "5"
+        assert csv_rows[0][11] == "0"
+        assert csv_rows[0][12] == "5"
+
+        # Validate second row
+        assert csv_rows[1][0] == str(rows[1]["id"])
+        assert csv_rows[1][7] == "us-west-2"
+        assert csv_rows[1][9] == "FAIL"
+        assert csv_rows[1][10] == "3"
+        assert csv_rows[1][11] == "2"
+
+        # Validate third row
+        assert csv_rows[2][0] == str(rows[2]["id"])
+        assert csv_rows[2][3] == "aws_foundational_security_aws"
+        assert csv_rows[2][5] == "2.0"
+        assert csv_rows[2][9] == "MANUAL"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_null_values(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY handles NULL/None values correctly in nullable fields."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        # Row with all nullable fields set to None/empty
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test_framework",
+            "framework": "Test",
+            "version": None,  # nullable
+            "description": None,  # nullable
+            "region": "",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "total_checks": 0,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 1
+
+        # Validate that None values are converted to empty strings in CSV
+        assert csv_rows[0][5] == ""  # version
+        assert csv_rows[0][6] == ""  # description
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_special_characters(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY correctly escapes special characters in CSV."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        # Row with special characters that need escaping
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": 'framework"with"quotes',
+            "framework": "Framework,with,commas",
+            "version": "1.0",
+            "description": 'Description with "quotes", commas, and\nnewlines',
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify CSV was generated (csv module handles escaping automatically)
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 1
+
+        # Verify special characters are preserved after CSV parsing
+        assert csv_rows[0][3] == 'framework"with"quotes'
+        assert csv_rows[0][4] == "Framework,with,commas"
+        assert "quotes" in csv_rows[0][6]
+        assert "commas" in csv_rows[0][6]
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_missing_inserted_at(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY uses current datetime when inserted_at is missing."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        # Row without inserted_at field
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test_framework",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+            # Note: inserted_at is intentionally missing
+        }
+
+        before_call = datetime.now(timezone.utc)
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+        after_call = datetime.now(timezone.utc)
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 1
+
+        # Verify inserted_at was auto-generated and is a valid ISO datetime
+        inserted_at_str = csv_rows[0][2]
+        inserted_at = datetime.fromisoformat(inserted_at_str)
+        assert before_call <= inserted_at <= after_call
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_transaction_rollback_on_copy_error(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test transaction is rolled back when copy_expert fails."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        # Simulate copy_expert failure
+        cursor.copy_expert.side_effect = Exception("COPY command failed")
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            with pytest.raises(Exception, match="COPY command failed"):
+                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify rollback was called
+        connection.rollback.assert_called_once()
+        connection.commit.assert_not_called()
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_transaction_rollback_on_set_config_error(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test transaction is rolled back when SET_CONFIG fails."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        # Simulate cursor.execute failure
+        cursor.execute.side_effect = Exception("SET prowler.tenant_id failed")
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            with pytest.raises(Exception, match="SET prowler.tenant_id failed"):
+                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify rollback was called
+        connection.rollback.assert_called_once()
+        connection.commit.assert_not_called()
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_commit_on_success(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test transaction is committed on successful COPY."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.copy_expert.return_value = None  # Success
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify commit was called and rollback was not
+        connection.commit.assert_called_once()
+        connection.rollback.assert_not_called()
+        # Verify autocommit was disabled
+        assert connection.autocommit is False
+
+    @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
+    def test_persist_compliance_requirement_rows_success(self, mock_copy):
+        """Test successful COPY path without fallback to ORM."""
+        mock_copy.return_value = None  # Success, no exception
+
+        tenant_id = str(uuid.uuid4())
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": datetime.now(timezone.utc),
+                "compliance_id": "test",
+                "framework": "Test",
+                "version": "1.0",
+                "description": "desc",
+                "region": "us-east-1",
+                "requirement_id": "req-1",
+                "requirement_status": "PASS",
+                "passed_checks": 1,
+                "failed_checks": 0,
+                "total_checks": 1,
+                "scan_id": uuid.uuid4(),
+            }
+        ]
+
+        _persist_compliance_requirement_rows(tenant_id, rows)
+
+        # Verify COPY was called
+        mock_copy.assert_called_once_with(tenant_id, rows)
+
+    @patch("tasks.jobs.scan.logger")
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("COPY failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback_logging(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_logger
+    ):
+        """Test logger.exception is called when COPY fails and fallback occurs."""
+        tenant_id = str(uuid.uuid4())
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": tenant_id,
+            "inserted_at": datetime.now(timezone.utc),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, [row])
+
+        # Verify logger.exception was called
+        mock_logger.exception.assert_called_once()
+        args, kwargs = mock_logger.exception.call_args
+        assert "COPY bulk insert" in args[0]
+        assert "falling back to ORM" in args[0]
+        assert kwargs.get("exc_info") is not None
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("copy failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback_multiple_rows(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        """Test ORM fallback with multiple rows."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = uuid.uuid4()
+        inserted_at = datetime.now(timezone.utc)
+
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "First requirement",
+                "region": "us-east-1",
+                "requirement_id": "req-1",
+                "requirement_status": "PASS",
+                "passed_checks": 5,
+                "failed_checks": 0,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "Second requirement",
+                "region": "us-west-2",
+                "requirement_id": "req-2",
+                "requirement_status": "FAIL",
+                "passed_checks": 2,
+                "failed_checks": 3,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, rows)
+
+        mock_copy.assert_called_once_with(tenant_id, rows)
+        mock_rls_transaction.assert_called_once_with(tenant_id)
+        mock_bulk_create.assert_called_once()
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+        assert len(objects) == 2
+        assert kwargs["batch_size"] == 500
+
+        # Validate first object
+        assert objects[0].id == rows[0]["id"]
+        assert objects[0].tenant_id == rows[0]["tenant_id"]
+        assert objects[0].compliance_id == rows[0]["compliance_id"]
+        assert objects[0].framework == rows[0]["framework"]
+        assert objects[0].region == rows[0]["region"]
+        assert objects[0].passed_checks == 5
+        assert objects[0].failed_checks == 0
+
+        # Validate second object
+        assert objects[1].id == rows[1]["id"]
+        assert objects[1].requirement_id == rows[1]["requirement_id"]
+        assert objects[1].requirement_status == rows[1]["requirement_status"]
+        assert objects[1].passed_checks == 2
+        assert objects[1].failed_checks == 3
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("copy failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback_all_fields(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        """Test ORM fallback correctly maps all fields from row dict to model."""
+        tenant_id = str(uuid.uuid4())
+        row_id = uuid.uuid4()
+        scan_id = uuid.uuid4()
+        inserted_at = datetime.now(timezone.utc)
+
+        row = {
+            "id": row_id,
+            "tenant_id": tenant_id,
+            "inserted_at": inserted_at,
+            "compliance_id": "aws_foundational_security_aws",
+            "framework": "AWS-Foundational-Security-Best-Practices",
+            "version": "2.0",
+            "description": "Ensure MFA is enabled",
+            "region": "eu-west-1",
+            "requirement_id": "iam.1",
+            "requirement_status": "FAIL",
+            "passed_checks": 10,
+            "failed_checks": 5,
+            "total_checks": 15,
+            "scan_id": scan_id,
+        }
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, [row])
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+        assert len(objects) == 1
+
+        obj = objects[0]
+        # Validate ALL fields are correctly mapped
+        assert obj.id == row_id
+        assert obj.tenant_id == tenant_id
+        assert obj.inserted_at == inserted_at
+        assert obj.compliance_id == "aws_foundational_security_aws"
+        assert obj.framework == "AWS-Foundational-Security-Best-Practices"
+        assert obj.version == "2.0"
+        assert obj.description == "Ensure MFA is enabled"
+        assert obj.region == "eu-west-1"
+        assert obj.requirement_id == "iam.1"
+        assert obj.requirement_status == "FAIL"
+        assert obj.passed_checks == 10
+        assert obj.failed_checks == 5
+        assert obj.total_checks == 15
+        assert obj.scan_id == scan_id
