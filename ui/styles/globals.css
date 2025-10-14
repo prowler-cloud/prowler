@@ -3,35 +3,35 @@
 
 @theme {
   /* Font Families are injected by Next.js from config/fonts.ts */
-  /* --font-sans: Work Sans (from Next.js) */
+  /* --font-sans: Inter (from Next.js) */
   /* --font-mono: Fira Code (from Next.js) */
 
   /* Text Sizes with Line Heights - Exact from Figma Design System */
-  --text-xs: 0.625rem; /* 10px */
+  --text-xs: 0.75rem; /* 12px */
   --text-xs--line-height: 1.6;
-  --text-sm: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
   --text-sm--line-height: 1.667;
-  --text-base: 0.875rem; /* 14px */
+  --text-base: 1.125rem; /* 18px */
   --text-base--line-height: 1.714;
-  --text-lg: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
   --text-lg--line-height: 1.75;
-  --text-xl: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
   --text-xl--line-height: 1.556;
-  --text-2xl: 1.25rem; /* 20px */
+  --text-2xl: 1.375rem; /* 22px */
   --text-2xl--line-height: 1.6;
-  --text-3xl: 1.5rem; /* 24px */
+  --text-3xl: 1.75rem; /* 28px */
   --text-3xl--line-height: 1.5;
-  --text-4xl: 1.875rem; /* 30px */
+  --text-4xl: 2.125rem; /* 34px */
   --text-4xl--line-height: 1.333;
-  --text-5xl: 2.25rem; /* 36px */
+  --text-5xl: 2.5rem; /* 40px */
   --text-5xl--line-height: 1.333;
-  --text-6xl: 3rem; /* 48px */
+  --text-6xl: 3.25rem; /* 52px */
   --text-6xl--line-height: 1.25;
-  --text-7xl: 3.75rem; /* 60px */
+  --text-7xl: 4rem; /* 64px */
   --text-7xl--line-height: 1.2;
-  --text-8xl: 4.5rem; /* 72px */
+  --text-8xl: 4.75rem; /* 76px */
   --text-8xl--line-height: 1.333;
-  --text-9xl: 6rem; /* 96px */
+  --text-9xl: 6.25rem; /* 100px */
   --text-9xl--line-height: 1.333;
 
   /* Font Weights - Complete Inter Scale */
