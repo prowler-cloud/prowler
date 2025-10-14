@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.vm.vm_service import (
     Disk,
@@ -226,3 +226,235 @@ def test_virtual_machine_with_linux_configuration():
     vm = virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID]["vm_id-linux"]
     assert vm.linux_configuration is not None
     assert vm.linux_configuration.disable_password_authentication is True
+
+
+class Test_VirtualMachine_SecurityProfile_Validation:
+    """Test VirtualMachine SecurityProfile Pydantic validation"""
+
+    def test_security_profile_with_all_fields(self):
+        """Test that SecurityProfile with all fields validates correctly"""
+        vm = VirtualMachine(
+            resource_id="/subscriptions/test/vm1",
+            resource_name="test-vm",
+            location="eastus",
+            security_profile=SecurityProfile(
+                security_type="TrustedLaunch",
+                uefi_settings=UefiSettings(
+                    secure_boot_enabled=True,
+                    v_tpm_enabled=True,
+                ),
+            ),
+            extensions=[],
+        )
+
+        assert vm.security_profile is not None
+        assert vm.security_profile.security_type == "TrustedLaunch"
+        assert vm.security_profile.uefi_settings is not None
+        assert vm.security_profile.uefi_settings.secure_boot_enabled is True
+        assert vm.security_profile.uefi_settings.v_tpm_enabled is True
+
+    def test_security_profile_with_none_uefi_settings(self):
+        """Test that SecurityProfile with None uefi_settings validates correctly"""
+        vm = VirtualMachine(
+            resource_id="/subscriptions/test/vm2",
+            resource_name="test-vm-2",
+            location="westus",
+            security_profile=SecurityProfile(
+                security_type="Standard",
+                uefi_settings=None,
+            ),
+            extensions=[],
+        )
+
+        assert vm.security_profile is not None
+        assert vm.security_profile.security_type == "Standard"
+        assert vm.security_profile.uefi_settings is None
+
+    def test_security_profile_with_none_security_type(self):
+        """Test that SecurityProfile with None security_type validates correctly"""
+        vm = VirtualMachine(
+            resource_id="/subscriptions/test/vm3",
+            resource_name="test-vm-3",
+            location="northeurope",
+            security_profile=SecurityProfile(
+                security_type=None,
+                uefi_settings=UefiSettings(
+                    secure_boot_enabled=False,
+                    v_tpm_enabled=False,
+                ),
+            ),
+            extensions=[],
+        )
+
+        assert vm.security_profile is not None
+        assert vm.security_profile.security_type is None
+        assert vm.security_profile.uefi_settings is not None
+        assert vm.security_profile.uefi_settings.secure_boot_enabled is False
+
+    def test_security_profile_with_all_none(self):
+        """Test that SecurityProfile with all None values validates correctly"""
+        vm = VirtualMachine(
+            resource_id="/subscriptions/test/vm4",
+            resource_name="test-vm-4",
+            location="southeastasia",
+            security_profile=SecurityProfile(
+                security_type=None,
+                uefi_settings=None,
+            ),
+            extensions=[],
+        )
+
+        assert vm.security_profile is not None
+        assert vm.security_profile.security_type is None
+        assert vm.security_profile.uefi_settings is None
+
+    def test_virtual_machine_with_none_security_profile(self):
+        """Test that VirtualMachine with None security_profile validates correctly"""
+        vm = VirtualMachine(
+            resource_id="/subscriptions/test/vm5",
+            resource_name="test-vm-5",
+            location="japaneast",
+            security_profile=None,
+            extensions=[],
+        )
+
+        assert vm.security_profile is None
+
+    def test_security_profile_creation_from_azure_sdk_simulation(self):
+        """
+        Test that SecurityProfile can be created from Azure SDK-like objects
+        This simulates the conversion that happens in _get_virtual_machines
+        """
+        # Simulate Azure SDK SecurityProfile object
+        mock_azure_security_profile = MagicMock()
+        mock_azure_security_profile.security_type = "TrustedLaunch"
+
+        mock_azure_uefi_settings = MagicMock()
+        mock_azure_uefi_settings.secure_boot_enabled = True
+        mock_azure_uefi_settings.v_tpm_enabled = True
+
+        # Simulate the conversion that happens in the service
+        security_type = getattr(mock_azure_security_profile, "security_type", None)
+        uefi_settings = UefiSettings(
+            secure_boot_enabled=getattr(
+                mock_azure_uefi_settings, "secure_boot_enabled", False
+            ),
+            v_tpm_enabled=getattr(mock_azure_uefi_settings, "v_tpm_enabled", False),
+        )
+        security_profile = SecurityProfile(
+            security_type=security_type,
+            uefi_settings=uefi_settings,
+        )
+
+        # Create VirtualMachine with converted SecurityProfile
+        vm = VirtualMachine(
+            resource_id="/subscriptions/test/vm6",
+            resource_name="test-vm-6",
+            location="uksouth",
+            security_profile=security_profile,
+            extensions=[],
+        )
+
+        # Verify no ValidationError is raised and data is correct
+        assert vm.security_profile is not None
+        assert vm.security_profile.security_type == "TrustedLaunch"
+        assert vm.security_profile.uefi_settings.secure_boot_enabled is True
+        assert vm.security_profile.uefi_settings.v_tpm_enabled is True
+
+    def test_security_profile_with_dict_input(self):
+        """Test that SecurityProfile can be created from dictionary (Pydantic feature)"""
+        vm = VirtualMachine(
+            resource_id="/subscriptions/test/vm7",
+            resource_name="test-vm-7",
+            location="canadacentral",
+            security_profile={
+                "security_type": "ConfidentialVM",
+                "uefi_settings": {
+                    "secure_boot_enabled": True,
+                    "v_tpm_enabled": True,
+                },
+            },
+            extensions=[],
+        )
+
+        assert vm.security_profile is not None
+        assert vm.security_profile.security_type == "ConfidentialVM"
+        assert vm.security_profile.uefi_settings.secure_boot_enabled is True
+
+    def test_uefi_settings_boolean_values(self):
+        """Test that UefiSettings properly handles boolean values"""
+        uefi_true = UefiSettings(secure_boot_enabled=True, v_tpm_enabled=True)
+        assert uefi_true.secure_boot_enabled is True
+        assert uefi_true.v_tpm_enabled is True
+
+        uefi_false = UefiSettings(secure_boot_enabled=False, v_tpm_enabled=False)
+        assert uefi_false.secure_boot_enabled is False
+        assert uefi_false.v_tpm_enabled is False
+
+        uefi_mixed = UefiSettings(secure_boot_enabled=True, v_tpm_enabled=False)
+        assert uefi_mixed.secure_boot_enabled is True
+        assert uefi_mixed.v_tpm_enabled is False
+
+    def test_security_profile_full_service_simulation(self):
+        """
+        Full integration test simulating the complete VM service flow
+        This tests the actual scenario where Azure SDK objects are converted
+        """
+
+        def mock_list_vms(*args, **kwargs):
+            # Simulate Azure SDK VM object with security_profile
+            mock_vm = MagicMock()
+            mock_vm.id = "/subscriptions/test/resourceGroups/test-rg/providers/Microsoft.Compute/virtualMachines/test-vm"
+            mock_vm.name = "test-vm-full-sim"
+            mock_vm.location = "eastus"
+
+            # Simulate Azure SDK SecurityProfile (this was causing the ValidationError)
+            mock_security_profile = MagicMock()
+            mock_security_profile.security_type = "TrustedLaunch"
+
+            mock_uefi_settings = MagicMock()
+            mock_uefi_settings.secure_boot_enabled = True
+            mock_uefi_settings.v_tpm_enabled = True
+            mock_security_profile.uefi_settings = mock_uefi_settings
+
+            mock_vm.security_profile = mock_security_profile
+            mock_vm.resources = []
+            mock_vm.storage_profile = None
+            mock_vm.hardware_profile = None
+            mock_vm.os_profile = None
+
+            return [mock_vm]
+
+        with (
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+            mock_client = MagicMock()
+            mock_client.virtual_machines.list_all.side_effect = mock_list_vms
+            vm_service.clients[AZURE_SUBSCRIPTION_ID] = mock_client
+
+            # Re-run _get_virtual_machines with mocked client
+            # This simulates the actual service flow
+            virtual_machines = vm_service._get_virtual_machines()
+
+            # Verify VM was created successfully without ValidationError
+            assert len(virtual_machines[AZURE_SUBSCRIPTION_ID]) == 1
+
+            vm_id = list(virtual_machines[AZURE_SUBSCRIPTION_ID].keys())[0]
+            vm = virtual_machines[AZURE_SUBSCRIPTION_ID][vm_id]
+
+            # Verify the VM object is valid
+            assert vm.resource_name == "test-vm-full-sim"
+            assert vm.location == "eastus"
+
+            # Verify SecurityProfile was converted correctly (not Azure SDK object)
+            assert vm.security_profile is not None
+            assert isinstance(vm.security_profile, SecurityProfile)
+            assert vm.security_profile.security_type == "TrustedLaunch"
+
+            # Verify UefiSettings was converted correctly
+            assert vm.security_profile.uefi_settings is not None
+            assert isinstance(vm.security_profile.uefi_settings, UefiSettings)
+            assert vm.security_profile.uefi_settings.secure_boot_enabled is True
+            assert vm.security_profile.uefi_settings.v_tpm_enabled is True
