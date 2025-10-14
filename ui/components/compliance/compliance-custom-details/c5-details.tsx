@@ -11,30 +11,28 @@ export const C5CustomDetails = ({
 }: {
   requirement: Requirement;
 }) => {
-  const aboutCriteria = requirement.about_criteria as string | undefined;
-  const complementaryCriteria = requirement.complementary_criteria as
-    | string
-    | undefined;
+  const sections = [
+    {
+      title: "Description",
+      content: requirement.description,
+    },
+    {
+      title: "About Criteria",
+      content: requirement.about_criteria as string | undefined,
+    },
+    {
+      title: "Complementary Criteria",
+      content: requirement.complementary_criteria as string | undefined,
+    },
+  ].filter((section) => section.content);
 
   return (
     <ComplianceDetailContainer>
-      {requirement.description && (
-        <ComplianceDetailSection title="Description">
-          <ComplianceDetailText>{requirement.description}</ComplianceDetailText>
+      {sections.map((section) => (
+        <ComplianceDetailSection key={section.title} title={section.title}>
+          <ComplianceDetailText>{section.content}</ComplianceDetailText>
         </ComplianceDetailSection>
-      )}
-
-      {aboutCriteria && (
-        <ComplianceDetailSection title="About Criteria">
-          <ComplianceDetailText>{aboutCriteria}</ComplianceDetailText>
-        </ComplianceDetailSection>
-      )}
-
-      {complementaryCriteria && (
-        <ComplianceDetailSection title="Complementary Criteria">
-          <ComplianceDetailText>{complementaryCriteria}</ComplianceDetailText>
-        </ComplianceDetailSection>
-      )}
+      ))}
     </ComplianceDetailContainer>
   );
 };

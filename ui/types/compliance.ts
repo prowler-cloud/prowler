@@ -1,4 +1,12 @@
-export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
+export const REQUIREMENT_STATUS = {
+  PASS: "PASS",
+  FAIL: "FAIL",
+  MANUAL: "MANUAL",
+  NO_FINDINGS: "No findings",
+} as const;
+
+export type RequirementStatus =
+  (typeof REQUIREMENT_STATUS)[keyof typeof REQUIREMENT_STATUS];
 
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];

@@ -8,6 +8,7 @@ import {
   Framework,
   Requirement,
   RequirementsData,
+  REQUIREMENT_STATUS,
   RequirementStatus,
   ThreatAttributesMetadata,
 } from "@/types/compliance";
@@ -56,7 +57,7 @@ export const mapComplianceData = (
     const totalFindings = requirementData.attributes.total_findings || 0;
 
     // Calculate score: if PASS = levelOfRisk * weight, if FAIL = 0
-    const score = status === "PASS" ? levelOfRisk * weight : 0;
+    const score = status === REQUIREMENT_STATUS.PASS ? levelOfRisk * weight : 0;
 
     // Find or create framework using common helper
     const framework = findOrCreateFramework(frameworks, frameworkName);
@@ -74,9 +75,9 @@ export const mapComplianceData = (
       description: description,
       status: finalStatus,
       check_ids: checks,
-      pass: finalStatus === "PASS" ? 1 : 0,
-      fail: finalStatus === "FAIL" ? 1 : 0,
-      manual: finalStatus === "MANUAL" ? 1 : 0,
+      pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
+      fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+      manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
       title: title,
       levelOfRisk: levelOfRisk,
       weight: weight,

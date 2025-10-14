@@ -9,6 +9,7 @@ import {
   Framework,
   Requirement,
   RequirementsData,
+  REQUIREMENT_STATUS,
   RequirementStatus,
 } from "@/types/compliance";
 
@@ -82,7 +83,7 @@ export const mapComplianceData = (
 
     // Create requirement
     const finalStatus: RequirementStatus = isManual
-      ? "MANUAL"
+      ? REQUIREMENT_STATUS.MANUAL
       : (status as RequirementStatus);
     const requirement: Requirement = {
       name: requirementName,
@@ -90,9 +91,9 @@ export const mapComplianceData = (
       status: finalStatus,
       type,
       check_ids: checks,
-      pass: finalStatus === "PASS" ? 1 : 0,
-      fail: finalStatus === "FAIL" ? 1 : 0,
-      manual: finalStatus === "MANUAL" ? 1 : 0,
+      pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
+      fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+      manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
       nivel: attrs.Nivel || "",
       dimensiones: attrs.Dimensiones || [],
     };

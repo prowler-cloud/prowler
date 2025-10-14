@@ -6,9 +6,11 @@ import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
   C5AttributesMetadata,
+  Control,
   Framework,
   Requirement,
   RequirementsData,
+  REQUIREMENT_STATUS,
   RequirementStatus,
 } from "@/types/compliance";
 
@@ -19,6 +21,12 @@ import {
   findOrCreateControl,
   findOrCreateFramework,
 } from "./commons";
+
+const getStatusCounters = (status: RequirementStatus) => ({
+  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
+  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
+});
 
 export const mapComplianceData = (
   attributesData: AttributesData,
@@ -61,12 +69,10 @@ export const mapComplianceData = (
     const finalStatus: RequirementStatus = status as RequirementStatus;
     const requirement: Requirement = {
       name: requirementName,
-      description: description,
+      description,
       status: finalStatus,
       check_ids: checks,
-      pass: finalStatus === "PASS" ? 1 : 0,
-      fail: finalStatus === "FAIL" ? 1 : 0,
-      manual: finalStatus === "MANUAL" ? 1 : 0,
+      ...getStatusCounters(finalStatus),
       type: attrs.Type,
       about_criteria: attrs.AboutCriteria,
       complementary_criteria: attrs.ComplementaryCriteria,
@@ -81,67 +87,93 @@ export const mapComplianceData = (
   return frameworks;
 };
 
+const createRequirementItem = (
+  requirement: Requirement,
+  frameworkName: string,
+  categoryName: string,
+  controlIndex: number,
+  reqIndex: number,
+  scanId: string,
+): AccordionItemProps => ({
+  key: `${frameworkName}-${categoryName}-control-${controlIndex}-req-${reqIndex}`,
+  title: (
+    <ComplianceAccordionRequirementTitle
+      type={requirement.type as string}
+      name={requirement.name}
+      status={requirement.status as FindingStatus}
+    />
+  ),
+  content: (
+    <ClientAccordionContent
+      requirement={requirement}
+      scanId={scanId}
+      framework={frameworkName}
+      disableFindings={
+        requirement.check_ids.length === 0 && requirement.manual === 0
+      }
+    />
+  ),
+  items: [],
+});
+
+const createControlItem = (
+  control: Control,
+  frameworkName: string,
+  categoryName: string,
+  controlIndex: number,
+  scanId: string,
+): AccordionItemProps => ({
+  key: `${frameworkName}-${categoryName}-control-${controlIndex}`,
+  title: (
+    <ComplianceAccordionTitle
+      label={control.label}
+      pass={control.pass}
+      fail={control.fail}
+      manual={control.manual}
+    />
+  ),
+  content: "",
+  items: control.requirements.map((requirement, reqIndex) =>
+    createRequirementItem(
+      requirement,
+      frameworkName,
+      categoryName,
+      controlIndex,
+      reqIndex,
+      scanId,
+    ),
+  ),
+  isDisabled: control.pass === 0 && control.fail === 0 && control.manual === 0,
+});
+
 export const toAccordionItems = (
   data: Framework[],
   scanId: string | undefined,
 ): AccordionItemProps[] => {
-  return data.flatMap((framework) =>
-    framework.categories.map((category) => {
-      return {
-        key: `${framework.name}-${category.name}`,
-        title: (
-          <ComplianceAccordionTitle
-            label={category.name}
-            pass={category.pass}
-            fail={category.fail}
-            manual={category.manual}
-            isParentLevel={true}
-          />
-        ),
-        content: "",
-        items: category.controls.map((control, i: number) => {
-          return {
-            key: `${framework.name}-${category.name}-control-${i}`,
-            title: (
-              <ComplianceAccordionTitle
-                label={control.label}
-                pass={control.pass}
-                fail={control.fail}
-                manual={control.manual}
-              />
-            ),
-            content: "",
-            items: control.requirements.map((requirement, j: number) => {
-              const itemKey = `${framework.name}-${category.name}-control-${i}-req-${j}`;
+  const safeId = scanId || "";
 
-              return {
-                key: itemKey,
-                title: (
-                  <ComplianceAccordionRequirementTitle
-                    type={requirement.type as string}
-                    name={requirement.name}
-                    status={requirement.status as FindingStatus}
-                  />
-                ),
-                content: (
-                  <ClientAccordionContent
-                    requirement={requirement}
-                    scanId={scanId || ""}
-                    framework={framework.name}
-                    disableFindings={
-                      requirement.check_ids.length === 0 &&
-                      requirement.manual === 0
-                    }
-                  />
-                ),
-                items: [],
-              };
-            }),
-            isDisabled:
-              control.pass === 0 && control.fail === 0 && control.manual === 0,
-          };
-        }),
-      };
-    }),
+  return data.flatMap((framework) =>
+    framework.categories.map((category) => ({
+      key: `${framework.name}-${category.name}`,
+      title: (
+        <ComplianceAccordionTitle
+          label={category.name}
+          pass={category.pass}
+          fail={category.fail}
+          manual={category.manual}
+          isParentLevel={true}
+        />
+      ),
+      content: "",
+      items: category.controls.map((control, controlIndex) =>
+        createControlItem(
+          control,
+          framework.name,
+          category.name,
+          controlIndex,
+          safeId,
+        ),
+      ),
+    })),
   );
 };
